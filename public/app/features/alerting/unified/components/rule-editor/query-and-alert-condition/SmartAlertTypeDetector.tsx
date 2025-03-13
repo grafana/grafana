@@ -4,6 +4,7 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceJsonData } from '@grafana/schema';
 import { RadioButtonGroup, Stack, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { Trans, t } from 'app/core/internationalization';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { AccessControlAction } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -96,16 +97,22 @@ export function SmartAlertTypeDetector({
   return (
     <Stack direction="column" gap={1} alignItems="flex-start">
       <Stack direction="column" gap={0}>
-        <Text variant="h5">Rule type</Text>
+        <Text variant="h5">
+          <Trans i18nKey="alerting.smart-alert-type-detector.rule-type">Rule type</Trans>
+        </Text>
         <Stack direction="row" gap={0.5} alignItems="center">
           <Text variant="bodySmall" color="secondary">
-            Select where the alert rule will be managed.
+            <Trans i18nKey="alerting.smart-alert-type-detector.select-where-alert-managed">
+              Select where the alert rule will be managed.
+            </Trans>
           </Text>
           <NeedHelpInfo
             contentText={
               <>
                 <Text color="primary" variant="h6">
-                  Grafana-managed alert rules
+                  <Trans i18nKey="alerting.smart-alert-type-detector.grafanamanaged-alert-rules">
+                    Grafana-managed alert rules
+                  </Trans>
                 </Text>
                 <p>
                   Grafana-managed alert rules allow you to create alerts that can act on data from any of our supported
@@ -113,7 +120,9 @@ export function SmartAlertTypeDetector({
                   transform your data and set alert conditions. Using images in alert notifications is also supported.
                 </p>
                 <Text color="primary" variant="h6">
-                  Data source-managed alert rules
+                  <Trans i18nKey="alerting.smart-alert-type-detector.data-sourcemanaged-alert-rules">
+                    Data source-managed alert rules
+                  </Trans>
                 </Text>
                 <p>
                   Data source-managed alert rules can be used for Grafana Mimir or Grafana Loki data sources which have
@@ -123,7 +132,7 @@ export function SmartAlertTypeDetector({
             }
             externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/"
             linkText="Read about alert rule types"
-            title="Alert rule types"
+            title={t('alerting.smart-alert-type-detector.title-alert-rule-types', 'Alert rule types')}
           />
         </Stack>
       </Stack>

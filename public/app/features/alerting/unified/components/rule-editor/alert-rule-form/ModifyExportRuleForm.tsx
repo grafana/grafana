@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
 import {
@@ -87,7 +87,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
       <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
     </LinkButton>,
     <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
-      Export
+      <Trans i18nKey="alerting.modify-export-rule-form.action-buttons.export">Export</Trans>
     </Button>,
   ];
 
@@ -196,7 +196,7 @@ const GrafanaRuleDesignExportPreview = ({
   }, [nameSpaceUID, exportFormat, payload, getExport, loadingGroup]);
 
   if (exportData.isLoading) {
-    return <LoadingPlaceholder text="Loading...." />;
+    return <LoadingPlaceholder text={t('alerting.grafana-rule-design-export-preview.text-loading', 'Loading....')} />;
   }
 
   const downloadFileName = `modify-export-${payload.name}-${uid}-${new Date().getTime()}`;

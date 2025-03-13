@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { GrafanaTheme2, RelativeTimeRange, dateTime, getDefaultRelativeTimeRange } from '@grafana/data';
 import { relativeToTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { Icon, InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertQueryOptions, MaxDataPointsOption, MinIntervalOption } from './QueryWrapper';
@@ -35,7 +36,7 @@ export const QueryOptions = ({
         content={
           <div className={styles.queryOptions}>
             {onChangeTimeRange && (
-              <InlineField label="Time Range">
+              <InlineField label={t('alerting.query-options.label-time-range', 'Time Range')}>
                 <RelativeTimeRangePicker
                   timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
                   onChange={(range) => onChangeTimeRange(range, index)}

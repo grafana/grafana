@@ -19,6 +19,7 @@ import {
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -254,7 +255,7 @@ export function MaxDataPointsOption({
   return (
     <InlineField
       labelWidth={24}
-      label="Max data points"
+      label={t('alerting.max-data-points-option.label-max-data-points', 'Max data points')}
       tooltip="The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
     >
       <Input
@@ -290,7 +291,7 @@ export function MinIntervalOption({
 
   return (
     <InlineField
-      label="Interval"
+      label={t('alerting.min-interval-option.label-interval', 'Interval')}
       labelWidth={24}
       tooltip={
         <>

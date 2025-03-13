@@ -4,7 +4,7 @@ import { useAsyncFn } from 'react-use';
 
 import { Alert, Button, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
@@ -201,13 +201,25 @@ export const NotificationPoliciesList = () => {
   return (
     <>
       {hasPoliciesError && (
-        <Alert severity="error" title="Error loading Alertmanager config">
+        <Alert
+          severity="error"
+          title={t(
+            'alerting.notification-policies-list.title-error-loading-alertmanager-config',
+            'Error loading Alertmanager config'
+          )}
+        >
           {stringifyErrorLike(fetchPoliciesError) || 'Unknown error.'}
         </Alert>
       )}
       {/* show when there is an update error */}
       {hasConflictError && (
-        <Alert severity="info" title="Notification policies have changed">
+        <Alert
+          severity="info"
+          title={t(
+            'alerting.notification-policies-list.title-notification-policies-have-changed',
+            'Notification policies have changed'
+          )}
+        >
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Trans i18nKey="alerting.policies.update-errors.conflict">
               The notification policy tree has been updated by another user.

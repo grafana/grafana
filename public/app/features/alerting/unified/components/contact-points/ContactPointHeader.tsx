@@ -86,7 +86,11 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   if (showManagePermissions) {
     menuActions.push(
       <Fragment key="manage-permissions">
-        <Menu.Item icon="unlock" label="Manage permissions" onClick={() => setShowPermissionsDrawer(true)} />
+        <Menu.Item
+          icon="unlock"
+          label={t('alerting.contact-point-header.label-manage-permissions', 'Manage permissions')}
+          onClick={() => setShowPermissionsDrawer(true)}
+        />
       </Fragment>
     );
   }
@@ -96,7 +100,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
       <Fragment key="export-contact-point">
         <Menu.Item
           icon="download-alt"
-          label="Export"
+          label={t('alerting.contact-point-header.export-label-export', 'Export')}
           ariaLabel="export"
           disabled={!exportAllowed}
           data-testid="export"
@@ -155,7 +159,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         )}
       >
         <Menu.Item
-          label="Delete"
+          label={t('alerting.contact-point-header.label-delete', 'Delete')}
           ariaLabel="delete"
           icon="trash-alt"
           destructive

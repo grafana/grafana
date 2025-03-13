@@ -1,7 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
 import { Button, Stack, Text } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { RuleFormValues } from '../../../types/rule-form';
 import { isRecordingRuleByType } from '../../../utils/rules';
@@ -31,7 +31,9 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={1}>
-        <Text element="h5">Labels</Text>
+        <Text element="h5">
+          <Trans i18nKey="alerting.labels-field-in-form.labels">Labels</Trans>
+        </Text>
         <Stack direction={'row'} gap={1}>
           <Text variant="bodySmall" color="secondary">
             {text}
@@ -39,7 +41,7 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
           <NeedHelpInfo
             contentText="The dropdown only displays labels that you have previously used for alerts.
               Select a label from the options below or type in a new one."
-            title="Labels"
+            title={t('alerting.labels-field-in-form.title-labels', 'Labels')}
           />
         </Stack>
       </Stack>
@@ -47,11 +49,13 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
         <LabelsInRule labels={labels} />
         {hasLabels ? (
           <Button variant="secondary" type="button" onClick={onEditClick} size="sm">
-            Edit labels
+            <Trans i18nKey="alerting.labels-field-in-form.edit-labels">Edit labels</Trans>
           </Button>
         ) : (
           <Stack direction="row" gap={2} alignItems="center">
-            <Text>No labels selected</Text>
+            <Text>
+              <Trans i18nKey="alerting.labels-field-in-form.no-labels-selected">No labels selected</Trans>
+            </Text>
             <Button
               icon="plus"
               type="button"
@@ -60,7 +64,7 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
               size="sm"
               data-testid="add-labels-button"
             >
-              Add labels
+              <Trans i18nKey="alerting.labels-field-in-form.add-labels">Add labels</Trans>
             </Button>
           </Stack>
         )}

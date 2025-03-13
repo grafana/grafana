@@ -26,7 +26,7 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { SilenceCreatedResponse, alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
@@ -76,7 +76,14 @@ const ExistingSilenceEditor = () => {
   }, [silence]);
 
   if (silenceId && getSilenceIsLoading) {
-    return <LoadingPlaceholder text="Loading existing silence information..." />;
+    return (
+      <LoadingPlaceholder
+        text={t(
+          'alerting.existing-silence-editor.text-loading-existing-silence-information',
+          'Loading existing silence information...'
+        )}
+      />
+    );
   }
 
   const existingSilenceNotFound =
@@ -200,7 +207,7 @@ export const SilencesEditor = ({
           <div className={styles.silencePeriod}>
             <SilencePeriod />
             <Field
-              label="Duration"
+              label={t('alerting.silences-editor.label-duration', 'Duration')}
               invalid={!!formState.errors.duration}
               error={
                 formState.errors.duration &&
@@ -222,7 +229,7 @@ export const SilencesEditor = ({
           <MatchersField required={Boolean(!ruleUid)} ruleUid={ruleUid} />
 
           <Field
-            label="Comment"
+            label={t('alerting.silences-editor.label-comment', 'Comment')}
             required
             error={formState.errors.comment?.message}
             invalid={!!formState.errors.comment}
@@ -230,20 +237,26 @@ export const SilencesEditor = ({
             <TextArea
               {...register('comment', { required: { value: true, message: 'Required.' } })}
               rows={5}
-              placeholder="Details about the silence"
+              placeholder={t(
+                'alerting.silences-editor.comment-placeholder-details-about-the-silence',
+                'Details about the silence'
+              )}
               id="comment"
             />
           </Field>
           {!userLogged && (
             <Field
-              label="Created By"
+              label={t('alerting.silences-editor.label-created-by', 'Created By')}
               required
               error={formState.errors.createdBy?.message}
               invalid={!!formState.errors.createdBy}
             >
               <Input
                 {...register('createdBy', { required: { value: true, message: 'Required.' } })}
-                placeholder="Who's creating the silence"
+                placeholder={t(
+                  'alerting.silences-editor.placeholder-whos-creating-the-silence',
+                  "Who's creating the silence"
+                )}
               />
             </Field>
           )}
@@ -254,10 +267,14 @@ export const SilencesEditor = ({
         <Stack gap={1}>
           {isLoading && (
             <Button disabled={true} icon="spinner" variant="primary">
-              Saving...
+              <Trans i18nKey="alerting.silences-editor.saving">Saving...</Trans>
             </Button>
           )}
-          {!isLoading && <Button type="submit">Save silence</Button>}
+          {!isLoading && (
+            <Button type="submit">
+              <Trans i18nKey="alerting.silences-editor.save-silence">Save silence</Trans>
+            </Button>
+          )}
           <LinkButton onClick={onCancelHandler} variant={'secondary'}>
             <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
           </LinkButton>

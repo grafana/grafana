@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { createContactPointSearchLink } from '../../utils/misc';
@@ -55,7 +56,9 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
               )}
             </Stack>
           ) : (
-            <span>No grouping</span>
+            <span>
+              <Trans i18nKey="alerting.alert-group.no-grouping">No grouping</Trans>
+            </span>
           )}
         </div>
         <AlertGroupHeader group={group} />

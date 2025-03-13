@@ -1,6 +1,7 @@
 import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { Button, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { useControlledFieldArray } from 'app/features/alerting/unified/hooks/useControlledFieldArray';
 import { NotificationChannelOption } from 'app/types';
 
@@ -38,7 +39,7 @@ export const SubformArrayField = ({ option, pathPrefix, errors, defaultValues, r
                 <ActionIcon
                   data-testid={`${path}.${itemIndex}.delete-button`}
                   icon="trash-alt"
-                  tooltip="delete"
+                  tooltip={t('alerting.subform-array-field.tooltip-delete', 'delete')}
                   onClick={() => remove(itemIndex)}
                   className={styles.deleteIcon}
                 />
@@ -66,7 +67,7 @@ export const SubformArrayField = ({ option, pathPrefix, errors, defaultValues, r
             size="sm"
             onClick={() => append({ __id: String(Math.random()) })}
           >
-            Add
+            <Trans i18nKey="alerting.subform-array-field.add">Add</Trans>
           </Button>
         )}
       </CollapsibleSection>

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Alert, IconButton, Select, SelectCommonProps, Stack, Text, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
@@ -69,7 +70,15 @@ export const ContactPointSelector = ({
 
   // TODO error handling
   if (error) {
-    return <Alert title="Failed to fetch contact points" severity="error" />;
+    return (
+      <Alert
+        title={t(
+          'alerting.contact-point-selector.title-failed-to-fetch-contact-points',
+          'Failed to fetch contact points'
+        )}
+        severity="error"
+      />
+    );
   }
 
   return (
@@ -86,8 +95,11 @@ export const ContactPointSelector = ({
         <IconButton
           name="sync"
           onClick={onClickRefresh}
-          aria-label="Refresh contact points"
-          tooltip="Refresh contact points list"
+          aria-label={t('alerting.contact-point-selector.aria-label-refresh-contact-points', 'Refresh contact points')}
+          tooltip={t(
+            'alerting.contact-point-selector.tooltip-refresh-contact-points-list',
+            'Refresh contact points list'
+          )}
           className={cx(styles.refreshButton, {
             [styles.loading]: loaderSpinning || isLoading,
           })}
