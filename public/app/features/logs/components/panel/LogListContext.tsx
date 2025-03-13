@@ -9,12 +9,13 @@ import {
   useState,
 } from 'react';
 
-import { CoreApp, LogRowModel, LogsSortOrder, shallowCompare } from '@grafana/data';
+import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder, shallowCompare } from '@grafana/data';
 import { PopoverContent } from '@grafana/ui';
 
 import { GetRowContextQueryFn } from './LogLineMenu';
 
 export interface LogListContextData extends Props {
+  setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDisplayedFields: (displayedFields: string[]) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
@@ -26,7 +27,9 @@ export interface LogListContextData extends Props {
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
+  dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
+  setDedupStrategy: () => {},
   setDisplayedFields: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
@@ -56,12 +59,19 @@ export const useLogIsPinned = (log: LogRowModel) => {
 
 type LogListState = Pick<
   LogListContextData,
-  'displayedFields' | 'pinnedLogs' | 'showTime' | 'sortOrder' | 'syntaxHighlighting' | 'wrapLogMessage'
+  | 'dedupStrategy'
+  | 'displayedFields'
+  | 'pinnedLogs'
+  | 'showTime'
+  | 'sortOrder'
+  | 'syntaxHighlighting'
+  | 'wrapLogMessage'
 >;
 
 export interface Props {
   app: CoreApp;
   children?: ReactNode;
+  dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   getRowContextQuery?: GetRowContextQueryFn;
   logSupportsContext?: (row: LogRowModel) => boolean;
@@ -79,6 +89,7 @@ export interface Props {
 
 export const LogListContextProvider = (props: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
+    dedupStrategy: props.dedupStrategy,
     displayedFields: props.displayedFields,
     pinnedLogs: props.pinnedLogs,
     showTime: props.showTime,
@@ -104,6 +115,13 @@ export const LogListContextProvider = (props: Props) => {
       });
     }
   }, [logListState, props.pinnedLogs]);
+
+  const setDedupStrategy = useCallback(
+    (dedupStrategy: LogsDedupStrategy) => {
+      setLogListState({ ...logListState, dedupStrategy });
+    },
+    [logListState]
+  );
 
   const setDisplayedFields = useCallback(
     (displayedFields: string[]) => {
@@ -151,6 +169,7 @@ export const LogListContextProvider = (props: Props) => {
     <LogListContext.Provider
       value={{
         app: props.app,
+        dedupStrategy: logListState.dedupStrategy,
         displayedFields: logListState.displayedFields,
         getRowContextQuery: props.getRowContextQuery,
         logSupportsContext: props.logSupportsContext,
@@ -160,6 +179,7 @@ export const LogListContextProvider = (props: Props) => {
         onUnpinLine: props.onUnpinLine,
         pinLineButtonTooltipTitle: props.pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
+        setDedupStrategy,
         setDisplayedFields,
         setLogListState,
         setPinnedLogs,

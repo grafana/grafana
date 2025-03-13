@@ -1055,8 +1055,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               {logsContainerRef.current && (
                 <LogList
                   app={CoreApp.Explore}
-                  logSupportsContext={showContextToggle}
                   containerElement={logsContainerRef.current}
+                  dedupStrategy={dedupStrategy}
                   displayedFields={displayedFields}
                   eventBus={eventBus}
                   forceEscape={forceEscape}
@@ -1064,6 +1064,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   getRowContextQuery={getRowContextQuery}
                   loadMore={loadMoreLogs}
                   logs={dedupedRows}
+                  logSupportsContext={showContextToggle}
                   onOpenContext={onOpenContext}
                   onPermalinkClick={onPermalinkClick}
                   onPinLine={onPinToContentOutlineClick}

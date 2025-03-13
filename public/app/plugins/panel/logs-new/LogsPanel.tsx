@@ -110,6 +110,7 @@ export const LogsPanel = ({
         <LogList
           app={CoreApp.Dashboard}
           containerElement={logsContainer}
+          dedupStrategy={dedupStrategy}
           displayedFields={[]}
           eventBus={eventBus}
           initialScrollPosition={initialScrollPosition}
