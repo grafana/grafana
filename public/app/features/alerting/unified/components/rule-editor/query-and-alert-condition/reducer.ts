@@ -256,19 +256,22 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
 
         state.queries.splice(reduceExpressionIndex, 1);
         state.queries[1].model.expression = dataQuery.refId;
-        if (isExpressionQuery(state.queries[1].model) ){
-         if ( state.queries[1].model.conditions){
-           state.queries[1].model.conditions[0].query.params = [dataQuery.refId];
-         } 
+        if (isExpressionQuery(state.queries[1].model)) {
+          if (state.queries[1].model.conditions) {
+            state.queries[1].model.conditions[0].query.params = [dataQuery.refId];
+          }
         }
       }
 
       const shouldAddReduceExpression =
         !isInstantDataQuery && expressionQueries.length === 1 && isThresholdExpression(expressionQueries[0].model);
       if (shouldAddReduceExpression) {
+        // this one will be used as the refID when we create a new reducer for the threshold expression
+        const NEW_REDUCER_REF = 'reducer';
+
         // add reducer to the second position
         // we only update the refid and the model to point to the reducer expression
-        state.queries[1].model.expression = 'REDUCER';
+        state.queries[1].model.expression = NEW_REDUCER_REF;
 
         // insert in second position the reducer expression
         state.queries.splice(1, 0, {
@@ -278,9 +281,9 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
             reducer: ReducerID.last,
             conditions: [{ ...defaultCondition, query: { params: [dataQuery.refId] } }],
             expression: dataQuery.refId,
-            refId: 'REDUCER',
+            refId: NEW_REDUCER_REF,
           }),
-          refId: 'REDUCER',
+          refId: NEW_REDUCER_REF,
           queryType: 'expression',
         });
       }
