@@ -626,7 +626,7 @@ Grafana encrypts secure settings in the database.
 | `tls_config`  |                |
 | `hmac_config` |                |
 
-##### TLS config
+##### TLS configuration
 
 | Name                 | Secure setting |
 | -------------------- | -------------- |
