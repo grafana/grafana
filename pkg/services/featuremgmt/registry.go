@@ -1106,13 +1106,6 @@ var (
 			AllowSelfServe: false,
 		},
 		{
-			Name:        "accessActionSets",
-			Description: "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       identityAccessTeam,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:            "disableNumericMetricsSortingInExpressions",
 			Description:     "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
 			Stage:           FeatureStageExperimental,
