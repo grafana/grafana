@@ -191,10 +191,11 @@ const (
 type BuilderQueryExpression struct {
 	From    *BuilderQueryEditorPropertyExpression     `json:"from,omitempty"`
 	Columns *BuilderQueryEditorColumnsExpression      `json:"columns,omitempty"`
-	Where   *BuilderQueryEditorWhereArrayExpression   `json:"where,omitempty"`
+	Where   *BuilderQueryEditorWhereExpressionArray   `json:"where,omitempty"`
 	Reduce  *BuilderQueryEditorReduceExpressionArray  `json:"reduce,omitempty"`
 	GroupBy *BuilderQueryEditorGroupByExpressionArray `json:"groupBy,omitempty"`
 	Limit   *int64                                    `json:"limit,omitempty"`
+	OrderBy *BuilderQueryEditorOrderByExpressionArray `json:"orderBy,omitempty"`
 }
 
 // NewBuilderQueryExpression creates a new BuilderQueryExpression object.
@@ -246,6 +247,7 @@ const (
 	BuilderQueryEditorExpressionTypeGroupBy           BuilderQueryEditorExpressionType = "group_by"
 	BuilderQueryEditorExpressionTypeOr                BuilderQueryEditorExpressionType = "or"
 	BuilderQueryEditorExpressionTypeAnd               BuilderQueryEditorExpressionType = "and"
+	BuilderQueryEditorExpressionTypeOrderBy           BuilderQueryEditorExpressionType = "order_by"
 )
 
 type BuilderQueryEditorColumnsExpression struct {
@@ -258,14 +260,14 @@ func NewBuilderQueryEditorColumnsExpression() *BuilderQueryEditorColumnsExpressi
 	return &BuilderQueryEditorColumnsExpression{}
 }
 
-type BuilderQueryEditorWhereArrayExpression struct {
+type BuilderQueryEditorWhereExpressionArray struct {
 	Expressions []BuilderQueryEditorWhereExpression `json:"expressions"`
 	Type        BuilderQueryEditorExpressionType    `json:"type"`
 }
 
-// NewBuilderQueryEditorWhereArrayExpression creates a new BuilderQueryEditorWhereArrayExpression object.
-func NewBuilderQueryEditorWhereArrayExpression() *BuilderQueryEditorWhereArrayExpression {
-	return &BuilderQueryEditorWhereArrayExpression{}
+// NewBuilderQueryEditorWhereExpressionArray creates a new BuilderQueryEditorWhereExpressionArray object.
+func NewBuilderQueryEditorWhereExpressionArray() *BuilderQueryEditorWhereExpressionArray {
+	return &BuilderQueryEditorWhereExpressionArray{}
 }
 
 type BuilderQueryEditorWhereExpression struct {
@@ -371,6 +373,36 @@ func NewBuilderQueryEditorGroupByExpression() *BuilderQueryEditorGroupByExpressi
 		Property: *NewBuilderQueryEditorProperty(),
 	}
 }
+
+type BuilderQueryEditorOrderByExpressionArray struct {
+	Expressions []BuilderQueryEditorOrderByExpression `json:"expressions"`
+	Type        BuilderQueryEditorExpressionType      `json:"type"`
+}
+
+// NewBuilderQueryEditorOrderByExpressionArray creates a new BuilderQueryEditorOrderByExpressionArray object.
+func NewBuilderQueryEditorOrderByExpressionArray() *BuilderQueryEditorOrderByExpressionArray {
+	return &BuilderQueryEditorOrderByExpressionArray{}
+}
+
+type BuilderQueryEditorOrderByExpression struct {
+	Property BuilderQueryEditorProperty       `json:"property"`
+	Order    BuilderQueryEditorOrderByOptions `json:"order"`
+	Type     BuilderQueryEditorExpressionType `json:"type"`
+}
+
+// NewBuilderQueryEditorOrderByExpression creates a new BuilderQueryEditorOrderByExpression object.
+func NewBuilderQueryEditorOrderByExpression() *BuilderQueryEditorOrderByExpression {
+	return &BuilderQueryEditorOrderByExpression{
+		Property: *NewBuilderQueryEditorProperty(),
+	}
+}
+
+type BuilderQueryEditorOrderByOptions string
+
+const (
+	BuilderQueryEditorOrderByOptionsAsc  BuilderQueryEditorOrderByOptions = "asc"
+	BuilderQueryEditorOrderByOptionsDesc BuilderQueryEditorOrderByOptions = "desc"
+)
 
 type AzureResourceGraphQuery struct {
 	// Azure Resource Graph KQL query to be executed.

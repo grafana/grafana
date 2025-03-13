@@ -301,6 +301,7 @@ export enum BuilderQueryEditorExpressionType {
   Group_by = 'group_by',
   Operator = 'operator',
   Or = 'or',
+  Order_by = 'order_by',
   Property = 'property',
   Reduce = 'reduce',
 }
@@ -313,6 +314,11 @@ export enum BuilderQueryEditorPropertyType {
   Number = 'number',
   String = 'string',
   Time_span = 'time_span',
+}
+
+export enum BuilderQueryEditorOrderByOptions {
+  Asc = 'asc',
+  Desc = 'desc',
 }
 
 export interface BuilderQueryEditorProperty {
@@ -353,12 +359,12 @@ export interface BuilderQueryEditorWhereExpression {
   type: BuilderQueryEditorExpressionType;
 }
 
-export interface BuilderQueryEditorWhereArrayExpression {
+export interface BuilderQueryEditorWhereExpressionArray {
   expressions: Array<BuilderQueryEditorWhereExpression>;
   type: BuilderQueryEditorExpressionType;
 }
 
-export const defaultBuilderQueryEditorWhereArrayExpression: Partial<BuilderQueryEditorWhereArrayExpression> = {
+export const defaultBuilderQueryEditorWhereExpressionArray: Partial<BuilderQueryEditorWhereExpressionArray> = {
   expressions: [],
 };
 
@@ -404,13 +410,29 @@ export const defaultBuilderQueryEditorGroupByExpressionArray: Partial<BuilderQue
   expressions: [],
 };
 
+export interface BuilderQueryEditorOrderByExpression {
+  order: BuilderQueryEditorOrderByOptions;
+  property: BuilderQueryEditorProperty;
+  type: BuilderQueryEditorExpressionType;
+}
+
+export interface BuilderQueryEditorOrderByExpressionArray {
+  expressions: Array<BuilderQueryEditorOrderByExpression>;
+  type: BuilderQueryEditorExpressionType;
+}
+
+export const defaultBuilderQueryEditorOrderByExpressionArray: Partial<BuilderQueryEditorOrderByExpressionArray> = {
+  expressions: [],
+};
+
 export interface BuilderQueryExpression {
   columns?: BuilderQueryEditorColumnsExpression;
   from?: BuilderQueryEditorPropertyExpression;
   groupBy?: BuilderQueryEditorGroupByExpressionArray;
   limit?: number;
+  orderBy?: BuilderQueryEditorOrderByExpressionArray;
   reduce?: BuilderQueryEditorReduceExpressionArray;
-  where?: BuilderQueryEditorWhereArrayExpression;
+  where?: BuilderQueryEditorWhereExpressionArray;
 }
 
 export interface AzureResourceGraphQuery {

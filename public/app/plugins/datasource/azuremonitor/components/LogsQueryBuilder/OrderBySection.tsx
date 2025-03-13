@@ -1,0 +1,161 @@
+import React, { useEffect, useState } from 'react';
+
+import { SelectableValue } from '@grafana/data';
+import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
+import { Button, Select, Label } from '@grafana/ui';
+
+import {
+  BuilderQueryEditorExpressionType,
+  BuilderQueryEditorOrderByExpression,
+  BuilderQueryEditorOrderByOptions,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryExpression,
+} from '../../dataquery.gen';
+import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+
+import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
+import { getAggregations, getFilters } from './utils';
+
+interface OrderBySectionProps {
+  query: AzureMonitorQuery;
+  allColumns: AzureLogAnalyticsMetadataColumn[];
+  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+}
+
+export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumns, onQueryUpdate }) => {
+  const builderQuery = query.azureLogAnalytics?.builderQuery;
+  const [orderBy, setOrderBy] = useState<BuilderQueryEditorOrderByExpression[]>([]);
+
+  useEffect(() => {
+    if (builderQuery?.orderBy) {
+      setOrderBy(builderQuery.orderBy.expressions);
+    }
+  }, [builderQuery?.orderBy]);
+
+  if (!builderQuery) {
+    return <></>;
+  }
+
+  const groupByColumns = builderQuery?.groupBy?.expressions?.map((g) => g.property.name) || [];
+  const aggregateColumns = builderQuery?.reduce?.expressions?.map((r) => r.property.name) || [];
+  const selectedColumns = builderQuery?.columns?.columns || [];
+
+  const allAvailableColumns =
+    groupByColumns.length > 0
+      ? groupByColumns
+      : aggregateColumns.length > 0
+        ? aggregateColumns
+        : selectedColumns.length > 0
+          ? selectedColumns
+          : allColumns.map((col) => col.name);
+
+  const columnOptions = allAvailableColumns.map((col) => ({
+    label: col,
+    value: col,
+  }));
+
+  const orderOptions: Array<SelectableValue<string>> = [
+    { label: 'Ascending', value: 'asc' },
+    { label: 'Descending', value: 'desc' },
+  ];
+
+  const handleOrderByChange = (index: number, key: 'column' | 'order', value: string) => {
+    setOrderBy((prev) => {
+      const updated = [...prev];
+
+      if (index === -1) {
+        updated.push({
+          property: { name: value, type: BuilderQueryEditorPropertyType.String },
+          order: BuilderQueryEditorOrderByOptions.Asc,
+          type: BuilderQueryEditorExpressionType.Order_by,
+        });
+      } else {
+        updated[index] = {
+          ...updated[index],
+          property:
+            key === 'column' ? { name: value, type: BuilderQueryEditorPropertyType.String } : updated[index].property,
+          order:
+            key === 'order' &&
+            (value === BuilderQueryEditorOrderByOptions.Asc || value === BuilderQueryEditorOrderByOptions.Desc)
+              ? value
+              : updated[index].order,
+        };
+      }
+
+      updateQuery(updated);
+      return updated;
+    });
+  };
+
+  const onDeleteOrderBy = (index: number) => {
+    setOrderBy((prev) => {
+      const updated = prev.filter((_, i) => i !== index);
+      updateQuery(updated);
+      return updated;
+    });
+  };
+
+  const updateQuery = (updatedOrderBy: BuilderQueryEditorOrderByExpression[]) => {
+    const updatedBuilderQuery: BuilderQueryExpression = {
+      ...builderQuery,
+      orderBy:
+        updatedOrderBy.length > 0
+          ? { expressions: updatedOrderBy, type: BuilderQueryEditorExpressionType.Order_by }
+          : undefined,
+    };
+
+    const aggregation = getAggregations(updatedBuilderQuery.reduce?.expressions);
+    const filters = getFilters(updatedBuilderQuery.where?.expressions);
+    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
+      updatedBuilderQuery,
+      allColumns,
+      aggregation,
+      filters
+    );
+
+    onQueryUpdate({
+      ...query,
+      azureLogAnalytics: {
+        ...query.azureLogAnalytics,
+        builderQuery: updatedBuilderQuery,
+        query: updatedQueryString,
+      },
+    });
+  };
+
+  return (
+    <EditorRow>
+      <EditorFieldGroup>
+        <EditorField label="Order By" optional={true}>
+          <>
+            {orderBy.length > 0 && (
+              <div>
+                {orderBy.map((entry, index) => (
+                  <InputGroup key={index}>
+                    <Select
+                      aria-label="Order by column"
+                      width={30}
+                      value={entry.property?.name ? { label: entry.property.name, value: entry.property.name } : null}
+                      options={columnOptions}
+                      onChange={(e) => e.value && handleOrderByChange(index, 'column', e.value)}
+                    />
+                    <Select
+                      aria-label="Order Direction"
+                      width={12}
+                      value={orderOptions.find((o) => o.value === entry.order) || null}
+                      options={orderOptions}
+                      onChange={(e) => e.value && handleOrderByChange(index, 'order', e.value)}
+                    />
+                    <Button variant="secondary" icon="times" onClick={() => onDeleteOrderBy(index)} />
+                    {index < orderBy.length - 1 ? <Label>AND</Label> : <></>}
+                  </InputGroup>
+                ))}
+              </div>
+            )}
+            <Button variant="secondary" onClick={() => handleOrderByChange(-1, 'column', '')} icon="plus" />
+          </>
+        </EditorField>
+      </EditorFieldGroup>
+    </EditorRow>
+  );
+};

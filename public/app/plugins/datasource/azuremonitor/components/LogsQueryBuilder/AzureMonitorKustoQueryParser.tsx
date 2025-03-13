@@ -1,6 +1,7 @@
 import {
   BuilderQueryEditorExpressionType,
-  BuilderQueryEditorWhereArrayExpression,
+  BuilderQueryEditorOrderByExpressionArray,
+  BuilderQueryEditorWhereExpressionArray,
   BuilderQueryExpression,
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn } from '../../types';
@@ -14,7 +15,7 @@ export class AzureMonitorKustoQueryParser {
     aggregation?: string,
     filters?: string
   ): string {
-    const { from, columns, groupBy, limit, where } = builderQuery;
+    const { from, columns, groupBy, limit, where, orderBy } = builderQuery;
 
     if (!from || !from.property.name) {
       return '';
@@ -31,7 +32,7 @@ export class AzureMonitorKustoQueryParser {
     this.appendWhere(selectedColumns, filters, datetimeColumn, shouldApplyTimeFilter, allColumns, parts, where);
     this.appendProject(selectedColumns, parts);
     this.appendSummarize(selectedColumns, aggregation, groupByStrings, datetimeColumn, parts);
-    this.appendOrderBy(datetimeColumn, selectedColumns, groupByStrings, parts, aggregation);
+    this.appendOrderBy(parts, orderBy, aggregation);
     this.appendLimit(limit, parts);
 
     return parts.join('\n| ');
@@ -56,7 +57,7 @@ export class AzureMonitorKustoQueryParser {
     shouldApplyTimeFilter: boolean,
     columns: AzureLogAnalyticsMetadataColumn[],
     parts: string[],
-    where: BuilderQueryEditorWhereArrayExpression | undefined
+    where: BuilderQueryEditorWhereExpressionArray | undefined
   ) {
     const whereConditions = new Set<string>();
 
@@ -79,7 +80,7 @@ export class AzureMonitorKustoQueryParser {
           const operatorName = condition.operator?.name;
           let operatorValue = String(condition.operator?.value).trim();
           const columnName = condition.property?.name;
-    
+
           if (operatorName && operatorValue && columnName) {
             if (
               (operatorValue.startsWith("'") && operatorValue.endsWith("'")) ||
@@ -87,16 +88,16 @@ export class AzureMonitorKustoQueryParser {
             ) {
               operatorValue = operatorValue.slice(1, -1);
             }
-    
+
             const newCondition = `${columnName} ${operatorName} '${operatorValue}'`;
-    
+
             if (!whereConditions.has(newCondition)) {
               whereConditions.add(newCondition);
             }
           }
         }
       });
-    }    
+    }
 
     if (whereConditions.size > 0) {
       parts.push(`where ${Array.from(whereConditions).join(' and ')}`);
@@ -150,21 +151,26 @@ export class AzureMonitorKustoQueryParser {
   }
 
   private static appendOrderBy(
-    datetimeColumn: string,
-    selectedColumns: string[],
-    groupBy: string[] | undefined,
     parts: string[],
+    orderBy?: BuilderQueryEditorOrderByExpressionArray,
     aggregation?: string
   ) {
-    const hasDatetimeGroupBy = groupBy?.some((col) => col === datetimeColumn);
-    const isOnlyTableSelected = selectedColumns.length === 0 && (!groupBy || groupBy.length === 0);
+    if (aggregation) {
+      return;
+    }
 
-    if (hasDatetimeGroupBy) {
-      parts.push(`summarize ${selectedColumns})`);
-    } else if (isOnlyTableSelected) {
-      parts.push(`order by ${datetimeColumn} asc`);
-    } else if (!groupBy?.length && selectedColumns.includes(datetimeColumn)) {
-      parts.push(`order by ${datetimeColumn} asc`);
+    const orderClauses: string[] = [];
+
+    if (orderBy?.expressions?.length) {
+      orderBy.expressions.forEach((order) => {
+        if (order.property?.name && order.order) {
+          orderClauses.push(`${order.property.name} ${order.order}`);
+        }
+      });
+    }
+
+    if (orderClauses.length > 0) {
+      parts.push(`order by ${orderClauses.join(', ')}`);
     }
   }
 

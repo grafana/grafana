@@ -167,8 +167,9 @@ composableKinds: DataQuery: {
 				#ResultFormat: "table" | "time_series" | "trace" | "logs" @cuetsy(kind="enum", memberNames="Table|TimeSeries|Trace|Logs")
 				#LogsEditorMode: "builder" | "raw" @cuetsy(kind="enum", memberNames="Builder|Raw")
 
-				#BuilderQueryEditorExpressionType: "property" | "operator" | "reduce" | "function_parameter" | "group_by" | "or" | "and" @cuetsy(kind="enum", memberNames:"Property|Operator|Reduce|FunctionParameter|GroupBy|Or|And")
+				#BuilderQueryEditorExpressionType: "property" | "operator" | "reduce" | "function_parameter" | "group_by" | "or" | "and" | "order_by" @cuetsy(kind="enum", memberNames:"Property|Operator|Reduce|FunctionParameter|GroupBy|Or|And|OrderBy")
 				#BuilderQueryEditorPropertyType: "number" | "string" | "boolean" | "datetime" | "time_span" | "function" | "interval" @cuetsy(kind="enum", memberNames:"Number|String|Boolean|Datetime|TimeSpan|Function|Interval")
+				#BuilderQueryEditorOrderByOptions: "asc" | "desc" @cuetsy(kind="enum", memberNames:"Asc|Desc")
 
 				#BuilderQueryEditorProperty: {
 					type: #BuilderQueryEditorPropertyType
@@ -204,7 +205,7 @@ composableKinds: DataQuery: {
 					type: #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 
-				#BuilderQueryEditorWhereArrayExpression: {
+				#BuilderQueryEditorWhereExpressionArray: {
 					expressions: [...#BuilderQueryEditorWhereExpression]
 					type: #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
@@ -239,13 +240,25 @@ composableKinds: DataQuery: {
 					type: #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 
+				#BuilderQueryEditorOrderByExpression: {
+					property: #BuilderQueryEditorProperty
+					order: #BuilderQueryEditorOrderByOptions
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+				
+				#BuilderQueryEditorOrderByExpressionArray: {
+					expressions: [...#BuilderQueryEditorOrderByExpression]
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
 				#BuilderQueryExpression: {
 					from?: #BuilderQueryEditorPropertyExpression
 					columns?: #BuilderQueryEditorColumnsExpression
-					where?: #BuilderQueryEditorWhereArrayExpression
+					where?: #BuilderQueryEditorWhereExpressionArray
 					reduce?: #BuilderQueryEditorReduceExpressionArray
 					groupBy?: #BuilderQueryEditorGroupByExpressionArray
 					limit?: int
+					orderBy?: #BuilderQueryEditorOrderByExpressionArray
 				} @cuetsy(kind="interface")
 
 				#AzureResourceGraphQuery: {

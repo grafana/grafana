@@ -85,6 +85,10 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
 
     setGroupBys(cleaned);
 
+    if (cleaned[0].property.name === '') {
+      return;
+    }
+
     let groupByClauses: string[] = [];
 
     cleaned.forEach((gb) => {

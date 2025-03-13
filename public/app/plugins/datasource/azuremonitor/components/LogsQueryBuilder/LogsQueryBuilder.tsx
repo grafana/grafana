@@ -18,6 +18,7 @@ import { FilterSection } from './FilterSection';
 import { FuzzySearch } from './FuzzySearch';
 import { GroupBySection } from './GroupBySection';
 import KQLPreview from './KQLPreview';
+import { OrderBySection } from './OrderBySection';
 import { TableSection } from './TableSection';
 import { DEFAULT_LOGS_BUILDER_QUERY, parseQueryToBuilder } from './utils';
 
@@ -101,6 +102,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         <FilterSection {...props} onQueryUpdate={onQueryChange} allColumns={allColumns} query={query} />
         <AggregateSection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <GroupBySection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
+        <OrderBySection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <FuzzySearch {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <EditorRow>
           <EditorFieldGroup>
