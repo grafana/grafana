@@ -4,7 +4,7 @@ import { SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafa
 
 import { DashboardScene } from '../DashboardScene';
 import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
-import { DropZone, getClosest, Point, Rect, SceneLayout2 } from '../layout-manager/utils';
+import { DropZone, getClosest, Point, Rect, SceneLayoutWithDragAndDrop } from '../layout-manager/utils';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
@@ -49,7 +49,10 @@ export interface ResponsiveGridLayoutOptions {
   justifyContent?: CSSProperties['justifyContent'];
 }
 
-export class ResponsiveGridLayout extends SceneObjectBase<ResponsiveGridLayoutState> implements SceneLayout2 {
+export class ResponsiveGridLayout
+  extends SceneObjectBase<ResponsiveGridLayoutState>
+  implements SceneLayoutWithDragAndDrop
+{
   public layoutOrchestrator: LayoutOrchestrator | undefined;
 
   public static Component = ResponsiveGridLayoutRenderer;

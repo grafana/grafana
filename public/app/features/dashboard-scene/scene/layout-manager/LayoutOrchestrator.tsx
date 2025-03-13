@@ -3,7 +3,7 @@ import { SceneObjectState, SceneObjectBase, SceneObjectRef, sceneGraph, VizPanel
 import { DropZonePlaceholder } from '../layout-default/DropZonePlaceholder';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../types/DashboardLayoutItem';
 
-import { closestOfType, DropZone, isSceneLayout, Point, SceneLayout2 } from './utils';
+import { closestOfType, DropZone, isSceneLayoutWithDragAndDrop, Point, SceneLayoutWithDragAndDrop } from './utils';
 
 interface LayoutOrchestratorState extends SceneObjectState {
   activeLayoutItemRef?: SceneObjectRef<DashboardLayoutItem>;
@@ -32,7 +32,7 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
   };
 
   /** The drop zone closest to the current mouse position while dragging. */
-  public activeDropZone: (DropZone & { layout: SceneObjectRef<SceneLayout2> }) | undefined;
+  public activeDropZone: (DropZone & { layout: SceneObjectRef<SceneLayoutWithDragAndDrop> }) | undefined;
 
   /** Called every tick while a panel is actively being dragged */
   public onDrag = (e: PointerEvent) => {
@@ -100,8 +100,8 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
 
   /** Moves layoutItem from its current layout to targetLayout to the location of the current placeholder.
    * Throws if layoutItem does not belong to any layout. */
-  private moveLayoutItem(layoutItem: DashboardLayoutItem, targetLayout: SceneLayout2) {
-    const sourceLayout = closestOfType(layoutItem, isSceneLayout);
+  private moveLayoutItem(layoutItem: DashboardLayoutItem, targetLayout: SceneLayoutWithDragAndDrop) {
+    const sourceLayout = closestOfType(layoutItem, isSceneLayoutWithDragAndDrop);
     if (!sourceLayout) {
       throw new Error(`Layout item with key "${layoutItem.state.key}" does not belong to any layout`);
     }
@@ -111,8 +111,11 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
   }
 
   public findClosestDropZone(p: Point) {
-    const sceneLayouts = sceneGraph.findAllObjects(this.getRoot(), isSceneLayout) as SceneLayout2[];
-    let closestDropZone: (DropZone & { layout: SceneObjectRef<SceneLayout2> }) | undefined = undefined;
+    const sceneLayouts = sceneGraph.findAllObjects(
+      this.getRoot(),
+      isSceneLayoutWithDragAndDrop
+    ) as SceneLayoutWithDragAndDrop[];
+    let closestDropZone: (DropZone & { layout: SceneObjectRef<SceneLayoutWithDragAndDrop> }) | undefined = undefined;
     let closestDistance = Number.MAX_VALUE;
     for (const layout of sceneLayouts) {
       const curClosestDropZone = layout.closestDropZone(p);

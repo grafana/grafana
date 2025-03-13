@@ -1,12 +1,4 @@
-import { css } from '@emotion/css';
-import classNames from 'classnames';
-
-import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
-
-import { DashboardScene } from '../DashboardScene';
-import { closestOfType } from '../layout-manager/utils';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 
@@ -14,56 +6,14 @@ export interface ResponsiveGridItemProps extends SceneComponentProps<ResponsiveG
 
 export function ResponsiveGridItemRenderer({ model }: ResponsiveGridItemProps) {
   const { body } = model.useState();
-  const styles = useStyles2(getStyles);
-  const dashboard = closestOfType(model, (s) => s instanceof DashboardScene);
-  const layoutOrchestrator = dashboard!.state.layoutOrchestrator;
-  const { activeLayoutItemRef } = layoutOrchestrator.useState();
-  const activeLayoutItem = activeLayoutItemRef?.resolve();
-  const isDragging = model === activeLayoutItem;
-
-  const dragStyles =
-    isDragging && layoutOrchestrator && model.cachedBoundingBox
-      ? {
-          width: model.cachedBoundingBox.right - model.cachedBoundingBox.left,
-          height: model.cachedBoundingBox.bottom - model.cachedBoundingBox.top,
-          translate: `${-layoutOrchestrator.dragOffset.left}px ${-layoutOrchestrator.dragOffset.top}px`,
-          // --x/y-pos are set in LayoutOrchestrator
-          transform: `translate(var(--x-pos), var(--y-pos))`,
-        }
-      : {};
 
   return model.state.repeatedPanels ? (
     <>
       {model.state.repeatedPanels.map((item) => (
-        <div className={styles.wrapper} key={item.state.key}>
-          <item.Component model={item} />
-        </div>
+        <item.Component model={item} key={item.state.key} />
       ))}
     </>
   ) : (
-    <div
-      className={classNames(styles.wrapper, { [styles.dragging]: isDragging })}
-      style={dragStyles}
-      ref={model.containerRef}
-    >
-      <body.Component model={body} />
-    </div>
+    <body.Component model={body} />
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    display: 'grid',
-    position: 'relative',
-    width: '100%',
-    height: '100%',
-    overflow: 'hidden',
-  }),
-  dragging: css({
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    zIndex: theme.zIndex.portal + 1,
-    pointerEvents: 'none',
-  }),
-});

@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
+import classNames from 'classnames';
 import { ComponentType, type PointerEventHandler, MutableRefObject, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps } from '@grafana/scenes';
+import { LazyLoader, SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from '../DashboardScene';
@@ -22,7 +23,7 @@ export interface DragAndDropProps {
 }
 
 export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<ResponsiveGridLayout>) {
-  const { children, isHidden } = model.useState();
+  const { children, isHidden, isLazy } = model.useState();
   const styles = useStyles2(getStyles, model.state);
   const dashboard = closestOfType(model, (s) => s instanceof DashboardScene);
 
@@ -61,17 +62,28 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
       ></div>
       {children.map((item) => {
         const Component = item.Component as ComponentType<ResponsiveGridItemProps>;
-        // const Wrapper = isLazy ? LazyLoader : 'div';
+        const Wrapper = isLazy ? LazyLoader : 'div';
+        const isDragging = activeLayoutItem === item;
+        const dragStyles =
+          isDragging && layoutOrchestrator && item.cachedBoundingBox
+            ? {
+                width: item.cachedBoundingBox.right - item.cachedBoundingBox.left,
+                height: item.cachedBoundingBox.bottom - item.cachedBoundingBox.top,
+                translate: `${-layoutOrchestrator.dragOffset.left}px ${-layoutOrchestrator.dragOffset.top}px`,
+                // --x/y-pos are set in LayoutOrchestrator
+                transform: `translate(var(--x-pos), var(--y-pos))`,
+              }
+            : {};
 
         return (
-          <Component key={item.state.key!} model={item} />
-          // <Wrapper
-          //   key={item.state.key!}
-          //   className={classNames(styles.itemWrapper, { [styles.dragging]: isDragging })}
-          //   id={item.state.key}
-          // >
-          //   <Component model={item}  />
-          // </Wrapper>
+          <Wrapper
+            key={item.state.key!}
+            className={classNames(styles.wrapper, { [styles.dragging]: isDragging })}
+            style={dragStyles}
+            ref={item.containerRef}
+          >
+            <Component model={item} />
+          </Wrapper>
         );
       })}
     </div>
@@ -103,5 +115,19 @@ const getStyles = (theme: GrafanaTheme2, state: ResponsiveGridLayoutState) => ({
           justifyContent: state.md.justifyContent,
         }
       : undefined,
+  }),
+  wrapper: css({
+    display: 'grid',
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+  }),
+  dragging: css({
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    zIndex: theme.zIndex.portal + 1,
+    pointerEvents: 'none',
   }),
 });

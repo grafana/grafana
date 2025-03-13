@@ -19,14 +19,14 @@ export interface DropZone extends Rect {
   distanceToPoint: number;
 }
 
-export interface SceneLayout2 extends SceneLayout {
+export interface SceneLayoutWithDragAndDrop extends SceneLayout {
   closestDropZone(cursorPosition: Point): DropZone;
   importLayoutItem(layoutItem: DashboardLayoutItem): void;
   removeLayoutItem(layoutItem: DashboardLayoutItem): void;
 }
 
 // todo@kay: Not the most robust interface check, should make more robust.
-export function isSceneLayout(o: SceneObject): o is SceneLayout2 {
+export function isSceneLayoutWithDragAndDrop(o: SceneObject): o is SceneLayoutWithDragAndDrop {
   return typeof (o as any).isDraggable === 'function' && typeof (o as any).closestDropZone === 'function';
 }
 
