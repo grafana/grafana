@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -197,4 +199,45 @@ func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured
 	}
 
 	return result
+}
+
+func removeUnprovisioned(ctx context.Context, client dynamic.ResourceInterface, progress jobs.JobProgressRecorder) error {
+	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
+	if err != nil {
+		return fmt.Errorf("failed to list resources: %w", err)
+	}
+
+	if rawList.GetContinue() != "" {
+		return fmt.Errorf("unable to list all resources in one request: %s", rawList.GetContinue())
+	}
+
+	for _, item := range rawList.Items {
+		meta, err := utils.MetaAccessor(item)
+		if err != nil {
+			return fmt.Errorf("extract meta accessor: %w", err)
+		}
+
+		// Skip if folder is managed
+		_, ok := meta.GetManagerProperties()
+		if ok {
+			continue
+		}
+
+		result := jobs.JobResourceResult{
+			Name:     item.GetName(),
+			Resource: item.GetKind(),
+			Group:    item.GroupVersionKind().Group,
+			Action:   repository.FileActionDeleted,
+		}
+
+		if err = client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
+			result.Error = fmt.Errorf("failed to delete folder: %w", err)
+			progress.Record(ctx, result)
+			return result.Error
+		}
+
+		progress.Record(ctx, result)
+	}
+
+	return nil
 }
