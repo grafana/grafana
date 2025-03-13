@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { capitalize } from 'lodash';
+import { useCallback, useMemo } from 'react';
 
-import { EventBus, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { EventBus, GrafanaTheme2, LogsDedupDescription, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { useLogListContext } from './LogListContext';
@@ -13,9 +14,18 @@ type Props = {
   eventBus: EventBus;
 };
 
+const DEDUP_OPTIONS = [
+  LogsDedupStrategy.none,
+  LogsDedupStrategy.exact,
+  LogsDedupStrategy.numbers,
+  LogsDedupStrategy.signature,
+];
+
 export const LogListControls = ({ eventBus }: Props) => {
   const styles = useStyles2(getStyles);
   const {
+    dedupStrategy,
+    setDedupStrategy,
     setShowTime,
     setSortOrder,
     setSyntaxHighlighting,
@@ -60,6 +70,23 @@ export const LogListControls = ({ eventBus }: Props) => {
     setWrapLogMessage(!wrapLogMessage);
   }, [setWrapLogMessage, wrapLogMessage]);
 
+  const deduplicationMenu = useMemo(
+    () => (
+      <Menu>
+        {DEDUP_OPTIONS.map((option) => (
+          <Menu.Item
+            key={option}
+            className={dedupStrategy === option ? styles.menuItemActive : undefined}
+            description={LogsDedupDescription[option]}
+            label={capitalize(option)}
+            onClick={() => setDedupStrategy(option)}
+          />
+        ))}
+      </Menu>
+    ),
+    [dedupStrategy, setDedupStrategy, styles.menuItemActive]
+  );
+
   return (
     <div className={styles.navContainer}>
       <IconButton
@@ -81,6 +108,15 @@ export const LogListControls = ({ eventBus }: Props) => {
         }
         size="md"
       />
+      <Dropdown overlay={deduplicationMenu} placement="auto-end">
+        <IconButton
+          name={'filter'}
+          className={styles.controlButton}
+          onClick={onSortOrderClick}
+          tooltip={t('logs.logs-controls.deduplication', 'Deduplication')}
+          size="md"
+        />
+      </Dropdown>
       <IconButton
         name="clock-nine"
         aria-pressed={showTime}
@@ -165,6 +201,17 @@ const getStyles = (theme: GrafanaTheme2) => {
         backgroundImage: theme.colors.gradients.brandHorizontal,
         width: '95%',
         opacity: 1,
+      },
+    }),
+    menuItemActive: css({
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: '4px',
+        height: `calc(100% - ${theme.spacing(1)})`,
+        width: '2px',
+        backgroundColor: theme.colors.warning.main,
       },
     }),
   };

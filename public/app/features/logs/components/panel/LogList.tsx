@@ -11,6 +11,7 @@ import {
   Field,
   LinkModel,
   LogRowModel,
+  LogsDedupStrategy,
   LogsSortOrder,
   TimeRange,
 } from '@grafana/data';
@@ -35,6 +36,7 @@ export type GetFieldLinksFn = (field: Field, rowIndex: number, dataFrame: DataFr
 interface Props {
   app: CoreApp;
   containerElement: HTMLDivElement;
+  dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   eventBus: EventBus;
   forceEscape?: boolean;
@@ -62,13 +64,14 @@ interface Props {
 
 type LogListComponentProps = Omit<
   Props,
-  'app' | 'displayedFields' | 'showTime' | 'sortOrder' | 'syntaxHighlighting' | 'wrapLogMessage'
+  'app' | 'dedupStrategy' | 'displayedFields' | 'showTime' | 'sortOrder' | 'syntaxHighlighting' | 'wrapLogMessage'
 >;
 
 export const LogList = ({
   app,
   displayedFields,
   containerElement,
+  dedupStrategy,
   eventBus,
   forceEscape = false,
   getFieldLinks,
@@ -94,6 +97,7 @@ export const LogList = ({
   return (
     <LogListContextProvider
       app={app}
+      dedupStrategy={dedupStrategy}
       displayedFields={displayedFields}
       getRowContextQuery={getRowContextQuery}
       logSupportsContext={logSupportsContext}
