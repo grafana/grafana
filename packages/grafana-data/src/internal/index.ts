@@ -88,17 +88,13 @@ export { mergeTransformer } from '../transformations/transformers/merge';
 export { getThemeById } from '../themes/registry';
 export { GrafanaEdition } from '../types/config';
 export { SIPrefix } from '../valueFormats/symbolFormatters';
-export { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '../datetime/rangeutil';
 
 export { type PluginAddedLinksConfigureFunc, type PluginExtensionEventHelpers } from '../types/pluginExtensions';
 
 export { getStreamingFrameOptions } from '../dataframe/StreamingDataFrame';
-export { secondsToHms, relativeToTimeRange } from '../datetime/rangeutil';
-export { describeInterval } from '../datetime/rangeutil';
 export { fieldIndexComparer } from '../field/fieldComparers';
 export { decoupleHideFromState } from '../field/fieldState';
 export { findNumericFieldMinMax } from '../field/fieldOverrides';
-export { insertAfterImmutably, insertBeforeImmutably } from '../utils/arrayUtils';
 export { type PanelOptionsSupplier } from '../panel/PanelPlugin';
 export { sanitize, sanitizeUrl } from '../text/sanitize';
 export { type NestedValueAccess, type NestedPanelOptions, isNestedPanelOptions } from '../utils/OptionsUIBuilders';
