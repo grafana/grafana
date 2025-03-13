@@ -130,6 +130,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}, progress); err != nil {
 			return err
 		}
+
 		progress.SetMessage(ctx, "pulling resources")
 		return w.syncWorker.Process(ctx, rw, provisioning.Job{
 			Spec: provisioning.JobSpec{
@@ -213,7 +214,6 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 	return err
-
 }
 
 // MigrationJob holds all context for a running job
