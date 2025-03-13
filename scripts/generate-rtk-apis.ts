@@ -39,13 +39,11 @@ const config: ConfigFile = {
       apiImport: 'baseAPI',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
-    '../public/app/features/iam/api/endpoints.gen.ts': {
+    '../public/app/api/clients/iam/endpoints.gen.ts': {
       schemaFile: '../data/openapi/iam.grafana.app-v0alpha1.json',
-      apiFile: '../public/app/features/iam/api/api.ts',
-      apiImport: 'iamApi',
+      apiImport: 'iamAPI',
+      apiFile: '../public/app/api/clients/iam/api.ts',
       filterEndpoints: ['getDisplayMapping'],
-      exportName: 'generatedIamApi',
-      flattenArg: false,
       tag: true,
     },
     '../public/app/features/provisioning/api/endpoints.gen.ts': {
