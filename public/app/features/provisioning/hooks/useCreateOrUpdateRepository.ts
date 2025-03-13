@@ -16,7 +16,7 @@ export function useCreateOrUpdateRepository(name?: string) {
               name,
               // TODO? -- replace with patch spec, so the rest of the metadata is not replaced?
               // Can that support optimistic locking? (eg, make sure the RV is the same?)
-              finalizers: ['create', 'remove-orphan-resources'],
+              finalizers: ['cleanup', 'remove-orphan-resources'],
             },
             spec: data,
           },
