@@ -1,4 +1,5 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
+import React from 'react';
 
 import { PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
 
@@ -201,6 +202,59 @@ describe('usePluginComponents()', () => {
       id: '-1921123019',
       type: 'component',
     });
+  });
+
+  it('should return pass the props as read-only to the components', async () => {
+    type Props = {
+      foo1: {
+        foo2: {
+          foo3: {
+            foo4: string;
+          };
+        };
+      };
+    };
+
+    const originalFoo = {
+      foo2: {
+        foo3: {
+          foo4: 'bar',
+        },
+      },
+    };
+
+    registries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          targets: extensionPointId,
+          title: '1',
+          description: '1',
+          // @ts-ignore - The register() method is not designed to be called directly like this, and because of that it doesn't have a way to set the type of the Props
+          component: ({ foo1 }: Props) => {
+            // Trying to override the prop
+            const foo3 = foo1.foo2.foo3;
+            foo3.foo4 = 'baz';
+
+            return <span>Foo</span>;
+          },
+        },
+      ],
+    });
+
+    // Check if it returns the components
+    const { result } = renderHook(() => usePluginComponents<Props>({ extensionPointId }), { wrapper });
+    expect(result.current.components.length).toBe(1);
+
+    const Component = result.current.components[0];
+
+    // Check if it throws a TypeError due to trying to change the prop
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => render(<Component foo1={originalFoo} />)).toThrow(TypeError);
+    jest.spyOn(console, 'error').mockRestore();
+
+    // Check if the original property hasn't been changed
+    expect(originalFoo.foo2.foo3.foo4).toBe('bar');
   });
 
   it('should dynamically update the extensions registered for a certain extension point', () => {
