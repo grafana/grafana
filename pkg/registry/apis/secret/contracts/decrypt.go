@@ -11,3 +11,8 @@ import (
 type DecryptStorage interface {
 	Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error)
 }
+
+// Needed to pass it with wire.
+type DecryptAllowList interface {
+	AllowList() map[string]struct{}
+}

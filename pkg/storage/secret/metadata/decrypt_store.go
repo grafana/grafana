@@ -24,7 +24,7 @@ func ProvideDecryptStorage(
 	features featuremgmt.FeatureToggles,
 	keeperService secretkeeper.Service,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
-	allowList map[string]struct{},
+	allowList contracts.DecryptAllowList,
 ) (contracts.DecryptStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
@@ -36,7 +36,7 @@ func ProvideDecryptStorage(
 		return nil, fmt.Errorf("failed to get keepers: %w", err)
 	}
 
-	return &decryptStorage{db: db, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage, allowList: allowList}, nil
+	return &decryptStorage{db: db, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage, allowList: allowList.AllowList()}, nil
 }
 
 // decryptStorage is the actual implementation of the decrypt storage.
