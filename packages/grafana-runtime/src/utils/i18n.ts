@@ -5,7 +5,7 @@ type UseTranslateHook = () => (id: string, defaultMessage: string, values?: Reco
  */
 export let useTranslate: UseTranslateHook = () => {
   // Fallback implementation that should be overridden by setUseT
-  const errorMessage = 'useT is not set. useT must not be called before Grafana is initialized.';
+  const errorMessage = 'useTranslate is not set. useTranslate must not be called before Grafana is initialized.';
   if (process.env.NODE_ENV === 'development') {
     throw new Error(errorMessage);
   }
@@ -16,6 +16,6 @@ export let useTranslate: UseTranslateHook = () => {
   };
 };
 
-export function setUseTranslateHook(useTParam: UseTranslateHook) {
-  useTranslate = useTParam;
+export function setUseTranslateHook(hook: UseTranslateHook) {
+  useTranslate = hook;
 }
