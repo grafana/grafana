@@ -48,9 +48,17 @@ jobs:
           # Copy docs sources to the temporary Hugo directory
           cp -r docs/sources/* /tmp/hugo/content/docs/grafana/latest/
           
-          # Note: In drone, the image is the execution environment
-          # In GitHub Actions, we need to mount our temporary directory to /hugo in the container
-          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && make prod"
+          # Explore the container to find the correct make target
+          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && ls -la && if [ -f Makefile ]; then cat Makefile; fi"
+          
+          # Try using different make targets
+          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && make help || echo 'No help target'"
+          
+          # Try running hugo directly instead of using make
+          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && hugo --help"
+          
+          # Try building with hugo directly
+          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && hugo"
       
       - name: Setup Go
         uses: actions/setup-go@v5
