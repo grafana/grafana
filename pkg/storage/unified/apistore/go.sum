@@ -1273,8 +1273,8 @@ github.com/grafana/grafana-aws-sdk v0.31.5 h1:4HpMQx7n4Qqoi7Bgu8KHQ2QKT9fYYdHilX
 github.com/grafana/grafana-aws-sdk v0.31.5/go.mod h1:5p4Cjyr5ZiR6/RT2nFWkJ8XpIKgX4lAUmUMu70m2yCM=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 h1:OfCkitCuomzZKW1WYHrG8MxKwtMhALb7jqoj+487eTg=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6/go.mod h1:V7y2BmsWxS3A9Ohebwn4OiSfJJqi//4JQydQ8fHTduo=
-github.com/grafana/grafana-plugin-sdk-go v0.270.0 h1:SST2Vo//ITQG5h401gC4jTkJpTHy8OV91sf2uDh6M/8=
-github.com/grafana/grafana-plugin-sdk-go v0.270.0/go.mod h1:Z0Cvkj4WGadz6F6FQmK4NGb/hD18kTTNkSqFb97Rfyc=
+github.com/grafana/grafana-plugin-sdk-go v0.272.0 h1:TmPIG+6e3lYGzkyfUfCHuaMaaiwDbkCacTZ7V/JaSeg=
+github.com/grafana/grafana-plugin-sdk-go v0.272.0/go.mod h1:i/9KH9y/6m5hkRnG3H6aR2nOMPbJUmvo4XNrHjI15cU=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 h1:9qOLpC21AmXZqZ6rUhrBWl2mVqS3CzV53pzw0BCuHt0=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8/go.mod h1:deLQ/ywLvpVGbncRGUA4UDGt8a5Ei9sivOP+x6AQ2ko=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
