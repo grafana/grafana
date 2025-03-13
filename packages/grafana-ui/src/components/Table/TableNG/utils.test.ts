@@ -1494,6 +1494,25 @@ describe('TableNG utils', () => {
       // Should use default min width (likely COLUMN.MIN_WIDTH)
       expect(width).toBeGreaterThanOrEqual(50);
     });
+
+    it('should default to auto when no width is specified', () => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {
+          custom: {
+            // No width specified
+          },
+        },
+        values: [],
+      };
+
+      const fieldConfig = createFieldConfig();
+
+      // When width is not provided
+      const widthWithoutDefault = getColumnWidth(field, fieldConfig, undefined);
+      expect(widthWithoutDefault).toBe('auto');
+    });
   });
 
   describe('getFooterStyles', () => {
