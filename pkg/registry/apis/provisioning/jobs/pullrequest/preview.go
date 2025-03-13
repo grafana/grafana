@@ -30,7 +30,7 @@ Grafana spotted some changes for your resources in this pull request:
 | File Name | Kind | Path | Action | Links |
 |-----------|------|------|--------|-------|
 {{- range .}}
-| {{.Filename}} | {{.Kind}} | {{.Path}} | {{.Action}} | {{if .OriginalURL}}[Original]({{.OriginalURL}}){{end}}{{if .PreviewURL}}, [Preview]({{.PreviewURL}}){{end}}|
+| {{.Filename}} | {{.Kind}} | {{.Path}} | {{.Action}} | {{- if .OriginalURL}}[Original]({{.OriginalURL}}){{- end}}{{- if and .OriginalURL .PreviewURL}}, {{end}}{{- if .PreviewURL}}[Preview]({{.PreviewURL}}){{- end}} |
 {{- end}}
 
 Click the preview links above to view how your changes will look and compare them with the original and current versions.
