@@ -100,7 +100,6 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	var (
 		cfg                               = backend.GrafanaConfigFromContext(ctx)
 		hasPromQLScopeFeatureFlag         = cfg.FeatureToggles().IsEnabled("promQLScope")
-		hasPrometheusDataplaneFeatureFlag = cfg.FeatureToggles().IsEnabled("prometheusDataplane")
 		hasPrometheusRunQueriesInParallel = cfg.FeatureToggles().IsEnabled("prometheusRunQueriesInParallel")
 	)
 
@@ -117,7 +116,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 
 		_ = concurrency.ForEachJob(ctx, len(req.Queries), concurrentQueryCount, func(ctx context.Context, idx int) error {
 			query := req.Queries[idx]
-			r := s.handleQuery(ctx, query, fromAlert, hasPromQLScopeFeatureFlag, hasPrometheusDataplaneFeatureFlag, true)
+			r := s.handleQuery(ctx, query, fromAlert, hasPromQLScopeFeatureFlag, true)
 			if r != nil {
 				m.Lock()
 				result.Responses[query.RefID] = *r
@@ -127,7 +126,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 		})
 	} else {
 		for _, q := range req.Queries {
-			r := s.handleQuery(ctx, q, fromAlert, hasPromQLScopeFeatureFlag, hasPrometheusDataplaneFeatureFlag, false)
+			r := s.handleQuery(ctx, q, fromAlert, hasPromQLScopeFeatureFlag, false)
 			if r != nil {
 				result.Responses[q.RefID] = *r
 			}
@@ -138,7 +137,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromAlert,
-	hasPromQLScopeFeatureFlag, hasPrometheusDataplaneFeatureFlag, hasPrometheusRunQueriesInParallel bool) *backend.DataResponse {
+	hasPromQLScopeFeatureFlag, hasPrometheusRunQueriesInParallel bool) *backend.DataResponse {
 	traceCtx, span := s.tracer.Start(ctx, "datasource.prometheus")
 	defer span.End()
 	query, err := models.Parse(span, bq, s.TimeInterval, s.intervalCalculator, fromAlert, hasPromQLScopeFeatureFlag)
@@ -148,15 +147,14 @@ func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromA
 		}
 	}
 
-	r := s.fetch(traceCtx, s.client, query, hasPrometheusDataplaneFeatureFlag, hasPrometheusRunQueriesInParallel)
+	r := s.fetch(traceCtx, s.client, query, hasPrometheusRunQueriesInParallel)
 	if r == nil {
 		s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
 	}
 	return r
 }
 
-func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query,
-	enablePrometheusDataplane, hasPrometheusRunQueriesInParallel bool) *backend.DataResponse {
+func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query, hasPrometheusRunQueriesInParallel bool) *backend.DataResponse {
 	logger := s.log.FromContext(traceCtx)
 	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr /*, "queryTimeout", s.QueryTimeout*/)
 
@@ -175,13 +173,13 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				res := s.instantQuery(traceCtx, client, q, enablePrometheusDataplane)
+				res := s.instantQuery(traceCtx, client, q)
 				m.Lock()
 				addDataResponse(&res, dr)
 				m.Unlock()
 			}()
 		} else {
-			res := s.instantQuery(traceCtx, client, q, enablePrometheusDataplane)
+			res := s.instantQuery(traceCtx, client, q)
 			addDataResponse(&res, dr)
 		}
 	}
@@ -191,13 +189,13 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				res := s.rangeQuery(traceCtx, client, q, enablePrometheusDataplane)
+				res := s.rangeQuery(traceCtx, client, q)
 				m.Lock()
 				addDataResponse(&res, dr)
 				m.Unlock()
 			}()
 		} else {
-			res := s.rangeQuery(traceCtx, client, q, enablePrometheusDataplane)
+			res := s.rangeQuery(traceCtx, client, q)
 			addDataResponse(&res, dr)
 		}
 	}
@@ -207,7 +205,7 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				res := s.exemplarQuery(traceCtx, client, q, enablePrometheusDataplane)
+				res := s.exemplarQuery(traceCtx, client, q)
 				m.Lock()
 				if res.Error != nil {
 					// If exemplar query returns error, we want to only log it and
@@ -218,7 +216,7 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 				m.Unlock()
 			}()
 		} else {
-			res := s.exemplarQuery(traceCtx, client, q, enablePrometheusDataplane)
+			res := s.exemplarQuery(traceCtx, client, q)
 			if res.Error != nil {
 				// If exemplar query returns error, we want to only log it and
 				// continue with other results processing
@@ -232,7 +230,7 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 	return dr
 }
 
-func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
+func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
 		return addErrorSourceToDataResponse(err)
@@ -248,7 +246,7 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
+func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
 		return addErrorSourceToDataResponse(err)
@@ -272,7 +270,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
+func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
 		response := backend.DataResponse{
