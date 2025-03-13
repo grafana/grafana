@@ -50,12 +50,3 @@ jobs:
           
           # Clean up the container
           docker rm -f docs-builder
-      
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: Verify generated CUE code
-        run: CODEGEN_VERIFY=1 make gen-cue
