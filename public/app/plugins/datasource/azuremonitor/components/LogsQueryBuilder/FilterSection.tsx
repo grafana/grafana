@@ -38,24 +38,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   const styles = useStyles2(getStyles);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
-
-  if (!builderQuery) {
-    return;
-  }
-
-  const safeTemplateVariables: Array<SelectableValue<string>> =
-    templateVariableOptions && templateVariableOptions.value
-      ? Array.isArray(templateVariableOptions)
-        ? templateVariableOptions
-        : [templateVariableOptions]
-      : [];
-
-  const availableColumns: Array<SelectableValue<string>> = builderQuery.columns?.columns?.length
-    ? builderQuery.columns.columns.map((col) => ({ label: col, value: col }))
-    : allColumns.map((col) => ({ label: col.name, value: col.name }));
-
-  const selectableOptions = availableColumns.concat(safeTemplateVariables);
-
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>(() => {
     return (
       builderQuery?.where?.expressions
@@ -69,6 +51,19 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         })) || []
     );
   });
+
+  const safeTemplateVariables: Array<SelectableValue<string>> =
+    templateVariableOptions && templateVariableOptions.value
+      ? Array.isArray(templateVariableOptions)
+        ? templateVariableOptions
+        : [templateVariableOptions]
+      : [];
+
+  const availableColumns: Array<SelectableValue<string>> = builderQuery?.columns?.columns?.length
+    ? builderQuery?.columns.columns.map((col) => ({ label: col, value: col }))
+    : allColumns.map((col) => ({ label: col.name, value: col.name }));
+
+  const selectableOptions = availableColumns.concat(safeTemplateVariables);
 
   const hasLoadedFilters = useRef(false);
 
@@ -106,6 +101,10 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
       hasLoadedFilters.current = true;
     }
   }, [builderQuery, selectableOptions]);
+
+  if (!builderQuery) {
+    return;
+  }
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters

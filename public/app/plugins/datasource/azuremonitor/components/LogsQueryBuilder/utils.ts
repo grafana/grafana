@@ -9,6 +9,7 @@ import {
   BuilderQueryEditorOperatorType,
   BuilderQueryEditorReduceExpression,
   BuilderQueryEditorWhereExpression,
+  BuilderQueryEditorOrderByOptions,
 } from '../../dataquery.gen';
 import { QueryEditorPropertyType } from '../../types';
 
@@ -111,6 +112,7 @@ export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
     groupBy: { expressions: [], type: BuilderQueryEditorExpressionType.Group_by },
     reduce: { expressions: [], type: BuilderQueryEditorExpressionType.Reduce },
     where: { expressions: [], type: BuilderQueryEditorExpressionType.And },
+    orderBy: { expressions: [], type: BuilderQueryEditorExpressionType.Order_by },
   };
 
   const lines = query.split('\n');
@@ -145,24 +147,20 @@ export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
       const conditions = line.replace('| where ', '').split(' and ');
       expression.where = {
         type: BuilderQueryEditorExpressionType.And,
-        expressions: conditions.map((condition) => {
-          const [property, operator, value] = condition.split(/\s+/);
-
-          let parsedValue: BuilderQueryEditorOperatorType;
-
-          if (value === 'true' || value === 'false') {
-            parsedValue = value === 'true';
-          } else if (!isNaN(Number(value))) {
-            parsedValue = Number(value);
-          } else {
-            parsedValue = value;
+        expressions: conditions.flatMap((condition) => {
+          const [property, operator, ...valueParts] = condition.split(/\s+/);
+          if (!property || !operator || valueParts.length === 0) {
+            return []; // Exclude invalid values
           }
 
-          return {
-            property: { name: property, type: BuilderQueryEditorPropertyType.String },
-            operator: { name: operator, value: parsedValue },
-            type: BuilderQueryEditorExpressionType.Operator,
-          };
+          const value = valueParts.join(' ').trim();
+          return [
+            {
+              property: { name: property, type: BuilderQueryEditorPropertyType.String },
+              operator: { name: operator, value: value },
+              type: BuilderQueryEditorExpressionType.Operator,
+            },
+          ];
         }),
       };
     }
@@ -202,6 +200,25 @@ export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
       if (!isNaN(limitValue)) {
         expression.limit = limitValue;
       }
+    }
+
+    if (line.startsWith('| order by ')) {
+      const orderParts = line.replace('| order by ', '').split(',');
+
+      expression.orderBy = {
+        type: BuilderQueryEditorExpressionType.Order_by,
+        expressions: orderParts.map((order) => {
+          const [column, direction] = order.trim().split(/\s+/);
+          return {
+            property: { name: column, type: BuilderQueryEditorPropertyType.String },
+            order:
+              direction?.toLowerCase() === 'desc'
+                ? BuilderQueryEditorOrderByOptions.Desc
+                : BuilderQueryEditorOrderByOptions.Asc,
+            type: BuilderQueryEditorExpressionType.Order_by,
+          };
+        }),
+      };
     }
   });
 

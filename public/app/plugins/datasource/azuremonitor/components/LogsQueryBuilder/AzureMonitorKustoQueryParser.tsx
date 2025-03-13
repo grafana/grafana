@@ -32,7 +32,7 @@ export class AzureMonitorKustoQueryParser {
     this.appendWhere(selectedColumns, filters, datetimeColumn, shouldApplyTimeFilter, allColumns, parts, where);
     this.appendProject(selectedColumns, parts);
     this.appendSummarize(selectedColumns, aggregation, groupByStrings, datetimeColumn, parts);
-    this.appendOrderBy(parts, orderBy, aggregation);
+    this.appendOrderBy(parts, orderBy, aggregation, selectedColumns, filters);
     this.appendLimit(limit, parts);
 
     return parts.join('\n| ');
@@ -42,8 +42,14 @@ export class AzureMonitorKustoQueryParser {
     return columns.find((col) => col.type === 'datetime')?.name || 'TimeGenerated';
   }
 
-  private static shouldApplyTimeFilter(selectedColumns: string[], datetimeColumn: string): boolean {
-    return selectedColumns.length === 0 || selectedColumns.includes(datetimeColumn);
+  private static shouldApplyTimeFilter(
+    selectedColumns: string[],
+    datetimeColumn: string,
+    where?: BuilderQueryEditorWhereExpressionArray
+  ): boolean {
+    const hasTimeFilter = where?.expressions?.some((exp) => exp.property?.name === datetimeColumn);
+
+    return !hasTimeFilter;
   }
 
   private static appendFrom(selectedTable: string, parts: string[]) {
@@ -142,7 +148,7 @@ export class AzureMonitorKustoQueryParser {
 
   private static appendProject(selectedColumns: string[], parts: string[]) {
     if (selectedColumns.length > 0) {
-      if (selectedColumns.includes('TimeGenerated') && !parts.some((p) => p.includes('$__timeFilter(TimeGenerated)'))) {
+      if (selectedColumns.includes('TimeGenerated') && !parts.some((p) => p.includes('$__timeFilter'))) {
         parts.splice(1, 0, `where $__timeFilter(TimeGenerated)`);
       }
 
@@ -153,9 +159,25 @@ export class AzureMonitorKustoQueryParser {
   private static appendOrderBy(
     parts: string[],
     orderBy?: BuilderQueryEditorOrderByExpressionArray,
-    aggregation?: string
+    aggregation?: string,
+    selectedColumns?: string[],
+    filters?: string
   ) {
     if (aggregation) {
+      return;
+    }
+
+    if (!orderBy?.expressions || orderBy.expressions.length === 0) {
+      return;
+    }
+
+    const isOnlyTableSelected =
+      (!selectedColumns || selectedColumns.length === 0) &&
+      !filters &&
+      !aggregation &&
+      (!orderBy?.expressions || orderBy.expressions.length === 0);
+
+    if (isOnlyTableSelected) {
       return;
     }
 
@@ -169,9 +191,7 @@ export class AzureMonitorKustoQueryParser {
       });
     }
 
-    if (orderClauses.length > 0) {
-      parts.push(`order by ${orderClauses.join(', ')}`);
-    }
+    parts.push(`order by ${orderClauses.join(', ')}`);
   }
 
   private static appendLimit(limit: number | undefined, parts: string[]) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
@@ -24,13 +24,26 @@ interface OrderBySectionProps {
 
 export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumns, onQueryUpdate }) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
-  const [orderBy, setOrderBy] = useState<BuilderQueryEditorOrderByExpression[]>([]);
+  const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
+  const hasLoadedOrderBy = useRef(false);
+
+  const [orderBy, setOrderBy] = useState<BuilderQueryEditorOrderByExpression[]>(() => {
+    return builderQuery?.orderBy?.expressions || [];
+  });
 
   useEffect(() => {
-    if (builderQuery?.orderBy) {
-      setOrderBy(builderQuery.orderBy.expressions);
+    const currentTable = builderQuery?.from?.property.name || null;
+
+    if (prevTable.current !== currentTable) {
+      setOrderBy([]);
+      hasLoadedOrderBy.current = false;
+      prevTable.current = currentTable;
     }
-  }, [builderQuery?.orderBy]);
+    if (!hasLoadedOrderBy.current && builderQuery?.orderBy?.expressions && orderBy.length === 0) {
+      setOrderBy(builderQuery.orderBy.expressions);
+      hasLoadedOrderBy.current = true;
+    }
+  }, [builderQuery, orderBy]);
 
   if (!builderQuery) {
     return <></>;
@@ -96,6 +109,11 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
   };
 
   const updateQuery = (updatedOrderBy: BuilderQueryEditorOrderByExpression[]) => {
+    if (updatedOrderBy && updatedOrderBy[0]?.property) {
+      if (updatedOrderBy[0]?.property?.name === '') {
+        return;
+      }
+    }
     const updatedBuilderQuery: BuilderQueryExpression = {
       ...builderQuery,
       orderBy:

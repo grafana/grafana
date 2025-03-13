@@ -30,10 +30,6 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
 
-  if (!builderQuery) {
-    return;
-  }
-
   const hasLoadedFuzzySearch = useRef(false);
 
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -63,6 +59,10 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
       }
     }
   }, [builderQuery]);
+
+  if (!builderQuery) {
+    return;
+  }
 
   const columnOptions: Array<SelectableValue<string>> = allColumns.map((col) => ({
     label: col.name,
