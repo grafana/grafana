@@ -109,9 +109,13 @@ type Debouncer[T any] struct {
 //	})
 //
 //	// Queue events
-//	debouncer.Add("user-1")
+//	if err := debouncer.Add("user-1"); err != nil {
+//	  // Do something with the error.
+//	}
 //	// Adding the same key resets MinWait but not MaxWait
-//	debouncer.Add("user-1")
+//	if err := debouncer.Add("user-1"); err != nil {
+//	  // Do something with the error.
+//	}
 //
 // The event will be processed when either MinWait expires (after the most recent add)
 // or MaxWait expires (after the first add), whichever comes first.
