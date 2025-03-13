@@ -88,14 +88,15 @@ const tracingPrexfixSearch = "unified_search."
 
 // This supports indexing+search regardless of implementation
 type searchSupport struct {
-	tracer      trace.Tracer
-	log         *slog.Logger
-	storage     StorageBackend
-	search      SearchBackend
-	access      types.AccessClient
-	builders    *builderCache
-	initWorkers int
-	initMinSize int
+	tracer       trace.Tracer
+	log          *slog.Logger
+	storage      StorageBackend
+	search       SearchBackend
+	indexMetrics *BleveIndexMetrics
+	access       types.AccessClient
+	builders     *builderCache
+	initWorkers  int
+	initMinSize  int
 }
 
 var (
@@ -103,7 +104,7 @@ var (
 	_ ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -117,13 +118,14 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	}
 
 	support = &searchSupport{
-		access:      access,
-		tracer:      tracer,
-		storage:     storage,
-		search:      opts.Backend,
-		log:         slog.Default().With("logger", "resource-search"),
-		initWorkers: opts.WorkerThreads,
-		initMinSize: opts.InitMinCount,
+		access:       access,
+		tracer:       tracer,
+		storage:      storage,
+		search:       opts.Backend,
+		log:          slog.Default().With("logger", "resource-search"),
+		initWorkers:  opts.WorkerThreads,
+		initMinSize:  opts.InitMinCount,
+		indexMetrics: indexMetrics,
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -399,8 +401,8 @@ func (s *searchSupport) init(ctx context.Context) error {
 
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
-	if IndexMetrics != nil {
-		IndexMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
+	if s.indexMetrics != nil {
+		s.indexMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
 	}
 
 	return nil
@@ -457,8 +459,8 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 			s.log.Warn("error writing document watch event", "error", err)
 			return
 		}
-		if evt.Type == WatchEvent_ADDED {
-			IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
+		if evt.Type == WatchEvent_ADDED && s.indexMetrics != nil {
+			s.indexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
 		}
 	case WatchEvent_DELETED:
 		_, deleteSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"DeleteDocument")
@@ -468,7 +470,9 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 			s.log.Warn("error deleting document watch event", "error", err)
 			return
 		}
-		IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Dec()
+		if s.indexMetrics != nil {
+			s.indexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Dec()
+		}
 	default:
 		// do nothing
 		s.log.Warn("unknown watch event", "type", evt.Type)
@@ -481,8 +485,8 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	if latencySeconds > 1 {
 		s.log.Warn("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace, "rv", evt.ResourceVersion)
 	}
-	if IndexMetrics != nil {
-		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
+	if s.indexMetrics != nil {
+		s.indexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
 	}
 }
 
@@ -573,8 +577,8 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	if err != nil {
 		s.log.Warn("error getting doc count", "error", err)
 	}
-	if IndexMetrics != nil {
-		IndexMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(float64(docCount))
+	if s.indexMetrics != nil {
+		s.indexMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(float64(docCount))
 	}
 
 	if err == nil {

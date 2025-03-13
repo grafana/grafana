@@ -184,6 +184,8 @@ type ResourceServerOptions struct {
 	Reg prometheus.Registerer
 
 	storageMetrics *StorageMetrics
+
+	IndexMetrics *BleveIndexMetrics
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -248,11 +250,12 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		ctx:            ctx,
 		cancel:         cancel,
 		storageMetrics: opts.storageMetrics,
+		indexMetrics:   opts.IndexMetrics,
 	}
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics)
 		if err != nil {
 			return nil, err
 		}
@@ -282,6 +285,7 @@ type server struct {
 	now            func() int64
 	mostRecentRV   atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics *StorageMetrics
+	indexMetrics   *BleveIndexMetrics
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
