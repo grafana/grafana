@@ -119,6 +119,23 @@
       {{ end }}
     </mj-raw>
 
+    <!-- @PERCONA -->
+    <mj-raw>
+      {{ if .Alerts.Firing  }}
+    </mj-raw>
+      <mj-wrapper css-class="background" padding="0">
+        <mj-include path="./partials/alerting/contact_us_firing.mjml" />
+      </mj-wrapper>
+    <mj-raw>
+      {{ else }}
+    </mj-raw>
+      <mj-wrapper css-class="background" padding="0">
+        <mj-include path="./partials/alerting/contact_us.mjml" />
+      </mj-wrapper>
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+
     <mj-section padding-top="10px">
       <mj-include path="./partials/layout/footer.mjml" />
     </mj-section>

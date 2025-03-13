@@ -1,0 +1,11 @@
+<!-- @PERCONA -->
+<mj-section padding="0">
+  <mj-column>
+      <mj-text>
+        <strong>Not sure how to resolve this?</strong>
+      </mj-text>
+      <mj-text>
+        Percona can help. <a target="_blank" href="https://hubs.ly/Q034_Dvp0">Contact us</a> to discuss your support options.
+      </mj-text>
+    </mj-column>
+</mj-section>

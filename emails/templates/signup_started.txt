@@ -1,4 +1,4 @@
-[[HiddenSubject .Subject "Welcome to Grafana, please complete your sign up!"]]
+[[HiddenSubject .Subject "Welcome to Percona Monitoring and Management (PMM), please complete your sign up!"]]
 
 Complete the signup
 

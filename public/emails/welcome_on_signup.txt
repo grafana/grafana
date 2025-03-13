@@ -1,14 +1,20 @@
-{{HiddenSubject .Subject "Welcome to Grafana"}}
+{{HiddenSubject .Subject "Welcome to Percona Monitoring and Management (PMM)"}}
 
 Hi {{.Name}},
 
-Welcome! Ready to start building some beautiful metric and analytic dashboards?
+Welcome to PMM! You're now ready to monitor and optimize your database performance with PMM’s powerful suite of tools and analytics dashboards.
 
-If you are new to Grafana, refer to the Getting started with Grafana guide on https://grafana.com/docs/grafana/latest/getting-started/getting-started/.
+As a new PMM user, here are some key resources to help you get started:
 
-Thank you for joining our community.
+- Getting Started Guide - https://per.co.na/pmm/about-PMM - Learn how to leverage PMM’s monitoring capabilities effectively.
+- Pre-built dashboards - {{.AppUrl}}/graph/dashboards - Explore dashboards tailored for MySQL, MongoDB, and PostgreSQL.
 
-The Grafana team
+Need help? Join our Community Forum - https://forums.percona.com/c/percona-monitoring-and-management-pmm/pmm-3/84 - to connect with fellow PMM users and get expert support.
+
+Thank you for choosing PMM for your databases!
+
+Best regards,
+The Percona Team
 
 
 Sent by Grafana v{{.BuildVersion}} (c) {{now | date "2006"}} Grafana Labs

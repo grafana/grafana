@@ -1,10 +1,8 @@
 <!doctype html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="und" dir="auto" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 
 <head>
-  <title>
-    {{ Subject .Subject .TemplateData "Welcome to Grafana" }}
-  </title>
+  <title>{{ Subject .Subject .TemplateData "Welcome to Percona Monitoring and Management (PMM)!" }}</title>
   {{ __dangerouslyInjectHTML `<!--[if !mso]><!-->` }}
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   {{ __dangerouslyInjectHTML `<!--<![endif]-->` }}
@@ -83,7 +81,7 @@
 
   </style>
   <style type="text/css">
-    @media only screen and (max-width:480px) {
+    @media only screen and (max-width:479px) {
       table.mj-full-width-mobile {
         width: 100% !important;
       }
@@ -94,12 +92,10 @@
     }
 
   </style>
-  <style type="text/css">
-  </style>
 </head>
 
 <body style="word-spacing:normal;">
-  <div class="canvas" style="background-color: #fff;">
+  <div class="canvas" style="background-color: #fff;" lang="und" dir="auto">
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
     <div style="margin:0px auto;max-width:600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
@@ -116,7 +112,7 @@
                           <tbody>
                             <tr>
                               <td style="width:200px;">
-                                <img height="auto" src="https://grafana.com/static/assets/img/logo_new_transparent_light_400x100.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="200">
+                                <img alt src="https://www.percona.com/wp-content/uploads/product-logos/PMM-logo-horizontal-400-dark-text.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="200" height="auto">
                               </td>
                             </tr>
                           </tbody>
@@ -151,35 +147,37 @@
                     </tr>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">Welcome! Ready to start building some beautiful metric and analytic dashboards?</div>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">Welcome to PMM! You're now ready to monitor and optimize your database performance with PMM’s powerful suite of tools and analytics dashboards.</div>
                       </td>
                     </tr>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">If you are new to Grafana, refer to the <a href="https://grafana.com/docs/grafana/latest/getting-started/getting-started/" style="color: #6E9FFF;">Getting started with Grafana</a> guide.</div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td align="center" vertical-align="middle" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
-                          <tbody>
-                            <tr>
-                              <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:10px 25px;background:#3D71D9;" valign="middle">
-                                <a href="https://grafana.com/docs/grafana/latest/getting-started/getting-started/" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Inter, Helvetica, Arial; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 10px 25px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> Check out our getting started guide </a>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">As a new PMM user, here are some key resources to help you get started:</div>
                       </td>
                     </tr>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">Thank you for joining our community.</div>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
+                          <ul style="margin:0;">
+                            <li><a href="https://per.co.na/pmm/about-PMM" style="color: #6E9FFF;">Getting Started Guide</a> - Learn how to leverage PMM’s monitoring capabilities effectively.</li>
+                            <li><a href="{{ .AppUrl }}dashboards" style="color: #6E9FFF;">Pre-built dashboards</a> - Explore dashboards tailored for MySQL, MongoDB, and PostgreSQL.</li>
+                          </ul>
+                        </div>
                       </td>
                     </tr>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">The Grafana Team</div>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">Need help? Join our <a href="https://forums.percona.com/c/percona-monitoring-and-management-pmm/pmm-3/84" style="color: #6E9FFF;">Community Forum</a> to connect with fellow PMM users and get expert support.</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">Thank you for choosing PMM for your databases!</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><strong>Best regards</strong>, <br> The Percona Team</div>
                       </td>
                     </tr>
                   </tbody>
@@ -203,7 +201,12 @@
                   <tbody>
                     <tr>
                       <td align="center" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: center; color: #000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: center; color: #000000;">From <a style="color: #e67612; text-decoration: none;" href="{{ .AppUrl }}" target="_blank">Percona Monitoring and Management</a> © 2025 <a style="color: #e67612; text-decoration: none;" href="https://hubs.ly/Q034_Dvp0" target="_blank">Percona, LLC</a></div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: center; color: #000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a target="_blank" style="text-decoration: none; color: #999999;" href="{{ .AppUrl }}">Grafana v{{ .BuildVersion }}</a>.</div>
                       </td>
                     </tr>
                   </tbody>
