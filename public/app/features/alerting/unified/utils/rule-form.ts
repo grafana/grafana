@@ -810,9 +810,7 @@ export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): bool
   }
 
   // find the datasource type from the UID
-  const type = getDataSourceSrv().getInstanceSettings(
-    dataSourceUID
-  )?.type;
+  const type = getDataSourceSrv().getInstanceSettings(dataSourceUID)?.type;
 
   // if the datasource is not prometheus or loki, return "undefined"
   if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
