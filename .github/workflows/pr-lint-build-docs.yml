@@ -34,9 +34,10 @@ jobs:
 
       - name: Build docs website
         run: |
-          mkdir -p hugo/content/docs/grafana/latest
+          # Create a temporary directory for Hugo content
+          mkdir -p /tmp/hugo/content/docs/grafana/latest
           
-          cat << EOF > hugo/content/docs/grafana/_index.md
+          cat << EOF > /tmp/hugo/content/docs/grafana/_index.md
           ---
           redirectURL: /docs/grafana/latest/
           type: redirect
@@ -44,9 +45,12 @@ jobs:
           ---
           EOF
           
-          cp -r docs/sources/* hugo/content/docs/grafana/latest/
+          # Copy docs sources to the temporary Hugo directory
+          cp -r docs/sources/* /tmp/hugo/content/docs/grafana/latest/
           
-          docker run --rm -v $(pwd):/src grafana/docs-base:latest /bin/sh -c "cd /src/hugo && make prod"
+          # Note: In drone, the image is the execution environment
+          # In GitHub Actions, we need to mount our temporary directory to /hugo in the container
+          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && make prod"
       
       - name: Setup Go
         uses: actions/setup-go@v5
