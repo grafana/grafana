@@ -68,7 +68,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
     const tooltipId = useId();
 
     const hover = useHover(context, {
-      ...(interactive ? { handleClose: safePolygon() } : {}),
+      handleClose: interactive ? safePolygon() : undefined,
       move: false,
     });
     const focus = useFocus(context);
