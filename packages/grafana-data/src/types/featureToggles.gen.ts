@@ -163,7 +163,6 @@ export interface FeatureToggles {
   oauthRequireSubClaim?: boolean;
   newDashboardWithFiltersAndGroupBy?: boolean;
   cloudWatchNewLabelParsing?: boolean;
-  accessActionSets?: boolean;
   disableNumericMetricsSortingInExpressions?: boolean;
   grafanaManagedRecordingRules?: boolean;
   queryLibrary?: boolean;
