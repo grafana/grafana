@@ -295,8 +295,7 @@ func (r sqlResourceBlobQueryRequest) Validate() error {
 
 type sqlResourceUpdateRVRequest struct {
 	sqltemplate.SQLTemplate
-	GUID            string
-	ResourceVersion int64
+	GUIDToRV map[string]int64
 }
 
 func (r sqlResourceUpdateRVRequest) Validate() error {

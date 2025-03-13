@@ -23,7 +23,7 @@ func newTestBackend(b *testing.B) resource.StorageBackend {
 	backend, err := sql.NewBackend(sql.BackendOptions{
 		DBProvider:              eDB,
 		IsHA:                    true,
-		SimulatedNetworkLatency: 5 * time.Millisecond, // to simulate some network latency
+		SimulatedNetworkLatency: 2 * time.Millisecond, // to simulate some network latency
 	})
 	require.NoError(b, err)
 	require.NotNil(b, backend)
