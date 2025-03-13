@@ -29,20 +29,32 @@ type metrics struct {
 func newMetrics(reg prometheus.Registerer, name string) *metrics {
 	return &metrics{
 		itemsAddedCounter: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: name + "_debouncer_items_added_total",
+			Name: "debouncer_items_added_total",
 			Help: "Total number of items added to the debouncer",
+			ConstLabels: prometheus.Labels{
+				"name": name,
+			},
 		}),
 		itemsDroppedCounter: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: name + "_debouncer_items_dropped_total",
+			Name: "debouncer_items_dropped_total",
 			Help: "Total number of items dropped due to a full buffer",
+			ConstLabels: prometheus.Labels{
+				"name": name,
+			},
 		}),
 		itemsProcessedCounter: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: name + "_debouncer_items_processed_total",
+			Name: "debouncer_items_processed_total",
 			Help: "Total number of items processed by the debouncer",
+			ConstLabels: prometheus.Labels{
+				"name": name,
+			},
 		}),
 		processingErrorsCounter: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: name + "_debouncer_processing_errors_total",
+			Name: "debouncer_processing_errors_total",
 			Help: "Total number of errors during processing",
+			ConstLabels: prometheus.Labels{
+				"name": name,
+			},
 		}),
 		processingDurationHistogram: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:                            name + "_debouncer_processing_duration_seconds",
@@ -51,6 +63,9 @@ func newMetrics(reg prometheus.Registerer, name string) *metrics {
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
+			ConstLabels: prometheus.Labels{
+				"name": name,
+			},
 		}),
 	}
 }
