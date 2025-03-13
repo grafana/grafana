@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/instrument"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -44,9 +45,12 @@ func newMetrics(reg prometheus.Registerer, name string) *metrics {
 			Help: "Total number of errors during processing",
 		}),
 		processingDurationHistogram: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
-			Name:    name + "_debouncer_processing_duration_seconds",
-			Help:    "Time taken to process items",
-			Buckets: prometheus.DefBuckets,
+			Name:                            name + "_debouncer_processing_duration_seconds",
+			Help:                            "Time taken to process items",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 	}
 }
