@@ -129,7 +129,7 @@ If an alert was too late to be included in the first notification due to group w
 
 Group interval is the duration to wait before sending notifications about group changes. A group change occurs when:
 
-- A new firing alert is added to the group, or
+- A new firing alert is added to the group.
 - An existing alert is resolved.
 
 **Example**
