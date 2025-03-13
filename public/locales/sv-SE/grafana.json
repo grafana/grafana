@@ -379,6 +379,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "",
+        "new-ds-managed-recording-rule": "",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "",
         "provisioning": ""
       },
@@ -1005,6 +1007,9 @@
     }
   },
   "dashboard": {
+    "actions": {
+      "open-settings": ""
+    },
     "add-menu": {
       "import": "",
       "paste-panel": "",
@@ -3123,7 +3128,8 @@
       "old-password-required": "",
       "passwords-must-match": "",
       "strong-password-validation-register": ""
-    }
+    },
+    "change-theme": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
