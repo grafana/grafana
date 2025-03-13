@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
-import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text } from '@grafana/ui';
+import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
 
 import KeyValuesTable from '../explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
-import { Repository, JobResourceSummary, Job, SyncStatus } from './api';
+import { JobSummary } from './JobSummary';
+import { Job, Repository, SyncStatus } from './api';
 import { useRepositoryJobs } from './hooks';
 import { formatTimestamp } from './utils/time';
 
@@ -16,12 +17,6 @@ interface Props {
 type JobCell<T extends keyof Job = keyof Job> = {
   row: {
     original: Job;
-  };
-};
-
-type SummaryCell<T extends keyof JobResourceSummary = keyof JobResourceSummary> = {
-  row: {
-    original: JobResourceSummary;
   };
 };
 
@@ -86,49 +81,6 @@ const getJobColumns = () => [
   },
 ];
 
-const getSummaryColumns = () => [
-  {
-    id: 'group',
-    header: 'Group',
-    cell: ({ row: { original: item } }: SummaryCell) => item.group || '-',
-  },
-  {
-    id: 'resource',
-    header: 'Resource',
-    cell: ({ row: { original: item } }: SummaryCell) => item.resource,
-  },
-  {
-    id: 'write',
-    header: 'Write',
-    cell: ({ row: { original: item } }: SummaryCell) => item.write?.toString() || '-',
-  },
-  {
-    id: 'created',
-    header: 'Created',
-    cell: ({ row: { original: item } }: SummaryCell) => item.create?.toString() || '-',
-  },
-  {
-    id: 'deleted',
-    header: 'Deleted',
-    cell: ({ row: { original: item } }: SummaryCell) => item.delete?.toString() || '-',
-  },
-  {
-    id: 'updated',
-    header: 'Updated',
-    cell: ({ row: { original: item } }: SummaryCell) => item.update?.toString() || '-',
-  },
-  {
-    id: 'unchanged',
-    header: 'Unchanged',
-    cell: ({ row: { original: item } }: SummaryCell) => item.noop?.toString() || '-',
-  },
-  {
-    id: 'errors',
-    header: 'Errors',
-    cell: ({ row: { original: item } }: SummaryCell) => item.error?.toString() || '-',
-  },
-];
-
 interface ExpandedRowProps {
   row: Job;
 }
@@ -165,7 +117,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
       <Stack direction="column" gap={2}>
         {hasSpec && (
           <Stack direction="column">
-            <Text variant="bodySmall" color="secondary">
+            <Text variant="body" color="secondary">
               Job Specification
             </Text>
             <KeyValuesTable data={data} />
@@ -187,12 +139,12 @@ function ExpandedRow({ row }: ExpandedRowProps) {
           </Stack>
         )}
         {hasSummary && (
-          <InteractiveTable
-            data={row.status!.summary!}
-            columns={getSummaryColumns()}
-            getRowId={(item) => item.resource || ''}
-            pageSize={10}
-          />
+          <Stack direction="column" gap={2}>
+            <Text variant="body" color="secondary">
+              Summary
+            </Text>
+            <JobSummary summary={row.status!.summary!} />
+          </Stack>
         )}
       </Stack>
     </Box>

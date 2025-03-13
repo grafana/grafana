@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
