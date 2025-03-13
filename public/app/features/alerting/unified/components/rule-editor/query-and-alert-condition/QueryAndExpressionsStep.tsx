@@ -145,7 +145,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   );
 
   const simplifiedQueryStep =
-    isSwitchModeEnabled && isGrafanaAlertingType ? getValues('editorSettings.simplifiedQueryEditor') : false;
+    isSwitchModeEnabled && isGrafanaAlertingType ? watch('editorSettings.simplifiedQueryEditor') : false;
 
   // If we switch to simple mode we need to update the simple condition with the data in the queries reducer
   useEffect(() => {
@@ -457,17 +457,17 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const switchMode =
     isGrafanaAlertingType && isSwitchModeEnabled
       ? {
-          isAdvancedMode: !simplifiedQueryStep,
-          setAdvancedMode: (isAdvanced: boolean) => {
-            if (!getValues('editorSettings.simplifiedQueryEditor')) {
-              if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
-                setShowResetModal(true);
-                return;
-              }
+        isAdvancedMode: !simplifiedQueryStep,
+        setAdvancedMode: (isAdvanced: boolean) => {
+          if (!getValues('editorSettings.simplifiedQueryEditor')) {
+            if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
+              setShowResetModal(true);
+              return;
             }
-            setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
-          },
-        }
+          }
+          setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
+        },
+      }
       : undefined;
 
   return (

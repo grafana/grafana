@@ -256,6 +256,11 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
 
         state.queries.splice(reduceExpressionIndex, 1);
         state.queries[1].model.expression = dataQuery.refId;
+        if (isExpressionQuery(state.queries[1].model) ){
+         if ( state.queries[1].model.conditions){
+           state.queries[1].model.conditions[0].query.params = [dataQuery.refId];
+         } 
+        }
       }
 
       const shouldAddReduceExpression =
@@ -271,7 +276,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
           model: expressionDatasource.newQuery({
             type: ExpressionQueryType.reduce,
             reducer: ReducerID.last,
-            conditions: [{ ...defaultCondition, query: { params: [] } }],
+            conditions: [{ ...defaultCondition, query: { params: [dataQuery.refId] } }],
             expression: dataQuery.refId,
             refId: 'REDUCER',
           }),
