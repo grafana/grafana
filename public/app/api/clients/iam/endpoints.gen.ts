@@ -1,6 +1,6 @@
-import { iamAPI } from './api';
+import { iamAPI as api } from './api';
 export const addTagTypes = ['Display'] as const;
-const injectedRtkApi = iamAPI
+const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
   })

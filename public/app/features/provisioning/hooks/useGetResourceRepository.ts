@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
 import { AnnoKeyManagerKind } from '../../apiserver/types';
-import { useGetFolderQuery } from '../../folders/api';
+import { useGetFolderQuery } from '../../../api/clients/folder';
 
 import { useRepositoryList } from './useRepositoryList';
 
