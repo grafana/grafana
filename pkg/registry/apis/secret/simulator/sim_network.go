@@ -7,6 +7,7 @@ import (
 	"math/rand"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/coro"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
@@ -67,9 +68,12 @@ func (network *SimNetwork) Send(input SendInput) any {
 
 /*** Request ***/
 type simDatabaseAppendQuery struct {
-	ctx           context.Context
 	transactionID TransactionID
-	secureValue   *secretv0alpha1.SecureValue
+	message       contracts.AppendOutboxMessage
+}
+
+type simDatabaseOutboxReceive struct {
+	n uint
 }
 
 type simDatabaseSecretMetadataHasPendingStatusQuery struct {
@@ -92,6 +96,11 @@ type simDatabaseBeginTxQuery struct {
 /*** Response ***/
 type simDatabaseAppendResponse struct {
 	err error
+}
+
+type simDatabaseOutboxReceiveResponse struct {
+	messages []contracts.OutboxMessage
+	err      error
 }
 
 type simDatabaseSecretMetadataHasPendingStatusResponse struct {

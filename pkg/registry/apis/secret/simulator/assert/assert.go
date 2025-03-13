@@ -1,6 +1,9 @@
 package assert
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 func True(expr bool, msg string, args ...any) {
 	if !expr {
@@ -9,5 +12,11 @@ func True(expr bool, msg string, args ...any) {
 		} else {
 			panic(msg)
 		}
+	}
+}
+
+func ErrorIs(err1, err2 error) {
+	if !errors.Is(err1, err2) {
+		panic(fmt.Sprintf("expected error %T%+v to be %T%+v", err1, err1, err2, err2))
 	}
 }

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
@@ -9,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+var ErrSecretInPendingState = errors.New("operation can't be applied to secret because it is in the pending state")
 
 type CreateSecureValue struct {
 	transactionManager         contracts.TransactionManager
@@ -25,7 +28,7 @@ func NewCreateSecureValue(
 }
 
 func (s *CreateSecureValue) Handle(ctx context.Context, sv *secretv0alpha1.SecureValue) (runtime.Object, error) {
-	// Modified inside the transaction callback.
+	// Assigned inside the transaction callback.
 	var object runtime.Object
 
 	err := s.transactionManager.InTransaction(ctx, func(ctx context.Context) error {
@@ -35,13 +38,14 @@ func (s *CreateSecureValue) Handle(ctx context.Context, sv *secretv0alpha1.Secur
 		}
 
 		if isPending {
-			return fmt.Errorf("already pending")
+			return ErrSecretInPendingState
 		}
 
 		// TODO: Consume sv.rawSecret and encrypt value here before storing!
 		// TODO: handle REF vs VALUE
 		_ = sv.Spec.Value.DangerouslyExposeAndConsumeValue()
 
+		// TODO: return err when secret already exists
 		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv)
 		if err != nil {
 			return fmt.Errorf("failed to create securevalue: %w", err)
@@ -49,8 +53,14 @@ func (s *CreateSecureValue) Handle(ctx context.Context, sv *secretv0alpha1.Secur
 
 		object = createdSecureValue
 
-		if err := s.outboxQueue.Append(ctx, createdSecureValue); err != nil {
-			return fmt.Errorf("failed to append to queue: %w", err)
+		if err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
+			Type:            contracts.CreateSecretOutboxMessage,
+			Name:            createdSecureValue.Name,
+			Namespace:       createdSecureValue.Namespace,
+			EncryptedSecret: createdSecureValue.Spec.Value,
+			KeeperType:      contracts.SQLKeeperType,
+		}); err != nil {
+			return fmt.Errorf("failed to append to outbox queue: %w", err)
 		}
 
 		return nil

@@ -12,6 +12,8 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/coro"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/fakes"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/simulator/assert"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/services"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
@@ -30,15 +32,17 @@ const (
 
 type Simulator struct {
 	// A seeded prng.
-	rng                *rand.Rand
-	config             SimulatorConfig
-	runtime            *coro.Runtime
-	activityLog        *ActivityLog
-	simNetwork         *SimNetwork
-	simDatabase        *SimDatabase
-	secureValueStorage *SimSecureValueStorage
-	secureValueService *services.CreateSecureValue
-	metrics            SimulationMetrics
+	rng                   *rand.Rand
+	config                SimulatorConfig
+	runtime               *coro.Runtime
+	activityLog           *ActivityLog
+	simNetwork            *SimNetwork
+	simDatabase           *SimDatabase
+	simOutboxQueue        *SimOutboxQueue
+	keepers               map[contracts.KeeperType]contracts.Keeper
+	simSecureValueStorage *SimSecureValueStorage
+	secureValueService    *services.CreateSecureValue
+	metrics               SimulationMetrics
 }
 
 type SimulationMetrics struct {
@@ -47,17 +51,30 @@ type SimulationMetrics struct {
 	NumWorkersStarted uint
 }
 
-func NewSimulator(rng *rand.Rand, config SimulatorConfig, runtime *coro.Runtime, activityLog *ActivityLog, simNetwork *SimNetwork, simDatabase *SimDatabase, secureValueStorage *SimSecureValueStorage, secureValueService *services.CreateSecureValue) *Simulator {
+func NewSimulator(
+	rng *rand.Rand,
+	config SimulatorConfig,
+	runtime *coro.Runtime,
+	activityLog *ActivityLog,
+	simNetwork *SimNetwork,
+	simOutboxQueue *SimOutboxQueue,
+	keepers map[contracts.KeeperType]contracts.Keeper,
+	simDatabase *SimDatabase,
+	simSecureValueStorage *SimSecureValueStorage,
+	secureValueService *services.CreateSecureValue,
+) *Simulator {
 	return &Simulator{
-		rng:                rng,
-		config:             config,
-		runtime:            runtime,
-		activityLog:        activityLog,
-		simNetwork:         simNetwork,
-		simDatabase:        simDatabase,
-		secureValueStorage: secureValueStorage,
-		secureValueService: secureValueService,
-		metrics:            SimulationMetrics{},
+		rng:                   rng,
+		config:                config,
+		runtime:               runtime,
+		activityLog:           activityLog,
+		simNetwork:            simNetwork,
+		simOutboxQueue:        simOutboxQueue,
+		keepers:               keepers,
+		simDatabase:           simDatabase,
+		simSecureValueStorage: simSecureValueStorage,
+		secureValueService:    secureValueService,
+		metrics:               SimulationMetrics{},
 	}
 }
 
@@ -107,11 +124,11 @@ func (sim *Simulator) step() {
 func (sim *Simulator) execute(action Action) {
 	switch action {
 	case ActionCreateSecret:
-		sim.activityLog.Record("[SIM] CreateSecret")
+		sim.activityLog.Record("[SIM] %s", action)
 		// Spawn a coroutine to make the request resumable
 		coroutine := sim.runtime.Spawn(func() {
 			// TODO: call secure_value_rest.Create
-			object, err := sim.secureValueService.Handle(context.Background(), &secretv0alpha1.SecureValue{
+			_, err := sim.secureValueService.Handle(context.Background(), &secretv0alpha1.SecureValue{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "sv-1",
 				},
@@ -123,8 +140,9 @@ func (sim *Simulator) execute(action Action) {
 					Phase: secretv0alpha1.SecureValuePhasePending,
 				},
 			})
-			// TODO: handle error
-			fmt.Printf("\n\naaaaaaa secureValueService.Handle object %+v err %+v\n\n", object, err)
+			if err != nil {
+				assert.ErrorIs(err, services.ErrSecretInPendingState)
+			}
 		})
 		// Resume once so action can make progress at least once
 		coroutine.Resume(nil)
@@ -141,19 +159,23 @@ func (sim *Simulator) execute(action Action) {
 	case ActionStartOutboxWorker:
 		sim.metrics.NumWorkersStarted += 1
 
+		fmt.Printf("\n\naaaaaaa  starting worker\n\n")
+
 		coroutine := sim.runtime.Spawn(func() {
 			worker := worker.NewWorker(worker.Config{
 				// Generate a number between 1 and 100
-				BatchSize: uint(1 + rng.Intn(100)),
+				BatchSize: uint(1 + sim.rng.Intn(100)),
 				// Generate a number between 1 and 100
-				ReceiveTimeout: time.Duration(1+rng.Intn(100)) * time.Millisecond,
-			}, simTransactionManager, simOutboxQueue, simSecureValueStorage, keepers)
+				ReceiveTimeout: time.Duration(1+sim.rng.Intn(100)) * time.Millisecond,
+			}, sim.simOutboxQueue, sim.simSecureValueStorage, sim.keepers)
 
 			if err := worker.ControlLoop(context.Background()); err != nil {
 				panic(fmt.Sprintf("worker panicked: %+v", err))
 			}
 		})
 		coroutine.Resume(nil)
+
+		sim.activityLog.Record("[SIM] %s numWorkers=%d", action, sim.metrics.NumWorkersStarted)
 
 	default:
 		panic(fmt.Sprintf("unhandled action: %+v", action))
@@ -233,21 +255,14 @@ func TestSimulate(t *testing.T) {
 	simOutboxQueue := NewSimOutboxQueue(simNetwork, simDatabase)
 
 	keepers := map[contracts.KeeperType]contracts.Keeper{
-		// keepertypes.SQLKeeperType: fakes.,
+		contracts.SQLKeeperType: fakes.NewFakeKeeper(),
 	}
-
-	worker := worker.NewWorker(worker.Config{
-		// Generate a number between 1 and 100
-		BatchSize: uint(1 + rng.Intn(100)),
-		// Generate a number between 1 and 100
-		ReceiveTimeout: time.Duration(1+rng.Intn(100)) * time.Millisecond,
-	}, simTransactionManager, simOutboxQueue, simSecureValueStorage, keepers)
 
 	secureValueService := services.NewCreateSecureValue(simTransactionManager, simSecureValueStorage, simOutboxQueue)
 
 	runtime := coro.NewRuntime()
 
-	simulator := NewSimulator(rng, runtime, activityLog, simNetwork, simDatabase, simSecureValueStorage, secureValueService)
+	simulator := NewSimulator(rng, simulatorConfig, runtime, activityLog, simNetwork, simOutboxQueue, keepers, simDatabase, simSecureValueStorage, secureValueService)
 
 	for range simulatorConfig.Steps {
 		simulator.step()

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/simulator/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -17,23 +18,25 @@ type SecureValueName = string
 
 // Simulation version of a database used by secrets.
 type SimDatabase struct {
-	outboxQueue []*secretv0alpha1.SecureValue
-	// Map of namespace -> secret name -> secure value
+	// Simulates the table used to store outbox messages.
+	outboxQueue []contracts.OutboxMessage
+	// Simulates the table used to store secret metadata. Map of namespace -> secret name -> secure value
 	secretMetadata map[Namespace]map[SecureValueName]secretv0alpha1.SecureValue
-
+	// Simulats in-fllight (not yet committed) transactions.
 	txBuffer map[TransactionID]*transaction
 
 	nextTransactionId uint64
+	nextCounter       uint64
 }
 
 type transaction struct {
-	outboxQueue    []*secretv0alpha1.SecureValue
+	outboxQueue    []contracts.OutboxMessage
 	secretMetadata map[Namespace]map[SecureValueName]secretv0alpha1.SecureValue
 }
 
 func newTransaction() *transaction {
 	return &transaction{
-		outboxQueue:    make([]*secretv0alpha1.SecureValue, 0),
+		outboxQueue:    make([]contracts.OutboxMessage, 0),
 		secretMetadata: make(map[Namespace]map[SecureValueName]secretv0alpha1.SecureValue),
 	}
 }
@@ -43,12 +46,19 @@ func NewSimDatabase() *SimDatabase {
 		secretMetadata:    make(map[string]map[string]secretv0alpha1.SecureValue),
 		txBuffer:          make(map[TransactionID]*transaction),
 		nextTransactionId: 1,
+		nextCounter:       1,
 	}
 }
 
 func (db *SimDatabase) getNextTransactionId() uint64 {
 	id := db.nextTransactionId
 	db.nextTransactionId += 1
+	return id
+}
+
+func (db *SimDatabase) getNextCounter() uint64 {
+	id := db.nextCounter
+	db.nextCounter += 1
 	return id
 }
 
@@ -59,11 +69,28 @@ func (db *SimDatabase) onQuery(query any) any {
 		// TODO: inject errors
 		transaction := db.txBuffer[query.transactionID]
 		assert.True(transaction != nil, "transaction not found: query=%T%+v", query, query)
-		transaction.outboxQueue = append(transaction.outboxQueue, query.secureValue)
+
+		transaction.outboxQueue = append(transaction.outboxQueue, contracts.OutboxMessage{
+			Type:            query.message.Type,
+			MessageID:       fmt.Sprintf("message_%d", db.getNextCounter()),
+			Name:            query.message.Name,
+			Namespace:       query.message.Namespace,
+			EncryptedSecret: query.message.EncryptedSecret,
+			KeeperType:      query.message.KeeperType,
+			ExternalID:      query.message.ExternalID,
+		})
 
 		// Query executed with no errors
 		return simDatabaseAppendResponse{
 			err: nil,
+		}
+
+	case simDatabaseOutboxReceive:
+		assert.True(query.n > 0, "query.n must be greater than 0")
+
+		return simDatabaseOutboxReceiveResponse{
+			messages: db.outboxQueue[:min(uint(len(db.outboxQueue)), query.n)],
+			err:      nil,
 		}
 
 	case simDatabaseSecretMetadataHasPendingStatusQuery:
@@ -145,6 +172,7 @@ func (db *SimDatabase) onQuery(query any) any {
 			}
 		}
 		delete(db.txBuffer, query.transactionID)
+		fmt.Printf("\n\naaaaaaa simDatabaseCommit: db.outboxQueue %+v\n\n", db.outboxQueue)
 		return simDatabaseCommitResponse{err: nil}
 
 	case simDatabaseRollback:

@@ -28,14 +28,12 @@ type Config struct {
 
 func NewWorker(
 	config Config,
-	transactionManager contracts.TransactionManager,
 	outboxQueue contracts.OutboxQueue,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keepers map[contracts.KeeperType]contracts.Keeper,
 ) *Worker {
 	return &Worker{
 		config:                     config,
-		transactionManager:         transactionManager,
 		outboxQueue:                outboxQueue,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keepers:                    keepers,
@@ -65,6 +63,7 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 	if err != nil {
 		panic(fmt.Sprintf("TODO: handle error: %+v", err))
 	}
+	fmt.Printf("\n\naaaaaaa receiveAndProcessMessages: receive messages: %+v\n\n", messages)
 	for _, message := range messages {
 		if err := w.processMessage(ctx, message); err != nil {
 			panic(fmt.Sprintf("TODO: handle error: %+v", err))
@@ -73,7 +72,7 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
-	// 	// TODO: DECRYPT HERE
+	// TODO: DECRYPT HERE
 	rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
 
 	// 	// TODO: fetch this
@@ -84,22 +83,27 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", message.KeeperType)
 	}
 
+	fmt.Printf("\n\naaaaaaa worker.processMessage: message %+v\n\n", message)
 	switch message.Type {
 	case contracts.CreateSecretOutboxMessage:
 		externalID, err := keeper.Store(ctx, cfg, message.Namespace, rawSecret)
 		if err != nil {
-			return fmt.Errorf("storing secret: message=%+v", message)
+			return fmt.Errorf("storing secret: message=%+v %w", message, err)
 		}
 
 		if err := w.secureValueMetadataStorage.SetExternalID(ctx, xkube.Namespace(message.Namespace), message.Name, externalID); err != nil {
-			return fmt.Errorf("setting secret metadata externalID: externalID=%+v message=%+v", externalID, message)
+			return fmt.Errorf("setting secret metadata externalID: externalID=%+v message=%+v %w", externalID, message, err)
 		}
 
 	case contracts.UpdateSecretOutboxMessage:
-		panic("TODO")
+		if err := keeper.Update(ctx, cfg, message.Name, contracts.ExternalID(*message.ExternalID), rawSecret); err != nil {
+			return fmt.Errorf("calling keeper to update secret: %w", err)
+		}
 
 	case contracts.DeleteSecretOutboxMessage:
-		panic("TODO")
+		if err := keeper.Delete(ctx, cfg, message.Namespace, contracts.ExternalID(*message.ExternalID)); err != nil {
+			return fmt.Errorf("calling keeper to delete secret: %w", err)
+		}
 
 	default:
 		panic(fmt.Sprintf("unhandled message type: %s", message.Type))
@@ -109,6 +113,14 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 	// since it acts as fence to clients.
 	if err := w.secureValueMetadataStorage.SetStatusSucceeded(ctx, xkube.Namespace(message.Namespace), message.Name); err != nil {
 		return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)
+	}
+
+	// Delete the message from the queue after setting the status because
+	// if the message is deleted first, the response may be lost,
+	// resulting in an error, but since the message was actually deleted
+	// the worker would never retry.
+	if err := w.outboxQueue.Delete(ctx, message.MessageID); err != nil {
+		return fmt.Errorf("deleting message from outbox queue: %w", err)
 	}
 
 	return nil

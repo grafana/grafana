@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 type OutboxMessageType int
@@ -29,6 +28,15 @@ func (typ OutboxMessageType) String() string {
 	}
 }
 
+type AppendOutboxMessage struct {
+	Type            OutboxMessageType
+	Name            string
+	Namespace       string
+	EncryptedSecret secretv0alpha1.ExposedSecureValue
+	KeeperType      KeeperType
+	ExternalID      *string
+}
+
 type OutboxMessage struct {
 	Type            OutboxMessageType
 	MessageID       string
@@ -40,7 +48,10 @@ type OutboxMessage struct {
 }
 
 type OutboxQueue interface {
-	Append(ctx context.Context, secureValue *secretv0alpha1.SecureValue) error
+	// Appends a message to the outbox queue
+	Append(ctx context.Context, message AppendOutboxMessage) error
+	// Receives at most n messages from the outbox queue
 	ReceiveN(ctx context.Context, n uint) ([]OutboxMessage, error)
-	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
+	// Deletes a message from the outbox queue
+	Delete(ctx context.Context, messageID string) error
 }

@@ -2,6 +2,7 @@ package simulator
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/simulator/assert"
 )
@@ -29,7 +30,28 @@ func (manager *SimTransactionManager) InTransaction(ctx context.Context, fn func
 		return reply.err
 	}
 	// Run the function with the transaction in the context
-	return fn(context.WithValue(ctx, transactionContextKey, reply.transactionID))
+	if err := fn(context.WithValue(ctx, transactionContextKey, reply.transactionID)); err != nil {
+		rollbackReply := manager.simNetwork.Send(SendInput{
+			Debug: "RollbackTx",
+			Execute: func() any {
+				return manager.simDatabase.onQuery(simDatabaseRollback{transactionID: reply.transactionID})
+			}}).(simDatabaseRollbackResponse)
+
+		return errors.Join(err, rollbackReply.err)
+	}
+
+	commitReply := manager.simNetwork.Send(SendInput{
+		Debug: "CommitTx",
+		Execute: func() any {
+			return manager.simDatabase.onQuery(simDatabaseCommit{transactionID: reply.transactionID})
+		}}).(simDatabaseCommitResponse)
+
+	// If an error happened when starting the transaction
+	if commitReply.err != nil {
+		return commitReply.err
+	}
+
+	return nil
 }
 
 func transactionIDFromContext(ctx context.Context) uint64 {
