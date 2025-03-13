@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
-
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -627,6 +627,93 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		})
 		k8sCliMock.AssertExpectations(t)
 	})
+
+	t.Run("Should retry once more when dashboard not found", func(t *testing.T) {
+		singleOrgService := &DashboardServiceImpl{
+			cfg:            setting.NewCfg(),
+			dashboardStore: &fakeStore,
+			orgService: &orgtest.FakeOrgService{
+				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
+			},
+		}
+		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
+		provisioningTimestamp := int64(1234567)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+
+		// first call returns not found
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Code:    404,
+				Message: "not found",
+				Reason:  metav1.StatusReasonNotFound,
+			},
+		}).Once()
+
+		// second call return a successful response
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": dashboardv0alpha1.DashboardResourceInfo.GroupVersion().String(),
+				"kind":       dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"name": "uid",
+					"labels": map[string]interface{}{
+						utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
+					},
+					"annotations": map[string]interface{}{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "test",
+						utils.AnnoKeySourceChecksum:  "hash",
+						utils.AnnoKeySourcePath:      "path/to/file",
+						utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
+					},
+				},
+				"spec": map[string]interface{}{
+					"test":    "test",
+					"version": int64(1),
+					"title":   "testing slugify",
+				},
+			},
+		}, nil).Once()
+
+		repo := "test"
+
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+			// make sure the kind is added to the query
+			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
+				req.Options.Fields[1].Values[0] == repo
+		})).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "uid",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Dashboard 1"),
+							[]byte("folder 1"),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Times(2)
+
+		_, err := singleOrgService.GetProvisionedDashboardData(ctx, repo)
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+
 }
 
 func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {

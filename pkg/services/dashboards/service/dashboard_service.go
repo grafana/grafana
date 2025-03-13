@@ -236,13 +236,28 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context,
 		for _, org := range orgs {
 			func(orgID int64) {
 				g.Go(func() error {
-					res, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
-						ManagedBy:       utils.ManagerKindClassicFP, // nolint:staticcheck
-						ManagerIdentity: name,
-						OrgId:           orgID,
-					})
-					if err != nil {
-						return err
+					var maxRetries = 2
+					var lastErr error
+					var res []*dashboardProvisioningWithUID
+					for attempt := 1; attempt <= maxRetries; attempt++ {
+						res, lastErr = dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
+							ManagedBy:       utils.ManagerKindClassicFP, // nolint:staticcheck
+							ManagerIdentity: name,
+							OrgId:           orgID,
+						})
+						// If the dashboard is not found, its probably because were looking for a deleted dashboard.
+						// This can be caused by the indexer lag, so we wait briefly then retry one more time.
+						var statusErr *apierrors.StatusError
+						if errors.As(lastErr, &statusErr) {
+							if statusErr.Status().Reason == v1.StatusReasonNotFound {
+								time.Sleep(1 * time.Second)
+								continue
+							}
+						}
+
+						if lastErr != nil {
+							return lastErr
+						}
 					}
 
 					mu.Lock()
