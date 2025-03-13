@@ -34,8 +34,8 @@ jobs:
 
       - name: Build docs website
         run: |
-          # Create a container from the docs-base image
-          docker create --name docs-builder grafana/docs-base:latest /bin/true
+          # Create and start a container from the docs-base image in detached mode
+          docker run -d --name docs-builder grafana/docs-base:latest tail -f /dev/null
           
           # Create the directory structure inside the container
           docker exec docs-builder mkdir -p /hugo/content/docs/grafana/latest
