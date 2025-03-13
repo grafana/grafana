@@ -21,8 +21,9 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
 /**
  * Default form field including label used in Grafana UI. Default input element is simple <input />. You can also pass
  * custom inputEl if required in which case inputWidth and inputProps are ignored.
- * @deprecated Please use the {@link Field} component, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-field--simple See Storybook}.
+ *
  * For inline fields, use {@link InlineField}, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-inlinefield--basic See Storybook}.
+ * @deprecated Please use the {@link Field} component, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-field--simple See Storybook}.
  */
 export const FormField = ({
   label,
