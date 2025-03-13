@@ -48,8 +48,17 @@ jobs:
           # Copy docs sources to the temporary Hugo directory
           cp -r docs/sources/* /tmp/hugo/content/docs/grafana/latest/
           
-          # Run Hugo directly to build the site
-          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && hugo build"
+          # Clone the website repository to get the necessary Hugo configuration
+          git clone --depth 1 https://github.com/grafana/website.git /tmp/website
+          
+          # Copy necessary files from the website repository to the Hugo directory
+          cp -r /tmp/website/config /tmp/hugo/
+          cp -r /tmp/website/layouts /tmp/hugo/
+          cp -r /tmp/website/static /tmp/hugo/
+          cp -r /tmp/website/Makefile /tmp/hugo/
+          
+          # Run the Docker container with the correct paths
+          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && ls -la && hugo"
       
       - name: Setup Go
         uses: actions/setup-go@v5
