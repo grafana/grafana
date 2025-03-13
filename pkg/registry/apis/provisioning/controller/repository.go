@@ -223,16 +223,17 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provisioning.Repository) error {
 	logger := logging.FromContext(ctx)
 	logger.Info("handle repository delete")
-	repo, err := rc.repoGetter.AsRepository(ctx, obj)
-	if err != nil {
-		return fmt.Errorf("unable to create repository from configuration: %w", err)
-	}
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
-		err := rc.finalizer.process(ctx, repo, obj.Finalizers)
+		repo, err := rc.repoGetter.AsRepository(ctx, obj)
 		if err != nil {
-			return fmt.Errorf("error running finalizers %w", err)
+			logger.Warn("unable to get repository for cleanup")
+		} else {
+			err := rc.finalizer.process(ctx, repo, obj.Finalizers)
+			if err != nil {
+				logger.Warn("error running finalizer", "err")
+			}
 		}
 
 		// remove the finalizers

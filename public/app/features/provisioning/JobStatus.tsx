@@ -5,7 +5,6 @@ import { Alert, ControlledCollapse, InteractiveTable, LinkButton, Spinner, Stack
 
 import ProgressBar from './ProgressBar';
 import { useGetRepositoryQuery, useListJobQuery } from './api';
-import { getRemoteURL } from './utils/git';
 
 export interface JobStatusProps {
   name: string;
@@ -158,7 +157,7 @@ function RepositoryLink({ name }: RepositoryLinkProps) {
     return null;
   }
 
-  const repoHref = getRemoteURL(repo);
+  const repoHref = repo.spec?.github?.url;
   const folderHref = repo.spec?.sync.target === 'folder' ? `/dashboards/f/${repo.metadata?.name}` : '/dashboards';
 
   if (!repoHref) {

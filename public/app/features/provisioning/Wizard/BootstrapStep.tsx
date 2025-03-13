@@ -17,7 +17,7 @@ import {
 
 import { useGetFrontendSettingsQuery, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from '../api';
 import { StepStatus } from '../hooks/useStepStatus';
-import { checkSyncSettings } from '../utils';
+import { checkSyncSettings } from '../utils/checkSyncSettings';
 
 import { BootstrapOptionsList } from './BootstrapOptionsList';
 import { ModeOption, WizardFormData, modeOptions } from './types';
