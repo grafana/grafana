@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -112,7 +113,11 @@ type ConvertPrometheusSrv struct {
 	datasourceCache  datasources.CacheService
 	alertRuleService *provisioning.AlertRuleService
 	featureToggles   featuremgmt.FeatureToggles
+	xactManager      provisioning.TransactionManager
 	proxySvc         *LotexRuler
+
+	// TODO: Refactor
+	rulerSrv *RulerSrv
 }
 
 func NewConvertPrometheusSrv(
@@ -123,6 +128,7 @@ func NewConvertPrometheusSrv(
 	alertRuleService *provisioning.AlertRuleService,
 	featureToggles featuremgmt.FeatureToggles,
 	proxySvc *LotexRuler,
+	rulerSrv *RulerSrv,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -132,6 +138,7 @@ func NewConvertPrometheusSrv(
 		alertRuleService: alertRuleService,
 		featureToggles:   featureToggles,
 		proxySvc:         proxySvc,
+		rulerSrv:         rulerSrv,
 	}
 }
 
@@ -405,9 +412,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostDatasource(c *context
 	// Is this re-encoding even needed?
 	// promGroups = map[string][]prom.PrometheusRuleGroup{}
 	nsMap := make(map[string]string) // File -> NamespaceUID
-	// if err := json.Unmarshal(resp.Body(), &promGroups); err != nil {
-	// 	return errorToResponse(err)
-	// }
+	if err := json.Unmarshal(resp.Body(), &promGroups); err != nil {
+		return errorToResponse(err)
+	}
 
 	grafanaGroups := make([]*ngmodels.AlertRuleGroup, 0, len(promGroups))
 	for ns, rgs := range promGroups {
@@ -469,13 +476,28 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostDatasource(c *context
 
 	// 3. Update the GMA Rules in the DB
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
-		for _, group := range grafanaGroups {
-
+		for _, grafanaGroup := range grafanaGroups {
+			rules := make([]*ngmodels.AlertRuleWithOptionals, 0, len(grafanaGroup.Rules))
+			for _, r := range grafanaGroup.Rules {
+				rules = append(rules, &ngmodels.AlertRuleWithOptionals{
+					AlertRule: r,
+				})
+			}
+			groupKey := ngmodels.AlertRuleGroupKey{
+				OrgID:        c.SignedInUser.GetOrgID(),
+				NamespaceUID: grafanaGroup.FolderUID,
+				RuleGroup:    grafanaGroup.Title,
+			}
+			updateResp := srv.rulerSrv.updateAlertRulesInGroup(c, groupKey, rules)
+			if updateResp.Status() != http.StatusAccepted {
+				return fmt.Errorf("failed to update group %s with folder_uid %s", groupKey.RuleGroup, grafanaGroup.FolderUID)
+			}
 		}
 
 		return nil
 	})
-	return response.JSON(http.StatusAccepted, changes)
+
+	return successfulResponse()
 }
 
 /*
