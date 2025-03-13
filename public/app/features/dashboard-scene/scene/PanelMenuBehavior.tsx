@@ -6,9 +6,12 @@ import {
   PanelPlugin,
   PluginExtensionPanelContext,
   PluginExtensionPoints,
+  PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
-import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
+
+import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -38,6 +41,9 @@ import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibra
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
+import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
+
+const getPluginExtensions = createPluginExtensionsGetter(pluginExtensionRegistries);
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -286,20 +292,20 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    // TODO: make sure that this works reliably with the reactive extension registry
-    // (we need to be able to know in advance what extensions should be loaded for this extension point, and make it possible to await for them.)
-    const { extensions } = getPluginLinkExtensions({
+    const { extensions } = getPluginExtensions({
       extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
       context: createExtensionContext(panel, dashboard),
       limitPerPlugin: 3,
     });
+
+    const linkExtensions = extensions.filter((extension) => extension.type === PluginExtensionTypes.link);
 
     if (extensions.length > 0 && !dashboard.state.isEditing) {
       items.push({
         text: 'Extensions',
         iconClassName: 'plug',
         type: 'submenu',
-        subMenu: createExtensionSubMenu(extensions),
+        subMenu: createExtensionSubMenu(linkExtensions),
       });
     }
 
