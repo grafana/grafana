@@ -1,6 +1,14 @@
 # Grafana frontend packages
 
-This document contains information about Grafana frontend package versioning and releases.
+## Exporting code conventions
+
+`@grafana/ui` makes use of `exports` in package.json to define three entrypoints that Grafana core and Grafana plugins can access. Before exposing anything in this package please consider the table below.
+
+| Entrypoint Name | Import Path            | Description                                                                                                                                                                     | Available to Grafana | Available to plugins |
+| --------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | -------------------- |
+| `./`            | `@grafana/ui`          | The public API entrypoint. If the code is stable and you want to share it everywhere, this is the place to export it.                                                           | ✅                   | ✅                   |
+| `./unstable`    | `@grafana/ui/unstable` | The public API entrypoint for all experimental code. If you want to iterate and test code from Grafana and plugins, this is the place to export it.                             | ✅                   | ✅                   |
+| `./internal`    | `@grafana/ui/internal` | The private API entrypoint for internal code shared with Grafana. If you need to import code in Grafana but don't want to expose it to plugins, this is the place to export it. | ✅                   | ❌                   |
 
 ## Versioning
 

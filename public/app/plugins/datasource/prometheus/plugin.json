@@ -104,6 +104,14 @@
       {
         "name": "Learn more",
         "url": "https://prometheus.io/"
+      },
+      {
+        "name": "Raise issue",
+        "url": "https://github.com/grafana/grafana/issues/new"
+      },
+      {
+        "name": "Documentation",
+        "url": "https://grafana.com/docs/grafana/latest/datasources/prometheus/"
       }
     ]
   }
