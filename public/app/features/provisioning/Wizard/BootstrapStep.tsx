@@ -30,7 +30,7 @@ interface Props {
   repoName: string;
 }
 
-export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData, repoName }: Props) {
+export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props) {
   const {
     register,
     control,
