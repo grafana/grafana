@@ -4,8 +4,8 @@ import { findVizPanelByKey } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
-import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
 import { ResponsiveGridLayout } from './ResponsiveGridLayout';
+import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
 
 describe('ResponsiveGridLayoutManager', () => {
   it('Should clone the layout', () => {

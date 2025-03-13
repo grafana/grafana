@@ -1,8 +1,8 @@
 import { DashboardV2Spec, ResponsiveGridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
+import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
