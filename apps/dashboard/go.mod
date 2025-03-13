@@ -4,7 +4,7 @@ go 1.23.7
 
 require (
 	github.com/grafana/grafana-app-sdk v0.31.0
-	github.com/grafana/grafana-plugin-sdk-go v0.270.0
+	github.com/grafana/grafana-plugin-sdk-go v0.272.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432
 	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.32.1
