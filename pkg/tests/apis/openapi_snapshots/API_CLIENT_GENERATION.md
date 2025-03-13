@@ -112,40 +112,11 @@ The last, but not least, step to be done is adding the middleware and reducers t
 In Grafana, the reducers are added to `public/app/core/reducers/root.ts`:
 
 ```jsx
+  import { dashboardAPI } from '<pathToYourAPI>';
   const rootReducers = {
-    ...sharedReducers,
-    ...alertingReducers,
-    ...teamsReducers,
-    ...apiKeysReducers,
-    ...foldersReducers,
-    ...dashboardReducers,
-    ...exploreReducers,
-    ...dataSourcesReducers,
-    ...usersReducers,
-    ...serviceAccountsReducer,
-    ...userReducers,
-    ...invitesReducers,
-    ...organizationReducers,
-    ...browseDashboardsReducers,
-    ...ldapReducers,
-    ...importDashboardReducers,
-    ...panelEditorReducers,
-    ...panelsReducers,
-    ...templatingReducers,
-    ...supportBundlesReducer,
-    ...authConfigReducers,
-    plugins: pluginsReducer,
-    [alertingApi.reducerPath]: alertingApi.reducer,
-    [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
-    [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
-    [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
-    [iamApi.reducerPath]: iamApi.reducer,
-    [userPreferencesAPI.reducerPath]: userPreferencesAPI.reducer,
-    [provisioningAPI.reducerPath]: provisioningAPI.reducer,
-    [folderAPI.reducerPath]: folderAPI.reducer,
+    ...,
     [dashboardAPI.reducerPath]: dashboardAPI.reducer,
   };
-```
 
 And the middlewares are added to `public/app/store/configureStore.ts`:
 
