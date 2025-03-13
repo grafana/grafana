@@ -212,7 +212,9 @@ func removeUnprovisioned(ctx context.Context, client dynamic.ResourceInterface, 
 	}
 
 	for _, item := range rawList.Items {
-		meta, err := utils.MetaAccessor(item)
+		// Create a pointer to the item since MetaAccessor requires a pointer
+		itemPtr := &item
+		meta, err := utils.MetaAccessor(itemPtr)
 		if err != nil {
 			return fmt.Errorf("extract meta accessor: %w", err)
 		}
