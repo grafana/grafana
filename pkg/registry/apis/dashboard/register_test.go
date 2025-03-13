@@ -192,7 +192,7 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 		{
 			name: "should return v2alpha1 as the default if dashboards v2 is enabled",
 			enabledFeatures: []string{
-				featuremgmt.FlagUseV2DashboardsAPI,
+				featuremgmt.FlagDashboardNewLayouts,
 			},
 			expected: []schema.GroupVersion{
 				v2alpha1.DashboardResourceInfo.GroupVersion(),
