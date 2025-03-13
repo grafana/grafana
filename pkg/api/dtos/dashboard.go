@@ -3,7 +3,7 @@ package dtos
 import (
 	"time"
 
-	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboardsV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 

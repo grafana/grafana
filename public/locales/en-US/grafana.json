@@ -184,7 +184,8 @@
       "rule-identifier": "Rule identifier",
       "rule-type": "Rule type",
       "state-error-timeout": "Alert state if execution error or timeout",
-      "state-no-data": "Alert state if no data or all values are null"
+      "state-no-data": "Alert state if no data or all values are null",
+      "target-datasource-uid": "Target data source"
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -378,6 +379,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
+        "new-ds-managed-recording-rule": "New data source-managed recording rule",
+        "new-grafana-recording-rule": "New Grafana-managed recording rule",
         "new-recording-rule": "New recording rule",
         "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
       },
@@ -503,6 +506,10 @@
       },
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
+    },
+    "recording-rules": {
+      "description-target-data-source": "The Prometheus data source to store the recording rule in",
+      "label-target-data-source": "Target data source"
     },
     "rule-form": {
       "evaluation": {
@@ -1000,6 +1007,9 @@
     }
   },
   "dashboard": {
+    "actions": {
+      "open-settings": "Settings"
+    },
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",
@@ -1009,6 +1019,46 @@
     "alert-rules-drawer": {
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
+    },
+    "conditional-rendering": {
+      "data": {
+        "disable": "Disable",
+        "enable": "Enable",
+        "label": "Data"
+      },
+      "group": {
+        "add": {
+          "button": "Add condition based on",
+          "data": "Data",
+          "interval": "Interval",
+          "variable": "Variable value"
+        },
+        "condition": {
+          "label": "Evaluate conditions",
+          "meet-all": "Meet all",
+          "meet-any": "Meet any"
+        },
+        "label": "Group"
+      },
+      "interval": {
+        "input-label": "Value",
+        "invalid-message": "Invalid interval",
+        "label": "Time range interval"
+      },
+      "shared": {
+        "delete-condition": "Delete Condition"
+      },
+      "title": "Conditional rendering options",
+      "variable": {
+        "label": "Variable",
+        "operator": {
+          "equals": "Equals",
+          "not-equal": "Not equal"
+        },
+        "select-operator": "Operator",
+        "select-variable": "Select variable",
+        "value-input": "Value"
+      }
     },
     "default-layout": {
       "description": "Manually size and position panels",
@@ -1068,23 +1118,18 @@
       "elements": {
         "dashboard": "Dashboard",
         "objects": "Objects",
+        "panel": "Panel",
         "panels": "Panels",
+        "row": "Row",
         "rows": "Rows",
+        "tab": "Tab",
         "tabs": "Tabs"
-      },
-      "objects": {
-        "multi-select": {
-          "selection-number": "No. of objects selected: {{length}}"
-        }
       },
       "open": "Open options pane",
       "row": {
         "header": {
           "hide": "Hide",
           "title": "Row header"
-        },
-        "multi-select": {
-          "title": "{{length}} rows selected"
         }
       }
     },
@@ -1165,13 +1210,11 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "layout": "Layout",
-        "panels-title": "{{length}} panels selected"
+        "layout": "Layout"
       }
     },
     "options": {
       "description": "Description",
-      "title": "Dashboard options",
       "title-option": "Title"
     },
     "outline": {
@@ -1191,16 +1234,6 @@
     },
     "responsive-layout": {
       "description": "Automatically positions panels into a grid.",
-      "item-options": {
-        "hide-no-data": "Hide when no data",
-        "repeat": {
-          "variable": {
-            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
-            "title": "Repeat by variable"
-          }
-        },
-        "title": "Layout options"
-      },
       "name": "Auto",
       "options": {
         "columns": "Columns",
@@ -1214,7 +1247,6 @@
     },
     "rows-layout": {
       "description": "Rows layout",
-      "item-name": "Row",
       "name": "Rows",
       "option": {
         "height": "Height",
@@ -1253,9 +1285,6 @@
       "menu": {
         "move-tab": "Move tab"
       },
-      "multi-select": {
-        "title": "{{length}} tabs selected"
-      },
       "name": "Tabs",
       "tab": {
         "menu": {
@@ -1270,7 +1299,6 @@
         "new": "New tab"
       },
       "tab-options": {
-        "title": "Tab",
         "title-option": "Title"
       }
     },
@@ -1345,9 +1373,8 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "open-edit": "Open Panel Edit",
+        "open-edit": "Open panel editor",
         "plugin-type-image": "Image of plugin type",
-        "title": "Panel",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }
@@ -1831,31 +1858,32 @@
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
       "access-help-details": "Access mode controls how requests to the data source will be handled.<1> <1>Server</1></1> should be the preferred way if nothing else is stated.",
+      "access-help-title": "Access help",
       "access-label": "Access",
-      "access-options-browser": "Browser",
-      "access-options-proxy": "Server (default)",
       "allowed-cookies": "Allowed cookies",
-      "allowed-cookies-tooltip": "Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.",
+      "allowed-cookies-description": "Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.",
       "auth": "Auth",
       "azure-auth-label": "Azure Authentication",
       "azure-auth-tooltip": "Use Azure authentication for Azure endpoint.",
       "basic-auth": "Basic Auth Details",
       "basic-auth-label": "Basic auth",
       "browser-mode-description": "All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.",
+      "browser-mode-label": "Browser",
       "browser-mode-title": "<0>Browser access mode:</0>",
-      "default-url-access-select": "Access",
       "default-url-tooltip": "Specify a complete HTTP URL (for example http://your_server:8080)",
       "direct-url-tooltip": "Your access method is <1>Browser</1>, this means the URL needs to be accessible from the browser.",
       "heading": "HTTP",
+      "invalid-url-error": "Invalid URL",
       "proxy-url-tooltip": "Your access method is <1>Server</1>, this means the URL needs to be accessible from the grafana backend/server.",
       "server-mode-description": "All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.",
+      "server-mode-label": "Server (default)",
       "server-mode-title": "<0>Server access mode (Default):</0>",
-      "timeout-form-label": "Timeout",
-      "timeout-label": "Timeout in seconds",
-      "timeout-tooltip": "HTTP request timeout in seconds",
-      "url-label": "URL",
-      "with-credential-label": "With Credentials",
-      "with-credential-tooltip": "Whether credentials such as cookies or auth headers should be sent with cross-site requests."
+      "sigv4-auth-label": "SigV4 auth",
+      "timeout-description": "HTTP request timeout in seconds",
+      "timeout-label": "Timeout",
+      "timeout-placeholder": "Timeout in seconds",
+      "with-credentials-label": "With Credentials",
+      "with-credentials-tooltip": "Whether credentials such as cookies or auth headers should be sent with cross-site requests."
     },
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
@@ -3131,7 +3159,8 @@
       "old-password-required": "Old password is required",
       "passwords-must-match": "Passwords must match",
       "strong-password-validation-register": "Password does not comply with the strong password policy"
-    }
+    },
+    "change-theme": "Change theme"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -3716,7 +3745,7 @@
       "home-dashboard-placeholder": "Default dashboard",
       "locale-label": "Language",
       "locale-placeholder": "Choose language",
-      "theme-description": "Enjoying the limited edition themes? Tell us what you'd like to see <2>here.</2>",
+      "theme-description": "Enjoying the experimental themes? Tell us what you'd like to see <2>here.</2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },

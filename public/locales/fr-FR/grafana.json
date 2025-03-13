@@ -184,7 +184,8 @@
       "rule-identifier": "",
       "rule-type": "",
       "state-error-timeout": "",
-      "state-no-data": ""
+      "state-no-data": "",
+      "target-datasource-uid": ""
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -378,6 +379,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "",
+        "new-ds-managed-recording-rule": "",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "",
         "provisioning": ""
       },
@@ -503,6 +506,10 @@
       },
       "preview": "",
       "previewCondition": ""
+    },
+    "recording-rules": {
+      "description-target-data-source": "",
+      "label-target-data-source": ""
     },
     "rule-form": {
       "evaluation": {
@@ -1000,6 +1007,9 @@
     }
   },
   "dashboard": {
+    "actions": {
+      "open-settings": ""
+    },
     "add-menu": {
       "import": "Importer depuis la bibliothèque",
       "paste-panel": "Coller le panneau",
@@ -1068,22 +1078,17 @@
       "elements": {
         "dashboard": "",
         "objects": "",
+        "panel": "",
         "panels": "",
+        "row": "",
         "rows": "",
+        "tab": "",
         "tabs": ""
-      },
-      "objects": {
-        "multi-select": {
-          "selection-number": ""
-        }
       },
       "open": "",
       "row": {
         "header": {
           "hide": "",
-          "title": ""
-        },
-        "multi-select": {
           "title": ""
         }
       }
@@ -1165,13 +1170,11 @@
         "copy-or-duplicate": "",
         "delete": "",
         "duplicate": "",
-        "layout": "",
-        "panels-title": ""
+        "layout": ""
       }
     },
     "options": {
       "description": "",
-      "title": "",
       "title-option": ""
     },
     "outline": {
@@ -1214,7 +1217,6 @@
     },
     "rows-layout": {
       "description": "",
-      "item-name": "",
       "name": "",
       "option": {
         "height": "",
@@ -1253,9 +1255,6 @@
       "menu": {
         "move-tab": ""
       },
-      "multi-select": {
-        "title": ""
-      },
       "name": "",
       "tab": {
         "menu": {
@@ -1270,7 +1269,6 @@
         "new": ""
       },
       "tab-options": {
-        "title": "",
         "title-option": ""
       }
     },
@@ -1347,7 +1345,6 @@
         "description": "",
         "open-edit": "",
         "plugin-type-image": "",
-        "title": "",
         "title-option": "",
         "transparent-background": ""
       }
@@ -3131,7 +3128,8 @@
       "old-password-required": "Vous devez saisir l'ancien mot de passe",
       "passwords-must-match": "Les mots de passe doivent être identiques",
       "strong-password-validation-register": "Selon notre politique, votre mot de passe n'est pas suffisamment sécurisé"
-    }
+    },
+    "change-theme": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {

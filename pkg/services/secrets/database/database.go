@@ -63,7 +63,7 @@ func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, label string)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		exists, err = sess.Table(ss.table).
-			Where("label = ? AND active = ?", label, ss.db.GetDialect().BooleanStr(true)).
+			Where("label = ? AND active = ?", label, ss.db.GetDialect().BooleanValue(true)).
 			Get(dataKey)
 		return err
 	})
@@ -109,7 +109,7 @@ func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey *secrets.
 func (ss *SecretsStoreImpl) DisableDataKeys(ctx context.Context) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Table(ss.table).
-			Where("active = ?", ss.db.GetDialect().BooleanStr(true)).
+			Where("active = ?", ss.db.GetDialect().BooleanValue(true)).
 			UseBool("active").Update(&secrets.DataKey{Active: false})
 		return err
 	})
