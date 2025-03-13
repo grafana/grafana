@@ -27,7 +27,8 @@ func newQueryMetrics(reg prometheus.Registerer) *queryMetrics {
 		}, []string{"error", "dataplane", "datasource_type"}),
 
 		dsResponses: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "grafana",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubSystem,
 			Name:      "plugin_request_total",
 			Help:      "The total amount of plugin requests",
 		}, []string{"plugin_id", "status", "status_source"}),
