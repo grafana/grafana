@@ -190,6 +190,9 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
+	// Reset the results after the export as pull will operate on the same resources
+	progress.ResetResults()
+
 	// Delegate the import to a sync (from the already checked out go-git repository!)
 	progress.SetMessage(ctx, "pulling resources")
 	err = w.syncWorker.Process(ctx, rw, provisioning.Job{
