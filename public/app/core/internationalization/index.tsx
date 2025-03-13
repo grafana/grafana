@@ -73,7 +73,7 @@ export const Trans = (props: TransProps): ReactElement => {
  * Note: Don't use this in the top level module scope. This wrapper needs initialization, which is done during Grafana
  * startup, and it will throw if used before.
  *
- * This will soon be deprecated in favor of useT()
+ * This will soon be deprecated in favor of useTranslate()
  * @param id ID of the translation string
  * @param defaultMessage Default message to use if the translation is missing
  * @param values Values to be interpolated into the string
