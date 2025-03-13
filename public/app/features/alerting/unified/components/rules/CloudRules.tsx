@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { LinkButton, LoadingPlaceholder, Pagination, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -15,6 +15,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { getPaginationStyles } from '../../styles/pagination';
 import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
 import { isAsyncRequestStatePending } from '../../utils/redux';
+import { createRelativeUrl } from '../../utils/url';
 
 import { RulesGroup } from './RulesGroup';
 import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
@@ -48,6 +49,14 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
+  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const [viewExternalRuleSupported, viewExternalRuleAllowed] = useAlertingAbility(AlertingAction.ViewExternalAlertRule);
+
+  const canViewCloudRules = viewExternalRuleSupported && viewExternalRuleAllowed;
+
+  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
+  const canMigrateToGMA = canCreateGrafanaRules && canViewCloudRules;
+
   return (
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
@@ -63,7 +72,10 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
           ) : (
             <div />
           )}
-          <CreateRecordingRuleButton />
+          <Stack gap={1}>
+            <CreateRecordingRuleButton />
+            {canMigrateToGMA && <MigrateToGMAButton />}
+          </Stack>
         </div>
       </div>
 
@@ -143,4 +155,13 @@ export function CreateRecordingRuleButton() {
     );
   }
   return null;
+}
+
+export function MigrateToGMAButton() {
+  const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
+  return (
+    <LinkButton variant="secondary" href={importUrl} icon="arrow-up">
+      <Trans i18nKey="alerting.rule-list.export-to-gma">Export to Grafana-managed rules</Trans>
+    </LinkButton>
+  );
 }
