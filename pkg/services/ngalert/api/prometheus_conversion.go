@@ -107,3 +107,8 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexGetRuleG
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexPostRuleGroup(ctx *contextmodel.ReqContext, namespaceTitle string) response.Response {
 	return f.handleRouteConvertPrometheusPostRuleGroup(ctx, namespaceTitle)
 }
+
+// UI
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostDatasource(ctx *contextmodel.ReqContext, datasourceUID string) response.Response {
+	return f.svc.RouteConvertPrometheusPostDatasource(ctx, datasourceUID)
+}

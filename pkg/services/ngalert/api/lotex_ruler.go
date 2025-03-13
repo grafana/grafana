@@ -26,22 +26,22 @@ const (
 	PrometheusDatasourceType = "prometheus"
 	LokiDatasourceType       = "loki"
 
-	mimirPrefix      = "/config/v1/rules"
-	prometheusPrefix = "/rules"
-	lokiPrefix       = "/api/prom/rules"
+	MimirPrefix      = "/config/v1/rules"
+	PrometheusPrefix = "/rules"
+	LokiPrefix       = "/api/prom/rules"
 
 	subtypeQuery = "subtype"
 )
 
 var dsTypeToRulerPrefix = map[string]string{
-	PrometheusDatasourceType: prometheusPrefix,
-	LokiDatasourceType:       lokiPrefix,
+	PrometheusDatasourceType: PrometheusPrefix,
+	LokiDatasourceType:       LokiPrefix,
 }
 
 var subtypeToPrefix = map[string]string{
-	Prometheus: prometheusPrefix,
-	Cortex:     prometheusPrefix,
-	Mimir:      mimirPrefix,
+	Prometheus: PrometheusPrefix,
+	Cortex:     PrometheusPrefix,
+	Mimir:      MimirPrefix,
 }
 
 // The requester is primarily used for testing purposes, allowing us to inject a different implementation of withReq.

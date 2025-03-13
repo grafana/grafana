@@ -6868,6 +6868,49 @@
     ]
    }
   },
+  "/convert/{DatasourceUID}/config/v1/rules": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Converts rule groups from specified Prometheus datasource to Grafana-Managed",
+    "operationId": "RouteConvertPrometheusPostDatasource",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "DatasourceUID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "tags": [
+     "convert_prometheus"
+    ]
+   }
+  },
   "/prometheus/grafana/api/v1/alerts": {
    "get": {
     "description": "gets the current alerts",
