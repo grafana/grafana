@@ -66,10 +66,7 @@ export function WizardContent({
   }, []);
 
   // A different repository is marked with instance target -- nothing will succede
-  if (
-    settingsQuery.data &&
-    settingsQuery.data.items.some((item) => item.target === 'instance' && item.name !== repoName)
-  ) {
+  if (settingsQuery.data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
     appEvents.publish({
       type: AppEvents.alertError.name,
       payload: ['Instance repository already exists'],
