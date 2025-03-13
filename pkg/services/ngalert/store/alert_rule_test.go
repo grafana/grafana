@@ -459,7 +459,7 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		require.Equal(t, newRule4.Title, dbrule4.Title)
 	})
 
-	t.Run("should fail with unique constraint violation", func(t *testing.T) {
+	t.Run("should not fail with unique constraint violation", func(t *testing.T) {
 		rule1 := createRuleInFolder("unique-rule1", 1, "my-namespace", "my-group")
 		rule2 := createRuleInFolder("unique-rule2", 1, "my-namespace", "my-group")
 
@@ -472,13 +472,7 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 			New:      *newRule2,
 		},
 		})
-		require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
-		require.NotEqual(t, newRule2.UID, "")
-		require.NotEqual(t, newRule2.Title, "")
-		require.NotEqual(t, newRule2.NamespaceUID, "")
-		require.ErrorContains(t, err, newRule2.UID)
-		require.ErrorContains(t, err, newRule2.Title)
-		require.ErrorContains(t, err, newRule2.NamespaceUID)
+		require.NoError(t, err)
 	})
 }
 
@@ -1026,18 +1020,11 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{rules[0]})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 	})
-	t.Run("fail insert rules with the same title in a folder", func(t *testing.T) {
+	t.Run("should not fail insert rules with the same title in a folder", func(t *testing.T) {
 		cp := models.CopyRule(&rules[0])
 		cp.UID = cp.UID + "-new"
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{*cp})
-		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
-		require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
-		require.NotEqual(t, rules[0].UID, "")
-		require.NotEqual(t, rules[0].Title, "")
-		require.NotEqual(t, rules[0].NamespaceUID, "")
-		require.ErrorContains(t, err, rules[0].UID)
-		require.ErrorContains(t, err, rules[0].Title)
-		require.ErrorContains(t, err, rules[0].NamespaceUID)
+		require.NoError(t, err)
 	})
 	t.Run("should not let insert rules with the same UID", func(t *testing.T) {
 		cp := models.CopyRule(&rules[0])

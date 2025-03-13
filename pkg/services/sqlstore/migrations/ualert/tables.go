@@ -572,13 +572,7 @@ func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrat
 	return nil
 }
 
-func ReplaceTitleUniqueIndexMigration(mg *migrator.Migrator) {
+func DropTitleUniqueIndexMigration(mg *migrator.Migrator) {
 	mg.AddMigration("remove title in folder unique index",
 		migrator.NewDropIndexMigration(migrator.Table{Name: "alert_rule"}, titleUniqueIndex))
-	mg.AddMigration("add title in group unique index",
-		migrator.NewAddIndexMigration(
-			migrator.Table{Name: "alert_rule"},
-			&migrator.Index{Cols: []string{"org_id", "namespace_uid", "rule_group", "title"}, Type: migrator.UniqueIndex},
-		),
-	)
 }

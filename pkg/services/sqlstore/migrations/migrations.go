@@ -150,5 +150,5 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.AddAlertRuleMissingSeriesEvalsToResolve(mg)
 
-	ualert.ReplaceTitleUniqueIndexMigration(mg)
+	ualert.DropTitleUniqueIndexMigration(mg)
 }
