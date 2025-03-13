@@ -1025,6 +1025,9 @@
     }
   },
   "dashboard": {
+    "actions": {
+      "open-settings": ""
+    },
     "add-menu": {
       "import": "",
       "paste-panel": "",
