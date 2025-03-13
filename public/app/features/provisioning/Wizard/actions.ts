@@ -79,7 +79,9 @@ export function getState(
     return state;
   }
 
-  const actionsToEvaluate = [migrateInstance, pullInstance, pullFolder];
+  const actionsToEvaluate = resourceCount
+    ? [pullFolder, pullInstance, migrateInstance] // reccomend pull when resources already exist
+    : [migrateInstance, pullInstance, pullFolder];
   actionsToEvaluate.forEach((action) => {
     const reason = getDisabledReason(action, resourceCount, folderConnected);
     if (reason) {

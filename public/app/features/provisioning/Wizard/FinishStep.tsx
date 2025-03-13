@@ -45,7 +45,7 @@ export function FinishStep() {
         {isGithub && !isPublic && (
           <Alert
             title={'Public URL not configured'}
-            severity={'warning'}
+            severity="info"
             buttonContent={<span>Instructions</span>}
             onRemove={() => navigate(GETTING_STARTED_URL)}
           >
