@@ -6,6 +6,7 @@ import { Alert, ControlledCollapse, LinkButton, Spinner, Stack, Text } from '@gr
 import { JobSummary } from './JobSummary';
 import ProgressBar from './ProgressBar';
 import { useGetRepositoryQuery, useListJobQuery } from './api';
+import { getRepoHref } from './utils/git';
 
 export interface JobStatusProps {
   name: string;
@@ -112,10 +113,7 @@ function RepositoryLink({ name }: RepositoryLinkProps) {
     return null;
   }
 
-  const repoHref =
-    repo.spec?.github?.url && repo.spec?.github?.branch
-      ? `${repo.spec.github.url}/tree/${repo.spec.github.branch}`
-      : repo.spec?.github?.url;
+  const repoHref = getRepoHref(repo.spec?.github);
   const folderHref = repo.spec?.sync.target === 'folder' ? `/dashboards/f/${repo.metadata?.name}` : '/dashboards';
 
   if (!repoHref) {

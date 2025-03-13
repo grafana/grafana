@@ -5,6 +5,7 @@ import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository } from './api';
 import { PROVISIONING_URL } from './constants';
+import { getRepoHref } from './utils/git';
 
 interface RepositoryActionsProps {
   repository: Repository;
@@ -20,9 +21,7 @@ export function RepositoryActions({
   onMigrateClick,
 }: RepositoryActionsProps) {
   const name = repository.metadata?.name ?? '';
-  const remoteURL = repository.spec?.github?.branch
-    ? `${repository.spec?.github?.url}/tree/${repository.spec?.github?.branch}`
-    : (repository.spec?.github?.url ?? '');
+  const repoHref = getRepoHref(repository.spec?.github);
 
   return (
     <Stack>
@@ -31,8 +30,8 @@ export function RepositoryActions({
         state={repository.status?.sync?.state}
         name={name}
       />
-      {remoteURL && (
-        <Button variant="secondary" icon="github" onClick={() => window.open(remoteURL, '_blank')}>
+      {repoHref && (
+        <Button variant="secondary" icon="github" onClick={() => window.open(repoHref, '_blank')}>
           Source Code
         </Button>
       )}
