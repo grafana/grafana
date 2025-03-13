@@ -36,6 +36,7 @@
         "name": "accessActionSets",
         "resourceVersion": "1731413707429",
         "creationTimestamp": "2024-04-12T16:19:25Z",
+        "deletionTimestamp": "2025-03-11T16:34:55Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-11-12 12:15:07.42916 +0000 UTC"
         }
