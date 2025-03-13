@@ -3,9 +3,10 @@ import { noop } from 'lodash';
 import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { CoreApp, DataQuery, DataSourcePluginContextProvider, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, DataSourcePluginContextProvider, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
