@@ -4,15 +4,18 @@ import (
 	"context"
 	"fmt"
 	sysruntime "runtime"
+	"slices"
 
 	"github.com/Masterminds/semver/v3"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
 func New(
@@ -20,20 +23,23 @@ func New(
 	pluginRepo repo.Service,
 	pluginPreinstall plugininstaller.Preinstall,
 	managedPlugins managedplugins.Manager,
+	provisionedPlugins provisionedplugins.Manager,
 ) checks.Check {
 	return &check{
-		PluginStore:      pluginStore,
-		PluginRepo:       pluginRepo,
-		PluginPreinstall: pluginPreinstall,
-		ManagedPlugins:   managedPlugins,
+		PluginStore:        pluginStore,
+		PluginRepo:         pluginRepo,
+		PluginPreinstall:   pluginPreinstall,
+		ManagedPlugins:     managedPlugins,
+		ProvisionedPlugins: provisionedPlugins,
 	}
 }
 
 type check struct {
-	PluginStore      pluginstore.Store
-	PluginRepo       repo.Service
-	PluginPreinstall plugininstaller.Preinstall
-	ManagedPlugins   managedplugins.Manager
+	PluginStore        pluginstore.Store
+	PluginRepo         repo.Service
+	PluginPreinstall   plugininstaller.Preinstall
+	ManagedPlugins     managedplugins.Manager
+	ProvisionedPlugins provisionedplugins.Manager
 }
 
 func (c *check) ID() string {
@@ -55,9 +61,11 @@ func (c *check) Steps() []checks.Step {
 			PluginRepo: c.PluginRepo,
 		},
 		&updateStep{
-			PluginRepo:       c.PluginRepo,
-			PluginPreinstall: c.PluginPreinstall,
-			ManagedPlugins:   c.ManagedPlugins,
+			PluginRepo:         c.PluginRepo,
+			PluginPreinstall:   c.PluginPreinstall,
+			ManagedPlugins:     c.ManagedPlugins,
+			ProvisionedPlugins: c.ProvisionedPlugins,
+			log:                log.New("advisor.check.plugin.update"),
 		},
 	}
 }
@@ -117,9 +125,12 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 }
 
 type updateStep struct {
-	PluginRepo       repo.Service
-	PluginPreinstall plugininstaller.Preinstall
-	ManagedPlugins   managedplugins.Manager
+	PluginRepo         repo.Service
+	PluginPreinstall   plugininstaller.Preinstall
+	ManagedPlugins     managedplugins.Manager
+	ProvisionedPlugins provisionedplugins.Manager
+	provisionedPlugins []string
+	log                log.Logger
 }
 
 func (s *updateStep) Title() string {
@@ -146,11 +157,19 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 
 	// Skip if it's a core plugin
 	if p.IsCorePlugin() {
+		s.log.Debug("Skipping core plugin", "plugin", p.ID)
 		return nil, nil
 	}
 
 	// Skip if it's managed or pinned
 	if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
+		s.log.Debug("Skipping managed or pinned plugin", "plugin", p.ID)
+		return nil, nil
+	}
+
+	// Skip if it's provisioned
+	if s.isProvisioned(ctx, p.ID) {
+		s.log.Debug("Skipping provisioned plugin", "plugin", p.ID)
 		return nil, nil
 	}
 
@@ -196,4 +215,15 @@ func (s *updateStep) isManaged(ctx context.Context, pluginID string) bool {
 		}
 	}
 	return false
+}
+
+func (s *updateStep) isProvisioned(ctx context.Context, pluginID string) bool {
+	if s.provisionedPlugins == nil {
+		var err error
+		s.provisionedPlugins, err = s.ProvisionedPlugins.ProvisionedPlugins(ctx)
+		if err != nil {
+			return false
+		}
+	}
+	return slices.Contains(s.provisionedPlugins, pluginID)
 }
