@@ -39,6 +39,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
         enabled: false,
         selected: [],
         onSelect: (item, multi) => this.selectElement(item, multi),
+        onClear: () => this.clearSelection(),
       },
     });
 

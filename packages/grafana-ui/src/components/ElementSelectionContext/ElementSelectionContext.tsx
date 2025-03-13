@@ -9,6 +9,7 @@ export interface ElementSelectionContextState {
   /** List of currently selected elements */
   selected: ElementSelectionContextItem[];
   onSelect: (item: ElementSelectionContextItem, multi?: boolean) => void;
+  onClear: () => void;
 }
 
 export interface ElementSelectionContextItem {
@@ -21,6 +22,7 @@ export interface UseElementSelectionResult {
   isSelected?: boolean;
   isSelectable?: boolean;
   onSelect?: (evt: React.PointerEvent) => void;
+  onClear?: () => void;
 }
 
 export function useElementSelection(id: string | undefined): UseElementSelectionResult {
@@ -48,5 +50,13 @@ export function useElementSelection(id: string | undefined): UseElementSelection
     [context, id]
   );
 
-  return { isSelected, onSelect, isSelectable: context.enabled };
+  const onClear = useCallback(() => {
+    if (!context.enabled) {
+      return;
+    }
+
+    context.onClear();
+  }, [context]);
+
+  return { isSelected, onSelect, onClear, isSelectable: context.enabled };
 }

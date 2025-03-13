@@ -7,18 +7,22 @@ import {
   SceneDataTransformer,
   sceneGraph,
   SceneObject,
+  SceneObjectState,
   SceneQueryRunner,
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { useElementSelection, UseElementSelectionResult } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
-import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { RowItem } from '../scene/layout-rows/RowItem';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
@@ -436,4 +440,43 @@ export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutMa
 
 export function getGridItemKeyForPanelId(panelId: number): string {
   return `grid-item-${panelId}`;
+}
+
+export function useDashboard(scene: SceneObject): DashboardScene {
+  return getDashboardSceneFor(scene);
+}
+
+export function useDashboardState(
+  scene: SceneObject
+): DashboardSceneState & { isEditing: boolean; showHiddenElements: boolean } {
+  const dashboard = useDashboard(scene);
+  const state = dashboard.useState();
+
+  return {
+    ...state,
+    isEditing: !!state.isEditing,
+    showHiddenElements: !!(state.isEditing && state.showHiddenElements),
+  };
+}
+
+export function useIsConditionallyHidden(scene: RowItem | ResponsiveGridItem): boolean {
+  const { conditionalRendering } = scene.useState();
+
+  return !(conditionalRendering?.evaluate() ?? true);
+}
+
+export function useElementSelectionScene(scene: SceneObject): UseElementSelectionResult {
+  const { key } = scene.useState();
+
+  return useElementSelection(key);
+}
+
+export function useInterpolatedTitle<T extends SceneObjectState & { title?: string }>(scene: SceneObject<T>): string {
+  const { title } = scene.useState();
+
+  if (!title) {
+    return '';
+  }
+
+  return sceneGraph.interpolate(scene, title, undefined, 'text');
 }

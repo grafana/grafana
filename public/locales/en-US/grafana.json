@@ -1020,6 +1020,46 @@
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
     },
+    "conditional-rendering": {
+      "data": {
+        "disable": "Disable",
+        "enable": "Enable",
+        "label": "Data"
+      },
+      "group": {
+        "add": {
+          "button": "Add condition based on",
+          "data": "Data",
+          "interval": "Interval",
+          "variable": "Variable value"
+        },
+        "condition": {
+          "label": "Evaluate conditions",
+          "meet-all": "Meet all",
+          "meet-any": "Meet any"
+        },
+        "label": "Group"
+      },
+      "interval": {
+        "input-label": "Value",
+        "invalid-message": "Invalid interval",
+        "label": "Time range interval"
+      },
+      "shared": {
+        "delete-condition": "Delete Condition"
+      },
+      "title": "Conditional rendering options",
+      "variable": {
+        "label": "Variable",
+        "operator": {
+          "equals": "Equals",
+          "not-equal": "Not equal"
+        },
+        "select-operator": "Operator",
+        "select-variable": "Select variable",
+        "value-input": "Value"
+      }
+    },
     "default-layout": {
       "description": "Manually size and position panels",
       "item-options": {
@@ -1194,16 +1234,6 @@
     },
     "responsive-layout": {
       "description": "Automatically positions panels into a grid.",
-      "item-options": {
-        "hide-no-data": "Hide when no data",
-        "repeat": {
-          "variable": {
-            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
-            "title": "Repeat by variable"
-          }
-        },
-        "title": "Layout options"
-      },
       "name": "Auto",
       "options": {
         "columns": "Columns",

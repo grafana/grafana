@@ -82,5 +82,13 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
         backgroundColor: theme.colors.emphasize(theme.colors.background.canvas, 0.08),
       },
     },
+
+    '.dashboard-visible-hidden-element': {
+      opacity: 0.6,
+
+      '&:hover': {
+        opacity: 1,
+      },
+    },
   });
 }
