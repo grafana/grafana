@@ -582,6 +582,37 @@
       "recommended": "Recommended",
       "validation-failed": "Failed to validate IRM integration name. Is the OnCall API available?"
     },
+    "import-to-gma": {
+      "action-button": "Export",
+      "datasource": {
+        "label": "Datasource",
+        "required-message": "Please select a datasource"
+      },
+      "group": {
+        "description": "Type to search for an existing group or create a new one",
+        "label": "Group"
+      },
+      "namespace": {
+        "description": "Type to search for an existing namespace",
+        "label": "Namespace"
+      },
+      "pageTitle": "Export alert rules from a datasource to Grafana-managed rules.",
+      "pause": {
+        "label": "Pause alerting rules",
+        "tooltip": "Exported alerting rules will be paused."
+      },
+      "pause-recording": {
+        "label": "Pause recording rules",
+        "tooltip": "Exported recording rules will be paused."
+      },
+      "taget-folder": {
+        "required": "Please select a target folder"
+      },
+      "target-folder": {
+        "label": "Target Folder"
+      },
+      "title": "Migrate your alert rules from a datasource into Grafana."
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
@@ -824,6 +855,7 @@
         "description": "Check the data source configuration. Does the data source support Prometheus API?",
         "title": "Unable to load rules from this data source"
       },
+      "export-to-gma": "Export to Grafana-managed rules",
       "filter-view": {
         "no-more-results": "No more results – showing {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters."
