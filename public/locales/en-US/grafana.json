@@ -187,6 +187,14 @@
       "state-no-data": "Alert state if no data or all values are null",
       "target-datasource-uid": "Target data source"
     },
+    "alert-menu": {
+      "copy-link": "Copy link",
+      "delete-permanently": "Delete Permanently",
+      "duplicate": "Duplicate",
+      "export": "Export",
+      "silence-notifications": "Silence notifications",
+      "with-modifications": "With modifications"
+    },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
         "description": {
@@ -232,6 +240,7 @@
       "provisioning-change-description": "Version update was made via provisioning",
       "queryAndAlertCondition": "Query and alert condition",
       "restore": "Restore",
+      "restore-deleted-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the deleted rule.",
       "restore-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the rule version",
       "restore-modal": {
         "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
@@ -352,6 +361,27 @@
     "dag": {
       "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
       "self-reference": "You can't link an expression to itself"
+    },
+    "delete-permanently-modal-body": "Deleting this rule will permanently remove it from your alert rule list. This rule will not be recoverable.Are you sure you want to delete permanently this rule?",
+    "delete-permanently-modal-confirm-text": "Yes, delete permanently",
+    "delete-permanently-modal-title": "Delete rule",
+    "deletedRules": {
+      "errorloading": "Failed to load alert deleted rules",
+      "restore": "Restore",
+      "restore-modal": {
+        "body": "Are you sure you want to restore this deleted alert rule definition?",
+        "confirm": "Yes, restore deleted rule",
+        "error": "Could not restore deleted alert rule",
+        "title": "Restore deleted alert rule"
+      },
+      "table": {
+        "folder": "Folder",
+        "group": "Group",
+        "title": "Title",
+        "updated": "Deletion Date",
+        "updatedBy": "Deleted By"
+      },
+      "unknown": "Unknown"
     },
     "export": {
       "subtitle": {
@@ -639,6 +669,9 @@
       },
       "delete-rule": {
         "success": "Rule successfully deleted"
+      },
+      "delete-rule-permanently": {
+        "success": "Rule successfully deleted permanently"
       },
       "pause-rule": {
         "success": "Rule evaluation paused"
@@ -2624,6 +2657,10 @@
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",
       "title": "Alerts & IRM"
+    },
+    "alerts-trash": {
+      "subtitle": "See deleted alerts rules",
+      "title": "Trash"
     },
     "api-keys": {
       "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",

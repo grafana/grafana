@@ -87,7 +87,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
           <div>{ruleToRestore && <RulePeview rule={ruleToRestore} />}</div>
           {error && (
             <Alert severity="warning" title={errorTitle}>
-              <Trans i18nKey="alerting.alertVersionHistory.restore-manually">
+              <Trans i18nKey="alerting.alertVersionHistory.restore-deleted-manually">
                 Your alert rule could not be restored. This may be due to changes to other entities such as contact
                 points, data sources etc. Please manually restore the deleted rule.
               </Trans>
