@@ -212,7 +212,6 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 			logger.Warn("error trying to revert dual write settings after an error", "err", err)
 		}
 	}
-
 	return err
 
 }

@@ -458,16 +458,9 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 	result.Resource = parsed.GVR.Resource
 	result.Group = parsed.GVK.Group
 
-	switch action {
-	case repository.FileActionCreated:
-		_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-		result.Error = err
-	case repository.FileActionUpdated:
-		_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-		result.Error = err
-	default:
-		result.Error = fmt.Errorf("unsupported action: %s", action)
-	}
+	// Update will also create (for resources we care about)
+	_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+	result.Error = err
 	return result
 }
 
