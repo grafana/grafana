@@ -35,6 +35,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     id: 'tabs-layout',
     createFromLayout: TabsLayoutManager.createFromLayout,
     kind: 'TabsLayout',
+    isGridLayout: false,
   };
 
   public readonly descriptor = TabsLayoutManager.descriptor;

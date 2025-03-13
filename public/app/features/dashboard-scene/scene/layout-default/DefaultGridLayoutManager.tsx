@@ -56,6 +56,7 @@ export class DefaultGridLayoutManager
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
     kind: 'GridLayout',
+    isGridLayout: true,
   };
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;

@@ -33,8 +33,8 @@ export class ResponsiveGridLayoutManager
     },
     id: 'responsive-grid',
     createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
-
     kind: 'ResponsiveGridLayout',
+    isGridLayout: true,
   };
 
   public readonly descriptor = ResponsiveGridLayoutManager.descriptor;

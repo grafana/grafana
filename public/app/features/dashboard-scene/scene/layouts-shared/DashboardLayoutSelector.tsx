@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Select } from '@grafana/ui';
+import { RadioButtonGroup } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -10,7 +10,6 @@ import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { layoutRegistry } from './layoutRegistry';
-import { findParentLayout } from './utils';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
@@ -18,29 +17,25 @@ export interface Props {
 
 export function DashboardLayoutSelector({ layoutManager }: Props) {
   const options = useMemo(() => {
-    const parentLayout = findParentLayout(layoutManager);
-    const parentLayoutId = parentLayout?.descriptor.id;
+    const isGridLayout = layoutManager.descriptor.isGridLayout;
 
     return layoutRegistry
       .list()
-      .filter((layout) => layout.id !== parentLayoutId)
+      .filter((layout) => layout.isGridLayout === isGridLayout)
       .map((layout) => ({
         label: layout.name,
-        value: layout,
+        value: layout.id,
       }));
   }, [layoutManager]);
 
-  const currentLayoutId = layoutManager.descriptor.id;
-  const currentOption = options.find((option) => option.value.id === currentLayoutId);
-
   return (
-    <Select
+    <RadioButtonGroup
       options={options}
-      value={currentOption}
-      onChange={(option) => {
-        if (option.value?.id !== currentOption?.value.id) {
-          changeLayoutTo(layoutManager, option.value!);
-        }
+      fullWidth={true}
+      value={layoutManager.descriptor.id}
+      onChange={(value) => {
+        const layout = layoutRegistry.get(value);
+        changeLayoutTo(layoutManager, layout);
       }}
     />
   );
@@ -48,15 +43,20 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
 
 export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
   return useMemo(() => {
+    const categoryName = layoutManager.descriptor.isGridLayout
+      ? t('dashboard.layout.common.grid', 'Grid')
+      : t('dashboard.layout.common.layout', 'Layout');
+
     const layoutCategory = new OptionsPaneCategoryDescriptor({
-      title: 'Layout',
+      title: categoryName,
       id: 'layout-options',
       isOpenDefault: true,
     });
 
     layoutCategory.addItem(
       new OptionsPaneItemDescriptor({
-        title: t('dashboard.layout.common.layout', 'Layout'),
+        title: '',
+        skipField: true,
         render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
       })
     );

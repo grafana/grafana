@@ -33,8 +33,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     },
     id: 'rows-layout',
     createFromLayout: RowsLayoutManager.createFromLayout,
-
     kind: 'RowsLayout',
+    isGridLayout: false,
   };
 
   public readonly descriptor = RowsLayoutManager.descriptor;
