@@ -294,8 +294,8 @@ type Cfg struct {
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings
 
-	ViewersCanEdit  bool // Deprecated: no longer used
-	EditorsCanAdmin bool // Deprecated: no longer used
+	// Deprecated: no longer used
+	ViewersCanEdit bool
 
 	ApiKeyMaxSecondsToLive int64
 
@@ -418,6 +418,9 @@ type Cfg struct {
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
+
+	// SQLExpressionCellLimit is the maximum number of cells (rows × columns, across all frames) that can be accepted by a SQL expression.
+	SQLExpressionCellLimit int64
 
 	ImageUploadProvider string
 
@@ -780,6 +783,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 func (cfg *Cfg) readExpressionsSettings() {
 	expressions := cfg.Raw.Section("expressions")
 	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
+	cfg.SQLExpressionCellLimit = expressions.Key("sql_expression_cell_limit").MustInt64(100000)
 }
 
 type AnnotationCleanupSettings struct {
@@ -1244,12 +1248,12 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
 
-	if err := cfg.readPluginSettings(iniFile); err != nil {
+	// nolint:staticcheck
+	if err := cfg.readFeatureToggles(iniFile); err != nil {
 		return err
 	}
 
-	// nolint:staticcheck
-	if err := cfg.readFeatureToggles(iniFile); err != nil {
+	if err := cfg.readPluginSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1729,15 +1733,11 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
 	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
 
-	// Deprecated
+	//nolint:staticcheck
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
+	//nolint:staticcheck
 	if cfg.ViewersCanEdit {
 		cfg.Logger.Warn("[Deprecated] The viewers_can_edit configuration setting is deprecated. Please upgrade viewers to editors.")
-	}
-	// Deprecated
-	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
-	if cfg.EditorsCanAdmin {
-		cfg.Logger.Warn("[Deprecated] The editors_can_admin configuration setting is deprecated. Please upgrade editors to admin.")
 	}
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")

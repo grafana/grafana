@@ -536,7 +536,7 @@ const (
 	FlagLogQLScope = "logQLScope"
 
 	// FlagSqlExpressions
-	// Enables using SQL and DuckDB functions as Expressions.
+	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagNodeGraphDotLayout
@@ -586,10 +586,6 @@ const (
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
-
-	// FlagAccessActionSets
-	// Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.
-	FlagAccessActionSets = "accessActionSets"
 
 	// FlagDisableNumericMetricsSortingInExpressions
 	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
@@ -835,10 +831,6 @@ const (
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 
-	// FlagUseV2DashboardsAPI
-	// Use the v2 kubernetes API in the frontend for dashboards
-	FlagUseV2DashboardsAPI = "useV2DashboardsAPI"
-
 	// FlagFeedbackButton
 	// Enables a button to send feedback from the Grafana UI
 	FlagFeedbackButton = "feedbackButton"
@@ -966,4 +958,8 @@ const (
 	// FlagInviteUserExperimental
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
+
+	// FlagExtraLanguages
+	// Enables additional languages
+	FlagExtraLanguages = "extraLanguages"
 )
