@@ -55,8 +55,7 @@ type Manager struct {
 	historian     Historian
 	externalURL   *url.URL
 
-	applyNoDataAndErrorToAllStates bool
-	rulesPerRuleGroupLimit         int64
+	rulesPerRuleGroupLimit int64
 
 	persister StatePersister
 }
@@ -73,10 +72,8 @@ type ManagerCfg struct {
 	// StatePeriodicSaveBatchSize controls the size of the alert instance batch that is saved periodically when the
 	// alertingSaveStatePeriodic feature flag is enabled.
 	StatePeriodicSaveBatchSize int
-	// ApplyNoDataAndErrorToAllStates makes state manager to apply exceptional results (NoData and Error)
-	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
-	ApplyNoDataAndErrorToAllStates bool
-	RulesPerRuleGroupLimit         int64
+
+	RulesPerRuleGroupLimit int64
 
 	DisableExecution bool
 
@@ -96,24 +93,19 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	}
 
 	m := &Manager{
-		cache:                          c,
-		ResendDelay:                    ResendDelay, // TODO: make this configurable
-		ResolvedRetention:              cfg.ResolvedRetention,
-		log:                            cfg.Log,
-		metrics:                        cfg.Metrics,
-		instanceStore:                  cfg.InstanceStore,
-		images:                         cfg.Images,
-		historian:                      cfg.Historian,
-		clock:                          cfg.Clock,
-		externalURL:                    cfg.ExternalURL,
-		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
-		rulesPerRuleGroupLimit:         cfg.RulesPerRuleGroupLimit,
-		persister:                      statePersister,
-		tracer:                         cfg.Tracer,
-	}
-
-	if m.applyNoDataAndErrorToAllStates {
-		m.log.Info("Running in alternative execution of Error/NoData mode")
+		cache:                  c,
+		ResendDelay:            ResendDelay, // TODO: make this configurable
+		ResolvedRetention:      cfg.ResolvedRetention,
+		log:                    cfg.Log,
+		metrics:                cfg.Metrics,
+		instanceStore:          cfg.InstanceStore,
+		images:                 cfg.Images,
+		historian:              cfg.Historian,
+		clock:                  cfg.Clock,
+		externalURL:            cfg.ExternalURL,
+		rulesPerRuleGroupLimit: cfg.RulesPerRuleGroupLimit,
+		persister:              statePersister,
+		tracer:                 cfg.Tracer,
 	}
 
 	return m
@@ -403,7 +395,7 @@ func (st *Manager) updateLastSentAt(states StateTransitions, evaluatedAt time.Ti
 }
 
 func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger, takeImageFn takeImageFn) []StateTransition {
-	if st.applyNoDataAndErrorToAllStates && results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK || alertRule.NoDataState == ngModels.KeepLast) { // If it is no data, check the mapping and switch all results to the new state
+	if results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK || alertRule.NoDataState == ngModels.KeepLast) { // If it is no data, check the mapping and switch all results to the new state
 		// aggregate UID of datasources that returned NoData into one and provide as auxiliary info via annotationa. See: https://github.com/grafana/grafana/issues/88184
 		var refIds strings.Builder
 		var datasourceUIDs strings.Builder
@@ -435,7 +427,7 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 			return transitions // if there are no current states for the rule. Create ones for each result
 		}
 	}
-	if st.applyNoDataAndErrorToAllStates && results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState || alertRule.ExecErrState == ngModels.KeepLastErrState) {
+	if results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState || alertRule.ExecErrState == ngModels.KeepLastErrState) {
 		// TODO squash all errors into one, and provide as annotation
 		transitions := st.setNextStateForAll(alertRule, results[0], logger, nil, takeImageFn)
 		if len(transitions) > 0 {
