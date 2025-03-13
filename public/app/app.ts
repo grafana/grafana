@@ -32,7 +32,6 @@ import {
   setEmbeddedDashboard,
   setAppEvents,
   setReturnToPreviousHook,
-  setPluginExtensionsHook,
   setPluginComponentHook,
   setPluginComponentsHook,
   setCurrentUser,
@@ -83,7 +82,6 @@ import { createPluginExtensionsGetter } from './features/plugins/extensions/getP
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
-import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
@@ -220,7 +218,6 @@ export class GrafanaApp {
       }
 
       setPluginExtensionGetter(createPluginExtensionsGetter(pluginExtensionRegistries));
-      setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionRegistries));
       setPluginLinksHook(usePluginLinks);
       setPluginComponentHook(usePluginComponent);
       setPluginComponentsHook(usePluginComponents);

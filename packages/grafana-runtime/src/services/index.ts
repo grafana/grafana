@@ -22,12 +22,6 @@ export {
   type UsePluginExtensions,
   type UsePluginExtensionsResult,
 } from './pluginExtensions/getPluginExtensions';
-export {
-  setPluginExtensionsHook,
-  usePluginExtensions,
-  usePluginLinkExtensions,
-  usePluginComponentExtensions,
-} from './pluginExtensions/usePluginExtensions';
 
 export {
   setPluginComponentHook,
