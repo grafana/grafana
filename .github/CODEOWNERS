@@ -791,6 +791,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev
+/.github/workflows/pr-lint-build-docs.yml @grafana/docs-tooling
 /.github/workflows/pr-patch-check.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
 /.github/workflows/pr-backend-unit-tests.yml @grafana/grafana-backend-group
