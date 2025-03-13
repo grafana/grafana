@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -263,6 +264,10 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	if labelSelector == nil {
 		labelSelector = labels.Everything()
 	}
+	fieldSelector := options.FieldSelector
+	if fieldSelector == nil {
+		fieldSelector = fields.Everything()
+	}
 
 	secureValueRows := make([]*secureValueDB, 0)
 
@@ -293,7 +298,11 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 		}
 
 		if labelSelector.Matches(labels.Set(secureValue.Labels)) {
-			secureValues = append(secureValues, *secureValue)
+			if fieldSelector.Matches(fields.Set{
+				"status.phase": string(secureValue.Status.Phase),
+			}) {
+				secureValues = append(secureValues, *secureValue)
+			}
 		}
 	}
 
