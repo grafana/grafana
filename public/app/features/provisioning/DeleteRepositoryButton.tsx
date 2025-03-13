@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -7,9 +8,16 @@ import { ConfirmModal, IconButton } from '@grafana/ui';
 import { useDeleteRepositoryMutation } from './api';
 
 const appEvents = getAppEvents();
-export function DeleteRepositoryButton({ name }: { name: string }) {
+
+interface Props {
+  name: string;
+  redirectTo?: string;
+}
+
+export function DeleteRepositoryButton({ name, redirectTo }: Props) {
   const [deleteRepository, request] = useDeleteRepositoryMutation();
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -18,8 +26,11 @@ export function DeleteRepositoryButton({ name }: { name: string }) {
         payload: ['Repository settings queued for deletion'],
       });
       setShowModal(false);
+      if (redirectTo) {
+        navigate(redirectTo);
+      }
     }
-  }, [request.isSuccess]);
+  }, [request.isSuccess, redirectTo, navigate]);
 
   const onConfirm = useCallback(() => {
     deleteRepository({ name });

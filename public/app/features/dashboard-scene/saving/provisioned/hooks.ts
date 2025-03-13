@@ -33,7 +33,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
   const sourcePath = annotations?.[AnnoKeySourcePath];
   const repositoryConfig = useConfig({ folderUid: meta.folderUid, managerKind, managerIdentity });
   const repository = repositoryConfig?.spec;
-  const random = Chance(1);
+  const random = Chance();
   const timestamp = `${dateTime().format('YYYY-MM-DD')}-${random.string({ length: 5, alpha: true })}`;
 
   // Get folder data to retrieve the folder path
