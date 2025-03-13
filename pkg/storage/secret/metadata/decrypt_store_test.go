@@ -308,7 +308,9 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	require.NoError(t, err)
 
 	// Initialize the decrypt storage
-	decryptSvc, err := ProvideDecryptStorage(db, cfg, features, keeperService, svStorage, allowList)
+	decryptAllowList := &mockAllowList{allowList: allowList}
+
+	decryptSvc, err := ProvideDecryptStorage(db, cfg, features, keeperService, svStorage, decryptAllowList)
 	require.NoError(t, err)
 
 	return decryptSvc.(*decryptStorage), svStorage
@@ -342,4 +344,12 @@ func createSecureValue(ctx context.Context, t *testing.T, db contracts.SecureVal
 	t.Cleanup(func() {
 		require.NoError(t, db.Delete(ctx, xkube.Namespace(sv.Namespace), sv.Name))
 	})
+}
+
+type mockAllowList struct {
+	allowList map[string]struct{}
+}
+
+func (m *mockAllowList) AllowList() map[string]struct{} {
+	return m.allowList
 }
