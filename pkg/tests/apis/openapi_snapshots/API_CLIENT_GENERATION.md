@@ -5,7 +5,7 @@ This folder contains a rendered OpenAPI file for each group/version. The “real
 To show the steps to follow, we are going to work on adding an API client to create a new dashboard. Just adapt the following guide to your use case.
 
 ### 1. Generate an OpenAPI snapshot
-First, check if the `group` and the `version` are already created in [openapi_test.go](https://github.com/grafana/grafana/blob/main/pkg/tests/apis/openapi_test.go). 
+First, check if the `group` and the `version` are already present in [openapi_test.go](/pkg/tests/apis/openapi_test.go). If so, move on to the next step.
 <br/> If you need to add a new block, you can check for the right `group` and `version` in the backend API call that you want to replicate in the frontend.
 
 ```jsx
