@@ -347,17 +347,14 @@ export interface BuilderQueryEditorOperator {
   value: BuilderQueryEditorOperatorType;
 }
 
-export interface BuilderQueryEditorOperatorExpression {
+export interface BuilderQueryEditorWhereExpression {
   operator: BuilderQueryEditorOperator;
   property: BuilderQueryEditorProperty;
   type: BuilderQueryEditorExpressionType;
 }
 
 export interface BuilderQueryEditorWhereArrayExpression {
-  expressions: Array<(BuilderQueryEditorOperatorExpression | {
-      expressions: Array<BuilderQueryEditorOperatorExpression>;
-      type: BuilderQueryEditorExpressionType;
-    })>;
+  expressions: Array<BuilderQueryEditorWhereExpression>;
   type: BuilderQueryEditorExpressionType;
 }
 

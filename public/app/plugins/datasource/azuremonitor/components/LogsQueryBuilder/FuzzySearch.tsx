@@ -6,7 +6,7 @@ import { Button, Input, Select } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
-  BuilderQueryEditorOperatorExpression,
+  BuilderQueryEditorWhereExpression,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
@@ -90,7 +90,7 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
         updatedBuilderQuery.where.expressions &&
         Array.isArray(updatedBuilderQuery.where.expressions)
       ) {
-        const isOperatorExpression = (exp: any): exp is BuilderQueryEditorOperatorExpression => {
+        const isOperatorExpression = (exp: BuilderQueryEditorWhereExpression) => {
           return exp?.type === BuilderQueryEditorExpressionType.Operator && 'operator' in exp && 'property' in exp;
         };
 
@@ -125,7 +125,7 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
     }
   };
 
-  const onClearFuzzySearch = () => {
+  const onDeleteFuzzySearch = () => {
     setSearchTerm('');
     setSelectedColumn('');
     setIsOpen(false);
@@ -137,7 +137,7 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
         updatedBuilderQuery.where = { expressions: [], type: BuilderQueryEditorExpressionType.And };
       }
 
-      let updatedWhereExpressions: BuilderQueryEditorOperatorExpression[] = updatedBuilderQuery.where.expressions
+      let updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = updatedBuilderQuery.where.expressions
         .filter(isOperatorExpression)
         .filter((condition) => condition.operator?.name !== 'has');
 
@@ -187,7 +187,7 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
                   onChange={(e) => handleChange(searchTerm ?? '', e.value ?? '')}
                   width="auto"
                 />
-                <Button variant="secondary" icon="times" onClick={onClearFuzzySearch} />
+                <Button variant="secondary" icon="times" onClick={onDeleteFuzzySearch} />
               </>
             ) : (
               <></>

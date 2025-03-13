@@ -73,22 +73,13 @@ export class AzureMonitorKustoQueryParser {
       validFilters.forEach((filter) => whereConditions.add(filter));
     }
 
-    if (where && where.expressions && Array.isArray(where.expressions)) {
+    if (where?.expressions?.length) {
       where.expressions.forEach((condition) => {
-        if ('expressions' in condition) {
-          this.appendWhere(selectedColumns, filters, datetimeColumn, shouldApplyTimeFilter, columns, parts, {
-            type: condition.type,
-            expressions: condition.expressions,
-          });
-        } else if (
-          condition.type === BuilderQueryEditorExpressionType.Operator &&
-          condition.operator &&
-          condition.property
-        ) {
+        if (condition.type === BuilderQueryEditorExpressionType.Operator) {
           const operatorName = condition.operator?.name;
           let operatorValue = String(condition.operator?.value).trim();
           const columnName = condition.property?.name;
-
+    
           if (operatorName && operatorValue && columnName) {
             if (
               (operatorValue.startsWith("'") && operatorValue.endsWith("'")) ||
@@ -96,16 +87,16 @@ export class AzureMonitorKustoQueryParser {
             ) {
               operatorValue = operatorValue.slice(1, -1);
             }
-
+    
             const newCondition = `${columnName} ${operatorName} '${operatorValue}'`;
-
+    
             if (!whereConditions.has(newCondition)) {
               whereConditions.add(newCondition);
             }
           }
         }
       });
-    }
+    }    
 
     if (whereConditions.size > 0) {
       parts.push(`where ${Array.from(whereConditions).join(' and ')}`);

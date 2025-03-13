@@ -259,8 +259,8 @@ func NewBuilderQueryEditorColumnsExpression() *BuilderQueryEditorColumnsExpressi
 }
 
 type BuilderQueryEditorWhereArrayExpression struct {
-	Expressions []any                            `json:"expressions"`
-	Type        BuilderQueryEditorExpressionType `json:"type"`
+	Expressions []BuilderQueryEditorWhereExpression `json:"expressions"`
+	Type        BuilderQueryEditorExpressionType    `json:"type"`
 }
 
 // NewBuilderQueryEditorWhereArrayExpression creates a new BuilderQueryEditorWhereArrayExpression object.
@@ -268,15 +268,15 @@ func NewBuilderQueryEditorWhereArrayExpression() *BuilderQueryEditorWhereArrayEx
 	return &BuilderQueryEditorWhereArrayExpression{}
 }
 
-type BuilderQueryEditorOperatorExpression struct {
+type BuilderQueryEditorWhereExpression struct {
 	Property BuilderQueryEditorProperty       `json:"property"`
 	Operator BuilderQueryEditorOperator       `json:"operator"`
 	Type     BuilderQueryEditorExpressionType `json:"type"`
 }
 
-// NewBuilderQueryEditorOperatorExpression creates a new BuilderQueryEditorOperatorExpression object.
-func NewBuilderQueryEditorOperatorExpression() *BuilderQueryEditorOperatorExpression {
-	return &BuilderQueryEditorOperatorExpression{
+// NewBuilderQueryEditorWhereExpression creates a new BuilderQueryEditorWhereExpression object.
+func NewBuilderQueryEditorWhereExpression() *BuilderQueryEditorWhereExpression {
+	return &BuilderQueryEditorWhereExpression{
 		Property: *NewBuilderQueryEditorProperty(),
 		Operator: *NewBuilderQueryEditorOperator(),
 	}
@@ -310,16 +310,6 @@ type SelectableValue struct {
 // NewSelectableValue creates a new SelectableValue object.
 func NewSelectableValue() *SelectableValue {
 	return &SelectableValue{}
-}
-
-type BuilderQueryEditorWhereExpression struct {
-	Expressions []BuilderQueryEditorOperatorExpression `json:"expressions"`
-	Type        BuilderQueryEditorExpressionType       `json:"type"`
-}
-
-// NewBuilderQueryEditorWhereExpression creates a new BuilderQueryEditorWhereExpression object.
-func NewBuilderQueryEditorWhereExpression() *BuilderQueryEditorWhereExpression {
-	return &BuilderQueryEditorWhereExpression{}
 }
 
 type BuilderQueryEditorReduceExpressionArray struct {

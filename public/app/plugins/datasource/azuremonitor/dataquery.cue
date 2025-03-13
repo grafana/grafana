@@ -198,19 +198,14 @@ composableKinds: DataQuery: {
 					labelValue?: string
 				} @cuetsy(kind="interface")
 
-				#BuilderQueryEditorOperatorExpression: {
+				#BuilderQueryEditorWhereExpression: {
 					property: #BuilderQueryEditorProperty
 					operator: #BuilderQueryEditorOperator
 					type: #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 
-				#BuilderQueryEditorWhereExpression: {
-					expressions: [...#BuilderQueryEditorOperatorExpression]
-					type: #BuilderQueryEditorExpressionType
-				}
-
 				#BuilderQueryEditorWhereArrayExpression: {
-					expressions: [...(#BuilderQueryEditorOperatorExpression | #BuilderQueryEditorWhereExpression)] 
+					expressions: [...#BuilderQueryEditorWhereExpression]
 					type: #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 

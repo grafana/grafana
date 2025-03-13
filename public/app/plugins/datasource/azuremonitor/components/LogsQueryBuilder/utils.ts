@@ -8,7 +8,7 @@ import {
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorOperatorType,
   BuilderQueryEditorReduceExpression,
-  BuilderQueryEditorOperatorExpression,
+  BuilderQueryEditorWhereExpression,
 } from '../../dataquery.gen';
 import { QueryEditorPropertyType } from '../../types';
 
@@ -228,7 +228,7 @@ export const getAggregations = (reduceExpressions: BuilderQueryEditorReduceExpre
     .join(', ');
 };
 
-export const getFilters = (whereExpressions: any[] = []) => {
+export const getFilters = (whereExpressions: BuilderQueryEditorWhereExpression[] = []) => {
   return whereExpressions
     .map((exp) => {
       if ('property' in exp && exp.property?.name && exp.operator?.name && exp.operator?.value !== undefined) {
@@ -243,11 +243,11 @@ export const getFilters = (whereExpressions: any[] = []) => {
     .join(' and ');
 };
 
-export const isOperatorExpression = (exp: any): exp is BuilderQueryEditorOperatorExpression => {
+export const isOperatorExpression = (exp: BuilderQueryEditorWhereExpression) => {
   return exp?.type === BuilderQueryEditorExpressionType.Operator && 'operator' in exp && 'property' in exp;
 };
 
-export const removeExtraQuotes = (value: any): string => {
+export const removeExtraQuotes = (value: string): string => {
   let strValue = String(value).trim();
   if ((strValue.startsWith("'") && strValue.endsWith("'")) || (strValue.startsWith('"') && strValue.endsWith('"'))) {
     return strValue.slice(1, -1);

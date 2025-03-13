@@ -7,8 +7,8 @@ import { Button, Input, Label, Select, useStyles2 } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
-  BuilderQueryEditorOperatorExpression,
   BuilderQueryEditorPropertyType,
+  BuilderQueryEditorWhereExpression,
   BuilderQueryExpression,
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
@@ -65,7 +65,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         ?.map((exp) => ({
           column: exp.property?.name || '',
           operator: exp.operator?.name || '==',
-          value: removeExtraQuotes(exp.operator?.value ?? ''),
+          value: removeExtraQuotes(String(exp.operator?.value) ?? ''),
         })) || []
     );
   });
@@ -99,7 +99,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         .map((exp) => ({
           column: exp.property?.name || '',
           operator: exp.operator?.name || '==',
-          value: removeExtraQuotes(exp.operator?.value ?? ''),
+          value: removeExtraQuotes(String(exp.operator?.value) ?? ''),
         }));
 
       setFilters(filteredExpressions);
@@ -131,7 +131,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     setFilters(updatedFilters);
 
     if (builderQuery?.where?.expressions) {
-      let updatedWhereExpressions: BuilderQueryEditorOperatorExpression[] = [];
+      let updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = [];
 
       if (updatedFilters.length > 0) {
         updatedWhereExpressions = updatedFilters.map((filter) => ({
@@ -174,7 +174,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     setFilters(newFilters);
 
     if (builderQuery?.where?.expressions) {
-      let updatedWhereExpressions: BuilderQueryEditorOperatorExpression[] = [];
+      let updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = [];
 
       if (newFilters.length > 0) {
         updatedWhereExpressions = newFilters.map((filter) => ({
