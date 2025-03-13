@@ -29,11 +29,11 @@ type JobQueue interface {
 
 type JobProgressRecorder interface {
 	Record(ctx context.Context, result JobResourceResult)
-	SetMessage(msg string)
-	GetMessage() string
+	SetFinalMessage(ctx context.Context, msg string)
+	SetMessage(ctx context.Context, msg string)
 	SetRef(ref string)
 	GetRef() string
-	SetTotal(total int)
+	SetTotal(ctx context.Context, total int)
 	TooManyErrors() error
 	Complete(ctx context.Context, err error) provisioning.JobStatus
 }

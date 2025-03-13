@@ -16,7 +16,7 @@ import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
 import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
 import { useRepositoryList } from './hooks';
-import { checkSyncSettings } from './utils';
+import { checkSyncSettings } from './utils/checkSyncSettings';
 
 const appEvents = getAppEvents();
 

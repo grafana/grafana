@@ -1,9 +1,12 @@
-import { Combobox, Spinner } from '@grafana/ui';
-import { ComboboxBaseProps } from '@grafana/ui/src/components/Combobox/Combobox';
+import { Combobox, ComboboxOption, Spinner } from '@grafana/ui';
 
 import { useListRepositoryQuery } from './api';
 
-export function RepositorySelect(props: Pick<ComboboxBaseProps<string>, 'value' | 'onChange'>) {
+interface Props {
+  value: string;
+  onChange: (value: ComboboxOption) => void;
+}
+export function RepositorySelect(props: Props) {
   const listQuery = useListRepositoryQuery({});
 
   if (listQuery.isLoading) {

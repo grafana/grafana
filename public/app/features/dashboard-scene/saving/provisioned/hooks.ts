@@ -6,6 +6,8 @@ import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'a
 import { useGetResourceRepository, useRepositoryList } from 'app/features/provisioning/hooks';
 import { DashboardMeta } from 'app/types';
 
+import { useGetFolderQuery } from '../../../folders/api';
+
 import { getDefaultWorkflow } from './defaults';
 
 interface UseDefaultValuesParams {
@@ -29,16 +31,29 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
   const sourcePath = annotations?.[AnnoKeySourcePath];
-
   const repositoryConfig = useConfig({ folderUid: meta.folderUid, managerKind, managerIdentity });
   const repository = repositoryConfig?.spec;
   const random = Chance(1);
   const timestamp = `${dateTime().format('YYYY-MM-DD')}-${random.string({ length: 5, alpha: true })}`;
 
+  // Get folder data to retrieve the folder path
+  const folderQuery = useGetFolderQuery(meta.folderUid ? { name: meta.folderUid } : skipToken);
+  let dashboardPath = generatePath(timestamp, sourcePath, meta.slug);
+
+  if (meta.folderUid) {
+    const folderPath = folderQuery.data?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
+    if (folderPath) {
+      dashboardPath = `${folderPath}/${dashboardPath}`;
+    }
+  }
+  if (folderQuery.isLoading || !repositoryConfig) {
+    return null;
+  }
+
   return {
     values: {
       ref: `dashboard/${timestamp}`,
-      path: generatePath(timestamp, sourcePath, meta.slug),
+      path: dashboardPath,
       repo: managerIdentity || repositoryConfig?.metadata?.name || '',
       comment: '',
       folder: {
@@ -49,7 +64,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
       description: defaultDescription ?? '',
       workflow: getDefaultWorkflow(repository),
     },
-    isNew: !managerIdentity,
+    isNew: !meta.k8s?.name,
     repositoryConfig: repository,
     isGitHub: repository?.type === 'github',
   };

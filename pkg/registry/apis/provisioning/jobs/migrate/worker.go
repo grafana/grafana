@@ -92,14 +92,14 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	)
 
 	isFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus)
-	progress.SetTotal(10) // will show a progress bar
+	progress.SetTotal(ctx, 10) // will show a progress bar
 	if repo.Config().Spec.GitHub != nil {
-		progress.SetMessage("clone " + repo.Config().Spec.GitHub.URL)
+		progress.SetMessage(ctx, "clone "+repo.Config().Spec.GitHub.URL)
 		reader, writer := io.Pipe()
 		go func() {
 			scanner := bufio.NewScanner(reader)
 			for scanner.Scan() {
-				progress.SetMessage(scanner.Text())
+				progress.SetMessage(ctx, scanner.Text())
 			}
 		}()
 
@@ -118,22 +118,6 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 	}
 
-	tree, err := rw.ReadTree(ctx, "")
-	if err != nil {
-		return fmt.Errorf("unable to read current tree: %w", err)
-	}
-
-	if true { // configurable?  can we skip if the repo is currently empty?
-		for _, v := range tree {
-			if v.Blob && !resources.ShouldIgnorePath(v.Path) {
-				err = rw.Delete(ctx, v.Path, "", "initial cleanup")
-				if err != nil {
-					return fmt.Errorf("initial cleanup error: %w", err)
-				}
-			}
-		}
-	}
-
 	dynamicClient, _, err := w.clients.New(repo.Config().Namespace)
 	if err != nil {
 		return fmt.Errorf("error getting client: %w", err)
@@ -150,7 +134,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	if options.History {
-		progress.SetMessage("loading users")
+		progress.SetMessage(ctx, "loading users")
 		err = worker.loadUsers(ctx)
 		if err != nil {
 			return fmt.Errorf("error loading users: %w", err)
@@ -158,18 +142,19 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	if isFromLegacy {
-		progress.SetMessage("exporting folders")
+		progress.SetMessage(ctx, "exporting legacy folders")
 		err = worker.loadFolders(ctx)
 		if err != nil {
 			return err
 		}
 
-		progress.SetMessage("exporting resources")
+		progress.SetMessage(ctx, "exporting legacy resources")
 		err = worker.loadResources(ctx)
 		if err != nil {
 			return err
 		}
 	} else {
+		progress.SetMessage(ctx, "exporting resources")
 		err = w.exportWorker.Process(ctx, rw, provisioning.Job{
 			Spec: provisioning.JobSpec{
 				Push: &provisioning.ExportJobOptions{
@@ -182,13 +167,14 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
+	logger := logging.FromContext(ctx)
 	if buffered != nil {
-		progress.SetMessage("pushing changes")
+		progress.SetMessage(ctx, "pushing changes")
 		reader, writer := io.Pipe()
 		go func() {
 			scanner := bufio.NewScanner(reader)
 			for scanner.Scan() {
-				progress.SetMessage(scanner.Text())
+				logger.Info("push output", "text", scanner.Text())
 			}
 		}()
 
@@ -197,17 +183,15 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	// Clear unified and allow writing
 	if isFromLegacy {
+		progress.SetMessage(ctx, "resetting unified storage")
 		if err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus); err != nil {
 			return fmt.Errorf("unable to reset unified storage %w", err)
 		}
 	}
 
-	// enable sync (won't be saved)
-	rw.Config().Spec.Sync.Enabled = true
-
 	// Delegate the import to a sync (from the already checked out go-git repository!)
+	progress.SetMessage(ctx, "pulling resources")
 	err = w.syncWorker.Process(ctx, rw, provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Pull: &provisioning.SyncJobOptions{
@@ -216,11 +200,13 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		},
 	}, progress)
 	if err != nil && isFromLegacy { // this will have an error when too many errors exist
+		progress.SetMessage(ctx, "error importing resources, reverting")
 		if e2 := stopReadingUnifiedStorage(ctx, w.storageStatus); e2 != nil {
 			logger := logging.FromContext(ctx)
 			logger.Warn("error trying to revert dual write settings after an error", "err", err)
 		}
 	}
+
 	return err
 }
 

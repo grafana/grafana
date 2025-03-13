@@ -126,6 +126,13 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 			"must enter a path to local file"))
 	}
 
+	// Check if it is valid
+	_, err := r.resolver.LocalPath(cfg.Path)
+	if err != nil {
+		fields = append(fields, field.Invalid(field.NewPath("spec", "local", "path"),
+			cfg.Path, err.Error()))
+	}
+
 	return fields
 }
 
