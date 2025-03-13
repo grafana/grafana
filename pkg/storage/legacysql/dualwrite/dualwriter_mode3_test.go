@@ -256,6 +256,16 @@ func TestMode3_Delete(t *testing.T) {
 				},
 				wantErr: true,
 			},
+			{
+				name: "should return an error when deleting an object in the LegacyStorage fails",
+				setupLegacyFn: func(m *mock.Mock, input string) {
+					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, apierrors.NewInternalError(errors.New("error")))
+				},
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Panic("i should not be called")
+				},
+				wantErr: true,
+			},
 		}
 
 	name := "foo"
