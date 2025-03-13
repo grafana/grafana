@@ -134,21 +134,15 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData, repo
         />
 
         {state.disabled.map((action) => (
-          <Box paddingLeft={2} paddingRight={2} key={`${action.target}-${action.operation}`}>
-            <div style={{ pointerEvents: 'auto' }}>
-              <div style={{ pointerEvents: 'none' }}>
-                <Card disabled={true} tabIndex={-1}>
-                  <Card.Heading>
-                    <Stack direction="row" alignItems="center" gap={2}>
-                      <Text color="secondary">{action.label}</Text>
-                      <Badge color="blue" text="Not available" icon="info" />
-                    </Stack>
-                  </Card.Heading>
-                  <Card.Description>{action.disabledReason ?? action.description}</Card.Description>
-                </Card>
-              </div>
-            </div>
-          </Box>
+           <Card disabled={true} key={`${action.target}-${action.operation}`}>
+            <Card.Heading>
+              <Stack direction="row" alignItems="center" gap={2}>
+                <Text color="secondary">{action.label}</Text>
+                <Badge color="blue" text="Not available" icon="info" />
+              </Stack>
+            </Card.Heading>
+            <Card.Description>{action.disabledReason ?? action.description}</Card.Description>
+          </Card>
         ))}
 
         {/* Add migration options */}
