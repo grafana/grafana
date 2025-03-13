@@ -187,13 +187,12 @@ func (d *Debouncer[T]) SetMaxWait(maxWait time.Duration) {
 func (d *Debouncer[T]) processValue(value T, processFunc ProcessFunc[T]) {
 	key := d.opts.KeyFunc(value)
 	d.debouncersMu.Lock()
-	defer d.debouncersMu.Unlock()
-
 	debouncer, ok := d.debouncers[key]
 	if !ok {
 		debouncer = newKeyDebouncer[T](d.opts.MinWait, d.opts.MaxWait)
 		d.debouncers[key] = debouncer
 	}
+	d.debouncersMu.Unlock()
 
 	wrappedProcessFunc := func(v T) {
 		d.processWithMetrics(d.ctx, v, processFunc)
