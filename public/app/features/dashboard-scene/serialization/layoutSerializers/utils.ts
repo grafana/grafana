@@ -219,5 +219,6 @@ export function getConditionalRendering(item: RowsLayoutRowKind | ResponsiveGrid
   if (rootGroup && !(rootGroup instanceof ConditionalRenderingGroup)) {
     throw new Error(`Conditional rendering must always start with a root group`);
   }
+
   return new ConditionalRendering({ rootGroup: rootGroup });
 }

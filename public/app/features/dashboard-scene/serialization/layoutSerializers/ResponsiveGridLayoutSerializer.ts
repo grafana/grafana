@@ -28,13 +28,18 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
           const layoutItem: ResponsiveGridLayoutItemKind = {
             kind: 'ResponsiveGridLayoutItem',
             spec: {
-              conditionalRendering: child.state.conditionalRendering?.serialize(),
               element: {
                 kind: 'ElementReference',
                 name: elementKey,
               },
             },
           };
+
+          const conditionalRenderingRootGroup = child.state.conditionalRendering?.serialize();
+          // Only serialize the conditional rendering if it has items
+          if (conditionalRenderingRootGroup?.spec.items.length) {
+            layoutItem.spec.conditionalRendering = conditionalRenderingRootGroup;
+          }
 
           if (child.state.variableName) {
             layoutItem.spec.repeat = {

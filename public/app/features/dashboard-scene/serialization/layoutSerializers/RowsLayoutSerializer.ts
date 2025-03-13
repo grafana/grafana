@@ -25,9 +25,14 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
               title: row.state.title,
               collapsed: row.state.isCollapsed ?? false,
               layout: layout,
-              conditionalRendering: row.state.conditionalRendering?.serialize(),
             },
           };
+
+          const conditionalRenderingRootGroup = row.state.conditionalRendering?.serialize();
+          // Only serialize the conditional rendering if it has items
+          if (conditionalRenderingRootGroup?.spec.items.length) {
+            rowKind.spec.conditionalRendering = conditionalRenderingRootGroup;
+          }
 
           if (row.state.$behaviors) {
             for (const behavior of row.state.$behaviors) {
