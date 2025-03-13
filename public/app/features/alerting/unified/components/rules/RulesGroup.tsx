@@ -165,7 +165,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           key="rule-group-edit"
           icon="pen"
           tooltip={t('alerting.rule-group-action.edit', 'edit rule group')}
-          to={groups.editPageLink(rulesSource.uid, namespace.name, group.name)}
+          to={groups.editPageLink(rulesSource.uid, namespace.name, group.name, { includeReturnTo: true })}
         />
       );
     }

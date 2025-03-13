@@ -17,13 +17,7 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';
 import { hashRulerRule } from '../../utils/rule-id';
-import {
-  getNumberEvaluationsToStartAlerting,
-  getRuleName,
-  isAlertingRulerRule,
-  isGrafanaOrDataSourceRecordingRule,
-  isGrafanaRulerRule,
-} from '../../utils/rules';
+import { getNumberEvaluationsToStartAlerting, getRuleName, rulerRuleType } from '../../utils/rules';
 
 interface DraggableRulesTableProps {
   rules: RulerRuleDTO[];
@@ -106,23 +100,15 @@ interface DraggableListItemProps extends React.HTMLAttributes<HTMLDivElement> {
   rule: RulerRuleDTO;
   groupInterval: string;
   isClone?: boolean;
-  isDragging?: boolean;
 }
 
-const DraggableListItem = ({
-  provided,
-  rule,
-  groupInterval,
-  isClone = false,
-  isDragging = false,
-}: DraggableListItemProps) => {
-  // @TODO does this work with Grafana-managed recording rules too? Double check that.
+const DraggableListItem = ({ provided, rule, groupInterval, isClone = false }: DraggableListItemProps) => {
+  const styles = useStyles2(getStyles);
   const ruleName = getRuleName(rule);
-  const pendingPeriod = isAlertingRulerRule(rule) || isGrafanaRulerRule(rule) ? rule.for : null;
+  const pendingPeriod = rulerRuleType.any.alertingRule(rule) ? rule.for : null;
   const numberEvaluationsToStartAlerting = getNumberEvaluationsToStartAlerting(pendingPeriod ?? '0s', groupInterval);
-  const isRecordingRule = isGrafanaOrDataSourceRecordingRule(rule);
+  const isRecordingRule = rulerRuleType.any.recordingRule(rule);
 
-  // TODO Bring back isClone and isDraggin styles
   return (
     <ListItem
       dragHandle={<Icon name="draggabledots" />}
@@ -136,7 +122,7 @@ const DraggableListItem = ({
         )
       }
       data-testid="reorder-alert-rule"
-      // className={cx(styles.listItem, isClone && 'isClone', isDragging && 'isDragging')}
+      className={cx(styles.listItem, { [styles.listItemClone]: isClone })}
       ref={provided.innerRef}
       {...provided.draggableProps}
       {...provided.dragHandleProps}
@@ -178,6 +164,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:nth-child(even)': {
       background: theme.colors.background.secondary,
     },
+  }),
+  listItemClone: css({
+    border: `solid 1px ${theme.colors.primary.shade}`,
   }),
   listHeader: css({
     fontWeight: theme.typography.fontWeightBold,

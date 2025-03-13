@@ -32,6 +32,9 @@ export interface UpdateGroupDelta {
   ruleSwaps?: SwapOperation[];
 }
 
+/**
+ * Update or move an existing rule group. Supports renaming a group and moving to a different namespace
+ */
 export function useUpdateRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();

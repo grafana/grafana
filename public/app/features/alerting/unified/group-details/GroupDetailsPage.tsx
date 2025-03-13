@@ -20,7 +20,7 @@ import { useRulesAccess } from '../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { makeFolderLink, stringifyErrorLike } from '../utils/misc';
 import { createListFilterLink, groups } from '../utils/navigation';
-import { calcRuleEvalsToStartAlerting, getRuleName, isAlertingRulerRule, isGrafanaAlertingRule } from '../utils/rules';
+import { calcRuleEvalsToStartAlerting, getRuleName, rulerRuleType } from '../utils/rules';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
 
 import { Title } from './Title';
@@ -169,7 +169,11 @@ function GroupActions({ dsFeatures, namespaceId, groupName, folder }: GroupActio
           <Trans i18nKey="alerting.group-details.export">Export</Trans>
         </Button>
       )}
-      <LinkButton icon="pen" href={groups.editPageLink(dsFeatures.uid, namespaceId, groupName)} variant="secondary">
+      <LinkButton
+        icon="pen"
+        href={groups.editPageLink(dsFeatures.uid, namespaceId, groupName, { includeReturnTo: true })}
+        variant="secondary"
+      >
         <Trans i18nKey="alerting.group-details.edit">Edit</Trans>
       </LinkButton>
       {folder && isExporting && (
@@ -290,7 +294,7 @@ function rulerRuleGroupToRuleGroupDetails(group: RulerRuleGroupDTO): RuleGroupDe
     rules: group.rules.map<RuleDetails>((rule) => {
       const name = getRuleName(rule);
 
-      if (isAlertingRulerRule(rule) || isGrafanaAlertingRule(rule)) {
+      if (rulerRuleType.any.alertingRule(rule)) {
         return {
           name,
           type: 'alerting',
