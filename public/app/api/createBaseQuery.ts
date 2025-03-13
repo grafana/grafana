@@ -8,7 +8,13 @@ interface RequestOptions extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
 }
 
-export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
+interface CreateBaseQueryOptions {
+  baseURL: string;
+  // Custom error handler for all endpoints
+  globalManageError?: RequestOptions['manageError'];
+}
+
+export function createBaseQuery({ baseURL, globalManageError }: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
       const { data: responseData, ...meta } = await lastValueFrom(
@@ -23,6 +29,8 @@ export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<R
     } catch (error) {
       if (requestOptions.manageError) {
         return requestOptions.manageError(error);
+      } else if (globalManageError) {
+        return globalManageError(error);
       } else {
         return handleRequestError(error);
       }
