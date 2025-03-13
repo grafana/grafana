@@ -118,6 +118,7 @@ export const LogsPanel = ({
           showControls={showControls}
           showTime={showTime}
           sortOrder={sortOrder}
+          syntaxHighlighting={true}
           timeRange={data.timeRange}
           timeZone={timeZone}
           wrapLogMessage={wrapLogMessage}

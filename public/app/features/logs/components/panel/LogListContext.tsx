@@ -9,32 +9,19 @@ import {
   useState,
 } from 'react';
 
-import { CoreApp, LogRowModel, shallowCompare } from '@grafana/data';
+import { CoreApp, LogRowModel, LogsSortOrder, shallowCompare } from '@grafana/data';
 import { PopoverContent } from '@grafana/ui';
 
 import { GetRowContextQueryFn } from './LogLineMenu';
 
-export interface LogListContextData {
-  app: CoreApp;
-  children?: ReactNode;
-  displayedFields: string[];
-  getRowContextQuery?: GetRowContextQueryFn;
-  logSupportsContext?: (row: LogRowModel) => boolean;
-  onPermalinkClick?: (row: LogRowModel) => Promise<void>;
-  onPinLine?: (row: LogRowModel) => void;
-  onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
-  onUnpinLine?: (row: LogRowModel) => void;
-  pinLineButtonTooltipTitle?: PopoverContent;
-  pinnedLogs?: string[];
+export interface LogListContextData extends Props {
   setDisplayedFields: (displayedFields: string[]) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
   setSyntaxHighlighting: (syntaxHighlighting: boolean) => void;
   setShowTime: (showTime: boolean) => void;
+  setSortOrder: (sortOrder: LogsSortOrder) => void;
   setWrapLogMessage: (showTime: boolean) => void;
-  showTime: boolean;
-  syntaxHighlighting: boolean;
-  wrapLogMessage: boolean;
 }
 
 export const LogListContext = createContext<LogListContextData>({
@@ -44,9 +31,11 @@ export const LogListContext = createContext<LogListContextData>({
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setShowTime: () => {},
+  setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
   setWrapLogMessage: () => {},
   showTime: true,
+  sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
   wrapLogMessage: false,
 });
@@ -67,14 +56,34 @@ export const useLogIsPinned = (log: LogRowModel) => {
 
 type LogListState = Pick<
   LogListContextData,
-  'displayedFields' | 'pinnedLogs' | 'showTime' | 'syntaxHighlighting' | 'wrapLogMessage'
+  'displayedFields' | 'pinnedLogs' | 'showTime' | 'sortOrder' | 'syntaxHighlighting' | 'wrapLogMessage'
 >;
-export const LogListContextProvider = (props: LogListContextData) => {
+
+export interface Props {
+  app: CoreApp;
+  children?: ReactNode;
+  displayedFields: string[];
+  getRowContextQuery?: GetRowContextQueryFn;
+  logSupportsContext?: (row: LogRowModel) => boolean;
+  onPermalinkClick?: (row: LogRowModel) => Promise<void>;
+  onPinLine?: (row: LogRowModel) => void;
+  onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
+  onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
+  pinnedLogs?: string[];
+  showTime: boolean;
+  sortOrder: LogsSortOrder;
+  syntaxHighlighting: boolean;
+  wrapLogMessage: boolean;
+}
+
+export const LogListContextProvider = (props: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
     displayedFields: props.displayedFields,
     pinnedLogs: props.pinnedLogs,
     showTime: props.showTime,
-    syntaxHighlighting: true,
+    sortOrder: props.sortOrder,
+    syntaxHighlighting: props.syntaxHighlighting,
     wrapLogMessage: props.wrapLogMessage,
   });
 
@@ -124,6 +133,13 @@ export const LogListContextProvider = (props: LogListContextData) => {
     [logListState]
   );
 
+  const setSortOrder = useCallback(
+    (sortOrder: LogsSortOrder) => {
+      setLogListState({ ...logListState, sortOrder });
+    },
+    [logListState]
+  );
+
   const setWrapLogMessage = useCallback(
     (wrapLogMessage: boolean) => {
       setLogListState({ ...logListState, wrapLogMessage });
@@ -148,9 +164,11 @@ export const LogListContextProvider = (props: LogListContextData) => {
         setLogListState,
         setPinnedLogs,
         setShowTime,
+        setSortOrder,
         setSyntaxHighlighting,
         setWrapLogMessage,
         showTime: logListState.showTime,
+        sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
         wrapLogMessage: logListState.wrapLogMessage,
       }}
