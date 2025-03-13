@@ -1,23 +1,6 @@
 import { GetRepositoryFilesResponse, GetResourceStatsResponse, RepositoryViewList } from '../api';
 
-export type Target = 'instance' | 'folder';
-export type Operation = 'pull' | 'migrate';
-
-export interface ModeOption {
-  target: Target;
-  operation: Operation;
-  label: string;
-  description: string;
-  disabledReason?: string;
-}
-
-export interface SystemState {
-  resourceCount: number;
-  fileCount: number;
-  actions: ModeOption[];
-  disabled: ModeOption[];
-  folderConnected?: boolean;
-}
+import { ModeOption, SystemState } from './types';
 
 const migrateInstance: ModeOption = {
   target: 'instance',

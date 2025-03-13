@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import {
@@ -20,8 +20,8 @@ import {
 import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from '../api';
 import { StepStatus } from '../hooks/useStepStatus';
 
-import { getState, ModeOption } from './actions';
-import { WizardFormData } from './types';
+import { getState } from './actions';
+import { ModeOption, WizardFormData } from './types';
 
 interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
@@ -134,7 +134,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
         />
 
         {state.disabled.map((action) => (
-           <Card disabled={true} key={`${action.target}-${action.operation}`}>
+          <Card disabled={true} key={`${action.target}-${action.operation}`}>
             <Card.Heading>
               <Stack direction="row" alignItems="center" gap={2}>
                 <Text color="secondary">{action.label}</Text>

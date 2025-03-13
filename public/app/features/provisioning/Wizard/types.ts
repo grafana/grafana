@@ -1,10 +1,9 @@
+import { SyncOptions } from '../api';
 import { RepositoryFormData } from '../types';
 
 export type WizardStep = 'connection' | 'bootstrap' | 'migrate' | 'pull' | 'finish';
 
 export interface MigrateFormData {
-  dashboards: string[];
-  folders: string[];
   history: boolean;
   identifier: boolean;
 }
@@ -19,3 +18,22 @@ export type ValidationResult = {
   valid: boolean;
   errors?: string[];
 };
+
+export type Target = SyncOptions['target'];
+export type Operation = 'pull' | 'migrate';
+
+export interface ModeOption {
+  target: Target;
+  operation: Operation;
+  label: string;
+  description: string;
+  disabledReason?: string;
+}
+
+export interface SystemState {
+  resourceCount: number;
+  fileCount: number;
+  actions: ModeOption[];
+  disabled: ModeOption[];
+  folderConnected?: boolean;
+}

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { Combobox, ComboboxOption, Field, Input, SecretInput, Stack } from '@grafana/ui';
 
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
 
 import { WizardFormData } from './types';
 
-const typeOptions = [
+const typeOptions: Array<ComboboxOption<'github' | 'local'>> = [
   { label: 'GitHub', value: 'github' },
   { label: 'Local', value: 'local' },
 ];
@@ -32,7 +32,7 @@ export function ConnectStep() {
         options={typeOptions}
         value={type}
         onChange={(value) => {
-          const repoType = value?.value as 'github' | 'local';
+          const repoType = value?.value;
           setValue('repository.type', repoType);
           setValue('repository.workflows', repoType === 'github' ? ['branch', 'write'] : ['write']);
         }}
