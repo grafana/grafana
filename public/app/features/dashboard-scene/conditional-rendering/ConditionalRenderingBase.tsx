@@ -56,6 +56,7 @@ export abstract class ConditionalRenderingBase<
     this.getConditionalLogicRoot().notifyChange();
   }
 }
+
 function ConditionalRenderingBaseRenderer({
   model,
 }: SceneComponentProps<ConditionalRenderingBase<ConditionalRenderingBaseState>>) {
