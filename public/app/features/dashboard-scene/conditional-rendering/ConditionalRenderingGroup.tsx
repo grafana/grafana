@@ -12,9 +12,9 @@ import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './Condi
 import { ConditionalRenderingData } from './ConditionalRenderingData';
 import { ConditionalRenderingInterval } from './ConditionalRenderingInterval';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
-import { ConditionsRenderingConditions } from './shared';
+import { ConditionalRenderingConditions } from './shared';
 
-export type GroupConditionValue = ConditionsRenderingConditions[];
+export type GroupConditionValue = ConditionalRenderingConditions[];
 export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<GroupConditionValue> {
   condition: 'and' | 'or';
 }
@@ -44,7 +44,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     this.setStateAndNotify({ condition });
   }
 
-  public addItem(item: ConditionsRenderingConditions) {
+  public addItem(item: ConditionalRenderingConditions) {
     // We don't use `setStateAndNotify` here because
     // We need to set a parent and activate the new condition before notifying the root
     this.setState({ value: [...this.state.value, item] });
@@ -114,8 +114,8 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
 
       {value.map((entry) => (
         <Fragment key={entry!.state.key}>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */}
-          <entry.Component model={entry as any} />
+          {/* @ts-expect-error */}
+          <entry.Component model={entry} />
 
           <div className={styles.entryDivider}>
             <Divider spacing={1} />

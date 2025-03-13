@@ -1,7 +1,7 @@
 import { ReactNode, useMemo } from 'react';
 
 import { PanelData, SelectableValue } from '@grafana/data';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneDataProvider, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { RadioButtonGroup, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -15,11 +15,45 @@ import { handleDeleteNonGroupCondition } from './shared';
 
 export type DataConditionValue = boolean;
 
-interface ConditionalRenderingDataState extends ConditionalRenderingBaseState<DataConditionValue> {}
+type ConditionalRenderingDataState = ConditionalRenderingBaseState<DataConditionValue>;
 
 export class ConditionalRenderingData extends ConditionalRenderingBase<ConditionalRenderingDataState> {
   public get title(): string {
     return t('dashboard.conditional-rendering.data.label', 'Data');
+  }
+
+  public constructor(state: ConditionalRenderingDataState) {
+    super(state);
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    let panelDataProviders: SceneDataProvider[] = [];
+    const item = this.getConditionalLogicRoot().parent;
+    if (item instanceof ResponsiveGridItem) {
+      const panelData = sceneGraph.getData(item.state.body);
+      if (panelData) {
+        panelDataProviders.push(panelData);
+      }
+    }
+    // extract multiple panel data from RowItem
+    if (item instanceof RowItem) {
+      const panels = item.getLayout().getVizPanels();
+      for (const panel of panels) {
+        const panelData = sceneGraph.getData(panel);
+        if (panelData) {
+          panelDataProviders.push(panelData);
+        }
+      }
+    }
+    panelDataProviders.forEach((d) => {
+      this._subs.add(
+        d.subscribeToState(() => {
+          this.getConditionalLogicRoot().notifyChange();
+        })
+      );
+    });
   }
 
   public evaluate(): boolean {
@@ -31,7 +65,6 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     }
 
     let data: PanelData[] = [];
-    let hasData = false;
 
     // get ResponsiveGridItem or RowItem
     const item = this.getConditionalLogicRoot().parent;
@@ -60,27 +93,17 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
       return false;
     }
 
-    // outer loop for PanelData[]
-    outer: for (let p = 0; p < data.length; p++) {
-      const panelData = data[p];
+    for (let panelDataIdx = 0; panelDataIdx < data.length; panelDataIdx++) {
+      const series = data[panelDataIdx]?.series ?? [];
 
-      if (!panelData?.series.length) {
-        continue outer;
-      }
-
-      // inner loop for PanelData.series
-      for (let i = 0; i < panelData.series.length; i++) {
-        // early break if any data is detected
-        if (hasData) {
-          break outer;
-        }
-        if (panelData?.series[i].length) {
-          hasData = true;
+      for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
+        if (series[seriesIdx].length > 0) {
+          return true;
         }
       }
     }
 
-    return hasData;
+    return false;
   }
 
   public render(): ReactNode {

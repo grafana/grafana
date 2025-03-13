@@ -50,6 +50,7 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     if (this.state.variableName) {
       this.performRepeat();
     }
+
     const deactivate = this.state.conditionalRendering?.activate();
 
     return () => {

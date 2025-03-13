@@ -16,6 +16,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"xorm.io/core"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -372,6 +373,11 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 		return *ss.recursiveQueriesAreSupported, nil
 	}
 	recursiveQueriesAreSupported := func() (bool, error) {
+		if ss.GetDBType() == migrator.Spanner {
+			// no need to try...
+			return false, nil
+		}
+
 		var result []int
 		if err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 			recQry := `WITH RECURSIVE cte (n) AS
