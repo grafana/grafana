@@ -1,5 +1,4 @@
 import { RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime/src/services/__mocks__/dataSourceSrv';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import {
   ExpressionDatasourceUID,
@@ -9,6 +8,8 @@ import {
 } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
+
+import { getDataSourceSrv } from '../../../__mocks__/dataSourceSrv';
 
 import {
   QueriesAndExpressionsState,
