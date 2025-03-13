@@ -379,6 +379,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "",
+        "new-ds-managed-recording-rule": "",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "",
         "provisioning": ""
       },
@@ -1005,6 +1007,9 @@
     }
   },
   "dashboard": {
+    "actions": {
+      "open-settings": ""
+    },
     "add-menu": {
       "import": "Aus Bibliothek importieren",
       "paste-panel": "Panel einfügen",
@@ -3123,7 +3128,8 @@
       "old-password-required": "Altes Passwort ist erforderlich",
       "passwords-must-match": "Passwörter müssen übereinstimmen",
       "strong-password-validation-register": "Passwort entspricht nicht den strengen Kennwortrichtlinien"
-    }
+    },
+    "change-theme": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
