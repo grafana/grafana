@@ -48,17 +48,8 @@ jobs:
           # Copy docs sources to the temporary Hugo directory
           cp -r docs/sources/* /tmp/hugo/content/docs/grafana/latest/
           
-          # Explore the container to find the correct make target
-          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && ls -la && if [ -f Makefile ]; then cat Makefile; fi"
-          
-          # Try using different make targets
-          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && make help || echo 'No help target'"
-          
-          # Try running hugo directly instead of using make
-          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && hugo --help"
-          
-          # Try building with hugo directly
-          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && hugo"
+          # Run Hugo directly to build the site
+          docker run --rm -v /tmp/hugo:/hugo grafana/docs-base:latest /bin/sh -c "cd /hugo && hugo build"
       
       - name: Setup Go
         uses: actions/setup-go@v5
