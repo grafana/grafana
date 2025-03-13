@@ -12,6 +12,7 @@ export const logsGrammar: Grammar = {
   'log-token-duration': /(?:\b|")\d+(\.\d+)?(ns|µs|ms|s|m|h|d)(?:\b|")/g,
   'log-token-string': /"(?!:)([^'"])*?"(?!:)/g,
   'log-token-number': /\b-?(0x[\dA-Fa-f]+|\d*\.?\d+([Ee]-?\d+)?)\b/g,
+  'log-token-url': /(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)/i,
 };
 
 export const generateLogGrammar = (log: LogListModel) => {

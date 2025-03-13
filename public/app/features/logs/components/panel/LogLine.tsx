@@ -193,19 +193,21 @@ export const getStyles = (theme: GrafanaTheme2) => {
         '.token.log-token-uuid': {
           color: theme.colors.success.text,
         },
+        '.token.log-token-url': {
+          color: theme.colors.primary.shade,
+        },
         '.token.log-token-key': {
           color: colors.parsedField,
-          opacity: 0.8,
+          opacity: 0.9,
           fontWeight: theme.typography.fontWeightMedium,
         },
         '.token.log-token-json-key': {
           color: colors.parsedField,
-          opacity: 0.8,
+          opacity: 0.9,
           fontWeight: theme.typography.fontWeightMedium,
         },
         '.token.log-token-label': {
           color: colors.metadata,
-          opacity: 0.9,
           fontWeight: theme.typography.fontWeightBold,
         },
       },
