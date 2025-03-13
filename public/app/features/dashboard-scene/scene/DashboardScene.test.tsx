@@ -81,7 +81,7 @@ locationUtil.initialize({
 });
 
 const worker = createWorker();
-mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
+mockResultsOfDetectChangesWorker({ hasChanges: true });
 
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
@@ -224,7 +224,7 @@ describe('DashboardScene', () => {
         const prevMeta = { ...scene.state.meta };
 
         // The worker only detects changes in the model, so the folder change should be detected anyway
-        mockResultsOfDetectChangesWorker({ hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false });
+        mockResultsOfDetectChangesWorker({ hasChanges: false });
 
         scene.setState({
           meta: {
@@ -706,7 +706,7 @@ describe('DashboardScene', () => {
     });
 
     it('A change to a variable state should set isDirty true', () => {
-      mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: true });
+      mockResultsOfDetectChangesWorker({ hasChanges: true });
       const variable = new TestVariable({ name: 'A' });
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [variable] }),
@@ -730,13 +730,10 @@ describe('DashboardScene', () => {
       scene.activate();
       scene.onEnterEditMode();
 
-      mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
+      mockResultsOfDetectChangesWorker({ hasChanges: true });
       variable.setState({ name: 'B' });
       expect(scene.state.isDirty).toBe(true);
-      mockResultsOfDetectChangesWorker(
-        // No changes, it is the same name than before comparing saving models
-        { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false }
-      );
+      mockResultsOfDetectChangesWorker({ hasChanges: false });
       variable.setState({ name: 'A' });
       expect(scene.state.isDirty).toBe(false);
     });
@@ -959,21 +956,11 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   return scene;
 }
 
-function mockResultsOfDetectChangesWorker({
-  hasChanges,
-  hasTimeChanges,
-  hasVariableValueChanges,
-}: {
-  hasChanges: boolean;
-  hasTimeChanges: boolean;
-  hasVariableValueChanges: boolean;
-}) {
+function mockResultsOfDetectChangesWorker({ hasChanges = true }) {
   jest.mocked(worker.postMessage).mockImplementationOnce(() => {
     worker.onmessage?.({
       data: {
-        hasChanges: hasChanges ?? true,
-        hasTimeChanges: hasTimeChanges ?? true,
-        hasVariableValueChanges: hasVariableValueChanges ?? true,
+        hasChanges,
       },
     } as unknown as MessageEvent);
   });
