@@ -114,7 +114,6 @@ export function BootstrapStep({ onOptionSelect, onStepUpdate, settingsData, repo
         <Controller
           name="repository.sync.target"
           control={control}
-          defaultValue={undefined}
           render={() => (
             <>
               {state.actions.map((action, index) => (
