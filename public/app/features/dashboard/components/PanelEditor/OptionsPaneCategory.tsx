@@ -162,9 +162,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: '1rem',
     fontWeight: theme.typography.fontWeightMedium,
     margin: 0,
-    height: theme.spacing(4),
-    display: 'flex',
-    alignItems: 'center',
   }),
   header: css({
     display: 'flex',
