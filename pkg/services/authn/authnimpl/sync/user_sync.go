@@ -314,13 +314,15 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	if usr.IsProvisioned {
 		s.log.Debug("User is provisioned", "id", id.ID)
 		needsConnectionCreation = false
-		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{AuthId: id.AuthID, AuthModule: id.AuthenticatedBy})
+		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
 		if err != nil {
-			s.log.Debug("Error getting auth info", "error", err)
+			s.log.Error("Error getting auth info", "error", err)
 			return err
 		}
-		if authInfo.AuthId != id.AuthID {
-			s.log.Debug("authID mistmatch", "authInfo.AuthId", authInfo.AuthId, "id.AuthID", id.AuthID)
+
+		// Validate the authID matches the identity authId and the userUniqueID
+		if authInfo.AuthId != id.AuthID || id.SAMLSession.UserUniqueID != authInfo.UserUniqueId {
+			s.log.Error("provisioned authID mistmatches identity authID", "authInfo.AuthId", authInfo.AuthId, "id.AuthID", id.AuthID)
 			return errors.New("authID mistmatch") // TODO: assign an error
 		}
 	}
