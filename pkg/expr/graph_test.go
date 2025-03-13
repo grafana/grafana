@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestServicebuildPipeLine(t *testing.T) {
@@ -234,6 +235,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 	}
 	s := Service{
 		features: featuremgmt.WithFeatures(featuremgmt.FlagExpressionParser),
+		cfg:      setting.NewCfg(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

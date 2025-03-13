@@ -536,7 +536,7 @@ const (
 	FlagLogQLScope = "logQLScope"
 
 	// FlagSqlExpressions
-	// Enables using SQL and DuckDB functions as Expressions.
+	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagNodeGraphDotLayout
@@ -835,10 +835,6 @@ const (
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 
-	// FlagUseV2DashboardsAPI
-	// Use the v2 kubernetes API in the frontend for dashboards
-	FlagUseV2DashboardsAPI = "useV2DashboardsAPI"
-
 	// FlagFeedbackButton
 	// Enables a button to send feedback from the Grafana UI
 	FlagFeedbackButton = "feedbackButton"
@@ -958,4 +954,16 @@ const (
 	// FlagAlertRuleRestore
 	// Enables the alert rule restore feature
 	FlagAlertRuleRestore = "alertRuleRestore"
+
+	// FlagGrafanaManagedRecordingRulesDatasources
+	// Enables writing to data sources for Grafana-managed recording rules.
+	FlagGrafanaManagedRecordingRulesDatasources = "grafanaManagedRecordingRulesDatasources"
+
+	// FlagInviteUserExperimental
+	// Renders invite user button along the app
+	FlagInviteUserExperimental = "inviteUserExperimental"
+
+	// FlagExtraLanguages
+	// Enables additional languages
+	FlagExtraLanguages = "extraLanguages"
 )

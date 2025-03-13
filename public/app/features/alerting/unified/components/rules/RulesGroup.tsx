@@ -13,7 +13,7 @@ import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
-import { isFederatedRuleGroup, isGrafanaRulerRule, isPluginProvidedRule } from '../../utils/rules';
+import { isFederatedRuleGroup, rulerRuleType, isPluginProvidedRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -49,7 +49,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const { hasRuler } = useHasRuler(namespace.rulesSource);
 
   const rulerRule = group.rules[0]?.rulerRule;
-  const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
+  const folderUID =
+    (rulerRule && rulerRuleType.grafana.rule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
 
   const { canEditRules } = useRulesAccess();
@@ -60,11 +61,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   // check if group has provisioned items
   const isProvisioned = group.rules.some((rule) => {
-    return isGrafanaRulerRule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
+    return rulerRuleType.grafana.rule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
   });
-  const isPluginProvided = group.rules.some((rule) => {
-    return isPluginProvidedRule(rule.rulerRule ?? rule.promRule);
-  });
+  const isPluginProvided = group.rules.some((rule) => isPluginProvidedRule(rule.rulerRule ?? rule.promRule));
 
   const canEditGroup = hasRuler && !isProvisioned && !isFederated && !isPluginProvided && canEditRules(rulesSourceName);
 

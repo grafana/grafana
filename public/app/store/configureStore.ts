@@ -11,7 +11,9 @@ import { StoreState } from 'app/types/store';
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
+import { folderAPI } from '../features/folders/api';
 import { iamApi } from '../features/iam/api/api';
+import { provisioningAPI } from '../features/provisioning/api';
 
 import { setStore } from './store';
 
@@ -41,6 +43,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
         cloudMigrationAPI.middleware,
         userPreferencesAPI.middleware,
         iamApi.middleware,
+        provisioningAPI.middleware,
+        folderAPI.middleware,
         ...extraMiddleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
