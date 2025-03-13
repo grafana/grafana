@@ -10,6 +10,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { loadDashboardFromProvisioning } from 'app/features/provisioning/dashboard';
 import { DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
@@ -123,6 +124,8 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
     if (type === 'script' && slug) {
       promise = this.loadScriptedDashboard(slug);
+    } else if (type === 'provisioning') {
+      promise = loadDashboardFromProvisioning(slug!, uid!);
       // needed for the old architecture
       // in scenes this is handled through loadSnapshot method
     } else if (type === 'snapshot' && slug) {
