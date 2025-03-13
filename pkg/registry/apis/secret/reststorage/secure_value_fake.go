@@ -113,18 +113,3 @@ func (s *fakeSecureValueMetadataStorage) List(ctx context.Context, namespace xku
 		Items: l,
 	}, nil
 }
-
-func (s *fakeSecureValueMetadataStorage) DecryptersFor(ctx context.Context, namespace xkube.Namespace, names []string) (map[string][]string, error) {
-	ns, ok := s.values[namespace.String()]
-	if !ok {
-		return nil, contracts.ErrSecureValueNotFound
-	}
-
-	decrypters := make(map[string][]string, 0)
-
-	for name, sv := range ns {
-		decrypters[name] = append(decrypters[name], sv.Spec.Decrypters...)
-	}
-
-	return decrypters, nil
-}
