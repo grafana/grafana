@@ -237,8 +237,7 @@ func (g *Group[T]) processWithMetrics(ctx context.Context, value T, processFunc 
 	defer timer.ObserveDuration()
 	g.metrics.itemsProcessedCounter.Inc()
 
-	err := processFunc(ctx, value)
-	if err != nil && g.errorHandler != nil {
+	if err := processFunc(ctx, value); err != nil {
 		g.errorHandler(value, err)
 		g.metrics.processingErrorsCounter.Inc()
 	}
