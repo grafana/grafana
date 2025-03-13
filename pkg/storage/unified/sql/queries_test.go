@@ -136,6 +136,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "single path",
 					Data: &sqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
+						},
 					},
 				},
 			},
@@ -164,6 +168,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "single path",
 					Data: &sqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
+						},
 					},
 				},
 			},
