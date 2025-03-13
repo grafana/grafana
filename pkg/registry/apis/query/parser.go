@@ -161,7 +161,6 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 
 		for _, exp := range expressions {
 			vars := exp.Command.NeedsVars()
-
 			for _, refId := range vars {
 
 				target := queryNode
