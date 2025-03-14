@@ -306,7 +306,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(event.Key)
+		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
 		if b.simulatedNetworkLatency > 0 {
 			time.Sleep(b.simulatedNetworkLatency)
 		}
@@ -360,7 +360,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(event.Key)
+		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
 		return guid, nil
 	})
 
@@ -408,7 +408,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(event.Key)
+		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
 		return guid, nil
 	})
 
@@ -457,7 +457,7 @@ func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(event.Key)
+		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
 
 		// 3. Update all resource history entries with the new UID
 		// Note: we do not update any history entries that have a deletion timestamp included. This will become
