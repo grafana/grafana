@@ -214,6 +214,10 @@
      },
      "type": "object"
     },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
+    },
     "noDataState": {
      "enum": [
       "Alerting",
@@ -1623,6 +1627,10 @@
     "metadata": {
      "$ref": "#/definitions/AlertRuleMetadata"
     },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
+    },
     "namespace_uid": {
      "type": "string"
     },
@@ -2857,6 +2865,10 @@
     "metadata": {
      "$ref": "#/definitions/AlertRuleMetadata"
     },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
+    },
     "no_data_state": {
      "enum": [
       "Alerting",
@@ -3125,6 +3137,11 @@
       "team": "sre-team-1"
      },
      "type": "object"
+    },
+    "missingSeriesEvalsToResolve": {
+     "example": 2,
+     "format": "int64",
+     "type": "integer"
     },
     "noDataState": {
      "enum": [
@@ -4791,6 +4808,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -4952,7 +4970,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"

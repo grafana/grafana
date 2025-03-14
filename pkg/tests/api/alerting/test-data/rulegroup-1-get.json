@@ -45,7 +45,8 @@
             "simplified_query_and_expressions_section": false,
             "simplified_notifications_section": false
           }
-        }
+        },
+        "missing_series_evals_to_resolve": 1
       }
     },
     {
@@ -91,7 +92,8 @@
             "simplified_query_and_expressions_section": false,
             "simplified_notifications_section": false
           }
-        }
+        },
+        "missing_series_evals_to_resolve": 2
       }
     }
   ]
