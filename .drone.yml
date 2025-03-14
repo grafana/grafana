@@ -3621,7 +3621,6 @@ clone:
   retries: 3
 depends_on:
 - main-test-backend
-- main-test-frontend
 image_pull_secrets:
 - gcr
 - gar
@@ -5211,6 +5210,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f92ef89dc0efc53fc18d29dd597eabe3e44ad2622472f424c7402752d6ae922d
+hmac: efb7a251f741df9b3497b3c09683604b25752f1f52488aff7175fff4802e8ce3
 
 ...
