@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useState, forwardRef } from 'react';
+import { useState, forwardRef, FocusEvent } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import { useThrottleFn } from 'react-use';
 
@@ -48,6 +48,13 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
       [currentColor]
     );
 
+    const handleBlur = (evt: FocusEvent<HTMLInputElement>) => {
+      // Unless the user clicked inside the color picker, close it on blur
+      if (!Boolean(evt.relatedTarget?.className?.split(' ').some((c) => /react-colorful/.test(c)))) {
+        setIsOpen(false);
+      }
+    };
+
     return (
       <ClickOutsideWrapper onClick={() => setIsOpen(false)}>
         <div className={styles.wrapper}>
@@ -66,7 +73,7 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
             onChange={setColor}
             buttonAriaLabel="Open color picker"
             onClick={() => setIsOpen(true)}
-            onBlur={() => setIsOpen(false)}
+            onBlur={(e) => handleBlur(e)}
             ref={ref}
             isClearable
           />
