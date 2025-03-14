@@ -184,7 +184,8 @@
       "rule-identifier": "",
       "rule-type": "",
       "state-error-timeout": "",
-      "state-no-data": ""
+      "state-no-data": "",
+      "target-datasource-uid": ""
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -378,6 +379,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "",
+        "new-ds-managed-recording-rule": "",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "",
         "provisioning": ""
       },
@@ -503,6 +506,10 @@
       },
       "preview": "",
       "previewCondition": ""
+    },
+    "recording-rules": {
+      "description-target-data-source": "",
+      "label-target-data-source": ""
     },
     "rule-form": {
       "evaluation": {
@@ -1000,6 +1007,9 @@
     }
   },
   "dashboard": {
+    "actions": {
+      "open-settings": ""
+    },
     "add-menu": {
       "import": "Aus Bibliothek importieren",
       "paste-panel": "Panel einfügen",
@@ -1009,6 +1019,46 @@
     "alert-rules-drawer": {
       "redirect-link": "Liste in Grafana Alerting",
       "subtitle": "Benachrichtigungsregeln im Zusammenhang mit diesem Dashboard"
+    },
+    "conditional-rendering": {
+      "data": {
+        "disable": "",
+        "enable": "",
+        "label": ""
+      },
+      "group": {
+        "add": {
+          "button": "",
+          "data": "",
+          "interval": "",
+          "variable": ""
+        },
+        "condition": {
+          "label": "",
+          "meet-all": "",
+          "meet-any": ""
+        },
+        "label": ""
+      },
+      "interval": {
+        "input-label": "",
+        "invalid-message": "",
+        "label": ""
+      },
+      "shared": {
+        "delete-condition": ""
+      },
+      "title": "",
+      "variable": {
+        "label": "",
+        "operator": {
+          "equals": "",
+          "not-equal": ""
+        },
+        "select-operator": "",
+        "select-variable": "",
+        "value-input": ""
+      }
     },
     "default-layout": {
       "description": "",
@@ -1068,22 +1118,17 @@
       "elements": {
         "dashboard": "",
         "objects": "",
+        "panel": "",
         "panels": "",
+        "row": "",
         "rows": "",
+        "tab": "",
         "tabs": ""
-      },
-      "objects": {
-        "multi-select": {
-          "selection-number": ""
-        }
       },
       "open": "",
       "row": {
         "header": {
           "hide": "",
-          "title": ""
-        },
-        "multi-select": {
           "title": ""
         }
       }
@@ -1165,13 +1210,11 @@
         "copy-or-duplicate": "",
         "delete": "",
         "duplicate": "",
-        "layout": "",
-        "panels-title": ""
+        "layout": ""
       }
     },
     "options": {
       "description": "",
-      "title": "",
       "title-option": ""
     },
     "outline": {
@@ -1191,16 +1234,6 @@
     },
     "responsive-layout": {
       "description": "",
-      "item-options": {
-        "hide-no-data": "",
-        "repeat": {
-          "variable": {
-            "description": "",
-            "title": ""
-          }
-        },
-        "title": ""
-      },
       "name": "",
       "options": {
         "columns": "",
@@ -1215,6 +1248,16 @@
     "rows-layout": {
       "description": "",
       "name": "",
+      "option": {
+        "height": "",
+        "hide-header": "",
+        "repeat": "",
+        "title": ""
+      },
+      "options": {
+        "height-expand": "",
+        "height-min": ""
+      },
       "row": {
         "collapse": "",
         "expand": "",
@@ -1234,15 +1277,6 @@
         }
       },
       "row-options": {
-        "height": {
-          "hide-row-header": ""
-        },
-        "repeat": {
-          "variable": {
-            "title": ""
-          }
-        },
-        "title": "",
         "title-option": ""
       }
     },
@@ -1250,9 +1284,6 @@
       "description": "",
       "menu": {
         "move-tab": ""
-      },
-      "multi-select": {
-        "title": ""
       },
       "name": "",
       "tab": {
@@ -1268,7 +1299,6 @@
         "new": ""
       },
       "tab-options": {
-        "title": "",
         "title-option": ""
       }
     },
@@ -1345,7 +1375,6 @@
         "description": "",
         "open-edit": "",
         "plugin-type-image": "",
-        "title": "",
         "title-option": "",
         "transparent-background": ""
       }
@@ -1829,31 +1858,32 @@
     "data-source-http-settings": {
       "access-help": "",
       "access-help-details": "",
+      "access-help-title": "",
       "access-label": "",
-      "access-options-browser": "",
-      "access-options-proxy": "",
       "allowed-cookies": "",
-      "allowed-cookies-tooltip": "",
+      "allowed-cookies-description": "",
       "auth": "",
       "azure-auth-label": "",
       "azure-auth-tooltip": "",
       "basic-auth": "",
       "basic-auth-label": "",
       "browser-mode-description": "",
+      "browser-mode-label": "",
       "browser-mode-title": "",
-      "default-url-access-select": "",
       "default-url-tooltip": "",
       "direct-url-tooltip": "",
       "heading": "",
+      "invalid-url-error": "",
       "proxy-url-tooltip": "",
       "server-mode-description": "",
+      "server-mode-label": "",
       "server-mode-title": "",
-      "timeout-form-label": "",
+      "sigv4-auth-label": "",
+      "timeout-description": "",
       "timeout-label": "",
-      "timeout-tooltip": "",
-      "url-label": "",
-      "with-credential-label": "",
-      "with-credential-tooltip": ""
+      "timeout-placeholder": "",
+      "with-credentials-label": "",
+      "with-credentials-tooltip": ""
     },
     "data-source-settings": {
       "alerting-settings-heading": "",
@@ -1911,6 +1941,16 @@
     "named-colors-palette": {
       "text-color-swatch": "",
       "transparent-swatch": ""
+    },
+    "page-toolbar": {
+      "go-back": "",
+      "search-dashboard-name": "",
+      "search-links": "",
+      "search-parent-folder": ""
+    },
+    "pagination": {
+      "next-page": "",
+      "previous-page": ""
     },
     "secret-form-field": {
       "reset": ""
@@ -2908,6 +2948,10 @@
     }
   },
   "navigation": {
+    "invite-user": {
+      "invite-button": "",
+      "invite-tooltip": ""
+    },
     "item": {
       "add-bookmark": "",
       "remove-bookmark": ""
@@ -3115,7 +3159,8 @@
       "old-password-required": "Altes Passwort ist erforderlich",
       "passwords-must-match": "Passwörter müssen übereinstimmen",
       "strong-password-validation-register": "Passwort entspricht nicht den strengen Kennwortrichtlinien"
-    }
+    },
+    "change-theme": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -3522,7 +3567,6 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
-      "invite-user-title": "",
       "share-externally-title": "",
       "share-internally-title": "",
       "share-snapshot-title": ""

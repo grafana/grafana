@@ -4,6 +4,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // When this code is changed, make sure to update the code generation.
@@ -347,15 +348,31 @@ type ResourceStats struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
+	// Stats across all unified storage
+	// When legacy storage is still used, this will offer a shim
 	// +listType=atomic
-	Items []ResourceCount `json:"items,omitempty"`
+	Instance []ResourceCount `json:"instance,omitempty"`
+
+	// Stats for each manager
+	// +listType=atomic
+	Managed []ManagerStats `json:"managed,omitempty"`
+}
+
+type ManagerStats struct {
+	// Manager kind
+	Kind utils.ManagerKind `json:"kind,omitempty"`
+
+	// Manager identity
+	Identity string `json:"id,omitempty"`
+
+	// stats
+	Stats []ResourceCount `json:"stats"`
 }
 
 type ResourceCount struct {
-	Repository string `json:"repository,omitempty"`
-	Group      string `json:"group"`
-	Resource   string `json:"resource"`
-	Count      int64  `json:"count"`
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
+	Count    int64  `json:"count"`
 }
 
 // HistoryList is a list of versions of a resource
