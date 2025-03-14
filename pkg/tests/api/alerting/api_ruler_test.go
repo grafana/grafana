@@ -1799,7 +1799,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 				group.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve = tc.initialValue
 
 				// Post the rule group with our alert rule
-				_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+				_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 				require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 				// and the value of the missing_series_evals_to_resolve
@@ -1814,7 +1814,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 				// Now let's update the initial value with the updated value
 				group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 				group.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve = tc.updatedValue
-				_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group)
+				_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 				require.Equalf(t, tc.expectedStatus, status, "failed to post rule group. Response: %s", body)
 				// Check the response status
 				require.Equal(t, tc.expectedStatus, status)
