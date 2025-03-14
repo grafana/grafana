@@ -1,8 +1,14 @@
 import { produce } from 'immer';
 
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { mockDataQuery, mockReduceExpression, mockThresholdExpression } from 'app/features/alerting/unified/mocks';
+import {
+  mockDataQuery,
+  mockDataSource,
+  mockReduceExpression,
+  mockThresholdExpression,
+} from 'app/features/alerting/unified/mocks';
 import { areQueriesTransformableToSimpleCondition } from 'app/features/alerting/unified/rule-editor/formProcessing';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { ExpressionQuery, ReducerMode } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -11,18 +17,11 @@ const reduceExpression = mockReduceExpression({ expression: 'A', settings: { mod
 const thresholdExpression = mockThresholdExpression({ expression: 'B' });
 
 const expressionQueries: Array<AlertQuery<ExpressionQuery>> = [reduceExpression, thresholdExpression];
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => {
-    return {
-      getInstanceSettings: (uid: string) => {
-        return { type: DataSourceType.Prometheus };
-      },
-    };
-  },
-}));
-
+const ds = mockDataSource({ type: DataSourceType.Prometheus, name: 'Mimir-cloud', uid: 'abc123' });
 describe('areQueriesTransformableToSimpleCondition', () => {
+  beforeEach(() => {
+    setupDataSources(ds);
+  });
   it('should return false if dataQueries length is not 1', () => {
     // zero dataQueries
     expect(areQueriesTransformableToSimpleCondition([], expressionQueries)).toBe(false);

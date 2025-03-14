@@ -25,6 +25,9 @@ import { getDefaultQueries, getInstantFromDataQuery } from '../../../utils/rule-
 import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
+// this one will be used as the refID when we create a new reducer for the threshold expression
+export const NEW_REDUCER_REF = 'reducer';
+
 export interface QueriesAndExpressionsState {
   queries: AlertQuery[];
 }
@@ -242,8 +245,8 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
         return;
       }
 
-      const dataQuery = updatedQueries[0];
-      const isInstantDataQuery = getInstantFromDataQuery(dataQuery);
+      const dataQuery = updatedQueries.at(0);
+      const isInstantDataQuery = dataQuery ? getInstantFromDataQuery(dataQuery) : false;
 
       const shouldRemoveReducer = isInstantDataQuery && expressionQueries.length === 2;
       if (shouldRemoveReducer) {
@@ -251,19 +254,16 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
           (query) =>
             isExpressionQuery(query.model) &&
             isReducerExpression(query.model) &&
-            query.model.expression === dataQuery.refId
+            query.model.expression === dataQuery?.refId
         );
 
         state.queries.splice(reduceExpressionIndex, 1);
-        state.queries[1].model.expression = dataQuery.refId;
+        state.queries[1].model.expression = dataQuery?.refId;
       }
 
       const shouldAddReduceExpression =
         !isInstantDataQuery && expressionQueries.length === 1 && isThresholdExpression(expressionQueries[0].model);
       if (shouldAddReduceExpression) {
-        // this one will be used as the refID when we create a new reducer for the threshold expression
-        const NEW_REDUCER_REF = 'reducer';
-
         // add reducer to the second position
         // we only update the refid and the model to point to the reducer expression
         state.queries[1].model.expression = NEW_REDUCER_REF;
@@ -275,7 +275,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
             type: ExpressionQueryType.reduce,
             reducer: ReducerID.last,
             conditions: [{ ...defaultCondition, query: { params: [] } }],
-            expression: dataQuery.refId,
+            expression: dataQuery?.refId,
             refId: NEW_REDUCER_REF,
           }),
           refId: NEW_REDUCER_REF,

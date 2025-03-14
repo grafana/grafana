@@ -87,7 +87,7 @@ export function areQueriesTransformableToSimpleCondition(
     return false;
   }
 
-  const [dataQuery] = dataQueries;
+  const dataQuery = dataQueries.at(0);
 
   // find the reduce or threshold expressions
   const reduceExpression = expressionQueries.find((query) => query.model.type === ExpressionQueryType.reduce);
@@ -105,7 +105,7 @@ export function areQueriesTransformableToSimpleCondition(
   const validThresholdExpression = thresholdExpression && thresholdExpressionIsClean;
 
   const thresholdPointingToReducer = thresholdExpression?.model.expression === reduceExpression?.refId;
-  const reducerPointingToDataQuery = reduceExpression?.model.expression === dataQuery.refId;
+  const reducerPointingToDataQuery = reduceExpression?.model.expression === dataQuery?.refId;
 
   // 2.1 check for a reduce + threshold expression and their targets
   if (validReducerExpression && reducerPointingToDataQuery && validThresholdExpression && thresholdPointingToReducer) {
@@ -113,9 +113,9 @@ export function areQueriesTransformableToSimpleCondition(
   }
 
   // 2.2 check for a single threshold expression pointing to an "instant" data query
-  const isInstantDataQuery = getInstantFromDataQuery(dataQuery);
+  const isInstantDataQuery = dataQuery ? getInstantFromDataQuery(dataQuery) : false;
   const hasSingleThresholdExpression = expressionQueries.length === 1 && thresholdExpression;
-  const thresholdPointingToDataQuery = thresholdExpression?.model.expression === dataQuery.refId;
+  const thresholdPointingToDataQuery = thresholdExpression?.model.expression === dataQuery?.refId;
 
   if (isInstantDataQuery && hasSingleThresholdExpression && validThresholdExpression && thresholdPointingToDataQuery) {
     return true;
