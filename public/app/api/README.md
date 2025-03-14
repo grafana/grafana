@@ -45,7 +45,7 @@ export const api = createApi({
 
 This is the API definition for the specific group you're working with, where `getAPIBaseURL` should have the proper `group` and `version` as parameters. The `reducerPath` needs to be unique. The convention is to use `<group>API`: `dashboard` will be `dashboardAPI`, `iam` will be `iamAPI` and so on.
 
-### 3. Modify the generation script
+### 3. Add your new client to the generation script
 
 Open [generate-rtk-apis.ts](scripts/generate-rtk-apis.ts) and add the following information:
 
