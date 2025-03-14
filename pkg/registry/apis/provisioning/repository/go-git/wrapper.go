@@ -238,8 +238,8 @@ func (g *GoGitRepo) Config() *provisioning.Repository {
 // ReadTree implements repository.Repository.
 func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
 	var treePath string
-	if g.config.Spec.GitHub.Prefix != "" {
-		treePath = g.config.Spec.GitHub.Prefix
+	if g.config.Spec.GitHub.Path != "" {
+		treePath = g.config.Spec.GitHub.Path
 	}
 	if !strings.HasPrefix(treePath, "/") {
 		treePath = "/" + treePath
@@ -430,7 +430,7 @@ func (g *GoGitRepo) Webhook(ctx context.Context, req *http.Request) (*provisioni
 // If the fpath does a path traversal that would be unsafe, a safepath.ErrUnsafePathTraversal error is returned.
 // This error is already a Kubernetes apierror (being a HTTP 400 Bad Request), so it can be returned directly.
 func (g *GoGitRepo) path(fpath string) (string, error) {
-	prefix := g.config.Spec.GitHub.Prefix
+	prefix := g.config.Spec.GitHub.Path
 	prefix = strings.Trim(prefix, "/")
 	if prefix == "" {
 		return fpath, nil

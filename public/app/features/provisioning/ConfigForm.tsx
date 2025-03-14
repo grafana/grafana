@@ -55,7 +55,7 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
       branch: 'main',
       generateDashboardPreviews: true,
       workflows: ['branch', 'write'],
-      prefix: 'grafana/',
+      path: 'grafana/',
       sync: {
         enabled: true,
         target: 'instance',
@@ -185,8 +185,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
           <Field label={'Branch'}>
             <Input {...register('branch')} placeholder={'main'} />
           </Field>
-          <Field label={'Prefix'}>
-            <Input {...register('prefix')} placeholder={'grafana/'} />
+          <Field label={'Path'} description={'Path to a subdirectory in the Git repository'}>
+            <Input {...register('path')} placeholder={'grafana/'} />
           </Field>
         </>
       )}

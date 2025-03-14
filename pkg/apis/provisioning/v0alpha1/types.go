@@ -51,10 +51,12 @@ type GitHubRepositoryConfig struct {
 	// By default, this is false (i.e. we will not create previews).
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
-	// The prefix for the Grafana data. If specified, Grafana will ignore anything that is outside this prefix.
-	// This is usually something like `grafana/`. Trailing and leading slash are not required.
+	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
+	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
-	Prefix string `json:"prefix,omitempty"`
+	//
+	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
+	Path string `json:"prefix,omitempty"`
 }
 
 // RepositoryType defines the types of Repository

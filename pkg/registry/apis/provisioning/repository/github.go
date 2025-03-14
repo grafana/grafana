@@ -107,12 +107,12 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	if gh.Token == "" && len(gh.EncryptedToken) == 0 {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
 	}
-	if strings.Contains(gh.Prefix, "..") {
-		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Prefix, "path traversal disallowed"))
+	if strings.Contains(gh.Path, "..") {
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Path, "path traversal disallowed"))
 	}
-	if strings.Contains(gh.Prefix, "//") {
+	if strings.Contains(gh.Path, "//") {
 		// Avoid making an assumption :).
-		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Prefix, "path intent is unclear: double slashes (//) can be seen as either resetting to / or as a standard path traversal"))
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Path, "path intent is unclear: double slashes (//) can be seen as either resetting to / or as a standard path traversal"))
 	}
 
 	return list
@@ -243,7 +243,7 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 
 	ctx, logger := r.logger(ctx, ref)
 
-	tree, truncated, err := r.gh.GetTree(ctx, r.owner, r.repo, r.config.Spec.GitHub.Prefix, ref, true)
+	tree, truncated, err := r.gh.GetTree(ctx, r.owner, r.repo, r.config.Spec.GitHub.Path, ref, true)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return nil, &apierrors.StatusError{
@@ -944,7 +944,7 @@ func (r *githubRepository) logger(ctx context.Context, ref string) (context.Cont
 // If the fpath does a path traversal that would be unsafe, a safepath.ErrUnsafePathTraversal error is returned.
 // This error is already a Kubernetes apierror (being a HTTP 400 Bad Request), so it can be returned directly.
 func (r *githubRepository) path(fpath string) (string, error) {
-	prefix := r.config.Spec.GitHub.Prefix
+	prefix := r.config.Spec.GitHub.Path
 	prefix = strings.Trim(prefix, "/")
 	if prefix == "" {
 		return fpath, nil
