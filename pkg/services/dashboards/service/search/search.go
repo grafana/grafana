@@ -76,6 +76,12 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (v0alph
 	}
 
 	for i, row := range result.Results.Rows {
+		if len(row.Cells) != len(result.Results.Columns) {
+			// there should never be mismatch len between # Columns and # Cells in a row. This indicates a bug in our
+			// code
+			return v0alpha1.SearchResults{}, fmt.Errorf("error parsing Search Response: mismatch number of columns and cells")
+		}
+
 		fields := &common.Unstructured{}
 		for colIndex, col := range result.Results.Columns {
 			if _, ok := excludedFields[col.Name]; !ok {

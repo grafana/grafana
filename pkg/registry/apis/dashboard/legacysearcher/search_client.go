@@ -257,6 +257,8 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			})
 		}
 
+		list.TotalHits = int64(len(list.Results.Rows))
+
 		return list, nil
 	}
 
