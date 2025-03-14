@@ -321,8 +321,8 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		}
 
 		// Validate the authID matches the identity authId and the userUniqueID
-		if authInfo.AuthId != id.AuthID || id.SAMLSession.UserUniqueID != authInfo.UserUniqueId {
-			s.log.Error("provisioned authID mistmatches identity authID", "authInfo.AuthId", authInfo.AuthId, "id.AuthID", id.AuthID)
+		if id.ExternalUID != authInfo.ExternalUID {
+			s.log.Error("provisioned authID mistmatches identity authID")
 			return errors.New("authID mistmatch") // TODO: assign an error
 		}
 	}
