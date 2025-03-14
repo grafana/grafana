@@ -19,7 +19,6 @@ func TestDebouncer(t *testing.T) {
 
 		group, err := NewGroup(DebouncerOpts[string]{
 			BufferSize: 10,
-			KeyFunc:    func(s string) string { return s },
 			ProcessHandler: func(ctx context.Context, value string) error {
 				processedMu.Lock()
 				processedValues[value]++
@@ -57,7 +56,6 @@ func TestDebouncer(t *testing.T) {
 
 		group, err := NewGroup(DebouncerOpts[string]{
 			BufferSize: 10,
-			KeyFunc:    func(s string) string { return s },
 			ProcessHandler: func(ctx context.Context, value string) error {
 				processed[value]++
 				return nil
@@ -99,7 +97,6 @@ func TestDebouncer(t *testing.T) {
 	t.Run("should handle buffer full", func(t *testing.T) {
 		group, err := NewGroup(DebouncerOpts[string]{
 			BufferSize:     1,
-			KeyFunc:        func(s string) string { return s },
 			ProcessHandler: func(ctx context.Context, value string) error { return nil },
 			MinWait:        10 * time.Millisecond,
 			MaxWait:        100 * time.Millisecond,
@@ -116,7 +113,6 @@ func TestDebouncer(t *testing.T) {
 
 		group, err := NewGroup(DebouncerOpts[string]{
 			BufferSize: 10,
-			KeyFunc:    func(s string) string { return s },
 			ProcessHandler: func(ctx context.Context, value string) error {
 				wg.Done()
 				return nil
@@ -152,7 +148,6 @@ func TestDebouncer(t *testing.T) {
 
 		group, err := NewGroup(DebouncerOpts[string]{
 			BufferSize: 10,
-			KeyFunc:    func(s string) string { return s },
 			ProcessHandler: func(ctx context.Context, value string) error {
 				wg.Done()
 				return expectedErr
@@ -191,7 +186,6 @@ func TestDebouncer(t *testing.T) {
 
 		group, err := NewGroup(DebouncerOpts[string]{
 			BufferSize: 10,
-			KeyFunc:    func(s string) string { return s },
 			ProcessHandler: func(ctx context.Context, item string) error {
 				// Start a goroutine to wait for context cancellation.
 				go func() {
