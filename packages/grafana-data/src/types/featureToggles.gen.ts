@@ -258,4 +258,5 @@ export interface FeatureToggles {
   infinityRunQueriesInParallel?: boolean;
   inviteUserExperimental?: boolean;
   extraLanguages?: boolean;
+  noBackdropBlur?: boolean;
 }
