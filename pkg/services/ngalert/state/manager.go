@@ -350,7 +350,7 @@ func (st *Manager) ProcessEvalResults(
 	}
 
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn)
+	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn, evaluatedAt)
 
 	staleStates := st.deleteStaleStatesFromCache(logger, evaluatedAt, alertRule, fn)
 	span.AddEvent("results processed", trace.WithAttributes(
@@ -394,7 +394,7 @@ func (st *Manager) updateLastSentAt(states StateTransitions, evaluatedAt time.Ti
 	return result
 }
 
-func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger, takeImageFn takeImageFn) []StateTransition {
+func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger, takeImageFn takeImageFn, now time.Time) []StateTransition {
 	if results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK || alertRule.NoDataState == ngModels.KeepLast) { // If it is no data, check the mapping and switch all results to the new state
 		// aggregate UID of datasources that returned NoData into one and provide as auxiliary info via annotationa. See: https://github.com/grafana/grafana/issues/88184
 		var refIds strings.Builder
@@ -422,7 +422,15 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 			"datasource_uid": datasourceUIDs.String(),
 			"ref_id":         refIds.String(),
 		}
-		transitions := st.setNextStateForAll(alertRule, results[0], logger, annotations, takeImageFn)
+		result := eval.Result{
+			Instance:    data.Labels{},
+			State:       eval.NoData,
+			EvaluatedAt: now,
+		}
+		if len(results) > 0 {
+			result = results[0]
+		}
+		transitions := st.setNextStateForAll(alertRule, result, logger, annotations, takeImageFn)
 		if len(transitions) > 0 {
 			return transitions // if there are no current states for the rule. Create ones for each result
 		}
