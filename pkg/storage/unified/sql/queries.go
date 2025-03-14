@@ -74,6 +74,7 @@ type sqlResourceRequest struct {
 	sqltemplate.SQLTemplate
 	GUID       string
 	WriteEvent resource.WriteEvent
+	Generation int64
 	Folder     string
 
 	// Useful when batch writing
