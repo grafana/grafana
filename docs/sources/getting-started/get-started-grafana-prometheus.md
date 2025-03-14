@@ -157,7 +157,7 @@ Get-Process -Name prometheus -ErrorAction SilentlyContinue
 
 Start by checking for common causes:
 
-**Check for port conflicts**. 
+**Check for port conflicts**.
 
 Prometheus runs on port 9090 by default. If another process is using this port, Prometheus may fail to start. You can check for port conflicts with:
 
