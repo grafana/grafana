@@ -342,6 +342,7 @@
         "name": "alertingNoDataErrorExecution",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-08-15T14:27:15Z",
+        "deletionTimestamp": "2025-03-13T19:16:25Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
