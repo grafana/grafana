@@ -186,7 +186,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             <Input {...register('branch')} placeholder={'main'} />
           </Field>
           <Field label={'Prefix'}>
-            <Input {...register('prefix')} placeholder={'main'} />
+            <Input {...register('prefix')} placeholder={'grafana/'} />
           </Field>
         </>
       )}
