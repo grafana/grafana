@@ -1746,7 +1746,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		keepFiringFor := model.Duration(10 * time.Second)
 		group.Rules[0].ApiRuleNode.KeepFiringFor = &keepFiringFor
 
-		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup, _ := client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, keepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
@@ -1754,7 +1754,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 		newKeepFiringFor := model.Duration(0)
 		group.Rules[0].ApiRuleNode.KeepFiringFor = &newKeepFiringFor
-		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group)
+		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 		getGroup, _ = client.GetRulesGroup(t, folderUID, group.Name)
