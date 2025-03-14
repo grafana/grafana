@@ -5,7 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks';
+import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SaveDashboardDrawer } from '../SaveDashboardDrawer';
