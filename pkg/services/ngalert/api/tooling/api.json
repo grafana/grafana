@@ -396,6 +396,9 @@
     },
     "metric": {
      "type": "string"
+    },
+    "targetDatasourceUid": {
+     "type": "string"
     }
    },
    "title": "Record is the provisioned export of models.Record.",
@@ -1605,6 +1608,9 @@
       "Alerting",
       "Error"
      ],
+     "type": "string"
+    },
+    "guid": {
      "type": "string"
     },
     "intervalSeconds": {
@@ -3492,6 +3498,11 @@
      "description": "Name of the recorded metric.",
      "example": "grafana_alerts_ratio",
      "type": "string"
+    },
+    "target_datasource_uid": {
+     "description": "Which data source should be used to write the output of the recording rule, specified by UID.",
+     "example": "my-prom",
+     "type": "string"
     }
    },
    "required": [
@@ -4355,6 +4366,15 @@
      "description": "Name of the associated template definition for this result.",
      "type": "string"
     },
+    "scope": {
+     "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+     "enum": [
+      ".",
+      ".Alerts",
+      ".Alert"
+     ],
+     "type": "string"
+    },
     "text": {
      "description": "Interpolated value of the template.",
      "type": "string"
@@ -4493,6 +4513,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -4528,7 +4549,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -5056,6 +5077,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"

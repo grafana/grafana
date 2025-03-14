@@ -69,7 +69,7 @@ func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder s
 			},
 		},
 	}
-	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules)
+	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules, false)
 	assert.Equal(t, http.StatusAccepted, status)
 	require.Len(t, resp.Created, 1)
 	return rules, resp.Created[0]

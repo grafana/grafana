@@ -60,7 +60,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		deleteCommands := getRecordedCommand(ruleStore)
 		require.Len(t, deleteCommands, 1)
 		cmd := deleteCommands[0]
-		actualUIDs := cmd.Params[2].([]string)
+		actualUIDs := cmd.Params[3].([]string)
 		require.Len(t, actualUIDs, len(expectedRules))
 		for _, rule := range expectedRules {
 			require.Containsf(t, actualUIDs, rule.UID, "Rule %s was expected to be deleted but it wasn't", rule.UID)

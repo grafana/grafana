@@ -782,7 +782,7 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, user identity.
 			uids = append(uids, tgt.UID)
 		}
 	}
-	if err := service.ruleStore.DeleteAlertRulesByUID(ctx, user.GetOrgID(), models.NewUserUID(user), uids...); err != nil {
+	if err := service.ruleStore.DeleteAlertRulesByUID(ctx, user.GetOrgID(), models.NewUserUID(user), false, uids...); err != nil {
 		return err
 	}
 	for _, uid := range uids {
