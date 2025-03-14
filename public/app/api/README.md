@@ -16,7 +16,7 @@ First, check if the `group` and the `version` are already present in [openapi_te
 
 ### 2. Run the `TestIntegrationOpenAPIs` test
 
-Note that it will fail the first time you run it, and, in the second one, it will generate the corresponding OpenAPI spec. You will find it in [openapi_snapshots](/pkg/tests/apis/openapi_snapshots).
+Note that it will fail the first time you run it. On the second run, it will generate the corresponding OpenAPI spec, which you can find in [openapi_snapshots](/pkg/tests/apis/openapi_snapshots).
 <br/>
 <br/>
 
