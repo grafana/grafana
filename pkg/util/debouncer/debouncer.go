@@ -83,7 +83,6 @@ type DebouncerOpts[T any] struct {
 }
 
 type Group[T any] struct {
-	opts   DebouncerOpts[T]
 	buffer chan T
 
 	// mutex protecting the debouncers map.
@@ -93,8 +92,11 @@ type Group[T any] struct {
 	wg             sync.WaitGroup
 	ctx            context.Context
 	cancel         context.CancelFunc
+	keyFunc        KeyFunc[T]
 	errorHandler   ErrorFunc[T]
 	processHandler ProcessFunc[T]
+	minWait        time.Duration
+	maxWait        time.Duration
 	metrics        *metrics
 }
 
@@ -166,12 +168,14 @@ func NewGroup[T any](opts DebouncerOpts[T]) (*Group[T], error) {
 	}
 
 	return &Group[T]{
-		opts:           opts,
 		buffer:         make(chan T, opts.BufferSize),
 		debouncers:     make(map[string]*debouncer[T]),
-		metrics:        newMetrics(opts.Reg, opts.Name),
+		keyFunc:        opts.KeyFunc,
 		processHandler: opts.ProcessHandler,
 		errorHandler:   opts.ErrorHandler,
+		minWait:        opts.MinWait,
+		maxWait:        opts.MaxWait,
+		metrics:        newMetrics(opts.Reg, opts.Name),
 	}, nil
 }
 
@@ -210,11 +214,11 @@ func (g *Group[T]) Stop() {
 }
 
 func (g *Group[T]) processValue(key T) {
-	keyStr := g.opts.KeyFunc(key)
+	keyStr := g.keyFunc(key)
 	g.debouncersMu.Lock()
 	deb, ok := g.debouncers[keyStr]
 	if !ok {
-		deb = newDebouncer[T](g.opts.MinWait, g.opts.MaxWait, key, func(v T) {
+		deb = newDebouncer[T](g.minWait, g.maxWait, key, func(v T) {
 			g.processWithMetrics(g.ctx, v, g.processHandler)
 
 			g.debouncersMu.Lock()
@@ -274,7 +278,8 @@ func (d *debouncer[T]) reset() {
 		// Value sent successfully.
 	default:
 		// Value was dropped. Is not an issue as
-		// a reset is already about to being processed.
+		// a reset is already about to being processed
+		// or the process is being run.
 	}
 }
 
@@ -293,12 +298,6 @@ func (d *debouncer[T]) run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-d.resetChan:
-			if !minTimer.Stop() {
-				select {
-				case <-minTimer.C:
-				default:
-				}
-			}
 			minTimer.Reset(d.minWait)
 		case <-minTimer.C:
 			d.processFunc(d.key)
