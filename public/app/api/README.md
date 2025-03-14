@@ -154,7 +154,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
   });
 ```
 
-You have available the oficial documentation in [RTK Query](https://redux-toolkit.js.org/tutorials/rtk-query#add-the-service-to-your-store)
+You have available the official documentation in [RTK Query](https://redux-toolkit.js.org/tutorials/rtk-query#add-the-service-to-your-store)
 
 After this step is done, it is time to use your hooks across Grafana.
 Enjoy coding!
