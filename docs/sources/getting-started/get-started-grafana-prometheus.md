@@ -256,7 +256,7 @@ net stop prometheus
 net start prometheus
 ```
 
-### 5. Checking if Prometheus is caputuring metrics
+### 5. Checking if Prometheus is capturing metrics
 
 If you installed [Node exporter](#install-prometheus-node-exporter) to expose your system metrics, you can check if Prometheus is capturing metrics by sending a request to the `/metrics` endpoint.
 
