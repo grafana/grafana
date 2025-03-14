@@ -47,7 +47,7 @@ export const getMatcherConfig = (
   if (byVariable && variable) {
     const stringOfNames = variable;
 
-    if (/\{.*\}/.test(stringOfNames)) {
+    if (/^\{.*\}$/.test(stringOfNames)) {
       const namesFromString = stringOfNames.slice(1).slice(0, -1).split(',');
       return { id: FieldMatcherID.byNames, options: { names: namesFromString } };
     }
