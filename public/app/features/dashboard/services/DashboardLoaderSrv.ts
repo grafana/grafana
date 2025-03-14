@@ -13,6 +13,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
+import { loadDashboardFromProvisioning } from '../../provisioning/dashboardLoader';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from '../api/types';
@@ -123,6 +124,8 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
     if (type === 'script' && slug) {
       promise = this.loadScriptedDashboard(slug);
+    } else if (type === 'provisioning' && uid && slug) {
+      promise = loadDashboardFromProvisioning(slug, uid);
       // needed for the old architecture
       // in scenes this is handled through loadSnapshot method
     } else if (type === 'snapshot' && slug) {
@@ -197,6 +200,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       promise = backendSrv.getPublicDashboardByUid(uid).then((result) => {
         return ResponseTransformers.ensureV2Response(result);
       });
+    } else if (type === 'provisioning' && uid && slug) {
+      promise = loadDashboardFromProvisioning(slug, uid).then((r) => ResponseTransformers.ensureV2Response(r));
     } else if (uid) {
       if (!params) {
         const cachedDashboard = stateManager.getDashboardFromCache(uid);
