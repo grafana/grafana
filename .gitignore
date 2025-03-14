@@ -68,6 +68,8 @@ public/css/*.min.css
 .vscode/
 !.vscode/launch.json
 .vs/
+.cursor/
+
 .eslintcache
 .stylelintcache
 
