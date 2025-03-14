@@ -9,6 +9,7 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
@@ -143,17 +144,7 @@ type Zanzana struct {
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
-	tracingCfg, err := tracing.ProvideTracingConfig(z.cfg)
-	if err != nil {
-		return err
-	}
-
-	tracingCfg.ServiceName = "zanzana"
-
-	tracer, err := tracing.ProvideService(tracingCfg)
-	if err != nil {
-		return err
-	}
+	var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana")
 
 	store, err := zanzana.NewStore(z.cfg, z.logger)
 	if err != nil {
