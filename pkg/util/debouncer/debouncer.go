@@ -294,6 +294,7 @@ func (d *debouncer[T]) run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-d.resetChan:
+			minTimer.Stop()
 			minTimer.Reset(d.minWait)
 		case <-minTimer.C:
 			d.processFunc(d.key)
