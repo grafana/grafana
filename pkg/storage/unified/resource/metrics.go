@@ -9,9 +9,8 @@ import (
 )
 
 type StorageMetrics struct {
-	WatchEventLatency      *prometheus.HistogramVec
-	PollerLatency          prometheus.Histogram
-	PruneBufferFullCounter prometheus.Counter
+	WatchEventLatency *prometheus.HistogramVec
+	PollerLatency     prometheus.Histogram
 }
 
 func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
@@ -33,11 +32,6 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramBucketFactor:     1.1, // enable native histograms
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
-		}),
-		PruneBufferFullCounter: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Namespace: "storage_server",
-			Name:      "prune_buffer_full_total",
-			Help:      "Total number of times the prune buffer was full",
 		}),
 	}
 }
