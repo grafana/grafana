@@ -284,7 +284,7 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 		return err
 	}
 
-	opts := confToClientOptions(cfg)
+	opts := SpannerConnectorConfigToClientOptions(cfg)
 
 	databaseAdminClient, err := database.NewDatabaseAdminClient(ctx, opts...)
 	if err != nil {
@@ -309,8 +309,8 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 	return nil
 }
 
-// Adapted from https://github.com/googleapis/go-sql-spanner/blob/main/driver.go#L341-L477, from version 1.11.1.
-func confToClientOptions(connectorConfig spannerdriver.ConnectorConfig) []option.ClientOption {
+// SpannerConnectorConfigToClientOptions is adapted from https://github.com/googleapis/go-sql-spanner/blob/main/driver.go#L341-L477, from version 1.11.1.
+func SpannerConnectorConfigToClientOptions(connectorConfig spannerdriver.ConnectorConfig) []option.ClientOption {
 	var opts []option.ClientOption
 	if connectorConfig.Host != "" {
 		opts = append(opts, option.WithEndpoint(connectorConfig.Host))
