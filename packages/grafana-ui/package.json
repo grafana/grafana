@@ -126,7 +126,7 @@
     "slate-react": "0.22.10",
     "tinycolor2": "1.6.0",
     "tslib": "2.8.1",
-    "uplot": "leeoniya/uPlot#4ae749b1cdee4a25f3bba833c5c4d773fced8043",
+    "uplot": "1.6.32",
     "uuid": "11.0.5"
   },
   "devDependencies": {
