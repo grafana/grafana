@@ -326,7 +326,11 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
 /**
  * @alpha
  */
-export function buildHistogram(frames: DataFrame[], options?: HistogramTransformerOptions): HistogramFields | null {
+export function buildHistogram(
+  frames: DataFrame[],
+  options?: HistogramTransformerOptions,
+  theme?: GrafanaTheme2
+): HistogramFields | null {
   let bucketSize = options?.bucketSize;
   let bucketCount = options?.bucketCount ?? DEFAULT_BUCKET_COUNT;
   let bucketOffset = options?.bucketOffset ?? 0;
@@ -413,13 +417,20 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
       if (field.type === FieldType.number) {
         let fieldHist = histogram(field.values, getBucket, histFilter, histSort);
         histograms.push(fieldHist);
-        counts.push({
+
+        const count = {
           ...field,
           config: {
             ...field.config,
             unit: field.config.unit === 'short' ? 'short' : undefined,
           },
+        };
+
+        count.display = getDisplayProcessor({
+          field: count,
+          theme: theme ?? createTheme(),
         });
+        counts.push(count);
         if (!config && field.config.unit) {
           config = field.config;
         }
@@ -573,12 +584,6 @@ export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaThe
     info.xMin.display = display;
     info.xMax.display = display;
   }
-
-  // ensure updated units are reflected on the count field used for y axis formatting
-  info.counts[0].display = getDisplayProcessor({
-    field: info.counts[0],
-    theme: theme ?? createTheme(),
-  });
 
   return {
     length: info.xMin.values.length,

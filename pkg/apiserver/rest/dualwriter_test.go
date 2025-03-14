@@ -64,7 +64,7 @@ func TestSetDualWritingMode(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
+		l := (Storage)(nil)
 		s := (Storage)(nil)
 
 		sm := &mock.Mock{}
@@ -75,7 +75,7 @@ func TestSetDualWritingMode(t *testing.T) {
 
 		lm := &mock.Mock{}
 		lm.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
-		ls := legacyStoreMock{lm, l}
+		ls := storageMock{lm, l}
 
 		serverLockSvc := &fakeServerLock{
 			err: tt.serverLockError,

@@ -25,8 +25,8 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							OperationId: "getResourceStats", // used for RTK client
-							Tags:        []string{"Provisioning"},
+							OperationId: "getResourceStats",                     // used for RTK client
+							Tags:        []string{"Provisioning", "Repository"}, //includes stats for repositores and provisiong in general
 							Description: "Get resource stats for this namespace",
 							Parameters: []*spec3.Parameter{
 								{
@@ -72,7 +72,9 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							OperationId: "getFrontendSettings", // used for RTK client
-							Tags:        []string{"Provisioning"},
+							//includes stats for repositores and provisiong in general
+							// This must include "Repository" so that the RTK client will invalidate when things are deleted
+							Tags:        []string{"Provisioning", "Repository"},
 							Description: "Get the frontend settings for this namespace",
 							Parameters: []*spec3.Parameter{
 								{

@@ -1,7 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardDTO } from 'app/types';
 
-import { AnnoKeyRepoName, AnnoKeyRepoPath } from '../apiserver/types';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from '../apiserver/types';
 
 import { BASE_URL } from './api/baseAPI';
 
@@ -32,10 +32,11 @@ export async function loadDashboardFromProvisioning(repo: string, path: string):
       if (!anno) {
         dryRun.metadata.annotations = anno = {};
       }
-      anno[AnnoKeyRepoName] = repo;
-      anno[AnnoKeyRepoPath] = path;
+      anno[AnnoKeyManagerKind] = 'repo';
+      anno[AnnoKeyManagerIdentity] = repo;
+      anno[AnnoKeySourcePath] = path;
       if (ref) {
-        anno[AnnoKeyRepoPath] = path + '#' + ref;
+        anno[AnnoKeySourcePath] = path + '#' + ref;
       }
 
       return {

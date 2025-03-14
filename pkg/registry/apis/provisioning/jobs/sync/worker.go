@@ -6,27 +6,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 	"sort"
-	"strings"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -72,34 +66,38 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("sync not supported until storage has migrated")
 	}
 
-	rw, ok := repo.(repository.ReaderWriter)
+	rw, ok := repo.(repository.Reader)
 	if !ok {
-		return fmt.Errorf("sync job submitted for repository that does not support read-write -- this is a bug!")
+		return fmt.Errorf("sync job submitted for repository that does not support read-write -- this is a bug")
 	}
+
+	syncStatus := job.Status.ToSyncStatus(job.Name)
+	// Preserve last ref as we use replace operation
+	syncStatus.LastRef = repo.Config().Status.Sync.LastRef
 
 	// Update sync status at start using JSON patch
 	patchOperations := []map[string]interface{}{
 		{
 			"op":    "replace",
 			"path":  "/status/sync",
-			"value": job.Status.ToSyncStatus(job.Name),
+			"value": syncStatus,
 		},
 	}
 
-	progress.SetMessage("update sync status at start")
+	progress.SetMessage(ctx, "update sync status at start")
 	if err := r.patchStatus(ctx, cfg, patchOperations); err != nil {
 		return fmt.Errorf("update repo with job status at start: %w", err)
 	}
 
-	progress.SetMessage("execute sync job")
+	progress.SetMessage(ctx, "execute sync job")
 	syncJob, err := r.createJob(ctx, rw, progress)
 	if err != nil {
 		return fmt.Errorf("failed to create sync job: %w", err)
 	}
 
-	syncError := syncJob.run(ctx, *job.Spec.Sync)
+	syncError := syncJob.run(ctx, *job.Spec.Pull)
 	jobStatus := progress.Complete(ctx, syncError)
-	syncStatus := jobStatus.ToSyncStatus(job.Name)
+	syncStatus = jobStatus.ToSyncStatus(job.Name)
 
 	// Create sync status and set hash if successful
 	if syncStatus.State == provisioning.JobStateSuccess {
@@ -107,7 +105,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	// Update final status using JSON patch
-	progress.SetMessage("update status and stats")
+	progress.SetMessage(ctx, "update status and stats")
 	patchOperations = []map[string]interface{}{
 		{
 			"op":    "replace",
@@ -119,11 +117,11 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	// Only add stats patch if stats are not nil
 	if stats, err := r.lister.Stats(ctx, cfg.Namespace, cfg.Name); err != nil {
 		logger.Error("unable to read stats", "error", err)
-	} else if stats != nil && stats.Items != nil {
+	} else if stats != nil && len(stats.Managed) == 1 {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/stats",
-			"value": stats.Items,
+			"value": stats.Managed[0].Stats,
 		})
 	}
 
@@ -132,20 +130,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("update repo with job final status: %w", err)
 	}
 
-	if syncError == nil {
-		progress.SetMessage("job completed successfully")
-	}
-
 	return syncError
 }
 
 // start a job and run it
-func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter, progress jobs.JobProgressRecorder) (*syncJob, error) {
+func (r *SyncWorker) createJob(ctx context.Context, repo repository.Reader, progress jobs.JobProgressRecorder) (*syncJob, error) {
 	cfg := repo.Config()
-	if !cfg.Spec.Sync.Enabled {
-		return nil, errors.New("sync is not enabled")
-	}
-
 	parser, err := r.parsers.GetParser(ctx, repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
@@ -161,11 +151,11 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter
 		progress:   progress,
 		parser:     parser,
 		lister:     r.lister,
-		folders: dynamicClient.Resource(schema.GroupVersionResource{
+		folders: resources.NewFolderManager(repo, dynamicClient.Resource(schema.GroupVersionResource{
 			Group:    folders.GROUP,
 			Version:  folders.VERSION,
 			Resource: folders.RESOURCE,
-		}),
+		})),
 		dashboards: dynamicClient.Resource(schema.GroupVersionResource{
 			Group:    dashboard.GROUP,
 			Version:  "v1alpha1",
@@ -200,11 +190,11 @@ type resourceID struct {
 
 // created once for each sync execution
 type syncJob struct {
-	repository      repository.ReaderWriter
+	repository      repository.Reader
 	progress        jobs.JobProgressRecorder
 	parser          *resources.Parser
 	lister          resources.ResourceLister
-	folders         dynamic.ResourceInterface
+	folders         *resources.FolderManager
 	dashboards      dynamic.ResourceInterface
 	folderLookup    *resources.FolderTree
 	resourcesLookup map[resourceID]string // the path with this k8s name
@@ -215,7 +205,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 	cfg := r.repository.Config()
 	rootFolder := resources.RootFolder(cfg)
 	if rootFolder != "" {
-		if err := r.ensureFolderExists(ctx, resources.Folder{
+		if err := r.folders.EnsureFolderExists(ctx, resources.Folder{
 			ID:    rootFolder, // will not change if exists
 			Title: cfg.Spec.Title,
 		}, ""); err != nil {
@@ -236,7 +226,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 
 		if cfg.Status.Sync.LastRef != "" && options.Incremental {
 			if currentRef == cfg.Status.Sync.LastRef {
-				r.progress.SetMessage("same commit as last sync")
+				r.progress.SetFinalMessage(ctx, "same commit as last sync")
 				return nil
 			}
 
@@ -259,7 +249,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 	}
 
 	if len(changes) == 0 {
-		r.progress.SetMessage("no changes to sync")
+		r.progress.SetFinalMessage(ctx, "no changes to sync")
 		return nil
 	}
 
@@ -280,8 +270,8 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
 
-	r.progress.SetTotal(len(changes))
-	r.progress.SetMessage("replicating changes")
+	r.progress.SetTotal(ctx, len(changes))
+	r.progress.SetMessage(ctx, "replicating changes")
 
 	// Create folder structure first
 	for _, change := range changes {
@@ -320,7 +310,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		r.progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, "", change.Action))
 	}
 
-	r.progress.SetMessage("changes replicated")
+	r.progress.SetMessage(ctx, "changes replicated")
 
 	return nil
 }
@@ -333,12 +323,12 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	}
 
 	if len(diff) < 1 {
-		r.progress.SetMessage("no changes detected between commits")
+		r.progress.SetFinalMessage(ctx, "no changes detected between commits")
 		return nil
 	}
 
-	r.progress.SetTotal(len(diff))
-	r.progress.SetMessage("replicating versioned changes")
+	r.progress.SetTotal(ctx, len(diff))
+	r.progress.SetMessage(ctx, "replicating versioned changes")
 
 	for _, change := range diff {
 		if err := r.progress.TooManyErrors(); err != nil {
@@ -368,7 +358,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		}
 	}
 
-	r.progress.SetMessage("versioned changes replicated")
+	r.progress.SetMessage(ctx, "versioned changes replicated")
 
 	return nil
 }
@@ -454,7 +444,7 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 	r.resourcesLookup[id] = path
 
 	// Make sure the parent folders exist
-	folder, err := r.ensureFolderPathExists(ctx, path)
+	folder, err := r.folders.EnsureFolderPathExist(ctx, path)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to ensure folder path exists: %w", err)
 		return result
@@ -468,127 +458,10 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 	result.Resource = parsed.GVR.Resource
 	result.Group = parsed.GVK.Group
 
-	switch action {
-	case repository.FileActionCreated:
-		_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-		result.Error = err
-	case repository.FileActionUpdated:
-		_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-		result.Error = err
-	default:
-		result.Error = fmt.Errorf("unsupported action: %s", action)
-	}
+	// Update will also create (for resources we care about)
+	_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+	result.Error = err
 	return result
-}
-
-// ensureFolderPathExists creates the folder structure in the cluster.
-func (r *syncJob) ensureFolderPathExists(ctx context.Context, filePath string) (parent string, err error) {
-	cfg := r.repository.Config()
-	parent = resources.RootFolder(cfg)
-
-	dir := path.Dir(filePath)
-	if dir == "." {
-		return parent, nil
-	}
-
-	if r.folderLookup == nil {
-		r.folderLookup = resources.NewEmptyFolderTree()
-	}
-
-	f := resources.ParseFolder(dir, cfg.Name)
-	if r.folderLookup.In(f.ID) {
-		return f.ID, nil
-	}
-
-	var traverse string
-	for i, part := range strings.Split(f.Path, "/") {
-		if i == 0 {
-			traverse = part
-		} else {
-			traverse, err = safepath.Join(traverse, part)
-			if err != nil {
-				return "", fmt.Errorf("unable to make path: %w", err)
-			}
-		}
-
-		f := resources.ParseFolder(traverse, cfg.GetName())
-		if r.folderLookup.In(f.ID) {
-			parent = f.ID
-			continue
-		}
-
-		if err := r.ensureFolderExists(ctx, f, parent); err != nil {
-			return "", fmt.Errorf("ensure folder exists: %w", err)
-		}
-		r.folderLookup.Add(f, parent)
-		parent = f.ID
-	}
-
-	return f.ID, err
-}
-
-// ensureFolderExists creates the folder if it doesn't exist.
-// If the folder already exists:
-// - it will error if the folder is not owned by this repository
-func (r *syncJob) ensureFolderExists(ctx context.Context, folder resources.Folder, parent string) error {
-	cfg := r.repository.Config()
-	obj, err := r.folders.Get(ctx, folder.ID, metav1.GetOptions{})
-	if err == nil {
-		current, ok := obj.GetAnnotations()[utils.AnnoKeyRepoName]
-		if !ok {
-			return fmt.Errorf("target folder is not managed by a repository")
-		}
-		if current != cfg.Name {
-			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
-		}
-		return nil
-	} else if !apierrors.IsNotFound(err) {
-		return fmt.Errorf("failed to check if folder exists: %w", err)
-	}
-
-	obj = &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"spec": map[string]any{
-				"title": folder.Title,
-			},
-		},
-	}
-
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return fmt.Errorf("create meta accessor for the object: %w", err)
-	}
-
-	obj.SetNamespace(cfg.GetNamespace())
-	obj.SetName(folder.ID)
-	if parent != "" {
-		meta.SetFolder(parent)
-	}
-	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name:      cfg.GetName(),
-		Path:      folder.Path,
-		Hash:      "",  // FIXME: which hash?
-		Timestamp: nil, // ???&info.Modified.Time,
-	})
-
-	result := jobs.JobResourceResult{
-		Name:     folder.ID,
-		Resource: folders.RESOURCE,
-		Group:    folders.GROUP,
-		Path:     folder.Path,
-		Action:   repository.FileActionCreated,
-		Error:    err,
-	}
-
-	if _, err := r.folders.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
-		result.Error = fmt.Errorf("failed to create folder: %w", err)
-		r.progress.Record(ctx, result)
-		return fmt.Errorf("failed to create folder: %w", err)
-	}
-
-	r.progress.Record(ctx, result)
-
-	return nil
 }
 
 func (r *syncJob) client(kind string) (dynamic.ResourceInterface, error) {
@@ -596,7 +469,7 @@ func (r *syncJob) client(kind string) (dynamic.ResourceInterface, error) {
 	case dashboard.GROUP, dashboard.DASHBOARD_RESOURCE, "Dashboard":
 		return r.dashboards, nil
 	case folders.GROUP, folders.RESOURCE, "Folder":
-		return r.folders, nil
+		return r.folders.Client(), nil
 	}
 	return nil, fmt.Errorf("unsupported resource: %s", kind)
 }

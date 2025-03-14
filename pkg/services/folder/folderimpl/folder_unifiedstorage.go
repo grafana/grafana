@@ -314,16 +314,11 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 
 	request := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
-			Key: folderkey,
-			Fields: []*resource.Requirement{
-				{
-					Key:      resource.SEARCH_FIELD_TITLE_PHRASE,
-					Operator: string(selection.In),
-					Values:   []string{title},
-				},
-			},
+			Key:    folderkey,
+			Fields: []*resource.Requirement{},
 			Labels: []*resource.Requirement{},
 		},
+		Query: title,
 		Limit: folderSearchLimit}
 
 	if parentUID != nil {
@@ -847,12 +842,6 @@ func (s *Service) canMoveViaApiServer(ctx context.Context, cmd *folder.MoveFolde
 	var evaluators []accesscontrol.Evaluator
 	currentFolderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID)
 	for action, scopes := range permissions {
-		// Skip unexpanded action sets - they have no impact if action sets are not enabled
-		if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-			if action == "folders:view" || action == "folders:edit" || action == "folders:admin" {
-				continue
-			}
-		}
 		for _, scope := range newFolderAndParentUIDs {
 			if slices.Contains(scopes, scope) {
 				evaluators = append(evaluators, accesscontrol.EvalPermission(action, currentFolderScope))

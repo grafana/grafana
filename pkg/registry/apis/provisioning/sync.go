@@ -52,12 +52,6 @@ func (c *syncConnector) Connect(
 		return nil, err
 	}
 	cfg := repo.Config()
-	if !cfg.Spec.Sync.Enabled {
-		return nil, &apierrors.StatusError{ErrStatus: v1.Status{
-			Code:    http.StatusPreconditionFailed,
-			Message: "Sync is not enabled for this repository",
-		}}
-	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var options provisioning.SyncJobOptions
@@ -74,7 +68,7 @@ func (c *syncConnector) Connect(
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionSync,
 				Repository: cfg.Name,
-				Sync:       &options,
+				Pull:       &options,
 			},
 		})
 		if err != nil {

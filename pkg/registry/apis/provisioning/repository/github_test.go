@@ -84,7 +84,7 @@ func TestParseWebhooks(t *testing.T) {
 			Job: &provisioning.JobSpec{ // we want to always push a sync job
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionSync,
-				Sync: &provisioning.SyncJobOptions{
+				Pull: &provisioning.SyncJobOptions{
 					Incremental: true,
 				},
 			},
@@ -94,7 +94,7 @@ func TestParseWebhooks(t *testing.T) {
 			Job: &provisioning.JobSpec{
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionSync,
-				Sync: &provisioning.SyncJobOptions{
+				Pull: &provisioning.SyncJobOptions{
 					Incremental: true,
 				},
 			},
@@ -125,6 +125,12 @@ func TestParseWebhooks(t *testing.T) {
 	var err error
 	gh.owner, gh.repo, err = parseOwnerRepo(gh.config.Spec.GitHub.URL)
 	require.NoError(t, err)
+
+	// Support parsing from a ".git" extension
+	owner, repo, err := parseOwnerRepo(gh.config.Spec.GitHub.URL + ".git")
+	require.NoError(t, err)
+	require.Equal(t, gh.owner, owner)
+	require.Equal(t, gh.repo, repo)
 
 	for _, tt := range tests {
 		name := fmt.Sprintf("webhook-%s-%s.json", tt.messageType, tt.name)

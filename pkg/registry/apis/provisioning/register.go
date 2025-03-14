@@ -26,8 +26,9 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -53,7 +54,6 @@ import (
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/blob"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -71,12 +71,12 @@ var (
 type APIBuilder struct {
 	urlProvider      func(namespace string) string
 	webhookSecretKey string
+	isPublic         bool
 
 	features          featuremgmt.FeatureToggles
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
 	render            rendering.Service
-	blobstore         blob.PublicBlobStore
 	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
 	ghFactory         *github.Factory
@@ -101,7 +101,6 @@ func NewAPIBuilder(
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
 	unified resource.ResourceClient,
-	blobstore blob.PublicBlobStore,
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
@@ -110,10 +109,15 @@ func NewAPIBuilder(
 	secrets secrets.Service,
 ) *APIBuilder {
 	clientFactory := resources.NewFactory(configProvider)
+
+	// HACK: Assume is only public if it is HTTPS
+	isPublic := strings.HasPrefix(urlProvider(""), "https://")
+
 	return &APIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
 		webhookSecretKey:  webhookSecretKey,
+		isPublic:          isPublic,
 		features:          features,
 		ghFactory:         ghFactory,
 		client:            clientFactory,
@@ -122,8 +126,7 @@ func NewAPIBuilder(
 		},
 		render:         render,
 		clonedir:       clonedir,
-		resourceLister: resources.NewResourceLister(unified),
-		blobstore:      blobstore,
+		resourceLister: resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
 		legacyMigrator: legacyMigrator,
 		storageStatus:  storageStatus,
 		unified:        unified,
@@ -153,12 +156,6 @@ func RegisterAPIService(
 		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
 
-	// TODO: use wire to initialize this storage
-	store, err := blob.ProvidePublicBlobStore(cfg)
-	if err != nil {
-		return nil, err
-	}
-
 	folderResolver := &repository.LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
@@ -168,7 +165,7 @@ func RegisterAPIService(
 	}
 
 	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
-		render, client, store,
+		render, client,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
@@ -179,15 +176,110 @@ func RegisterAPIService(
 
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
-			// TODO: Implement a better webhook authoriser somehow.
-			if a.GetSubresource() == "webhook" {
-				// for now????
+		func(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
+			if identity.IsServiceIdentity(ctx) {
+				// A Grafana sub-system should have full access. We trust them to make wise decisions.
 				return authorizer.DecisionAllow, "", nil
 			}
 
-			// fallback to the standard authorizer
-			return authorizer.DecisionNoOpinion, "", nil
+			// Different routes may need different permissions.
+			// * Reading and modifying a repository's configuration requires administrator privileges.
+			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
+			// * Reading a repository's files requires viewer privileges.
+			// * Editing a repository's files requires editor privileges.
+			// * Syncing a repository requires editor privileges.
+			// * Exporting a repository requires administrator privileges.
+			// * Migrating a repository requires administrator privileges.
+			// * Testing a repository configuration requires administrator privileges.
+			// * Viewing a repository's history requires editor privileges.
+
+			id, err := identity.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "failed to find requester", err
+			}
+
+			switch a.GetResource() {
+			case provisioning.RepositoryResourceInfo.GetName():
+				// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
+				switch a.GetSubresource() {
+				case "":
+					// Doing something with the repository itself.
+					if id.GetOrgRole().Includes(identity.RoleAdmin) {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "admin role is required", nil
+
+				case "test", "export", "migrate":
+					// Testing doesn't make sense for non-admins.
+					// Exporting and migrating are potentially dangerous.
+					if id.GetOrgRole().Includes(identity.RoleAdmin) {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "admin role is required", nil
+
+				case "webhook":
+					// When the resource is a webhook, we'll deal with permissions manually by checking signatures or similar in the webhook handler.
+					// The user in this context is usually an anonymous user, but may also be an authenticated synthetic check by the Grafana instance's operator as well.
+					// For context on the anonymous user, check the authn/clients/provisioning.go file.
+					return authorizer.DecisionAllow, "", nil
+
+				case "files":
+					// Reading files is allowed for everyone, so as to allow code reviews and similar.
+					// Writing files is only allowed fo Editor and higher.
+					isViewer := id.GetOrgRole().Includes(identity.RoleViewer)
+					isEditor := id.GetOrgRole().Includes(identity.RoleEditor)
+					isReadOperation := a.GetVerb() == apiutils.VerbGet
+
+					if isEditor || (isViewer && isReadOperation) {
+						return authorizer.DecisionAllow, "", nil
+					} else if isReadOperation {
+						return authorizer.DecisionDeny, "viewer role is required for reads", nil
+					} else {
+						return authorizer.DecisionDeny, "editor role is required for edits", nil
+					}
+
+				case "render":
+					// This is used to read a blob from unified storage, for GitHub PR comments.
+					// GH uses a proxy for all images, so we need to accept it, always.
+					return authorizer.DecisionAllow, "", nil
+
+				case "resources", "sync", "history":
+					// These are strictly read operations.
+					// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
+					if id.GetOrgRole().Includes(identity.RoleEditor) {
+						return authorizer.DecisionAllow, "", nil
+					} else {
+						return authorizer.DecisionDeny, "editor role is required", nil
+					}
+
+				default:
+					if id.GetIsGrafanaAdmin() {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
+				}
+
+			case "stats":
+				// This can leak information one shouldn't necessarily have access to.
+				if id.GetOrgRole().Includes(identity.RoleAdmin) {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "admin role is required", nil
+
+			case "settings":
+				// This is strictly a read operation. It is handy on the frontend for viewers.
+				if id.GetOrgRole().Includes(identity.RoleViewer) {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "viewer role is required", nil
+
+			default:
+				// We haven't bothered with this kind yet.
+				if id.GetIsGrafanaAdmin() {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
+			}
 		})
 }
 
@@ -230,8 +322,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter: b,
-		jobs:   b.jobs,
+		getter:          b,
+		jobs:            b.jobs,
+		webhooksEnabled: b.isPublic,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
@@ -259,6 +352,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		repoGetter: b,
 		jobs:       b.jobs,
 		dual:       b.storageStatus,
+	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
+		blob: b.unified,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
@@ -312,8 +408,14 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect {
+	if obj == nil || a.GetOperation() == admission.Connect || a.GetOperation() == admission.Delete {
 		return nil // This is normal for sub-resource
+	}
+
+	// Do not validate objects we are trying to delete
+	meta, _ := apiutils.MetaAccessor(obj)
+	if meta.GetDeletionTimestamp() != nil {
+		return nil
 	}
 
 	repo, err := b.asRepository(ctx, obj)
@@ -347,6 +449,23 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	targetError := b.verifySingleInstanceTarget(cfg)
 	if targetError != nil {
 		list = append(list, targetError)
+	}
+
+	// For *create* we do a synchronous test... this can be expensive!
+	// it is the same as a full healthcheck, so should not be run on every update
+	if len(list) == 0 && a.GetOperation() == admission.Create {
+		testResults, err := repository.TestRepository(ctx, repo)
+		if err != nil {
+			list = append(list, field.Invalid(field.NewPath("spec"),
+				"Repository test failed", "Unable to verify repository: "+err.Error()))
+		}
+
+		if !testResults.Success {
+			for _, err := range testResults.Errors {
+				list = append(list, field.Invalid(field.NewPath("spec"),
+					"Repository test failed", err))
+			}
+		}
 	}
 
 	if len(list) > 0 {
@@ -389,7 +508,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Informer with resync interval used for health check and reconciliation
-			sharedInformerFactory := informers.NewSharedInformerFactory(c, 10*time.Second)
+			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
 
@@ -400,18 +519,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			b.jobs.Register(export.NewExportWorker(
+			exportWorker := export.NewExportWorker(
 				b.client,
 				b.storageStatus,
 				b.secrets,
 				b.clonedir,
-			))
+			)
 			syncWorker := sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
 				b.parsers,
 				b.resourceLister,
 				b.storageStatus,
 			)
+			b.jobs.Register(exportWorker)
 			b.jobs.Register(syncWorker)
 			b.jobs.Register(migrate.NewMigrationWorker(
 				b.client,
@@ -420,12 +540,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 				b.unified,
 				b.secrets,
+				exportWorker,
 				syncWorker,
 				b.clonedir,
 			))
 
-			renderer := pullrequest.NewRenderer(b.render, b.blobstore)
-			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, renderer, b.urlProvider)
+			// Pull request worker
+			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
+			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
+			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer)
 			if err != nil {
 				return fmt.Errorf("create pull request worker: %w", err)
 			}
@@ -704,6 +827,26 @@ spec:
 		}
 	}
 
+	delete(oas.Paths.Paths, repoprefix+"/render")
+	sub = oas.Paths.Paths[repoprefix+"/render/{path}"]
+	if sub != nil {
+		sub.Get.Description = "get a rendered preview image"
+		sub.Get.Responses = &spec3.Responses{
+			ResponsesProps: spec3.ResponsesProps{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Content: map[string]*spec3.MediaType{
+								"image/png": {},
+							},
+							Description: "OK",
+						},
+					},
+				},
+			},
+		}
+	}
+
 	// Add any missing definitions
 	//-----------------------------
 	for k, v := range defs {
@@ -713,23 +856,7 @@ spec:
 		}
 	}
 	compBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
-	schema := oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"]
-	schema.Items = &spec.SchemaOrArray{
-		Schema: &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				AllOf: []spec.Schema{
-					{
-						SchemaProps: spec.SchemaProps{
-							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
-						},
-					},
-				},
-			},
-		},
-	}
-	oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"] = schema
-
-	schema = oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
+	schema := oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
 	schema.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -744,6 +871,44 @@ spec:
 		},
 	}
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
+
+	countSpec := &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
+						},
+					},
+				},
+			},
+		},
+	}
+	managerSpec := &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ManagerStats"),
+						},
+					},
+				},
+			},
+		},
+	}
+	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["instance"]
+	schema.Items = countSpec
+	oas.Components.Schemas[compBase+"ResourceStats"].Properties["instance"] = schema
+
+	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["managed"]
+	schema.Items = managerSpec
+	oas.Components.Schemas[compBase+"ResourceStats"].Properties["managed"] = schema
+
+	schema = oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"]
+	schema.Items = countSpec
+	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
 
 	return oas, nil
 }
@@ -901,15 +1066,18 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
 		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-		webhookURL := fmt.Sprintf(
-			"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-			b.urlProvider(r.GetNamespace()),
-			gvr.Group,
-			gvr.Version,
-			r.GetNamespace(),
-			gvr.Resource,
-			r.GetName(),
-		)
+		var webhookURL string
+		if b.isPublic {
+			webhookURL = fmt.Sprintf(
+				"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
+				b.urlProvider(r.GetNamespace()),
+				gvr.Group,
+				gvr.Version,
+				r.GetNamespace(),
+				gvr.Resource,
+				r.GetName(),
+			)
+		}
 		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
 	default:
 		return nil, errors.New("unknown repository type")

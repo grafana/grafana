@@ -151,14 +151,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "vizActions",
-			Description:       "Allow actions in visualizations",
-			Stage:             FeatureStageExperimental,
-			FrontendOnly:      true,
-			Owner:             grafanaDatavizSquad,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			Stage:           FeatureStageExperimental,
@@ -197,14 +189,6 @@ var (
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
-		},
-		{
-			Name:              "accessControlOnCall",
-			Description:       "Access control primitives for OnCall",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			Expression:        "true", // enabled by default
 		},
 		{
 			Name:        "nestedFolders",
@@ -999,22 +983,26 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:        "promQLScope",
-			Description: "In-development feature that will allow injection of labels into prometheus queries.",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOSSBigTent,
-			Expression:  "true",
+			Name:              "promQLScope",
+			Description:       "In-development feature that will allow injection of labels into prometheus queries.",
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaOSSBigTent,
+			Expression:        "true",
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
-			Name:        "logQLScope",
-			Description: "In-development feature that will allow injection of labels into loki queries.",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "false",
+			Name:              "logQLScope",
+			Description:       "In-development feature that will allow injection of labels into loki queries.",
+			Stage:             FeatureStagePrivatePreview,
+			Owner:             grafanaObservabilityLogsSquad,
+			Expression:        "false",
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:         "sqlExpressions",
-			Description:  "Enables using SQL and DuckDB functions as Expressions.",
+			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
@@ -1086,8 +1074,9 @@ var (
 		{
 			Name:           "ssoSettingsSAML",
 			Description:    "Use the new SSO Settings API to configure the SAML connector",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageGeneralAvailability,
 			Owner:          identityAccessTeam,
+			Expression:     "true",
 			AllowSelfServe: true,
 		},
 		{
@@ -1115,13 +1104,6 @@ var (
 			Owner:          awsDatasourcesSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
-		},
-		{
-			Name:        "accessActionSets",
-			Description: "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       identityAccessTeam,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "disableNumericMetricsSortingInExpressions",
@@ -1177,14 +1159,6 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			Expression:        "false", // enabled by default
-		},
-		{
-			Name:         "datasourceProxyDisableRBAC",
-			Description:  "Disables applying a plugin route's ReqAction field to authorization",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
 		},
 		{
 			Name:              "alertingDisableSendAlertsExternal",
@@ -1579,13 +1553,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:            "useV2DashboardsAPI",
-			Description:     "Use the v2 kubernetes API in the frontend for dashboards",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDashboardsSquad,
-			RequiresRestart: true, // changes the API routing
-		},
-		{
 			Name:         "feedbackButton",
 			Description:  "Enables a button to send feedback from the Grafana UI",
 			Stage:        FeatureStageExperimental,
@@ -1693,12 +1660,11 @@ var (
 		},
 		{
 			Name:            "exploreMetricsUseExternalAppPlugin",
-			Description:     "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-			Stage:           FeatureStageExperimental,
+			Description:     "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
+			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaObservabilityMetricsSquad,
 			FrontendOnly:    true,
 			RequiresRestart: true,
-			HideFromDocs:    true,
 		},
 		{
 			Name:            "datasourceConnectionsTab",
@@ -1776,10 +1742,11 @@ var (
 			Name:              "alertingRuleVersionHistoryRestore",
 			Description:       "Enables the alert rule version history restore feature",
 			FrontendOnly:      true,
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:              "newShareReportDrawer",
@@ -1788,6 +1755,54 @@ var (
 			Owner:             grafanaSharingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:              "rendererDisableAppPluginsPreload",
+			Description:       "Disable pre-loading app plugins when the request is coming from the renderer",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSharingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+		},
+		{
+			Name:         "assetSriChecks",
+			Description:  "Enables SRI checks for Grafana JavaScript assets",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendOpsWG,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "alertRuleRestore",
+			Description: "Enables the alert rule restore feature",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "true", // enabled by default
+		},
+		{
+			Name:              "grafanaManagedRecordingRulesDatasources",
+			Description:       "Enables writing to data sources for Grafana-managed recording rules.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "inviteUserExperimental",
+			Description:       "Renders invite user button along the app",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSharingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+		},
+		{
+			Name:         "extraLanguages",
+			Description:  "Enables additional languages",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
 		},
 	}
 )

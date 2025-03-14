@@ -400,6 +400,14 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
           },
         }
       ),
+      option(
+        'timeout',
+        'Timeout',
+        'The maximum time to wait for a webhook request to complete, before failing the request and allowing it to be retried. The default value of 0s indicates that no timeout should be applied. NOTE: This will have no effect if set higher than the group_interval.',
+        {
+          placeholder: 'Use duration format, for example: 1.2s, 100ms',
+        }
+      ),
       httpConfigOption,
     ],
   },

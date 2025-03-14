@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -223,8 +224,13 @@ func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string, orgID int
 func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, rv int64) (*dashver.DashboardVersionDTO, error) {
 	out, err := s.k8sclient.Get(ctx, dashboardUID, orgID, v1.GetOptions{ResourceVersion: strconv.FormatInt(rv, 10)})
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, dashboards.ErrDashboardNotFound
+		}
+
 		return nil, err
-	} else if out == nil {
+	}
+	if out == nil {
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
@@ -243,8 +249,13 @@ func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashbo
 		Continue:      continueToken,
 	})
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, dashboards.ErrDashboardNotFound
+		}
+
 		return nil, err
-	} else if out == nil {
+	}
+	if out == nil {
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
@@ -334,10 +345,9 @@ func getRestoreVersion(msg string) (int, error) {
 		return 0, nil
 	}
 
-	ver, err := strconv.ParseInt(parts[1], 10, 64)
+	ver, err := strconv.Atoi(parts[1])
 	if err != nil {
 		return 0, err
 	}
-
-	return int(ver), nil
+	return ver, nil
 }

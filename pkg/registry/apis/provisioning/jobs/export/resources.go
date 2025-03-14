@@ -9,8 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -20,13 +20,13 @@ import (
 
 func (r *exportJob) loadResources(ctx context.Context) error {
 	kinds := []schema.GroupVersionResource{{
-		Group:    dashboards.GROUP,
-		Resource: dashboards.DASHBOARD_RESOURCE,
+		Group:    dashboard.GROUP,
+		Resource: dashboard.DASHBOARD_RESOURCE,
 		Version:  "v1alpha1",
 	}}
 
 	for _, kind := range kinds {
-		r.progress.SetMessage(fmt.Sprintf("reading %s resource", kind.Resource))
+		r.progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
 		if err := r.loadResourcesFromAPIServer(ctx, kind); err != nil {
 			return fmt.Errorf("error loading %s %w", kind.Resource, err)
 		}
@@ -92,8 +92,8 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) j
 	}
 
 	name := meta.GetName()
-	repoName := meta.GetRepositoryName()
-	if repoName == r.target.Config().GetName() {
+	manager, _ := meta.GetManagerProperties()
+	if manager.Identity == r.target.Config().GetName() {
 		result.Action = repository.FileActionIgnored
 		return result
 	}

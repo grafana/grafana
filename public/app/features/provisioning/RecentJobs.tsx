@@ -1,8 +1,12 @@
 import { useMemo } from 'react';
 
-import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text } from '@grafana/ui';
+import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
+import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
 
-import { Repository, JobResourceSummary, Job, SyncStatus } from './api';
+import KeyValuesTable from '../explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
+
+import { JobSummary } from './JobSummary';
+import { Job, Repository, SyncStatus } from './api';
 import { useRepositoryJobs } from './hooks';
 import { formatTimestamp } from './utils/time';
 
@@ -13,12 +17,6 @@ interface Props {
 type JobCell<T extends keyof Job = keyof Job> = {
   row: {
     original: Job;
-  };
-};
-
-type SummaryCell<T extends keyof JobResourceSummary = keyof JobResourceSummary> = {
-  row: {
-    original: JobResourceSummary;
   };
 };
 
@@ -59,57 +57,27 @@ const getJobColumns = () => [
     cell: ({ row: { original: job } }: JobCell) => formatTimestamp(job.status?.started),
   },
   {
-    id: 'finished',
-    header: 'Finished',
-    cell: ({ row: { original: job } }: JobCell) => formatTimestamp(job.status?.finished),
+    id: 'duration',
+    header: 'Duration',
+    cell: ({ row: { original: job } }: JobCell) => {
+      const interval = {
+        start: job.status?.started ?? 0,
+        end: job.status?.finished ?? Date.now(),
+      };
+      if (!interval.start) {
+        return null;
+      }
+      const elapsed = interval.end - interval.start;
+      if (elapsed < 1000) {
+        return `${elapsed}ms`;
+      }
+      return intervalToAbbreviatedDurationString(interval, true);
+    },
   },
   {
     id: 'message',
     header: 'Message',
     cell: ({ row: { original: job } }: JobCell) => <span>{job.status?.message}</span>,
-  },
-];
-
-const getSummaryColumns = () => [
-  {
-    id: 'group',
-    header: 'Group',
-    cell: ({ row: { original: item } }: SummaryCell) => item.group || '-',
-  },
-  {
-    id: 'resource',
-    header: 'Resource',
-    cell: ({ row: { original: item } }: SummaryCell) => item.resource,
-  },
-  {
-    id: 'write',
-    header: 'Write',
-    cell: ({ row: { original: item } }: SummaryCell) => item.write?.toString() || '-',
-  },
-  {
-    id: 'created',
-    header: 'Created',
-    cell: ({ row: { original: item } }: SummaryCell) => item.create?.toString() || '-',
-  },
-  {
-    id: 'deleted',
-    header: 'Deleted',
-    cell: ({ row: { original: item } }: SummaryCell) => item.delete?.toString() || '-',
-  },
-  {
-    id: 'updated',
-    header: 'Updated',
-    cell: ({ row: { original: item } }: SummaryCell) => item.update?.toString() || '-',
-  },
-  {
-    id: 'unchanged',
-    header: 'Unchanged',
-    cell: ({ row: { original: item } }: SummaryCell) => item.noop?.toString() || '-',
-  },
-  {
-    id: 'errors',
-    header: 'Errors',
-    cell: ({ row: { original: item } }: SummaryCell) => item.error?.toString() || '-',
   },
 ];
 
@@ -121,31 +89,38 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   const hasSummary = Boolean(row.status?.summary?.length);
   const hasErrors = Boolean(row.status?.errors?.length);
   const hasSpec = Boolean(row.spec);
-  const specJson = hasSpec ? JSON.stringify(row.spec, null, 2) : '';
 
   if (!hasSummary && !hasErrors && !hasSpec) {
     console.log('no summary, errors, or spec', row);
     return null;
   }
 
+  // the action is already showin
+  const data = useMemo(() => {
+    const v: TraceKeyValuePair[] = [];
+    const action = row.spec?.action;
+    if (!action) {
+      return v;
+    }
+    const def = row.spec?.[action];
+    if (!def) {
+      return v;
+    }
+    for (const [key, value] of Object.entries(def)) {
+      v.push({ key, value });
+    }
+    return v;
+  }, [row.spec]);
+
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        {specJson && (
+        {hasSpec && (
           <Stack direction="column">
-            <Text variant="bodySmall" color="secondary">
+            <Text variant="body" color="secondary">
               Job Specification
             </Text>
-            <pre
-              style={{
-                width: '100%',
-                height: Math.min(400, specJson.split('\n').length * 24),
-                whiteSpace: 'pre-wrap',
-                overflowX: 'auto',
-              }}
-            >
-              {specJson}
-            </pre>
+            <KeyValuesTable data={data} />
           </Stack>
         )}
         {hasErrors && (
@@ -164,12 +139,12 @@ function ExpandedRow({ row }: ExpandedRowProps) {
           </Stack>
         )}
         {hasSummary && (
-          <InteractiveTable
-            data={row.status!.summary!}
-            columns={getSummaryColumns()}
-            getRowId={(item) => item.resource || ''}
-            pageSize={10}
-          />
+          <Stack direction="column" gap={2}>
+            <Text variant="body" color="secondary">
+              Summary
+            </Text>
+            <JobSummary summary={row.status!.summary!} />
+          </Stack>
         )}
       </Stack>
     </Box>

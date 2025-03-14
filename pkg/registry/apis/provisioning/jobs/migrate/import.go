@@ -9,11 +9,34 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+// called when an error exists
+func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) error {
+	kinds := []schema.GroupResource{{
+		Group:    folders.GROUP,
+		Resource: folders.RESOURCE,
+	}, {
+		Group:    dashboard.GROUP,
+		Resource: dashboard.DASHBOARD_RESOURCE,
+	}}
+
+	for _, gr := range kinds {
+		status, _ := dual.Status(ctx, gr)
+		status.ReadUnified = false
+		status.Migrated = 0
+		status.Migrating = 0
+		_, err := dual.Update(ctx, status)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func (j *migrationJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service) error {
 	kinds := []schema.GroupResource{{
@@ -34,7 +57,7 @@ func (j *migrationJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual d
 				return fmt.Errorf("another migration job is running for: %s", gr)
 			}
 		}
-		settings := resource.BatchSettings{
+		settings := resource.BulkSettings{
 			RebuildCollection: true, // wipes everything in the collection
 			Collection: []*resource.ResourceKey{{
 				Namespace: j.namespace,
@@ -43,7 +66,7 @@ func (j *migrationJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual d
 			}},
 		}
 		ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-		stream, err := j.batch.BatchProcess(ctx)
+		stream, err := j.batch.BulkProcess(ctx)
 		if err != nil {
 			return fmt.Errorf("error clearing unified %s / %w", gr, err)
 		}

@@ -3,17 +3,14 @@ package resources
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"os"
 	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -84,7 +81,7 @@ spec:
 		require.Equal(t, provisioning.ClassicDashboard, classic)
 		require.Equal(t, &schema.GroupVersionKind{
 			Group:   "dashboard.grafana.app",
-			Version: "v1alpha1",
+			Version: "v0alpha1",
 			Kind:    "Dashboard",
 		}, gvk)
 		require.NotNil(t, obj)
@@ -99,10 +96,8 @@ spec:
 		require.NoError(t, err)
 
 		parser := &Parser{
-			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test",
-				},
+			repo: provisioning.ResourceRepositoryInfo{
+				Name: "test",
 			},
 			client: &DynamicClient{},
 			kinds:  &StaticKindsLookup{},
@@ -110,7 +105,6 @@ spec:
 
 		// try to validate (and lint)
 		validate := true
-		parser.linter = lint.NewDashboardLinter()
 
 		// Support dashboard conversion
 		parsed, err := parser.Parse(context.Background(), info, validate)
@@ -119,24 +113,8 @@ spec:
 		require.Equal(t, provisioning.ClassicDashboard, parsed.Classic)
 		require.Equal(t, &schema.GroupVersionKind{
 			Group:   "dashboard.grafana.app",
-			Version: "v1alpha1",
+			Version: "v0alpha1",
 			Kind:    "Dashboard",
 		}, parsed.GVK)
-
-		jj, err := json.MarshalIndent(parsed.Lint, "", "  ")
-		require.NoError(t, err)
-		// fmt.Printf("%s\n", string(jj))
-		require.JSONEq(t, `[
-			{
-				"severity": "error",
-				"rule": "template-datasource-rule",
-				"message": "Dashboard 'Timeline Demo' does not have a templated data source"
-			},
-			{
-				"severity": "error",
-				"rule": "uneditable-dashboard",
-				"message": "Dashboard 'Timeline Demo' is editable, it should be set to 'editable: false'"
-			}
-		]`, string(jj))
 	})
 }

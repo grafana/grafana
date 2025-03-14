@@ -126,6 +126,13 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 			"must enter a path to local file"))
 	}
 
+	// Check if it is valid
+	_, err := r.resolver.LocalPath(cfg.Path)
+	if err != nil {
+		fields = append(fields, field.Invalid(field.NewPath("spec", "local", "path"),
+			cfg.Path, err.Error()))
+	}
+
 	return fields
 }
 
@@ -245,9 +252,15 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 		return nil, err
 	}
 
+	// Return an empty list when folder does not exist
+	_, err := os.Stat(r.path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return []FileTreeEntry{}, nil
+	}
+
 	rootlen := len(r.path)
 	entries := make([]FileTreeEntry, 0, 100)
-	err := filepath.Walk(r.path, func(path string, info fs.FileInfo, err error) error {
+	err = filepath.Walk(r.path, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

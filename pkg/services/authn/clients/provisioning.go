@@ -23,7 +23,7 @@ type Provisioning struct {
 func ProvideProvisioning() *Provisioning {
 	// It's fine to compile a regexp here. The function is only called once per instance of APIBuilder, of which there should only ever be 1.
 	// Assumption: APIVERSION has no leading or trailing slashes.
-	webhookRegexp := regexp.MustCompile("^/apis/" + regexp.QuoteMeta(provisioning.APIVERSION) + "/namespaces/[^/]+/repositories/[^/]+/webhook$")
+	webhookRegexp := regexp.MustCompile("^/apis/" + regexp.QuoteMeta(provisioning.APIVERSION) + "/namespaces/[^/]+/repositories/[^/]+/(webhook|render/.*)$")
 	return &Provisioning{webhookRegexp}
 }
 

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { DataFrameType, PanelProps, buildHistogram, cacheFieldDisplayNames, getHistogramFields } from '@grafana/data';
 import { histogramFieldsToFrame, joinHistograms } from '@grafana/data/src/transformations/transformers/histogram';
 import { TooltipDisplayMode, TooltipPlugin2, useTheme2 } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TooltipHoverMode } from '@grafana/ui/internal';
 
 import { Histogram, getBucketSize } from './Histogram';
 import { HistogramTooltip } from './HistogramTooltip';
@@ -46,7 +46,7 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
         return histogramFieldsToFrame(joinHistograms(histograms), theme);
       }
     }
-    const hist = buildHistogram(data.series, options);
+    const hist = buildHistogram(data.series, options, theme);
     if (!hist) {
       return undefined;
     }

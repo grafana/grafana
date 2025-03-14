@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"path"
 	"strings"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +15,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -200,19 +201,14 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return nil, apierrors.NewBadRequest("repository does not support read-writing")
 	}
 
+	parser, err := s.parsers.GetParser(ctx, writer)
+	if err != nil {
+		return nil, err
+	}
+
 	defer func() { _ = req.Body.Close() }()
 	if strings.HasSuffix(path, "/") {
-		if err := writer.Create(ctx, path, ref, nil, message); err != nil {
-			return nil, fmt.Errorf("failed to create folder: %w", err)
-		}
-		return &provisioning.ResourceWrapper{
-			Path:      path,
-			Ref:       ref,
-			Timestamp: &metav1.Time{Time: time.Now()},
-			// TODO: should we return something here?
-			// TypeMeta:  metav1.TypeMeta{},
-			// Resource: provisioning.ResourceObjects{},
-		}, nil
+		return s.doCreateFolder(ctx, writer, path, ref, message, parser)
 	}
 
 	data, err := io.ReadAll(req.Body)
@@ -224,11 +220,6 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		Data: data,
 		Path: path,
 		Ref:  ref,
-	}
-
-	parser, err := s.parsers.GetParser(ctx, writer)
-	if err != nil {
-		return nil, err
 	}
 
 	parsed, err := parser.Parse(ctx, info, true)
@@ -263,25 +254,64 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return nil, err
 	}
 
-	// Which context?  request of background???
+	// Directly update the grafana database
 	// Behaves the same running sync after writing
-	if parsed.Existing == nil {
-		obj, err := parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-		if err != nil {
-			parsed.Errors = append(parsed.Errors, err)
+	if ref == "" {
+		if parsed.Existing == nil {
+			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
+			if err != nil {
+				parsed.Errors = append(parsed.Errors, err)
+			}
 		} else {
-			parsed.Obj = obj
-		}
-	} else {
-		obj, err := parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-		if err != nil {
-			parsed.Errors = append(parsed.Errors, err)
-		} else {
-			parsed.Obj = obj
+			parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+			if err != nil {
+				parsed.Errors = append(parsed.Errors, err)
+			}
 		}
 	}
 
 	return parsed.AsResourceWrapper(), err
+}
+
+func (s *filesConnector) doCreateFolder(ctx context.Context, repo repository.Writer, path string, ref string, message string, parser *resources.Parser) (*provisioning.ResourceWrapper, error) {
+	manager := resources.NewFolderManager(repo, parser.Client().Resource(folder.SchemeGroupVersion.WithResource(folder.RESOURCE)))
+
+	// Now actually create the folder
+	if err := repo.Create(ctx, path, ref, nil, message); err != nil {
+		return nil, fmt.Errorf("failed to create folder: %w", err)
+	}
+
+	cfg := repo.Config()
+	wrap := &provisioning.ResourceWrapper{
+		Path: path,
+		Ref:  ref,
+		Repository: provisioning.ResourceRepositoryInfo{
+			Type:      cfg.Spec.Type,
+			Namespace: cfg.Namespace,
+			Name:      cfg.Name,
+			Title:     cfg.Spec.Title,
+		},
+		Resource: provisioning.ResourceObjects{
+			Action: provisioning.ResourceActionCreate,
+		},
+	}
+
+	if ref == "" {
+		folderName, err := manager.EnsureFolderPathExist(ctx, path)
+		if err != nil {
+			return nil, err
+		}
+
+		current, err := manager.GetFolder(ctx, folderName)
+		if err != nil && !apierrors.IsNotFound(err) {
+			return nil, err // unable to check if the folder exists
+		}
+		wrap.Resource.Upsert = v0alpha1.Unstructured{
+			Object: current.Object,
+		}
+	}
+
+	return wrap, nil
 }
 
 func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
@@ -289,23 +319,50 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 		return nil, err
 	}
 
-	writer, ok := repo.(repository.Writer)
+	// Read the existing value
+	access, ok := repo.(repository.ReaderWriter)
 	if !ok {
-		return nil, apierrors.NewBadRequest("repository does not support writing")
+		return nil, fmt.Errorf("repository is not read+writeable")
 	}
 
-	err := writer.Delete(ctx, path, ref, message)
+	if strings.HasSuffix(path, "/") {
+		return nil, fmt.Errorf("deleting folders (safely) is not yet supported")
+	}
+
+	file, err := access.Read(ctx, path, ref)
+	if err != nil {
+		return nil, err // unable to read value
+	}
+
+	parser, err := s.parsers.GetParser(ctx, access)
+	if err != nil {
+		return nil, err // unable to read value
+	}
+
+	// We can only delete parsable things
+	parsed, err := parser.Parse(ctx, file, false)
+	if err != nil {
+		return nil, err // unable to read value
+	}
+
+	parsed.Action = provisioning.ResourceActionDelete
+	wrap := parsed.AsResourceWrapper()
+
+	// Now delete the file
+	err = access.Delete(ctx, path, ref, message)
 	if err != nil {
 		return nil, err
 	}
 
-	logger := logging.FromContext(ctx).With("path", path)
-	logger.Info("TODO! trigger sync for this file we just deleted...")
+	// Delete the file in the grafana database
+	if ref == "" {
+		err = parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
+		if apierrors.IsNotFound(err) {
+			err = nil // ignorable
+		}
+	}
 
-	return &provisioning.ResourceWrapper{
-		Path: path,
-		// TODO: should we return the deleted object and / or commit?
-	}, nil
+	return wrap, err
 }
 
 var (

@@ -615,11 +615,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "mockServiceWorker.js", "mockServiceWorker.js")
 
-	// Directly serve anything from data/blob
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
-		hs.mapStatic(m, filepath.Join(hs.Cfg.DataPath, "blob"), "", "static/blob")
-	}
-
 	if hs.Cfg.ImageUploadProvider == "local" {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}

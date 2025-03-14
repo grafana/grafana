@@ -18,24 +18,24 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-var _ resource.BatchResourceWriter = (*folderReader)(nil)
+var _ resource.BulkResourceWriter = (*folderReader)(nil)
 
 type folderReader struct {
 	tree           *resources.FolderTree
 	targetRepoName string
 }
 
-// Close implements resource.BatchResourceWrite.
+// Close implements resource.BulkResourceWrite.
 func (f *folderReader) Close() error {
 	return nil
 }
 
-// CloseWithResults implements resource.BatchResourceWrite.
-func (f *folderReader) CloseWithResults() (*resource.BatchResponse, error) {
-	return &resource.BatchResponse{}, nil
+// CloseWithResults implements resource.BulkResourceWrite.
+func (f *folderReader) CloseWithResults() (*resource.BulkResponse, error) {
+	return &resource.BulkResponse{}, nil
 }
 
-// Write implements resource.BatchResourceWrite.
+// Write implements resource.BulkResourceWrite.
 func (f *folderReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
@@ -46,13 +46,13 @@ func (f *folderReader) Write(ctx context.Context, key *resource.ResourceKey, val
 	return f.tree.AddUnstructured(item, f.targetRepoName)
 }
 
-func (j *migrationJob) loadFolders(ctx context.Context) error {
+func (j *migrationJob) migrateLegacyFolders(ctx context.Context) error {
 	logger := j.logger
-	j.progress.SetMessage("reading folder tree")
+	j.progress.SetMessage(ctx, "reading folder tree")
 
 	repoName := j.target.Config().Name
 
-	j.progress.SetMessage("migrate folder tree from legacy")
+	j.progress.SetMessage(ctx, "migrate folder tree from legacy")
 	reader := &folderReader{
 		tree:           j.folderTree,
 		targetRepoName: repoName,
@@ -63,14 +63,14 @@ func (j *migrationJob) loadFolders(ctx context.Context) error {
 			Group:    folders.GROUP,
 			Resource: folders.RESOURCE,
 		}},
-		Store: parquet.NewBatchResourceWriterClient(reader),
+		Store: parquet.NewBulkResourceWriterClient(reader),
 	})
 	if err != nil {
 		return fmt.Errorf("unable to read folders from legacy storage %w", err)
 	}
 
 	// create folders first is required so that empty folders exist when finished
-	j.progress.SetMessage("write folders")
+	j.progress.SetMessage(ctx, "write folders")
 
 	err = j.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
@@ -106,7 +106,6 @@ func (j *migrationJob) loadFolders(ctx context.Context) error {
 			return result.Error
 		}
 
-		j.progress.Record(ctx, result)
 		return nil
 	})
 	if err != nil {

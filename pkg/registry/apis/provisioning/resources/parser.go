@@ -6,22 +6,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"path"
 
 	"gopkg.in/yaml.v3"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -38,34 +35,17 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 		return nil, err
 	}
 
+	urls, _ := repo.(repository.RepositoryWithURLs)
 	parser := &Parser{
-		repo:   config,
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      config.Spec.Type,
+			Title:     config.Spec.Title,
+			Namespace: config.Namespace,
+			Name:      config.Name,
+		},
+		urls:   urls,
 		client: client,
 		kinds:  kinds,
-	}
-	// TODO: Figure out how we want to determine this in practice.
-	linting, ok := os.LookupEnv("GRAFANA_LINTING")
-	if ok && linting == "true" {
-		linterFactory := lint.NewDashboardLinterFactory()
-		cfg, err := repo.Read(ctx, linterFactory.ConfigPath(), "")
-
-		logger := logging.FromContext(ctx)
-		var linter lint.Linter
-		switch {
-		case err == nil:
-			logger.Info("linter config found", "config", string(cfg.Data))
-			linter, err = linterFactory.NewFromConfig(cfg.Data)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create linter: %w", err)
-			}
-		case apierrors.IsNotFound(err):
-			logger.Info("no linter config found, using default")
-			linter = linterFactory.New()
-		default:
-			return nil, fmt.Errorf("failed to read linter config: %w", err)
-		}
-
-		parser.linter = linter
 	}
 
 	return parser, nil
@@ -73,17 +53,25 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 
 type Parser struct {
 	// The target repository
-	repo *provisioning.Repository
+	repo provisioning.ResourceRepositoryInfo
+
+	// for repositories that have URL support
+	urls repository.RepositoryWithURLs
 
 	// client helper (for this namespace?)
 	client *DynamicClient
 	kinds  KindsLookup
-	linter lint.Linter
 }
 
 type ParsedResource struct {
 	// Original file Info
 	Info *repository.FileInfo
+
+	// The repository details
+	Repo provisioning.ResourceRepositoryInfo
+
+	// Resource URLs
+	URLs *provisioning.ResourceURLs
 
 	// Check for classic file types (dashboard.json, etc)
 	Classic provisioning.ClassicFileType
@@ -110,8 +98,8 @@ type ParsedResource struct {
 	// The results from dry run
 	DryRunResponse *unstructured.Unstructured
 
-	// Optional lint issues
-	Lint []provisioning.LintIssue
+	// When the value has been saved in the grafana database
+	Upsert *unstructured.Unstructured
 
 	// If we got some Errors
 	Errors []error
@@ -125,6 +113,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 	logger := logging.FromContext(ctx).With("path", info.Path, "validate", validate)
 	parsed = &ParsedResource{
 		Info: info,
+		Repo: r.repo,
 	}
 
 	if ShouldIgnorePath(info.Path) && info.Path != "" {
@@ -141,7 +130,15 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		}
 	}
 
-	// Remove the internal UID,version and id if they exist
+	if r.urls != nil {
+		parsed.URLs, err = r.urls.ResourceURLs(ctx, info)
+		if err != nil {
+			logger.Debug("failed to load resource URLs", "error", err)
+			return parsed, err
+		}
+	}
+
+	// Remove the internal dashboard UID,version and id if they exist
 	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" {
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "uid")
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "version")
@@ -153,24 +150,25 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		return nil, err
 	}
 	obj := parsed.Obj
-	cfg := r.repo
 
 	// Validate the namespace
-	if obj.GetNamespace() != "" && obj.GetNamespace() != cfg.GetNamespace() {
+	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
 		parsed.Errors = append(parsed.Errors, ErrNamespaceMismatch)
 	}
 
-	obj.SetNamespace(cfg.GetNamespace())
-	parsed.Meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name:      cfg.Name,
-		Path:      info.Path, // joinPathWithRef(info.Path, info.Ref),
-		Hash:      info.Hash,
-		Timestamp: nil, // ???&info.Modified.Time,
+	obj.SetNamespace(r.repo.Namespace)
+	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: r.repo.Name,
+	})
+	parsed.Meta.SetSourceProperties(utils.SourceProperties{
+		Path:     info.Path, // joinPathWithRef(info.Path, info.Ref),
+		Checksum: info.Hash,
 	})
 
 	// Calculate name+folder from the file path
 	if info.Path != "" {
-		objName, folderName := NamesFromHashedRepoPath(cfg.Name, info.Path)
+		objName, folderName := NamesFromHashedRepoPath(r.repo.Name, info.Path)
 		parsed.Meta.SetFolder(folderName)
 		if obj.GetName() == "" {
 			obj.SetName(objName) // use the name saved in config
@@ -193,20 +191,6 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 	parsed.Client = r.client.Resource(gvr)
 	if !validate {
 		return parsed, nil
-	}
-
-	if r.linter != nil { // lint
-		raw := info.Data
-		if parsed.Classic == provisioning.ClassicDashboard {
-			raw, err = json.MarshalIndent(parsed.Obj, "", "  ") // indent so it is not all on one line
-			if err != nil {
-				return parsed, err
-			}
-		}
-		parsed.Lint, err = r.linter.Lint(ctx, raw)
-		if err != nil {
-			parsed.Errors = append(parsed.Errors, err)
-		}
 	}
 
 	if parsed.Client == nil {
@@ -282,16 +266,19 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 	if f.Existing != nil {
 		res.Existing = v0alpha1.Unstructured{Object: f.Existing.Object}
 	}
-	if f.DryRunResponse != nil {
+	if f.Upsert != nil {
+		res.Upsert = v0alpha1.Unstructured{Object: f.Upsert.Object}
+	} else if f.DryRunResponse != nil {
 		res.DryRun = v0alpha1.Unstructured{Object: f.DryRunResponse.Object}
 	}
 	wrap := &provisioning.ResourceWrapper{
-		Path:      info.Path,
-		Ref:       info.Ref,
-		Hash:      info.Hash,
-		Timestamp: info.Modified,
-		Resource:  res,
-		Lint:      f.Lint,
+		Path:       info.Path,
+		Ref:        info.Ref,
+		Hash:       info.Hash,
+		Repository: f.Repo,
+		URLs:       f.URLs,
+		Timestamp:  info.Modified,
+		Resource:   res,
 	}
 	for _, err := range f.Errors {
 		wrap.Errors = append(wrap.Errors, err.Error())

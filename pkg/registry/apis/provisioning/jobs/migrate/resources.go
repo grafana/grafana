@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -20,23 +22,23 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-var _ resource.BatchResourceWriter = (*resourceReader)(nil)
+var _ resource.BulkResourceWriter = (*resourceReader)(nil)
 
 type resourceReader struct {
 	job *migrationJob
 }
 
-// Close implements resource.BatchResourceWriter.
+// Close implements resource.BulkResourceWriter.
 func (r *resourceReader) Close() error {
 	return nil
 }
 
-// CloseWithResults implements resource.BatchResourceWriter.
-func (r *resourceReader) CloseWithResults() (*resource.BatchResponse, error) {
-	return &resource.BatchResponse{}, nil
+// CloseWithResults implements resource.BulkResourceWriter.
+func (r *resourceReader) CloseWithResults() (*resource.BulkResponse, error) {
+	return &resource.BulkResponse{}, nil
 }
 
-// Write implements resource.BatchResourceWriter.
+// Write implements resource.BulkResourceWriter.
 func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	// Reuse the same parse+cleanup logic
 	parsed, err := r.job.parser.Parse(ctx, &repository.FileInfo{
@@ -49,7 +51,8 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	}
 
 	// clear anything so it will get written
-	parsed.Meta.SetRepositoryInfo(nil)
+	parsed.Meta.SetManagerProperties(utils.ManagerProperties{})
+	parsed.Meta.SetSourceProperties(utils.SourceProperties{})
 
 	if result := r.job.write(ctx, parsed.Obj); result.Error != nil {
 		r.job.progress.Record(ctx, result)
@@ -61,7 +64,7 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	return nil
 }
 
-func (j *migrationJob) loadResources(ctx context.Context) error {
+func (j *migrationJob) migrateLegacyResources(ctx context.Context) error {
 	kinds := []schema.GroupVersionResource{{
 		Group:    dashboard.GROUP,
 		Resource: dashboard.DASHBOARD_RESOURCE,
@@ -69,13 +72,13 @@ func (j *migrationJob) loadResources(ctx context.Context) error {
 	}}
 
 	for _, kind := range kinds {
-		j.progress.SetMessage(fmt.Sprintf("migrate %s resource", kind.Resource))
+		j.progress.SetMessage(ctx, fmt.Sprintf("migrate %s resource", kind.Resource))
 		gr := kind.GroupResource()
 		opts := legacy.MigrateOptions{
 			Namespace:   j.namespace,
 			WithHistory: j.options.History,
 			Resources:   []schema.GroupResource{gr},
-			Store:       parquet.NewBatchResourceWriterClient(&resourceReader{job: j}),
+			Store:       parquet.NewBulkResourceWriterClient(&resourceReader{job: j}),
 			OnlyCount:   true, // first get the count
 		}
 		stats, err := j.legacy.Migrate(ctx, opts)
@@ -90,7 +93,7 @@ func (j *migrationJob) loadResources(ctx context.Context) error {
 			if history > count {
 				count = history // the number of items we will process
 			}
-			j.progress.SetTotal(int(count))
+			j.progress.SetTotal(ctx, int(count))
 		}
 
 		opts.OnlyCount = false // this time actually write
@@ -134,8 +137,8 @@ func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured
 	}
 
 	name := meta.GetName()
-	repoName := meta.GetRepositoryName()
-	if repoName == j.target.Config().GetName() {
+	manager, _ := meta.GetManagerProperties()
+	if manager.Identity == j.target.Config().GetName() {
 		result.Action = repository.FileActionIgnored
 		return result
 	}
@@ -196,4 +199,47 @@ func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured
 	}
 
 	return result
+}
+
+func removeUnprovisioned(ctx context.Context, client dynamic.ResourceInterface, progress jobs.JobProgressRecorder) error {
+	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
+	if err != nil {
+		return fmt.Errorf("failed to list resources: %w", err)
+	}
+
+	if rawList.GetContinue() != "" {
+		return fmt.Errorf("unable to list all resources in one request: %s", rawList.GetContinue())
+	}
+
+	for _, item := range rawList.Items {
+		// Create a pointer to the item since MetaAccessor requires a pointer
+		itemPtr := &item
+		meta, err := utils.MetaAccessor(itemPtr)
+		if err != nil {
+			return fmt.Errorf("extract meta accessor: %w", err)
+		}
+
+		// Skip if managed
+		_, ok := meta.GetManagerProperties()
+		if ok {
+			continue
+		}
+
+		result := jobs.JobResourceResult{
+			Name:     item.GetName(),
+			Resource: item.GetKind(),
+			Group:    item.GroupVersionKind().Group,
+			Action:   repository.FileActionDeleted,
+		}
+
+		if err = client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
+			result.Error = fmt.Errorf("failed to delete folder: %w", err)
+			progress.Record(ctx, result)
+			return result.Error
+		}
+
+		progress.Record(ctx, result)
+	}
+
+	return nil
 }

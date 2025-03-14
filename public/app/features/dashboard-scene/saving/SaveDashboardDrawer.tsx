@@ -1,9 +1,8 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { useUrlParams } from 'app/core/navigation/hooks';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
+import { useIsProvisionedNG } from 'app/features/provisioning/hooks';
 
-import { useGetResourceRepository } from '../../provisioning/hooks';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
@@ -50,16 +49,13 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const changeInfo = model.state.dashboardRef
       .resolve()
       .getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
-    const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges } = changeInfo;
+
+    const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges, hasMigratedToV2 } = changeInfo;
     const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
     const { provisioned: isProvisioned, folderTitle } = meta;
-    const [params] = useUrlParams();
-    const folderUid = params.get('folderUid') || undefined;
-
-    const folderRepository = useGetResourceRepository({ folderUid });
-    const isProvisionedNG = dashboard.isProvisioned() || Boolean(folderRepository);
+    const isProvisionedNG = useIsProvisionedNG(dashboard);
 
     const tabs = (
       <TabsBar>
@@ -90,6 +86,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
             oldValue={initialSaveModel}
             newValue={changedSaveModel}
             hasFolderChanges={hasFolderChanges}
+            hasMigratedToV2={hasMigratedToV2}
             oldFolder={dashboard.getInitialState()?.meta.folderTitle}
             newFolder={folderTitle}
           />

@@ -17,14 +17,12 @@ autoMigrateWorldmapPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateStatPanel,preview,@grafana/dataviz-squad,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
-vizActions,experimental,@grafana/dataviz-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
-accessControlOnCall,GA,@grafana/identity-access-team,false,false,false
 nestedFolders,GA,@grafana/search-and-storage,false,false,false
 alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/dataviz-squad,false,false,true
@@ -142,11 +140,10 @@ kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true
 expressionParser,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
-ssoSettingsSAML,preview,@grafana/identity-access-team,false,false,false
+ssoSettingsSAML,GA,@grafana/identity-access-team,false,false,false
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
-accessActionSets,GA,@grafana/identity-access-team,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/oss-big-tent,false,true,false
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,experimental,@grafana/grafana-frontend-platform,false,false,false
@@ -154,7 +151,6 @@ logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,fa
 newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
 dashboardRestore,experimental,@grafana/search-and-storage,false,false,false
-datasourceProxyDisableRBAC,GA,@grafana/identity-access-team,false,false,false
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
@@ -209,7 +205,6 @@ reportingUseRawTimeRange,GA,@grafana/sharing-squad,false,false,false
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
-useV2DashboardsAPI,experimental,@grafana/dashboards-squad,false,true,false
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,false
 elasticsearchCrossClusterSearch,preview,@grafana/aws-datasources,false,false,false
@@ -225,7 +220,7 @@ templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,fa
 ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
 grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
-exploreMetricsUseExternalAppPlugin,experimental,@grafana/observability-metrics,false,true,true
+exploreMetricsUseExternalAppPlugin,preview,@grafana/observability-metrics,false,true,true
 datasourceConnectionsTab,experimental,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 alertingConversionAPI,experimental,@grafana/alerting-squad,false,false,false
@@ -235,5 +230,11 @@ newLogsPanel,experimental,@grafana/observability-logs,false,false,true
 grafanaconThemes,experimental,@grafana/grafana-frontend-platform,false,true,false
 pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
 alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
-alertingRuleVersionHistoryRestore,experimental,@grafana/alerting-squad,false,false,true
+alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
 newShareReportDrawer,experimental,@grafana/sharing-squad,false,false,false
+rendererDisableAppPluginsPreload,experimental,@grafana/sharing-squad,false,false,true
+assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
+alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
+grafanaManagedRecordingRulesDatasources,experimental,@grafana/alerting-squad,false,false,false
+inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
+extraLanguages,experimental,@grafana/grafana-frontend-platform,false,false,true

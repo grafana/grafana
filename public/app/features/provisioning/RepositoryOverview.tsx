@@ -119,7 +119,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           )}
           <div className={styles.cardContainer}>
             <Card className={styles.card}>
-              <Card.Heading>Sync status</Card.Heading>
+              <Card.Heading>Pull status</Card.Heading>
               <Card.Description>
                 <Grid columns={12} gap={1} alignItems="baseline">
                   <div className={styles.labelColumn}>

@@ -48,23 +48,21 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 
 // Process will start a job
 func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
-	options := job.Spec.Export
+	options := job.Spec.Push
 	if options == nil {
 		return errors.New("missing export settings")
 	}
 
 	// Can write to external branch
-	if err := repository.IsWriteAllowed(repo.Config(), options.Branch); err != nil {
+	err := repository.IsWriteAllowed(repo.Config(), options.Branch)
+	if err != nil {
 		return err
 	}
 
-	var (
-		err      error
-		buffered *gogit.GoGitRepo
-	)
-
-	if repo.Config().Spec.GitHub != nil {
-		progress.SetMessage("clone target")
+	// Use the existing clone if already checked out
+	buffered, ok := repo.(*gogit.GoGitRepo)
+	if !ok && repo.Config().Spec.GitHub != nil {
+		progress.SetMessage(ctx, "clone target")
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   r.clonedir,
 			SingleCommitBeforePush: true,
@@ -79,7 +77,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
-		return errors.New("export job submitted targetting repository that is not a ReaderWriter")
+		return errors.New("export job submitted targeting repository that is not a ReaderWriter")
 	}
 
 	dynamicClient, _, err := r.clients.New(rw.Config().Namespace)
@@ -90,20 +88,20 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	worker := newExportJob(ctx, rw, *options, dynamicClient, progress)
 
 	// Load and write all folders
-	progress.SetMessage("start folder export")
+	progress.SetMessage(ctx, "start folder export")
 	err = worker.loadFolders(ctx)
 	if err != nil {
 		return err
 	}
 
-	progress.SetMessage("start resource export")
+	progress.SetMessage(ctx, "start resource export")
 	err = worker.loadResources(ctx)
 	if err != nil {
 		return err
 	}
 
 	if buffered != nil {
-		progress.SetMessage("push changes")
+		progress.SetMessage(ctx, "push changes")
 		if err := buffered.Push(ctx, os.Stdout); err != nil {
 			return fmt.Errorf("error pushing changes: %w", err)
 		}

@@ -23,15 +23,15 @@ export function SyncRepository({ repository }: Props) {
     if (syncQuery.isSuccess) {
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['Sync started'],
+        payload: ['Pull started'],
       });
     } else if (syncQuery.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: ['Error importing resources', syncQuery.error],
+        payload: ['Error pulling resources', syncQuery.error],
       });
     }
-  }, [syncQuery.error, syncQuery.isError, syncQuery.isSuccess, navigate]);
+  }, [syncQuery.error, syncQuery.isError, syncQuery.isSuccess]);
 
   const onClick = () => {
     if (!name) {
@@ -46,27 +46,18 @@ export function SyncRepository({ repository }: Props) {
   return (
     <>
       <Button
-        icon="sync"
+        icon="cloud-download"
         variant={'secondary'}
-        tooltip={isHealthy ? undefined : 'Unable to sync an unhealthy repository'}
+        tooltip={isHealthy ? undefined : 'Unable to pull an unhealthy repository'}
         disabled={syncQuery.isLoading || !name || !isHealthy}
-        onClick={() => setIsModalOpen(true)}
+        onClick={onClick}
       >
-        Sync
+        Pull
       </Button>
-      {repository.spec?.sync.enabled ? (
+      {!repository.spec?.sync.enabled && (
         <ConfirmModal
           isOpen={isModalOpen}
-          title={'Synchronize resources from repository'}
-          body={`This will trigger a job that will import everything from the repository into grafana. Proceed?`}
-          confirmText={syncQuery.isLoading ? 'Syncing...' : 'Sync'}
-          onConfirm={onClick}
-          onDismiss={() => setIsModalOpen(false)}
-        />
-      ) : (
-        <ConfirmModal
-          isOpen={isModalOpen}
-          title={'Sync is not enabled'}
+          title={'Pull is not enabled'}
           body={`Edit the configuration`}
           confirmText={'Edit'}
           onConfirm={() => navigate(`${PROVISIONING_URL}/${name}/edit`)}

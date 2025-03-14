@@ -1,6 +1,6 @@
 import { Alert, Icon, Stack } from '@grafana/ui';
 import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
-import { useGetRepositoryFilesWithPathQuery, useGetRepositoryQuery } from 'app/features/provisioning/api';
+import { useGetRepositoryFilesWithPathQuery } from 'app/features/provisioning/api';
 import { usePullRequestParam } from 'app/features/provisioning/hooks';
 import { DashboardRoutes } from 'app/types';
 
@@ -24,10 +24,6 @@ const commonAlertProps = {
 function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPreviewBannerContentProps) {
   const prParam = usePullRequestParam();
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
-
-  // Required to create the new PR link
-  // TODO?? can the relevant links be in the file response???
-  const repo = useGetRepositoryQuery({ name: slug });
 
   if (file.data?.errors) {
     return (
@@ -59,10 +55,8 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
   }
 
   // Check if this is a github link
-  const githubSpec = repo.data?.spec?.type === 'github' ? repo.data.spec.github : undefined;
-  if (queryParams.ref?.length && githubSpec) {
-    const url = `${githubSpec.url}/compare/${githubSpec.branch}...${queryParams.ref}?quick_pull=1&labels=grafana`;
-
+  const githubURL = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
+  if (githubURL) {
     return (
       <Alert
         {...commonAlertProps}
@@ -73,7 +67,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
             <Icon name="external-link-alt" />
           </Stack>
         }
-        onRemove={() => window.open(url, '_blank')}
+        onRemove={() => window.open(githubURL, '_blank')}
       >
         The value is <strong>not yet</strong> saved in the grafana database
       </Alert>

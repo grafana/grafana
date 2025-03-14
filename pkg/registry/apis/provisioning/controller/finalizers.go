@@ -11,8 +11,8 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -54,9 +54,10 @@ func (f *finalizer) process(ctx context.Context,
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					_, err := client.Patch(ctx, item.Name, types.JSONPatchType, []byte(`[
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoName+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoPath+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoHash+`" }
+						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyManagerKind+`" },
+						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyManagerIdentity+`" },
+						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeySourcePath+`" },
+						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeySourceChecksum+`" }
 					]`), v1.PatchOptions{})
 					return err
 				})
@@ -109,7 +110,7 @@ func (f *finalizer) processExistingItems(
 		switch item.Group {
 		case folders.GROUP:
 			version = folders.VERSION
-		case dashboards.GROUP:
+		case dashboard.GROUP:
 			version = "v0alpha1" // the constant is internal
 		default:
 			version = "v0alpha1"

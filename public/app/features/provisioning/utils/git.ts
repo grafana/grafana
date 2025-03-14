@@ -1,4 +1,4 @@
-import { Repository } from '../api';
+import { RepositorySpec } from '../api';
 
 /**
  * Validates a Git branch name according to the following rules:
@@ -15,14 +15,12 @@ export function validateBranchName(branchName?: string) {
   return branchName && branchNameRegex.test(branchName!);
 }
 
-export function getRemoteURL(repo: Repository) {
-  if (repo.spec?.type === 'github') {
-    const spec = repo.spec.github;
-    let url = spec?.url || '';
-    if (spec?.branch) {
-      url += `/tree/${spec.branch}`;
-    }
-    return url;
+export const getRepoHref = (github?: RepositorySpec['github']) => {
+  if (!github?.url) {
+    return undefined;
   }
-  return undefined;
-}
+  if (!github.branch) {
+    return github.url;
+  }
+  return `${github.url}/tree/${github.branch}`;
+};
