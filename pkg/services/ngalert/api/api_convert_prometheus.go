@@ -448,7 +448,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostDatasource(c *context
 			return errResp
 		}
 
-		ds, err := getDatasourceByUID(c, srv.proxySvc.DataProxy.DataSourceCache, apimodels.LoTexRulerBackend)
+		ds, err := srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), datasourceUID, c.SignedInUser, c.SkipDSCache)
 		if err != nil {
 			return ErrResp(http.StatusInternalServerError, err, "failed to get datasource by UID")
 		}
