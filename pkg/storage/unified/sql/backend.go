@@ -194,6 +194,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to start history pruner: %w", err)
 	}
+	b.historyPruner.Start(ctx)
 
 	return nil
 }
