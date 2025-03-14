@@ -11,7 +11,7 @@ updates:
       - "/apps/investigations"
       - "/pkg/aggregator"
       - "/pkg/apimachinery"
-      - "/pkg/apis/secret/v0alpha1/decrypt"
+      - "/pkg/apis/secret"
       - "/pkg/apiserver"
       - "/pkg/build"
       - "/pkg/build/wire"
