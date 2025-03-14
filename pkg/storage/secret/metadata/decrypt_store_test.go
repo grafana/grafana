@@ -26,7 +26,11 @@ import (
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
-func TestDecrypt(t *testing.T) {
+func TestIntegrationDecrypt(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	t.Parallel()
 
 	t.Run("when no auth info is present, it returns an error", func(t *testing.T) {
