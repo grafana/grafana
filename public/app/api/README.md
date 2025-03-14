@@ -26,7 +26,7 @@ Note that it will fail the first time you run it. On the second run, it will gen
 
 ### 3. Create the API definition
 
-In the folder `../public/app/features/{your_group_name}/api/` you have to create the `baseAPI.ts` file for your group. This file should have the following content:
+In the `../public/app/features/{your_group_name}/api/` folder you have to create the `baseAPI.ts` file for your group. This file should have the following content:
 
 ```jsx
 import { createApi } from '@reduxjs/toolkit/query/react';
