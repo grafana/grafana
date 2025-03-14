@@ -12,7 +12,7 @@ type GitHubRepositoryConfigApplyConfiguration struct {
 	Token                     *string `json:"token,omitempty"`
 	EncryptedToken            []byte  `json:"encryptedToken,omitempty"`
 	GenerateDashboardPreviews *bool   `json:"generateDashboardPreviews,omitempty"`
-	Path                      *string `json:"prefix,omitempty"`
+	Path                      *string `json:"path,omitempty"`
 }
 
 // GitHubRepositoryConfigApplyConfiguration constructs a declarative configuration of the GitHubRepositoryConfig type for use with
