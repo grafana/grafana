@@ -40,7 +40,7 @@ jest.mock('app/api/clients/provisioning', () => {
   };
 });
 
-jest.mock('../../folders/api', () => {
+jest.mock('app/api/clients/folder', () => {
   return {
     useGetFolderQuery: jest.fn(),
   };
