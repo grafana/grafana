@@ -1,4 +1,7 @@
+import { css } from '@emotion/css';
 import { Property } from 'csstype';
+import React from 'react';
+import { SortColumn, SortDirection } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 
 import {
@@ -10,19 +13,34 @@ import {
   DisplayValue,
   LinkModel,
   DisplayValueAlignmentFactors,
+  DataFrame,
 } from '@grafana/data';
 import {
+  BarGaugeDisplayMode,
+  TableAutoCellOptions,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
+  TableCellHeight,
   TableCellOptions,
-  TableAutoCellOptions,
-  BarGaugeDisplayMode,
 } from '@grafana/schema';
 
+import { TableCellInspectorMode } from '../..';
 import { getTextColorForAlphaBackground } from '../../../utils';
 
-import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes } from './types';
+import { TABLE } from './constants';
+import {
+  CellColors,
+  TableRow,
+  TableFieldOptionsType,
+  ColumnTypes,
+  FilterType,
+  FrameToRowsConverter,
+  TableNGProps,
+  Comparator,
+  TableFooterCalc,
+} from './types';
 
+/* ---------------------------- Cell calculations --------------------------- */
 export function getCellHeight(
   text: string,
   cellWidth: number, // width of the cell without padding
@@ -79,6 +97,22 @@ export function getCellHeight(
   return defaultRowHeight;
 }
 
+export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellHeight | undefined): number {
+  const bodyFontSize = theme.typography.fontSize;
+  const lineHeight = theme.typography.body.lineHeight;
+
+  switch (cellHeight) {
+    case TableCellHeight.Sm:
+      return 36;
+    case TableCellHeight.Md:
+      return 42;
+    case TableCellHeight.Lg:
+      return TABLE.MAX_CELL_HEIGHT;
+  }
+
+  return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
+}
+
 /**
  * getRowHeight determines cell height based on cell width + text length. Used
  * for when textWrap is enabled.
@@ -120,7 +154,7 @@ export function getRowHeight(
   return biggestHeight;
 }
 
-function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
+export function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
   return columnTypes[key] === FieldType.string;
 }
 
@@ -153,16 +187,98 @@ export function shouldTextOverflow(
   return false;
 }
 
-export interface TableFooterCalc {
-  show: boolean;
-  reducer: string[]; // actually 1 value
-  fields?: string[];
-  enablePagination?: boolean;
-  countRows?: boolean;
+export function getColumnWidth(field: Field, fieldConfig: TableNGProps['fieldConfig'], key: string): number {
+  const overrideWidth = fieldConfig?.overrides
+    ?.find(({ matcher: { id, options } }) => id === 'byName' && options === key)
+    ?.properties?.find(({ id }) => id === 'width')?.value;
+
+  return overrideWidth ?? field.config?.custom?.width ?? fieldConfig?.defaults?.custom?.width ?? 'auto';
 }
 
+export function getTextAlign(field?: Field): Property.JustifyContent {
+  if (!field) {
+    return 'flex-start';
+  }
+
+  if (field.config.custom) {
+    const custom: TableFieldOptionsType = field.config.custom;
+
+    switch (custom.align) {
+      case 'right':
+        return 'flex-end';
+      case 'left':
+        return 'flex-start';
+      case 'center':
+        return 'center';
+    }
+  }
+
+  if (field.type === FieldType.number) {
+    return 'flex-end';
+  }
+
+  return 'flex-start';
+}
+
+const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
+
+export function getCellOptions(field: Field): TableCellOptions {
+  if (field.config.custom?.displayMode) {
+    return migrateTableDisplayModeToCellOptions(field.config.custom?.displayMode);
+  }
+
+  if (!field.config.custom?.cellOptions) {
+    return defaultCellOptions;
+  }
+
+  return field.config.custom.cellOptions;
+}
+
+/**
+ * Getting gauge or sparkline values to align is very tricky without looking at all values and passing them through display processor.
+ * For very large tables that could pretty expensive. So this is kind of a compromise. We look at the first 1000 rows and cache the longest value.
+ * If we have a cached value we just check if the current value is longer and update the alignmentFactor. This can obviously still lead to
+ * unaligned gauges but it should a lot less common.
+ **/
+export function getAlignmentFactor(
+  field: Field,
+  displayValue: DisplayValue,
+  rowIndex: number
+): DisplayValueAlignmentFactors {
+  let alignmentFactor = field.state?.alignmentFactors;
+
+  if (alignmentFactor) {
+    // check if current alignmentFactor is still the longest
+    if (formattedValueToString(alignmentFactor).length < formattedValueToString(displayValue).length) {
+      alignmentFactor = { ...displayValue };
+      field.state!.alignmentFactors = alignmentFactor;
+    }
+    return alignmentFactor;
+  } else {
+    // look at the next 1000 rows
+    alignmentFactor = { ...displayValue };
+    const maxIndex = Math.min(field.values.length, rowIndex + 1000);
+
+    for (let i = rowIndex + 1; i < maxIndex; i++) {
+      const nextDisplayValue = field.display!(field.values[i]);
+      if (formattedValueToString(alignmentFactor).length > formattedValueToString(nextDisplayValue).length) {
+        alignmentFactor.text = displayValue.text;
+      }
+    }
+
+    if (field.state) {
+      field.state.alignmentFactors = alignmentFactor;
+    } else {
+      field.state = { alignmentFactors: alignmentFactor };
+    }
+
+    return alignmentFactor;
+  }
+}
+
+/* ------------------------------ Footer calculations ------------------------------ */
 export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFooterCalc | undefined): string {
-  if (!options) {
+  if (options === undefined) {
     return '';
   }
 
@@ -170,11 +286,12 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
     return '';
   }
 
-  const calc = options.reducer[0];
-  if (calc === undefined) {
+  // Check if reducer array exists and has at least one element
+  if (!options.reducer || !options.reducer.length) {
     return '';
   }
 
+  const calc = options.reducer[0];
   const value = reduceField({
     field: {
       ...field,
@@ -188,6 +305,14 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
   return formattedValue;
 }
 
+export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
+  footerCell: css({
+    display: 'flex',
+    justifyContent: justifyContent || 'space-between',
+  }),
+});
+
+/* ------------------------- Cell color calculation ------------------------- */
 const CELL_COLOR_DARKENING_MULTIPLIER = 10;
 const CELL_GRADIENT_DARKENING_MULTIPLIER = 15;
 const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
@@ -235,6 +360,19 @@ export function getCellColors(
   return { textColor, bgColor, bgHoverColor };
 }
 
+/** Extracts numeric pixel value from theme spacing */
+export const extractPixelValue = (spacing: string | number): number => {
+  return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
+};
+
+/** Converts an RGBA color to hex by blending it with a background color */
+export const convertRGBAToHex = (backgroundColor: string, rgbaColor: string): string => {
+  const bg = tinycolor(backgroundColor);
+  const rgba = tinycolor(rgbaColor);
+  return tinycolor.mix(bg, rgba, rgba.getAlpha() * 100).toHexString();
+};
+
+/* ------------------------------- Data links ------------------------------- */
 /**
  * @internal
  */
@@ -270,50 +408,118 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
   return links;
 };
 
-/** Extracts numeric pixel value from theme spacing */
-export const extractPixelValue = (spacing: string | number): number => {
-  return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
-};
+/* ----------------------------- Data grid sorting ---------------------------- */
+export const handleSort = (
+  columnKey: string,
+  direction: SortDirection,
+  isMultiSort: boolean,
+  setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>,
+  sortColumnsRef: React.MutableRefObject<readonly SortColumn[]>
+) => {
+  let currentSortColumn: SortColumn | undefined;
 
-export function getTextAlign(field?: Field): Property.JustifyContent {
-  if (!field) {
-    return 'flex-start';
-  }
+  const updatedSortColumns = sortColumnsRef.current.filter((column) => {
+    const isCurrentColumn = column.columnKey === columnKey;
+    if (isCurrentColumn) {
+      currentSortColumn = column;
+    }
+    return !isCurrentColumn;
+  });
 
-  if (field.config.custom) {
-    const custom: TableFieldOptionsType = field.config.custom;
-
-    switch (custom.align) {
-      case 'right':
-        return 'flex-end';
-      case 'left':
-        return 'flex-start';
-      case 'center':
-        return 'center';
+  // sorted column exists and is descending -> remove it to reset sorting
+  if (currentSortColumn && currentSortColumn.direction === 'DESC') {
+    setSortColumns(updatedSortColumns);
+    sortColumnsRef.current = updatedSortColumns;
+  } else {
+    // new sort column or changed direction
+    if (isMultiSort) {
+      setSortColumns([...updatedSortColumns, { columnKey, direction }]);
+      sortColumnsRef.current = [...updatedSortColumns, { columnKey, direction }];
+    } else {
+      setSortColumns([{ columnKey, direction }]);
+      sortColumnsRef.current = [{ columnKey, direction }];
     }
   }
+};
 
-  if (field.type === FieldType.number) {
-    return 'flex-end';
-  }
+/* ----------------------------- Data grid mapping ---------------------------- */
+export const frameToRecords = (frame: DataFrame): TableRow[] => {
+  const fnBody = `
+    const rows = Array(frame.length);
+    const values = frame.fields.map(f => f.values);
+    let rowCount = 0;
+    for (let i = 0; i < frame.length; i++) {
+      rows[rowCount] = {
+        __depth: 0,
+        __index: i,
+        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}
+      };
+      rowCount += 1;
+      if (rows[rowCount-1]['Nested frames']){
+        const childFrame = rows[rowCount-1]['Nested frames'];
+        rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
+        rowCount += 1;
+      }
+    }
+    return rows;
+  `;
 
-  return 'flex-start';
+  // Creates a function that converts a DataFrame into an array of TableRows
+  // Uses new Function() for performance as it's faster than creating rows using loops
+  const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
+  return convert(frame);
+};
+
+export interface MapFrameToGridOptions extends TableNGProps {
+  columnTypes: ColumnTypes;
+  columnWidth: number | string;
+  crossFilterOrder: React.MutableRefObject<string[]>;
+  crossFilterRows: React.MutableRefObject<{ [key: string]: TableRow[] }>;
+  defaultLineHeight: number;
+  defaultRowHeight: number;
+  expandedRows: number[];
+  filter: FilterType;
+  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
+  isCountRowsSet: boolean;
+  osContext: OffscreenCanvasRenderingContext2D | null;
+  rows: TableRow[];
+  setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
+  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
+  setIsInspecting: (isInspecting: boolean) => void;
+  setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>;
+  sortColumnsRef: React.MutableRefObject<readonly SortColumn[]>;
+  styles: { cell: string };
+  textWrap: boolean;
+  theme: GrafanaTheme2;
 }
 
-const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
-
-export function getCellOptions(field: Field): TableCellOptions {
-  if (field.config.custom?.displayMode) {
-    return migrateTableDisplayModeToCellOptions(field.config.custom?.displayMode);
+/* ----------------------------- Data grid comparator ---------------------------- */
+const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
+export function getComparator(sortColumnType: FieldType): Comparator {
+  switch (sortColumnType) {
+    case FieldType.time:
+    case FieldType.number:
+    case FieldType.boolean:
+      return (a, b) => {
+        if (a === b) {
+          return 0;
+        }
+        if (a == null) {
+          return -1;
+        }
+        if (b == null) {
+          return 1;
+        }
+        return Number(a) - Number(b);
+      };
+    case FieldType.string:
+    case FieldType.enum:
+    default:
+      return (a, b) => compare(String(a ?? ''), String(b ?? ''));
   }
-
-  if (!field.config.custom?.cellOptions) {
-    return defaultCellOptions;
-  }
-
-  return field.config.custom.cellOptions;
 }
 
+/* ---------------------------- Miscellaneous ---------------------------- */
 /**
  * Migrates table cell display mode to new object format.
  *
@@ -362,51 +568,6 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
   }
 }
 
-/**
- * Getting gauge or sparkline values to align is very tricky without looking at all values and passing them through display processor.
- * For very large tables that could pretty expensive. So this is kind of a compromise. We look at the first 1000 rows and cache the longest value.
- * If we have a cached value we just check if the current value is longer and update the alignmentFactor. This can obviously still lead to
- * unaligned gauges but it should a lot less common.
- **/
-export function getAlignmentFactor(
-  field: Field,
-  displayValue: DisplayValue,
-  rowIndex: number
-): DisplayValueAlignmentFactors {
-  let alignmentFactor = field.state?.alignmentFactors;
-
-  if (alignmentFactor) {
-    // check if current alignmentFactor is still the longest
-    if (formattedValueToString(alignmentFactor).length < formattedValueToString(displayValue).length) {
-      alignmentFactor = { ...displayValue };
-      field.state!.alignmentFactors = alignmentFactor;
-    }
-    return alignmentFactor;
-  } else {
-    // look at the next 1000 rows
-    alignmentFactor = { ...displayValue };
-    const maxIndex = Math.min(field.values.length, rowIndex + 1000);
-
-    for (let i = rowIndex + 1; i < maxIndex; i++) {
-      const nextDisplayValue = field.display!(field.values[i]);
-      if (formattedValueToString(alignmentFactor).length > formattedValueToString(nextDisplayValue).length) {
-        alignmentFactor.text = displayValue.text;
-      }
-    }
-
-    if (field.state) {
-      field.state.alignmentFactors = alignmentFactor;
-    } else {
-      field.state = { alignmentFactors: alignmentFactor };
-    }
-
-    return alignmentFactor;
-  }
-}
-
-/** Converts an RGBA color to hex by blending it with a background color */
-function convertRGBAToHex(backgroundColor: string, rgbaColor: string): string {
-  const bg = tinycolor(backgroundColor);
-  const rgba = tinycolor(rgbaColor);
-  return tinycolor.mix(bg, rgba, rgba.getAlpha() * 100).toHexString();
-}
+/** Returns true if the DataFrame contains nested frames */
+export const getIsNestedTable = (dataFrame: DataFrame): boolean =>
+  dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
