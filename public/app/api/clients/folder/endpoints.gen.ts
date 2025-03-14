@@ -1,4 +1,4 @@
-import { baseAPI as api } from './api';
+import { api } from './baseAPI';
 export const addTagTypes = ['Folder'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({

@@ -41,8 +41,7 @@ const config: ConfigFile = {
     },
     '../public/app/api/clients/iam/endpoints.gen.ts': {
       schemaFile: '../data/openapi/iam.grafana.app-v0alpha1.json',
-      apiImport: 'iamAPI',
-      apiFile: '../public/app/api/clients/iam/api.ts',
+      apiFile: '../public/app/api/clients/iam/baseAPI.ts',
       filterEndpoints: ['getDisplayMapping'],
       tag: true,
     },
@@ -57,9 +56,8 @@ const config: ConfigFile = {
       hooks: true,
     },
     '../public/app/api/clients/folder/endpoints.gen.ts': {
-      apiFile: '../public/app/api/clients/folder/api.ts',
+      apiFile: '../public/app/api/clients/folder/baseAPI.ts',
       schemaFile: '../data/openapi/folder.grafana.app-v0alpha1.json',
-      apiImport: 'baseAPI',
       filterEndpoints: ['getFolder'],
       tag: true,
     },

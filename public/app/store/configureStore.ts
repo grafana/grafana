@@ -9,7 +9,7 @@ import { userPreferencesAPI } from 'app/features/preferences/api';
 import { StoreState } from 'app/types/store';
 
 import { folderAPI } from '../api/clients/folder';
-import { iamAPI } from '../api/clients/iam/api';
+import { iamAPI } from '../api/clients/iam';
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';

@@ -1,4 +1,4 @@
-import { iamAPI as api } from './api';
+import { api } from './baseAPI';
 export const addTagTypes = ['Display'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({

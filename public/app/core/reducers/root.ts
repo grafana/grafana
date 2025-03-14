@@ -28,7 +28,7 @@ import usersReducers from 'app/features/users/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
 
 import { folderAPI } from '../../api/clients/folder';
-import { iamAPI } from '../../api/clients/iam/api';
+import { iamAPI } from '../../api/clients/iam';
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
 import { userPreferencesAPI } from '../../features/preferences/api';
 import { provisioningAPI } from '../../features/provisioning/api';
