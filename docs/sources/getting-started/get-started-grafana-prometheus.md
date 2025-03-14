@@ -63,7 +63,7 @@ The instructions in the referenced topic are intended for Linux users. You may h
 
 1. Locate the `prometheus.yml` file in the directory.
 
-1. Modify Prometheus's configuration file to monitor the hosts where you installed Node exporter.
+1. Modify the Prometheus configuration file to monitor the hosts where you installed Node exporter.
 
 By default, Prometheus looks for the file `prometheus.yml` in the current working directory. This behavior can be changed via the `--config.file` command line flag. For example, some Prometheus installers use it to set the configuration file to `/etc/prometheus/prometheus.yml`.
 
