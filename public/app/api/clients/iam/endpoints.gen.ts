@@ -1,4 +1,4 @@
-import { iamApi as api } from './api';
+import { api } from './baseAPI';
 export const addTagTypes = ['Display'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
@@ -18,7 +18,7 @@ const injectedRtkApi = api
     }),
     overrideExisting: false,
   });
-export { injectedRtkApi as generatedIamApi };
+export { injectedRtkApi as generatedAPI };
 export type GetDisplayMappingApiResponse = /** status 200 undefined */ DisplayList;
 export type GetDisplayMappingApiArg = {
   /** Display keys */

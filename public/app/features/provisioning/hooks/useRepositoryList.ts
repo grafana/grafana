@@ -1,10 +1,10 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
-import { ListRepositoryArg, Repository, useListRepositoryQuery } from '../api';
+import { ListRepositoryApiArg, Repository, useListRepositoryQuery } from '../../../api/clients/provisioning';
 
 // Sort repositories alphabetically by title
 export function useRepositoryList(
-  options: ListRepositoryArg | typeof skipToken = {}
+  options: ListRepositoryApiArg | typeof skipToken = {}
 ): [Repository[] | undefined, boolean] {
   const query = useListRepositoryQuery(options);
   const collator = new Intl.Collator(undefined, { numeric: true });

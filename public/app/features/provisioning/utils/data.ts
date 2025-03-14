@@ -1,4 +1,4 @@
-import { RepositorySpec } from '../api';
+import { RepositorySpec } from '../../../api/clients/provisioning';
 import { RepositoryFormData } from '../types';
 
 export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
