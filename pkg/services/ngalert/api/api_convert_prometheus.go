@@ -127,6 +127,7 @@ func NewConvertPrometheusSrv(
 	datasourceCache datasources.CacheService,
 	alertRuleService *provisioning.AlertRuleService,
 	featureToggles featuremgmt.FeatureToggles,
+	xactManager provisioning.TransactionManager,
 	proxySvc *LotexRuler,
 	rulerSrv *RulerSrv,
 ) *ConvertPrometheusSrv {
@@ -137,6 +138,7 @@ func NewConvertPrometheusSrv(
 		datasourceCache:  datasourceCache,
 		alertRuleService: alertRuleService,
 		featureToggles:   featureToggles,
+		xactManager:      xactManager,
 		proxySvc:         proxySvc,
 		rulerSrv:         rulerSrv,
 	}
@@ -405,9 +407,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostDatasource(c *context
 	}
 
 	promGroups := map[string][]prom.PrometheusRuleGroup{}
-	// TODO: Check the datasource here
+	fmt.Println("FAZ: ", *c.Req.URL, ds.URL)
 	resp := srv.proxySvc.requester.withReq(c, http.MethodGet, withPath(*c.Req.URL, MimirPrefix), nil, yamlExtractor(&promGroups), nil)
-
+	fmt.Println("FAZ: ", promGroups)
 	// 2. Convert Prometheus Rules to GMA
 	// Is this re-encoding even needed?
 	// promGroups = map[string][]prom.PrometheusRuleGroup{}
