@@ -151,7 +151,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 
 	mg.AddMigration("Migrate DeletionMarkers to real Resource objects", &deletionMarkerMigrator{})
 
-	// Add generation column so we can use it for more agressive pruning
+	// Add generation column so we can use it for more aggressive pruning
 	mg.AddMigration("Add generation to resource history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
 		Name: "generation", Type: migrator.DB_BigInt, Nullable: true,
 	}))
