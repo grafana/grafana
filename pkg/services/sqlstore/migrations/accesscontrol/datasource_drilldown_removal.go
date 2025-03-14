@@ -27,7 +27,7 @@ func (m *datasourceDrilldownRemovalMigrator) SQL(dialect migrator.Dialect) strin
 
 func (m *datasourceDrilldownRemovalMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	var roleIDs []int64
-	err := sess.SQL("SELECT DISTINCT role_id FROM permission WHERE action LIKE ?", "%drilldown%").Find(&roleIDs)
+	err := sess.SQL("SELECT DISTINCT role_id FROM permission WHERE action LIKE ?", "%datasources:drilldown%").Find(&roleIDs)
 	if err != nil {
 		mg.Logger.Error("Failed to find roles with drilldown permissions", "error", err)
 		// Continue with the migration even if we can't find roles
@@ -35,7 +35,7 @@ func (m *datasourceDrilldownRemovalMigrator) Exec(sess *xorm.Session, mg *migrat
 	}
 
 	if len(roleIDs) > 0 {
-		mg.Logger.Info(fmt.Sprintf("Found %d roles with drilldown permissions", len(roleIDs)))
+		mg.Logger.Info(fmt.Sprintf("Found %d roles with datasources:drilldown permissions", len(roleIDs)))
 
 		inClause := "(" + strings.Repeat("?,", len(roleIDs)-1) + "?)"
 		roleIDsInterface := make([]any, len(roleIDs))
@@ -87,30 +87,30 @@ func (m *datasourceDrilldownRemovalMigrator) Exec(sess *xorm.Session, mg *migrat
 	}
 
 	// Remove all permissions with action containing 'drilldown'
-	result, err := sess.Exec("DELETE FROM permission WHERE action LIKE ?", "%drilldown%")
+	result, err := sess.Exec("DELETE FROM permission WHERE action LIKE ?", "%datasources:drilldown%")
 	if err != nil {
-		mg.Logger.Error("Failed to delete drilldown permissions", "error", err)
+		mg.Logger.Error("Failed to delete datasources:drilldown permissions", "error", err)
 		// This is a critical step, but we'll continue with the migration
 	} else {
 		rowsAffected, err := result.RowsAffected()
 		if err != nil {
-			mg.Logger.Info("Removed drilldown permissions, but couldn't determine how many")
+			mg.Logger.Info("Removed datasources:drilldown permissions, but couldn't determine how many")
 		} else {
-			mg.Logger.Info(fmt.Sprintf("Removed %d drilldown permissions", rowsAffected))
+			mg.Logger.Info(fmt.Sprintf("Removed %d datasources:drilldown permissions", rowsAffected))
 		}
 	}
 
 	// Remove all seed assignments with action containing 'drilldown'
-	seedResult, err := sess.Exec("DELETE FROM seed_assignment WHERE action LIKE ?", "%drilldown%")
+	seedResult, err := sess.Exec("DELETE FROM seed_assignment WHERE action LIKE ?", "%datasources:drilldown%")
 	if err != nil {
-		mg.Logger.Error("Failed to delete drilldown seed assignments", "error", err)
+		mg.Logger.Error("Failed to delete datasources:drilldown seed assignments", "error", err)
 		// Continue with the migration
 	} else {
 		seedRowsAffected, err := seedResult.RowsAffected()
 		if err != nil {
-			mg.Logger.Info("Removed drilldown seed assignments, but couldn't determine how many")
+			mg.Logger.Info("Removed datasources:drilldown seed assignments, but couldn't determine how many")
 		} else {
-			mg.Logger.Info(fmt.Sprintf("Removed %d drilldown seed assignments", seedRowsAffected))
+			mg.Logger.Info(fmt.Sprintf("Removed %d datasources:drilldown seed assignments", seedRowsAffected))
 		}
 	}
 
