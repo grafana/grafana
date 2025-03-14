@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
@@ -109,14 +110,16 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			},
 		},
 	}
+	obj.SetAPIVersion(v0alpha1.APIVERSION)
+	obj.SetKind(v0alpha1.FolderResourceInfo.GroupVersionKind().Kind)
+	obj.SetNamespace(cfg.GetNamespace())
+	obj.SetName(folder.ID)
 
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return fmt.Errorf("create meta accessor for the object: %w", err)
 	}
 
-	obj.SetNamespace(cfg.GetNamespace())
-	obj.SetName(folder.ID)
 	if parent != "" {
 		meta.SetFolder(parent)
 	}
