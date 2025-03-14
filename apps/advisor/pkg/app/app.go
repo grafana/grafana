@@ -59,6 +59,7 @@ func New(cfg app.Config) (app.App, error) {
 							if err != nil {
 								return err
 							}
+							// This could be done using a Watcher, but we want to avoid the overhead of a full informer
 							if req.Action == resource.AdmissionActionCreate {
 								go func() {
 									log.Debug("Processing check", "namespace", req.Object.GetNamespace())
