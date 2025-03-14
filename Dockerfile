@@ -65,7 +65,6 @@ COPY .bingo .bingo
 COPY pkg/util/xorm pkg/util/xorm
 COPY pkg/apis/secret pkg/apis/secret
 COPY pkg/apiserver pkg/apiserver
-COPY pkg/apis/secret/v0alpha1/decrypt pkg/apis/secret/v0alpha1/decrypt
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build
 COPY pkg/build/wire pkg/build/wire
