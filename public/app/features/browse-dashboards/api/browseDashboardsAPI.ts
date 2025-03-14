@@ -4,6 +4,7 @@ import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { provisioningAPI, RepositoryViewList } from 'app/api/clients/provisioning';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -11,7 +12,6 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { provisioningAPI, RepositoryViewList } from 'app/features/provisioning/api';
 import { dispatch } from 'app/store/store';
 import {
   DescendantCount,

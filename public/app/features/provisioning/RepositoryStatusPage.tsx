@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
 import { Alert, EmptyState, Modal, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
+import { useGetFrontendSettingsQuery, useListRepositoryQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -15,7 +16,6 @@ import { MigrateToRepository } from './MigrateToRepository';
 import { RepositoryActions } from './RepositoryActions';
 import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
-import { useGetFrontendSettingsQuery, useListRepositoryQuery } from './api';
 import { PROVISIONING_URL } from './constants';
 
 enum TabSelection {

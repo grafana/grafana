@@ -5,15 +5,15 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { urlUtil } from '@grafana/data';
 import { Alert, CodeEditor, LinkButton, Button, Stack, Tab, TabContent, TabsBar, DeleteButton } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
-
 import {
   useGetRepositoryFilesWithPathQuery,
   ResourceWrapper,
   useReplaceRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
-} from './api';
+} from 'app/api/clients/provisioning';
+import { Page } from 'app/core/components/Page/Page';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+
 import { PROVISIONING_URL } from './constants';
 
 export default function FileStatusPage() {

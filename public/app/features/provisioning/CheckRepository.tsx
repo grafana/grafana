@@ -3,8 +3,7 @@ import { useEffect } from 'react';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Button, Spinner } from '@grafana/ui';
-
-import { Repository, useCreateRepositoryTestMutation } from './api';
+import { Repository, useCreateRepositoryTestMutation } from 'app/api/clients/provisioning';
 
 interface Props {
   repository: Repository;

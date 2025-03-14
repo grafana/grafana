@@ -1,6 +1,5 @@
 import { Stack, Alert, Text } from '@grafana/ui';
-
-import { HealthStatus } from './api';
+import { HealthStatus } from 'app/api/clients/provisioning';
 
 interface Props {
   health: HealthStatus;

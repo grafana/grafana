@@ -6,8 +6,12 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  RepositoryViewList,
+  useDeleteRepositoryMutation,
+  useGetFrontendSettingsQuery,
+} from 'app/api/clients/provisioning';
 
-import { RepositoryViewList, useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from '../api';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks';
 import { StepStatus } from '../hooks/useStepStatus';

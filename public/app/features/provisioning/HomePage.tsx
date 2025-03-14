@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, ConfirmModal, Modal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 
 import { ExportToRepository } from './ExportToRepository';
@@ -14,7 +15,6 @@ import { MigrateToRepository } from './MigrateToRepository';
 import { RepositoryActions } from './RepositoryActions';
 import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
-import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
 import { useRepositoryList } from './hooks';
 import { checkSyncSettings } from './utils/checkSyncSettings';
 

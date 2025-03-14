@@ -12,13 +12,13 @@ import {
   ConfirmModal,
   Button,
 } from '@grafana/ui';
-
 import {
   Repository,
   ResourceListItem,
   useGetRepositoryResourcesQuery,
   useDeleteRepositoryFilesWithPathMutation,
-} from './api';
+} from 'app/api/clients/provisioning';
+
 import { PROVISIONING_URL } from './constants';
 
 interface RepoProps {

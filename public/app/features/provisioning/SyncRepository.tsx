@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
+import { Repository, useCreateRepositorySyncMutation } from 'app/api/clients/provisioning';
 
-import { Repository, useCreateRepositorySyncMutation } from './api';
 import { PROVISIONING_URL } from './constants';
 
 interface Props {

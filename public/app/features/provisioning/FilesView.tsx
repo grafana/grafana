@@ -11,10 +11,14 @@ import {
   Spinner,
   Stack,
 } from '@grafana/ui';
+import {
+  Repository,
+  useGetRepositoryFilesQuery,
+  useDeleteRepositoryFilesWithPathMutation,
+} from 'app/api/clients/provisioning';
 
-import { Repository, useGetRepositoryFilesQuery, useDeleteRepositoryFilesWithPathMutation } from './api';
-import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
+import { FileDetails } from './types';
 
 interface FilesViewProps {
   repo: Repository;

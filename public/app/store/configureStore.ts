@@ -42,7 +42,6 @@ export function configureStore(initialState?: Partial<StoreState>) {
         browseDashboardsAPI.middleware,
         cloudMigrationAPI.middleware,
         userPreferencesAPI.middleware,
-        provisioningAPI.middleware,
         iamAPI.middleware,
         provisioningAPI.middleware,
         folderAPI.middleware,

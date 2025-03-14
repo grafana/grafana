@@ -1,6 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
-import { useCreateRepositoryMigrateMutation } from '../api';
+import { useCreateRepositoryMigrateMutation } from 'app/api/clients/provisioning';
+
 import { StepStatus } from '../hooks/useStepStatus';
 
 import { JobStep } from './JobStep';

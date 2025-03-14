@@ -2,11 +2,11 @@ import { useMemo } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
 import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
+import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
 
 import KeyValuesTable from '../explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { JobSummary } from './JobSummary';
-import { Job, Repository, SyncStatus } from './api';
 import { useRepositoryJobs } from './hooks';
 import { formatTimestamp } from './utils/time';
 

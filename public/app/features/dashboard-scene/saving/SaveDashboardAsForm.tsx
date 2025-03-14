@@ -4,11 +4,11 @@ import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
+import { RepositoryView } from 'app/api/clients/provisioning';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { AnnoKeyManagerIdentity } from '../../apiserver/types';
-import { RepositoryView } from '../../provisioning/api';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';

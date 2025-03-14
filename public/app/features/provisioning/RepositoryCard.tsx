@@ -1,11 +1,11 @@
 import { ReactNode } from 'react';
 
 import { IconName, Stack, Text, TextLink, Icon, Card, LinkButton } from '@grafana/ui';
+import { Repository, ResourceCount } from 'app/api/clients/provisioning';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { Repository, ResourceCount } from './api';
 import { PROVISIONING_URL } from './constants';
 
 interface Props {

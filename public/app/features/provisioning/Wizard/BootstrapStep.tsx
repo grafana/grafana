@@ -16,8 +16,8 @@ import {
   Text,
   Tooltip,
 } from '@grafana/ui';
+import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
 
-import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from '../api';
 import { StepStatus } from '../hooks/useStepStatus';
 
 import { getState } from './actions';

@@ -1,4 +1,8 @@
-import { GetRepositoryFilesResponse, GetResourceStatsResponse, RepositoryViewList } from '../api';
+import {
+  GetRepositoryFilesApiResponse,
+  GetResourceStatsApiResponse,
+  RepositoryViewList,
+} from 'app/api/clients/provisioning';
 
 import { ModeOption, SystemState } from './types';
 
@@ -47,8 +51,8 @@ function getDisabledReason(action: ModeOption, resourceCount: number, folderConn
 export function getState(
   repoName: string,
   settings?: RepositoryViewList,
-  files?: GetRepositoryFilesResponse,
-  stats?: GetResourceStatsResponse
+  files?: GetRepositoryFilesApiResponse,
+  stats?: GetResourceStatsApiResponse
 ): SystemState {
   const folderConnected = settings?.items?.some((item) => item.target === 'folder' && item.name !== repoName);
 

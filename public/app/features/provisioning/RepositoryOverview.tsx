@@ -13,12 +13,12 @@ import {
   Grid,
   useStyles2,
 } from '@grafana/ui';
+import { Repository, ResourceCount } from 'app/api/clients/provisioning';
 
 import { CheckRepository } from './CheckRepository';
 import { RecentJobs } from './RecentJobs';
 import { RepositoryHealth } from './RepositoryHealth';
 import { SyncRepository } from './SyncRepository';
-import { Repository, ResourceCount } from './api';
 import { formatTimestamp } from './utils/time';
 
 type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;

@@ -1,4 +1,4 @@
-import { RepositorySpec } from 'app/features/provisioning/api';
+import { RepositorySpec } from 'app/api/clients/provisioning';
 import { WorkflowOption } from 'app/features/provisioning/types';
 
 export function getDefaultWorkflow(config?: RepositorySpec) {

@@ -1,9 +1,9 @@
 import { useForm } from 'react-hook-form';
 
 import { Box, Button, Field, FieldSet, Input, Switch } from '@grafana/ui';
+import { Repository, useCreateRepositoryMigrateMutation, MigrateJobOptions } from 'app/api/clients/provisioning';
 
 import { JobStatus } from './JobStatus';
-import { Repository, useCreateRepositoryMigrateMutation, MigrateJobOptions } from './api';
 
 interface Props {
   repo: Repository;

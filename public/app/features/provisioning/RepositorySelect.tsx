@@ -1,6 +1,5 @@
 import { Combobox, ComboboxOption, Spinner } from '@grafana/ui';
-
-import { useListRepositoryQuery } from './api';
+import { useListRepositoryQuery } from 'app/api/clients/provisioning';
 
 interface Props {
   value: string;

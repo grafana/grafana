@@ -2,10 +2,10 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect } from 'react';
 
 import { Alert, ControlledCollapse, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
+import { useGetRepositoryQuery, useListJobQuery } from 'app/api/clients/provisioning';
 
 import { JobSummary } from './JobSummary';
 import ProgressBar from './ProgressBar';
-import { useGetRepositoryQuery, useListJobQuery } from './api';
 import { getRepoHref } from './utils/git';
 
 export interface JobStatusProps {

@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { ConfirmModal, IconButton } from '@grafana/ui';
-
-import { useDeleteRepositoryMutation } from './api';
+import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning';
 
 const appEvents = getAppEvents();
 

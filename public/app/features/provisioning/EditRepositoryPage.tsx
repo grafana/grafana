@@ -1,10 +1,10 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { EmptyState, Text, TextLink } from '@grafana/ui';
+import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 
 import { ConfigForm } from './ConfigForm';
-import { useGetRepositoryQuery } from './api';
 import { PROVISIONING_URL } from './constants';
 
 export default function EditRepositoryPage() {

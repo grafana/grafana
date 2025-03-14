@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { EmptySearchResult, FilterInput, LinkButton, Stack } from '@grafana/ui';
+import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 
 import { RepositoryCard } from './RepositoryCard';
-import { Repository, useGetFrontendSettingsQuery } from './api';
 import { CONNECT_URL } from './constants';
 import { checkSyncSettings } from './utils/checkSyncSettings';
 

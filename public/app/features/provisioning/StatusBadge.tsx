@@ -1,7 +1,7 @@
 import { locationService } from '@grafana/runtime';
 import { Badge, BadgeColor, IconName } from '@grafana/ui';
+import { SyncStatus } from 'app/api/clients/provisioning';
 
-import { SyncStatus } from './api';
 import { PROVISIONING_URL } from './constants';
 
 interface StatusBadgeProps {

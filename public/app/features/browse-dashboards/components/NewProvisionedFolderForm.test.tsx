@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
+import { useGetFolderQuery } from 'app/api/clients/folder';
+import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { useCreateRepositoryFilesWithPathMutation } from 'app/features/provisioning/api';
 import { usePullRequestParam, useRepositoryList } from 'app/features/provisioning/hooks';
 
 import { FolderDTO } from '../../../types';
-import { useGetFolderQuery } from '../../folders/api';
 
 import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
 
@@ -34,7 +34,7 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
   };
 });
 
-jest.mock('app/features/provisioning/api', () => {
+jest.mock('app/api/clients/provisioning', () => {
   return {
     useCreateRepositoryFilesWithPathMutation: jest.fn(),
   };
