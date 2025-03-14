@@ -15,6 +15,7 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
         url: data.url || '',
         branch: data.branch,
         token: data.token,
+        path: data.path,
       };
       break;
     case 'local':

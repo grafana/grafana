@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
@@ -105,6 +106,13 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	// TODO: Use two fields for token
 	if gh.Token == "" && len(gh.EncryptedToken) == 0 {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
+	}
+	if strings.Contains(gh.Path, "..") {
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Path, "path traversal disallowed"))
+	}
+	if strings.Contains(gh.Path, "//") {
+		// Avoid making an assumption :).
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Path, "path intent is unclear: double slashes (//) can be seen as either resetting to / or as a standard path traversal"))
 	}
 
 	return list
@@ -191,12 +199,17 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 		ref = r.config.Spec.GitHub.Branch
 	}
 
-	content, dirContent, err := r.gh.GetContents(ctx, r.owner, r.repo, filePath, ref)
+	finalPath, err := r.path(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	content, dirContent, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return nil, &apierrors.StatusError{
 				ErrStatus: metav1.Status{
-					Message: fmt.Sprintf("file not found; path=%s ref=%s", filePath, ref),
+					Message: fmt.Sprintf("file not found; path=%s ref=%s", finalPath, ref),
 					Code:    http.StatusNotFound,
 				},
 			}
@@ -230,7 +243,7 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 
 	ctx, logger := r.logger(ctx, ref)
 
-	tree, truncated, err := r.gh.GetTree(ctx, r.owner, r.repo, ref, true)
+	tree, truncated, err := r.gh.GetTree(ctx, r.owner, r.repo, r.config.Spec.GitHub.Path, ref, true)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return nil, &apierrors.StatusError{
@@ -268,17 +281,22 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 		return fmt.Errorf("create branch on create: %w", err)
 	}
 
+	finalPath, err := r.path(path)
+	if err != nil {
+		return err
+	}
+
 	// Create .keep file if it is a directory
-	if strings.HasSuffix(path, "/") {
+	if strings.HasSuffix(finalPath, "/") {
 		if data != nil {
 			return apierrors.NewBadRequest("data cannot be provided for a directory")
 		}
 
-		path = strings.TrimSuffix(path, "/") + "/.keep"
+		finalPath = strings.TrimSuffix(finalPath, "/") + "/.keep"
 		data = []byte{}
 	}
 
-	err := r.gh.CreateFile(ctx, r.owner, r.repo, path, ref, comment, data)
+	err = r.gh.CreateFile(ctx, r.owner, r.repo, finalPath, ref, comment, data)
 	if errors.Is(err, pgh.ErrResourceAlreadyExists) {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -300,7 +318,12 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 		return fmt.Errorf("create branch on update: %w", err)
 	}
 
-	file, _, err := r.gh.GetContents(ctx, r.owner, r.repo, path, ref)
+	finalPath, err := r.path(path)
+	if err != nil {
+		return err
+	}
+
+	file, _, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return &apierrors.StatusError{
@@ -317,7 +340,7 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 		return apierrors.NewBadRequest("cannot update a directory")
 	}
 
-	if err := r.gh.UpdateFile(ctx, r.owner, r.repo, path, ref, comment, file.GetSHA(), data); err != nil {
+	if err := r.gh.UpdateFile(ctx, r.owner, r.repo, finalPath, ref, comment, file.GetSHA(), data); err != nil {
 		return fmt.Errorf("update file: %w", err)
 	}
 	return nil
@@ -329,7 +352,12 @@ func (r *githubRepository) Write(ctx context.Context, path string, ref string, d
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	return writeWithReadThenCreateOrUpdate(ctx, r, path, ref, data, message)
+	finalPath, err := r.path(path)
+	if err != nil {
+		return err
+	}
+
+	return writeWithReadThenCreateOrUpdate(ctx, r, finalPath, ref, data, message)
 }
 
 func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string) error {
@@ -342,11 +370,21 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 		return fmt.Errorf("create branch on delete: %w", err)
 	}
 
-	return r.deleteRecursively(ctx, path, ref, comment)
+	finalPath, err := r.path(path)
+	if err != nil {
+		return err
+	}
+
+	return r.deleteRecursively(ctx, finalPath, ref, comment)
 }
 
 func (r *githubRepository) deleteRecursively(ctx context.Context, path, ref, comment string) error {
-	file, contents, err := r.gh.GetContents(ctx, r.owner, r.repo, path, ref)
+	finalPath, err := r.path(path)
+	if err != nil {
+		return err
+	}
+
+	file, contents, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return &apierrors.StatusError{
@@ -360,7 +398,7 @@ func (r *githubRepository) deleteRecursively(ctx context.Context, path, ref, com
 	}
 
 	if file != nil && !file.IsDirectory() {
-		return r.gh.DeleteFile(ctx, r.owner, r.repo, path, ref, comment, file.GetSHA())
+		return r.gh.DeleteFile(ctx, r.owner, r.repo, finalPath, ref, comment, file.GetSHA())
 	}
 
 	for _, c := range contents {
@@ -385,7 +423,12 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	commits, err := r.gh.Commits(ctx, r.owner, r.repo, path, ref)
+	finalPath, err := r.path(path)
+	if err != nil {
+		return nil, err
+	}
+
+	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return nil, &apierrors.StatusError{
@@ -894,4 +937,18 @@ func (r *githubRepository) logger(ctx context.Context, ref string) (context.Cont
 	// We want to ensure we don't add multiple github_repository keys. With doesn't deduplicate the keys...
 	ctx = context.WithValue(ctx, containsGhKey, true)
 	return ctx, logger
+}
+
+// path returns a safe path for the given file, based out of the Prefix property.
+//
+// If the fpath does a path traversal that would be unsafe, a safepath.ErrUnsafePathTraversal error is returned.
+// This error is already a Kubernetes apierror (being a HTTP 400 Bad Request), so it can be returned directly.
+func (r *githubRepository) path(fpath string) (string, error) {
+	prefix := r.config.Spec.GitHub.Path
+	prefix = strings.Trim(prefix, "/")
+	if prefix == "" {
+		return fpath, nil
+	}
+
+	return safepath.JoinIncludingTrailing(prefix, fpath)
 }

@@ -90,6 +90,15 @@ export function ConnectStep() {
           <Field label={'Branch'} error={errors.repository?.branch?.message} invalid={!!errors.repository?.branch}>
             <Input {...register('repository.branch')} placeholder={'main'} />
           </Field>
+
+          <Field
+            label={'Path'}
+            error={errors.repository?.path?.message}
+            invalid={!!errors.repository?.path}
+            description={'Path to a subdirectory in the Git repository'}
+          >
+            <Input {...register('repository.path')} placeholder={'grafana/'} />
+          </Field>
         </>
       )}
 
