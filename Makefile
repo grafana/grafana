@@ -324,6 +324,7 @@ golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
 		--config .golangci.yml \
+		$(if $(GO_BUILD_TAGS),--build-tags $(GO_BUILD_TAGS)) \
 		$(GO_LINT_FILES)
 
 .PHONY: lint-go
