@@ -1,8 +1,8 @@
-import { parseListOptionsSelector } from '../../../apiserver/client';
-import { ListOptions } from '../../../apiserver/types';
-import { ListRepositoryArg } from '../endpoints.gen';
+import { parseListOptionsSelector } from '../../../../features/apiserver/client';
+import { ListOptions } from '../../../../features/apiserver/types';
+import { ListRepositoryApiArg } from '../endpoints.gen';
 
-type ListParams = Omit<ListRepositoryArg, 'fieldSelector' | 'labelSelector'> &
+type ListParams = Omit<ListRepositoryApiArg, 'fieldSelector' | 'labelSelector'> &
   Pick<ListOptions, 'labelSelector' | 'fieldSelector'>;
 
 /**
