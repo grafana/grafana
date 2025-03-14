@@ -124,7 +124,7 @@ export const dashboardsAPI = generatedApi.enhanceEndpoints({
 });
 ```
 
-### 7. Add reducers and middleware to the redux store
+### 7. Add reducers and middleware to the Redux store
 
 The last, but not least, step to be done is adding the middleware and reducers to the store.
 
