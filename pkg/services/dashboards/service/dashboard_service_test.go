@@ -10,14 +10,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -877,7 +881,8 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			"spec": map[string]any{},
 		}}, nil).Once()
 		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Fields[0].Key == "manager.id" && req.Options.Fields[0].Values[0] == "test" && req.Options.Fields[0].Operator == "notin"
+			// nolint:staticcheck
+			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "test" && req.Options.Fields[1].Operator == "notin"
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
@@ -907,7 +912,8 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		}, nil).Once()
 
 		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Fields[0].Key == "manager.id" && req.Options.Fields[0].Values[0] == "test" && req.Options.Fields[0].Operator == "notin"
+			// nolint:staticcheck
+			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "test" && req.Options.Fields[1].Operator == "notin"
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
@@ -1108,6 +1114,72 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 		require.Len(t, dashes, 1)
 		k8sCliMock.AssertExpectations(t)
 	})
+}
+
+func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+
+	type testCase struct {
+		description                   string
+		expectedCallsToSetPermissions int
+		featuresArr                   []any
+	}
+
+	tcs := []testCase{
+		{
+			description:                   "folder creation succeeds, via legacy storage",
+			expectedCallsToSetPermissions: 1,
+		},
+		{
+			description:                   "folder creation succeeds, via API Server",
+			expectedCallsToSetPermissions: 0,
+			featuresArr:                   []any{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			folderPermService := acmock.NewMockedPermissionsService()
+			folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+			cfg := setting.NewCfg()
+			f := ini.Empty()
+			f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("folder")
+			tempCfg, err := setting.NewCfgFromINIFile(f)
+			require.NoError(t, err)
+			cfg.RBAC = tempCfg.RBAC
+
+			service := &DashboardServiceImpl{
+				cfg:               cfg,
+				dashboardStore:    &fakeStore,
+				folderPermissions: folderPermService,
+				folderService: &foldertest.FakeService{
+					ExpectedFolder: &folder.Folder{
+						ID:  0,
+						UID: "general",
+					},
+				},
+				log: log.NewNopLogger(),
+			}
+
+			origNewDashboardGuardian := guardian.New
+			defer func() { guardian.New = origNewDashboardGuardian }()
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+
+			cmd := &folder.CreateFolderCommand{
+				Title: "foo",
+				OrgID: 1,
+			}
+
+			service.features = featuremgmt.WithFeatures(tc.featuresArr...)
+			folder, err := service.SaveFolderForProvisionedDashboards(context.Background(), cmd)
+			require.NoError(t, err)
+			require.NotNil(t, folder)
+
+			folderPermService.AssertNumberOfCalls(t, "SetPermissions", tc.expectedCallsToSetPermissions)
+		})
+	}
 }
 
 func TestSaveProvisionedDashboard(t *testing.T) {

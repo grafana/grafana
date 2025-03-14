@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestSchedulableAlertRulesRegistry(t *testing.T) {
@@ -212,6 +213,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 					SimplifiedNotificationsSection:       false,
 				},
 			},
+			MissingSeriesEvalsToResolve: util.Pointer(2),
 		}
 		r2 := &models.AlertRule{
 			ID:        2,
@@ -257,6 +259,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 					SimplifiedQueryAndExpressionsSection: true,
 				},
 			},
+			MissingSeriesEvalsToResolve: util.Pointer(1),
 		}
 
 		excludedFields := map[string]struct{}{

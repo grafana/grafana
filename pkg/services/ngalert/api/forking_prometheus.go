@@ -5,16 +5,18 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+
+	apiprometheus "github.com/grafana/grafana/pkg/services/ngalert/api/prometheus"
 )
 
 type PrometheusApiHandler struct {
 	ProxySvc        *LotexProm
-	GrafanaSvc      *PrometheusSrv
+	GrafanaSvc      *apiprometheus.PrometheusSrv
 	DatasourceCache datasources.CacheService
 }
 
 // NewForkingProm implements a set of routes that proxy to various Prometheus-compatible backends.
-func NewForkingProm(datasourceCache datasources.CacheService, proxy *LotexProm, grafana *PrometheusSrv) *PrometheusApiHandler {
+func NewForkingProm(datasourceCache datasources.CacheService, proxy *LotexProm, grafana *apiprometheus.PrometheusSrv) *PrometheusApiHandler {
 	return &PrometheusApiHandler{
 		ProxySvc:        proxy,
 		GrafanaSvc:      grafana,

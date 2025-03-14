@@ -18,9 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 
-	dashboardV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
-	dashboardV2 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 )
 
 func TestMain(m *testing.M) {
@@ -334,10 +334,10 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	require.Equal(t, 200, rsp.Response.StatusCode)
 	require.Equal(t, "v1alpha1", rsp.Result.Meta.APIVersion)
 
-	// V2 should send a redirect
+	// V2 should send a not acceptable
 	rsp = apis.DoRequest(helper, apis.RequestParams{
 		User: helper.Org1.Admin,
 		Path: "/api/dashboards/uid/test-v2",
 	}, &dtos.DashboardFullWithMeta{})
-	require.Equal(t, 302, rsp.Response.StatusCode) // redirect
+	require.Equal(t, 406, rsp.Response.StatusCode) // not acceptable
 }

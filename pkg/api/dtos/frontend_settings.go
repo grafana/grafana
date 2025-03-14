@@ -34,6 +34,7 @@ type FrontendSettingsAuthDTO struct {
 	DisableLogin                  bool `json:"disableLogin"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
 	PasswordlessEnabled           bool `json:"passwordlessEnabled"`
+	DisableSignoutMenu            bool `json:"disableSignoutMenu"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
@@ -206,7 +207,6 @@ type FrontendSettingsDTO struct {
 	ExternalUserMngAnalyticsParams      string   `json:"externalUserMngAnalyticsParams"`
 	ViewersCanEdit                      bool     `json:"viewersCanEdit"`
 	AngularSupportEnabled               bool     `json:"angularSupportEnabled"`
-	EditorsCanAdmin                     bool     `json:"editorsCanAdmin"`
 	DisableSanitizeHtml                 bool     `json:"disableSanitizeHtml"`
 	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
 	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
