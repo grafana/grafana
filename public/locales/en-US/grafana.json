@@ -515,7 +515,7 @@
       "simple-routing": {
         "alertmanager-label": "Alertmanager:",
         "optional-settings": {
-          "description": "Configure how notifications for this alert are sent.",
+          "description": "Configure how notifications for this alert rule are sent.",
           "help-info1": "Mute timings allows you to temporarily pause notifications for a specific recurring period, such as a regular maintenance window or weekends.",
           "help-info2": "Grouping and timing options combine multiple alerts within a specific period into a single notification, allowing you to customize default options."
         }

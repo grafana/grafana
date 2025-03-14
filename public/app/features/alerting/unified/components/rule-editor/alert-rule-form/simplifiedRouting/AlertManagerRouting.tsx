@@ -82,7 +82,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
             <Stack direction="row" gap={0.5} alignItems="center">
               <Text variant="bodySmall" color="secondary">
                 <Trans i18nKey="alerting.rule-form.simple-routing.optional-settings.description">
-                  Configure how notifications for this alert are sent.
+                  Configure how notifications for this alert rule are sent.
                 </Trans>
               </Text>
               <NeedHelpInfo
