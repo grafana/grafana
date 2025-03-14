@@ -255,6 +255,7 @@ export interface FeatureToggles {
   assetSriChecks?: boolean;
   alertRuleRestore?: boolean;
   grafanaManagedRecordingRulesDatasources?: boolean;
+  infinityRunQueriesInParallel?: boolean;
   inviteUserExperimental?: boolean;
   extraLanguages?: boolean;
 }
