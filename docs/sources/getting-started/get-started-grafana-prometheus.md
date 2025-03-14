@@ -184,13 +184,13 @@ ls /etc/prometheus/prometheus.yml
 ```
 - Ensures that Prometheus has its necessary configuration and data storage directories.
 
-#### ensure correct permissions
+#### Ensure correct permissions
 If Prometheus is running as a dedicated user, ensure the correct ownership:
 ```bash
 sudo chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
 ```
 
-#### (optional) secure Prometheus by creating a dedicated user
+#### (Optional) Secure Prometheus by creating a dedicated user
 ```bash
 sudo useradd --no-create-home --shell /bin/false prometheus
 ```
@@ -199,7 +199,7 @@ sudo useradd --no-create-home --shell /bin/false prometheus
 ---
 
 ### 3. Checking if Prometheus is running as a service
-If Prometheus isn’t running as a process, check if it's set up correctly as a service.
+If Prometheus is running as a process, check if it's also set up correctly as a service.
 
 #### Check Prometheus service status
 ##### Linux
@@ -256,9 +256,9 @@ net stop prometheus
 net start prometheus
 ```
 
-## Check Prometheus metrics in Grafana Explore view
+## Check Prometheus metrics in Grafana Metics Drilldown
 
-In your Grafana instance, go to the [Explore](../../explore/) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus.
+In your Grafana instance, go to the [Drilldown](https://www.grafana.com/docs/grafana/latest/explore/simplified-exploration/metrics/) view and experience query-less browsing of Prometheus-compatible metrics.
 
 ## Start building dashboards
 
