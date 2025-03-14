@@ -1,7 +1,10 @@
 import { Button, Modal } from '@grafana/ui';
 
-import { FolderDataType } from '../../../browse-dashboards/api/browseDashboardsAPI';
+import { FolderDTO, FolderListItemDTO } from '../../../../types';
+import { NestedFolderDTO } from '../../../search/service/types';
 import { DashboardScene } from '../../scene/DashboardScene';
+
+export type FolderDataType = FolderListItemDTO | NestedFolderDTO | FolderDTO;
 
 export interface Props {
   onDismiss: () => void;

@@ -3,7 +3,8 @@ import { Chance } from 'chance';
 
 import { dateTime } from '@grafana/data';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { useGetResourceRepository, useRepositoryList } from 'app/features/provisioning/hooks';
+import { useGetResourceRepository } from 'app/features/provisioning/hooks/useGetResourceRepository';
+import { useRepositoryList } from 'app/features/provisioning/hooks/useRepositoryList';
 import { DashboardMeta } from 'app/types';
 
 import { useGetFolderQuery } from '../../../folders/api';

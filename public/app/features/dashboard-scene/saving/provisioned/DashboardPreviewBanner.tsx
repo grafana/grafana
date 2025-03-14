@@ -1,7 +1,7 @@
 import { Alert, Icon, Stack } from '@grafana/ui';
 import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { useGetRepositoryFilesWithPathQuery } from 'app/features/provisioning/api';
-import { usePullRequestParam } from 'app/features/provisioning/hooks';
+import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types';
 
 interface CommonBannerProps {
