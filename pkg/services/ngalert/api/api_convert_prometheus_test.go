@@ -523,6 +523,7 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 
 		// Create two folders in the root folder
 		fldr := randFolder()
+		fldr.ParentUID = ""
 		fldr2 := randFolder()
 		fldr2.ParentUID = ""
 		folderService.ExpectedFolders = []*folder.Folder{fldr, fldr2}
@@ -1321,7 +1322,6 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	// TODO: Initialize LotexRuler and RulerSrv properly
 	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, nil, nil, nil)
 
 	return srv, dsCache, ruleStore, folderService
