@@ -101,7 +101,7 @@ function GroupDetailsPage() {
           url: namespaceUrl,
         },
       }}
-      renderTitle={(title) => <Title name={title} folder={folder} namespaceId={namespaceId} />}
+      renderTitle={(title) => <Title name={title} />}
       info={[
         { label: namespaceLabel, value: namespaceValue },
         { label: t('alerting.group-details.interval', 'Interval'), value: groupInterval },
