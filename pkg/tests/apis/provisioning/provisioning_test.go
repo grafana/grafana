@@ -30,6 +30,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -129,6 +130,8 @@ func withLogs(opts *testinfra.GrafanaOpts) {
 }
 
 func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper {
+	apiserver.ClearRestConfig()
+
 	provisioningPath := t.TempDir()
 	opts := testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
