@@ -84,7 +84,6 @@ func TestDebouncer(t *testing.T) {
 		}
 
 		require.WithinDuration(t, start.Add(time.Millisecond*500), time.Now(), time.Millisecond*100)
-
 	})
 
 	t.Run("should handle buffer full", func(t *testing.T) {
