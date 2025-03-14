@@ -2915,6 +2915,21 @@
     },
     {
       "metadata": {
+        "name": "noBackdropBlur",
+        "resourceVersion": "1741879106163",
+        "creationTimestamp": "2025-03-13T15:18:26Z"
+      },
+      "spec": {
+        "description": "Disables backdrop blur",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "nodeGraphDotLayout",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-31T16:26:12Z"
