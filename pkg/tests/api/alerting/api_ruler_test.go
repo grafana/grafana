@@ -4775,7 +4775,7 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 		idx := slices.IndexFunc(rules[""][0].Rules, func(node apimodels.GettableExtendedRuleNode) bool {
 			return node.GrafanaManagedAlert.GUID == ruleGUID
 		})
-		require.Equalf(t, -1, idx, "rule with is expected to be deleted but it was returned by list operation")
+		require.Equalf(t, -1, idx, "rule is expected to be deleted but it was returned by list operation")
 	})
 }
 
