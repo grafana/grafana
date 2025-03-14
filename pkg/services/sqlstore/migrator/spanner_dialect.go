@@ -174,11 +174,6 @@ func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 	// Collect all DROP statements.
 	var statements []string
 	for _, table := range tables {
-		// Ignore these tables used by Unified storage.
-		if table.Name == "resource" || table.Name == "resource_blob" || table.Name == "resource_history" {
-			continue
-		}
-
 		// Indexes must be dropped first, otherwise dropping tables fails.
 		for _, index := range table.Indexes {
 			if !index.IsRegular {
