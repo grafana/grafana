@@ -44,7 +44,7 @@ SCIM provisioning currently works **only with SAML authentication**. Other authe
 
 ## Supported identity providers
 
-Grafana's SCIM provisioning currently supports:
+The SCIM provisioning feature in Grafana currently supports:
 
 - [Azure AD](../configure-authentication/azuread/)
 - [Okta](../configure-authentication/saml/)
@@ -54,7 +54,7 @@ Grafana's SCIM provisioning currently supports:
 SCIM provisioning works by establishing a connection between your identity provider and Grafana:
 
 1. You configure SCIM in both your identity provider and Grafana.
-2. Your identity provider sends SCIM requests to Grafana's SCIM API endpoint.
+2. Your identity provider sends SCIM requests to the Grafana SCIM API endpoint.
 3. Grafana processes these requests to create, update, or deactivate users and teams, and synchronize team memberships.
 
 ## Comparing SCIM with other user sync methods
@@ -64,17 +64,17 @@ Grafana offers several methods for synchronizing users, teams, and roles. The ta
 | Sync Method                                                                    | Users | Teams | Roles | Automation | Key Benefits                                                             | Limitations                                                  | On-Prem | Cloud |
 | ------------------------------------------------------------------------------ | ----- | ----- | ----- | ---------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ | ------- | ----- |
 | SCIM                                                                           | ✅    | ✅    | ⚠️    | Partial    | Complete user and team lifecycle management with automatic team creation | Requires SAML authentication; uses Role Sync for basic roles | ✅      | ✅    |
-| [Team Sync](../configure-team-sync/)                                           | ❌    | ✅    | ❌    | Partial    | Maps IdP groups to Grafana teams                                         | Requires manual team creation                                | ✅      | ✅    |
+| [Team Sync](../configure-team-sync/)                                           | ❌    | ✅    | ❌    | Partial    | Maps identity provider groups to Grafana teams                           | Requires manual team creation                                | ✅      | ✅    |
 | [Active LDAP Sync](../configure-authentication/enhanced-ldap/)                 | ✅    | ❌    | ❌    | Full       | Background synchronization of LDAP users                                 | Limited to LDAP environments                                 | ✅      | ❌    |
-| [Group Attribute Sync](../configure-group-attribute-sync/)                     | ❌    | ❌    | ✅    | Partial    | Maps IdP group attributes to permissions                                 | Limited to IdP attributes                                    | ✅      | ✅    |
+| [Group Attribute Sync](../configure-group-attribute-sync/)                     | ❌    | ❌    | ✅    | Partial    | Maps identity provider group attributes to permissions                   | Limited to identity provider attributes                      | ✅      | ✅    |
 | [Role Sync](../configure-authentication/saml#configure-role-sync)              | ❌    | ❌    | ✅    | Partial    | Maps basic roles to users                                                | Limited to basic roles only                                  | ✅      | ✅    |
 | [Org Mapping](../configure-authentication/saml#configure-organization-mapping) | ❌    | ❌    | ✅    | Partial    | Maps basic roles per organization                                        | Only available for on-premises deployments                   | ✅      | ❌    |
 
 ### Key advantages of SCIM over other methods
 
 - **Complete automation**: SCIM is the only method that fully automates user and team provisioning.
-- **Dynamic team creation**: Teams are created automatically based on IdP groups, eliminating manual setup.
-- **Near real-time synchronization**: Changes in your IdP are reflected in Grafana based on your IdP's synchronization schedule (consult your IdP's documentation for specific details).
+- **Dynamic team creation**: Teams are created automatically based on identity provider groups, eliminating manual setup.
+- **Near real-time synchronization**: Changes in your identity provider are reflected in Grafana based on your identity provider synchronization schedule (consult your identity provider documentation for specific details).
 - **Enterprise-ready**: Designed for large organizations with complex user management needs.
 
 ## Important considerations when using SCIM
