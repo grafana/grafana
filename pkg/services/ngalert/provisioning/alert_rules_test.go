@@ -674,6 +674,42 @@ func TestAlertRuleService(t *testing.T) {
 				to:     models.ProvenanceNone,
 				errNil: false,
 			},
+			{
+				name:   "should be able to update from provenance none to 'converted prometheus'",
+				from:   models.ProvenanceNone,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: true,
+			},
+			{
+				name:   "should be able to update from provenance 'converted prometheus' to none",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceNone,
+				errNil: true,
+			},
+			{
+				name:   "should not be able to update from provenance 'converted prometheus' to api",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceAPI,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance 'converted prometheus' to file",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceFile,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance api to 'converted prometheus'",
+				from:   models.ProvenanceAPI,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance file to 'converted prometheus'",
+				from:   models.ProvenanceFile,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: false,
+			},
 		}
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
