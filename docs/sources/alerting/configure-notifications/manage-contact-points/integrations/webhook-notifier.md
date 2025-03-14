@@ -72,12 +72,44 @@ For more details on contact points, including how to test them and enable notifi
 | Authentication Header Credentials | Credentials for the `Authorization` Request header.                                                                     |
 | Max Alerts                        | Maximum number of alerts to include in a notification. Any alerts exceeding this limit are ignored. `0` means no limit. |
 | TLS                               | TLS configuration options, including CA certificate, client certificate, and client key.                                |
+| HMAC Signature                    | HMAC signature configuration options.                                                                                   |
 
 {{< admonition type="note" >}}
 
 You can configure either HTTP Basic Authentication or the Authorization request header, but not both.
 
 {{< /admonition >}}
+
+#### HMAC signature
+
+You can secure your webhook notifications using HMAC signatures to verify the authenticity and integrity of the requests. When enabled, Grafana signs the webhook payload with a shared secret using HMAC-SHA256.
+
+| Option           | Description                                                                                                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Secret           | The shared secret key used to generate the HMAC signature.                                                                                                                                                                     |
+| Header           | The HTTP header where the signature will be set. Default is `X-Grafana-Alerting-Signature`.                                                                                                                                    |
+| Timestamp Header | Optional header to include a timestamp in the signature calculation. When specified, Grafana will set a Unix timestamp in this header and include it in the HMAC calculation. This provides protection against replay attacks. |
+
+When HMAC signing is configured, Grafana generates a signature using HMAC-SHA256 with your secret key. If a timestamp header is specified, a Unix timestamp is included in the signature calculation. The signature is calculated as:
+
+```
+HMAC(timestamp + ":" + body)
+```
+
+The timestamp is sent in the specified header. If no timestamp header is specified, the signature is calculated just from the request body. The signature is sent as a hex-encoded string in the specified signature header.
+
+##### Validate a request
+
+To validate incoming webhook requests from Grafana, follow these steps:
+
+1. Extract the signature from the header (default is `X-Grafana-Alerting-Signature`).
+2. If you configured a timestamp header, extract the timestamp value and verify it's recent to prevent replay attacks.
+3. Calculate the expected signature:
+   - Create an HMAC-SHA256 hash using your shared secret
+   - If using timestamps, include the timestamp followed by a colon (`:`) before the request body
+   - Hash the raw request body
+   - Convert the result to a hexadecimal string
+4. Compare the calculated signature with the one in the request header.
 
 #### Optional settings using templates
 
