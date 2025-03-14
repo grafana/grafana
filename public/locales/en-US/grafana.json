@@ -1538,6 +1538,9 @@
         "tooltip": "Enter edit mode"
       },
       "edit-dashboard-v2-schema": "Edit dashboard v2 schema",
+      "edit-toggle": {
+        "label": "Toggle edit mode"
+      },
       "enter-edit-mode": {
         "label": "Make editable",
         "tooltip": "This dashboard was marked as read only"
@@ -1571,8 +1574,8 @@
         "tooltip": "Share dashboard"
       },
       "share-button": "Share",
-      "show-hidden-elements": "Show hidden",
       "switch-old-dashboard": "Switch to old dashboard page",
+      "toggle-hidden-elements": "Toggle hidden elements",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },

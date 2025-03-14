@@ -5,7 +5,7 @@ import { useAsyncFn } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { VizPanel } from '@grafana/scenes';
-import { Button, ButtonGroup, Dropdown, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, ButtonProps, Dropdown, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -16,7 +16,15 @@ import { buildShareUrl } from './utils';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton;
 
-export default function ShareButton({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
+export default function ShareButton({
+  dashboard,
+  panel,
+  variant,
+}: {
+  dashboard: DashboardScene;
+  panel?: VizPanel;
+  variant?: ButtonProps['variant'];
+}) {
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -42,6 +50,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
         size="sm"
         tooltip={t('share-dashboard.share-button-tooltip', 'Copy link')}
         onClick={buildUrl}
+        variant={variant}
       >
         <Trans i18nKey="share-dashboard.share-button">Share</Trans>
       </Button>
@@ -51,6 +60,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
           data-testid={newShareButtonSelector.arrowMenu}
           size="sm"
           icon={isOpen ? 'angle-up' : 'angle-down'}
+          variant={variant}
         />
       </Dropdown>
     </ButtonGroup>
