@@ -5,7 +5,7 @@ import { createBaseQuery } from 'app/api/createBaseQuery';
 
 export const BASE_URL = `apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`;
 
-export const baseAPI = createApi({
+export const api = createApi({
   reducerPath: 'provisioningAPI',
   baseQuery: createBaseQuery({
     baseURL: BASE_URL,

@@ -1,4 +1,4 @@
-import { baseAPI as api } from './baseAPI';
+import { api } from './baseAPI';
 export const addTagTypes = ['Job', 'Repository', 'Provisioning'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
@@ -6,7 +6,7 @@ const injectedRtkApi = api
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      listJob: build.query<ListJobResponse, ListJobArg>({
+      listJob: build.query<ListJobApiResponse, ListJobApiArg>({
         query: (queryArg) => ({
           url: `/jobs`,
           params: {
@@ -25,7 +25,7 @@ const injectedRtkApi = api
         }),
         providesTags: ['Job'],
       }),
-      getJob: build.query<GetJobResponse, GetJobArg>({
+      getJob: build.query<GetJobApiResponse, GetJobApiArg>({
         query: (queryArg) => ({
           url: `/jobs/${queryArg.name}`,
           params: {
@@ -34,7 +34,7 @@ const injectedRtkApi = api
         }),
         providesTags: ['Job'],
       }),
-      listRepository: build.query<ListRepositoryResponse, ListRepositoryArg>({
+      listRepository: build.query<ListRepositoryApiResponse, ListRepositoryApiArg>({
         query: (queryArg) => ({
           url: `/repositories`,
           params: {
@@ -53,7 +53,7 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
-      createRepository: build.mutation<CreateRepositoryResponse, CreateRepositoryArg>({
+      createRepository: build.mutation<CreateRepositoryApiResponse, CreateRepositoryApiArg>({
         query: (queryArg) => ({
           url: `/repositories`,
           method: 'POST',
@@ -67,7 +67,10 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      deletecollectionRepository: build.mutation<DeletecollectionRepositoryResponse, DeletecollectionRepositoryArg>({
+      deletecollectionRepository: build.mutation<
+        DeletecollectionRepositoryApiResponse,
+        DeletecollectionRepositoryApiArg
+      >({
         query: (queryArg) => ({
           url: `/repositories`,
           method: 'DELETE',
@@ -90,7 +93,7 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      getRepository: build.query<GetRepositoryResponse, GetRepositoryArg>({
+      getRepository: build.query<GetRepositoryApiResponse, GetRepositoryApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}`,
           params: {
@@ -99,7 +102,7 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
-      replaceRepository: build.mutation<ReplaceRepositoryResponse, ReplaceRepositoryArg>({
+      replaceRepository: build.mutation<ReplaceRepositoryApiResponse, ReplaceRepositoryApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}`,
           method: 'PUT',
@@ -113,7 +116,7 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      deleteRepository: build.mutation<DeleteRepositoryResponse, DeleteRepositoryArg>({
+      deleteRepository: build.mutation<DeleteRepositoryApiResponse, DeleteRepositoryApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}`,
           method: 'DELETE',
@@ -128,11 +131,11 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      createRepositoryExport: build.mutation<CreateRepositoryExportResponse, CreateRepositoryExportArg>({
+      createRepositoryExport: build.mutation<CreateRepositoryExportApiResponse, CreateRepositoryExportApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/export`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
       }),
-      getRepositoryFiles: build.query<GetRepositoryFilesResponse, GetRepositoryFilesArg>({
+      getRepositoryFiles: build.query<GetRepositoryFilesApiResponse, GetRepositoryFilesApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/files/`,
           params: {
@@ -141,7 +144,7 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
-      getRepositoryFilesWithPath: build.query<GetRepositoryFilesWithPathResponse, GetRepositoryFilesWithPathArg>({
+      getRepositoryFilesWithPath: build.query<GetRepositoryFilesWithPathApiResponse, GetRepositoryFilesWithPathApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
           params: {
@@ -151,8 +154,8 @@ const injectedRtkApi = api
         providesTags: ['Repository'],
       }),
       replaceRepositoryFilesWithPath: build.mutation<
-        ReplaceRepositoryFilesWithPathResponse,
-        ReplaceRepositoryFilesWithPathArg
+        ReplaceRepositoryFilesWithPathApiResponse,
+        ReplaceRepositoryFilesWithPathApiArg
       >({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
@@ -166,8 +169,8 @@ const injectedRtkApi = api
         invalidatesTags: ['Repository'],
       }),
       createRepositoryFilesWithPath: build.mutation<
-        CreateRepositoryFilesWithPathResponse,
-        CreateRepositoryFilesWithPathArg
+        CreateRepositoryFilesWithPathApiResponse,
+        CreateRepositoryFilesWithPathApiArg
       >({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
@@ -181,8 +184,8 @@ const injectedRtkApi = api
         invalidatesTags: ['Repository'],
       }),
       deleteRepositoryFilesWithPath: build.mutation<
-        DeleteRepositoryFilesWithPathResponse,
-        DeleteRepositoryFilesWithPathArg
+        DeleteRepositoryFilesWithPathApiResponse,
+        DeleteRepositoryFilesWithPathApiArg
       >({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
@@ -194,7 +197,7 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      getRepositoryHistory: build.query<GetRepositoryHistoryResponse, GetRepositoryHistoryArg>({
+      getRepositoryHistory: build.query<GetRepositoryHistoryApiResponse, GetRepositoryHistoryApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/history`,
           params: {
@@ -203,7 +206,10 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
-      getRepositoryHistoryWithPath: build.query<GetRepositoryHistoryWithPathResponse, GetRepositoryHistoryWithPathArg>({
+      getRepositoryHistoryWithPath: build.query<
+        GetRepositoryHistoryWithPathApiResponse,
+        GetRepositoryHistoryWithPathApiArg
+      >({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/history/${queryArg.path}`,
           params: {
@@ -212,19 +218,22 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
-      createRepositoryMigrate: build.mutation<CreateRepositoryMigrateResponse, CreateRepositoryMigrateArg>({
+      createRepositoryMigrate: build.mutation<CreateRepositoryMigrateApiResponse, CreateRepositoryMigrateApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/migrate`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
       }),
-      getRepositoryRenderWithPath: build.query<GetRepositoryRenderWithPathResponse, GetRepositoryRenderWithPathArg>({
+      getRepositoryRenderWithPath: build.query<
+        GetRepositoryRenderWithPathApiResponse,
+        GetRepositoryRenderWithPathApiArg
+      >({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/render/${queryArg.path}` }),
         providesTags: ['Repository'],
       }),
-      getRepositoryResources: build.query<GetRepositoryResourcesResponse, GetRepositoryResourcesArg>({
+      getRepositoryResources: build.query<GetRepositoryResourcesApiResponse, GetRepositoryResourcesApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
         providesTags: ['Repository'],
       }),
-      getRepositoryStatus: build.query<GetRepositoryStatusResponse, GetRepositoryStatusArg>({
+      getRepositoryStatus: build.query<GetRepositoryStatusApiResponse, GetRepositoryStatusApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/status`,
           params: {
@@ -233,7 +242,7 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
-      replaceRepositoryStatus: build.mutation<ReplaceRepositoryStatusResponse, ReplaceRepositoryStatusArg>({
+      replaceRepositoryStatus: build.mutation<ReplaceRepositoryStatusApiResponse, ReplaceRepositoryStatusApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/status`,
           method: 'PUT',
@@ -247,27 +256,27 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      createRepositorySync: build.mutation<CreateRepositorySyncResponse, CreateRepositorySyncArg>({
+      createRepositorySync: build.mutation<CreateRepositorySyncApiResponse, CreateRepositorySyncApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/sync`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
       }),
-      createRepositoryTest: build.mutation<CreateRepositoryTestResponse, CreateRepositoryTestArg>({
+      createRepositoryTest: build.mutation<CreateRepositoryTestApiResponse, CreateRepositoryTestApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/test`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
       }),
-      getRepositoryWebhook: build.query<GetRepositoryWebhookResponse, GetRepositoryWebhookArg>({
+      getRepositoryWebhook: build.query<GetRepositoryWebhookApiResponse, GetRepositoryWebhookApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/webhook` }),
         providesTags: ['Repository'],
       }),
-      createRepositoryWebhook: build.mutation<CreateRepositoryWebhookResponse, CreateRepositoryWebhookArg>({
+      createRepositoryWebhook: build.mutation<CreateRepositoryWebhookApiResponse, CreateRepositoryWebhookApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/webhook`, method: 'POST' }),
         invalidatesTags: ['Repository'],
       }),
-      getFrontendSettings: build.query<GetFrontendSettingsResponse, GetFrontendSettingsArg>({
+      getFrontendSettings: build.query<GetFrontendSettingsApiResponse, GetFrontendSettingsApiArg>({
         query: () => ({ url: `/settings` }),
         providesTags: ['Provisioning', 'Repository'],
       }),
-      getResourceStats: build.query<GetResourceStatsResponse, GetResourceStatsArg>({
+      getResourceStats: build.query<GetResourceStatsApiResponse, GetResourceStatsApiArg>({
         query: () => ({ url: `/stats` }),
         providesTags: ['Provisioning', 'Repository'],
       }),
@@ -275,8 +284,8 @@ const injectedRtkApi = api
     overrideExisting: false,
   });
 export { injectedRtkApi as generatedAPI };
-export type ListJobResponse = /** status 200 OK */ JobList;
-export type ListJobArg = {
+export type ListJobApiResponse = /** status 200 OK */ JobList;
+export type ListJobApiArg = {
   /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
   allowWatchBookmarks?: boolean;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
@@ -320,15 +329,15 @@ export type ListJobArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type GetJobResponse = /** status 200 OK */ Job;
-export type GetJobArg = {
+export type GetJobApiResponse = /** status 200 OK */ Job;
+export type GetJobApiArg = {
   /** name of the Job */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ListRepositoryResponse = /** status 200 OK */ RepositoryList;
-export type ListRepositoryArg = {
+export type ListRepositoryApiResponse = /** status 200 OK */ RepositoryList;
+export type ListRepositoryApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
   /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
@@ -372,11 +381,11 @@ export type ListRepositoryArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type CreateRepositoryResponse = /** status 200 OK */
+export type CreateRepositoryApiResponse = /** status 200 OK */
   | Repository
   | /** status 201 Created */ Repository
   | /** status 202 Accepted */ Repository;
-export type CreateRepositoryArg = {
+export type CreateRepositoryApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
   /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
@@ -387,8 +396,8 @@ export type CreateRepositoryArg = {
   fieldValidation?: string;
   repository: Repository;
 };
-export type DeletecollectionRepositoryResponse = /** status 200 OK */ Status;
-export type DeletecollectionRepositoryArg = {
+export type DeletecollectionRepositoryApiResponse = /** status 200 OK */ Status;
+export type DeletecollectionRepositoryApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
@@ -438,15 +447,15 @@ export type DeletecollectionRepositoryArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetRepositoryResponse = /** status 200 OK */ Repository;
-export type GetRepositoryArg = {
+export type GetRepositoryApiResponse = /** status 200 OK */ Repository;
+export type GetRepositoryApiArg = {
   /** name of the Repository */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceRepositoryResponse = /** status 200 OK */ Repository | /** status 201 Created */ Repository;
-export type ReplaceRepositoryArg = {
+export type ReplaceRepositoryApiResponse = /** status 200 OK */ Repository | /** status 201 Created */ Repository;
+export type ReplaceRepositoryApiArg = {
   /** name of the Repository */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -459,8 +468,8 @@ export type ReplaceRepositoryArg = {
   fieldValidation?: string;
   repository: Repository;
 };
-export type DeleteRepositoryResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
-export type DeleteRepositoryArg = {
+export type DeleteRepositoryApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
+export type DeleteRepositoryApiArg = {
   /** name of the Repository */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -476,8 +485,8 @@ export type DeleteRepositoryArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type CreateRepositoryExportResponse = /** status 200 OK */ Job;
-export type CreateRepositoryExportArg = {
+export type CreateRepositoryExportApiResponse = /** status 200 OK */ Job;
+export type CreateRepositoryExportApiArg = {
   /** name of the Job */
   name: string;
   body: {
@@ -491,7 +500,7 @@ export type CreateRepositoryExportArg = {
     prefix?: string;
   };
 };
-export type GetRepositoryFilesResponse = /** status 200 OK */ {
+export type GetRepositoryFilesApiResponse = /** status 200 OK */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   items?: any[];
@@ -499,37 +508,23 @@ export type GetRepositoryFilesResponse = /** status 200 OK */ {
   kind?: string;
   metadata?: any;
 };
-export type GetRepositoryFilesArg = {
+export type GetRepositoryFilesApiArg = {
   /** name of the ResourceWrapper */
   name: string;
   /** branch or commit hash */
   ref?: string;
 };
-export type GetRepositoryFilesWithPathResponse = /** status 200 OK */ ResourceWrapper;
-export type GetRepositoryFilesWithPathArg = {
-  /** name of the ResourceWrapper */
-  name: string;
-  /** path to the resource */
-  path: string;
-  /** branch or commit hash */
-  ref?: string;
-};
-export type ReplaceRepositoryFilesWithPathResponse = /** status 200 OK */ ResourceWrapper;
-export type ReplaceRepositoryFilesWithPathArg = {
+export type GetRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
+export type GetRepositoryFilesWithPathApiArg = {
   /** name of the ResourceWrapper */
   name: string;
   /** path to the resource */
   path: string;
   /** branch or commit hash */
   ref?: string;
-  /** optional message sent with any changes */
-  message?: string;
-  body: {
-    [key: string]: any;
-  };
 };
-export type CreateRepositoryFilesWithPathResponse = /** status 200 OK */ ResourceWrapper;
-export type CreateRepositoryFilesWithPathArg = {
+export type ReplaceRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
+export type ReplaceRepositoryFilesWithPathApiArg = {
   /** name of the ResourceWrapper */
   name: string;
   /** path to the resource */
@@ -542,8 +537,22 @@ export type CreateRepositoryFilesWithPathArg = {
     [key: string]: any;
   };
 };
-export type DeleteRepositoryFilesWithPathResponse = /** status 200 OK */ ResourceWrapper;
-export type DeleteRepositoryFilesWithPathArg = {
+export type CreateRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
+export type CreateRepositoryFilesWithPathApiArg = {
+  /** name of the ResourceWrapper */
+  name: string;
+  /** path to the resource */
+  path: string;
+  /** branch or commit hash */
+  ref?: string;
+  /** optional message sent with any changes */
+  message?: string;
+  body: {
+    [key: string]: any;
+  };
+};
+export type DeleteRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
+export type DeleteRepositoryFilesWithPathApiArg = {
   /** name of the ResourceWrapper */
   name: string;
   /** path to the resource */
@@ -553,15 +562,15 @@ export type DeleteRepositoryFilesWithPathArg = {
   /** optional message sent with any changes */
   message?: string;
 };
-export type GetRepositoryHistoryResponse = /** status 200 OK */ string;
-export type GetRepositoryHistoryArg = {
+export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
+export type GetRepositoryHistoryApiArg = {
   /** name of the HistoryList */
   name: string;
   /** branch or commit hash */
   ref?: string;
 };
-export type GetRepositoryHistoryWithPathResponse = /** status 200 OK */ string;
-export type GetRepositoryHistoryWithPathArg = {
+export type GetRepositoryHistoryWithPathApiResponse = /** status 200 OK */ string;
+export type GetRepositoryHistoryWithPathApiArg = {
   /** name of the HistoryList */
   name: string;
   /** path to the resource */
@@ -569,8 +578,8 @@ export type GetRepositoryHistoryWithPathArg = {
   /** branch or commit hash */
   ref?: string;
 };
-export type CreateRepositoryMigrateResponse = /** status 200 OK */ Job;
-export type CreateRepositoryMigrateArg = {
+export type CreateRepositoryMigrateApiResponse = /** status 200 OK */ Job;
+export type CreateRepositoryMigrateApiArg = {
   /** name of the Job */
   name: string;
   body: {
@@ -582,27 +591,27 @@ export type CreateRepositoryMigrateArg = {
     prefix?: string;
   };
 };
-export type GetRepositoryRenderWithPathResponse = unknown;
-export type GetRepositoryRenderWithPathArg = {
+export type GetRepositoryRenderWithPathApiResponse = unknown;
+export type GetRepositoryRenderWithPathApiArg = {
   /** name of the Repository */
   name: string;
   /** path to the resource */
   path: string;
 };
-export type GetRepositoryResourcesResponse = /** status 200 OK */ ResourceList;
-export type GetRepositoryResourcesArg = {
+export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceList;
+export type GetRepositoryResourcesApiArg = {
   /** name of the ResourceList */
   name: string;
 };
-export type GetRepositoryStatusResponse = /** status 200 OK */ Repository;
-export type GetRepositoryStatusArg = {
+export type GetRepositoryStatusApiResponse = /** status 200 OK */ Repository;
+export type GetRepositoryStatusApiArg = {
   /** name of the Repository */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceRepositoryStatusResponse = /** status 200 OK */ Repository | /** status 201 Created */ Repository;
-export type ReplaceRepositoryStatusArg = {
+export type ReplaceRepositoryStatusApiResponse = /** status 200 OK */ Repository | /** status 201 Created */ Repository;
+export type ReplaceRepositoryStatusApiArg = {
   /** name of the Repository */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -615,8 +624,8 @@ export type ReplaceRepositoryStatusArg = {
   fieldValidation?: string;
   repository: Repository;
 };
-export type CreateRepositorySyncResponse = /** status 200 OK */ Job;
-export type CreateRepositorySyncArg = {
+export type CreateRepositorySyncApiResponse = /** status 200 OK */ Job;
+export type CreateRepositorySyncApiArg = {
   /** name of the Job */
   name: string;
   body: {
@@ -624,8 +633,8 @@ export type CreateRepositorySyncArg = {
     incremental: boolean;
   };
 };
-export type CreateRepositoryTestResponse = /** status 200 OK */ TestResults;
-export type CreateRepositoryTestArg = {
+export type CreateRepositoryTestApiResponse = /** status 200 OK */ TestResults;
+export type CreateRepositoryTestApiArg = {
   /** name of the TestResults */
   name: string;
   body: {
@@ -638,20 +647,20 @@ export type CreateRepositoryTestArg = {
     status?: any;
   };
 };
-export type GetRepositoryWebhookResponse = /** status 200 OK */ WebhookResponse;
-export type GetRepositoryWebhookArg = {
+export type GetRepositoryWebhookApiResponse = /** status 200 OK */ WebhookResponse;
+export type GetRepositoryWebhookApiArg = {
   /** name of the WebhookResponse */
   name: string;
 };
-export type CreateRepositoryWebhookResponse = /** status 200 OK */ WebhookResponse;
-export type CreateRepositoryWebhookArg = {
+export type CreateRepositoryWebhookApiResponse = /** status 200 OK */ WebhookResponse;
+export type CreateRepositoryWebhookApiArg = {
   /** name of the WebhookResponse */
   name: string;
 };
-export type GetFrontendSettingsResponse = /** status 200 undefined */ RepositoryViewList;
-export type GetFrontendSettingsArg = void;
-export type GetResourceStatsResponse = /** status 200 undefined */ ResourceStats;
-export type GetResourceStatsArg = void;
+export type GetFrontendSettingsApiResponse = /** status 200 undefined */ RepositoryViewList;
+export type GetFrontendSettingsApiArg = void;
+export type GetResourceStatsApiResponse = /** status 200 undefined */ ResourceStats;
+export type GetResourceStatsApiArg = void;
 export type Time = string;
 export type FieldsV1 = object;
 export type ManagedFieldsEntry = {

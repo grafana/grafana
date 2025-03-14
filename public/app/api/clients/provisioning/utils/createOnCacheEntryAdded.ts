@@ -1,7 +1,7 @@
 import { Subscription } from 'rxjs';
 
-import { ScopedResourceClient } from '../../../apiserver/client';
-import { ListOptions } from '../../../apiserver/types';
+import { ScopedResourceClient } from '../../../../features/apiserver/client';
+import { ListOptions } from '../../../../features/apiserver/types';
 import { ListMeta, ObjectMeta } from '../endpoints.gen';
 
 /**

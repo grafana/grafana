@@ -1,6 +1,10 @@
 import { useCallback } from 'react';
 
-import { RepositorySpec, useCreateRepositoryMutation, useReplaceRepositoryMutation } from '../api';
+import {
+  RepositorySpec,
+  useCreateRepositoryMutation,
+  useReplaceRepositoryMutation,
+} from '../../../api/clients/provisioning';
 
 export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();

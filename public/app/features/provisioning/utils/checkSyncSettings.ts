@@ -1,4 +1,4 @@
-import { RepositoryViewList } from '../api';
+import { RepositoryViewList } from '../../../api/clients/provisioning';
 
 export function checkSyncSettings(settings?: RepositoryViewList): [boolean, boolean] {
   if (!settings?.items?.length) {

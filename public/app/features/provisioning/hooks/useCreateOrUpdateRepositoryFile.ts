@@ -1,17 +1,17 @@
 import { useCallback } from 'react';
 
 import {
-  ReplaceRepositoryFilesWithPathArg,
+  ReplaceRepositoryFilesWithPathApiArg,
   useCreateRepositoryFilesWithPathMutation,
   useReplaceRepositoryFilesWithPathMutation,
-} from '../api';
+} from '../../../api/clients/provisioning';
 
 export function useCreateOrUpdateRepositoryFile(name?: string) {
   const [create, createRequest] = useCreateRepositoryFilesWithPathMutation();
   const [update, updateRequest] = useReplaceRepositoryFilesWithPathMutation();
 
   const updateOrCreate = useCallback(
-    (data: ReplaceRepositoryFilesWithPathArg) => {
+    (data: ReplaceRepositoryFilesWithPathApiArg) => {
       const actions = name ? update : create;
       return actions(data);
     },

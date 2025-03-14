@@ -1,4 +1,4 @@
-import { baseAPI as api } from './baseAPI';
+import { api } from './baseAPI';
 export const addTagTypes = ['Folder'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
@@ -6,7 +6,7 @@ const injectedRtkApi = api
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      getFolder: build.query<GetFolderResponse, GetFolderArg>({
+      getFolder: build.query<GetFolderApiResponse, GetFolderApiArg>({
         query: (queryArg) => ({
           url: `/folders/${queryArg.name}`,
           params: {
@@ -19,8 +19,8 @@ const injectedRtkApi = api
     overrideExisting: false,
   });
 export { injectedRtkApi as generatedAPI };
-export type GetFolderResponse = /** status 200 OK */ Folder;
-export type GetFolderArg = {
+export type GetFolderApiResponse = /** status 200 OK */ Folder;
+export type GetFolderApiArg = {
   /** name of the Folder */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -122,4 +122,3 @@ export type Folder = {
   metadata?: ObjectMeta;
   spec?: Spec;
 };
-export const { useGetFolderQuery } = injectedRtkApi;
