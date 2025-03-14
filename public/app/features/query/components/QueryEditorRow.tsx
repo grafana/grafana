@@ -29,6 +29,7 @@ import {
   AngularComponent,
   getAngularLoader,
   getDataSourceSrv,
+  renderLimitedComponents,
   reportInteraction,
   usePluginComponents,
 } from '@grafana/runtime';
@@ -684,13 +685,12 @@ function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
       return null;
     }
 
-    const actions = components
-      .filter(({ meta }) => meta.pluginId.startsWith('grafana-adaptive'))
-      .map((Component) => {
-        const { meta } = Component;
-        return <Component key={meta.id} query={query} contextHints={['queryeditorrow', 'header']} />;
-      });
-    return <>{actions}</>;
+    return renderLimitedComponents({
+      props: { query, contextHints: ['queryeditorrow', 'header'] },
+      components,
+      limit: 1,
+      pluginIdPatterns: ['grafana-adaptive*'],
+    });
   } catch (error) {
     // If `usePluginComponents` isn't properly resolved, tests will fail with 'setPluginComponentsHook(options) can only be used after the Grafana instance has started.'
     // This will be resolved in https://github.com/grafana/grafana/pull/92983

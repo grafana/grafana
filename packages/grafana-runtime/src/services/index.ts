@@ -53,7 +53,7 @@ export {
   type UsePluginFunctionsResult,
 } from './pluginExtensions/usePluginFunctions';
 
-export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';
+export { isPluginExtensionLink, isPluginExtensionComponent, getLimitedComponents, renderLimitedComponents } from './pluginExtensions/utils';
 export { setCurrentUser } from './user';
 export { RuntimeDataSource } from './RuntimeDataSource';
 export { ScopesContext, type ScopesContextValueState, type ScopesContextValue, useScopes } from './ScopesContext';
