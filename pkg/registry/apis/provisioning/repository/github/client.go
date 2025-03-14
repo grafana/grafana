@@ -37,10 +37,11 @@ type Client interface {
 
 	// GetTree returns the Git tree in the repository.
 	// When recursive is given, subtrees are mapped into the returned array.
+	// When basePath is given, only trees under it are given. The results do not include this path in their names.
 	//
 	// The truncated bool will be set to true if the tree is larger than 7 MB or 100 000 entries.
 	// When truncated is true, you may wish to read each subtree manually instead.
-	GetTree(ctx context.Context, owner, repository, ref string, recursive bool) (entries []RepositoryContent, truncated bool, err error)
+	GetTree(ctx context.Context, owner, repository, basePath, ref string, recursive bool) (entries []RepositoryContent, truncated bool, err error)
 
 	// CreateFile creates a new file in the repository under the given path.
 	// The file is created on the branch given.
