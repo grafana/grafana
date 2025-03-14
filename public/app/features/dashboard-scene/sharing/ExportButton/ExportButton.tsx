@@ -10,7 +10,12 @@ import ExportMenu from './ExportMenu';
 
 const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton;
 
-export default function ExportButton({ dashboard }: { dashboard: DashboardScene }) {
+interface Props {
+  dashboard: DashboardScene;
+  iconOnly?: boolean;
+}
+
+export default function ExportButton({ dashboard, iconOnly = false }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
   const onMenuClick = useCallback((isOpen: boolean) => {
@@ -29,8 +34,14 @@ export default function ExportButton({ dashboard }: { dashboard: DashboardScene 
           fill="solid"
           tooltip={t('export.menu.export-as-json-tooltip', 'Export')}
         >
-          <Trans i18nKey="export.menu.export-as-json-label">Export</Trans>&nbsp;
-          <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="sm" />
+          {iconOnly ? (
+            <Icon name="download-alt" size="sm" />
+          ) : (
+            <>
+              <Trans i18nKey="export.menu.export-as-json-label">Export</Trans>&nbsp;
+              <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="sm" />
+            </>
+          )}
         </Button>
       </Dropdown>
     </ButtonGroup>
