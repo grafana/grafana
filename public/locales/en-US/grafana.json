@@ -565,9 +565,9 @@
         "label": "Pause evaluation"
       },
       "annotations": {
-        "description1": "Evaluation groups are containers for evaluating alert and recording rules.",
+        "description1": "Annotations add additional information to alerts, helping alert responders identify and address potential issues.",
         "description2": "For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.",
-        "description3": "Annotations can contain a combination of text and template code, which is used to include data from queries.",
+        "description3": "Annotations can contain a combination of text and template code, which is used to include data from queries."
       },
       "threshold": {
         "recovery": {
