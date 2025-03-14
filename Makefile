@@ -268,7 +268,12 @@ test-go-unit-pretty: check-tparse
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
-	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE)  -timeout=5m $(GO_INTEGRATION_TESTS) $(GO_TEST_OUTPUT)
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -timeout=5m $(GO_INTEGRATION_TESTS) $(GO_TEST_OUTPUT)
+
+.PHONY: test-go-integration-cov
+test-go-integration-cov: ## Run integration tests for backend with flags and coverage
+	@echo "backend integration tests with coverage"
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" $(if $(filter true,$(GO_UNIT_COVERAGE)),-covermode=atomic -coverprofile=$(GO_UNIT_COVER_PROFILE) $(if $(GO_UNIT_TEST_COVERPKG),-coverpkg=$(GO_UNIT_TEST_COVERPKG)),) -timeout=5m $(GO_INTEGRATION_TESTS) $(GO_TEST_OUTPUT)
 
 .PHONY: test-go-integration-alertmanager
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).

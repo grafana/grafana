@@ -13,14 +13,19 @@ permissions:
   contents: read
   id-token: write
 
-env:
-  EDITION: 'oss'
-  WIRE_TAGS: 'oss'
-
 jobs:
   main:
-    name: Backend Unit Tests
+    strategy:
+      fail-fast: false
+      matrix:
+        edition: ['oss', 'pro', 'enterprise']
+        test-type: ['unit', 'integration']
+
+    name: Backend ${{ matrix.test-type }} tests (${{ matrix.edition }})
     runs-on: ubuntu-latest-8-cores
+    env:
+      EDITION: ${{ matrix.edition }}
+      WIRE_TAGS: ${{ matrix.edition }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,19 +39,23 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential shared-mime-info
           go install github.com/mfridman/tparse@c1754a1f484ac5cd422697b0fec635177ddc8507 # v0.17.0
+      - name: Setup Enterprise
+        if: ${{ matrix.edition != 'oss' }}
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
       - name: Generate Go code
         run: make gen-go
-      - name: Run unit tests
-        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." GO_TEST_OUTPUT="/tmp/unit.log" make test-go-unit-cov
+      - name: Run ${{ matrix.test-type }} tests
+        run: COVER_OPTS="-coverprofile=grafana.cov -coverpkg=github.com/grafana/grafana/..." GO_TEST_OUTPUT="/tmp/tests.log" make test-go-${{ matrix.test-type }}-cov
       - name: Process and upload coverage
         uses: ./.github/actions/test-coverage-processor
         with:
-          test-type: 'be-unit'
-          # Needs to be named 'unit.cov' based on the Makefile command `make test-go-unit`
-          coverage-file: 'unit.cov'
+          # Needs to be named 'grafana.cov' based on the Makefile command's inputs
+          coverage-file: 'grafana.cov'
           codecov-token: ${{ secrets.CODECOV_TOKEN }}
-          codecov-flag: 'be-unit'
-          codecov-name: 'be-unit'
+          codecov-flags: 'be-${{ matrix.test-type }},${{ matrix.edition }}'
+          codecov-name: 'be-${{ matrix.test-type }}-${{ matrix.edition }}'
 
       - name: Install Grafana Bench
         # We can't allow forks here, as we need secret access.
@@ -57,12 +66,12 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           grafana-bench report \
-            --trigger pr-backend-unit-tests-oss \
+            --trigger pr-backend-${{ matrix.test-type }}-tests-${{ matrix.edition }} \
             --report-input go \
             --report-output log \
             --grafana-version "$(git rev-parse HEAD)" \
-            --suite-name grafana-oss-unit-tests \
-            /tmp/unit.log
+            --suite-name grafana-${{ matrix.edition }}-${{ matrix.test-type }}-tests \
+            /tmp/tests.log
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
