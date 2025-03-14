@@ -76,6 +76,12 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}, nil
 }
 
+type pruningKey struct {
+	namespace string
+	group     string
+	resource  string
+}
+
 type backend struct {
 	//general
 	isHA bool
@@ -109,7 +115,7 @@ type backend struct {
 	// testing
 	simulatedNetworkLatency time.Duration
 
-	historyPruner *debouncer.Group[*resource.ResourceKey]
+	historyPruner *debouncer.Group[pruningKey]
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -155,17 +161,21 @@ func (b *backend) initLocked(ctx context.Context) error {
 	}
 	b.notifier = notifier
 
-	b.historyPruner, err = debouncer.NewGroup(debouncer.DebouncerOpts[*resource.ResourceKey]{
-		Name:       "history_pruner_" + time.Now().Format(time.RFC3339Nano),
+	b.historyPruner, err = debouncer.NewGroup(debouncer.DebouncerOpts[pruningKey]{
+		Name:       "history_pruner",
 		BufferSize: 1000,
 		MinWait:    time.Second * 30,
 		MaxWait:    time.Minute * 5,
-		ProcessHandler: func(ctx context.Context, key *resource.ResourceKey) error {
+		ProcessHandler: func(ctx context.Context, key pruningKey) error {
 			return dbConn.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 					SQLTemplate:  sqltemplate.New(b.dialect),
 					HistoryLimit: 100,
-					Key:          key,
+					Key: &resource.ResourceKey{
+						Namespace: key.namespace,
+						Group:     key.group,
+						Resource:  key.resource,
+					},
 				})
 				if err != nil {
 					return fmt.Errorf("failed to prune history: %w", err)
@@ -175,18 +185,18 @@ func (b *backend) initLocked(ctx context.Context) error {
 					return fmt.Errorf("failed to get rows affected: %w", err)
 				}
 				b.log.Debug("pruned history successfully",
-					"namespace", key.Namespace,
-					"group", key.Group,
-					"resource", key.Resource,
+					"namespace", key.namespace,
+					"group", key.group,
+					"resource", key.resource,
 					"rows", rows)
 				return nil
 			})
 		},
-		ErrorHandler: func(key *resource.ResourceKey, err error) {
+		ErrorHandler: func(key pruningKey, err error) {
 			b.log.Error("failed to prune history",
-				"namespace", key.Namespace,
-				"group", key.Group,
-				"resource", key.Resource,
+				"namespace", key.namespace,
+				"group", key.group,
+				"resource", key.resource,
 				"error", err)
 		},
 		Reg: prometheus.DefaultRegisterer,
