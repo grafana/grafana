@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -25,30 +25,63 @@ func TestLocalResolver(t *testing.T) {
 }
 
 func TestLocal(t *testing.T) {
-	t.Run("invalid path", func(t *testing.T) {
-		r := NewLocal(&v0alpha1.Repository{
-			Spec: v0alpha1.RepositorySpec{
-				Local: &v0alpha1.LocalRepositoryConfig{
-					Path: "invalid/path",
+	// Valid paths test cases
+	for _, tc := range []struct {
+		Name              string
+		Path              string
+		PermittedPrefixes []string
+		ExpectedPath      string
+	}{
+		{"relative path", "devenv/test", []string{"/home/grafana"}, "/home/grafana/devenv/test/"},
+		{"absolute path", "/devenv/test", []string{"/devenv"}, "/devenv/test/"},
+		{"relative path with multiple prefixes", "devenv/test", []string{"/home/grafana", "/devenv"}, "/home/grafana/devenv/test/"},
+		{"absolute path with multiple prefixes", "/devenv/test", []string{"/home/grafana", "/devenv"}, "/devenv/test/"},
+		{"path traversal inside allowed prefix", "/home/grafana/devenv/../test/test", []string{"/home/grafana"}, "/home/grafana/test/test/"},
+	} {
+		t.Run("valid: "+tc.Name, func(t *testing.T) {
+			r := NewLocal(&v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Local: &v0alpha1.LocalRepositoryConfig{
+						Path: tc.Path,
+					},
 				},
-			},
-		}, &LocalFolderResolver{})
+			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"})
 
-		// Did not resolve a local path
-		require.Equal(t, "", r.path)
+			assert.Equal(t, tc.ExpectedPath, r.path, "expected path to be resolved")
+			for _, err := range r.Validate() {
+				assert.Fail(t, "unexpected validation failure", "unexpected validation error on field %s: %s", err.Field, err.ErrorBody())
+			}
+		})
+	}
 
-		// The correct fields are set
-		require.Nil(t, r.Validate())
+	// Invalid paths test cases
+	for _, tc := range []struct {
+		Name              string
+		Path              string
+		PermittedPrefixes []string
+	}{
+		{"no configured paths", "invalid/path", nil},
+		{"path traversal escape", "../../etc/passwd", []string{"/home/grafana"}},
+		{"unconfigured prefix", "invalid/path", []string{"devenv", "/tmp", "test"}},
+	} {
+		t.Run("invalid: "+tc.Name, func(t *testing.T) {
+			r := NewLocal(&v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Local: &v0alpha1.LocalRepositoryConfig{
+						Path: tc.Path,
+					},
+				},
+			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"})
 
-		expected := "the path given ('invalid/path') is invalid for a local repository (no permitted prefixes were configured)"
+			require.Empty(t, r.path, "no path should be resolved")
 
-		rsp, err := r.Test(context.Background())
-		require.NoError(t, err)
-		require.Equal(t, false, rsp.Success)
-		require.Equal(t, []string{expected}, rsp.Errors)
-
-		// We get the same error when trying to read a file
-		_, err = r.Read(context.Background(), "path/to/file", "")
-		require.Equal(t, expected, err.Error())
-	})
+			errs := r.Validate()
+			require.NotEmpty(t, errs, "expected validation errors")
+			for _, err := range errs {
+				if !assert.Equal(t, "spec.local.path", err.Field) {
+					assert.FailNow(t, "unexpected validation failure", "unexpected validation error on field %s: %s", err.Field, err.ErrorBody())
+				}
+			}
+		})
+	}
 }
