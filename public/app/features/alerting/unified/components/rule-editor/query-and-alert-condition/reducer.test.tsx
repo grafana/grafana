@@ -9,8 +9,6 @@ import {
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { getDataSourceSrv } from '../../../__mocks__/dataSourceSrv';
-
 import {
   QueriesAndExpressionsState,
   addNewDataQuery,
