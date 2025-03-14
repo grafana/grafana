@@ -245,6 +245,9 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context,
 							ManagerIdentity: name,
 							OrgId:           orgID,
 						})
+						if lastErr == nil {
+							break
+						}
 						// If the dashboard is not found, its probably because were looking for a deleted dashboard.
 						// This can be caused by the indexer lag, so we wait briefly then retry one more time.
 						var statusErr *apierrors.StatusError
@@ -254,10 +257,7 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context,
 								continue
 							}
 						}
-
-						if lastErr != nil {
-							return lastErr
-						}
+						return lastErr
 					}
 
 					mu.Lock()
