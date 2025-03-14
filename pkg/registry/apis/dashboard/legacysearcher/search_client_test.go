@@ -115,6 +115,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 		}, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Sorting should be properly parsed into legacy sorting options (asc), and results added", func(t *testing.T) {
@@ -181,6 +184,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 		}, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Sorting should be properly parsed into legacy sorting options (desc)", func(t *testing.T) {
@@ -247,6 +253,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 		}, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Query for tags should return facet properly", func(t *testing.T) {
@@ -287,6 +296,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 		}, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Query should be set as the title, and * should be removed", func(t *testing.T) {
@@ -309,6 +321,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Should read labels for the dashboard ids", func(t *testing.T) {
@@ -337,6 +352,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Should modify fields to legacy compatible queries", func(t *testing.T) {
@@ -377,6 +395,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Should retrieve dashboards by plugin through a different function", func(t *testing.T) {
@@ -409,6 +430,10 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
+		require.Equal(t, resp.TotalHits, int64(1))
 	})
 
 	t.Run("Should retrieve dashboards by provisioner name through a different function", func(t *testing.T) {
@@ -438,6 +463,10 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
+		require.Equal(t, resp.TotalHits, int64(1))
 	})
 
 	t.Run("Should retrieve orphaned dashboards if provisioner not in is specified", func(t *testing.T) {
@@ -467,5 +496,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
+		require.Equal(t, resp.TotalHits, int64(1))
 	})
 }
