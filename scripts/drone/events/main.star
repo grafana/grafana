@@ -71,7 +71,6 @@ def main_pipelines():
             slack_channel = "grafana-ci-notifications",
             trigger = dict(trigger, status = ["failure"]),
             depends_on = [
-                "main-test-frontend",
                 "main-test-backend",
                 "main-build-e2e-publish",
                 "main-integration-tests",

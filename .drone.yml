@@ -2450,7 +2450,6 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- main-test-frontend
 - main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
@@ -5212,6 +5211,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a26d2186a36467548743721b9407351a0b7d89f0eef5829d57483618bea354f7
+hmac: f92ef89dc0efc53fc18d29dd597eabe3e44ad2622472f424c7402752d6ae922d
 
 ...
