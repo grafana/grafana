@@ -1,13 +1,7 @@
 import { BehaviorSubject, Observable, pairwise, Subscription } from 'rxjs';
 
-import { getAPINamespace } from '../../api/utils';
-
 export abstract class ScopesServiceBase<T> {
   private _state: BehaviorSubject<T>;
-  protected _fetchSub: Subscription | undefined;
-  protected _apiGroup = 'scope.grafana.app';
-  protected _apiVersion = 'v0alpha1';
-  protected _apiNamespace = getAPINamespace();
 
   protected constructor(initialState: T) {
     this._state = new BehaviorSubject<T>(Object.freeze(initialState));

@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
 
+import { ScopesService } from '../ScopesService';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 
 import {
@@ -48,6 +49,8 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('Dashboards list', () => {
   let fetchDashboardsSpy: jest.SpyInstance;
+  let scopesService: ScopesService;
+  let scopesDashboardsService: ScopesDashboardsService;
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
@@ -55,8 +58,10 @@ describe('Dashboards list', () => {
   });
 
   beforeEach(async () => {
-    await renderDashboard();
-    fetchDashboardsSpy = jest.spyOn(ScopesDashboardsService.instance!, 'fetchDashboardsApi');
+    const result = await renderDashboard();
+    scopesService = result.scopesService;
+    scopesDashboardsService = result.scopesDashboardsService;
+    fetchDashboardsSpy = jest.spyOn(result.client, 'fetchDashboards');
   });
 
   afterEach(async () => {
@@ -65,35 +70,35 @@ describe('Dashboards list', () => {
 
   it('Opens container and fetches dashboards list when a scope is selected', async () => {
     expectDashboardsClosed();
-    await updateScopes(['mimir']);
+    await updateScopes(scopesService, ['mimir']);
     expectDashboardsOpen();
     expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Closes container when no scopes are selected', async () => {
-    await updateScopes(['mimir']);
+    await updateScopes(scopesService, ['mimir']);
     expectDashboardsOpen();
-    await updateScopes(['mimir', 'loki']);
+    await updateScopes(scopesService, ['mimir', 'loki']);
     expectDashboardsOpen();
-    await updateScopes([]);
+    await updateScopes(scopesService, []);
     expectDashboardsClosed();
   });
 
   it('Fetches dashboards list when the list is expanded', async () => {
     await toggleDashboards();
-    await updateScopes(['mimir']);
+    await updateScopes(scopesService, ['mimir']);
     expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Fetches dashboards list when the list is expanded after scope selection', async () => {
-    await updateScopes(['mimir']);
+    await updateScopes(scopesService, ['mimir']);
     await toggleDashboards();
     expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Shows dashboards for multiple scopes', async () => {
     await toggleDashboards();
-    await updateScopes(['grafana']);
+    await updateScopes(scopesService, ['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -118,7 +123,7 @@ describe('Dashboards list', () => {
     expectDashboardNotInDocument('multiple2-compacter');
     expectDashboardNotInDocument('another-stats');
 
-    await updateScopes(['grafana', 'mimir']);
+    await updateScopes(scopesService, ['grafana', 'mimir']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -143,7 +148,7 @@ describe('Dashboards list', () => {
     expectDashboardLength('multiple2-compacter', 2);
     expectDashboardInDocument('another-stats');
 
-    await updateScopes(['grafana']);
+    await updateScopes(scopesService, ['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -171,7 +176,7 @@ describe('Dashboards list', () => {
 
   it('Filters the dashboards list for dashboards', async () => {
     await toggleDashboards();
-    await updateScopes(['grafana']);
+    await updateScopes(scopesService, ['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -205,7 +210,7 @@ describe('Dashboards list', () => {
 
   it('Filters the dashboards list for folders', async () => {
     await toggleDashboards();
-    await updateScopes(['grafana']);
+    await updateScopes(scopesService, ['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -239,7 +244,7 @@ describe('Dashboards list', () => {
 
   it('Deduplicates the dashboards list', async () => {
     await toggleDashboards();
-    await updateScopes(['dev', 'ops']);
+    await updateScopes(scopesService, ['dev', 'ops']);
     await expandDashboardFolder('Cardinality Management');
     await expandDashboardFolder('Usage Insights');
     expectDashboardLength('cardinality-management-labels', 1);
@@ -260,14 +265,14 @@ describe('Dashboards list', () => {
   });
 
   it('Does not show the input when there are no dashboards found for scope', async () => {
-    await updateScopes(['cloud']);
+    await updateScopes(scopesService, ['cloud']);
     await toggleDashboards();
     expectNoDashboardsForScope();
     expectNoDashboardsSearch();
   });
 
   it('Shows the input and a message when there are no dashboards found for filter', async () => {
-    await updateScopes(['mimir']);
+    await updateScopes(scopesService, ['mimir']);
     await searchDashboards('unknown');
     expectDashboardsSearch();
     expectNoDashboardsForFilter();
@@ -278,7 +283,7 @@ describe('Dashboards list', () => {
 
   describe('groupDashboards', () => {
     it('Assigns dashboards without groups to root folder', () => {
-      expect(ScopesDashboardsService.instance?.groupDashboards([dashboardWithoutFolder])).toEqual({
+      expect(scopesDashboardsService.groupDashboards([dashboardWithoutFolder])).toEqual({
         '': {
           title: '',
           expanded: true,
@@ -295,7 +300,7 @@ describe('Dashboards list', () => {
     });
 
     it('Assigns dashboards with root group to root folder', () => {
-      expect(ScopesDashboardsService.instance?.groupDashboards([dashboardWithRootFolder])).toEqual({
+      expect(scopesDashboardsService.groupDashboards([dashboardWithRootFolder])).toEqual({
         '': {
           title: '',
           expanded: true,
@@ -312,9 +317,7 @@ describe('Dashboards list', () => {
     });
 
     it('Merges folders from multiple dashboards', () => {
-      expect(
-        ScopesDashboardsService.instance?.groupDashboards([dashboardWithOneFolder, dashboardWithTwoFolders])
-      ).toEqual({
+      expect(scopesDashboardsService.groupDashboards([dashboardWithOneFolder, dashboardWithTwoFolders])).toEqual({
         '': {
           title: '',
           expanded: true,
@@ -356,7 +359,7 @@ describe('Dashboards list', () => {
 
     it('Merges scopes from multiple dashboards', () => {
       expect(
-        ScopesDashboardsService.instance?.groupDashboards([dashboardWithTwoFolders, alternativeDashboardWithTwoFolders])
+        scopesDashboardsService.groupDashboards([dashboardWithTwoFolders, alternativeDashboardWithTwoFolders])
       ).toEqual({
         '': {
           title: '',
@@ -394,7 +397,7 @@ describe('Dashboards list', () => {
 
     it('Matches snapshot', () => {
       expect(
-        ScopesDashboardsService.instance?.groupDashboards([
+        scopesDashboardsService.groupDashboards([
           dashboardWithoutFolder,
           dashboardWithOneFolder,
           dashboardWithTwoFolders,
@@ -475,7 +478,7 @@ describe('Dashboards list', () => {
   describe('filterFolders', () => {
     it('Shows folders matching criteria', () => {
       expect(
-        ScopesDashboardsService.instance?.filterFolders(
+        scopesDashboardsService.filterFolders(
           {
             '': {
               title: '',
@@ -554,7 +557,7 @@ describe('Dashboards list', () => {
 
     it('Shows dashboards matching criteria', () => {
       expect(
-        ScopesDashboardsService.instance?.filterFolders(
+        scopesDashboardsService.filterFolders(
           {
             '': {
               title: '',

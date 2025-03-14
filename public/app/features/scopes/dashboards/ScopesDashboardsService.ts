@@ -1,15 +1,15 @@
 import { isEqual } from 'lodash';
-import { finalize, from } from 'rxjs';
 
 import { ScopeDashboardBinding } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
 
-import { ScopesService } from '../ScopesService';
+import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
 import { SuggestedDashboardsFoldersMap } from './types';
 
 interface ScopesDashboardsServiceState {
+  // State of the drawer showing related dashboards
+  drawerOpened: boolean;
   // by keeping a track of the raw response, it's much easier to check if we got any dashboards for the currently selected scopes
   dashboards: ScopeDashboardBinding[];
   // a filtered version of the `folders` property. this prevents a lot of unnecessary parsings in React renders
@@ -22,10 +22,9 @@ interface ScopesDashboardsServiceState {
 }
 
 export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsServiceState> {
-  static #instance: ScopesDashboardsService | undefined = undefined;
-
-  private constructor() {
+  constructor(private apiClient: ScopesApiClient) {
     super({
+      drawerOpened: false,
       dashboards: [],
       filteredFolders: {},
       folders: {},
@@ -33,14 +32,6 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       loading: false,
       searchQuery: '',
     });
-  }
-
-  public static get instance(): ScopesDashboardsService | undefined {
-    if (!ScopesDashboardsService.#instance && config.featureToggles.scopeFilters) {
-      ScopesDashboardsService.#instance = new ScopesDashboardsService();
-    }
-
-    return ScopesDashboardsService.#instance;
   }
 
   public updateFolder = (path: string[], expanded: boolean) => {
@@ -81,8 +72,6 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       return;
     }
 
-    this._fetchSub?.unsubscribe();
-
     if (forScopeNames.length === 0) {
       this.updateState({
         dashboards: [],
@@ -90,31 +79,21 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         folders: {},
         forScopeNames: [],
         loading: false,
+        drawerOpened: false,
       });
-
-      ScopesService.instance?.setDrawerOpened(false);
 
       return;
     }
 
     this.updateState({ forScopeNames, loading: true });
 
-    this._fetchSub = from(this.fetchDashboardsApi(forScopeNames))
-      .pipe(
-        finalize(() => {
-          this.updateState({ loading: false });
-        })
-      )
-      .subscribe((dashboards) => {
-        const folders = this.groupDashboards(dashboards);
-        const filteredFolders = this.filterFolders(folders, this.state.searchQuery);
+    const dashboards = await this.apiClient.fetchDashboards(forScopeNames);
+    if (isEqual(this.state.forScopeNames, forScopeNames)) {
+      const folders = this.groupDashboards(dashboards);
+      const filteredFolders = this.filterFolders(folders, this.state.searchQuery);
 
-        this.updateState({ dashboards, filteredFolders, folders, loading: false });
-
-        ScopesService.instance?.setDrawerOpened(dashboards.length > 0);
-
-        this._fetchSub?.unsubscribe();
-      });
+      this.updateState({ dashboards, filteredFolders, folders, loading: false, drawerOpened: dashboards.length > 0 });
+    }
   };
 
   public groupDashboards = (dashboards: ScopeDashboardBinding[]): SuggestedDashboardsFoldersMap => {
@@ -196,22 +175,5 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     }, {});
   };
 
-  public fetchDashboardsApi = async (scopeNames: string[]): Promise<ScopeDashboardBinding[]> => {
-    try {
-      const response = await getBackendSrv().get<{ items: ScopeDashboardBinding[] }>(
-        `/apis/${this._apiGroup}/${this._apiVersion}/namespaces/${this._apiNamespace}/find/scope_dashboard_bindings`,
-        {
-          scope: scopeNames,
-        }
-      );
-
-      return response?.items ?? [];
-    } catch (err) {
-      return [];
-    }
-  };
-
-  public reset = () => {
-    ScopesDashboardsService.#instance = undefined;
-  };
+  public toggleDrawer = () => this.updateState({ drawerOpened: !this.state.drawerOpened });
 }

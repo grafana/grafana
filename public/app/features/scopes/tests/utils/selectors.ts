@@ -87,9 +87,10 @@ export const getResultCloudDevRadio = () =>
 export const getResultCloudOpsRadio = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-ops', 'result'));
 
-export const getListOfScopes = () => ScopesService.instance?.state.value;
-export const getListOfSelectedScopes = () => ScopesSelectorService.instance?.state.selectedScopes;
-export const getListOfTreeScopes = () => ScopesSelectorService.instance?.state.treeScopes;
-export const getSelectedScope = (name: string) =>
-  getListOfSelectedScopes()?.find((selectedScope) => selectedScope.scope.metadata.name === name);
-export const getTreeScope = (name: string) => getListOfTreeScopes()?.find((treeScope) => treeScope.scopeName === name);
+export const getListOfScopes = (service: ScopesService) => service.state.value;
+export const getListOfSelectedScopes = (service: ScopesSelectorService) => service.state.selectedScopes;
+export const getListOfTreeScopes = (service: ScopesSelectorService) => service.state.treeScopes;
+export const getSelectedScope = (service: ScopesSelectorService, name: string) =>
+  getListOfSelectedScopes(service)?.find((selectedScope) => selectedScope.scope.metadata.name === name);
+export const getTreeScope = (service: ScopesSelectorService, name: string) =>
+  getListOfTreeScopes(service)?.find((treeScope) => treeScope.scopeName === name);
