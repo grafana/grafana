@@ -1,7 +1,6 @@
 import testDashboard from '../dashboards/DataLinkWithoutSlugTest.json';
 import { e2e } from '../utils';
 
-// Skipping due to flakiness/race conditions with same old arch test  e2e/dashboards-suite/dashboard-live-streaming.spec.ts
 describe('Dashboard with data links that have no slug', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
