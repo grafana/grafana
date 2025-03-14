@@ -126,7 +126,7 @@ export const dashboardsAPI = generatedApi.enhanceEndpoints({
 
 ### 7. Add reducers and middleware to the Redux store
 
-The last, but not least, step to be done is adding the middleware and reducers to the store.
+Last but not least, you need to add the middleware and reducers to the store.
 
 In Grafana, the reducers are added to [`root.ts`](public/app/core/reducers/root.ts):
 
