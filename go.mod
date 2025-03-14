@@ -557,10 +557,7 @@ require (
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3 // @grafana/grafana-backend-group
 )
 
-require (
-	github.com/grafana/grafana/pkg/build v0.0.0-20250313161343-4d5fd2cfb775
-	github.com/linkedin/goavro/v2 v2.13.1
-)
+require github.com/grafana/grafana/pkg/build v0.0.0-20250313161343-4d5fd2cfb775
 
 require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.49.0 // indirect
