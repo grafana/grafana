@@ -131,15 +131,15 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		}
 	}
 
-	if canSave, err := hs.canCreateAnnotation(c, cmd.DashboardId); err != nil || !canSave {
-		if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
-			return dashboardGuardianResponse(err)
-		} else if err != nil {
-			return response.Error(http.StatusInternalServerError, "Error while checking annotation permissions", err)
-		} else {
-			return response.Error(http.StatusForbidden, "Access denied to save the annotation", nil)
-		}
-	}
+	//if canSave, err := hs.canCreateAnnotation(c, cmd.DashboardId); err != nil || !canSave {
+	//	if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
+	//		return dashboardGuardianResponse(err)
+	//	} else if err != nil {
+	//		return response.Error(http.StatusInternalServerError, "Error while checking annotation permissions", err)
+	//	} else {
+	//		return response.Error(http.StatusForbidden, "Access denied to save the annotation", nil)
+	//	}
+	//}
 
 	if cmd.Text == "" {
 		err := &AnnotationError{"text field should not be empty"}

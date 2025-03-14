@@ -18,6 +18,7 @@ import {
   outerJoinDataFrames,
   ValueMapping,
   ThresholdsConfig,
+  getTimeField,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
@@ -31,6 +32,7 @@ import {
   TimelineValueAlignment,
   HideableFieldConfig,
   MappingType,
+  LegendDurationMode,
 } from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn, VizLegendItem } from '@grafana/ui';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
@@ -563,16 +565,22 @@ export function prepareTimelineLegendItems(
     return undefined;
   }
 
-  return getFieldLegendItem(allNonTimeFields(frames), theme);
+  return getFieldLegendItem(frames, options, theme);
 }
 
-export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
-  if (!fields.length) {
+export function getFieldLegendItem(
+  frames: DataFrame[],
+  options: VizLegendOptions,
+  theme: GrafanaTheme2
+): VizLegendItem[] | undefined {
+  const valueFields = allNonTimeFields(frames);
+
+  if (!valueFields.length) {
     return undefined;
   }
 
   const items: VizLegendItem[] = [];
-  const fieldConfig = fields[0].config;
+  const fieldConfig = valueFields[0].config;
   const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
   const thresholds = fieldConfig.thresholds;
 
@@ -582,28 +590,67 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
     return getThresholdItems(fieldConfig, theme);
   }
 
-  // If thresholds are enabled show each step in the legend
   if (colorMode.startsWith('continuous')) {
     return undefined; // eventually a color bar
   }
 
   const stateColors: Map<string, string | undefined> = new Map();
+  const stateCounts: Map<string, number> = new Map();
+  const stateDurationMs: Map<string, number> = new Map();
 
-  fields.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.legend) {
-      field.values.forEach((v) => {
-        let state = field.display!(v);
-        if (state.color) {
-          stateColors.set(state.text, state.color!);
-        }
-      });
-    }
+  let lastTime: number;
+
+  frames.forEach((frame) => {
+    const timeField = getTimeField(frame);
+    const valueFields = allNonTimeFields([frame]);
+
+    valueFields.forEach((field) => {
+      if (!field.config.custom?.hideFrom?.legend) {
+        field.values.forEach((v, index) => {
+          let state = field.display!(v);
+          if (state.color) {
+            stateCounts.set(state.text, (stateCounts.get(state.text) ?? 0) + 1);
+            stateColors.set(state.text, state.color!);
+
+            const timeMs = timeField?.timeField?.values[index];
+
+            if (typeof timeMs === 'number') {
+              const diffMs = Math.max(timeMs - (lastTime ?? timeMs), 0);
+              lastTime = timeMs;
+
+              stateDurationMs.set(state.text, (stateDurationMs.get(state.text) ?? 0) + diffMs);
+            }
+          }
+        });
+      }
+    });
   });
+
+  const allValuesCount = [...stateCounts.values()].reduce((acc, value) => acc + value, 0);
 
   stateColors.forEach((color, label) => {
     if (label.length > 0) {
+      let suffix = '';
+
+      switch (options.durationMode) {
+        case LegendDurationMode.Percentage: {
+          suffix = ` (${Math.floor(((stateCounts.get(label) ?? 0) * 100) / allValuesCount)}%)`;
+          break;
+        }
+        case LegendDurationMode.Absolute: {
+          const durationMs = stateDurationMs.get(label);
+          const duration = durationMs ? fmtDuration(durationMs) : '';
+
+          if (duration) {
+            suffix = ` (${duration})`;
+          }
+
+          break;
+        }
+      }
+
       items.push({
-        label: label!,
+        label: label! + suffix,
         color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
         yAxis: 1,
       });

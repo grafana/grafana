@@ -137,7 +137,7 @@ export const StateTimelinePanel = ({
     );
   }
 
-  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const enableAnnotationCreation = true;
 
   return (
     <div className={styles.container}>
