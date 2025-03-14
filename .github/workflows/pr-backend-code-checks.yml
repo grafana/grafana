@@ -48,8 +48,8 @@ jobs:
             exit 0
           fi
           
-          # Clean and regenerate OpenAPI specs with enterprise wire tags
-          WIRE_TAGS="enterprise" make swagger-clean && WIRE_TAGS="enterprise" make openapi3-gen
+          # Clean and regenerate OpenAPI specs
+          make swagger-clean && make openapi3-gen
           
           # Check if the generated specs differ from what's in the PR
           for f in public/api-merged.json public/openapi3.json; do git add $f; done
