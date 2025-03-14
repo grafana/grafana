@@ -1562,8 +1562,8 @@ github.com/grafana/grafana-api-golang-client v0.27.0 h1:zIwMXcbCB4n588i3O2N6HfNc
 github.com/grafana/grafana-api-golang-client v0.27.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
 github.com/grafana/grafana-app-sdk v0.31.0 h1:/mFCcx+YqG8cWAi9hePDJQxIdtXDClDIDRgZwHkksFk=
 github.com/grafana/grafana-app-sdk v0.31.0/go.mod h1:Xw00NL7qpRLo5r3Gn48Bl1Xn2n4eUDI5pYf/wMufKWs=
-github.com/grafana/grafana-app-sdk/logging v0.30.0 h1:K/P/bm7Cp7Di4tqIJ3EQz2+842JozQGRaz62r95ApME=
-github.com/grafana/grafana-app-sdk/logging v0.30.0/go.mod h1:xy6ZyVXl50Z3DBDLybvBPphbykPhuVNed/VNmen9DQM=
+github.com/grafana/grafana-app-sdk/logging v0.34.0 h1:c3I7iy57rJ5JUkexgv1PY3a4gZfPrDtyj7UYzhSH/eA=
+github.com/grafana/grafana-app-sdk/logging v0.34.0/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
 github.com/grafana/grafana-aws-sdk v0.31.5 h1:4HpMQx7n4Qqoi7Bgu8KHQ2QKT9fYYdHilX/Gh3FZKBE=
 github.com/grafana/grafana-aws-sdk v0.31.5/go.mod h1:5p4Cjyr5ZiR6/RT2nFWkJ8XpIKgX4lAUmUMu70m2yCM=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 h1:OfCkitCuomzZKW1WYHrG8MxKwtMhALb7jqoj+487eTg=
@@ -1588,6 +1588,10 @@ github.com/grafana/grafana/apps/playlist v0.0.0-20250220164708-c8d4ff28a450 h1:h
 github.com/grafana/grafana/apps/playlist v0.0.0-20250220164708-c8d4ff28a450/go.mod h1:KKIsWpbv88Lwwcvdjon73zFL7vNJvuXLtsSoUjJErTw=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 h1:9qOLpC21AmXZqZ6rUhrBWl2mVqS3CzV53pzw0BCuHt0=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8/go.mod h1:deLQ/ywLvpVGbncRGUA4UDGt8a5Ei9sivOP+x6AQ2ko=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432 h1:/0MLOGx9Ow7ihR4smlUYHFvomXBpdpf/jLWHKNfEUiI=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432/go.mod h1:A/SJ9CiAWNOdeD/IezNwRaDZusLKq0z6dTfhKDgZw5Y=
+github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295 h1:ivbywO8ZnmzDDkn169qUb9REsCGYAA7H8W6VfqSmCEw=
+github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295/go.mod h1:OugmKouuvgWeOI8Kghram2Pv8b/1SuXRR8/iW068uLk=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 h1:wSqgLKFwI7fyeqf3djRXGClBLb/UPjZ4XPm/UsKFDB0=
@@ -2226,8 +2230,8 @@ github.com/rogpeppe/go-internal v1.8.0/go.mod h1:WmiCO8CzOY8rg0OYDC4/i/2WRWAB6po
 github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/fJaraNFVN+nFs=
 github.com/rogpeppe/go-internal v1.10.0/go.mod h1:UQnix2H7Ngw/k4C5ijL5+65zddjncjaFoBhdsK/akog=
 github.com/rogpeppe/go-internal v1.11.0/go.mod h1:ddIwULY96R17DhadqLgMfk9H9tvdUzkipdSkR5nkCZA=
-github.com/rogpeppe/go-internal v1.13.1 h1:KvO1DLK/DRN07sQ1LQKScxyZJuNnedQ5/wKSR38lUII=
-github.com/rogpeppe/go-internal v1.13.1/go.mod h1:uMEvuHeurkdAXX61udpOXGD/AzZDWNMNyH2VO9fmH0o=
+github.com/rogpeppe/go-internal v1.13.2-0.20241226121412-a5dc8ff20d0a h1:w3tdWGKbLGBPtR/8/oO74W6hmz0qE5q0z9aqSAewaaM=
+github.com/rogpeppe/go-internal v1.13.2-0.20241226121412-a5dc8ff20d0a/go.mod h1:S8kfXMp+yh77OxPD4fdM6YUknrZpQxLhvxzS4gDHENY=
 github.com/rs/cors v1.10.1/go.mod h1:XyqrcTp5zjWr1wsJ8PIRZssZ8b/WMcMf71DJnit4EMU=
 github.com/rs/cors v1.11.1 h1:eU3gRzXLRK57F5rKMGMZURNdIG4EoAmX8k94r9wXWHA=
 github.com/rs/cors v1.11.1/go.mod h1:XyqrcTp5zjWr1wsJ8PIRZssZ8b/WMcMf71DJnit4EMU=
@@ -2364,8 +2368,8 @@ github.com/thanos-io/objstore v0.0.0-20240818203309-0363dadfdfb1 h1:z0v9BB/p7s4J
 github.com/thanos-io/objstore v0.0.0-20240818203309-0363dadfdfb1/go.mod h1:3ukSkG4rIRUGkKM4oIz+BSuUx2e3RlQVVv3Cc3W+Tv4=
 github.com/tidwall/pretty v0.0.0-20180105212114-65a9db5fad51/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
-github.com/tjhop/slog-gokit v0.1.3 h1:6SdexP3UIeg93KLFeiM1Wp1caRwdTLgsD/THxBUy1+o=
-github.com/tjhop/slog-gokit v0.1.3/go.mod h1:Bbu5v2748qpAWH7k6gse/kw3076IJf6owJmh7yArmJs=
+github.com/tjhop/slog-gokit v0.1.4 h1:uj/vbDt3HaF0Py8bHPV4ti/s0utnO0miRbO277FLBKM=
+github.com/tjhop/slog-gokit v0.1.4/go.mod h1:Bbu5v2748qpAWH7k6gse/kw3076IJf6owJmh7yArmJs=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 h1:6fotK7otjonDflCTK0BCfls4SPy3NcCVb5dqqmbRknE=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75/go.mod h1:KO6IkyS8Y3j8OdNO85qEYBsRPuteD+YciPomcXdrMnk=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=

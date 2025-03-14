@@ -9,11 +9,11 @@ import (
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel/trace"
 
 	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,7 +42,7 @@ type Server struct {
 	cache    *localcache.CacheService
 
 	logger log.Logger
-	tracer tracing.Tracer
+	tracer trace.Tracer
 }
 
 type storeInfo struct {
@@ -50,7 +50,7 @@ type storeInfo struct {
 	ModelID string
 }
 
-func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger log.Logger, tracer tracing.Tracer) (*Server, error) {
+func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger log.Logger, tracer trace.Tracer) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)

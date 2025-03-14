@@ -5,15 +5,15 @@ import (
 
 	openfgaserver "github.com/openfga/openfga/pkg/server"
 	openfgastorage "github.com/openfga/openfga/pkg/storage"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewServer(cfg setting.ZanzanaServerSettings, openfga server.OpenFGAServer, logger log.Logger, tracer tracing.Tracer) (*server.Server, error) {
+func NewServer(cfg setting.ZanzanaServerSettings, openfga server.OpenFGAServer, logger log.Logger, tracer trace.Tracer) (*server.Server, error) {
 	return server.NewServer(cfg, openfga, logger, tracer)
 }
 

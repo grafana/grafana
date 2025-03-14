@@ -19,12 +19,13 @@ use (
 	./apps/playlist
 	./pkg/aggregator
 	./pkg/apimachinery
-	./pkg/apis/secret // @grafana/grafana-operator-experience-squad
 	./pkg/apis
+	./pkg/apis/secret // @grafana/grafana-operator-experience-squad
 	./pkg/apiserver
 	./pkg/build
 	./pkg/build/wire // skip:golangci-lint
 	./pkg/codegen
+	./pkg/infra/log
 	./pkg/infra/tracing
 	./pkg/plugins/codegen
 	./pkg/promlib
@@ -36,7 +37,7 @@ use (
 
 // when we release xorm we would like to release it like github.com/grafana/grafana/pkg/util/xorm
 // but we don't want to change all the imports. so we use replace to handle this situation
-replace xorm.io/xorm => ./pkg/util/xorm
+replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 
 replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.126.0
 
