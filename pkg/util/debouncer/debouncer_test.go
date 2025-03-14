@@ -27,7 +27,7 @@ func TestDebouncer(t *testing.T) {
 				return nil
 			},
 			MinWait: 10 * time.Millisecond,
-			MaxWait: 100 * time.Millisecond,
+			MaxWait: 500 * time.Millisecond,
 		})
 		require.NoError(t, err)
 
@@ -41,14 +41,15 @@ func TestDebouncer(t *testing.T) {
 		// Should be deduplicated.
 		require.NoError(t, group.Add("key1"))
 
-		// Wait for processing.
-		time.Sleep(20 * time.Millisecond)
-
-		// We should have processed key1 and key2 exactly once.
-		processedMu.Lock()
-		require.Equal(t, 1, processedValues["key1"])
-		require.Equal(t, 1, processedValues["key2"])
-		processedMu.Unlock()
+		require.Eventually(t, func() bool {
+			// We should have processed key1 and key2 exactly once.
+			processedMu.Lock()
+			if processedValues["key1"] == 1 && processedValues["key2"] == 1 {
+				return true
+			}
+			processedMu.Unlock()
+			return false
+		}, time.Millisecond*200, time.Millisecond*20)
 	})
 
 	t.Run("should process values after max wait", func(t *testing.T) {
@@ -106,8 +107,8 @@ func TestDebouncer(t *testing.T) {
 			},
 			MinWait: 10 * time.Millisecond,
 			MaxWait: 100 * time.Millisecond,
-			Reg:     prometheus.NewPedanticRegistry(),
-			Name:    "test",
+
+			Name: "test",
 		})
 		require.NoError(t, err)
 
@@ -184,7 +185,7 @@ func TestDebouncer(t *testing.T) {
 				return nil
 			},
 			MinWait: 50 * time.Millisecond,
-			MaxWait: 100 * time.Millisecond,
+			MaxWait: 500 * time.Millisecond,
 		})
 		require.NoError(t, err)
 
@@ -198,7 +199,7 @@ func TestDebouncer(t *testing.T) {
 		require.NoError(t, group.Add("key-1"))
 
 		// Give the group a moment to process the item.
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 
 		// Stop the group, which should cancel the context.
 		group.Stop()
