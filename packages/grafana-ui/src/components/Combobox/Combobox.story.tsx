@@ -7,7 +7,7 @@ import { Field } from '../Forms/Field';
 
 import { Combobox, ComboboxProps } from './Combobox';
 import mdx from './Combobox.mdx';
-import { fakeSearchAPI, generateOptions } from './storyUtils';
+import { fakeSearchAPI, generateGroupingOptions, generateOptions } from './storyUtils';
 import { ComboboxOption } from './types';
 
 type PropsAndCustomArgs<T extends string | number = string> = ComboboxProps<T> & {
@@ -103,6 +103,14 @@ export const AutoSize: Story = {
 export const CustomValue: Story = {
   args: {
     createCustomValue: true,
+  },
+  render: BaseCombobox,
+};
+
+export const Groups: Story = {
+  args: {
+    options: await generateGroupingOptions(500),
+    value: '34',
   },
   render: BaseCombobox,
 };

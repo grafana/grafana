@@ -92,43 +92,64 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     [debouncedLoadOptions, isAsync]
   );
 
-  const organizeOptionsByGroup = useCallback((options: Array<ComboboxOption<T>>) => {
-    const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
-    for (const option of options) {
-      const groupExists = groupedOptions.has(option.group);
-      if (groupExists) {
-        groupedOptions.get(option.group)?.push(option);
-      } else {
-        groupedOptions.set(option.group, [option]);
-      }
-    }
-
-    // Reorganize options to have groups first, then undefined group
-    const reorganizeOptions = [];
-    for (const [group, groupOptions] of groupedOptions) {
-      if (!group) {
-        continue;
-      }
-      reorganizeOptions.push(...groupOptions);
-    }
-
-    const undefinedGroupOptions = groupedOptions.get(undefined);
-    if (undefinedGroupOptions) {
-      reorganizeOptions.push(...undefinedGroupOptions);
-    }
-    return reorganizeOptions;
-  }, []);
-
   const stringifiedOptions = useMemo(() => {
     return isAsync ? [] : rawOptions.map(itemToString);
   }, [isAsync, rawOptions]);
 
-  const finalOptions = useMemo(() => {
-    const currentOptions = isAsync ? asyncOptions : fuzzyFind(rawOptions, stringifiedOptions, userTypedSearch);
-    const currentOptionsOrganised = organizeOptionsByGroup(currentOptions);
+  // Create a list of options filtered by the current search.
+  // If async, just returns the async options.
+  const filteredOptions = useMemo(() => {
+    if (isAsync) {
+      return asyncOptions;
+    }
 
-    return addCustomValue(currentOptionsOrganised);
-  }, [isAsync, organizeOptionsByGroup, addCustomValue, asyncOptions, rawOptions, userTypedSearch, stringifiedOptions]);
+    return fuzzyFind(rawOptions, stringifiedOptions, userTypedSearch);
+  }, [asyncOptions, isAsync, rawOptions, stringifiedOptions, userTypedSearch]);
 
-  return { options: finalOptions, updateOptions, asyncLoading, asyncError };
+  const [finalOptions, groupStartIndices] = useMemo(() => {
+    const { options, groupStartIndices } = sortByGroup(filteredOptions);
+
+    return [addCustomValue(options), groupStartIndices];
+  }, [filteredOptions, addCustomValue]);
+
+  return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError };
+}
+
+function sortByGroup<T extends string | number>(options: Array<ComboboxOption<T>>) {
+  const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
+  for (const option of options) {
+    const groupExists = groupedOptions.has(option.group);
+    if (groupExists) {
+      groupedOptions.get(option.group)?.push(option);
+    } else {
+      groupedOptions.set(option.group, [option]);
+    }
+  }
+
+  // Create a map to track the starting index of each group
+  const groupStartIndices = new Map<string, number>();
+  let currentIndex = 0;
+
+  // Reorganize options to have groups first, then undefined group
+  const reorganizeOptions = [];
+  for (const [group, groupOptions] of groupedOptions) {
+    if (!group) {
+      continue;
+    }
+
+    groupStartIndices.set(group, currentIndex);
+    reorganizeOptions.push(...groupOptions);
+    currentIndex += groupOptions.length;
+  }
+
+  const undefinedGroupOptions = groupedOptions.get(undefined);
+  if (undefinedGroupOptions) {
+    groupStartIndices.set('undefined', currentIndex);
+    reorganizeOptions.push(...undefinedGroupOptions);
+  }
+
+  return {
+    options: reorganizeOptions,
+    groupStartIndices,
+  };
 }
