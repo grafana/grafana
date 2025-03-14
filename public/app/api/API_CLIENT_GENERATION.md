@@ -3,6 +3,7 @@
 To show the steps to follow, we are going to work on adding an API client to create a new dashboard. Just adapt the following guide to your use case.
 
 ### 1. Generate an OpenAPI snapshot
+
 First, check if the `group` and the `version` are already present in [openapi_test.go](/pkg/tests/apis/openapi_test.go). If so, move on to the next step.
 <br/> If you need to add a new block, you can check for the right `group` and `version` in the backend API call that you want to replicate in the frontend.
 
@@ -12,7 +13,9 @@ First, check if the `group` and the `version` are already present in [openapi_te
 	Version: "v0alpha1",
 }
 ```
+
 ### 2. Run the `TestIntegrationOpenAPIs` test
+
 Note that it will fail the first time you run it, and, in the second one, it will generate the corresponding OpenAPI spec. You will find it in [openapi_snapshots](/pkg/tests/apis/openapi_snapshots).
 <br/>
 <br/>
@@ -22,6 +25,7 @@ Note that it will fail the first time you run it, and, in the second one, it wil
 <br/>
 
 ### 3. Create the API definition
+
 In the folder `../public/app/features/{your_group_name}/api/` you have to create the `baseAPI.ts` file for your group. This file should have the following content:
 
 ```jsx
@@ -40,22 +44,25 @@ export const baseAPI = createApi({
   endpoints: () => ({}),
 });
 ```
-This is the API definition for the specific group you're working with, where `getAPIBaseURL` should have the proper `group` and `version` as parameters. The `reducePath` should also be modified to match `group + API`: `dashboard` will be `dashboardAPI`, `iam` will be `iamAPI` and so on. 
+
+This is the API definition for the specific group you're working with, where `getAPIBaseURL` should have the proper `group` and `version` as parameters. The `reducePath` should also be modified to match `group + API`: `dashboard` will be `dashboardAPI`, `iam` will be `iamAPI` and so on.
 
 ### 4. Add the output information
+
 Open [generate-rtk-apis.ts](scripts/generate-rtk-apis.ts) and add the following information:
 
-| Data | Descritpion |
-|------|-------------|
-| outputFile name | File that will be created after running the API Client Generation script. It is the key of the object. | 
-| apiFile | File with the group's API definition. |
-| schemaFile | File with the schema that was automatically created in the second step. Although it is in openapi_snapshots, you should link the one saved in `data/openapi`.|
-|apiImport| Function name exported in the API definition (baseAPI.ts file).|
-| filterEndpoints | The `operationId` of the particular route you want to work with. You can check the available operationIds in the specific group's spec file. As seen in the `migrate-to-cloud` one, it is an array|
-| tag | Must be set to `true`, to automatically attach tags to endpoints. This is needed for proper cache invalidation. See more info in the [official documentation](https://redux-toolkit.js.org/rtk-query/usage/automated-refetching#:~:text=RTK%20Query%20uses,an%20active%20subscription.). |
-| hooks | Must be set to `false` since we only want to export the hooks from the index file, not the generated one. |
+| Data            | Descritpion                                                                                                                                                                                                                                                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| outputFile name | File that will be created after running the API Client Generation script. It is the key of the object.                                                                                                                                                                                    |
+| apiFile         | File with the group's API definition.                                                                                                                                                                                                                                                     |
+| schemaFile      | File with the schema that was automatically created in the second step. Although it is in openapi_snapshots, you should link the one saved in `data/openapi`.                                                                                                                             |
+| apiImport       | Function name exported in the API definition (baseAPI.ts file).                                                                                                                                                                                                                           |
+| filterEndpoints | The `operationId` of the particular route you want to work with. You can check the available operationIds in the specific group's spec file. As seen in the `migrate-to-cloud` one, it is an array                                                                                        |
+|  tag            | Must be set to `true`, to automatically attach tags to endpoints. This is needed for proper cache invalidation. See more info in the [official documentation](https://redux-toolkit.js.org/rtk-query/usage/automated-refetching#:~:text=RTK%20Query%20uses,an%20active%20subscription.).  |
+|  hooks          | Must be set to `false` since we only want to export the hooks from the index file, not the generated one.                                                                                                                                                                                 |
+
 <br/>
-> More info in [Redux Toolkit](https://redux-toolkit.js.org/rtk-query/usage/code-generation#simple-usage) 
+> More info in [Redux Toolkit](https://redux-toolkit.js.org/rtk-query/usage/code-generation#simple-usage)
 
 In our example, the information added will be:
 
@@ -71,6 +78,7 @@ In our example, the information added will be:
 ```
 
 ### 5. Run the API Client script
+
 Then, we are ready to run the script to create the API client:
 
 ```jsx
@@ -118,7 +126,7 @@ export const dashboardsAPI = generatedApi.enhanceEndpoints({
 
 ### 7. Add reducers and middleware to the redux store
 
-The last, but not least, step to be done is adding the middleware and reducers to the store. 
+The last, but not least, step to be done is adding the middleware and reducers to the store.
 
 In Grafana, the reducers are added to [`root.ts`](public/app/core/reducers/root.ts):
 
@@ -148,5 +156,5 @@ export function configureStore(initialState?: Partial<StoreState>) {
 
 You have available the oficial documentation in [RTK Query](https://redux-toolkit.js.org/tutorials/rtk-query#add-the-service-to-your-store)
 
-After this step is done, it is time to use your hooks across Grafana. 
+After this step is done, it is time to use your hooks across Grafana.
 Enjoy coding!
