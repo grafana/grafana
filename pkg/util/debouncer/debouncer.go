@@ -163,10 +163,6 @@ func NewGroup[T any](opts DebouncerOpts[T]) (*Group[T], error) {
 		opts.ErrorHandler = func(_ T, _ error) {}
 	}
 
-	if opts.Reg == nil {
-		opts.Reg = prometheus.NewRegistry()
-	}
-
 	return &Group[T]{
 		buffer:         make(chan T, opts.BufferSize),
 		debouncers:     make(map[string]*debouncer[T]),
