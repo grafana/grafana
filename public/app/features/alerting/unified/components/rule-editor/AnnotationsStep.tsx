@@ -106,18 +106,18 @@ const AnnotationsStep = () => {
             <>
               <p>
                 {t(
-                  'alerting.rule-form.labels.annotations-description1',
+                  'alerting.rule-form.annotations.description1',
                   'Annotations add additional information to alerts, helping alert responders identify and address potential issues.'
                 )}
               </p>
               <p>
                 {t(
-                  'alerting.rule-form.labels.annotations-description2',
+                  'alerting.rule-form.annotations.description2',
                   'For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.'
                 )}
               </p>
               {t(
-                'alerting.rule-form.labels.annotations-description3',
+                'alerting.rule-form.annotations.description3',
                 'Annotations can contain a combination of text and template code, which is used to include data from queries.'
               )}
             </>
