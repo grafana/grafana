@@ -781,7 +781,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	folderUID := "test-folder"
 	legacyCli.CreateFolder(t, folderUID, "TEST")
-	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	requestReceivers := func(t *testing.T, title string) (v0alpha1.Receiver, v0alpha1.Receiver) {
@@ -825,7 +825,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Remove the extra rules.
 	ruleGroup.Rules = ruleGroup.Rules[:1]
-	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
@@ -840,7 +840,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
 
 	ruleGroup.Rules = nil
-	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
@@ -1187,7 +1187,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 
 	folderUID := "test-folder"
 	legacyCli.CreateFolder(t, folderUID, "TEST")
-	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	receivers, err := adminClient.List(ctx, v1.ListOptions{})

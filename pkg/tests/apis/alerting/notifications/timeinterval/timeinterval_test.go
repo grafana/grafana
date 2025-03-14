@@ -660,7 +660,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 
 	folderUID := "test-folder"
 	legacyCli.CreateFolder(t, folderUID, "TEST")
-	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	currentRoute := legacyCli.GetRoute(t)

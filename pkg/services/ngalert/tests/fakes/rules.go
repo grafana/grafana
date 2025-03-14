@@ -103,10 +103,10 @@ func (f *RuleStore) GetRecordedCommands(predicate func(cmd any) (any, bool)) []a
 	return result
 }
 
-func (f *RuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, user *models.UserUID, UIDs ...string) error {
+func (f *RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *models.UserUID, permanently bool, UIDs ...string) error {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "DeleteAlertRulesByUID",
-		Params: []any{orgID, user, UIDs},
+		Params: []any{orgID, user, permanently, UIDs},
 	})
 
 	rules := f.Rules[orgID]
@@ -128,6 +128,14 @@ func (f *RuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, user *
 
 	f.Rules[orgID] = result
 	return nil
+}
+
+func (f *RuleStore) DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ruleGUID string) (int64, error) {
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "DeleteRuleFromTrashByGUID",
+		Params: []any{orgID, ruleGUID},
+	})
+	return 0, nil
 }
 
 func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) (*models.AlertRule, error) {

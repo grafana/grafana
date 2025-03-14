@@ -65,6 +65,8 @@ func (api *API) authorize(method, path string) web.Handler {
 				ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 			),
 		)
+	case http.MethodDelete + "/api/ruler/grafana/api/v1/trash/rule/guid/{RuleGUID}":
+		return middleware.ReqOrgAdmin
 
 	// Grafana rule state history paths
 	case http.MethodGet + "/api/v1/rules/history":

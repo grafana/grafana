@@ -12842,6 +12842,9 @@
         },
         "metric": {
           "type": "string"
+        },
+        "targetDatasourceUid": {
+          "type": "string"
         }
       }
     },
@@ -16088,6 +16091,9 @@
             "Alerting",
             "Error"
           ]
+        },
+        "guid": {
+          "type": "string"
         },
         "intervalSeconds": {
           "type": "integer",
@@ -19417,6 +19423,11 @@
           "description": "Name of the recorded metric.",
           "type": "string",
           "example": "grafana_alerts_ratio"
+        },
+        "target_datasource_uid": {
+          "description": "Which data source should be used to write the output of the recording rule, specified by UID.",
+          "type": "string",
+          "example": "my-prom"
         }
       }
     },
@@ -21451,6 +21462,15 @@
           "description": "Name of the associated template definition for this result.",
           "type": "string"
         },
+        "scope": {
+          "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+          "type": "string",
+          "enum": [
+            ".",
+            ".Alerts",
+            ".Alert"
+          ]
+        },
         "text": {
           "description": "Interpolated value of the template.",
           "type": "string"
@@ -22974,6 +22994,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",
