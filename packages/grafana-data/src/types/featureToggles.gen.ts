@@ -86,7 +86,6 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   configurableSchedulerTick?: boolean;
-  alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
   aiGeneratedDashboardChanges?: boolean;
