@@ -1072,7 +1072,8 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles)
+	// TODO: Initialize LotexRuler and RulerSrv properly
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, nil, nil, nil)
 
 	return srv, dsCache, ruleStore, folderService
 }

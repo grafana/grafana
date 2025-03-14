@@ -134,6 +134,12 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 		)
 
+	case http.MethodPost + "/api/convert/{DatasourceUID}/config/v1/rules":
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleCreate),
+			// ac.EvalPermission(ac.ActionAlertingRuleExternalRead),
+		)
+
 	case http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
 		http.MethodDelete + "/api/convert/api/prom/rules/{NamespaceTitle}/{Group}",
 		http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
