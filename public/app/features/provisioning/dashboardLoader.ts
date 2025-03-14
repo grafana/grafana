@@ -30,14 +30,11 @@ export async function loadDashboardFromProvisioning(repo: string, path: string):
       // Make sure the annotation key exists
       let anno = dryRun.metadata.annotations;
       if (!anno) {
-        dryRun.metadata.annotations = anno = {};
+        dryRun.metadata.annotations = {};
       }
       anno[AnnoKeyManagerKind] = 'repo';
       anno[AnnoKeyManagerIdentity] = repo;
-      anno[AnnoKeySourcePath] = path;
-      if (ref) {
-        anno[AnnoKeySourcePath] = path + '#' + ref;
-      }
+      anno[AnnoKeySourcePath] = ref ? path + '#' + ref : path;
 
       return {
         meta: {

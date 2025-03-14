@@ -35,7 +35,8 @@ const type = async (selector: () => HTMLInputElement, value: string) => {
   await jest.runOnlyPendingTimersAsync();
 };
 
-export const updateScopes = async (scopes: string[]) => act(async () => ScopesService.instance?.changeScopes(scopes));
+export const updateScopes = async (service: ScopesService, scopes: string[]) =>
+  act(async () => service.changeScopes(scopes));
 export const openSelector = async () => click(getSelectorInput);
 export const applyScopes = async () => {
   await click(getSelectorApply);

@@ -2144,6 +2144,18 @@
     },
     {
       "metadata": {
+        "name": "infinityRunQueriesInParallel",
+        "resourceVersion": "1741881350055",
+        "creationTimestamp": "2025-03-13T15:55:50Z"
+      },
+      "spec": {
+        "description": "Enables running Infinity queries in parallel",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/oss-big-tent"
+      }
+    },
+    {
+      "metadata": {
         "name": "influxdbBackendMigration",
         "resourceVersion": "1735845919509",
         "creationTimestamp": "2022-02-09T18:26:16Z",
