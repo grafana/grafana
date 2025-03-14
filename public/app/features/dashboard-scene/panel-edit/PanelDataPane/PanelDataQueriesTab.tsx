@@ -283,7 +283,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   };
 
   public isExpressionsSupported(dsSettings: DataSourceInstanceSettings): boolean {
-    return (dsSettings.meta.backend || dsSettings.meta.mixed) === true;
+    return (dsSettings.meta.backend || dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
   }
 
   public onAddExpressionClick = () => {
