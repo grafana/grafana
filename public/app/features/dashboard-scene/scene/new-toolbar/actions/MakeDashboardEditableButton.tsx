@@ -1,13 +1,15 @@
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { ToolbarActionProps } from '../types';
-import { getCommonActionStyles } from '../utils';
 
 export const MakeDashboardEditableButton = ({ dashboard }: ToolbarActionProps) => {
-  const styles = useStyles2(getCommonActionStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <Button
@@ -17,7 +19,7 @@ export const MakeDashboardEditableButton = ({ dashboard }: ToolbarActionProps) =
         dashboard.setState({ editable: true, meta: { ...dashboard.state.meta, canEdit: true } });
       }}
       tooltip={t('dashboard.toolbar.enter-edit-mode.tooltip', 'This dashboard was marked as read only')}
-      className={styles.buttonWithExtraMargin}
+      className={styles.button}
       variant="secondary"
       size="sm"
       data-testid={selectors.components.NavToolbar.editDashboard.editButton}
@@ -26,3 +28,9 @@ export const MakeDashboardEditableButton = ({ dashboard }: ToolbarActionProps) =
     </Button>
   );
 };
+
+export const getStyles = (theme: GrafanaTheme2) => ({
+  button: css({
+    margin: theme.spacing(0, 0.5),
+  }),
+});

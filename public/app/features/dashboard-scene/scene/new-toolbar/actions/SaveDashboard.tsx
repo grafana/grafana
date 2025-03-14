@@ -1,13 +1,15 @@
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, ButtonGroup, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ToolbarActionProps } from '../types';
-import { getCommonActionStyles } from '../utils';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
-  const styles = useStyles2(getCommonActionStyles);
+  const styles = useStyles2(getStyles);
   const { meta, isDirty, uid } = dashboard.state;
 
   const isNew = !Boolean(uid || dashboard.isManaged());
@@ -44,7 +46,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   }
 
   return (
-    <ButtonGroup className={styles.buttonWithExtraMargin}>
+    <ButtonGroup className={styles.button}>
       <Button
         onClick={() => dashboard.openSaveDrawer({})}
         tooltip={t('dashboard.toolbar.save-dashboard.tooltip', 'Save changes')}
@@ -80,3 +82,9 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     </ButtonGroup>
   );
 };
+
+export const getStyles = (theme: GrafanaTheme2) => ({
+  button: css({
+    margin: theme.spacing(0, 0.5),
+  }),
+});
