@@ -86,7 +86,6 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   configurableSchedulerTick?: boolean;
-  alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
   aiGeneratedDashboardChanges?: boolean;
@@ -255,6 +254,9 @@ export interface FeatureToggles {
   assetSriChecks?: boolean;
   alertRuleRestore?: boolean;
   grafanaManagedRecordingRulesDatasources?: boolean;
+  infinityRunQueriesInParallel?: boolean;
   inviteUserExperimental?: boolean;
   extraLanguages?: boolean;
+  noBackdropBlur?: boolean;
+  alertingMigrationUI?: boolean;
 }
