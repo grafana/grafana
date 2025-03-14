@@ -1,4 +1,3 @@
-
 module github.com/grafana/grafana/pkg/build
 
 go 1.23.7
