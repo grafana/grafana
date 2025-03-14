@@ -90,6 +90,7 @@ type PatchPreferenceCommand struct {
 
 type PreferenceJSONData struct {
 	Language          string                 `json:"language"`
+	Locale            string                 `json:"locale"`
 	QueryHistory      QueryHistoryPreference `json:"queryHistory"`
 	CookiePreferences map[string]struct{}    `json:"cookiePreferences"`
 	Navbar            NavbarPreference       `json:"navbar"`
