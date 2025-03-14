@@ -2,20 +2,20 @@
     "apiVersion": "provisioning.grafana.app/v0alpha1",
     "kind": "Repository",
     "metadata": {
-        "name": "local-tmp"
+        "name": "{{ .Name }}"
     },
     "spec": {
-        "description": "load a /tmp directory",
+        "description": "Test",
         "local": {
-            "path": "the test will replace this string"
+            "path": "{{ .h.ProvisioningPath }}"
         },
         "sync": {
             "enabled": true,
-            "target": "folder",
+            "target": "instance",
             "intervalSeconds": 60
         },
-        "title": "Load tmp dashboards",
+        "title": "ExportToUnifiedRepository test repository",
         "type": "local",
-        "workflows": []
+        "workflows": ["write"]
     }
 }

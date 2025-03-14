@@ -49,7 +49,7 @@ type GitHubRepositoryConfig struct {
 
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
-	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
+	GenerateDashboardPreviews bool `json:"generateDashboardPreviews"` // omitempty would mean false is omitted.
 
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
