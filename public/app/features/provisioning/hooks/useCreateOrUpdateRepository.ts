@@ -4,7 +4,7 @@ import {
   RepositorySpec,
   useCreateRepositoryMutation,
   useReplaceRepositoryMutation,
-} from '../../../api/clients/provisioning';
+} from 'app/api/clients/provisioning';
 
 export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();

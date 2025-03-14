@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
-import { RepositoryViewList, useGetFrontendSettingsQuery } from '../../../api/clients/provisioning';
+import { RepositoryViewList, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
+
 import { checkSyncSettings } from '../utils/checkSyncSettings';
 
 export function useIsProvisionedInstance(settings?: RepositoryViewList) {

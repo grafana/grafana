@@ -1,7 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { BASE_URL } from 'app/api/clients/provisioning/baseAPI';
 import { DashboardDTO } from 'app/types';
 
-import { BASE_URL } from '../../api/clients/provisioning/baseAPI';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from '../apiserver/types';
 
 /**
