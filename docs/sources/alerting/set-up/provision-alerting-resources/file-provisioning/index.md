@@ -628,6 +628,13 @@ settings:
     clientKey: key in PEM format
     # <string>
     caCertificate: CA certificate in PEM format
+  hmacConfig:
+    #<string>
+    secret: secret-key
+    #<string>
+    header: X-Grafana-Alerting-Signature
+    #<string>
+    timestampHeader: X-Grafana-Alerting-Signature-Timestamp
 ```
 
 {{< /collapse >}}
