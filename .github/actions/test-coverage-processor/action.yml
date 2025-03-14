@@ -10,10 +10,6 @@ inputs:
     description: 'Token for CodeCov (required for CodeCov reporting)'
     required: false
     default: ''
-  codecov-flags:
-    description: 'Flags to categorize the upload to CodeCov (comma-separated)'
-    required: false
-    default: ''
   codecov-name:
     description: 'Custom name for the upload to CodeCov'
     required: false
@@ -36,7 +32,7 @@ runs:
       if: inputs.codecov-token != ''
       with:
         files: ${{ inputs.coverage-file }}
-        flags: ${{ inputs.codecov-flags }}
+        flags: ${{ inputs.codecov-name }}
         name: ${{ inputs.codecov-name }}
         slug: grafana/grafana
         # This URL doesn't use the Google auth, but is much more locked down. As such, it requires OIDC or a CodeCov-provided token to do anything.

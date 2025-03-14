@@ -54,7 +54,6 @@ jobs:
           # Needs to be named 'grafana.cov' based on the Makefile command's inputs
           coverage-file: 'grafana.cov'
           codecov-token: ${{ secrets.CODECOV_TOKEN }}
-          codecov-flags: 'be-${{ matrix.test-type }},${{ matrix.edition }}'
           codecov-name: 'be-${{ matrix.test-type }}-${{ matrix.edition }}'
 
       - name: Install Grafana Bench
