@@ -17,6 +17,7 @@ type UpdatePrefsCmd struct {
 	WeekStart    string                       `json:"weekStart"`
 	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	Language     string                       `json:"language"`
+	Region       string                       `json:"region"`
 	Cookies      []pref.CookieType            `json:"cookies,omitempty"`
 	Navbar       *pref.NavbarPreference       `json:"navbar,omitempty"`
 }
@@ -32,6 +33,7 @@ type PatchPrefsCmd struct {
 	Timezone         *string                      `json:"timezone,omitempty"`
 	WeekStart        *string                      `json:"weekStart,omitempty"`
 	Language         *string                      `json:"language,omitempty"`
+	Region           *string                      `json:"region,omitempty"`
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
 	Cookies          []pref.CookieType            `json:"cookies,omitempty"`

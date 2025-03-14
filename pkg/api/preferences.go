@@ -153,6 +153,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		WeekStart:         dtoCmd.WeekStart,
 		HomeDashboardID:   dtoCmd.HomeDashboardID,
 		Language:          dtoCmd.Language,
+		Region:            dtoCmd.Region,
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
 		Navbar:            dtoCmd.Navbar,
