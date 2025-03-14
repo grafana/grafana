@@ -156,7 +156,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 	b.notifier = notifier
 
 	b.historyPruner, err = debouncer.NewGroup(debouncer.DebouncerOpts[*resource.ResourceKey]{
-		Name:       "history_pruner",
+		Name:       "history_pruner_" + time.Now().Format(time.RFC3339Nano),
 		BufferSize: 1000,
 		MinWait:    time.Second * 30,
 		MaxWait:    time.Minute * 5,
