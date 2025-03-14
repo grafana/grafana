@@ -56,7 +56,7 @@ type GitHubRepositoryConfig struct {
 	// The path is relative to the root of the repository, regardless of the leading slash.
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
-	Path string `json:"prefix,omitempty"`
+	Path string `json:"path,omitempty"`
 }
 
 // RepositoryType defines the types of Repository
