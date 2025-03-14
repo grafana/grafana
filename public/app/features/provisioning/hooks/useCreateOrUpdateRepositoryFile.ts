@@ -4,7 +4,7 @@ import {
   ReplaceRepositoryFilesWithPathApiArg,
   useCreateRepositoryFilesWithPathMutation,
   useReplaceRepositoryFilesWithPathMutation,
-} from '../../../api/clients/provisioning';
+} from 'app/api/clients/provisioning';
 
 export function useCreateOrUpdateRepositoryFile(name?: string) {
   const [create, createRequest] = useCreateRepositoryFilesWithPathMutation();

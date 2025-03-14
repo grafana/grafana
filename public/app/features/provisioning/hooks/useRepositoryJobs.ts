@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { Job, useListJobQuery } from '../../../api/clients/provisioning';
+import { Job, useListJobQuery } from 'app/api/clients/provisioning';
 
 interface RepositoryJobsArgs {
   name?: string;
