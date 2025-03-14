@@ -221,7 +221,7 @@ ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
 grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 exploreMetricsUseExternalAppPlugin,preview,@grafana/observability-metrics,false,true,true
-datasourceConnectionsTab,experimental,@grafana/plugins-platform-backend,false,false,true
+datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 alertingConversionAPI,experimental,@grafana/alerting-squad,false,false,false
 alertingAlertmanagerExtraDedupStage,experimental,@grafana/alerting-squad,false,true,false
@@ -239,3 +239,4 @@ grafanaManagedRecordingRulesDatasources,experimental,@grafana/alerting-squad,fal
 infinityRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
 extraLanguages,experimental,@grafana/grafana-frontend-platform,false,false,true
+noBackdropBlur,experimental,@grafana/grafana-frontend-platform,false,false,true
