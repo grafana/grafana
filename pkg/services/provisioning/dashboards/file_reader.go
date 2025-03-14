@@ -254,6 +254,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	// keeps track of which UIDs and titles we have already provisioned
 	dash := jsonFile.dashboard
 	provisioningMetadata.uid = dash.Dashboard.UID
+
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 	// nolint:staticcheck
 	provisioningMetadata.identity = dashboardIdentity{title: dash.Dashboard.Title, folderID: dash.Dashboard.FolderID}

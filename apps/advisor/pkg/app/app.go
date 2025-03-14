@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -12,11 +13,38 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
-	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/klog/v2"
 )
+
+type advisorApp struct {
+	log          log.Logger
+	checkMap     map[string]checks.Check
+	client       resource.Client
+	namespace    string
+	simpleConfig simple.AppConfig
+	customRoutes map[app.CustomRouteIdentifier]app.CustomRouteHandler
+}
+
+func (a *advisorApp) CustomRoutes() map[app.CustomRouteIdentifier]app.CustomRouteHandler {
+	return a.customRoutes
+}
+
+func (a *advisorApp) Start(ctx context.Context) error {
+	return nil
+}
+
+func (a *advisorApp) Stop(ctx context.Context) error {
+	return nil
+}
+
+func (a *advisorApp) ValidateManifest(manifest []byte) error {
+	return nil
+}
+
+func (a *advisorApp) GetKinds() map[schema.GroupVersion][]resource.Kind {
+	return nil
+}
 
 func New(cfg app.Config) (app.App, error) {
 	// Read config
@@ -46,73 +74,40 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	simpleConfig := simple.AppConfig{
-		Name:       "advisor",
-		KubeConfig: cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				klog.ErrorS(err, "Informer processing error")
-			},
-		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind: advisorv0alpha1.CheckKind(),
-				Validator: &simple.Validator{
-					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-						if req.Object != nil {
-							_, err := getCheck(req.Object, checkMap)
-							return err
-						}
-						return nil
-					},
-				},
-				Watcher: &simple.Watcher{
-					AddFunc: func(ctx context.Context, obj resource.Object) error {
-						log.Debug("Adding check", "namespace", obj.GetNamespace())
-						if obj.GetNamespace() != namespace {
-							log.Debug("Skipping check in namespace", "namespace", obj.GetNamespace())
-							return nil
-						} else {
-							log.Debug("Processing check in namespace", "namespace", obj.GetNamespace())
-						}
-						check, err := getCheck(obj, checkMap)
-						if err != nil {
-							return err
-						}
-						return processCheck(ctx, client, obj, check)
-					},
-				},
-			},
-			{
-				Kind: advisorv0alpha1.CheckTypeKind(),
+				Kind:      advisorv0alpha1.CheckKind(),
+				Validator: checks.ValidateCheck,
+				Watcher:   checkscheduler.NewCheckWatcher(client, checkMap, namespace),
 			},
 		},
 	}
 
-	a, err := simple.NewApp(simpleConfig)
-	if err != nil {
-		return nil, err
+	app := &advisorApp{
+		log:          log,
+		checkMap:     checkMap,
+		client:       client,
+		namespace:    namespace,
+		simpleConfig: simpleConfig,
+		customRoutes: map[app.CustomRouteIdentifier]app.CustomRouteHandler{
+			{
+				ResourceIdentifier: schema.GroupVersionResource{
+					Group:    advisorv0alpha1.CheckKind().Group(),
+					Version:  advisorv0alpha1.CheckKind().Version(),
+					Resource: advisorv0alpha1.CheckKind().Plural(),
+				},
+				Method:          "GET",
+				SubresourcePath: "metadata",
+			}: func(ctx context.Context, req *app.ResourceCustomRouteRequest) (*app.ResourceCustomRouteResponse, error) {
+				return &app.ResourceCustomRouteResponse{
+					Body:       []byte("{}"),
+					StatusCode: http.StatusOK,
+				}, nil
+			},
+		},
 	}
 
-	err = a.ValidateManifest(cfg.ManifestData)
-	if err != nil {
-		return nil, err
-	}
-
-	// Save check types as resources
-	ctr, err := checktyperegisterer.New(cfg)
-	if err != nil {
-		return nil, err
-	}
-	a.AddRunnable(ctr)
-
-	// Start scheduler
-	csch, err := checkscheduler.New(cfg)
-	if err != nil {
-		return nil, err
-	}
-	a.AddRunnable(csch)
-
-	return a, nil
+	return app, nil
 }
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
