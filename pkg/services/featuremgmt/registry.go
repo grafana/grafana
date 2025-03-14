@@ -591,6 +591,7 @@ var (
 			Description: "Allow core plugins to be loaded as external",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "pluginsAPIMetrics",
