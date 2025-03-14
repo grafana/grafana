@@ -966,4 +966,8 @@ const (
 	// FlagExtraLanguages
 	// Enables additional languages
 	FlagExtraLanguages = "extraLanguages"
+
+	// FlagNoBackdropBlur
+	// Disables backdrop blur
+	FlagNoBackdropBlur = "noBackdropBlur"
 )

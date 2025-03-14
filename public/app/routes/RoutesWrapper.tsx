@@ -6,6 +6,7 @@ import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import {
+  config,
   locationService,
   LocationServiceProvider,
   useChromeHeaderHeight,
@@ -114,7 +115,7 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
             <Router history={locationService.getHistory()}>
               <LocationServiceProvider service={locationService}>
                 <CompatRouter>
-                  <GlobalStyles />
+                  <GlobalStyles hackNoBackdropBlur={config.featureToggles.noBackdropBlur} />
                   <div className={styles.secondAppChrome}>
                     <div className={styles.secondAppToolbar}>
                       <IconButton

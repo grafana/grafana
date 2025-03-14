@@ -121,7 +121,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   actions={[]}
                   options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
                 >
-                  <GlobalStyles />
+                  <GlobalStyles hackNoBackdropBlur={config.featureToggles.noBackdropBlur} />
                   <MaybeTimeRangeProvider>
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
                       <ScopesContextProvider>
