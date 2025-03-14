@@ -221,7 +221,6 @@ func (a *accessControlDashboardGuardian) CanEdit() (bool, error) {
 		return false, ErrGuardianDashboardNotFound.Errorf("failed to check edit permissions for dashboard")
 	}
 
-	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
 	if a.cfg.ViewersCanEdit {
 		return a.CanView()
 	}
@@ -236,7 +235,6 @@ func (a *accessControlFolderGuardian) CanEdit() (bool, error) {
 		return false, ErrGuardianFolderNotFound.Errorf("failed to check edit permissions for folder")
 	}
 
-	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
 	if a.cfg.ViewersCanEdit {
 		return a.CanView()
 	}
