@@ -34,11 +34,10 @@ var (
 	// ErrAlertRuleFailedGenerateUniqueUID is an error for failure to generate alert rule UID
 	ErrAlertRuleFailedGenerateUniqueUID = errors.New("failed to generate alert rule UID")
 	// ErrCannotEditNamespace is an error returned if the user does not have permissions to edit the namespace
-	ErrCannotEditNamespace                = errors.New("user does not have permissions to edit the namespace")
-	ErrRuleGroupNamespaceNotFound         = errors.New("rule group not found under this namespace")
-	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
-	ErrAlertRuleUniqueConstraintViolation = errors.New("rule title under the same organisation and folder should be unique")
-	ErrQuotaReached                       = errors.New("quota has been exceeded")
+	ErrCannotEditNamespace        = errors.New("user does not have permissions to edit the namespace")
+	ErrRuleGroupNamespaceNotFound = errors.New("rule group not found under this namespace")
+	ErrAlertRuleFailedValidation  = errors.New("invalid alert rule")
+	ErrQuotaReached               = errors.New("quota has been exceeded")
 	// ErrNoDashboard is returned when the alert rule does not have a Dashboard UID
 	// in its annotations or the dashboard does not exist.
 	ErrNoDashboard = errors.New("no dashboard")
