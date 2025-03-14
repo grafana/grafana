@@ -18,14 +18,12 @@ import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
-  isAlertingRule,
-  isAlertingRulerRule,
+  getRuleName,
   isCloudRuleIdentifier,
   isGrafanaRuleIdentifier,
-  isGrafanaRulerRule,
   isPrometheusRuleIdentifier,
-  isRecordingRule,
-  isRecordingRulerRule,
+  prometheusRuleType,
+  rulerRuleType,
 } from './rules';
 
 export function fromRulerRule(
@@ -34,14 +32,14 @@ export function fromRulerRule(
   groupName: string,
   rule: RulerRuleDTO
 ): EditableRuleIdentifier {
-  if (isGrafanaRulerRule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     return { uid: rule.grafana_alert.uid!, ruleSourceName: 'grafana' };
   }
   return {
     ruleSourceName,
     namespace,
     groupName,
-    ruleName: isAlertingRulerRule(rule) ? rule.alert : rule.record,
+    ruleName: getRuleName(rule),
     rulerRuleHash: hashRulerRule(rule),
   } satisfies CloudRuleIdentifier;
 }
@@ -51,7 +49,7 @@ export function fromRulerRuleAndGroupIdentifierV2(
   rule: RulerRuleDTO
 ): EditableRuleIdentifier {
   if (ruleGroup.groupOrigin === 'grafana') {
-    if (isGrafanaRulerRule(rule)) {
+    if (rulerRuleType.grafana.rule(rule)) {
       return { uid: rule.grafana_alert.uid, ruleSourceName: 'grafana' };
     }
     logError(new Error('Rule is not a Grafana Ruler rule'));
@@ -260,7 +258,7 @@ export function hash(value: string): number {
 
 // this is used to identify rules, mimir / loki rules do not have a unique identifier
 export function hashRulerRule(rule: RulerRuleDTO): string {
-  if (isGrafanaRulerRule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     return rule.grafana_alert.uid;
   }
 
@@ -276,10 +274,10 @@ function getRulerRuleFingerprint(rule: RulerCloudRuleDTO) {
   const queryHash = prometheusRulesPrimary ? '' : hashQuery(rule.expr);
   const labelsHash = hashLabelsOrAnnotations(rule.labels);
 
-  if (isRecordingRulerRule(rule)) {
+  if (rulerRuleType.dataSource.recordingRule(rule)) {
     return [rule.record, PromRuleType.Recording, queryHash, labelsHash];
   }
-  if (isAlertingRulerRule(rule)) {
+  if (rulerRuleType.dataSource.alertingRule(rule)) {
     return [rule.alert, PromRuleType.Alerting, queryHash, hashLabelsOrAnnotations(rule.annotations), labelsHash];
   }
   throw new Error('Only recording and alerting ruler rules can be hashed');
@@ -296,10 +294,10 @@ function getPromRuleFingerprint(rule: Rule) {
   const queryHash = prometheusRulesPrimary ? '' : hashQuery(rule.query);
   const labelsHash = hashLabelsOrAnnotations(rule.labels);
 
-  if (isRecordingRule(rule)) {
+  if (prometheusRuleType.recordingRule(rule)) {
     return [rule.name, PromRuleType.Recording, queryHash, labelsHash];
   }
-  if (isAlertingRule(rule)) {
+  if (prometheusRuleType.alertingRule(rule)) {
     return [rule.name, PromRuleType.Alerting, queryHash, hashLabelsOrAnnotations(rule.annotations), labelsHash];
   }
   throw new Error('Only recording and alerting rules can be hashed');

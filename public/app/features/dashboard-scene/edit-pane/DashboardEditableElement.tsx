@@ -1,12 +1,12 @@
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 
-import { Input, TextArea } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Button, Icon, Input, Stack, TextArea } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
+import { DashboardLayoutSelector } from '../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 export class DashboardEditableElement implements EditableDashboardElement {
@@ -15,7 +15,11 @@ export class DashboardEditableElement implements EditableDashboardElement {
   public constructor(private dashboard: DashboardScene) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { typeId: 'dashboard', icon: 'apps', name: t('dashboard.edit-pane.elements.dashboard', 'Dashboard') };
+    return {
+      typeName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
+      icon: 'apps',
+      instanceName: this.dashboard.state.title,
+    };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
@@ -25,32 +29,53 @@ export class DashboardEditableElement implements EditableDashboardElement {
     const { body } = dashboard.useState();
 
     const dashboardOptions = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({
-        title: t('dashboard.options.title', 'Dashboard options'),
-        id: 'dashboard-options',
-        isOpenDefault: true,
-      })
+      const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.options.title-option', 'Title'),
-            render: function renderTitle() {
-              return <DashboardTitleInput dashboard={dashboard} />;
-            },
+            render: () => <DashboardTitleInput dashboard={dashboard} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.options.description', 'Description'),
-            render: function renderTitle() {
-              return <DashboardDescriptionInput dashboard={dashboard} />;
-            },
+            render: () => <DashboardDescriptionInput dashboard={dashboard} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.layout.common.layout', 'Layout'),
+            render: () => <DashboardLayoutSelector layoutManager={body} />,
           })
         );
-    }, [dashboard]);
 
-    const layoutCategory = useLayoutCategory(body);
+      if (body.getOptions) {
+        for (const option of body.getOptions()) {
+          editPaneHeaderOptions.addItem(option);
+        }
+      }
 
-    return [dashboardOptions, layoutCategory];
+      return editPaneHeaderOptions;
+    }, [body, dashboard]);
+
+    return [dashboardOptions];
+  }
+
+  public renderActions(): ReactNode {
+    return (
+      <Button
+        variant="secondary"
+        onClick={() => this.dashboard.onOpenSettings()}
+        tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+      >
+        <Stack direction="row" gap={1} justifyContent="space-between" alignItems={'center'}>
+          <span>
+            <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
+          </span>
+          <Icon name="sliders-v-alt" />
+        </Stack>
+      </Button>
+    );
   }
 }
 
@@ -63,5 +88,5 @@ export function DashboardTitleInput({ dashboard }: { dashboard: DashboardScene }
 export function DashboardDescriptionInput({ dashboard }: { dashboard: DashboardScene }) {
   const { description } = dashboard.useState();
 
-  return <TextArea value={description} onChange={(e) => dashboard.setState({ title: e.currentTarget.value })} />;
+  return <TextArea value={description} onChange={(e) => dashboard.setState({ description: e.currentTarget.value })} />;
 }

@@ -36,6 +36,7 @@
         "name": "accessActionSets",
         "resourceVersion": "1731413707429",
         "creationTimestamp": "2024-04-12T16:19:25Z",
+        "deletionTimestamp": "2025-03-11T16:34:55Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-11-12 12:15:07.42916 +0000 UTC"
         }
@@ -106,6 +107,22 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertRuleRestore",
+        "resourceVersion": "1741127758142",
+        "creationTimestamp": "2025-03-04T22:29:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-04 22:35:58.1421143 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the alert rule restore feature",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "true"
       }
     },
     {
@@ -596,6 +613,22 @@
         "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
+        "name": "assetSriChecks",
+        "resourceVersion": "1739984409734",
+        "creationTimestamp": "2025-02-19T15:56:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-19 17:00:09.734088 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables SRI checks for Grafana JavaScript assets",
+        "stage": "experimental",
+        "codeowner": "@grafana/frontend-ops",
+        "frontend": true
       }
     },
     {
@@ -1628,19 +1661,18 @@
     {
       "metadata": {
         "name": "exploreMetricsUseExternalAppPlugin",
-        "resourceVersion": "1738596266973",
+        "resourceVersion": "1741883352541",
         "creationTimestamp": "2025-01-21T23:24:50Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-02-03 15:24:26.973231 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-13 16:29:12.541156 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-        "stage": "experimental",
+        "description": "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
+        "stage": "preview",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true,
-        "requiresRestart": true,
-        "hideFromDocs": true
+        "requiresRestart": true
       }
     },
     {
@@ -1679,6 +1711,19 @@
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "extraLanguages",
+        "resourceVersion": "1741626708204",
+        "creationTimestamp": "2025-03-10T17:11:48Z"
+      },
+      "spec": {
+        "description": "Enables additional languages",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
       }
     },
     {
@@ -1934,6 +1979,20 @@
     },
     {
       "metadata": {
+        "name": "grafanaManagedRecordingRulesDatasources",
+        "resourceVersion": "1741291902441",
+        "creationTimestamp": "2025-03-06T20:11:42Z"
+      },
+      "spec": {
+        "description": "Enables writing to data sources for Grafana-managed recording rules.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1738661140740",
         "creationTimestamp": "2025-02-04T09:25:40Z"
@@ -2160,6 +2219,21 @@
     },
     {
       "metadata": {
+        "name": "inviteUserExperimental",
+        "resourceVersion": "1741358664069",
+        "creationTimestamp": "2025-03-07T14:44:24Z"
+      },
+      "spec": {
+        "description": "Renders invite user button along the app",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "jaegerBackendMigration",
         "resourceVersion": "1731599633815",
         "creationTimestamp": "2024-11-15T14:40:20Z"
@@ -2356,13 +2430,18 @@
     {
       "metadata": {
         "name": "logQLScope",
-        "resourceVersion": "1730842404843",
-        "creationTimestamp": "2024-11-11T11:53:24Z"
+        "resourceVersion": "1741643492217",
+        "creationTimestamp": "2024-11-11T11:53:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-10 21:51:32.217697 +0000 UTC"
+        }
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into loki queries.",
         "stage": "privatePreview",
         "codeowner": "@grafana/observability-logs",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -3201,16 +3280,18 @@
     {
       "metadata": {
         "name": "promQLScope",
-        "resourceVersion": "1735845919509",
+        "resourceVersion": "1741643492217",
         "creationTimestamp": "2024-01-29T20:22:17Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-10 21:51:32.217697 +0000 UTC"
         }
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
         "stage": "GA",
         "codeowner": "@grafana/oss-big-tent",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
         "expression": "true"
       }
     },
@@ -3748,7 +3829,7 @@
         }
       },
       "spec": {
-        "description": "Enables using SQL and DuckDB functions as Expressions.",
+        "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services"
       }
@@ -3816,14 +3897,18 @@
     {
       "metadata": {
         "name": "ssoSettingsSAML",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-03-14T11:04:45Z"
+        "resourceVersion": "1741342789814",
+        "creationTimestamp": "2024-03-14T11:04:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-07 10:19:49.814084 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure the SAML connector",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {
@@ -4174,7 +4259,8 @@
       "metadata": {
         "name": "useV2DashboardsAPI",
         "resourceVersion": "1732535420861",
-        "creationTimestamp": "2024-12-17T21:17:09Z"
+        "creationTimestamp": "2024-12-17T21:17:09Z",
+        "deletionTimestamp": "2025-03-04T10:50:39Z"
       },
       "spec": {
         "description": "Use the v2 kubernetes API in the frontend for dashboards",

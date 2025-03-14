@@ -26,7 +26,6 @@ import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { ScopesSelector } from 'app/features/scopes';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -38,6 +37,7 @@ import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
+import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
 
 interface Props {
   dashboard: DashboardScene;
@@ -70,14 +70,14 @@ export function ToolbarActions({ dashboard }: Props) {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
-  const isNew = !Boolean(uid);
+  const isNew = !Boolean(uid || dashboard.isManaged());
 
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
+  const isManaged = Boolean(dashboard.isManaged());
 
   // Internal only;
   // allows viewer editing without ability to save
@@ -127,6 +127,16 @@ export function ToolbarActions({ dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.DashNav.publicDashboardTag}
           />
         );
+      },
+    });
+  }
+
+  if (isManaged && meta.canEdit) {
+    toolbarActions.push({
+      group: 'icon-actions',
+      condition: true,
+      render: () => {
+        return <ManagedDashboardNavBarBadge meta={meta} />;
       },
     });
   }
@@ -411,25 +421,27 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 
-  toolbarActions.push({
-    group: 'settings',
-    condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
-    render: () => (
-      <Button
-        onClick={() => {
-          dashboard.onOpenSettings();
-        }}
-        tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
-        fill="text"
-        size="sm"
-        key="settings"
-        variant="secondary"
-        data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
-      >
-        <Trans i18nKey="dashboard.toolbar.dashboard-settings.label">Settings</Trans>
-      </Button>
-    ),
-  });
+  if (!dashboardNewLayouts) {
+    toolbarActions.push({
+      group: 'settings',
+      condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
+      render: () => (
+        <Button
+          onClick={() => {
+            dashboard.onOpenSettings();
+          }}
+          tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+          fill="text"
+          size="sm"
+          key="settings"
+          variant="secondary"
+          data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
+        >
+          <Trans i18nKey="dashboard.toolbar.dashboard-settings.label">Settings</Trans>
+        </Button>
+      ),
+    });
+  }
 
   toolbarActions.push({
     group: 'main-buttons',
@@ -554,7 +566,7 @@ export function ToolbarActions({ dashboard }: Props) {
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave && !meta.canMakeEditable) {
+      if (canSaveAs && !meta.canSave && !meta.canMakeEditable && !isManaged) {
         return (
           <Button
             onClick={() => {
@@ -617,10 +629,10 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  // Will open a schema v2 editor drawer. Only available with useV2DashboardsAPI feature toggle on.
+  // Will open a schema v2 editor drawer. Only available with new dashboard layouts.
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && config.featureToggles.useV2DashboardsAPI,
+    condition: uid && dashboardNewLayouts,
     render: () => {
       return (
         <ToolbarButton
@@ -637,11 +649,10 @@ export function ToolbarActions({ dashboard }: Props) {
 
   const rightActionsElements: ReactNode[] = renderActionElements(toolbarActions);
   const leftActionsElements: ReactNode[] = renderActionElements(leftActions);
-  const hasActionsToLeftAndRight = showScopesSelector || leftActionsElements.length > 0;
+  const hasActionsToLeftAndRight = leftActionsElements.length > 0;
 
   return (
     <Stack flex={1} minWidth={0} justifyContent={hasActionsToLeftAndRight ? 'space-between' : 'flex-end'}>
-      {showScopesSelector && <ScopesSelector />}
       {leftActionsElements.length > 0 && <ToolbarButtonRow alignment="left">{leftActionsElements}</ToolbarButtonRow>}
       <ToolbarButtonRow alignment="right">{rightActionsElements}</ToolbarButtonRow>
     </Stack>

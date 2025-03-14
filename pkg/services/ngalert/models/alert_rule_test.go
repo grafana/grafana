@@ -18,6 +18,7 @@ import (
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
@@ -386,6 +387,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 	})
 }
 
+// nolint:gocyclo
 func TestDiff(t *testing.T) {
 	t.Run("should return nil if there is no diff", func(t *testing.T) {
 		rule1 := RuleGen.GenerateRef()
@@ -406,7 +408,9 @@ func TestDiff(t *testing.T) {
 
 	t.Run("should find diff in simple fields", func(t *testing.T) {
 		rule1 := RuleGen.GenerateRef()
-		rule2 := RuleGen.GenerateRef()
+		rule2 := RuleGen.With(
+			RuleGen.WithMissingSeriesEvalsToResolve(*rule1.MissingSeriesEvalsToResolve + 1),
+		).GenerateRef()
 
 		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings", "Metadata") // these fields will be tested separately
 
@@ -538,6 +542,13 @@ func TestDiff(t *testing.T) {
 			assert.Len(t, diff, 1)
 			assert.Equal(t, rule1.Record, diff[0].Left.String())
 			assert.Equal(t, rule2.Record, diff[0].Right.String())
+			difCnt++
+		}
+		if rule1.MissingSeriesEvalsToResolve != rule2.MissingSeriesEvalsToResolve {
+			diff := diffs.GetDiffsForField("MissingSeriesEvalsToResolve")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, *rule1.MissingSeriesEvalsToResolve, int(diff[0].Left.Int()))
+			assert.Equal(t, *rule2.MissingSeriesEvalsToResolve, int(diff[0].Right.Int()))
 			difCnt++
 		}
 
@@ -963,6 +974,21 @@ func TestAlertRuleGetKeyWithGroup(t *testing.T) {
 	})
 }
 
+func TestAlertRuleGetMissingSeriesEvalsToResolve(t *testing.T) {
+	t.Run("should return the default 2 if MissingSeriesEvalsToResolve is nil", func(t *testing.T) {
+		rule := RuleGen.GenerateRef()
+		rule.MissingSeriesEvalsToResolve = nil
+		require.Equal(t, 2, rule.GetMissingSeriesEvalsToResolve())
+	})
+
+	t.Run("should return the correct value", func(t *testing.T) {
+		rule := RuleGen.With(
+			RuleMuts.WithMissingSeriesEvalsToResolve(3),
+		).GenerateRef()
+		require.Equal(t, 3, rule.GetMissingSeriesEvalsToResolve())
+	})
+}
+
 func TestAlertRuleCopy(t *testing.T) {
 	t.Run("should return a copy of the rule", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
@@ -1016,4 +1042,122 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 	}
 
 	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+}
+
+func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
+	tests := []struct {
+		name             string
+		rule             AlertRule
+		expectedResult   string
+		expectedErrorMsg string
+	}{
+		{
+			name: "rule with prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "groups:\n- name: example\n  rules:\n  - alert: HighRequestLatency\n    expr: request_latency_seconds{job=\"myjob\"} > 0.5\n    for: 10m\n    labels:\n      severity: page\n    annotations:\n      summary: High request latency",
+					},
+				},
+			},
+			expectedResult:   "groups:\n- name: example\n  rules:\n  - alert: HighRequestLatency\n    expr: request_latency_seconds{job=\"myjob\"} > 0.5\n    for: 10m\n    labels:\n      severity: page\n    annotations:\n      summary: High request latency",
+			expectedErrorMsg: "",
+		},
+		{
+			name: "rule with empty prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "",
+					},
+				},
+			},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+		{
+			name: "rule with nil prometheus style rule",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: nil,
+				},
+			},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+		{
+			name:             "rule with empty metadata",
+			rule:             AlertRule{},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := tt.rule.PrometheusRuleDefinition()
+			isPrometheusRule := tt.rule.ImportedFromPrometheus()
+
+			if tt.expectedErrorMsg != "" {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedErrorMsg, err.Error())
+				require.False(t, isPrometheusRule)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedResult, result)
+				require.True(t, isPrometheusRule)
+			}
+		})
+	}
+}
+
+func TestMissingSeriesEvalsToResolveValidation(t *testing.T) {
+	testCases := []struct {
+		name                        string
+		missingSeriesEvalsToResolve *int
+		expectedErrorContains       string
+	}{
+		{
+			name:                        "should allow nil value",
+			missingSeriesEvalsToResolve: nil,
+		},
+		{
+			name:                        "should reject negative value",
+			missingSeriesEvalsToResolve: util.Pointer(-1),
+			expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
+		},
+		{
+			name:                        "should reject 0",
+			missingSeriesEvalsToResolve: util.Pointer(0),
+			expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
+		},
+		{
+			name:                        "should accept positive value",
+			missingSeriesEvalsToResolve: util.Pointer(2),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			baseIntervalSeconds := int64(10)
+			cfg := setting.UnifiedAlertingSettings{
+				BaseInterval: time.Duration(baseIntervalSeconds) * time.Second,
+			}
+
+			rule := RuleGen.With(
+				RuleMuts.WithIntervalSeconds(baseIntervalSeconds * 2),
+			).Generate()
+			rule.MissingSeriesEvalsToResolve = tc.missingSeriesEvalsToResolve
+
+			err := rule.ValidateAlertRule(cfg)
+
+			if tc.expectedErrorContains != "" {
+				require.Error(t, err)
+				require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+				require.Contains(t, err.Error(), tc.expectedErrorContains)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

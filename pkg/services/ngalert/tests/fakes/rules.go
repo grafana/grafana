@@ -24,6 +24,7 @@ type RuleStore struct {
 	// OrgID -> RuleGroup -> Namespace -> Rules
 	Rules       map[int64][]*models.AlertRule
 	History     map[string][]*models.AlertRule
+	Deleted     map[int64][]*models.AlertRule
 	Hook        func(cmd any) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []any
 	Folders     map[int64][]*folder.Folder
@@ -102,10 +103,10 @@ func (f *RuleStore) GetRecordedCommands(predicate func(cmd any) (any, bool)) []a
 	return result
 }
 
-func (f *RuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs ...string) error {
+func (f *RuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, user *models.UserUID, UIDs ...string) error {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "DeleteAlertRulesByUID",
-		Params: []any{orgID, UIDs},
+		Params: []any{orgID, user, UIDs},
 	})
 
 	rules := f.Rules[orgID]
@@ -215,11 +216,7 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 			continue
 		}
 		if q.ImportedPrometheusRule != nil {
-			hasOriginalRuleDefinition := r.PrometheusRuleDefinition() != ""
-			if *q.ImportedPrometheusRule && !hasOriginalRuleDefinition {
-				continue
-			}
-			if !*q.ImportedPrometheusRule && hasOriginalRuleDefinition {
+			if *q.ImportedPrometheusRule != r.ImportedFromPrometheus() {
 				continue
 			}
 		}
@@ -268,38 +265,58 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *RuleStore) GetOrCreateNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
 	for _, folder := range f.Folders[orgID] {
-		if folder.Title == title {
+		if folder.Title == title && folder.ParentUID == parentUID {
 			return folder, nil
 		}
 	}
 
 	newFolder := &folder.Folder{
-		ID:       rand.Int63(), // nolint:staticcheck
-		UID:      util.GenerateShortUID(),
-		Title:    title,
-		Fullpath: "fullpath_" + title,
+		ID:        rand.Int63(), // nolint:staticcheck
+		UID:       util.GenerateShortUID(),
+		Title:     title,
+		ParentUID: parentUID,
+		Fullpath:  "fullpath_" + title,
 	}
 
 	f.Folders[orgID] = append(f.Folders[orgID], newFolder)
 	return newFolder, nil
 }
 
-func (f *RuleStore) GetNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+func (f *RuleStore) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
 	for _, folder := range f.Folders[orgID] {
-		if folder.Title == title && folder.ParentUID == "" {
+		if folder.Title == title && folder.ParentUID == parentUID {
 			return folder, nil
 		}
 	}
 
 	return nil, dashboards.ErrFolderNotFound
+}
+
+func (f *RuleStore) GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	result := []*folder.Folder{}
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.ParentUID == uid {
+			result = append(result, folder)
+		}
+	}
+
+	if len(result) == 0 {
+		return nil, dashboards.ErrFolderNotFound
+	}
+
+	return result, nil
 }
 
 func (f *RuleStore) UpdateAlertRules(_ context.Context, _ *models.UserUID, q []models.UpdateRule) error {
@@ -443,4 +460,16 @@ func (f *RuleStore) GetAlertRuleVersions(_ context.Context, orgID int64, guid st
 	}
 
 	return f.History[guid], nil
+}
+
+func (f *RuleStore) ListDeletedRules(_ context.Context, orgID int64) ([]*models.AlertRule, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{Name: "ListDeletedRules", Params: []any{orgID}})
+	}()
+	if err := f.Hook(orgID); err != nil {
+		return nil, err
+	}
+	return f.Deleted[orgID], nil
 }

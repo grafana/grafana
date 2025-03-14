@@ -7,7 +7,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -29,10 +29,11 @@ var (
 		resource.SEARCH_FIELD_CREATED_BY,
 		resource.SEARCH_FIELD_UPDATED,
 		resource.SEARCH_FIELD_UPDATED_BY,
-		resource.SEARCH_FIELD_REPOSITORY_NAME,
-		resource.SEARCH_FIELD_REPOSITORY_PATH,
-		resource.SEARCH_FIELD_REPOSITORY_HASH,
-		resource.SEARCH_FIELD_REPOSITORY_TIME,
+		resource.SEARCH_FIELD_MANAGER_KIND,
+		resource.SEARCH_FIELD_MANAGER_ID,
+		resource.SEARCH_FIELD_SOURCE_PATH,
+		resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+		resource.SEARCH_FIELD_SOURCE_TIME,
 	}
 )
 
