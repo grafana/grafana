@@ -53,7 +53,22 @@ type provisioningTestHelper struct {
 	ViewerREST   *rest.RESTClient
 }
 
+func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, jobName string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		job, err := h.Jobs.Resource.Get(ctx, jobName, metav1.GetOptions{})
+		if assert.NoError(collect, err) {
+			state, _, err := unstructured.NestedString(job.Object, "status", "state")
+
+			assert.NoError(collect, err)
+			require.NotEqual(t, string(provisioning.JobStateError), state, "job failed: %v", job.Object) // use t here: fail fast on errors.
+			assert.Equal(collect, string(provisioning.JobStateSuccess), state)                           // use collect here: continue to check if the job is working on syncing.
+		}
+	}, time.Second*5, time.Millisecond*20)
+}
+
 func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
+	t.Helper()
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		list, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
 		if assert.NoError(collect, err) {
@@ -77,6 +92,7 @@ func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 //
 // The values object is mutated to also include the helper property as `h`.
 func (h *provisioningTestHelper) RenderObject(t *testing.T, filePath string, values map[string]any) *unstructured.Unstructured {
+	t.Helper()
 	file := h.LoadFile(filePath)
 
 	if values == nil {
@@ -119,6 +135,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+			featuremgmt.FlagNestedFolders,
 			featuremgmt.FlagUnifiedStorageSearch,
 			featuremgmt.FlagKubernetesClientDashboardsFolders,
 		},
@@ -221,6 +238,25 @@ func ghAlwaysWrite(t *testing.T, body any) http.HandlerFunc {
 	})
 }
 
+func ghHandleTree(t *testing.T, refs map[string][]*gh.TreeEntry) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sha := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
+		require.NotEmpty(t, sha, "sha path parameter was missing?")
+
+		entries := refs[sha]
+		require.NotNil(t, entries, "no entries for sha %s", sha)
+
+		tree := &gh.Tree{
+			SHA:       gh.Ptr(sha),
+			Truncated: gh.Ptr(false),
+			Entries:   entries,
+		}
+
+		_, err := w.Write(ghmock.MustMarshal(tree))
+		require.NoError(t, err, "failed to write body in mock")
+	})
+}
+
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -315,15 +351,17 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 				Commit: &gh.RepositoryCommit{SHA: gh.Ptr("deadbeef")},
 			}),
 		),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha, ghAlwaysWrite(t, &gh.Tree{
-			SHA:       gh.Ptr("deadbeef"),
-			Truncated: gh.Ptr(false),
-			Entries: []*gh.TreeEntry{
-				treeEntry("README.md", []byte("# Hello, World!")),
-				treeEntry("dashboard.json", helper.LoadFile("testdata/all-panels.json")),
-				treeEntry("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json")),
-			},
-		})),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha,
+			ghHandleTree(t, map[string][]*gh.TreeEntry{
+				"deadbeef": {
+					treeEntryDir("grafana", "subtree"),
+				},
+				"subtree": {
+					treeEntry("dashboard.json", helper.LoadFile("testdata/all-panels.json")),
+					treeEntryDir("subdir", "subtree2"),
+					treeEntry("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json")),
+				},
+			})),
 		ghmock.WithRequestMatchHandler(
 			ghmock.GetReposContentsByOwnerByRepoByPath,
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -334,12 +372,10 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 				var err error
 				switch path {
-				case "README.md":
-					_, err = w.Write(ghmock.MustMarshal(repoContent("README.md", []byte("# Hello, World"))))
-				case "dashboard.json":
-					_, err = w.Write(ghmock.MustMarshal(repoContent("dashboard.json", helper.LoadFile("testdata/all-panels.json"))))
-				case "subdir/dashboard2.yaml":
-					_, err = w.Write(ghmock.MustMarshal(repoContent("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json"))))
+				case "grafana/dashboard.json":
+					_, err = w.Write(ghmock.MustMarshal(repoContent(path, helper.LoadFile("testdata/all-panels.json"))))
+				case "grafana/subdir/dashboard2.yaml":
+					_, err = w.Write(ghmock.MustMarshal(repoContent(path, helper.LoadFile("testdata/text-options.json"))))
 				default:
 					t.Fatalf("got unexpected path: %s", path)
 				}
@@ -350,19 +386,36 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 	const repo = "github-create-test"
 	_, err := helper.Repositories.Resource.Update(ctx,
-		helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{"Name": repo}),
+		helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        repo,
+			"SyncEnabled": true,
+			"SyncTarget":  "instance",
+			"Path":        "grafana/",
+		}),
 		metav1.UpdateOptions{},
 	)
 	require.NoError(t, err)
 
-	helper.AwaitJobs(t, repo)
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		repo, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
-		if assert.NoError(collect, err) {
-			assert.Equal(collect, true, mustNested(repo.Object, "status", "health", "healthy"))
-			assert.Equal(collect, "success", mustNestedString(repo.Object, "status", "sync", "state"))
-		}
-	}, time.Second*3, time.Millisecond*20, "repository is not healthy")
+	result := helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("sync").
+		Body(asJSON(provisioning.SyncJobOptions{
+			Incremental: false,
+		})).
+		Do(ctx)
+
+	obj, err := result.Get()
+	require.NoError(t, err, "expecting to be able to sync repository")
+	obj2, ok := obj.(*unstructured.Unstructured)
+	if !ok {
+		require.Fail(t, "expected unstructured response, %T", obj)
+	}
+	job := obj2.GetName()
+	require.NotEmpty(t, job)
+
+	helper.AwaitJobSuccess(t, ctx, job)
 
 	// By now, we should have synced, meaning we have data to read in the local Grafana instance!
 
@@ -373,8 +426,8 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	for _, v := range found.Items {
 		names = append(names, v.GetName())
 	}
-	require.Contains(t, names, "n1jR8vnnz", "should contain dashboard.json's contents")
-	require.Contains(t, names, "WZ7AhQiVz", "should contain dashboard2.yaml's contents")
+	assert.Contains(t, names, "n1jR8vnnz", "should contain dashboard.json's contents")
+	assert.Contains(t, names, "WZ7AhQiVz", "should contain dashboard2.yaml's contents")
 }
 
 func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
@@ -425,14 +478,17 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 		t.Skip("skipping integration test")
 	}
 
-	helper := runGrafana(t, withLogs)
+	helper := runGrafana(t)
 	ctx := context.Background()
 
 	const repo = "local-tmp"
 	// Set up the repository and the file to import.
 	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "all-panels.json")
 
-	localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{"Name": repo})
+	localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+		"Name":        repo,
+		"SyncEnabled": true,
+	})
 	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -467,15 +523,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	require.NotEmpty(t, job)
 
 	// Wait for the async job to finish
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		job, err := helper.Jobs.Resource.Get(ctx, job, metav1.GetOptions{})
-		require.NoError(collect, err)
-
-		state, _, err := unstructured.NestedString(job.Object, "status", "state")
-		require.NoError(collect, err)
-		require.NotEqual(t, string(provisioning.JobStateError), state, "job failed") // use t here: fail fast on errors.
-		require.Equal(collect, string(provisioning.JobStateSuccess), state)          // use collect here: continue to check if the job is working on syncing.
-	}, time.Millisecond*50, time.Second*5, "failed to sync repository")
+	helper.AwaitJobSuccess(t, ctx, job)
 
 	found, err := helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
@@ -502,11 +550,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 
 	// Now for the repository.
 	const repo = "local-repository"
-	repoPath := path.Join(helper.ProvisioningPath, repo, randomAsciiStr(10))
-	err = os.MkdirAll(repoPath, 0700)
-	require.NoError(t, err, "should be able to create repo path")
 	createBody := helper.RenderObject(t, "exportunifiedtorepository/repository.json.tmpl", map[string]any{"Name": repo})
-
 	_, err = helper.Repositories.Resource.Create(ctx, createBody, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create repository")
 
@@ -527,9 +571,9 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	// And time to assert.
 	helper.AwaitJobs(t, repo)
 
-	fpath := filepath.Join(repoPath, slugify.Slugify(mustNestedString(dashboard.Object, "spec", "title"))+".json")
+	fpath := filepath.Join(helper.ProvisioningPath, slugify.Slugify(mustNestedString(dashboard.Object, "spec", "title"))+".json")
 	_, err = os.Stat(fpath)
-	require.NoError(t, err, "exported file was not created at path %s?", fpath)
+	require.NoError(t, err, "exported file was not created at path %s", fpath)
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
@@ -561,21 +605,24 @@ func randomAsciiStr(n int) string {
 	return b.String()
 }
 
+func treeEntryDir(dirName string, sha string) *gh.TreeEntry {
+	return &gh.TreeEntry{
+		SHA:  gh.Ptr(sha),
+		Path: gh.Ptr(dirName),
+		Type: gh.Ptr("tree"),
+		Mode: gh.Ptr("040000"),
+	}
+}
+
 func treeEntry(fpath string, content []byte) *gh.TreeEntry {
 	sha := sha256.Sum256(content)
-	typ := "blob"
-	mode := "100644"
-	if strings.HasSuffix(fpath, "/") {
-		typ = "tree"
-		mode = "040000"
-	}
 
 	return &gh.TreeEntry{
 		SHA:     gh.Ptr(hex.EncodeToString(sha[:])),
-		Path:    &fpath,
+		Path:    gh.Ptr(fpath),
 		Size:    gh.Ptr(len(content)),
-		Type:    &typ,
-		Mode:    &mode,
+		Type:    gh.Ptr("blob"),
+		Mode:    gh.Ptr("100644"),
 		Content: gh.Ptr(string(content)),
 	}
 }
