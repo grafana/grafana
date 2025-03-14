@@ -20,7 +20,7 @@ Note that it will fail the first time you run it. On the second run, it will gen
 <br/>
 <br/>
 
-> Note: You won't need to follow these two steps if the `group` you will work within is already in the `openapi_test.go` file.
+> Note: You don’t need to follow these two steps if the `group` you’re working with is already in the `openapi_test.go` file.
 
 <br/>
 
