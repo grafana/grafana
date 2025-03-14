@@ -144,7 +144,6 @@ ssoSettingsSAML,GA,@grafana/identity-access-team,false,false,false
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
-accessActionSets,GA,@grafana/identity-access-team,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/oss-big-tent,false,true,false
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,experimental,@grafana/grafana-frontend-platform,false,false,false
@@ -206,7 +205,6 @@ reportingUseRawTimeRange,GA,@grafana/sharing-squad,false,false,false
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
-useV2DashboardsAPI,experimental,@grafana/dashboards-squad,false,true,false
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,false
 elasticsearchCrossClusterSearch,preview,@grafana/aws-datasources,false,false,false
@@ -222,7 +220,7 @@ templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,fa
 ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
 grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
-exploreMetricsUseExternalAppPlugin,experimental,@grafana/observability-metrics,false,true,true
+exploreMetricsUseExternalAppPlugin,preview,@grafana/observability-metrics,false,true,true
 datasourceConnectionsTab,experimental,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 alertingConversionAPI,experimental,@grafana/alerting-squad,false,false,false

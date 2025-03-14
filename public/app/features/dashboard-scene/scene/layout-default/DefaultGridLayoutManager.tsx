@@ -15,7 +15,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
-import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
+import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
@@ -25,7 +25,7 @@ import {
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
-  getDashboardSceneFor,
+  useDashboard,
 } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -108,6 +108,8 @@ export class DefaultGridLayoutManager
     this.state.grid.setState({
       children: layout.state.children.filter((child) => child !== gridItem),
     });
+
+    this.publishEvent(new ObjectRemovedFromCanvasEvent(panel), true);
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
@@ -440,7 +442,7 @@ export class DefaultGridLayoutManager
 
 function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<DefaultGridLayoutManager>) {
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
-  const dashboard = getDashboardSceneFor(model);
+  const dashboard = useDashboard(model);
 
   // If we are top level layout and have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {

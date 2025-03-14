@@ -240,16 +240,12 @@ function NeedHelpInfoForNotificationPolicy() {
       contentText={
         <Stack gap={1} direction="column">
           <Stack direction="column" gap={0}>
-            <>
-              Firing alert instances are routed to notification policies based on matching labels. The default
-              notification policy matches all alert instances.
-            </>
+            Firing alert instances are routed to notification policies based on matching labels. The default
+            notification policy matches all alert instances.
           </Stack>
           <Stack direction="column" gap={0}>
-            <>
-              Custom labels change the way your notifications are routed. First, add labels to your alert rule and then
-              connect them to your notification policy by adding label matchers.
-            </>
+            Custom labels change the way your notifications are routed. First, add labels to your alert rule and then
+            connect them to your notification policy by adding label matchers.
             <a
               href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/notification-policies/`}
               target="_blank"

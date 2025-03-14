@@ -24,6 +24,7 @@ type RuleStore struct {
 	// OrgID -> RuleGroup -> Namespace -> Rules
 	Rules       map[int64][]*models.AlertRule
 	History     map[string][]*models.AlertRule
+	Deleted     map[int64][]*models.AlertRule
 	Hook        func(cmd any) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []any
 	Folders     map[int64][]*folder.Folder
@@ -459,4 +460,16 @@ func (f *RuleStore) GetAlertRuleVersions(_ context.Context, orgID int64, guid st
 	}
 
 	return f.History[guid], nil
+}
+
+func (f *RuleStore) ListDeletedRules(_ context.Context, orgID int64) ([]*models.AlertRule, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{Name: "ListDeletedRules", Params: []any{orgID}})
+	}()
+	if err := f.Hook(orgID); err != nil {
+		return nil, err
+	}
+	return f.Deleted[orgID], nil
 }
