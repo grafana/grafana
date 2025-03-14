@@ -2,8 +2,11 @@ package grpc
 
 import (
 	"context"
+	"crypto/tls"
+	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"strconv"
 	"sync"
 
@@ -14,9 +17,10 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/authlib/grpcutils"
+	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -36,11 +40,11 @@ var logger = slog.Default().With("logger", "legacy.grpc.Authenticator")
 // This is in a package we can no import
 // var _ interceptors.Authenticator = (*Authenticator)(nil)
 
-type Authenticator struct {
+type LegacyAuthenticator struct {
 	Tracer trace.Tracer
 }
 
-func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
+func (f *LegacyAuthenticator) Authenticate(ctx context.Context) (context.Context, error) {
 	ctx, span := f.Tracer.Start(ctx, "legacy.grpc.Authenticator.Authenticate")
 	defer span.End()
 
@@ -63,7 +67,7 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 	return identity.WithRequester(ctx, user), nil
 }
 
-func (f *Authenticator) decodeMetadata(meta metadata.MD) (identity.Requester, error) {
+func (f *LegacyAuthenticator) decodeMetadata(meta metadata.MD) (identity.Requester, error) {
 	// Avoid NPE/panic with getting keys
 	getter := func(key string) string {
 		v := meta.Get(key)
@@ -186,12 +190,21 @@ func ReadGrpcClientConfig(cfg *setting.Cfg) *GrpcClientConfig {
 	}
 }
 
-func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.GrpcAuthenticatorConfig {
+// TODO: use authlib/grpcutils
+type GrpcAuthenticatorConfig struct {
+	SigningKeysURL   string
+	LegacyFallback   bool
+	AllowedAudiences []string
+	AllowInsecure    bool
+}
+
+func ReadGrpcServerConfig(cfg *setting.Cfg) *GrpcAuthenticatorConfig {
 	section := cfg.SectionWithEnvOverrides("grpc_server_authentication")
 
-	return &grpcutils.GrpcAuthenticatorConfig{
+	return &GrpcAuthenticatorConfig{
 		SigningKeysURL:   section.Key("signing_keys_url").MustString(""),
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
+		LegacyFallback:   section.Key("legacy_fallback").MustBool(true),
 		AllowInsecure:    cfg.Env == setting.Dev,
 	}
 }
@@ -202,16 +215,19 @@ type authenticatorWithFallback struct {
 	authenticator interceptors.Authenticator
 	fallback      interceptors.Authenticator
 	metrics       *metrics
-	tracer        trace.Tracer
+	tracer        tracing.Tracer
 }
 
 func WithFallback(ctx context.Context) context.Context {
 	return context.WithValue(ctx, contextFallbackKey{}, true)
 }
 
-func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer trace.Tracer, fallback interceptors.Authenticator) interceptors.Authenticator {
+func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer tracing.Tracer, fallback interceptors.Authenticator) interceptors.Authenticator {
 	authCfg := ReadGrpcServerConfig(cfg)
-	authenticator := grpcutils.NewAuthenticator(authCfg, tracer)
+	authenticator := NewAuthenticator(authCfg, tracer)
+	if !authCfg.LegacyFallback {
+		return authenticator
+	}
 
 	return &authenticatorWithFallback{
 		authenticator: authenticator,
@@ -273,4 +289,61 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 	}
 
 	return m
+}
+
+// TODO: use authlib/grpcutils
+
+func NewAuthenticator(cfg *GrpcAuthenticatorConfig, tracer tracing.Tracer) interceptors.Authenticator {
+	client := http.DefaultClient
+	if cfg.AllowInsecure {
+		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	}
+
+	kr := authn.NewKeyRetriever(authn.KeyRetrieverConfig{
+		SigningKeysURL: cfg.SigningKeysURL,
+	}, authn.WithHTTPClientKeyRetrieverOpt(client))
+
+	auth := authn.NewDefaultAuthenticator(
+		authn.NewAccessTokenVerifier(authn.VerifierConfig{AllowedAudiences: cfg.AllowedAudiences}, kr),
+		authn.NewIDTokenVerifier(authn.VerifierConfig{}, kr),
+	)
+
+	return newAuthenticatorInterceptor(auth, tracer)
+}
+
+func newAuthenticatorInterceptor(auth authn.Authenticator, tracer trace.Tracer) interceptors.Authenticator {
+	return interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
+		ctx, span := tracer.Start(ctx, "grpcutils.Authenticate")
+		defer span.End()
+
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			return nil, errors.New("missing metedata in context")
+		}
+
+		info, err := auth.Authenticate(ctx, authn.NewGRPCTokenProvider(md))
+		if err != nil {
+			span.RecordError(err)
+			if authn.IsUnauthenticatedErr(err) {
+				return nil, status.Error(codes.Unauthenticated, err.Error())
+			}
+
+			return ctx, status.Error(codes.Internal, err.Error())
+		}
+
+		// FIXME: Add attribute with service subject once https://github.com/grafana/authlib/issues/139 is closed.
+		span.SetAttributes(attribute.String("subject", info.GetUID()))
+		span.SetAttributes(attribute.Bool("service", types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy)))
+		return types.WithAuthInfo(ctx, info), nil
+	})
+}
+
+func NewInProcGrpcAuthenticator() interceptors.Authenticator {
+	return newAuthenticatorInterceptor(
+		authn.NewDefaultAuthenticator(
+			authn.NewUnsafeAccessTokenVerifier(authn.VerifierConfig{}),
+			authn.NewUnsafeIDTokenVerifier(authn.VerifierConfig{}),
+		),
+		tracing.NewNoopTracerService(),
+	)
 }

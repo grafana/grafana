@@ -6,17 +6,21 @@ import (
 	"fmt"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	"github.com/gogo/status"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 
+	"github.com/grafana/authlib/authn"
 	authnlib "github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 
@@ -32,7 +36,7 @@ import (
 
 // ProvideZanzana used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
-func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer trace.Tracer, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
+func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zanzana.NewNoopClient(), nil
 	}
@@ -184,7 +188,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	z.handle, err = grpcserver.ProvideService(
 		z.cfg,
 		z.features,
-		grpcutils.NewAuthenticatorInterceptor(authenticator, tracer),
+		NewAuthenticatorInterceptor(authenticator, tracer), // TODO: use authlib/grpcutils
 		tracer,
 		prometheus.DefaultRegisterer,
 	)
@@ -232,4 +236,43 @@ func (z *Zanzana) stopping(err error) error {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
 	}
 	return nil
+}
+
+// TODO: use authlib/grpcutils
+
+type Authenticator interface {
+	Authenticate(ctx context.Context) (context.Context, error)
+}
+
+func (fn AuthenticatorFunc) Authenticate(ctx context.Context) (context.Context, error) {
+	return fn(ctx)
+}
+
+type AuthenticatorFunc func(context.Context) (context.Context, error)
+
+func NewAuthenticatorInterceptor(auth authn.Authenticator, tracer trace.Tracer) Authenticator {
+	return AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
+		ctx, span := tracer.Start(ctx, "grpcutils.Authenticate")
+		defer span.End()
+
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			return nil, errors.New("missing metedata in context")
+		}
+
+		info, err := auth.Authenticate(ctx, authn.NewGRPCTokenProvider(md))
+		if err != nil {
+			span.RecordError(err)
+			if authn.IsUnauthenticatedErr(err) {
+				return nil, status.Error(codes.Unauthenticated, err.Error())
+			}
+
+			return ctx, status.Error(codes.Internal, err.Error())
+		}
+
+		// FIXME: Add attribute with service subject once https://github.com/grafana/authlib/issues/139 is closed.
+		span.SetAttributes(attribute.String("subject", info.GetUID()))
+		span.SetAttributes(attribute.Bool("service", types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy)))
+		return types.WithAuthInfo(ctx, info), nil
+	})
 }
