@@ -17,10 +17,11 @@ weight: 300
 Prometheus is an open source monitoring system for which Grafana provides out-of-the-box support. This topic walks you through the steps to create a series of dashboards in Grafana to display system metrics for a server monitored by Prometheus.
 
 {{% admonition type="tip" %}}
-Check out our Prometheus __Learning Journeys__.
+Check out our Prometheus **Learning Journeys**.
+
 - [Connect to a Prometheus data source in Grafana Cloud](https://www.grafana.com/docs/learning-journeys/prometheus/) to visualize your metrics directly from where they are stored.
 - [Send metrics to Grafana Cloud using Prometheus remote write](https://www.grafana.com/docs/learning-journeys/prom-remote-write/) to explore Grafana Cloud without making significant changes to your existing configuration.
-{{% /admonition %}}
+  {{% /admonition %}}
 
 _Grafana and Prometheus_:
 
@@ -125,22 +126,29 @@ These are some of the troubleshooting steps you can try if Prometheus isn’t ru
 ### 1. Checking if Prometheus is running
 
 #### Check if Prometheus is running
+
 ##### Linux
+
 ```bash
 sudo systemctl status prometheus
 ```
+
 - Shows whether the process is running and if the service is active.
 
 ##### MacOS
+
 ```bash
 pgrep prometheus
 ```
+
 - Returns the process ID (PID) if Prometheus is running.
 
 ##### Windows (`PowerShell`)
+
 ```powershell
 Get-Process -Name prometheus -ErrorAction SilentlyContinue
 ```
+
 - Checks if the Prometheus process is running by name.
 
 ---
@@ -148,72 +156,97 @@ Get-Process -Name prometheus -ErrorAction SilentlyContinue
 ### 2. If Prometheus is not running
 
 #### Check for port conflicts
+
 If Prometheus isn’t running, another process may be using its default port (**9090**).
 
 ##### Linux & MacOS
+
 ```bash
 lsof -i :9090
 ```
+
 ##### Windows (`PowerShell`)
+
 ```powershell
 netstat -ano | findstr :9090
 ```
+
 - Shows if another process is using port **9090**.
 
 #### Verify the Prometheus binary placement
+
 Ensure Prometheus binaries (`prometheus` and `promtool`) are correctly installed.
 
 ##### Linux & MacOS
+
 ```bash
 ls /usr/local/bin/prometheus /usr/local/bin/promtool
 ```
+
 - If missing, move them to `/usr/local/bin` or a directory in your system’s **PATH**.
 
 ##### Check if Prometheus is in the path
+
 ```bash
 which prometheus
 which promtool
 ```
+
 - If there’s **no output**, the binaries are not in the system **PATH**.
 
 #### Ensure configuration & data files are in place
+
 ##### Linux & MacOs
+
 ```bash
 ls /etc/prometheus /var/lib/prometheus
 ls /etc/prometheus/prometheus.yml
 ```
+
 - Ensures that Prometheus has its necessary configuration and data storage directories.
 
 #### Ensure correct permissions
+
 If Prometheus is running as a dedicated user, ensure the correct ownership:
+
 ```bash
 sudo chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
 ```
 
 #### (Optional) Secure Prometheus by creating a dedicated user
+
 ```bash
 sudo useradd --no-create-home --shell /bin/false prometheus
 ```
+
 - Recommended for security: runs Prometheus as a non-login user.
 
 ---
 
 ### 3. Checking if Prometheus is running as a service
+
 If Prometheus is running as a process, check if it's also set up correctly as a service.
 
 #### Check Prometheus service status
+
 ##### Linux
+
 ```bash
 systemctl status prometheus.service
 ```
+
 ##### Windows
+
 ```powershell
 sc query prometheus
 ```
+
 ##### MacOs
+
 ```bash
 pgrep prometheus
 ```
+
 - If the service is **inactive (dead) or stopped**, proceed to the next steps.
 
 ---
@@ -221,20 +254,26 @@ pgrep prometheus
 ### 4. If Prometheus is not running as a service
 
 #### Verify service configuration (Linux & MacOs)
+
 Check the service unit file to ensure correct paths:
+
 ```bash
 sudo nano /etc/systemd/system/prometheus.service
 ```
+
 - Look for the `ExecStart` line:
+
 ```bash
 ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus/
 ```
+
 - Ensure:
   - The **binary path** (`/usr/local/bin/prometheus`) is correct.
   - The **configuration file** (`/etc/prometheus/prometheus.yml`) is in place.
   - The **storage path** (`/var/lib/prometheus/`) exists.
 
 #### Restart and enable Prometheus service (Linux & MacOs)
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable prometheus
@@ -243,14 +282,19 @@ sudo systemctl status prometheus
 ```
 
 #### Check Prometheus health status
+
 After restarting, verify if Prometheus is responsive:
+
 ```bash
 curl -s http://localhost:9090/-/ready
 ```
+
 - If successful, this confirms Prometheus is **ready to serve requests**.
 
 #### Restart Prometheus service (Windows)
+
 If running as a Windows service, restart it:
+
 ```powershell
 net stop prometheus
 net start prometheus
@@ -263,6 +307,7 @@ If you installed [Node exporter](#install-prometheus-node-exporter) to expose yo
 ```bash
 curl http://localhost:9090/metrics
 ```
+
 - It should return a number of metrics and metadata about the metrics being exposed.
 
 ## Check Prometheus metrics in Grafana Metics Drilldown

@@ -86,9 +86,10 @@ Prometheus is an open source database that uses a telemetry collector agent to s
 For instructions on downloading Prometheus see [Get started with Grafana and Prometheus](ref:get-started-prometheus).
 
 If you’re ready to start visualizing your metrics, check out our Prometheus Learning Journeys:
+
 - [Connect to a Prometheus data source in Grafana Cloud](https://www.grafana.com/docs/learning-journeys/prometheus/) to visualize your metrics directly from where they are stored.
 - [Send metrics to Grafana Cloud using Prometheus remote write](https://www.grafana.com/docs/learning-journeys/prom-remote-write/) to explore Grafana Cloud without making significant changes to your existing configuration.
-{{% /admonition %}}
+  {{% /admonition %}}
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:administration-documentation).
 Only users with the organization `administrator` role can add data sources and edit existing data sources.
