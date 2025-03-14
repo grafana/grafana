@@ -4,7 +4,7 @@ import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/
 
 import { useStyles2 } from '../../themes';
 import { trimFileName } from '../../utils/file';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { Button } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
@@ -26,7 +26,14 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
       return (
         <>
           <span className={styles.error}>{error.message}</span>
-          {retryUpload && <IconButton name="sync" tooltip="Retry" tooltipPlacement="top" onClick={retryUpload} />}
+          {retryUpload && (
+            <IconButton
+              name="sync"
+              tooltip={t('grafana-ui.file-dropzone.item-retry', 'Retry')}
+              tooltipPlacement="top"
+              onClick={retryUpload}
+            />
+          )}
           {removeFile && (
             <IconButton
               className={retryUpload ? styles.marginLeft : ''}
