@@ -259,4 +259,5 @@ export interface FeatureToggles {
   inviteUserExperimental?: boolean;
   extraLanguages?: boolean;
   noBackdropBlur?: boolean;
+  alertingMigrationUI?: boolean;
 }
