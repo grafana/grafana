@@ -2,12 +2,12 @@
   "apiVersion": "provisioning.grafana.app/v0alpha1",
       "kind": "Repository",
       "metadata": {
-          "name": "local-repository"
+          "name": "{{ .Name }}"
       },
       "spec": {
           "description": "Test",
           "local": {
-              "path": "${path}"
+              "path": "{{ .h.ProvisioningPath }}"
           },
           "sync": {
               "enabled": false,

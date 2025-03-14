@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
 	gh "github.com/google/go-github/v69/github"
@@ -69,6 +70,36 @@ func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 			}
 		}
 	}, time.Second*5, time.Millisecond*20)
+}
+
+// RenderObject reads the filePath and renders it as a template with the given values.
+// The template is expected to be a YAML or JSON file.
+//
+// The values object is mutated to also include the helper property as `h`.
+func (h *provisioningTestHelper) RenderObject(t *testing.T, filePath string, values map[string]any) *unstructured.Unstructured {
+	file := h.LoadFile(filePath)
+
+	if values == nil {
+		values = make(map[string]any)
+	}
+	values["h"] = h
+
+	tmpl, err := template.New(filePath).Parse(string(file))
+	require.NoError(t, err, "failed to parse template")
+
+	var buf strings.Builder
+	err = tmpl.Execute(&buf, values)
+	require.NoError(t, err, "failed to execute template")
+
+	return h.LoadYAMLOrJSON(buf.String())
+}
+
+// CopyToProvisioningPath copies a file to the provisioning path.
+// The from path is relative to test file's directory.
+func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to string) {
+	file := h.LoadFile(from)
+	err := os.WriteFile(path.Join(h.ProvisioningPath, to), file, 0600)
+	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
 type grafanaOption func(opts *testinfra.GrafanaOpts)
@@ -199,15 +230,14 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 
-	for _, inputFilePath := range []string{
-		"testdata/github-example.json",
-		"testdata/local-conf-provisioning-sample.json",
-		"testdata/local-devenv.json",
-		"testdata/local-tmp.json",
-		"testdata/local-xxx.json",
-	} {
+	inputFiles := []string{
+		"testdata/github-readonly.json.tmpl",
+		"testdata/local-readonly.json.tmpl",
+	}
+
+	for _, inputFilePath := range inputFiles {
 		t.Run(inputFilePath, func(t *testing.T) {
-			input := helper.LoadYAMLOrJSONFile(inputFilePath)
+			input := helper.RenderObject(t, inputFilePath, nil)
 
 			_, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
 			require.NoError(t, err, "failed to create resource")
@@ -262,7 +292,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	require.NoError(t, rsp.Error())
 	err := rsp.Into(settings)
 	require.NoError(t, err)
-	require.Len(t, settings.Items, 5) // a list of the 5 resources we added
+	require.Len(t, settings.Items, len(inputFiles))
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
@@ -318,15 +348,16 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 		),
 	)
 
+	const repo = "github-create-test"
 	_, err := helper.Repositories.Resource.Update(ctx,
-		helper.LoadYAMLOrJSONFile("testdata/github-example.json"),
+		helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{"Name": repo}),
 		metav1.UpdateOptions{},
 	)
 	require.NoError(t, err)
 
-	helper.AwaitJobs(t, "github-example")
+	helper.AwaitJobs(t, repo)
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		repo, err := helper.Repositories.Resource.Get(ctx, "github-example", metav1.GetOptions{})
+		repo, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		if assert.NoError(collect, err) {
 			assert.Equal(collect, true, mustNested(repo.Object, "status", "health", "healthy"))
 			assert.Equal(collect, "success", mustNestedString(repo.Object, "status", "sync", "state"))
@@ -354,13 +385,13 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	_, err := helper.Repositories.Resource.Update(ctx,
-		helper.LoadYAMLOrJSONFile("testdata/local-devenv.json"),
-		metav1.UpdateOptions{},
-	)
+	const repo = "local-safe-path-usages"
+	// Set up the repository.
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{"Name": repo})
+	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	const repo = "local-devenv"
+	// Write a file
 	result := helper.AdminREST.Post().
 		Namespace("default").
 		Resource("repositories").
@@ -370,6 +401,7 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 		Do(ctx)
 	require.NoError(t, result.Error(), "expecting to be able to create file")
 
+	// Write a file with a bad path
 	result = helper.AdminREST.Post().
 		Namespace("default").
 		Resource("repositories").
@@ -379,9 +411,11 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 		Do(ctx)
 	require.Error(t, result.Error(), "invalid path should return error")
 
+	// Read a file
 	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
 	require.NoError(t, err, "valid path should be fine")
 
+	// Read a file with a bad path
 	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")
 	require.Error(t, err, "invalid path should not be fine")
 }
@@ -391,22 +425,16 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 		t.Skip("skipping integration test")
 	}
 
-	helper := runGrafana(t)
+	helper := runGrafana(t, withLogs)
 	ctx := context.Background()
 
 	const repo = "local-tmp"
-	// Create the repository.
-	repoPath := path.Join(helper.ProvisioningPath, repo, randomAsciiStr(10))
-	err := os.MkdirAll(repoPath, 0700)
-	require.NoError(t, err, "should be able to create repo path")
-	localTmp := helper.LoadYAMLOrJSONFile("testdata/local-tmp.json")
-	require.NoError(t, unstructured.SetNestedField(localTmp.Object, repoPath, "spec", "local", "path"))
+	// Set up the repository and the file to import.
+	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "all-panels.json")
 
-	_, err = helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{"Name": repo})
+	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
-
-	err = os.WriteFile(path.Join(repoPath, "all-panels.json"), helper.LoadFile("testdata/all-panels.json"), 0600)
-	require.NoError(t, err, "expecting to be able to create file")
 
 	// Make sure the repo can see the file
 	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
@@ -439,17 +467,15 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	require.NotEmpty(t, job)
 
 	// Wait for the async job to finish
-	for i := 0; i < 10; i++ {
-		time.Sleep(time.Millisecond * 250)
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		job, err := helper.Jobs.Resource.Get(ctx, job, metav1.GetOptions{})
-		require.NoError(t, err)
+		require.NoError(collect, err)
 
 		state, _, err := unstructured.NestedString(job.Object, "status", "state")
-		require.NoError(t, err)
-		if provisioning.JobState(state).Finished() {
-			break
-		}
-	}
+		require.NoError(collect, err)
+		require.NotEqual(t, string(provisioning.JobStateError), state, "job failed") // use t here: fail fast on errors.
+		require.Equal(collect, string(provisioning.JobStateSuccess), state)          // use collect here: continue to check if the job is working on syncing.
+	}, time.Millisecond*50, time.Second*5, "failed to sync repository")
 
 	found, err := helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
@@ -479,14 +505,13 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	repoPath := path.Join(helper.ProvisioningPath, repo, randomAsciiStr(10))
 	err = os.MkdirAll(repoPath, 0700)
 	require.NoError(t, err, "should be able to create repo path")
-	createBody := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/repository.json")
-	require.NoError(t, unstructured.SetNestedField(createBody.Object, repoPath, "spec", "local", "path"))
+	createBody := helper.RenderObject(t, "exportunifiedtorepository/repository.json.tmpl", map[string]any{"Name": repo})
 
 	_, err = helper.Repositories.Resource.Create(ctx, createBody, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create repository")
 
 	// Now export...
-	result := helper.REST.Post().
+	result := helper.AdminREST.Post().
 		Namespace("default").
 		Resource("repositories").
 		Name(repo).
