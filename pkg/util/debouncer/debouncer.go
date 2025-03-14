@@ -12,8 +12,7 @@ import (
 )
 
 var (
-	ErrBufferFull               = errors.New("debouncer buffer full")
-	ErrMinWaitBiggerThanMaxWait = errors.New("")
+	ErrBufferFull = errors.New("debouncer buffer full")
 )
 
 type ProcessFunc[T comparable] func(context.Context, T) error
