@@ -11,6 +11,7 @@ module.exports = (env = {}) => {
 
     entry: {
       app: './public/swagger/index.tsx',
+      light: './public/sass/grafana.light.scss',
     },
 
     // Output to a different directory so each build doesn't clobber each other
