@@ -15,11 +15,11 @@ import (
 	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
+	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboardOG "github.com/grafana/grafana/pkg/apis/dashboard"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -317,13 +317,6 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		}
 
 		if origin_name.String != "" {
-			ts := time.Unix(origin_ts.Int64, 0)
-
-			repo := &utils.ResourceRepositoryInfo{
-				Name:      dashboardOG.ProvisionedFileNameWithPrefix(origin_name.String),
-				Hash:      origin_hash.String,
-				Timestamp: &ts,
-			}
 			// if the reader cannot be found, it may be an orphaned provisioned dashboard
 			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
 			if resolvedPath != "" {
@@ -334,13 +327,20 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 				if err != nil {
 					return nil, err
 				}
-				repo.Path = originPath
+				meta.SetSourceProperties(utils.SourceProperties{
+					Path:            originPath, // relative path within source
+					Checksum:        origin_hash.String,
+					TimestampMillis: origin_ts.Int64,
+				})
+				meta.SetManagerProperties(utils.ManagerProperties{
+					Kind:     utils.ManagerKindClassicFP, // nolint:staticcheck
+					Identity: origin_name.String,
+				})
 			}
-			meta.SetRepositoryInfo(repo)
 		} else if plugin_id.String != "" {
-			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-				Name: dashboardOG.PluginIDRepoName,
-				Path: plugin_id.String,
+			meta.SetManagerProperties(utils.ManagerProperties{
+				Kind:     utils.ManagerKindPlugin,
+				Identity: plugin_id.String,
 			})
 		}
 

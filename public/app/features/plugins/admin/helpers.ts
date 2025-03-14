@@ -129,7 +129,6 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     versionSignatureType,
     versionSignedByOrgName,
     url,
-    raiseAnIssueUrl,
   } = plugin;
 
   const isDisabled = !!error || isDisabledSecretsPlugin(typeCode);
@@ -168,7 +167,6 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isFullyInstalled: isDisabled,
     latestVersion: plugin.version,
     url,
-    raiseAnIssueUrl,
   };
 }
 
@@ -185,7 +183,6 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     hasUpdate,
     accessControl,
     angularDetected,
-    raiseAnIssueUrl,
   } = plugin;
 
   const isDisabled = !!error || isDisabledSecretsPlugin(type);
@@ -220,7 +217,6 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isFullyInstalled: true,
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
-    raiseAnIssueUrl,
   };
 }
 
@@ -285,7 +281,6 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     iam: local?.iam,
     latestVersion: local?.latestVersion || remote?.version || '',
     url: remote?.url || '',
-    raiseAnIssueUrl: remote?.raiseAnIssueUrl || local?.raiseAnIssueUrl,
   };
 }
 

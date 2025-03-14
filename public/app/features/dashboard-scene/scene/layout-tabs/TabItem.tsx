@@ -40,7 +40,11 @@ export class TabItem
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { typeId: 'tab', icon: 'tag-alt', name: sceneGraph.interpolate(this, this.state.title, undefined, 'text') };
+    return {
+      typeName: t('dashboard.edit-pane.elements.tab', 'Tab'),
+      instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
+      icon: 'tag-alt',
+    };
   }
 
   public getLayout(): DashboardLayoutManager {

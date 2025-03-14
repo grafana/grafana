@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .bingo/Variables.mk
 
 GO = go
-GO_VERSION = 1.23.5
+GO_VERSION = 1.23.7
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -17,6 +17,10 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
+GO_TEST_OUTPUT := $(shell [ -n "$(GO_TEST_OUTPUT)" ] && echo '-json | tee $(GO_TEST_OUTPUT) | tparse -all')
+GO_UNIT_COVERAGE ?= true
+GO_UNIT_COVER_PROFILE ?= unit.cov
+GO_INTEGRATION_COVER_PROFILE ?= integration.cov
 GIT_BASE = remotes/origin/main
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
@@ -130,14 +134,12 @@ else
 i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
 	yarn run i18next --config public/locales/i18next-parser-enterprise.config.cjs
-	node ./public/locales/pseudo.mjs --mode enterprise
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
 	yarn run i18next --config public/locales/i18next-parser.config.cjs
-	node ./public/locales/pseudo.mjs --mode oss
 
 ##@ Building
 .PHONY: gen-cue
@@ -247,8 +249,13 @@ test-go: test-go-unit test-go-integration
 
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
-	@echo "test backend unit tests"
-	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -coverprofile=unit.cov -timeout=30m $(GO_TEST_FILES)
+	@echo "backend unit tests"
+	$(GO) test $(GO_RACE_FLAG) -v -short -timeout=30m $(GO_TEST_FILES) $(GO_TEST_OUTPUT)
+
+.PHONY: test-go-unit-cov
+test-go-unit-cov: ## Run unit tests for backend with flags and coverage
+	@echo "backend unit tests with coverage"
+	$(GO) test $(GO_RACE_FLAG) -v -short $(if $(filter true,$(GO_UNIT_COVERAGE)),-covermode=atomic -coverprofile=$(GO_UNIT_COVER_PROFILE) $(if $(GO_UNIT_TEST_COVERPKG),-coverpkg=$(GO_UNIT_TEST_COVERPKG)),) -timeout=30m $(GO_TEST_FILES) $(GO_TEST_OUTPUT)
 
 .PHONY: test-go-unit-pretty
 test-go-unit-pretty: check-tparse
@@ -261,7 +268,7 @@ test-go-unit-pretty: check-tparse
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
-	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=integration.cov -timeout=5m $(GO_INTEGRATION_TESTS)
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE)  -timeout=5m $(GO_INTEGRATION_TESTS) $(GO_TEST_OUTPUT)
 
 .PHONY: test-go-integration-alertmanager
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
@@ -426,6 +433,7 @@ protobuf: ## Compile protobuf definitions
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
+	buf generate pkg/apis/secret/v0alpha1/decrypt --template pkg/apis/secret/v0alpha1/decrypt/buf.gen.yaml
 	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml

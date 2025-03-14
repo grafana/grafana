@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,7 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	authz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	apivalidation "github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -157,7 +161,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 			rulesToDelete = append(rulesToDelete, uid...)
 		}
 		if len(rulesToDelete) > 0 {
-			err := srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.GetOrgID(), rulesToDelete...)
+			err := srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.GetOrgID(), ngmodels.NewUserUID(c.SignedInUser), rulesToDelete...)
 			if err != nil {
 				return err
 			}
@@ -261,6 +265,26 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 
 // RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Response {
+	if strings.ToLower(c.Query("deleted")) == "true" {
+		if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) {
+			return ErrResp(http.StatusBadRequest, errors.New("restore of deleted rules is not enabled"), "")
+		}
+		if !c.SignedInUser.HasRole(identity.RoleAdmin) {
+			return ErrResp(http.StatusForbidden, errors.New("only admins can get deleted rules"), "")
+		}
+		rules, err := srv.store.ListDeletedRules(c.Req.Context(), c.SignedInUser.GetOrgID())
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to get deleted rules")
+		}
+		result := apimodels.NamespaceConfigResponse{}
+		if len(rules) > 0 {
+			result[""] = []apimodels.GettableRuleGroupConfig{
+				toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, srv.resolveUserIdToNameFn(c.Req.Context())),
+			}
+		}
+		return response.JSON(http.StatusOK, result)
+	}
+
 	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
@@ -370,7 +394,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	rules, err := ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, RuleLimitsFromConfig(srv.cfg, srv.featureManager))
+	rules, err := apivalidation.ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager))
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -461,7 +485,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 				UIDs = append(UIDs, rule.UID)
 			}
 
-			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.GetOrgID(), UIDs...); err != nil {
+			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.GetOrgID(), ngmodels.NewUserUID(c.SignedInUser), UIDs...); err != nil {
 				return fmt.Errorf("failed to delete rules: %w", err)
 			}
 		}
@@ -792,4 +816,11 @@ func (srv RulerSrv) resolveUserIdToNameFn(ctx context.Context) userIDToUserInfoF
 		cache[*id] = result
 		return result
 	}
+}
+
+func getPanelIDFromQuery(v url.Values) (int64, error) {
+	if s := strings.TrimSpace(v.Get("panel_id")); s != "" {
+		return strconv.ParseInt(s, 10, 64)
+	}
+	return 0, nil
 }

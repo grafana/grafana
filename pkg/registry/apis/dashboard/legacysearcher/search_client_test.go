@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/selection"
 
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -43,8 +43,8 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db", // should set type based off of key
 			Sort:         sorter,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", Term: "term"},
-			{UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2"},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", Term: "term"},
+			{ID: 2, UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2"},
 		}, nil).Once()
 
 		req := &resource.ResourceSearchRequest{
@@ -73,6 +73,11 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
 					{
+						Name:        unisearch.DASHBOARD_LEGACY_ID,
+						Type:        resource.ResourceTableColumnDefinition_INT64,
+						Description: "Deprecated legacy id of the dashboard",
+					},
+					{
 						Name: "", // sort by should be empty if title is what we sorted by
 						Type: resource.ResourceTableColumnDefinition_INT64,
 					},
@@ -88,6 +93,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 							[]byte("Test Dashboard"),
 							[]byte("folder1"),
 							tags,
+							[]byte("1"),
 							[]byte(strconv.FormatInt(0, 10)),
 						},
 					},
@@ -101,6 +107,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 							[]byte("Test Dashboard2"),
 							[]byte("folder2"),
 							emptyTags,
+							[]byte("2"),
 							[]byte(strconv.FormatInt(0, 10)),
 						},
 					},
@@ -108,6 +115,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 		}, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Sorting should be properly parsed into legacy sorting options (asc), and results added", func(t *testing.T) {
@@ -120,7 +130,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db",
 			Sort:         sortOptionAsc,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(50)},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(50)},
 		}, nil).Once()
 
 		req := &resource.ResourceSearchRequest{
@@ -146,6 +156,11 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
 					{
+						Name:        unisearch.DASHBOARD_LEGACY_ID,
+						Type:        resource.ResourceTableColumnDefinition_INT64,
+						Description: "Deprecated legacy id of the dashboard",
+					},
+					{
 						Name: "views_total",
 						Type: resource.ResourceTableColumnDefinition_INT64,
 					},
@@ -161,6 +176,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 							[]byte("Test Dashboard"),
 							[]byte("folder"),
 							emptyTags,
+							[]byte("1"),
 							[]byte(strconv.FormatInt(50, 10)),
 						},
 					},
@@ -168,6 +184,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 		}, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Sorting should be properly parsed into legacy sorting options (desc)", func(t *testing.T) {
@@ -180,7 +199,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db",
 			Sort:         sortOptionAsc,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(2)},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(2)},
 		}, nil).Once()
 
 		req := &resource.ResourceSearchRequest{
@@ -206,6 +225,11 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
 					{
+						Name:        unisearch.DASHBOARD_LEGACY_ID,
+						Type:        resource.ResourceTableColumnDefinition_INT64,
+						Description: "Deprecated legacy id of the dashboard",
+					},
+					{
 						Name: "errors_last_30_days",
 						Type: resource.ResourceTableColumnDefinition_INT64,
 					},
@@ -221,6 +245,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 							[]byte("Test Dashboard"),
 							[]byte("folder"),
 							emptyTags,
+							[]byte("1"),
 							[]byte(strconv.FormatInt(2, 10)),
 						},
 					},
@@ -228,6 +253,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 		}, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Query for tags should return facet properly", func(t *testing.T) {
@@ -268,6 +296,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			},
 		}, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Query should be set as the title, and * should be removed", func(t *testing.T) {
@@ -290,6 +321,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Should read labels for the dashboard ids", func(t *testing.T) {
@@ -318,6 +352,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Should modify fields to legacy compatible queries", func(t *testing.T) {
@@ -358,6 +395,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
 	})
 
 	t.Run("Should retrieve dashboards by plugin through a different function", func(t *testing.T) {
@@ -373,12 +413,12 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resource.Requirement{
 					{
-						Key:      resource.SEARCH_FIELD_REPOSITORY_PATH,
+						Key:      resource.SEARCH_FIELD_MANAGER_ID,
 						Operator: "in",
 						Values:   []string{"slo"},
 					},
 					{
-						Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
+						Key:      resource.SEARCH_FIELD_MANAGER_KIND,
 						Operator: "in",
 						Values:   []string{"plugin"},
 					},
@@ -390,6 +430,10 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
+		require.Equal(t, resp.TotalHits, int64(1))
 	})
 
 	t.Run("Should retrieve dashboards by provisioner name through a different function", func(t *testing.T) {
@@ -402,9 +446,14 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resource.Requirement{
 					{
-						Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
+						Key:      resource.SEARCH_FIELD_MANAGER_KIND,
+						Operator: "=",
+						Values:   []string{string(utils.ManagerKindClassicFP)}, // nolint:staticcheck
+					},
+					{
+						Key:      resource.SEARCH_FIELD_MANAGER_ID,
 						Operator: "in",
-						Values:   []string{"file:test"}, // file prefix should be removed before going to legacy
+						Values:   []string{"test"},
 					},
 				},
 			},
@@ -414,6 +463,10 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
+		require.Equal(t, resp.TotalHits, int64(1))
 	})
 
 	t.Run("Should retrieve orphaned dashboards if provisioner not in is specified", func(t *testing.T) {
@@ -426,9 +479,14 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resource.Requirement{
 					{
-						Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
+						Key:      resource.SEARCH_FIELD_MANAGER_KIND,
+						Operator: "=",
+						Values:   []string{string(utils.ManagerKindClassicFP)}, // nolint:staticcheck
+					},
+					{
+						Key:      resource.SEARCH_FIELD_MANAGER_ID,
 						Operator: string(selection.NotIn),
-						Values:   []string{"file:test", "file:test2"}, // file prefix should be removed before going to legacy
+						Values:   []string{"test", "test2"},
 					},
 				},
 			},
@@ -438,5 +496,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
+		require.Equal(t, resp.TotalHits, int64(1))
 	})
 }

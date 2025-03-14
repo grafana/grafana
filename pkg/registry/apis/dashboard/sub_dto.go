@@ -11,9 +11,9 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -134,13 +134,9 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			OrgID: info.OrgID,
 			ID:    obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		}
-		repo, err := obj.GetRepositoryInfo()
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-		if repo != nil && repo.Name == dashboard.PluginIDRepoName {
-			dto.PluginID = repo.Path
+		manager, ok := obj.GetManagerProperties()
+		if ok && manager.Kind == utils.ManagerKindPlugin {
+			dto.PluginID = manager.Identity
 		}
 
 		guardian, err := guardian.NewByDashboard(ctx, dto, info.OrgID, user)
