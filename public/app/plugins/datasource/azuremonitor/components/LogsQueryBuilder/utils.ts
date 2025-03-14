@@ -6,7 +6,6 @@ import {
   BuilderQueryExpression,
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
-  BuilderQueryEditorOperatorType,
   BuilderQueryEditorReduceExpression,
   BuilderQueryEditorWhereExpression,
   BuilderQueryEditorOrderByOptions,
@@ -150,7 +149,7 @@ export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
         expressions: conditions.flatMap((condition) => {
           const [property, operator, ...valueParts] = condition.split(/\s+/);
           if (!property || !operator || valueParts.length === 0) {
-            return []; // Exclude invalid values
+            return [];
           }
 
           const value = valueParts.join(' ').trim();
@@ -167,31 +166,65 @@ export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
 
     if (line.startsWith('| summarize ')) {
       const summarizeParts = line.replace('| summarize ', '').split('by');
-      const aggregationPart = summarizeParts[0].trim();
-      const groupByPart = summarizeParts[1]?.trim();
-
-      const aggregationExpressions = aggregationPart.split(',').map((agg) => {
-        return {
-          reduce: { name: agg.trim(), type: BuilderQueryEditorPropertyType.Function },
-          property: { name: '', type: BuilderQueryEditorPropertyType.String },
+      const percentileAgg = summarizeParts.filter((p) => p.includes('percentile'));
+      if (percentileAgg && percentileAgg.length > 0) {
+        expression.reduce = {
+          expressions: percentileAgg.map((p) => {
+            const percentValues = p.split('(')[1].replaceAll(')', '').split(',');
+            const column = percentValues[0];
+            const percent = percentValues[1];
+            return {
+              reduce: {
+                name: 'percentile',
+                type: BuilderQueryEditorPropertyType.Function,
+              },
+              property: {
+                name: column,
+                type: BuilderQueryEditorPropertyType.String,
+              },
+              parameters: [
+                {
+                  type: BuilderQueryEditorExpressionType.Function_parameter,
+                  fieldType: BuilderQueryEditorPropertyType.Number,
+                  value: percent,
+                },
+                {
+                  type: BuilderQueryEditorExpressionType.Function_parameter,
+                  fieldType: BuilderQueryEditorPropertyType.String,
+                  value: column,
+                },
+              ],
+            };
+          }),
+          type: BuilderQueryEditorExpressionType.Reduce,
         };
-      });
+      } else {
+        const aggregationPart = summarizeParts[0].trim();
+        const groupByPart = summarizeParts[1]?.trim();
 
-      if (!expression.reduce) {
-        expression.reduce = { expressions: [], type: BuilderQueryEditorExpressionType.Reduce };
-      }
+        const aggregationExpressions = aggregationPart.split(',').map((agg) => {
+          return {
+            reduce: { name: agg.trim(), type: BuilderQueryEditorPropertyType.Function },
+            property: { name: '', type: BuilderQueryEditorPropertyType.String },
+          };
+        });
 
-      expression.reduce.expressions = aggregationExpressions;
+        if (!expression.reduce) {
+          expression.reduce = { expressions: [], type: BuilderQueryEditorExpressionType.Reduce };
+        }
 
-      if (groupByPart) {
-        const groupByColumns = groupByPart.split(',').map((col) => col.trim());
-        expression.groupBy = {
-          type: BuilderQueryEditorExpressionType.Group_by,
-          expressions: groupByColumns.map((col) => ({
-            property: { name: col, type: BuilderQueryEditorPropertyType.String },
+        expression.reduce.expressions = aggregationExpressions;
+
+        if (groupByPart) {
+          const groupByColumns = groupByPart.split(',').map((col) => col.trim());
+          expression.groupBy = {
             type: BuilderQueryEditorExpressionType.Group_by,
-          })),
-        };
+            expressions: groupByColumns.map((col) => ({
+              property: { name: col, type: BuilderQueryEditorPropertyType.String },
+              type: BuilderQueryEditorExpressionType.Group_by,
+            })),
+          };
+        }
       }
     }
 

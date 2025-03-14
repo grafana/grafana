@@ -29,6 +29,9 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
   const [isPercentile, setIsPercentile] = useState(aggregate.reduce?.name.includes('percentile'));
   const [isCountAggregate, setIsCountAggregate] = useState(aggregate.reduce?.name.includes('count'));
 
+  const [percentileValue, setPercentileValue] = useState(aggregate.parameters?.[0]?.value || '');
+  const [columnValue, setColumnValue] = useState(aggregate.property?.name || '');
+
   useEffect(() => {
     setIsPercentile(aggregate.reduce?.name.includes('percentile'));
     setIsCountAggregate(aggregate.reduce?.name.includes('count'));
@@ -43,10 +46,7 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
 
   const selectableOptions = columns.concat(safeTemplateVariables);
 
-  const handlePercentileChange = (e: SelectableValue<string>) => {
-    const percentileValue = e.value || '';
-    const column = aggregate.property?.name || '';
-
+  const updateAggregate = (percentile?: string, column?: string) => {
     onChange({
       ...aggregate,
       reduce: {
@@ -54,19 +54,19 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
         type: BuilderQueryEditorPropertyType.Function,
       },
       property: {
-        name: aggregate.property?.name || '',
+        name: column || columnValue || '',
         type: aggregate.property?.type || BuilderQueryEditorPropertyType.String,
       },
       parameters: [
         {
           type: BuilderQueryEditorExpressionType.Function_parameter,
           fieldType: BuilderQueryEditorPropertyType.Number,
-          value: percentileValue,
+          value: percentile || percentileValue || '',
         },
         {
           type: BuilderQueryEditorExpressionType.Function_parameter,
           fieldType: BuilderQueryEditorPropertyType.String,
-          value: column,
+          value: column || columnValue || '',
         },
       ],
     });
@@ -103,41 +103,51 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
           });
         }}
       />
+
       {isPercentile ? (
         <>
           <Select
             aria-label="percentile value"
             options={range(0, 101, 5).map((n) => ({ label: n.toString(), value: n.toString() }))}
-            value={aggregate.parameters?.length ? aggregate.parameters[0].value : undefined}
+            value={percentileValue ? { label: percentileValue, value: percentileValue } : ''}
             width="auto"
-            onChange={handlePercentileChange}
+            onChange={(e) => {
+              setPercentileValue(e.value || '');
+              updateAggregate(e.value);
+            }}
           />
           <Label style={{ margin: '9px 9px 0 9px' }}>OF</Label>
         </>
       ) : (
         <></>
       )}
+
       {!isCountAggregate ? (
         <Select
           aria-label="column"
           width="auto"
-          value={aggregate.property?.name ? { label: aggregate.property?.name, value: aggregate.property?.name } : null}
+          value={columnValue ? { label: columnValue, value: columnValue } : null}
           options={selectableOptions}
           onChange={(e) => {
-            const newColumn = e.value;
-            onChange({
-              ...aggregate,
-              property: {
-                name: newColumn || '',
-                type: aggregate.property?.type || BuilderQueryEditorPropertyType.String,
-              },
-              reduce: aggregate.reduce || { name: '', type: BuilderQueryEditorPropertyType.String },
-            });
+            setColumnValue(e.value || '');
+            if (isPercentile) {
+              updateAggregate(undefined, e.value);
+            } else {
+              onChange({
+                ...aggregate,
+                property: {
+                  name: e.value || '',
+                  type: aggregate.property?.type || BuilderQueryEditorPropertyType.String,
+                },
+                reduce: aggregate.reduce || { name: '', type: BuilderQueryEditorPropertyType.String },
+              });
+            }
           }}
         />
       ) : (
         <></>
       )}
+
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
     </InputGroup>
   );

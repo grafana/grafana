@@ -43,15 +43,30 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
     }
 
     if (!hasLoadedAggregates.current && builderQuery?.reduce?.expressions?.length && aggregates.length === 0) {
-      const parsedAggregates = builderQuery.reduce.expressions
-        .filter((agg) => agg.reduce?.name)
-        .map((agg) => ({
-          property: agg.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
-          reduce: agg.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
-          focus: false,
-        }));
+      let parsedAggregates: BuilderQueryEditorReduceExpression[];
 
-      setAggregates(parsedAggregates);
+      const hasPercentile = builderQuery.reduce.expressions.find((r) => r.parameters);
+      if (hasPercentile) {
+        parsedAggregates = builderQuery.reduce.expressions
+          .filter((agg) => agg.reduce?.name)
+          .map((agg) => ({
+            property: agg.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
+            reduce: agg.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
+            parameters: agg.parameters ?? [],
+            focus: false,
+          }));
+        setAggregates(parsedAggregates);
+      } else {
+        parsedAggregates = builderQuery.reduce.expressions
+          .filter((agg) => agg.reduce?.name)
+          .map((agg) => ({
+            property: agg.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
+            reduce: agg.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
+            focus: false,
+          }));
+        setAggregates(parsedAggregates);
+      }
+
       hasLoadedAggregates.current = true;
     }
   }, [builderQuery, aggregates]);

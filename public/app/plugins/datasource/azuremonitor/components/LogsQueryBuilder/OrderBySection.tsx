@@ -157,6 +157,7 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
                       options={columnOptions}
                       onChange={(e) => e.value && handleOrderByChange(index, 'column', e.value)}
                     />
+                    <Label style={{ margin: '9px 9px 0 9px' }}>BY</Label>
                     <Select
                       aria-label="Order Direction"
                       width={12}
