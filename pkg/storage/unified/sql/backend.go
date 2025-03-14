@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
@@ -188,6 +189,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 				"resource", key.Resource,
 				"error", err)
 		},
+		Reg: prometheus.DefaultRegisterer,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to start history pruner: %w", err)
