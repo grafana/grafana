@@ -45,13 +45,10 @@ const config: ConfigFile = {
       filterEndpoints: ['getDisplayMapping'],
       tag: true,
     },
-    '../public/app/features/provisioning/api/endpoints.gen.ts': {
-      apiFile: '../public/app/features/provisioning/api/baseAPI.ts',
+    '../public/app/api/clients/provisioning/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/provisioning/baseAPI.ts',
       schemaFile: '../data/openapi/provisioning.grafana.app-v0alpha1.json',
-      apiImport: 'baseAPI',
       filterEndpoints,
-      argSuffix: 'Arg',
-      responseSuffix: 'Response',
       tag: true,
       hooks: true,
     },
