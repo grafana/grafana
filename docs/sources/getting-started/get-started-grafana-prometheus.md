@@ -24,29 +24,29 @@ Check out our Prometheus __Learning Journeys__.
 
 _Grafana and Prometheus_:
 
-1. Download Prometheus and node_exporter
-1. Install Prometheus node_exporter
+1. Download Prometheus and Node exporter
+1. Install Prometheus Node exporter
 1. Install and configure Prometheus
 1. Configure Prometheus for Grafana
 1. Check Prometheus metrics in Grafana Explore view
 1. Start building dashboards
 
-## Download Prometheus and node_exporter
+## Download Prometheus and Node exporter
 
 Download the following components:
 
 - [Prometheus](https://prometheus.io/download/#prometheus)
-- [node_exporter](https://prometheus.io/download/#node_exporter)
+- [Node exporter](https://prometheus.io/download/#node_exporter)
 
 Like Grafana, you can install Prometheus on many different operating systems. Refer to the [Prometheus download page](https://prometheus.io/download/) to see a list of stable versions of Prometheus components.
 
-## Install Prometheus node_exporter
+## Install Prometheus Node exporter
 
-Install node_exporter on all hosts you want to monitor. This guide shows you how to install it locally.
+Install Node exporter on all hosts you want to monitor. This guide shows you how to install it locally.
 
-Prometheus node_exporter is a widely used tool that exposes system metrics. For instructions on installing node_exporter, refer to the [Installing and running the node_exporter](https://prometheus.io/docs/guides/node-exporter/#installing-and-running-the-node-exporter) section in the Prometheus documentation.
+Prometheus Node exporter is a widely used tool that exposes system metrics. For instructions on installing Node exporter, refer to the [Installing and running the Node exporter](https://prometheus.io/docs/guides/node-exporter/#installing-and-running-the-node-exporter) section in the Prometheus documentation.
 
-When you run node_exporter locally, navigate to `http://localhost:9100/metrics` to check that it is exporting metrics.
+When you run Node exporter locally, navigate to `http://localhost:9100/metrics` to check that it is exporting metrics.
 
 {{% admonition type="note" %}}
 The instructions in the referenced topic are intended for Linux users. You may have to alter the instructions slightly depending on your operating system. For example, if you are on Windows, use the [windows_exporter](https://github.com/prometheus-community/windows_exporter) instead.
@@ -63,14 +63,14 @@ The instructions in the referenced topic are intended for Linux users. You may h
 
 1. Locate the `prometheus.yml` file in the directory.
 
-1. Modify Prometheus's configuration file to monitor the hosts where you installed node_exporter.
+1. Modify Prometheus's configuration file to monitor the hosts where you installed Node exporter.
 
 By default, Prometheus looks for the file `prometheus.yml` in the current working directory. This behavior can be changed via the `--config.file` command line flag. For example, some Prometheus installers use it to set the configuration file to `/etc/prometheus/prometheus.yml`.
 
 The following example shows you the code you should add. Notice that static configs targets are set to `['localhost:9100']` to target node-explorer when running it locally.
 
 ```
- # A scrape configuration containing exactly one endpoint to scrape from node_exporter running on a host:
+ # A scrape configuration containing exactly one endpoint to scrape from Node exporter running on a host:
  scrape_configs:
      # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
      - job_name: 'node'
@@ -90,7 +90,7 @@ The following example shows you the code you should add. Notice that static conf
 
 1. Confirm that Prometheus is running by navigating to `http://localhost:9090`.
 
-You can see that the node_exporter metrics have been delivered to Prometheus. Next, the metrics will be sent to Grafana.
+You can see that the Node exporter metrics have been delivered to Prometheus. Next, the metrics will be sent to Grafana.
 
 ## Configure Prometheus for Grafana
 
@@ -262,7 +262,7 @@ In your Grafana instance, go to the [Drilldown](https://www.grafana.com/docs/gra
 
 ## Start building dashboards
 
-Now that you have a curated list of queries, create [dashboards](../../dashboards/) to render system metrics monitored by Prometheus. When you install Prometheus and node_exporter or windows_exporter, you will find recommended dashboards for use.
+Now that you have a curated list of queries, create [dashboards](../../dashboards/) to render system metrics monitored by Prometheus. When you install Prometheus and Node exporter or windows_exporter, you will find recommended dashboards for use.
 
 The following image shows a dashboard with three panels showing some system metrics.
 
