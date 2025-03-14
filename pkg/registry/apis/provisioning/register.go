@@ -451,16 +451,20 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		list = append(list, targetError)
 	}
 
-	testResults, err := repository.TestRepository(ctx, repo)
-	if err != nil {
-		list = append(list, field.Invalid(field.NewPath("spec"),
-			"Repository test failed", "Unable to verify repository: "+err.Error()))
-	}
-
-	if !testResults.Success {
-		for _, err := range testResults.Errors {
+	// For *create* we do a synchronous test... this can be expensive!
+	// it is the same as a full healthcheck, so should not be run on every update
+	if len(list) == 0 && a.GetOperation() == admission.Create {
+		testResults, err := repository.TestRepository(ctx, repo)
+		if err != nil {
 			list = append(list, field.Invalid(field.NewPath("spec"),
-				"Repository test failed", err))
+				"Repository test failed", "Unable to verify repository: "+err.Error()))
+		}
+
+		if !testResults.Success {
+			for _, err := range testResults.Errors {
+				list = append(list, field.Invalid(field.NewPath("spec"),
+					"Repository test failed", err))
+			}
 		}
 	}
 
@@ -504,7 +508,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Informer with resync interval used for health check and reconciliation
-			sharedInformerFactory := informers.NewSharedInformerFactory(c, 10*time.Second)
+			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
 
