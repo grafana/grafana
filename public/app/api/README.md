@@ -9,14 +9,12 @@ First, check if the `group` and the `version` are already present in [openapi_te
 
 ```jsx
 {
-    Group:   "dashboard.grafana.app",
-	Version: "v0alpha1",
+  Group:   "dashboard.grafana.app",
+  Version: "v0alpha1",
 }
 ```
 
-### 2. Run the `TestIntegrationOpenAPIs` test
-
-Note that it will fail the first time you run it. On the second run, it will generate the corresponding OpenAPI spec, which you can find in [openapi_snapshots](/pkg/tests/apis/openapi_snapshots).
+Afterwards, you need to run the `TestIntegrationOpenAPIs` test. Note that it will fail the first time you run it. On the second run, it will generate the corresponding OpenAPI spec, which you can find in [openapi_snapshots](/pkg/tests/apis/openapi_snapshots).
 <br/>
 <br/>
 
@@ -24,7 +22,7 @@ Note that it will fail the first time you run it. On the second run, it will gen
 
 <br/>
 
-### 3. Create the API definition
+### 2. Create the API definition
 
 In the `../public/app/features/{your_group_name}/api/` folder you have to create the `baseAPI.ts` file for your group. This file should have the following content:
 
@@ -47,7 +45,7 @@ export const baseAPI = createApi({
 
 This is the API definition for the specific group you're working with, where `getAPIBaseURL` should have the proper `group` and `version` as parameters. The `reducePath` should also be modified to match `group + API`: `dashboard` will be `dashboardAPI`, `iam` will be `iamAPI` and so on.
 
-### 4. Add the output information
+### 3. Add the output information
 
 Open [generate-rtk-apis.ts](scripts/generate-rtk-apis.ts) and add the following information:
 
@@ -59,9 +57,9 @@ Open [generate-rtk-apis.ts](scripts/generate-rtk-apis.ts) and add the following 
 | apiImport       | Function name exported in the API definition (baseAPI.ts file).                                                                                                                                                                                                                           |
 | filterEndpoints | The `operationId` of the particular route you want to work with. You can check the available operationIds in the specific group's spec file. As seen in the `migrate-to-cloud` one, it is an array                                                                                        |
 |  tag            | Must be set to `true`, to automatically attach tags to endpoints. This is needed for proper cache invalidation. See more info in the [official documentation](https://redux-toolkit.js.org/rtk-query/usage/automated-refetching#:~:text=RTK%20Query%20uses,an%20active%20subscription.).  |
-|  hooks          | Must be set to `false` since we only want to export the hooks from the index file, not the generated one.                                                                                                                                                                                 |
 
 <br/>
+
 > More info in [Redux Toolkit](https://redux-toolkit.js.org/rtk-query/usage/code-generation#simple-usage)
 
 In our example, the information added will be:
@@ -71,13 +69,12 @@ In our example, the information added will be:
     apiFile: '../public/app/features/dashboard/api/baseAPI.ts',
     schemaFile: '../data/openapi/dashboard.grafana.app-v0alpha1.json',
     apiImport: 'baseAPI',
-    filterEndpoints: ['createDashboard'],
+    filterEndpoints: ['createDashboard', 'updateDashboard'],
     tag: true,
-    hooks: false,
 },
 ```
 
-### 5. Run the API Client script
+### 4. Run the API Client script
 
 Then, we are ready to run the script to create the API client:
 
@@ -87,7 +84,7 @@ yarn generate-apis
 
 This will create an `endpoints.gen.ts` file in the path specified in the previous step.
 
-### 6. Create the index file for your hooks
+### 5. Create the index file for your hooks
 
 In the same `api` folder where the `endpoints.gen.ts` file has been saved, you have to create an index file from which you can import the types and hooks needed. By doing this, we selectively export hooks/types from `endpoints.gen.ts`.
 
@@ -97,7 +94,7 @@ In our case, the dashboard index will be like:
 import { generatedAPI } from './endpoints.gen';
 
 export const dashboardAPI = generatedAPI;
-export const { useCreateDashboardMutation} = dashboardAPI;
+export const { useCreateDashboardMutation, useUpdateDashboardMutation} = dashboardAPI;
 // eslint-disable-next-line no-barrel-files/no-barrel-files
 export { type Dashboard } from './endpoints.gen';
 
@@ -109,7 +106,7 @@ There are some use cases where the hook will not work, and that is a clue to see
 export const dashboardsAPI = generatedApi.enhanceEndpoints({
   endpoints: {
     // Need to mutate the generated query to set the Content-Type header correctly
-    createDashboard: (endpointDefinition) => {
+    updateDashboard: (endpointDefinition) => {
       const originalQuery = endpointDefinition.query;
       if (originalQuery) {
         endpointDefinition.query = (requestOptions) => ({
@@ -124,7 +121,7 @@ export const dashboardsAPI = generatedApi.enhanceEndpoints({
 });
 ```
 
-### 7. Add reducers and middleware to the Redux store
+### 6. Add reducers and middleware to the Redux store
 
 Last but not least, you need to add the middleware and reducers to the store.
 
