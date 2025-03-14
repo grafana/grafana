@@ -2993,6 +2993,14 @@
       "error": "Login provider denied login request"
     }
   },
+  "org-profile": {
+    "confirm-preferences-update-text": "This will update the preferences for the whole organization. Are you sure you want to update the preferences?",
+    "confirm-preferences-update-title": "Confirm preferences update",
+    "confirm-preferences-update-yes-text": "Save",
+    "name": "Organization name",
+    "title": "Organization profile",
+    "update-name-button": "Update organization name"
+  },
   "panel": {
     "header-menu": {
       "copy": "Copy",
