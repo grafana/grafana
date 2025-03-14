@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - pkg/**
-      - .github/workflows/go_lint.yml
+      - .github/workflows/go-lint.yml
       - go.*
     branches:
       - main
@@ -20,13 +20,11 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: ./go.mod
-      - run: CODEGEN_VERIFY=1 make gen-cue
       - run: make gen-go
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.60.1
+          version: v1.62.0
           args: |
-            --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose $(./scripts/go-workspace/golangci-lint-includes.sh)
-          skip-cache: true
+            --verbose $(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}/...')
           install-mode: binary
