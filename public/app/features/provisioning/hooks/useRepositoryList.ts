@@ -6,6 +6,7 @@ import { ListRepositoryArg, Repository, useListRepositoryQuery } from '../api';
 export function useRepositoryList(
   options: ListRepositoryArg | typeof skipToken = {}
 ): [Repository[] | undefined, boolean] {
+  // TODO Fix watch blocking requests
   if (typeof options === 'object' && 'watch' in options && options.watch) {
     options.watch = false;
   }
