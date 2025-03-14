@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Params, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
@@ -52,15 +52,14 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, type]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     // This use effect corrects URL without refresh when navigating to the same dashboard
     //  using data link that has no slug in url
     if (route.routeName === DashboardRoutes.Normal) {
       // correct URL only when there are no new slug
       // if slug is defined and incorrect it will be corrected in stateManager
       if (uid === prevParams.current.uid && prevParams.current.slug && !slug) {
-        const currentUrl = locationService.getLocation().pathname;
-        const correctedUrl = `${currentUrl.split(uid!)[0]}${uid}/${prevParams.current.slug}`;
+        const correctedUrl = `/d/${uid}/${prevParams.current.slug}`;
         locationService.replace({
           ...locationService.getLocation(),
           pathname: correctedUrl,
