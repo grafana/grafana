@@ -9,7 +9,6 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -23,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -144,7 +144,18 @@ type Zanzana struct {
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
-	var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana")
+	//TODO: use otel
+	tracingCfg, err := tracing.ProvideTracingConfig(z.cfg)
+	if err != nil {
+		return err
+	}
+
+	tracingCfg.ServiceName = "zanzana"
+
+	tracer, err := tracing.ProvideService(tracingCfg)
+	if err != nil {
+		return err
+	}
 
 	store, err := zanzana.NewStore(z.cfg, z.logger)
 	if err != nil {
