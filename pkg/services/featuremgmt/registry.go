@@ -1669,7 +1669,7 @@ var (
 		{
 			Name:            "datasourceConnectionsTab",
 			Description:     "Shows defined connections for a data source in the plugins detail page",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePrivatePreview,
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresDevMode: false,
 			FrontendOnly:    true,
@@ -1810,6 +1810,15 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:              "noBackdropBlur",
+			Description:       "Disables backdrop blur",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
 		},
 	}
 )
