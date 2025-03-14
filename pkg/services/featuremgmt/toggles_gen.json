@@ -3250,12 +3250,15 @@
     {
       "metadata": {
         "name": "pluginsSriChecks",
-        "resourceVersion": "1727785264632",
-        "creationTimestamp": "2024-10-04T12:55:09Z"
+        "resourceVersion": "1741965163643",
+        "creationTimestamp": "2024-10-04T12:55:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-14 15:12:43.643319 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SRI checks for plugin assets",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
