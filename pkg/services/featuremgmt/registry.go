@@ -1222,7 +1222,7 @@ var (
 		},
 		{
 			Name:        "failWrongDSUID",
-			Description: "Throws an error if a datasource has an invalid UIDs",
+			Description: "Throws an error if a data source has an invalid UIDs",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
 			Expression:  "true", // enabled by default
