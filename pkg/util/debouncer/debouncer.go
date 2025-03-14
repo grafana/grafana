@@ -71,15 +71,29 @@ func newMetrics(reg prometheus.Registerer, name string) *metrics {
 	}
 }
 
+// DebouncerOpts hold all the options to create a debouncer group.
 type DebouncerOpts[T any] struct {
-	BufferSize     int
-	KeyFunc        KeyFunc[T]
-	MinWait        time.Duration
-	MaxWait        time.Duration
-	Reg            prometheus.Registerer
-	Name           string
-	ErrorHandler   ErrorFunc[T]
+	// Name should be a unique name for this debouncer group. It is
+	// also used a name label value for the metrics.
+	Name string
+	// BufferSize is the maximum number of pending events to buffer.
+	BufferSize int
+
+	// KeyFunc is the function that extracts/defines the key from an input.
+	KeyFunc KeyFunc[T]
+	// ErrorHandler is the function that is called when a process for a given
+	// key returns an error while running.
+	ErrorHandler ErrorFunc[T]
+	// ProcessHandler is the function that is called once a process for a given
+	// key should be run.
 	ProcessHandler ProcessFunc[T]
+	// MinWait is the cooldown period after receiving an event. If another event with the
+	// same key arrives during this period, the timer resets and we wait another MinWait duration.
+	MinWait time.Duration
+	// MaxWait is the maximum time any event will wait before processing. Even if new events
+	// for the same key keep arriving, we guarantee processing after MaxWait from the first event.
+	MaxWait time.Duration
+	Reg     prometheus.Registerer
 }
 
 type Group[T any] struct {
@@ -105,14 +119,6 @@ type Group[T any] struct {
 // A debouncer group helps optimize expensive operations by:
 // 1. Grouping identical events that occur in rapid succession
 // 2. Processing each unique key only once after waiting periods expire
-//
-// Parameters:
-//   - BufferSize: Maximum number of pending events to buffer
-//   - KeyFunc: Function that extracts/defines the key from an input
-//   - MinWait: Cooldown period after receiving an event. If another event with the
-//     same key arrives during this period, the timer resets and we wait another MinWait duration.
-//   - MaxWait: Maximum time any event will wait before processing. Even if new events
-//     for the same key keep arriving, we guarantee processing after MaxWait from the first event.
 //
 // Example usage:
 //
@@ -175,6 +181,9 @@ func NewGroup[T any](opts DebouncerOpts[T]) (*Group[T], error) {
 	}, nil
 }
 
+// Add will create a new debouncer for the given Key if it doesn't exist yet.
+// If a key has already a debouncer it will either reset the MinWait timer for
+// this key, or if they key is already running its process be no-op.
 func (g *Group[T]) Add(value T) error {
 	select {
 	case g.buffer <- value:
