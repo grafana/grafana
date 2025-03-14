@@ -955,6 +955,10 @@ const (
 	// Enables writing to data sources for Grafana-managed recording rules.
 	FlagGrafanaManagedRecordingRulesDatasources = "grafanaManagedRecordingRulesDatasources"
 
+	// FlagInfinityRunQueriesInParallel
+	// Enables running Infinity queries in parallel
+	FlagInfinityRunQueriesInParallel = "infinityRunQueriesInParallel"
+
 	// FlagInviteUserExperimental
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"

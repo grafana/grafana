@@ -1789,6 +1789,13 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:         "infinityRunQueriesInParallel",
+			Description:  "Enables running Infinity queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaOSSBigTent,
+		},
+		{
 			Name:              "inviteUserExperimental",
 			Description:       "Renders invite user button along the app",
 			Stage:             FeatureStageExperimental,
