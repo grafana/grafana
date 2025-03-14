@@ -1755,13 +1755,17 @@
     {
       "metadata": {
         "name": "failWrongDSUID",
-        "resourceVersion": "1718721033692",
-        "creationTimestamp": "2024-06-20T10:56:39Z"
+        "resourceVersion": "1741956230731",
+        "creationTimestamp": "2024-06-20T10:56:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-14 12:43:50.731848 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Throws an error if a datasource has an invalid UIDs",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {
