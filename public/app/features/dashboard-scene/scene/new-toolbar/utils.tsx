@@ -1,7 +1,5 @@
-import { css } from '@emotion/css';
 import { ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -54,15 +52,3 @@ export function getDynamicActions(
     return acc;
   }, []);
 }
-
-export const getCommonActionStyles = (theme: GrafanaTheme2) => ({
-  buttonWithExtraMargin: css({
-    margin: theme.spacing(0, 0.5),
-  }),
-  switchContainer: css({
-    display: 'flex',
-    padding: 0,
-    gap: theme.spacing(1),
-    whiteSpace: 'nowrap',
-  }),
-});
