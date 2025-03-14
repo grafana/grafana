@@ -125,9 +125,11 @@ These are some of the troubleshooting steps you can try if Prometheus isn’t ru
 
 ### 1. Checking if Prometheus is running
 
-#### Check if Prometheus is running
+If the Prometheus web UI is inaccessible (e.g., "Connection refused" error in the browser) or Prometheus queries fail (e.g., errors in Grafana like "Data source unavailable" or "No data points"), a good place to start is confirming that the Prometheus process and service are running.
 
-##### Linux
+You can do this by checking the system process or verifying the service status:
+
+**Linux**
 
 ```bash
 sudo systemctl status prometheus
@@ -135,7 +137,7 @@ sudo systemctl status prometheus
 
 - Shows whether the process is running and if the service is active.
 
-##### MacOS
+**MacOS**
 
 ```bash
 pgrep prometheus
@@ -143,7 +145,7 @@ pgrep prometheus
 
 - Returns the process ID (PID) if Prometheus is running.
 
-##### Windows (`PowerShell`)
+**Windows** (`PowerShell`)
 
 ```powershell
 Get-Process -Name prometheus -ErrorAction SilentlyContinue
@@ -151,21 +153,21 @@ Get-Process -Name prometheus -ErrorAction SilentlyContinue
 
 - Checks if the Prometheus process is running by name.
 
----
-
 ### 2. If Prometheus is not running
 
-#### Check for port conflicts
+Start by checking for common causes:
 
-If Prometheus isn’t running, another process may be using its default port (**9090**).
+**Check for port conflicts**. 
 
-##### Linux & MacOS
+Prometheus runs on port 9090 by default. If another process is using this port, Prometheus may fail to start. You can check for port conflicts with:
+
+**Linux & MacOS**
 
 ```bash
 lsof -i :9090
 ```
 
-##### Windows (`PowerShell`)
+**Windows** (`PowerShell`)
 
 ```powershell
 netstat -ano | findstr :9090
@@ -173,11 +175,9 @@ netstat -ano | findstr :9090
 
 - Shows if another process is using port **9090**.
 
-#### Verify the Prometheus binary placement
+**Verify the Prometheus binary placement**: ensure Prometheus binaries (`prometheus` and `promtool`) are correctly installed.
 
-Ensure Prometheus binaries (`prometheus` and `promtool`) are correctly installed.
-
-##### Linux & MacOS
+**Linux & MacOS**
 
 ```bash
 ls /usr/local/bin/prometheus /usr/local/bin/promtool
@@ -185,7 +185,7 @@ ls /usr/local/bin/prometheus /usr/local/bin/promtool
 
 - If missing, move them to `/usr/local/bin` or a directory in your system’s **PATH**.
 
-##### Check if Prometheus is in the path
+**Check if Prometheus is in the path**.
 
 ```bash
 which prometheus
@@ -194,26 +194,24 @@ which promtool
 
 - If there’s **no output**, the binaries are not in the system **PATH**.
 
-#### Ensure configuration & data files are in place
+**Ensure configuration & data files are in place**.
 
-##### Linux & MacOs
+**Linux & MacOs**
 
 ```bash
 ls /etc/prometheus /var/lib/prometheus
 ls /etc/prometheus/prometheus.yml
 ```
 
-- Ensures that Prometheus has its necessary configuration and data storage directories.
+- Makes sure that Prometheus has its necessary configuration and data storage directories.
 
-#### Ensure correct permissions
-
-If Prometheus is running as a dedicated user, ensure the correct ownership:
+**Check permissions**: If Prometheus is running as a dedicated user, ensure the correct ownership:
 
 ```bash
 sudo chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
 ```
 
-#### (Optional) Secure Prometheus by creating a dedicated user
+(Optional) **Secure Prometheus by creating a dedicated user**
 
 ```bash
 sudo useradd --no-create-home --shell /bin/false prometheus
@@ -221,27 +219,25 @@ sudo useradd --no-create-home --shell /bin/false prometheus
 
 - Recommended for security: runs Prometheus as a non-login user.
 
----
-
 ### 3. Checking if Prometheus is running as a service
 
-If Prometheus is running as a process, check if it's also set up correctly as a service.
+If Prometheus is running as a process, check whether it is properly set up and managed as a service to ensure it restarts automatically after reboots or failures.
 
-#### Check Prometheus service status
+**Check Prometheus service status**
 
-##### Linux
+**Linux**
 
 ```bash
 systemctl status prometheus.service
 ```
 
-##### Windows
+**Windows**
 
 ```powershell
 sc query prometheus
 ```
 
-##### MacOs
+**MacOs**
 
 ```bash
 pgrep prometheus
@@ -249,11 +245,11 @@ pgrep prometheus
 
 - If the service is **inactive (dead) or stopped**, proceed to the next steps.
 
----
-
 ### 4. If Prometheus is not running as a service
 
-#### Verify service configuration (Linux & MacOs)
+If Prometheus is not running as a managed service, ensure it is correctly configured and can restart automatically.
+
+**Verify service configuration** **(Linux & MacOs)**
 
 Check the service unit file to ensure correct paths:
 
@@ -272,7 +268,7 @@ ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml
   - The **configuration file** (`/etc/prometheus/prometheus.yml`) is in place.
   - The **storage path** (`/var/lib/prometheus/`) exists.
 
-#### Restart and enable Prometheus service (Linux & MacOs)
+**Restart and enable Prometheus service (Linux & MacOs)**
 
 ```bash
 sudo systemctl daemon-reload
@@ -281,7 +277,7 @@ sudo systemctl start prometheus
 sudo systemctl status prometheus
 ```
 
-#### Check Prometheus health status
+**Check Prometheus health status**
 
 After restarting, verify if Prometheus is responsive:
 
@@ -291,7 +287,7 @@ curl -s http://localhost:9090/-/ready
 
 - If successful, this confirms Prometheus is **ready to serve requests**.
 
-#### Restart Prometheus service (Windows)
+**Restart Prometheus service (Windows)**
 
 If running as a Windows service, restart it:
 
