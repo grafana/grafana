@@ -11,8 +11,8 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -111,7 +111,7 @@ func (f *finalizer) processExistingItems(
 		switch item.Group {
 		case folders.GROUP:
 			version = folders.VERSION
-		case dashboards.GROUP:
+		case dashboard.GROUP:
 			version = "v0alpha1" // the constant is internal
 		default:
 			version = "v0alpha1"

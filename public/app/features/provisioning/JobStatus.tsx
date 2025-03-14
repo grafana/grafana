@@ -1,10 +1,12 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
-import { Alert, ControlledCollapse, InteractiveTable, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
+import { Alert, ControlledCollapse, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
 
+import { JobSummary } from './JobSummary';
 import ProgressBar from './ProgressBar';
 import { useGetRepositoryQuery, useListJobQuery } from './api';
+import { getRepoHref } from './utils/git';
 
 export interface JobStatusProps {
   name: string;
@@ -80,8 +82,12 @@ export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange
             <ProgressBar progress={job.status.progress} />
           </Stack>
 
-          {job.status.summary && <SummaryTable summary={job.status.summary} />}
-
+          {job.status.summary && (
+            <Stack direction="column" gap={2}>
+              <Text variant="h3">Summary</Text>
+              <JobSummary summary={job.status.summary} />
+            </Stack>
+          )}
           {job.status.state === 'success' ? (
             <RepositoryLink name={job.metadata?.labels?.repository} />
           ) : (
@@ -91,56 +97,6 @@ export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange
           )}
         </Stack>
       )}
-    </Stack>
-  );
-}
-
-interface SummaryRow {
-  resource: string;
-  group: string;
-  created: number;
-  updated: number;
-  unchanged: number;
-  total: number;
-}
-
-interface SummaryTableProps {
-  summary: Array<{
-    resource?: string;
-    group?: string;
-    create?: number;
-    write?: number;
-    noop?: number;
-  }>;
-}
-
-function SummaryTable({ summary }: SummaryTableProps) {
-  const summaryData = useMemo(() => {
-    return summary.map((item) => ({
-      resource: item.resource || '',
-      group: item.group || '',
-      created: item.create || 0,
-      updated: item.write || 0,
-      unchanged: item.noop || 0,
-      total: (item.create || 0) + (item.write || 0) + (item.noop || 0),
-    }));
-  }, [summary]);
-
-  const columns = useMemo(
-    () => [
-      { id: 'resource', header: 'Resource Type' },
-      { id: 'created', header: 'Created' },
-      { id: 'updated', header: 'Updated' },
-      { id: 'unchanged', header: 'Unchanged' },
-      { id: 'total', header: 'Total' },
-    ],
-    []
-  );
-
-  return (
-    <Stack direction="column" gap={2}>
-      <Text variant="h6">Summary</Text>
-      <InteractiveTable columns={columns} data={summaryData} getRowId={(row: SummaryRow) => row.resource} />
     </Stack>
   );
 }
@@ -157,7 +113,7 @@ function RepositoryLink({ name }: RepositoryLinkProps) {
     return null;
   }
 
-  const repoHref = repo.spec?.github?.url;
+  const repoHref = getRepoHref(repo.spec?.github);
   const folderHref = repo.spec?.sync.target === 'folder' ? `/dashboards/f/${repo.metadata?.name}` : '/dashboards';
 
   if (!repoHref) {

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
@@ -110,7 +111,7 @@ func Clone(
 				Create: true,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("unable to create new branch %w", err)
+				return nil, fmt.Errorf("unable to create new branch: %w", err)
 			}
 		}
 	}
@@ -120,7 +121,7 @@ func Clone(
 
 	rcfg, err := repo.Config()
 	if err != nil {
-		return nil, fmt.Errorf("error readign repository config %w", err)
+		return nil, fmt.Errorf("error reading repository config %w", err)
 	}
 
 	origin := rcfg.Remotes["origin"]
@@ -128,7 +129,7 @@ func Clone(
 		return nil, fmt.Errorf("missing origin remote %w", err)
 	}
 	if url != origin.URLs[0] {
-		return nil, fmt.Errorf("unexpected remote (expected:%s, found: %s)", url, origin.URLs[0])
+		return nil, fmt.Errorf("unexpected remote (expected: %s, found: %s)", url, origin.URLs[0])
 	}
 
 	worktree, err := repo.Worktree()
@@ -236,9 +237,20 @@ func (g *GoGitRepo) Config() *provisioning.Repository {
 
 // ReadTree implements repository.Repository.
 func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
+	var treePath string
+	if g.config.Spec.GitHub.Path != "" {
+		treePath = g.config.Spec.GitHub.Path
+	}
+	if !strings.HasPrefix(treePath, "/") {
+		treePath = "/" + treePath
+	}
+	if !strings.HasSuffix(treePath, "/") {
+		treePath = treePath + "/"
+	}
+
 	entries := make([]repository.FileTreeEntry, 0, 100)
-	err := util.Walk(g.tree.Filesystem, "/", func(path string, info fs.FileInfo, err error) error {
-		if err != nil || strings.HasPrefix(path, "/.git") || path == "/" {
+	err := util.Walk(g.tree.Filesystem, treePath, func(path string, info fs.FileInfo, err error) error {
+		if err != nil || path == "/" {
 			return err
 		}
 		entry := repository.FileTreeEntry{
@@ -254,10 +266,12 @@ func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.File
 		entries = append(entries, entry)
 		return err
 	})
-	if err != nil {
-		return nil, err
+	if errors.Is(err, fs.ErrNotExist) {
+		// We intentionally ignore this case, as
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to walk tree for ref '%s': %w", ref, err)
 	}
-	return entries, err
+	return entries, nil
 }
 
 func (g *GoGitRepo) Test(ctx context.Context) (*provisioning.TestResults, error) {
@@ -278,6 +292,11 @@ func (g *GoGitRepo) Create(ctx context.Context, path string, ref string, data []
 
 // Write implements repository.Repository.
 func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []byte, message string) error {
+	fpath, err := g.path(fpath)
+	if err != nil {
+		return err
+	}
+
 	if err := verifyPathWithoutRef(fpath, ref); err != nil {
 		return err
 	}
@@ -332,15 +351,25 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 
 // Delete implements repository.Repository.
 func (g *GoGitRepo) Delete(ctx context.Context, path string, ref string, message string) error {
-	_, err := g.tree.Remove(path)
+	path, err := g.path(path)
+	if err != nil {
+		return err
+	}
+
+	_, err = g.tree.Remove(path)
 	return err // missing slash
 }
 
 // Read implements repository.Repository.
 func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*repository.FileInfo, error) {
-	stat, err := g.tree.Filesystem.Lstat(path)
+	readPath, err := g.path(path)
 	if err != nil {
 		return nil, err
+	}
+
+	stat, err := g.tree.Filesystem.Lstat(readPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to stat path '%s': %w", readPath, err)
 	}
 	info := &repository.FileInfo{
 		Path: path,
@@ -349,7 +378,7 @@ func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*reposit
 		},
 	}
 	if !stat.IsDir() {
-		f, err := g.tree.Filesystem.Open(path)
+		f, err := g.tree.Filesystem.Open(readPath)
 		if err != nil {
 			return nil, err
 		}
@@ -394,4 +423,18 @@ func (g *GoGitRepo) Webhook(ctx context.Context, req *http.Request) (*provisioni
 			Code:    http.StatusNotImplemented,
 		},
 	}
+}
+
+// path returns a safe path for the given file, based out of the Prefix property.
+//
+// If the fpath does a path traversal that would be unsafe, a safepath.ErrUnsafePathTraversal error is returned.
+// This error is already a Kubernetes apierror (being a HTTP 400 Bad Request), so it can be returned directly.
+func (g *GoGitRepo) path(fpath string) (string, error) {
+	prefix := g.config.Spec.GitHub.Path
+	prefix = strings.Trim(prefix, "/")
+	if prefix == "" {
+		return fpath, nil
+	}
+
+	return safepath.JoinIncludingTrailing(prefix, fpath)
 }

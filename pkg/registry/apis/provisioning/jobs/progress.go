@@ -77,6 +77,14 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.maybeNotify(ctx)
 }
 
+// ResetResults will reset the results of the job
+func (r *jobProgressRecorder) ResetResults() {
+	r.resultCount = 0
+	r.errorCount = 0
+	r.errors = nil
+	r.summaries = make(map[string]*provisioning.JobResourceSummary)
+}
+
 func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
 	r.message = msg
 	logging.FromContext(ctx).Info("job progress message", "message", msg)

@@ -417,7 +417,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
-			features:       []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagAccessActionSets},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"dashboard under the root", "dashboard under parent folder", "dashboard under subfolder"},
 		},
 		{
@@ -459,7 +459,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 		})
 		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), tc.permissions)}}
 
-		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagAccessActionSets)...), featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
+		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
 			m := features.GetEnabled(context.Background())
 			keys := make([]string, 0, len(m))
 			for k := range m {
@@ -616,20 +616,17 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 		permission              dashboardaccess.PermissionType
 		signedInUserPermissions []accesscontrol.Permission
 		expectedResult          []string
-		features                []any
 	}{
 		{
 			desc:                    "Should not list any dashboards if user has no permissions",
 			permission:              dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
-			features:                []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagAccessActionSets},
 			expectedResult:          nil,
 		},
 		{
 			desc:                    "Should not list any folders if user has no permissions",
 			permission:              dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
-			features:                []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagAccessActionSets},
 			expectedResult:          nil,
 		},
 		{
@@ -639,7 +636,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 			},
-			features:       []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagAccessActionSets},
 			expectedResult: []string{"parent", "subfolder"},
 		},
 		{
@@ -649,7 +645,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: "folders:view", Scope: "folders:uid:parent", Kind: "folders", Identifier: "parent"},
 			},
-			features:       []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagAccessActionSets},
 			expectedResult: []string{"parent", "subfolder"},
 		},
 		{
@@ -659,7 +654,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: "folders:admin", Scope: "folders:uid:subfolder", Kind: "folders", Identifier: "subfolder"},
 			},
-			features:       []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagAccessActionSets},
 			expectedResult: []string{"subfolder"},
 		},
 		{
@@ -670,7 +664,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 				{Action: "folders:edit", Scope: "folders:uid:subfolder", Kind: "folders", Identifier: "subfolder"},
 				{Action: "folders:view", Scope: "folders:uid:parent", Kind: "folders", Identifier: "parent"},
 			},
-			features:       []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagAccessActionSets},
 			expectedResult: []string{"subfolder"},
 		},
 	}
@@ -696,7 +689,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 			Scope:  "folders:uid:unrelated"})
 		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), tc.signedInUserPermissions)}}
 
-		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
+		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders), featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery)} {
 			m := features.GetEnabled(context.Background())
 			keys := make([]string, 0, len(m))
 			for k := range m {

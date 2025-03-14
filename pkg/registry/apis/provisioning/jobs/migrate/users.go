@@ -14,7 +14,7 @@ import (
 )
 
 func (j *migrationJob) loadUsers(ctx context.Context) error {
-	client, _, err := j.client.ForResource(schema.GroupVersionResource{
+	client, _, err := j.parser.Clients().ForResource(schema.GroupVersionResource{
 		Group:    iam.GROUP,
 		Version:  iam.VERSION,
 		Resource: iam.UserResourceInfo.GroupResource().Resource,

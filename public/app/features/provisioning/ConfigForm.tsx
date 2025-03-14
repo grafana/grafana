@@ -49,12 +49,13 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
   if (!repository) {
     return {
       type: 'github',
-      title: 'Github Repository',
+      title: 'Repository',
       token: '',
       url: '',
       branch: 'main',
       generateDashboardPreviews: true,
       workflows: ['branch', 'write'],
+      path: 'grafana/',
       sync: {
         enabled: true,
         target: 'instance',
@@ -183,6 +184,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
           </Field>
           <Field label={'Branch'}>
             <Input {...register('branch')} placeholder={'main'} />
+          </Field>
+          <Field label={'Path'} description={'Path to a subdirectory in the Git repository'}>
+            <Input {...register('path')} placeholder={'grafana/'} />
           </Field>
         </>
       )}

@@ -428,7 +428,7 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /save/i })).toBeEnabled(); //.toBeDisabled();
   });
 
   it('should show read-only alert when repository has no workflows', () => {

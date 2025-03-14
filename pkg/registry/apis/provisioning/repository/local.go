@@ -252,9 +252,15 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 		return nil, err
 	}
 
+	// Return an empty list when folder does not exist
+	_, err := os.Stat(r.path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return []FileTreeEntry{}, nil
+	}
+
 	rootlen := len(r.path)
 	entries := make([]FileTreeEntry, 0, 100)
-	err := filepath.Walk(r.path, func(path string, info fs.FileInfo, err error) error {
+	err = filepath.Walk(r.path, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
