@@ -3112,20 +3112,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "14"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"]
     ],
     "public/app/features/dashboard-scene/saving/provisioned/ProvisionedResourceDeleteModal.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/dashboard-scene/saving/provisioned/SaveProvisionedDashboardForm.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -5345,8 +5338,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"]
     ],
     "public/app/features/provisioning/DeleteRepositoryButton.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -5532,8 +5524,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"]
     ],
     "public/app/features/provisioning/Wizard/BootstrapStep.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -5549,8 +5540,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "14"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"]
     ],
     "public/app/features/provisioning/Wizard/ConnectStep.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
