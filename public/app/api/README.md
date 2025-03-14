@@ -138,7 +138,7 @@ In Grafana, the reducers are added to [`root.ts`](public/app/core/reducers/root.
   };
 ```
 
-And the middlewares are added to [`configureStore.ts`](public/app/store/configureStore.ts):
+And the middleware is added to [`configureStore.ts`](public/app/store/configureStore.ts):
 
 ```jsx
 import { dashboardAPI } from '<pathToYourAPI>';
