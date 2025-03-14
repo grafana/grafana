@@ -197,6 +197,8 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
     displayName = parts.join(' ');
   } else if (field.name) {
     displayName = field.name;
+  } else if (frame?.name) {
+    displayName = frame?.name;
   } else {
     displayName = TIME_SERIES_VALUE_FIELD_NAME;
   }
