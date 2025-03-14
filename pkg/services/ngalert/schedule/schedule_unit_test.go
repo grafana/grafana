@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
-	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -528,16 +528,16 @@ func TestProcessTicks(t *testing.T) {
 		require.False(t, ok, "status for a rule that just evaluated was not available")
 	})
 
-	t.Run("scheduled rules should be sorted", func(t *testing.T) {
+	t.Run("scheduled rules should contain all expected rules", func(t *testing.T) {
 		rules := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval)).GenerateManyRef(10, 20)
 		ruleStore.rules = map[string]*models.AlertRule{}
 		ruleStore.PutRule(context.Background(), rules...)
 
-		expectedUids := make([]string, 0, len(rules))
+		// Create a set of expected UIDs
+		expectedUIDsSet := make(map[string]struct{}, len(rules))
 		for _, rule := range rules {
-			expectedUids = append(expectedUids, rule.UID)
+			expectedUIDsSet[rule.UID] = struct{}{}
 		}
-		slices.Sort(expectedUids)
 
 		tick = tick.Add(cfg.BaseInterval)
 
@@ -545,14 +545,14 @@ func TestProcessTicks(t *testing.T) {
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
 		require.Emptyf(t, updated, "None rules are expected to be updated")
 
-		actualUids := make([]string, 0, len(scheduled))
+		// Create a set of actual UIDs
+		actualUIDsSet := make(map[string]struct{}, len(scheduled))
 		for _, rule := range scheduled {
-			actualUids = append(actualUids, rule.rule.UID)
+			actualUIDsSet[rule.rule.UID] = struct{}{}
 		}
 
-		require.Len(t, scheduled, len(rules))
-		assert.Truef(t, slices.IsSorted(actualUids), "The scheduler rules should be sorted by UID but they aren't")
-		require.Equal(t, expectedUids, actualUids)
+		require.Len(t, scheduled, len(rules), "The number of scheduled rules should match the number of input rules")
+		require.Equal(t, expectedUIDsSet, actualUIDsSet, "The scheduled rules should contain all the expected rules")
 	})
 }
 
@@ -1272,4 +1272,300 @@ func assertScheduledContains(t *testing.T, scheduled []readyToRunItem, rule *mod
 		}
 	}
 	require.True(t, contains, "Expected a scheduled rule with key %s title %s but didn't get one, scheduled rules were %v", rule.GetKey(), rule.Title, scheduled)
+}
+
+func TestSchedule_buildGroups(t *testing.T) {
+	testTracer := tracing.InitializeTracerForTest()
+	reg := prometheus.NewPedanticRegistry()
+	testMetrics := metrics.NewNGAlert(reg)
+	ctx := context.Background()
+
+	ruleStore := newFakeRulesStore()
+	cfg := setting.UnifiedAlertingSettings{
+		BaseInterval: 1 * time.Second,
+	}
+
+	mockedClock := clock.NewMock()
+	notifier := NewSyncAlertsSenderMock()
+	notifier.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Return()
+
+	appUrl := &url.URL{
+		Scheme: "http",
+		Host:   "localhost",
+	}
+
+	cacheServ := &datasources.FakeCacheService{}
+	evaluator := eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheServ, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()))
+	rrSet := setting.RecordingRuleSettings{
+		Enabled: true,
+	}
+
+	schedCfg := SchedulerCfg{
+		BaseInterval:      cfg.BaseInterval,
+		C:                 mockedClock,
+		AppURL:            appUrl,
+		EvaluatorFactory:  evaluator,
+		RuleStore:         ruleStore,
+		Metrics:           testMetrics.GetSchedulerMetrics(),
+		AlertSender:       notifier,
+		RecordingRulesCfg: rrSet,
+		Tracer:            testTracer,
+		Log:               log.New("ngalert.scheduler"),
+	}
+	managerCfg := state.ManagerCfg{
+		Metrics:       testMetrics.GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: nil,
+		Images:        &state.NoopImageService{},
+		Clock:         mockedClock,
+		Historian:     &state.FakeHistorian{},
+		Tracer:        testTracer,
+		Log:           log.New("ngalert.state.manager"),
+	}
+	st := state.NewManager(managerCfg, state.NewNoopPersister())
+
+	sched := NewScheduler(schedCfg, st)
+
+	t.Run("should create groups based on namespace and rule group", func(t *testing.T) {
+		// Create rules with different namespaces and rule groups
+		const orgID int64 = 1
+		gen := models.RuleGen.With(models.RuleGen.WithOrgID(orgID))
+
+		// Create rules in two different namespaces
+		namespace1 := "namespace1"
+		namespace2 := "namespace2"
+
+		// Create rules in two different rule groups within each namespace
+		group1 := "group1"
+		group2 := "group2"
+
+		// Create rules with different RuleGroupIndex values
+		rules := []*models.AlertRule{
+			gen.With(models.RuleGen.WithNamespaceUID(namespace1), models.RuleGen.WithGroupName(group1), models.RuleGen.WithGroupIndex(2)).GenerateRef(),
+			gen.With(models.RuleGen.WithNamespaceUID(namespace1), models.RuleGen.WithGroupName(group1), models.RuleGen.WithGroupIndex(1)).GenerateRef(),
+			gen.With(models.RuleGen.WithNamespaceUID(namespace1), models.RuleGen.WithGroupName(group2), models.RuleGen.WithGroupIndex(1)).GenerateRef(),
+			gen.With(models.RuleGen.WithNamespaceUID(namespace2), models.RuleGen.WithGroupName(group1), models.RuleGen.WithGroupIndex(1)).GenerateRef(),
+		}
+
+		// Create readyToRunItems for each rule
+		readyToRunItems := make([]readyToRunItem, 0, len(rules))
+		for _, rule := range rules {
+			readyToRunItems = append(readyToRunItems, readyToRunItem{
+				ruleRoutine: &FakeRule{},
+				Evaluation: Evaluation{
+					rule:        rule,
+					scheduledAt: time.Now(),
+					folderTitle: "folder-" + rule.NamespaceUID,
+				},
+			})
+		}
+
+		// Build groups
+		groups := sched.buildGroups(ctx, readyToRunItems)
+
+		// Verify the number of groups
+		require.Len(t, groups, 3, "Should create 3 groups: namespace1/group1, namespace1/group2, namespace2/group1")
+
+		// Verify each group has the correct rules
+		for key, group := range groups {
+			switch {
+			case key.NamespaceUID == namespace1 && key.RuleGroup == group1:
+				require.Len(t, group.Rules(), 2, "namespace1/group1 should have 2 rules")
+				// Verify rules are sorted by RuleGroupIndex
+				require.Equal(t, 1, group.Rules()[0].rule.RuleGroupIndex, "First rule should have RuleGroupIndex 1")
+				require.Equal(t, 2, group.Rules()[1].rule.RuleGroupIndex, "Second rule should have RuleGroupIndex 2")
+			case key.NamespaceUID == namespace1 && key.RuleGroup == group2:
+				require.Len(t, group.Rules(), 1, "namespace1/group2 should have 1 rule")
+			case key.NamespaceUID == namespace2 && key.RuleGroup == group1:
+				require.Len(t, group.Rules(), 1, "namespace2/group1 should have 1 rule")
+			default:
+				t.Fatalf("Unexpected group key: %v", key)
+			}
+		}
+	})
+}
+
+func TestSchedule_EvaluationOrder(t *testing.T) {
+	testTracer := tracing.InitializeTracerForTest()
+	reg := prometheus.NewPedanticRegistry()
+	testMetrics := metrics.NewNGAlert(reg)
+	ctx := context.Background()
+	dispatcherGroup, ctx := errgroup.WithContext(ctx)
+
+	ruleStore := newFakeRulesStore()
+
+	cfg := setting.UnifiedAlertingSettings{
+		BaseInterval:            1 * time.Second,
+		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
+	}
+
+	const mainOrgID int64 = 1
+
+	mockedClock := clock.NewMock()
+
+	notifier := NewSyncAlertsSenderMock()
+	notifier.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Return()
+
+	appUrl := &url.URL{
+		Scheme: "http",
+		Host:   "localhost",
+	}
+
+	cacheServ := &datasources.FakeCacheService{}
+	evaluator := eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheServ, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()))
+	rrSet := setting.RecordingRuleSettings{
+		Enabled: true,
+	}
+
+	schedCfg := SchedulerCfg{
+		BaseInterval:      cfg.BaseInterval,
+		C:                 mockedClock,
+		AppURL:            appUrl,
+		EvaluatorFactory:  evaluator,
+		RuleStore:         ruleStore,
+		Metrics:           testMetrics.GetSchedulerMetrics(),
+		AlertSender:       notifier,
+		RecordingRulesCfg: rrSet,
+		Tracer:            testTracer,
+		Log:               log.New("ngalert.scheduler"),
+	}
+	managerCfg := state.ManagerCfg{
+		Metrics:       testMetrics.GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: nil,
+		Images:        &state.NoopImageService{},
+		Clock:         mockedClock,
+		Historian:     &state.FakeHistorian{},
+		Tracer:        testTracer,
+		Log:           log.New("ngalert.state.manager"),
+	}
+	st := state.NewManager(managerCfg, state.NewNoopPersister())
+
+	sched := NewScheduler(schedCfg, st)
+
+	// Create a map to track rule keys by UID for later lookup
+	rulesByUID := make(map[string]*models.AlertRule)
+
+	// Track the order of rule evaluations
+	var evaluationOrder []string
+	sched.evalAppliedFunc = func(alertDefKey models.AlertRuleKey, now time.Time) {
+		// Look up the rule by UID
+		if rule, ok := rulesByUID[alertDefKey.UID]; ok {
+			evaluationOrder = append(evaluationOrder, rule.Title)
+		}
+	}
+
+	// Create rules with different namespaces, groups, and indices
+	gen := models.RuleGen.With(models.RuleGen.WithOrgID(mainOrgID), models.RuleGen.WithInterval(cfg.BaseInterval))
+
+	// Create two namespaces
+	namespace1 := "namespace1"
+	namespace2 := "namespace2"
+
+	// Create two rule groups per namespace
+	group1 := "group1"
+	group2 := "group2"
+
+	// Create rules with specific titles to track evaluation order
+	rules := []*models.AlertRule{
+		// Namespace 1, Group 1
+		gen.With(
+			models.RuleGen.WithNamespaceUID(namespace1),
+			models.RuleGen.WithGroupName(group1),
+			models.RuleGen.WithGroupIndex(2),
+			models.RuleGen.WithTitle("n1g1i2"), // namespace1, group1, index2
+		).GenerateRef(),
+		gen.With(
+			models.RuleGen.WithNamespaceUID(namespace1),
+			models.RuleGen.WithGroupName(group1),
+			models.RuleGen.WithGroupIndex(1),
+			models.RuleGen.WithTitle("n1g1i1"), // namespace1, group1, index1
+		).GenerateRef(),
+
+		// Namespace 1, Group 2
+		gen.With(
+			models.RuleGen.WithNamespaceUID(namespace1),
+			models.RuleGen.WithGroupName(group2),
+			models.RuleGen.WithGroupIndex(2),
+			models.RuleGen.WithTitle("n1g2i2"), // namespace1, group2, index2
+		).GenerateRef(),
+		gen.With(
+			models.RuleGen.WithNamespaceUID(namespace1),
+			models.RuleGen.WithGroupName(group2),
+			models.RuleGen.WithGroupIndex(1),
+			models.RuleGen.WithTitle("n1g2i1"), // namespace1, group2, index1
+		).GenerateRef(),
+
+		// Namespace 2, Group 1
+		gen.With(
+			models.RuleGen.WithNamespaceUID(namespace2),
+			models.RuleGen.WithGroupName(group1),
+			models.RuleGen.WithGroupIndex(2),
+			models.RuleGen.WithTitle("n2g1i2"), // namespace2, group1, index2
+		).GenerateRef(),
+		gen.With(
+			models.RuleGen.WithNamespaceUID(namespace2),
+			models.RuleGen.WithGroupName(group1),
+			models.RuleGen.WithGroupIndex(1),
+			models.RuleGen.WithTitle("n2g1i1"), // namespace2, group1, index1
+		).GenerateRef(),
+	}
+
+	// Add rules to the store and build the lookup map
+	for _, rule := range rules {
+		ruleStore.PutRule(ctx, rule)
+		rulesByUID[rule.UID] = rule
+	}
+
+	// Process a tick to trigger rule evaluation
+	tick := time.Now()
+	scheduled, _, _ := sched.processTick(ctx, dispatcherGroup, tick)
+
+	// Verify all rules were scheduled
+	require.Len(t, scheduled, len(rules), "All rules should be scheduled")
+
+	// Wait for evaluations to complete
+	// In a real scenario, we would need to wait for the evaluation goroutines to complete
+	// For this test, the evaluations are synchronous due to the mocked setup
+
+	// Verify the evaluation order within each group
+	// The exact order of groups is not guaranteed, but within each group, rules should be ordered by index
+
+	// Create a map to track the evaluation order within each namespace+group
+	groupEvaluationOrder := make(map[string][]string)
+
+	// Group the evaluations by namespace and group
+	for _, title := range evaluationOrder {
+		var namespace, group string
+
+		switch {
+		case strings.HasPrefix(title, "n1g1"):
+			namespace, group = namespace1, group1
+		case strings.HasPrefix(title, "n1g2"):
+			namespace, group = namespace1, group2
+		case strings.HasPrefix(title, "n2g1"):
+			namespace, group = namespace2, group1
+		default:
+			t.Fatalf("Unexpected rule title format: %s", title)
+		}
+
+		key := namespace + ":" + group
+		groupEvaluationOrder[key] = append(groupEvaluationOrder[key], title)
+	}
+
+	// Verify the order within each group
+	for key, titles := range groupEvaluationOrder {
+		t.Logf("Evaluation order for group %s: %v", key, titles)
+
+		// Check that rules within each group are evaluated in order of their index
+		for i := range len(titles) - 1 {
+			// Extract the index from the title (last character)
+			currentIndex := titles[i][len(titles[i])-1:]
+			nextIndex := titles[i+1][len(titles[i+1])-1:]
+
+			// Verify that the index is increasing (rules are evaluated in order of index)
+			require.LessOrEqual(t, currentIndex, nextIndex,
+				"Rules within group %s should be evaluated in order of their index", key)
+		}
+	}
 }

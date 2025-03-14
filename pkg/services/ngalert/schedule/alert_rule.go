@@ -342,7 +342,6 @@ func (a *alertRule) Run() error {
 				}
 			}()
 			if ctx.afterEval != nil {
-				logger.Debug("Calling afterEval")
 				ctx.afterEval()
 			}
 		case <-grafanaCtx.Done():
