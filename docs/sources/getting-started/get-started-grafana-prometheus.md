@@ -256,6 +256,15 @@ net stop prometheus
 net start prometheus
 ```
 
+### 5. Checking if Prometheus is caputuring metrics
+
+If you installed [Node exporter](#install-prometheus-node-exporter) to expose your system metrics, you can check if Prometheus is capturing metrics by sending a request to the `/metrics` endpoint.
+
+```bash
+curl http://localhost:9090/metrics
+```
+- It should return a number of metrics and metadata about the metrics being exposed.
+
 ## Check Prometheus metrics in Grafana Metics Drilldown
 
 In your Grafana instance, go to the [Drilldown](https://www.grafana.com/docs/grafana/latest/explore/simplified-exploration/metrics/) view and experience query-less browsing of Prometheus-compatible metrics.
