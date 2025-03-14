@@ -14,8 +14,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
-import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
+import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
 
 import { getDataLinks } from '../status-history/utils';
 

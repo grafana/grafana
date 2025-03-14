@@ -32,6 +32,27 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       label: 'combobox-menu-ul-container',
       listStyle: 'none',
     }),
+
+    // New class for on the virtual list item. Should be on the wrapper around the group header and option.
+    listItem: css({
+      label: 'list-item',
+      width: '100%',
+      position: 'absolute',
+    }),
+
+    // New class used in single combobox group headers
+    newOptionGroup: css({
+      label: 'combobox-new-option-group',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      letterSpacing: 0,
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightLight,
+      padding: MENU_ITEM_PADDING,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+    }),
+
     optionBasic: css({
       label: 'combobox-option',
       position: 'absolute',
@@ -55,6 +76,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
+
+    /** @deprecated - only used in multicombobox, will refactor it */
     optionGroup: css({
       cursor: 'default',
       padding: MENU_ITEM_PADDING,
@@ -74,8 +97,10 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       fontSize: MENU_ITEM_FONT_SIZE,
       fontWeight: MENU_ITEM_FONT_WEIGHT,
+      lineHeight: MENU_ITEM_LINE_HEIGHT,
       letterSpacing: 0, // pr todo: text in grafana has a slightly different letter spacing, which causes measureText() to be ~5% off
     }),
+    /** @deprecated - only used in multicombobox, will refactor it */
     optionLabelGroup: css({
       label: 'combobox-option-label-group',
       color: theme.colors.text.secondary,
@@ -93,7 +118,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     optionFocused: css({
       label: 'combobox-option-focused',
-      top: 0,
+      // top: 0,
       background: theme.colors.action.focus,
       '@media (forced-colors: active), (prefers-contrast: more)': {
         border: `1px solid ${theme.colors.primary.border}`,

@@ -59,10 +59,11 @@ type bleveBackend struct {
 	cache   map[resource.NamespacedResource]*bleveIndex
 	cacheMu sync.RWMutex
 
-	features featuremgmt.FeatureToggles
+	features     featuremgmt.FeatureToggles
+	indexMetrics *resource.BleveIndexMetrics
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -74,14 +75,19 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
 	}
 
-	return &bleveBackend{
-		log:      slog.Default().With("logger", "bleve-backend"),
-		tracer:   tracer,
-		cache:    make(map[resource.NamespacedResource]*bleveIndex),
-		opts:     opts,
-		start:    time.Now(),
-		features: features,
-	}, nil
+	bleveBackend := &bleveBackend{
+		log:          slog.Default().With("logger", "bleve-backend"),
+		tracer:       tracer,
+		cache:        make(map[resource.NamespacedResource]*bleveIndex),
+		opts:         opts,
+		start:        time.Now(),
+		features:     features,
+		indexMetrics: indexMetrics,
+	}
+
+	go bleveBackend.updateIndexSizeMetric(opts.Root)
+
+	return bleveBackend, nil
 }
 
 // This will return nil if the key does not exist
@@ -94,6 +100,39 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 		return idx, nil
 	}
 	return nil, nil
+}
+
+// updateIndexSizeMetric sets the total size of all file-based indices metric.
+func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
+	if b.indexMetrics == nil {
+		return
+	}
+
+	for {
+		var totalSize int64
+
+		err := filepath.WalkDir(indexPath, func(path string, info os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				fileInfo, err := info.Info()
+				if err != nil {
+					return err
+				}
+				totalSize += fileInfo.Size()
+			}
+			return nil
+		})
+
+		if err == nil {
+			b.indexMetrics.IndexSize.Set(float64(totalSize))
+		} else {
+			b.log.Error("got error while trying to calculate bleve file index size", "error", err)
+		}
+
+		time.Sleep(60 * time.Second)
+	}
 }
 
 // Build an index from scratch
@@ -166,10 +205,14 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		if index != nil && err == nil {
 			go b.cleanOldIndexes(resourceDir, fname)
 		}
-		resource.IndexMetrics.IndexTenants.WithLabelValues("file").Inc()
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexTenants.WithLabelValues("file").Inc()
+		}
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
-		resource.IndexMetrics.IndexTenants.WithLabelValues("memory").Inc()
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexTenants.WithLabelValues("memory").Inc()
+		}
 	}
 	if err != nil {
 		return nil, err
@@ -263,6 +306,8 @@ type bleveIndex struct {
 
 // Write implements resource.DocumentIndex.
 func (b *bleveIndex) Write(v *resource.IndexableDocument) error {
+	v = v.UpdateCopyFields()
+
 	// remove references (for now!)
 	v.References = nil
 	if b.batch != nil {
@@ -297,21 +342,33 @@ func (b *bleveIndex) Flush() (err error) {
 	return err
 }
 
-func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
 	if req.NextPageToken != "" {
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
-	if req.Name == "" {
-		return &resource.ListRepositoryObjectsResponse{
-			Error: resource.NewBadRequestError("empty repository name"),
+	if req.Kind == "" {
+		return &resource.ListManagedObjectsResponse{
+			Error: resource.NewBadRequestError("empty manager kind"),
+		}, nil
+	}
+	if req.Id == "" {
+		return &resource.ListManagedObjectsResponse{
+			Error: resource.NewBadRequestError("empty manager id"),
 		}, nil
 	}
 
+	q := bleve.NewBooleanQuery()
+	q.AddMust(&query.TermQuery{
+		Term:     req.Kind,
+		FieldVal: resource.SEARCH_FIELD_MANAGER_KIND,
+	})
+	q.AddMust(&query.TermQuery{
+		Term:     req.Id,
+		FieldVal: resource.SEARCH_FIELD_MANAGER_ID,
+	})
+
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: &query.TermQuery{
-			Term:     req.Name,
-			FieldVal: resource.SEARCH_FIELD_MANAGER_ID,
-		},
+		Query: q,
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
 			resource.SEARCH_FIELD_FOLDER,
@@ -366,9 +423,9 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 		return 0
 	}
 
-	rsp := &resource.ListRepositoryObjectsResponse{}
+	rsp := &resource.ListManagedObjectsResponse{}
 	for _, hit := range found.Hits {
-		item := &resource.ListRepositoryObjectsResponse_Item{
+		item := &resource.ListManagedObjectsResponse_Item{
 			Object: &resource.ResourceKey{},
 			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_CHECKSUM]),
 			Path:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_PATH]),
@@ -385,27 +442,32 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 	return rsp, nil
 }
 
-func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.CountRepositoryObjectsResponse_ResourceCount, error) {
+func (b *bleveIndex) CountManagedObjects(ctx context.Context) ([]*resource.CountManagedObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: bleve.NewMatchAllQuery(),
 		Size:  0,
 		Facets: bleve.FacetsRequest{
-			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_MANAGER_ID, 1000), // typically less then 5
+			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_MANAGED_BY, 1000), // typically less then 5
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
-	vals := make([]*resource.CountRepositoryObjectsResponse_ResourceCount, 0)
+	vals := make([]*resource.CountManagedObjectsResponse_ResourceCount, 0)
 	f, ok := found.Facets["count"]
 	if ok && f.Terms != nil {
 		for _, v := range f.Terms.Terms() {
-			vals = append(vals, &resource.CountRepositoryObjectsResponse_ResourceCount{
-				Repository: v.Term,
-				Group:      b.key.Group,
-				Resource:   b.key.Resource,
-				Count:      int64(v.Count),
-			})
+			val := v.Term
+			idx := strings.Index(val, ":")
+			if idx > 0 {
+				vals = append(vals, &resource.CountManagedObjectsResponse_ResourceCount{
+					Kind:     val[0:idx],
+					Id:       val[idx+1:],
+					Group:    b.key.Group,
+					Resource: b.key.Resource,
+					Count:    int64(v.Count),
+				})
+			}
 		}
 	}
 	return vals, nil
@@ -784,7 +846,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		boolQuery.AddMustNot(mustNotQueries...)
 
 		// must still have a value
-		notEmptyQuery := bleve.NewWildcardQuery("*")
+		notEmptyQuery := bleve.NewMatchAllQuery()
 		boolQuery.AddMust(notEmptyQuery)
 
 		return boolQuery, nil
