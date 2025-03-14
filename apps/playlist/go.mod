@@ -1,4 +1,3 @@
-
 module github.com/grafana/grafana/apps/playlist
 
 go 1.23.7

@@ -1,4 +1,3 @@
-
 module github.com/grafana/grafana/pkg/aggregator
 
 go 1.23.7
