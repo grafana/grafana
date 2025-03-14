@@ -11,7 +11,7 @@ import {
 import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/joinByField';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
-import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
+import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 

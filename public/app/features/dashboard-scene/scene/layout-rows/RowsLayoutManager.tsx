@@ -1,7 +1,7 @@
 import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
-import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
+import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -128,6 +128,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   public removeRow(row: RowItem) {
     const rows = this.state.rows.filter((r) => r !== row);
     this.setState({ rows: rows.length === 0 ? [new RowItem()] : rows });
+    this.publishEvent(new ObjectRemovedFromCanvasEvent(row), true);
   }
 
   public moveRowUp(row: RowItem) {

@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 
-import { Input, TextArea } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Button, Icon, Input, Stack, TextArea } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -60,6 +60,23 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
     return [dashboardOptions];
   }
+
+  public renderActions(): ReactNode {
+    return (
+      <Button
+        variant="secondary"
+        onClick={() => this.dashboard.onOpenSettings()}
+        tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+      >
+        <Stack direction="row" gap={1} justifyContent="space-between" alignItems={'center'}>
+          <span>
+            <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
+          </span>
+          <Icon name="sliders-v-alt" />
+        </Stack>
+      </Button>
+    );
+  }
 }
 
 export function DashboardTitleInput({ dashboard }: { dashboard: DashboardScene }) {
@@ -71,5 +88,5 @@ export function DashboardTitleInput({ dashboard }: { dashboard: DashboardScene }
 export function DashboardDescriptionInput({ dashboard }: { dashboard: DashboardScene }) {
   const { description } = dashboard.useState();
 
-  return <TextArea value={description} onChange={(e) => dashboard.setState({ title: e.currentTarget.value })} />;
+  return <TextArea value={description} onChange={(e) => dashboard.setState({ description: e.currentTarget.value })} />;
 }

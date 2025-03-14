@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 
 import { BusEventBase, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { IconButton, Select } from '@grafana/ui';
-import { Field, useStyles2 } from '@grafana/ui/';
+import { IconButton, Select, Field, useStyles2 } from '@grafana/ui';
 
 import { Trans } from '../../../core/internationalization';
 import { getSortByPreference, setSortByPreference } from '../services/store';
