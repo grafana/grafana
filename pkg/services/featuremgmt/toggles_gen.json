@@ -1293,15 +1293,15 @@
     {
       "metadata": {
         "name": "datasourceConnectionsTab",
-        "resourceVersion": "1737049826022",
+        "resourceVersion": "1741961069415",
         "creationTimestamp": "2025-01-21T17:39:48Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-16 17:50:26.022636488 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-14 14:04:29.415154706 +0000 UTC"
         }
       },
       "spec": {
         "description": "Shows defined connections for a data source in the plugins detail page",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
       }
