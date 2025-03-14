@@ -332,7 +332,10 @@ function renderGroupEditPage(dsUid: string, namespaceId: string, groupName: stri
     <>
       <AppNotificationList />
       <Routes>
-        <Route path="/alerting/:sourceId/namespaces/:namespaceId/groups/:groupName/edit" element={<GroupEditPage />} />
+        <Route
+          path="/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/edit"
+          element={<GroupEditPage />}
+        />
       </Routes>
     </>,
     {

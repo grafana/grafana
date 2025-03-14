@@ -74,7 +74,7 @@ describe('GroupDetailsPage', () => {
 
     beforeEach(() => {
       setRulerRuleGroupHandler({ response: HttpResponse.json(group) });
-      setFolderResponse({ uid: 'test-folder-uid', canSave: true });
+      setFolderResponse({ uid: 'test-folder-uid', canSave: true, title: 'test-folder-title' });
       setGrafanaRuleGroupExportResolver(({ request }) => {
         const url = new URL(request.url);
         return HttpResponse.text(
@@ -92,11 +92,11 @@ describe('GroupDetailsPage', () => {
 
       // Assert
       expect(header).toHaveTextContent('test-group-cpu');
-      expect(await screen.findByText(/test-folder-uid/)).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: /test-folder-title/ })).toBeInTheDocument();
       expect(await screen.findByText(/5m/)).toBeInTheDocument();
       expect(editLink).toHaveAttribute(
         'href',
-        '/alerting/grafana/namespaces/test-folder-uid/groups/test-group-cpu/edit'
+        '/alerting/grafana/namespaces/test-folder-uid/groups/test-group-cpu/edit?returnTo=%2Falerting%2Fgrafana%2Fnamespaces%2Ftest-folder-uid%2Fgroups%2Ftest-group-cpu%2Fview'
       );
 
       const tableRows = await ui.tableRow.findAll(await ui.rowsTable.find());
@@ -240,7 +240,7 @@ describe('GroupDetailsPage', () => {
       expect(await screen.findByText(/11m40s/)).toBeInTheDocument();
       expect(editLink).toHaveAttribute(
         'href',
-        `/alerting/${mimirDs.uid}/namespaces/test-mimir-namespace/groups/test-group-cpu/edit`
+        `/alerting/mimir/namespaces/test-mimir-namespace/groups/test-group-cpu/edit?returnTo=%2Falerting%2Fmimir%2Fnamespaces%2Ftest-mimir-namespace%2Fgroups%2Ftest-group-cpu%2Fview`
       );
       expect(ui.exportButton.query()).not.toBeInTheDocument();
     });
@@ -250,7 +250,10 @@ describe('GroupDetailsPage', () => {
 function renderGroupDetailsPage(dsUid: string, namespaceId: string, groupName: string) {
   return render(
     <Routes>
-      <Route path="/alerting/:sourceId/namespaces/:namespaceId/groups/:groupName/view" element={<GroupDetailsPage />} />
+      <Route
+        path="/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/view"
+        element={<GroupDetailsPage />}
+      />
     </Routes>,
     {
       historyOptions: { initialEntries: [`/alerting/${dsUid}/namespaces/${namespaceId}/groups/${groupName}/view`] },
