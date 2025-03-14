@@ -121,7 +121,6 @@ type Group[T comparable] struct {
 //
 //	group := debouncer.NewGroup(DebouncerOpts[string]{
 //		BufferSize:     1000,
-//		KeyFunc:        func(s string) string { return s },
 //		ProcessHandler: func(ctx context.Context, key string) error {
 //		  // This is where you perform the expensive operation
 //		  return doSuperExpensiveCommand(key)
