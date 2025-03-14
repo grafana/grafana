@@ -19,6 +19,7 @@ import {
   TableCellHeight,
 } from '@grafana/schema';
 
+import { mapFrameToDataGrid, myRowRenderer } from './TableNG';
 import { COLUMN, TABLE } from './constants';
 import { TableColumn } from './types';
 import {
@@ -40,9 +41,7 @@ import {
   getTextAlign,
   handleSort,
   isTextCell,
-  mapFrameToDataGrid,
   migrateTableDisplayModeToCellOptions,
-  myRowRenderer,
   shouldTextOverflow,
 } from './utils';
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import React, { JSX } from 'react';
-import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
+import React from 'react';
+import { SortColumn, SortDirection } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 
 import {
@@ -14,7 +14,6 @@ import {
   LinkModel,
   DisplayValueAlignmentFactors,
   DataFrame,
-  getDefaultTimeRange,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -28,20 +27,14 @@ import {
 import { TableCellInspectorMode } from '../..';
 import { getTextColorForAlphaBackground } from '../../../utils';
 
-import { HeaderCell } from './Cells/HeaderCell';
-import { RowExpander } from './Cells/RowExpander';
-import { TableCellNG } from './Cells/TableCellNG';
-import { COLUMN, TABLE } from './constants';
+import { TABLE } from './constants';
 import {
   CellColors,
   TableRow,
   TableFieldOptionsType,
   ColumnTypes,
-  TableColumn,
-  TableSummaryRow,
   FilterType,
   FrameToRowsConverter,
-  TableColumnResizeActionCallback,
   TableNGProps,
   Comparator,
   TableFooterCalc,
@@ -450,30 +443,6 @@ export const handleSort = (
 };
 
 /* ----------------------------- Data grid mapping ---------------------------- */
-export function myRowRenderer(
-  key: React.Key,
-  props: RenderRowProps<TableRow, TableSummaryRow>,
-  expandedRows: number[]
-): React.ReactNode {
-  // Let's render row level things here!
-  // i.e. we can look at row styles and such here
-  const { row } = props;
-  const rowIdx = Number(row.__index);
-  const isExpanded = expandedRows.includes(rowIdx);
-
-  // Don't render non expanded child rows
-  if (Number(row.__depth) === 1 && !isExpanded) {
-    return null;
-  }
-
-  // Add aria-expanded to parent rows that have nested data
-  if (row.data) {
-    return <Row key={key} {...props} aria-expanded={isExpanded} />;
-  }
-
-  return <Row key={key} {...props} />;
-}
-
 export const frameToRecords = (frame: DataFrame): TableRow[] => {
   const fnBody = `
     const rows = Array(frame.length);
@@ -501,7 +470,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
   return convert(frame);
 };
 
-interface MapFrameToGridOptions extends TableNGProps {
+export interface MapFrameToGridOptions extends TableNGProps {
   columnTypes: ColumnTypes;
   columnWidth: number | string;
   crossFilterOrder: React.MutableRefObject<string[]>;
@@ -522,198 +491,6 @@ interface MapFrameToGridOptions extends TableNGProps {
   styles: { cell: string };
   textWrap: boolean;
   theme: GrafanaTheme2;
-}
-
-export function mapFrameToDataGrid({
-  frame,
-  calcsRef,
-  options,
-  handlers,
-}: {
-  frame: DataFrame;
-  calcsRef: React.MutableRefObject<string[]>;
-  options: MapFrameToGridOptions;
-  handlers: { onCellExpand: (rowIdx: number) => void; onColumnResize: TableColumnResizeActionCallback };
-}): TableColumn[] {
-  const {
-    columnTypes,
-    columnWidth,
-    crossFilterOrder,
-    crossFilterRows,
-    defaultLineHeight,
-    defaultRowHeight,
-    expandedRows,
-    filter,
-    headerCellRefs,
-    isCountRowsSet,
-    osContext,
-    rows,
-    setContextMenuProps,
-    setFilter,
-    setIsInspecting,
-    setSortColumns,
-    sortColumnsRef,
-    styles,
-    textWrap,
-    fieldConfig,
-    theme,
-    timeRange,
-    getActions,
-  } = options;
-  const { onCellExpand, onColumnResize } = handlers;
-
-  const columns: TableColumn[] = [];
-  const hasNestedFrames = getIsNestedTable(frame);
-
-  const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || COLUMN.MIN_WIDTH;
-  const cellInspect = fieldConfig?.defaults?.custom?.inspect ?? false;
-  const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
-
-  // If nested frames, add expansion control column
-  if (hasNestedFrames) {
-    const expanderField: Field = {
-      name: '',
-      type: FieldType.other,
-      config: {},
-      values: [],
-    };
-    columns.push({
-      key: 'expanded',
-      name: '',
-      field: expanderField,
-      cellClass: styles.cell,
-      colSpan(args) {
-        return args.type === 'ROW' && Number(args.row.__depth) === 1 ? frame.fields.length : 1;
-      },
-      renderCell: ({ row }) => {
-        // TODO add TableRow type extension to include row depth and optional data
-        if (Number(row.__depth) === 0) {
-          const rowIdx = Number(row.__index);
-          return (
-            <RowExpander
-              height={defaultRowHeight}
-              onCellExpand={() => onCellExpand(rowIdx)}
-              isExpanded={expandedRows.includes(rowIdx)}
-            />
-          );
-        }
-        // If it's a child, render entire DataGrid at first column position
-        let expandedColumns: TableColumn[] = [];
-        let expandedRecords: TableRow[] = [];
-
-        // Type guard to check if data exists as it's optional
-        if (row.data) {
-          expandedColumns = mapFrameToDataGrid({
-            frame: row.data,
-            calcsRef,
-            options: { ...options },
-            handlers: { onCellExpand, onColumnResize },
-          });
-          expandedRecords = frameToRecords(row.data);
-        }
-
-        // TODO add renderHeaderCell HeaderCell's here and handle all features
-        return (
-          <DataGrid<TableRow, TableSummaryRow>
-            rows={expandedRecords}
-            columns={expandedColumns}
-            rowHeight={defaultRowHeight}
-            style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH }}
-            headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
-          />
-        );
-      },
-      width: COLUMN.EXPANDER_WIDTH,
-      minWidth: COLUMN.EXPANDER_WIDTH,
-    });
-  }
-
-  frame.fields.map((field, fieldIndex) => {
-    if (field.type === FieldType.nestedFrames) {
-      // Don't render nestedFrames type field
-      return;
-    }
-    const key = field.name;
-    const width = getColumnWidth(field, fieldConfig, key);
-    const justifyColumnContent = getTextAlign(field);
-    const footerStyles = getFooterStyles(justifyColumnContent);
-
-    // Add a column for each field
-    columns.push({
-      key,
-      name: field.name,
-      field,
-      cellClass: styles.cell,
-      renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-        const { row, rowIdx } = props;
-        const value = row[key];
-        // Cell level rendering here
-        return (
-          <TableCellNG
-            frame={frame}
-            key={key}
-            value={value}
-            field={field}
-            theme={theme}
-            timeRange={timeRange ?? getDefaultTimeRange()}
-            height={defaultRowHeight}
-            justifyContent={justifyColumnContent}
-            rowIdx={rowIdx}
-            shouldTextOverflow={() =>
-              shouldTextOverflow(
-                key,
-                row,
-                columnTypes,
-                headerCellRefs,
-                osContext,
-                defaultLineHeight,
-                defaultRowHeight,
-                TABLE.CELL_PADDING,
-                textWrap,
-                cellInspect
-              )
-            }
-            setIsInspecting={setIsInspecting}
-            setContextMenuProps={setContextMenuProps}
-            cellInspect={cellInspect}
-            getActions={getActions}
-          />
-        );
-      },
-      renderSummaryCell: () => {
-        if (isCountRowsSet && fieldIndex === 0) {
-          return (
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Count</span>
-              <span>{calcsRef.current[fieldIndex]}</span>
-            </div>
-          );
-        }
-        return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
-      },
-      renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
-        <HeaderCell
-          column={column}
-          rows={rows}
-          field={field}
-          onSort={() => handleSort(column.key, sortDirection ?? 'ASC', false, setSortColumns, sortColumnsRef)}
-          direction={sortDirection}
-          justifyContent={justifyColumnContent}
-          filter={filter}
-          setFilter={setFilter}
-          filterable={filterable}
-          onColumnResize={onColumnResize}
-          headerCellRefs={headerCellRefs}
-          crossFilterOrder={crossFilterOrder}
-          crossFilterRows={crossFilterRows}
-        />
-      ),
-      width: width ?? columnWidth,
-      minWidth: field.config?.custom?.minWidth ?? columnMinWidth,
-    });
-  });
-
-  return columns;
 }
 
 /* ----------------------------- Data grid comparator ---------------------------- */
