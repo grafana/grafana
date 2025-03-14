@@ -61,8 +61,8 @@ interface DashboardCacheEntry<T> {
 export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
-  slug?: string;
   type?: string;
+  slug?: string;
   urlFolderUid?: string;
   params?: {
     version: number;
