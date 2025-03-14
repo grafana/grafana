@@ -1820,6 +1820,15 @@ var (
 			HideFromDocs:      true,
 			FrontendOnly:      true,
 		},
+		{
+			Name:              "alertingMigrationUI",
+			Description:       "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
+			FrontendOnly:      true,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
 	}
 )
 
