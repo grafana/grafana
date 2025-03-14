@@ -20,7 +20,7 @@ func TestBasicEncodeDecode(t *testing.T) {
 		OrgRole: identity.RoleAdmin,
 	}
 
-	auth := &Authenticator{Tracer: tracing.NewNoopTracerService()}
+	auth := &LegacyAuthenticator{Tracer: tracing.NewNoopTracerService()}
 
 	md := encodeIdentityInMetadata(before)
 	after, err := auth.decodeMetadata(md)

@@ -75,7 +75,7 @@ require (
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20250310104713-16b885f1c79e // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250305132846-37f49eb947fa // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20250224151205-5ef97131cc82 // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20250314102521-a77865c746c0 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // @grafana/grafana-backend-group
@@ -167,13 +167,13 @@ require (
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	go.uber.org/zap v1.27.0 // @grafana/identity-access-team
 	gocloud.dev v0.40.0 // @grafana/grafana-app-platform-squad
-	golang.org/x/crypto v0.35.0 // @grafana/grafana-backend-group
+	golang.org/x/crypto v0.36.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // @grafana/alerting-backend
 	golang.org/x/mod v0.23.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/net v0.36.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.11.0 // @grafana/alerting-backend
-	golang.org/x/text v0.22.0 // @grafana/grafana-backend-group
+	golang.org/x/sync v0.12.0 // @grafana/alerting-backend
+	golang.org/x/text v0.23.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.9.0 // @grafana/grafana-backend-group
 	golang.org/x/tools v0.30.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.15.1 // @grafana/oss-big-tent
@@ -354,7 +354,7 @@ require (
 	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
-	github.com/gogo/status v1.1.1 // indirect
+	github.com/gogo/status v1.1.1
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
@@ -526,8 +526,8 @@ require (
 	go.uber.org/mock v0.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/term v0.29.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20250122153221-138b5a5a4fd4 // indirect

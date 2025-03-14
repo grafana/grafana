@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	resourcegrpc "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
@@ -85,7 +84,7 @@ func ProvideUnifiedStorageGrpcService(
 
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
-	authn := resourcegrpc.NewAuthenticatorWithFallback(cfg, reg, tracing, &grpc.Authenticator{Tracer: tracing})
+	authn := resourcegrpc.NewAuthenticatorWithFallback(cfg, reg, tracing, &resourcegrpc.LegacyAuthenticator{Tracer: tracing})
 
 	s := &service{
 		cfg:            cfg,
