@@ -137,7 +137,7 @@ pgrep prometheus
 ```
 - Returns the process ID (PID) if Prometheus is running.
 
-##### Windows (Powershell)
+##### Windows (`PowerShell`)
 ```powershell
 Get-Process -Name prometheus -ErrorAction SilentlyContinue
 ```
@@ -154,7 +154,7 @@ If Prometheus isn’t running, another process may be using its default port (**
 ```bash
 lsof -i :9090
 ```
-##### Windows (Powershell)
+##### Windows (`PowerShell`)
 ```powershell
 netstat -ano | findstr :9090
 ```
@@ -243,7 +243,7 @@ sudo systemctl status prometheus
 ```
 
 #### Check Prometheus health status
-Once restarted, verify if Prometheus is responsive:
+After restarting, verify if Prometheus is responsive:
 ```bash
 curl -s http://localhost:9090/-/ready
 ```
