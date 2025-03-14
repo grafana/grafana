@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -858,11 +859,12 @@ func createServiceWithProvenanceStore(store *fakes.RuleStore, provenanceStore pr
 
 func createService(store *fakes.RuleStore) *RulerSrv {
 	return &RulerSrv{
-		xactManager:     store,
-		store:           store,
-		QuotaService:    nil,
-		provenanceStore: fakes.NewFakeProvisioningStore(),
-		log:             log.New("test"),
+		xactManager:        store,
+		store:              store,
+		QuotaService:       &fakeQuotaService{},
+		provenanceStore:    fakes.NewFakeProvisioningStore(),
+		conditionValidator: &recordingConditionValidator{},
+		log:                log.New("test"),
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,
 		},
@@ -872,6 +874,32 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		featureManager: featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
 		userService:    usertest.NewUserServiceFake(),
 	}
+}
+
+type fakeQuotaService struct{}
+
+func (f *fakeQuotaService) CheckQuotaReached(ctx context.Context, target quota.TargetSrv, scopeParams *quota.ScopeParameters) (bool, error) {
+	return false, nil
+}
+
+func (f *fakeQuotaService) QuotaReached(c *contextmodel.ReqContext, target quota.TargetSrv) (bool, error) {
+	return false, nil
+}
+
+func (f *fakeQuotaService) GetQuotasByScope(ctx context.Context, scope quota.Scope, id int64) ([]quota.QuotaDTO, error) {
+	return []quota.QuotaDTO{}, nil
+}
+
+func (f *fakeQuotaService) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error {
+	return nil
+}
+
+func (f *fakeQuotaService) DeleteQuotaForUser(ctx context.Context, userID int64) error {
+	return nil
+}
+
+func (f *fakeQuotaService) RegisterQuotaReporter(e *quota.NewUsageReporter) error {
+	return nil
 }
 
 type fakeAMRefresher struct {
