@@ -45,7 +45,7 @@ export const HeatmapPanel = ({
 }: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { sync, eventsScope, canAddAnnotations, onSelectRange } = usePanelContext();
+  const { sync, eventsScope, onSelectRange } = usePanelContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2

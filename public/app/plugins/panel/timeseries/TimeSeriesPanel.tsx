@@ -31,16 +31,8 @@ export const TimeSeriesPanel = ({
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
-  const {
-    sync,
-    eventsScope,
-    canAddAnnotations,
-    onThresholdsChange,
-    canEditThresholds,
-    showThresholds,
-    dataLinkPostProcessor,
-    eventBus,
-  } = usePanelContext();
+  const { sync, eventsScope, onThresholdsChange, canEditThresholds, showThresholds, dataLinkPostProcessor, eventBus } =
+    usePanelContext();
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
