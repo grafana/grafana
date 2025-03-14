@@ -71,22 +71,15 @@ func TestDebouncer(t *testing.T) {
 		group.Start(ctx)
 
 		ticker := time.NewTicker(time.Millisecond * 40)
+		defer ticker.Stop()
+
 		start := time.Now()
-		counter := 0
-	testLoop:
-		for {
-			// Add a safeguard to exit eventually.
-			if counter > 25 {
-				ticker.Stop()
+
+		for counter := 0; counter < 25; counter++ {
+			<-ticker.C
+			_ = group.Add("key1")
+			if processed["key1"] == 1 {
 				break
-			}
-			select {
-			case <-ticker.C:
-				_ = group.Add("key1")
-				if processed["key1"] == 1 {
-					break testLoop
-				}
-				counter++
 			}
 		}
 
