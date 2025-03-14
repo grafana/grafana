@@ -24,7 +24,7 @@ Afterwards, you need to run the `TestIntegrationOpenAPIs` test. Note that it wil
 
 ### 2. Create the API definition
 
-In the `../public/app/features/{your_group_name}/api/` folder you have to create the `baseAPI.ts` file for your group. This file should have the following content:
+In the [`/public/app/api/clients`](/public/app/api/clients) folder, create a new folder and `baseAPI.ts` file for your group. This file should have the following content:
 
 ```jsx
 import { createApi } from '@reduxjs/toolkit/query/react';
@@ -34,7 +34,7 @@ import { getAPIBaseURL } from 'app/api/utils';
 
 export const BASE_URL = getAPIBaseURL('dashboard.grafana.app', 'v0alpha1');
 
-export const baseAPI = createApi({
+export const api = createApi({
   reducerPath: 'dashboardAPI',
   baseQuery: createBaseQuery({
     baseURL: BASE_URL,
@@ -43,9 +43,9 @@ export const baseAPI = createApi({
 });
 ```
 
-This is the API definition for the specific group you're working with, where `getAPIBaseURL` should have the proper `group` and `version` as parameters. The `reducePath` should also be modified to match `group + API`: `dashboard` will be `dashboardAPI`, `iam` will be `iamAPI` and so on.
+This is the API definition for the specific group you're working with, where `getAPIBaseURL` should have the proper `group` and `version` as parameters. The `reducerPath` needs to be unique. The convention is to use `<group>API`: `dashboard` will be `dashboardAPI`, `iam` will be `iamAPI` and so on.
 
-### 3. Add the output information
+### 3. Add your new client to the generation script
 
 Open [generate-rtk-apis.ts](scripts/generate-rtk-apis.ts) and add the following information:
 
@@ -54,7 +54,6 @@ Open [generate-rtk-apis.ts](scripts/generate-rtk-apis.ts) and add the following 
 | outputFile name | File that will be created after running the API Client Generation script. It is the key of the object.                                                                                                                                                                                    |
 | apiFile         | File with the group's API definition.                                                                                                                                                                                                                                                     |
 | schemaFile      | File with the schema that was automatically created in the second step. Although it is in openapi_snapshots, you should link the one saved in `data/openapi`.                                                                                                                             |
-| apiImport       | Function name exported in the API definition (baseAPI.ts file).                                                                                                                                                                                                                           |
 | filterEndpoints | The `operationId` of the particular route you want to work with. You can check the available operationIds in the specific group's spec file. As seen in the `migrate-to-cloud` one, it is an array                                                                                        |
 |  tag            | Must be set to `true`, to automatically attach tags to endpoints. This is needed for proper cache invalidation. See more info in the [official documentation](https://redux-toolkit.js.org/rtk-query/usage/automated-refetching#:~:text=RTK%20Query%20uses,an%20active%20subscription.).  |
 
@@ -65,16 +64,15 @@ Open [generate-rtk-apis.ts](scripts/generate-rtk-apis.ts) and add the following 
 In our example, the information added will be:
 
 ```jsx
-'../public/app/features/dashboard/api/endpoints.gen.ts': {
-    apiFile: '../public/app/features/dashboard/api/baseAPI.ts',
+'../public/app/api/clients/dashboard/endpoints.gen.ts': {
+    apiFile: '../public/app/api/clients/dashboard/baseAPI.ts',
     schemaFile: '../data/openapi/dashboard.grafana.app-v0alpha1.json',
-    apiImport: 'baseAPI',
     filterEndpoints: ['createDashboard', 'updateDashboard'],
     tag: true,
 },
 ```
 
-### 4. Run the API Client script
+### 4. Run the API client generation script
 
 Then, we are ready to run the script to create the API client:
 
@@ -100,7 +98,7 @@ export { type Dashboard } from './endpoints.gen';
 
 ```
 
-There are some use cases where the hook will not work, and that is a clue to see if it needs to be modified. The hooks can be tweaked by using `enhanceEndpoints`.
+There are some use cases where the hook will not work out of the box, and that is a clue to see if it needs to be modified. The hooks can be tweaked by using `enhanceEndpoints`.
 
 ```jsx
 export const dashboardsAPI = generatedApi.enhanceEndpoints({
