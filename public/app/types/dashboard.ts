@@ -4,6 +4,8 @@ import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { ProvisioningPreview } from 'app/features/provisioning/types';
 
+import { ProvisioningPreview } from '../features/provisioning/types';
+
 export interface HomeDashboardRedirectDTO {
   redirectUri: string;
 }

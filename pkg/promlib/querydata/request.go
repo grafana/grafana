@@ -46,12 +46,14 @@ type QueryData struct {
 	URL                string
 	TimeInterval       string
 	exemplarSampler    func() exemplar.Sampler
+	featureToggles     backend.FeatureToggles
 }
 
 func New(
 	httpClient *http.Client,
 	settings backend.DataSourceInstanceSettings,
 	plog log.Logger,
+	featureToggles backend.FeatureToggles,
 ) (*QueryData, error) {
 	jsonData, err := utils.GetJsonData(settings)
 	if err != nil {
@@ -86,6 +88,7 @@ func New(
 		ID:                 settings.ID,
 		URL:                settings.URL,
 		exemplarSampler:    exemplarSampler,
+		featureToggles:     featureToggles,
 	}, nil
 }
 
@@ -98,9 +101,8 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	var (
-		cfg                               = backend.GrafanaConfigFromContext(ctx)
-		hasPromQLScopeFeatureFlag         = cfg.FeatureToggles().IsEnabled("promQLScope")
-		hasPrometheusRunQueriesInParallel = cfg.FeatureToggles().IsEnabled("prometheusRunQueriesInParallel")
+		hasPromQLScopeFeatureFlag         = s.featureToggles.IsEnabled("promQLScope")
+		hasPrometheusRunQueriesInParallel = s.featureToggles.IsEnabled("prometheusRunQueriesInParallel")
 	)
 
 	if hasPrometheusRunQueriesInParallel {
