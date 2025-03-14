@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	ErrBufferFull = errors.New("debouncer buffer full")
+	ErrBufferFull               = errors.New("debouncer buffer full")
+	ErrMinWaitBiggerThanMaxWait = errors.New("")
 )
 
 type KeyFunc[T any] func(T) string
@@ -151,12 +152,17 @@ func NewGroup[T any](opts DebouncerOpts[T]) (*Group[T], error) {
 	if opts.BufferSize <= 0 {
 		opts.BufferSize = 100
 	}
+
 	if opts.MinWait <= 0 {
 		opts.MinWait = time.Minute
 	}
 	if opts.MaxWait <= 0 {
 		opts.MaxWait = 5 * time.Minute
 	}
+	if opts.MinWait > opts.MaxWait {
+		return nil, errors.New("minWait is bigger than maxWait")
+	}
+
 	if opts.KeyFunc == nil {
 		return nil, errors.New("keyFunc is required")
 	}

@@ -62,9 +62,8 @@ func TestDebouncer(t *testing.T) {
 				processed[value]++
 				return nil
 			},
-			MinWait: 100 * time.Millisecond,
-			// Test max wait by setting it lower than min wait.
-			MaxWait: 20 * time.Millisecond,
+			MinWait: 50 * time.Millisecond,
+			MaxWait: 500 * time.Millisecond,
 		})
 		require.NoError(t, err)
 
@@ -73,11 +72,28 @@ func TestDebouncer(t *testing.T) {
 
 		group.Start(ctx)
 
-		require.NoError(t, group.Add("key1"))
-		// Wait for max wait to trigger.
-		time.Sleep(30 * time.Millisecond)
+		ticker := time.NewTicker(time.Millisecond * 40)
+		start := time.Now()
+		counter := 0
+	testLoop:
+		for {
+			// Add a safeguard to exit eventually.
+			if counter > 25 {
+				ticker.Stop()
+				break
+			}
+			select {
+			case <-ticker.C:
+				_ = group.Add("key1")
+				if processed["key1"] == 1 {
+					break testLoop
+				}
+				counter++
+			}
+		}
 
-		require.Equal(t, 1, processed["key1"])
+		require.WithinDuration(t, start.Add(time.Millisecond*500), time.Now(), time.Millisecond*100)
+
 	})
 
 	t.Run("should handle buffer full", func(t *testing.T) {
