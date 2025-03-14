@@ -401,19 +401,10 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostDatasource(c *context
 	groupFilter := c.Query("group")
 
 	// 1. Fetch rules from datasource
-	ds, err := getDatasourceByUID(c, srv.proxySvc.DataProxy.DataSourceCache, apimodels.LoTexRulerBackend)
-	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to get datasource by UID")
-	}
-
 	promGroups := map[string][]prom.PrometheusRuleGroup{}
-	fmt.Println("FAZ: ", *c.Req.URL, ds.URL)
 	resp := srv.proxySvc.requester.withReq(c, http.MethodGet, withPath(*c.Req.URL, MimirPrefix), nil, yamlExtractor(&promGroups), nil)
-	fmt.Println("FAZ: ", promGroups)
+
 	// 2. Convert Prometheus Rules to GMA
-	// Is this re-encoding even needed?
-	// promGroups = map[string][]prom.PrometheusRuleGroup{}
-	nsMap := make(map[string]string) // File -> NamespaceUID
 	if err := json.Unmarshal(resp.Body(), &promGroups); err != nil {
 		return errorToResponse(err)
 	}
@@ -440,10 +431,14 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostDatasource(c *context
 		logger.Debug("Creating a new namespace", "title", ns)
 		namespace, errResp := srv.getOrCreateNamespace(c, ns, logger, targetFolderUID)
 		if errResp != nil {
-			logger.Error("Failed to create a new namespace", "error", err)
+			logger.Error("Failed to create a new namespace", "folder_uid", targetFolderUID)
 			return errResp
 		}
-		nsMap[ns] = namespace.UID
+
+		ds, err := getDatasourceByUID(c, srv.proxySvc.DataProxy.DataSourceCache, apimodels.LoTexRulerBackend)
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to get datasource by UID")
+		}
 
 		// We don't want to keep the original definition for rules converted in the UI
 		// as they are editable and the stored original rule definition can become stale
@@ -477,7 +472,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostDatasource(c *context
 	}
 
 	// 3. Update the GMA Rules in the DB
-	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+	err := srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
 		for _, grafanaGroup := range grafanaGroups {
 			rules := make([]*ngmodels.AlertRuleWithOptionals, 0, len(grafanaGroup.Rules))
 			for _, r := range grafanaGroup.Rules {
@@ -499,70 +494,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostDatasource(c *context
 		return nil
 	})
 
-	return successfulResponse()
-}
-
-/*
-func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, promGroup apimodels.PrometheusRuleGroup) response.Response {
-	logger := srv.logger.FromContext(c.Req.Context())
-
-	workingFolderUID := getWorkingFolderUID(c)
-	logger = logger.New("folder_title", namespaceTitle, "group", promGroup.Name, "working_folder_uid", workingFolderUID)
-
-	// If we're importing recording rules, we can only import them if the feature is enabled,
-	// and the feature flag that enables configuring target datasources per-rule is also enabled.
-	if promGroupHasRecordingRules(promGroup) {
-		if !srv.cfg.RecordingRules.Enabled {
-			logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
-			return errorToResponse(errRecordingRulesNotEnabled)
-		}
-
-		if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
-			logger.Error("Cannot import recording rules", "error", errRecordingRulesDatasourcesNotEnabled)
-			return errorToResponse(errRecordingRulesDatasourcesNotEnabled)
-		}
-	}
-
-	logger.Info("Converting Prometheus rule group", "rules", len(promGroup.Rules))
-
-	ns, errResp := srv.getOrCreateNamespace(c, namespaceTitle, logger, workingFolderUID)
-	if errResp != nil {
-		return errResp
-	}
-
-	datasourceUID := strings.TrimSpace(c.Req.Header.Get(datasourceUIDHeader))
-	if datasourceUID == "" {
-		return response.Err(errDatasourceUIDHeaderMissing)
-	}
-	ds, err := srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), datasourceUID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
-		logger.Error("Failed to get datasource", "datasource_uid", datasourceUID, "error", err)
-		return errorToResponse(err)
-	}
-
-	provenance := getProvenance(c)
-
-	// If the provenance is not ConvertedPrometheus, we don't keep the original rule definition.
-	// This is because the rules can be modified through the UI, which may break compatibility
-	// with the Prometheus format. We only preserve the original rule definition
-	// to ensure we can return them in this API in Prometheus format.
-	keepOriginalRuleDefinition := provenance == models.ProvenanceConvertedPrometheus
-
-	group, err := srv.convertToGrafanaRuleGroup(c, ds, ns.UID, promGroup, keepOriginalRuleDefinition, logger)
-	if err != nil {
-		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
-		return errorToResponse(err)
-	}
-
-	err = srv.alertRuleService.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, *group, provenance)
-	if err != nil {
-		logger.Error("Failed to replace rule group", "error", err)
-		return errorToResponse(err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to convert rule groups")
 	}
 
 	return successfulResponse()
 }
-*/
 
 func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext, title string, logger log.Logger, workingFolderUID string) (*folder.Folder, response.Response) {
 	logger.Debug("Getting or creating a new folder")
