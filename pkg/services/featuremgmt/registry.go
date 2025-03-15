@@ -509,15 +509,6 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:            "alertingNoDataErrorExecution",
-			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-		},
-		{
 			Name:         "angularDeprecationUI",
 			Description:  "Display Angular warnings in dashboards and panels",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1819,6 +1810,15 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
+		},
+		{
+			Name:              "alertingMigrationUI",
+			Description:       "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
+			FrontendOnly:      true,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 		},
 	}
 )
