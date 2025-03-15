@@ -129,7 +129,17 @@ var example_case_statement = `SELECT
   END AS category
 FROM metrics`
 
-var example_all_allowed_functions = `SELECT
+var example_all_allowed_functions = `WITH sample_data AS (
+  SELECT 
+    100 AS value,
+    'example' AS name,
+    NOW() AS created_at
+  UNION ALL SELECT 
+    50 AS value,
+    'test' AS name,
+    DATE_SUB(NOW(), INTERVAL 1 DAY) AS created_at
+)
+SELECT
   -- Conditional functions
   IF(value > 100, 'High', 'Low') AS conditional_if,
   COALESCE(value, 0) AS conditional_coalesce,
@@ -191,6 +201,6 @@ var example_all_allowed_functions = `SELECT
   -- Type conversion
   CAST(value AS CHAR) AS type_cast,
   CONVERT(value, CHAR) AS type_convert
-FROM metrics
+FROM sample_data
 GROUP BY name, value, created_at
 LIMIT 10`
