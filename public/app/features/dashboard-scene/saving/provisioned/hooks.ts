@@ -2,12 +2,11 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { Chance } from 'chance';
 
 import { dateTime } from '@grafana/data';
+import { useGetFolderQuery } from 'app/api/clients/folder';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { useGetResourceRepository } from 'app/features/provisioning/hooks/useGetResourceRepository';
 import { useRepositoryList } from 'app/features/provisioning/hooks/useRepositoryList';
 import { DashboardMeta } from 'app/types';
-
-import { useGetFolderQuery } from '../../../folders/api';
 
 import { getDefaultWorkflow } from './defaults';
 

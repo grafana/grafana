@@ -28,7 +28,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { useSelector } from 'app/types';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
-import { selectFolderRepository } from '../../provisioning/api/selectors';
+import { selectFolderRepository } from '../../provisioning/utils/selectors';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
