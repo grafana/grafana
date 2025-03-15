@@ -1642,6 +1642,8 @@ function reportTempoQueryMetrics(
     datasourceType: 'tempo',
     app: options.app ?? '',
     grafana_version: config.buildInfo.version,
+    timeRangeSeconds: options.range.to.unix() - options.range.from.unix(),
+    timeRange: options.range.raw.from + ';' + options.range.raw.to,
     ...metrics,
   });
 }
