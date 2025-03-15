@@ -170,6 +170,28 @@ import (
 //       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
+// Route for UI
+// swagger:route POST /convert/{DatasourceUID}/config/v1/rules convert_prometheus RouteConvertPrometheusPostDatasource
+//
+// Converts rule groups from specified Prometheus datasource to Grafana-Managed
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+//       404: NotFound
+
+// swagger:parameters RouteConvertPrometheusPostDatasource
+type RouteConvertPrometheusPostDatasourceParams struct {
+	// in:path
+	DatasourceUID string
+}
+
 // swagger:parameters RouteConvertPrometheusPostRuleGroup RouteConvertPrometheusCortexPostRuleGroup
 type RouteConvertPrometheusPostRuleGroupParams struct {
 	// in: path

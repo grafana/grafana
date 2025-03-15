@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,12 +10,17 @@ import (
 	"time"
 
 	prommodel "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -23,6 +29,7 @@ import (
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -943,6 +950,293 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 	})
 }
 
+func TestRouteConvertPrometheusPostDatasource(t *testing.T) {
+	srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+	srv.rulerSrv = createService(ruleStore)
+	srv.xactManager = ruleStore
+
+	orgID := int64(1)
+	permissions := createPermissionsToImportPrometheusRules(orgID)
+	req := createRequestContextWithPerms(orgID, permissions, nil)
+
+	// Create test prometheus rules
+	promAlertRule := prom.PrometheusRule{
+		Alert: "TestAlert",
+		Expr:  "up == 0",
+		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		Labels: map[string]string{
+			"severity": "critical",
+		},
+	}
+
+	promRecordingRule := prom.PrometheusRule{
+		Record: "TestRecordingRule",
+		Expr:   "up == 0",
+	}
+
+	promGroup1 := prom.PrometheusRuleGroup{
+		Name:     "TestGroup1",
+		Interval: prommodel.Duration(1 * time.Minute),
+		Rules:    []prom.PrometheusRule{promAlertRule},
+	}
+
+	promGroup2 := prom.PrometheusRuleGroup{
+		Name:     "TestGroup2",
+		Interval: prommodel.Duration(1 * time.Minute),
+		Rules:    []prom.PrometheusRule{promAlertRule},
+	}
+
+	promGroup3 := prom.PrometheusRuleGroup{
+		Name:     "TestGroup3",
+		Interval: prommodel.Duration(1 * time.Minute),
+		Rules:    []prom.PrometheusRule{promAlertRule, promRecordingRule},
+	}
+
+	promGroups := map[string][]prom.PrometheusRuleGroup{
+		"namespace1": {promGroup1, promGroup2},
+		"namespace2": {promGroup3},
+	}
+
+	proxyResp, err := json.Marshal(promGroups)
+	require.NoError(t, err)
+
+	requestMock := RequestMock{}
+	defer requestMock.AssertExpectations(t)
+
+	requestMock.On(
+		"withReq",
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+	).Return(response.JSON(200, proxyResp))
+
+	// Setup Proxy.
+	fakeDatasource := &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType}
+	proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: fakeDatasource}}}
+	srv.proxySvc = &LotexRuler{log.NewNopLogger(), proxy, &requestMock}
+
+	t.Run("should convert prometheus rules to Grafana rules", func(t *testing.T) {
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostDatasource(req, existingDSUID)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.SignedInUser.GetOrgID(),
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 4)
+
+		// Verify rule content
+		for _, rule := range rules {
+			require.Equal(t, int64(60), rule.IntervalSeconds) // 1 minute interval
+
+			// Check that the rule matches one of our original prometheus rules
+			switch rule.RuleGroup {
+			case "TestGroup1":
+				require.Equal(t, "[TestGroup1] TestAlert", rule.Title)
+				require.Equal(t, "critical", rule.Labels["severity"])
+				require.Equal(t, 5*time.Minute, rule.For)
+			case "TestGroup2":
+				require.Equal(t, "[TestGroup2] TestAlert", rule.Title)
+				require.Equal(t, "critical", rule.Labels["severity"])
+				require.Equal(t, 5*time.Minute, rule.For)
+			case "TestGroup3":
+				switch rule.Title {
+				case "[TestGroup3] TestAlert":
+					require.Equal(t, "critical", rule.Labels["severity"])
+					require.Equal(t, 5*time.Minute, rule.For)
+				case "[TestGroup3] TestRecordingRule":
+					require.Equal(t, "TestRecordingRule", rule.Record.Metric)
+				default:
+					t.Fatalf("unexpected rule title: %s", rule.Title)
+				}
+			default:
+				t.Fatalf("unexpected rule group: %s", rule.RuleGroup)
+			}
+		}
+	})
+
+	t.Run("should convert Prometheus rules to Grafana rules but pause recording rules", func(t *testing.T) {
+		clear(ruleStore.Rules)
+
+		req.Req.Form.Set("pauseAlerts", "false")
+		req.Req.Form.Set("pauseRecordingRules", "true")
+
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostDatasource(req, existingDSUID)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.SignedInUser.GetOrgID(),
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 4)
+
+		// Verify the recording rule is paused
+		for _, rule := range rules {
+			if rule.Record != nil {
+				require.True(t, rule.IsPaused)
+			}
+		}
+	})
+
+	t.Run("should convert Prometheus rules to Grafana rules but pause alert rules", func(t *testing.T) {
+		clear(ruleStore.Rules)
+
+		req.Req.Form.Set("pauseAlerts", "true")
+		req.Req.Form.Set("pauseRecordingRules", "false")
+
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostDatasource(req, existingDSUID)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.SignedInUser.GetOrgID(),
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 4)
+
+		// Verify the alert rule is paused
+		for _, rule := range rules {
+			if rule.Record == nil {
+				require.True(t, rule.IsPaused)
+			}
+		}
+	})
+
+	t.Run("should convert Prometheus rules to Grafana rules but pause both alert and recording rules", func(t *testing.T) {
+		clear(ruleStore.Rules)
+
+		req.Req.Form.Set("pauseRecordingRules", "true")
+		req.Req.Form.Set("pauseAlerts", "true")
+
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostDatasource(req, existingDSUID)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.SignedInUser.GetOrgID(),
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 4)
+
+		// Verify the alert rule is paused
+		for _, rule := range rules {
+			require.True(t, rule.IsPaused)
+		}
+	})
+
+	t.Run("convert Prometheus rules but filter by namespace", func(t *testing.T) {
+		clear(ruleStore.Rules)
+
+		req.Req.Form.Set("namespace", "namespace2")
+
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostDatasource(req, existingDSUID)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.SignedInUser.GetOrgID(),
+		})
+
+		require.NoError(t, err)
+		require.Len(t, rules, 2)
+
+		for _, rule := range rules {
+			require.Equal(t, "TestGroup3", rule.RuleGroup)
+		}
+	})
+
+	t.Run("convert Prometheus rules but filter by group", func(t *testing.T) {
+		clear(ruleStore.Rules)
+
+		req.Req.Form.Del("namespace")
+		req.Req.Form.Set("group", "TestGroup1")
+
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostDatasource(req, existingDSUID)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.SignedInUser.GetOrgID(),
+		})
+
+		require.NoError(t, err)
+		require.Len(t, rules, 1)
+
+		for _, rule := range rules {
+			require.Equal(t, "TestGroup1", rule.RuleGroup)
+		}
+	})
+
+	t.Run("convert Prometheus rules but filter by namespace and group", func(t *testing.T) {
+		clear(ruleStore.Rules)
+		req.Req.Form.Set("namespace", "namespace1")
+		req.Req.Form.Set("group", "TestGroup2")
+
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostDatasource(req, existingDSUID)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.SignedInUser.GetOrgID(),
+		})
+
+		require.NoError(t, err)
+		require.Len(t, rules, 1)
+
+		for _, rule := range rules {
+			require.Equal(t, "TestGroup2", rule.RuleGroup)
+		}
+	})
+
+	t.Run("convert Prometheus rules to Grafana rules into a specified target folder", func(t *testing.T) {
+		clear(ruleStore.Rules)
+
+		// Create a target folder to move the rules into
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		req.Req.Form.Del("namespace")
+		req.Req.Form.Del("group")
+		req.Req.Form.Del("pauseRecordingRules")
+		req.Req.Form.Del("pauseAlerts")
+		req.Req.Form.Set("targetFolderUID", fldr.UID)
+
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostDatasource(req, existingDSUID)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.SignedInUser.GetOrgID(),
+		})
+
+		require.NoError(t, err)
+		require.Len(t, rules, 4)
+
+		for _, rule := range rules {
+			parentFolders, err := folderService.GetParents(context.Background(), folder.GetParentsQuery{UID: rule.NamespaceUID, OrgID: orgID})
+			require.NoError(t, err)
+			require.Len(t, parentFolders, 1)
+			require.Equal(t, fldr.UID, parentFolders[0].UID)
+		}
+	})
+}
+
 type convertPrometheusSrvOptions struct {
 	provenanceStore              provisioning.ProvisioningStore
 	fakeAccessControlRuleService *acfakes.FakeRuleService
@@ -1028,7 +1322,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles)
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, nil, nil, nil)
 
 	return srv, dsCache, ruleStore, folderService
 }
@@ -1109,4 +1403,21 @@ func TestGetProvenance(t *testing.T) {
 		provenance := getProvenance(rc)
 		require.Equal(t, models.ProvenanceNone, provenance)
 	})
+}
+
+func createPermissionsToImportPrometheusRules(orgID int64) map[int64]map[string][]string {
+	permissions := map[int64]map[string][]string{}
+
+	permissions[orgID] = map[string][]string{
+		dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
+		dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
+		datasources.ActionQuery:        {datasources.ScopeAll},
+
+		ac.ActionAlertingRuleCreate: {dashboards.ScopeFoldersAll},
+		ac.ActionAlertingRuleUpdate: {dashboards.ScopeFoldersAll},
+		ac.ActionAlertingRuleDelete: {dashboards.ScopeFoldersAll},
+		ac.ActionAlertingRuleRead:   {dashboards.ScopeFoldersAll},
+	}
+
+	return permissions
 }
