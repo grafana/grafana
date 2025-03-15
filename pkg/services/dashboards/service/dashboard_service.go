@@ -700,7 +700,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	}
 
 	if dto.Dashboard.ID == 0 {
-		dr.setDefaultPermissions(ctx, dto, dash, true)
+		dr.setDefaultPermissions(ctx, dto.User, dto.OrgID, dash, true)
 	}
 
 	return dash, nil
@@ -721,7 +721,7 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 
 	// Only set default permissions if the Folder API Server is disabled.
 	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		dr.setDefaultFolderPermissions(ctx, dto, f, true)
+		dr.setDefaultPermissions(ctx, ident, dto.OrgID, &dashboards.Dashboard{IsFolder: true, UID: f.UID, FolderUID: f.ParentUID, Title: f.Title}, true)
 	}
 	return f, nil
 }
@@ -750,7 +750,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 
 	// new dashboard created
 	if dto.Dashboard.ID == 0 {
-		dr.setDefaultPermissions(ctx, dto, dash, false)
+		dr.setDefaultPermissions(ctx, dto.User, dto.OrgID, dash, false)
 	}
 
 	return dash, nil
@@ -925,7 +925,7 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashbo
 		return nil, err
 	}
 
-	dr.setDefaultPermissions(ctx, dto, dash, false)
+	dr.setDefaultPermissions(ctx, dto.User, dto.OrgID, dash, false)
 
 	return dash, nil
 }
@@ -991,7 +991,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 	return dr.dashboardStore.GetDashboardsByPluginID(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {
+func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, user identity.Requester, orgID int64, dash *dashboards.Dashboard, provisioned bool) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultPermissions")
 	defer span.End()
 
@@ -1000,66 +1000,31 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		resource = "folder"
 	}
 
-	if !dr.cfg.RBAC.PermissionsOnCreation(resource) {
+	if dash.FolderUID != "" || !dr.cfg.RBAC.PermissionsOnCreation(resource) {
 		return
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 
-	var permissions []accesscontrol.SetResourcePermissionCommand
-	if !provisioned && dto.User.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
-		userID, err := dto.User.GetInternalID()
+	permissions := []accesscontrol.SetResourcePermissionCommand{
+		{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+		{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+	}
+
+	if !provisioned && user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		userID, err := user.GetInternalID()
 		if err != nil {
-			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "id", dto.User.GetID(), "error", err)
+			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "id", user.GetID(), "error", err)
 		} else {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
 		}
-	}
-
-	if dash.FolderUID == "" {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-		}...)
 	}
 
 	svc := dr.getPermissionsService(dash.IsFolder)
-	if _, err := svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...); err != nil {
+	if _, err := svc.SetPermissions(ctx, orgID, dash.UID, permissions...); err != nil {
 		dr.log.Error("Could not set default permissions", "dashboard", dash.Title, "error", err)
-	}
-}
-
-func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context, cmd *folder.CreateFolderCommand, f *folder.Folder, provisioned bool) {
-	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultFolderPermissions")
-	defer span.End()
-
-	if !dr.cfg.RBAC.PermissionsOnCreation("folder") {
-		return
-	}
-
-	var permissions []accesscontrol.SetResourcePermissionCommand
-	if !provisioned && cmd.SignedInUser.IsIdentityType(claims.TypeUser) {
-		userID, err := cmd.SignedInUser.GetInternalID()
-		if err != nil {
-			dr.log.Error("Could not make user admin", "folder", cmd.Title, "id", cmd.SignedInUser.GetID())
-		} else {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
-			})
-		}
-	}
-
-	if f.ParentUID == "" {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-		}...)
-	}
-
-	if _, err := dr.folderPermissions.SetPermissions(ctx, cmd.OrgID, f.UID, permissions...); err != nil {
-		dr.log.Error("Could not set default folder permissions", "folder", f.Title, "error", err)
 	}
 }
 
