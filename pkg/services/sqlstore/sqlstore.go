@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -424,6 +423,9 @@ type InitTestDBOpt struct {
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
+//
+// Deprecated: Use NewTestStore if possible. If not, contact #wg-north-star-of-testing about why you can't.
+// Testsuite users need not worry about this deprecation for now.
 func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
@@ -436,18 +438,31 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 }
 
 // InitTestDB initializes the test DB.
+//
+// Deprecated: Use NewTestStore if possible. If not, contact #wg-north-star-of-testing about why you can't.
+// Testsuite users need not worry about this deprecation for now.
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
 	t.Helper()
-	features := getFeaturesForTesting(opts...)
-	cfg := getCfgForTesting(opts...)
 
-	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
-	if err != nil {
-		t.Fatalf("failed to initialize sql store: %s", err)
+	var newOpts []TestOption
+	for _, opt := range opts {
+		if opt.Cfg != nil {
+			newOpts = append(newOpts, WithCfg(opt.Cfg))
+		}
+		if !opt.EnsureDefaultOrgAndUser {
+			newOpts = append(newOpts, WithoutDefaultOrgAndUser())
+		}
+		if len(opt.FeatureFlags) > 0 {
+			newOpts = append(newOpts, WithFeatureFlags(opt.FeatureFlags...))
+		}
 	}
+	newOpts = append(newOpts, WithFeatureFlags(featuremgmt.FlagPanelTitleSearch))
+	store := NewTestStore(t, newOpts...)
 	return store, store.cfg
 }
 
+// Deprecated: Use NewTestStore if possible. If not, contact #wg-north-star-of-testing about why you can't.
+// Testsuite users need not worry about this deprecation for now.
 func SetupTestDB() {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
@@ -458,6 +473,8 @@ func SetupTestDB() {
 	testSQLStoreSetup = true
 }
 
+// Deprecated: Use NewTestStore if possible. If not, contact #wg-north-star-of-testing about why you can't.
+// Testsuite users need not worry about this deprecation for now.
 func CleanupTestDB() {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
@@ -569,29 +586,6 @@ func TestMain(m *testing.M) {
 		}
 
 		testSQLStoreCleanup = append(testSQLStoreCleanup, testDB.Cleanup)
-
-		// useful if you already have a database that you want to use for tests.
-		// cannot just set it on testSQLStore as it overrides the config in Init
-		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
-			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
-				return nil, err
-			}
-		}
-
-		if testCfg.Raw.HasSection("database") {
-			testSec, err := testCfg.Raw.GetSection("database")
-			if err == nil {
-				// copy from testCfg to the Cfg keys that do not exist
-				for _, k := range testSec.Keys() {
-					if sec.HasKey(k.Name()) {
-						continue
-					}
-					if _, err := sec.NewKey(k.Name(), k.Value()); err != nil {
-						return nil, err
-					}
-				}
-			}
-		}
 
 		// need to get engine to clean db before we init
 		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
