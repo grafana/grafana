@@ -5,6 +5,7 @@ import { Fragment, memo, useEffect } from 'react';
 
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';
@@ -54,7 +55,13 @@ export const LogRecordViewerByTimestamp = memo(
     });
 
     return (
-      <ul className={styles.logsScrollable} aria-label="State history by timestamp">
+      <ul
+        className={styles.logsScrollable}
+        aria-label={t(
+          'alerting.log-record-viewer-by-timestamp.aria-label-state-history-by-timestamp',
+          'State history by timestamp'
+        )}
+      >
         {Array.from(groupedLines.entries()).map(([key, records]) => {
           return (
             <li

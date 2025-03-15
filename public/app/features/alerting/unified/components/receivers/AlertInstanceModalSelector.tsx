@@ -15,7 +15,7 @@ import {
   clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -208,7 +208,7 @@ export function AlertInstanceModalSelector({
   return (
     <div>
       <Modal
-        title="Select alert instances"
+        title={t('alerting.alert-instance-modal-selector.title-select-alert-instances', 'Select alert instances')}
         className={styles.modal}
         closeOnEscape
         isOpen={isOpen}
@@ -219,14 +219,19 @@ export function AlertInstanceModalSelector({
           <FilterInput
             value={ruleFilter}
             onChange={handleSearchRules}
-            title="Search alert rule"
-            placeholder="Search alert rule"
+            title={t('alerting.alert-instance-modal-selector.title-search-alert-rule', 'Search alert rule')}
+            placeholder={t('alerting.alert-instance-modal-selector.placeholder-search-alert-rule', 'Search alert rule')}
             autoFocus
           />
           <div>{(selectedRule && 'Select one or more instances from the list below') || ''}</div>
 
           <div className={styles.column}>
-            {loading && <LoadingPlaceholder text="Loading rules..." className={styles.loadingPlaceholder} />}
+            {loading && (
+              <LoadingPlaceholder
+                text={t('alerting.alert-instance-modal-selector.text-loading-rules', 'Loading rules...')}
+                className={styles.loadingPlaceholder}
+              />
+            )}
 
             {!loading && (
               <AutoSizer>
@@ -245,7 +250,12 @@ export function AlertInstanceModalSelector({
                 <div>Select an alert rule to get a list of available firing instances</div>
               </div>
             )}
-            {loading && <LoadingPlaceholder text="Loading rule..." className={styles.loadingPlaceholder} />}
+            {loading && (
+              <LoadingPlaceholder
+                text={t('alerting.alert-instance-modal-selector.text-loading-rule', 'Loading rule...')}
+                className={styles.loadingPlaceholder}
+              />
+            )}
 
             {selectedRule && rulesWithInstances[selectedRule].length && !loading && (
               <AutoSizer>
@@ -277,7 +287,9 @@ export function AlertInstanceModalSelector({
               }
             }}
           >
-            Add alert data to payload
+            <Trans i18nKey="alerting.alert-instance-modal-selector.add-alert-data-to-payload">
+              Add alert data to payload
+            </Trans>
           </Button>
         </Modal.ButtonRow>
       </Modal>
