@@ -71,7 +71,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleEditor)},
 	}
 
-	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
 	if hs.Cfg.ViewersCanEdit {
 		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(org.RoleViewer))
 	}
@@ -257,7 +256,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	teamCreatorGrants := []string{string(org.RoleAdmin)}
-
+	if hs.Cfg.EditorsCanAdmin {
+		teamCreatorGrants = append(teamCreatorGrants, string(org.RoleEditor))
+	}
 	teamsCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:teams:creator",

@@ -341,7 +341,6 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			//nolint:staticcheck
 			cfg.ViewersCanEdit = tt.viewersCanEdit
 			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, cfg)
 
