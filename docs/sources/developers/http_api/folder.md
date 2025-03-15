@@ -107,6 +107,7 @@ Content-Type: application/json
 {
   "id":1,
   "uid": "nErXDvCkzz",
+  "orgId": 1,
   "title": "Department ABC",
   "url": "/dashboards/f/nErXDvCkzz/department-abc",
   "hasAcl": false,
