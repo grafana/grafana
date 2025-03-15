@@ -526,7 +526,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           <PanelComponent
             id={panel.id}
             data={data}
-            title={panel.title}
+            title={panel.title ?? ''}
             timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
             options={panelOptions}
@@ -542,7 +542,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             eventBus={dashboard.events}
           />
           {config.featureToggles.panelMonitoring && this.state.errorMessage === undefined && (
-            <PanelLoadTimeMonitor panelType={plugin.meta.id} panelId={panel.id} panelTitle={panel.title} />
+            <PanelLoadTimeMonitor panelType={plugin.meta.id} panelId={panel.id} panelTitle={panel.title ?? ''} />
           )}
         </PanelContextProvider>
       </>
