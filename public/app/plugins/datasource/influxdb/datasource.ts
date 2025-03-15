@@ -71,6 +71,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   httpMode: string;
   version?: InfluxVersion;
   isProxyAccess: boolean;
+  showTagTime: string;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
@@ -92,6 +93,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     const settingsData: InfluxOptions = instanceSettings.jsonData ?? {};
     this.database = settingsData.dbName ?? instanceSettings.database;
     this.interval = settingsData.timeInterval;
+    this.showTagTime = settingsData.showTagTime || '';
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
     this.version = settingsData.version ?? InfluxVersion.InfluxQL;
@@ -446,6 +448,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       type: 'TAG_KEYS',
       templateService: this.templateSrv,
       database: this.database,
+      withTimeFilter: this.showTagTime,
     });
 
     return this.metricFindQuery({ refId: 'get-tag-keys', query });
@@ -457,6 +460,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       templateService: this.templateSrv,
       database: this.database,
       withKey: options.key,
+      withTimeFilter: this.showTagTime,
     });
 
     return this.metricFindQuery({ refId: 'get-tag-values', query });
