@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/util/debouncer"
 )
 
 const tracePrefix = "sql.resource."
@@ -74,6 +76,12 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}, nil
 }
 
+type pruningKey struct {
+	namespace string
+	group     string
+	resource  string
+}
+
 type backend struct {
 	//general
 	isHA bool
@@ -106,6 +114,8 @@ type backend struct {
 
 	// testing
 	simulatedNetworkLatency time.Duration
+
+	historyPruner *debouncer.Group[pruningKey]
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -116,13 +126,18 @@ func (b *backend) Init(ctx context.Context) error {
 }
 
 func (b *backend) initLocked(ctx context.Context) error {
-	db, err := b.dbProvider.Init(ctx)
+	dbConn, err := b.dbProvider.Init(ctx)
 	if err != nil {
 		return fmt.Errorf("initialize resource DB: %w", err)
 	}
-	b.db = db
 
-	driverName := db.DriverName()
+	if err := dbConn.PingContext(ctx); err != nil {
+		return fmt.Errorf("ping resource DB: %w", err)
+	}
+
+	b.db = dbConn
+
+	driverName := dbConn.DriverName()
 	b.dialect = sqltemplate.DialectForDriver(driverName)
 	if b.dialect == nil {
 		return fmt.Errorf("no dialect for driver %q", driverName)
@@ -146,7 +161,52 @@ func (b *backend) initLocked(ctx context.Context) error {
 	}
 	b.notifier = notifier
 
-	return b.db.PingContext(ctx)
+	b.historyPruner, err = debouncer.NewGroup(debouncer.DebouncerOpts[pruningKey]{
+		Name:       "history_pruner",
+		BufferSize: 1000,
+		MinWait:    time.Second * 30,
+		MaxWait:    time.Minute * 5,
+		ProcessHandler: func(ctx context.Context, key pruningKey) error {
+			return dbConn.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
+					SQLTemplate:  sqltemplate.New(b.dialect),
+					HistoryLimit: 100,
+					Key: &resource.ResourceKey{
+						Namespace: key.namespace,
+						Group:     key.group,
+						Resource:  key.resource,
+					},
+				})
+				if err != nil {
+					return fmt.Errorf("failed to prune history: %w", err)
+				}
+				rows, err := res.RowsAffected()
+				if err != nil {
+					return fmt.Errorf("failed to get rows affected: %w", err)
+				}
+				b.log.Debug("pruned history successfully",
+					"namespace", key.namespace,
+					"group", key.group,
+					"resource", key.resource,
+					"rows", rows)
+				return nil
+			})
+		},
+		ErrorHandler: func(key pruningKey, err error) {
+			b.log.Error("failed to prune history",
+				"namespace", key.namespace,
+				"group", key.group,
+				"resource", key.resource,
+				"error", err)
+		},
+		Reg: prometheus.DefaultRegisterer,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to start history pruner: %w", err)
+	}
+	b.historyPruner.Start(ctx)
+
+	return nil
 }
 
 func (b *backend) IsHealthy(ctx context.Context, r *resource.HealthCheckRequest) (*resource.HealthCheckResponse, error) {
@@ -246,6 +306,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
+		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
 		if b.simulatedNetworkLatency > 0 {
 			time.Sleep(b.simulatedNetworkLatency)
 		}
@@ -299,6 +360,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
+		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
 		return guid, nil
 	})
 
@@ -346,6 +408,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
+		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
 		return guid, nil
 	})
 
@@ -394,6 +457,7 @@ func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
+		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
 
 		// 3. Update all resource history entries with the new UID
 		// Note: we do not update any history entries that have a deletion timestamp included. This will become
