@@ -2,9 +2,7 @@ package schedule
 
 import (
 	"context"
-	"fmt"
 	"net/url"
-	"slices"
 	"strings"
 	"time"
 
@@ -390,30 +388,12 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.log.Warn("Unable to obtain folder titles for some rules", "missingFolderUIDToRuleUID", missingFolder)
 	}
 
-	var step int64 = 0
-	if len(readyToRun) > 0 {
-		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
-	}
+	// Create groups for rules that are ready to run
+	groups := sch.buildGroups(ctx, readyToRun)
 
-	slices.SortFunc(readyToRun, func(a, b readyToRunItem) int {
-		return strings.Compare(a.rule.UID, b.rule.UID)
-	})
-	for i := range readyToRun {
-		item := readyToRun[i]
-
-		time.AfterFunc(time.Duration(int64(i)*step), func() {
-			key := item.rule.GetKey()
-			success, dropped := item.ruleRoutine.Eval(&item.Evaluation)
-			if !success {
-				sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", tick)...)
-				return
-			}
-			if dropped != nil {
-				sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", tick, "droppedTick", dropped.scheduledAt)...)
-				orgID := fmt.Sprint(key.OrgID)
-				sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
-			}
-		})
+	// Schedule each group for evaluation
+	for _, group := range groups {
+		go group.Evaluate()
 	}
 
 	// Stop old routines for rules that got restarted.
@@ -428,4 +408,43 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	}
 	sch.deleteAlertRule(ctx, toDelete...)
 	return readyToRun, registeredDefinitions, updatedRules
+}
+
+func (sch *schedule) buildGroups(ctx context.Context, items []readyToRunItem) map[GroupKey]*Group {
+	// Create groups for all rules that should be evaluated at the current tick
+	groups := make(map[GroupKey]*Group)
+
+	for _, item := range items {
+		key := GroupKey{
+			NamespaceUID: item.rule.NamespaceUID,
+			RuleGroup:    item.rule.RuleGroup,
+			FolderTitle:  item.folderTitle,
+		}
+
+		group, exists := groups[key]
+		if !exists {
+			group = NewGroup(sch.log, sch.metrics)
+			groups[key] = group
+		}
+
+		group.AddRule(item)
+	}
+
+	for _, group := range groups {
+		group.Sort()
+	}
+
+	// Log the groups we've created
+	for key, group := range groups {
+		ruleUIDs := make([]string, 0, len(group.Rules()))
+		for _, item := range group.Rules() {
+			ruleUIDs = append(ruleUIDs, item.rule.UID)
+		}
+		sch.log.Debug("Group created",
+			"folder", key.FolderTitle,
+			"group", key.RuleGroup,
+			"rules", strings.Join(ruleUIDs, "->"))
+	}
+
+	return groups
 }

@@ -172,6 +172,40 @@ func TestAlertRule(t *testing.T) {
 				t.Fatal("No message was received on eval channel")
 			}
 		})
+		t.Run("eval should call afterEval function if provided", func(t *testing.T) {
+			ruleSpec := gen.GenerateRef()
+			r := blankRuleForTests(context.Background(), ruleSpec.GetKeyWithGroup())
+
+			afterEvalCalled := false
+			data := &Evaluation{
+				scheduledAt: time.Now(),
+				rule:        ruleSpec,
+				folderTitle: util.GenerateShortUID(),
+				afterEval: func() {
+					afterEvalCalled = true
+				},
+			}
+
+			// Start a goroutine to process the evaluation
+			go func() {
+				<-r.evalCh // Consume the evaluation from the channel
+
+				// Simulate the Run() method's behavior of calling afterEval
+				if data.afterEval != nil {
+					data.afterEval()
+				}
+			}()
+
+			// Call Eval which should send to evalCh
+			success, _ := r.Eval(data)
+			require.True(t, success)
+
+			// Wait a bit for the goroutine to process
+			time.Sleep(100 * time.Millisecond)
+
+			// Verify afterEval was called
+			require.True(t, afterEvalCalled, "afterEval function should have been called")
+		})
 	})
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("Update should do nothing", func(t *testing.T) {

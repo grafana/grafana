@@ -341,7 +341,9 @@ func (a *alertRule) Run() error {
 					}
 				}
 			}()
-
+			if ctx.afterEval != nil {
+				ctx.afterEval()
+			}
 		case <-grafanaCtx.Done():
 			reason := grafanaCtx.Err()
 
