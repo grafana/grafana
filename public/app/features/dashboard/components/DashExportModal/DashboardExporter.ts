@@ -1,7 +1,19 @@
-import { defaults, each, sortBy } from 'lodash';
+import { defaults, each, sortBy, uniqBy } from 'lodash';
 
 import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import {
+  DashboardKind,
+  DashboardImportableRequirements,
+  DashboardV2Spec,
+  ImportableResources,
+  LibraryPanelImport,
+  LibraryPanelKind,
+  PanelKind,
+  PanelQueryKind,
+  AnnotationQueryKind,
+  QueryVariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
@@ -78,7 +90,11 @@ export interface LibraryElementExport {
   kind: LibraryElementKind;
 }
 
-export class DashboardExporter {
+export interface DashboardExporterLike<T, J> {
+  makeExportable(dashboard: T): Promise<J | { error: unknown }>;
+}
+
+export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel, DashboardJson> {
   async makeExportable(dashboard: DashboardModel) {
     // clean up repeated rows and panels,
     // this is done on the live real dashboard instance, not on a clone
@@ -324,4 +340,207 @@ export class DashboardExporter {
       };
     }
   }
+}
+
+export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, ImportableResources> {
+  async makeExportable(dashboard: DashboardV2Spec) {
+    const requires: DashboardImportableRequirements[] = [];
+    const variableLookup: { [key: string]: any } = {};
+    const libraryPanels: LibraryPanelImport[] = [];
+
+    for (const variable of dashboard.variables) {
+      variableLookup[variable.spec.name] = variable.spec;
+    }
+
+    const templateizeLibraryPanelDatasourceUsage = (obj: any) => {
+      if (obj.datasource === undefined) {
+        return;
+      }
+
+      let datasource = obj.datasource;
+      const datasourceUid: string | undefined = obj.datasource.uid;
+      const match = datasourceUid && variableRegex.exec(datasourceUid);
+
+      const { datasourceVariable, datasourceMatch: dataSourceMatch } = getDatasourceFromMatch(match, datasource);
+
+      if (dataSourceMatch) {
+        datasource = dataSourceMatch;
+      }
+
+      return getDataSourceSrv()
+        .get(datasource)
+        .then((ds) => {
+          if (ds.meta?.builtIn) {
+            return;
+          }
+
+          requires.push({
+            type: 'datasource',
+            id: ds.meta.id,
+            name: ds.meta.name,
+            version: ds.meta.info.version || '1.0.0',
+          });
+
+          if (datasourceVariable) {
+            return;
+          }
+
+          const libraryPanel = obj.libraryPanel;
+          const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
+          let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
+          obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
+        });
+    };
+
+    const templateizeDatasourceUsage = (
+      obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
+    ) => {
+      if (obj.datasource === undefined) {
+        return;
+      }
+
+      let datasource = obj.datasource;
+      const datasourceUid: string | undefined = obj.datasource?.uid;
+      const match = datasourceUid && variableRegex.exec(datasourceUid);
+
+      // ignore data source properties that contain a variable
+      const { datasourceMatch } = getDatasourceFromMatch(match, datasource);
+
+      if (datasourceMatch) {
+        datasource = datasourceMatch;
+      }
+
+      return getDataSourceSrv()
+        .get(datasource)
+        .then((ds) => {
+          if (ds.meta?.builtIn) {
+            return;
+          }
+
+          requires.push({
+            type: 'datasource',
+            id: ds.meta.id,
+            name: ds.meta.name,
+            version: ds.meta.info.version || '1.0.0',
+          });
+
+          let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
+          obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
+        });
+    };
+
+    const processPanel = async (panel: PanelKind) => {
+      if (panel.spec.data.spec.queries) {
+        for (const query of panel.spec.data.spec.queries) {
+          await templateizeDatasourceUsage(query.spec);
+        }
+      }
+
+      const panelDef: PanelPluginMeta = config.panels[panel.spec.vizConfig.kind];
+      if (panelDef) {
+        requires.push({
+          type: 'panel',
+          id: panelDef.id,
+          name: panelDef.name,
+          version: panelDef.info.version,
+        });
+      }
+    };
+
+    const processLibraryPanels = async (panel: LibraryPanelKind) => {
+      const { uid } = panel.spec.libraryPanel;
+
+      const libPanel = await getLibraryPanel(uid, true);
+      const exportableLibPanel: LibraryPanelImport = {
+        kind: 'LibraryPanelImport',
+        spec: {
+          name: libPanel.name,
+          uid: libPanel.uid,
+          model: libPanel.model,
+        },
+      };
+
+      await templateizeLibraryPanelDatasourceUsage(exportableLibPanel.spec.model);
+
+      libraryPanels.push(exportableLibPanel);
+    };
+
+    try {
+      const elements = dashboard.elements;
+
+      for (const element of Object.values(elements)) {
+        if (element.kind === 'Panel') {
+          await processPanel(element);
+        } else if (element.kind === 'LibraryPanel') {
+          await processLibraryPanels(element);
+        }
+      }
+
+      // templatize template vars
+      for (const variable of dashboard.variables) {
+        if (variable.kind === 'QueryVariable') {
+          await templateizeDatasourceUsage(variable.spec);
+          variable.spec.options = [];
+          variable.spec.current = {} as unknown as VariableOption;
+        } else if (variable.kind === 'DatasourceVariable') {
+          variable.spec.current = {
+            text: '',
+            value: '',
+          };
+        }
+      }
+
+      // templatize annotations vars
+      for (const annotation of dashboard.annotations) {
+        await templateizeDatasourceUsage(annotation.spec);
+      }
+
+      // add grafana version
+      requires.push({
+        type: 'grafana',
+        id: 'grafana',
+        name: 'Grafana',
+        version: config.buildInfo.version,
+      });
+
+      const importableDashboard: DashboardKind = {
+        kind: 'Dashboard',
+        spec: dashboard,
+      };
+
+      const newObj: ImportableResources = {
+        kind: 'ImportableResources',
+        spec: {
+          resources: [importableDashboard, ...uniqBy(libraryPanels, 'spec.uid')],
+          requirements: uniqBy(sortBy(requires, ['id']), 'id'),
+        },
+      };
+
+      return newObj;
+    } catch (err) {
+      console.error('Export failed:', err);
+      return {
+        error: err,
+      };
+    }
+
+    function getDatasourceFromMatch(match: string | RegExpExecArray | null | undefined, datasource: any) {
+      let datasourceVariable: any = null;
+      if (match) {
+        const varName = match[1] || match[2] || match[4];
+        const datasourceVariable = variableLookup[varName];
+        if (datasourceVariable && datasourceVariable.current) {
+          datasource = datasourceVariable.current.value;
+        }
+      }
+      return { datasourceVariable, datasourceMatch: datasource };
+    }
+  }
+}
+
+export function getDashboardExporter(): DashboardExporterLike<
+  DashboardModel | DashboardV2Spec,
+  DashboardJson | ImportableResources
+> {
+  return config.featureToggles.useV2DashboardsAPI ? new DashboardExporterV2() : new DashboardExporterV1();
 }
