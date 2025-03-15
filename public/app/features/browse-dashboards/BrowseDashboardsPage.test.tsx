@@ -23,6 +23,10 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     unifiedAlertingEnabled: true,
+    featureToggles: {
+      ...jest.requireActual('@grafana/runtime').config.featureToggles,
+      provisioning: false,
+    },
   },
 }));
 
@@ -136,6 +140,11 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       http.get('/api/search/sorting', () => {
         return HttpResponse.json({
           sortOptions: [],
+        });
+      }),
+      http.get('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/settings', () => {
+        return HttpResponse.json({
+          items: [],
         });
       })
     );

@@ -1,4 +1,5 @@
 import { DataFrameView, SelectableValue } from '@grafana/data';
+import { RepositoryView } from 'app/api/clients/provisioning';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { PermissionLevelString } from 'app/types';
 
@@ -91,4 +92,5 @@ export interface GrafanaSearcher {
 export interface NestedFolderDTO {
   uid: string;
   title: string;
+  repository?: RepositoryView;
 }
