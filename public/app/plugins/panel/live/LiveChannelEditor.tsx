@@ -22,6 +22,7 @@ const scopes: Array<SelectableValue<LiveChannelScope>> = [
   { label: 'Data Sources', value: LiveChannelScope.DataSource, description: 'Data sources with live support' },
   { label: 'Plugins', value: LiveChannelScope.Plugin, description: 'Plugins with live support' },
   { label: 'Stream', value: LiveChannelScope.Stream, description: 'data streams (eg, influx style)' },
+  { label: 'Watch', value: LiveChannelScope.Watch, description: 'Watch k8s style resources' },
 ];
 
 export function LiveChannelEditor(props: Props) {
