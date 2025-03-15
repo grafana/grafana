@@ -320,7 +320,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
 			if resolvedPath != "" {
 				meta.SetSourceProperties(utils.SourceProperties{
-					Path:            origin_path.String, // relative path within source
+					Path:            origin_path.String,
 					Checksum:        origin_hash.String,
 					TimestampMillis: origin_ts.Int64,
 				})
