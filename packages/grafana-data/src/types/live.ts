@@ -12,6 +12,7 @@ export enum LiveChannelScope {
   Plugin = 'plugin', // namespace = plugin name (singleton works for apps too)
   Grafana = 'grafana', // namespace = feature
   Stream = 'stream', // namespace = id for the managed data stream
+  Watch = 'watch', // namespace = group, path - ressource/name
 }
 
 /**
