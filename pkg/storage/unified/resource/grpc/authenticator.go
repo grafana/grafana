@@ -292,7 +292,6 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 }
 
 // TODO: use authlib/grpcutils
-
 func NewAuthenticator(cfg *GrpcAuthenticatorConfig, tracer tracing.Tracer) interceptors.Authenticator {
 	client := http.DefaultClient
 	if cfg.AllowInsecure {

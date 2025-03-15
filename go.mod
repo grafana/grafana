@@ -563,12 +563,16 @@ require (
 	github.com/grafana/grafana/pkg/infra/tracing v0.0.0-00010101000000-000000000000 // @grafana/grafana-backend-group
 )
 
+require github.com/grafana/grafana/pkg/build v0.0.0-20250315003045-45e2cb78f247
+
 require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.49.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0 // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
+	github.com/google/go-github/v69 v69.2.0 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
+	github.com/spyzhov/ajson v0.9.6 // indirect
 	github.com/tjhop/slog-gokit v0.1.4 // indirect
 )
 
