@@ -1,5 +1,16 @@
-import { SceneObject } from '@grafana/scenes';
+import React from 'react';
+
+import { SceneObject, VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+
+import { Point, Rect } from '../layout-manager/utils';
+
+export interface IntermediateLayoutItem {
+  body: VizPanel;
+  origin: Point;
+  width: number;
+  height: number;
+}
 
 /**
  * Abstraction to handle editing of different layout elements (wrappers for VizPanels and other objects)
@@ -25,6 +36,13 @@ export interface DashboardLayoutItem extends SceneObject {
    * When coming out of panel edit
    */
   editingCompleted?(withChanges: boolean): void;
+
+  toIntermediate(): IntermediateLayoutItem;
+
+  containerRef: React.RefObject<HTMLElement>;
+
+  distanceToPoint?(point: Point): number;
+  boundingBox?(): Rect | undefined;
 }
 
 export function isDashboardLayoutItem(obj: SceneObject): obj is DashboardLayoutItem {

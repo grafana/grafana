@@ -1,24 +1,27 @@
 import { isEqual } from 'lodash';
+import React from 'react';
 
 import {
-  SceneObjectState,
-  VizPanel,
-  SceneObjectBase,
-  sceneGraph,
+  SceneObject,
   CustomVariable,
-  MultiValueVariable,
-  VariableValueSingle,
-  VizPanelState,
-  SceneVariableSet,
   LocalValueVariable,
+  MultiValueVariable,
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneVariableSet,
   VariableDependencyConfig,
+  VariableValueSingle,
+  VizPanel,
+  VizPanelState,
 } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
+import { Point, Rect } from '../layout-manager/utils';
+import { DashboardLayoutItem, IntermediateLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getOptions } from './ResponsiveGridItemEditor';
@@ -29,6 +32,7 @@ export interface ResponsiveGridItemState extends SceneObjectState {
   hideWhenNoData?: boolean;
   repeatedPanels?: VizPanel[];
   variableName?: string;
+  isHidden?: boolean;
   conditionalRendering?: ConditionalRendering;
 }
 
@@ -45,6 +49,8 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     super({ ...state, conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty() });
     this.addActivationHandler(() => this._activationHandler());
   }
+
+  public containerRef = React.createRef<HTMLDivElement>();
 
   private _activationHandler() {
     if (this.state.variableName) {
@@ -66,6 +72,16 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
 
   public toggleHideWhenNoData() {
     this.setState({ hideWhenNoData: !this.state.hideWhenNoData });
+  }
+
+  public setBody(body: SceneObject): void {
+    if (body instanceof VizPanel) {
+      this.setState({ body });
+    }
+  }
+
+  public getVizPanel() {
+    return this.state.body;
   }
 
   public performRepeat() {
@@ -141,4 +157,79 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     this.setState(stateUpdate);
     this.performRepeat();
   }
+
+  public cachedBoundingBox: Rect | undefined;
+  public computeBoundingBox() {
+    const itemContainer = this.containerRef.current;
+    if (!itemContainer || this.state.isHidden) {
+      // We can't actually calculate the dimensions of the rendered grid item :(
+      throw new Error('Unable to compute bounding box.');
+    }
+
+    this.cachedBoundingBox = itemContainer.getBoundingClientRect();
+    return this.cachedBoundingBox;
+  }
+
+  public distanceToPoint(point: Point): number {
+    if (!this.cachedBoundingBox) {
+      try {
+        this.cachedBoundingBox = this.computeBoundingBox();
+      } catch (err) {
+        // If we can't actually calculate the dimensions and position of the
+        // rendered grid item, it might as well be infinitely far away.
+        return Number.POSITIVE_INFINITY;
+      }
+    }
+
+    const { top, left, bottom, right } = this.cachedBoundingBox;
+    const corners: Point[] = [
+      { x: left, y: top },
+      { x: left, y: bottom },
+      { x: right, y: top },
+      { x: right, y: bottom },
+    ];
+
+    const { distance } = closestPoint(point, ...corners);
+    return distance;
+  }
+
+  toIntermediate(): IntermediateLayoutItem {
+    const gridItem = this.containerRef.current;
+
+    if (!gridItem) {
+      throw new Error('Grid item not found. Unable to convert to intermediate representation');
+    }
+
+    // calculate origin and bounding box of layout item
+    const rect = gridItem.getBoundingClientRect();
+
+    return {
+      body: this.state.body,
+      origin: {
+        x: rect.left,
+        y: rect.top,
+      },
+      width: rect.width,
+      height: rect.height,
+    };
+  }
+}
+
+// todo@kay: tests
+function closestPoint(referencePoint: Point, ...points: Point[]): { point: Point; distance: number } {
+  let minDistance = Number.POSITIVE_INFINITY;
+  let closestPoint = points[0];
+  for (const currentPoint of points) {
+    const distance = euclideanDistance(referencePoint, currentPoint);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestPoint = currentPoint;
+    }
+  }
+
+  return { point: closestPoint, distance: minDistance };
+}
+
+function euclideanDistance(a: Point, b: Point): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
 }
