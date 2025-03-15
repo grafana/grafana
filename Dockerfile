@@ -14,6 +14,8 @@ ARG JS_SRC=js-builder
 
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
+ARG JS_NODE_ENV=production
+ARG JS_YARN_BUILD_FLAG=build
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -29,14 +31,17 @@ COPY e2e e2e
 
 RUN apk add --no-cache make build-base python3
 
+# Set the node env according to defaults or argument passed
+#
+ENV NODE_ENV=${JS_NODE_ENV}
 RUN yarn install --immutable
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
 COPY emails emails
 
-ENV NODE_ENV=production
-RUN yarn build
+# Set the build argument according to default or argument passed
+RUN yarn ${JS_YARN_BUILD_FLAG}
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
