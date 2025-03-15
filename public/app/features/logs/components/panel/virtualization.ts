@@ -118,12 +118,12 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
     };
   }
 
+  const availableWidth = maxWidth - beforeWidth;
   for (const textLine of textLines) {
     for (let start = 0; start < textLine.length; ) {
       let testLogLine: string;
       let width = 0;
       let delta = 0;
-      let availableWidth = maxWidth - beforeWidth;
       do {
         testLogLine = textLine.substring(start, start + logLineCharsLength - delta);
         width = measureTextWidth(testLogLine);
@@ -176,9 +176,10 @@ export function getLogLineSize(
     optionsWidth += gap;
     textToMeasure += logs[index].timestamp;
   }
-  if (logs[index].logLevel) {
+  // When logs are unwrapped, we want an empty column space to align with other log lines.
+  if (logs[index].displayLevel || !wrap) {
     optionsWidth += gap;
-    textToMeasure += logs[index].logLevel;
+    textToMeasure += logs[index].displayLevel ?? '';
   }
   for (const field of displayedFields) {
     textToMeasure = getDisplayedFieldValue(field, logs[index]) + textToMeasure;
