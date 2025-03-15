@@ -1,6 +1,7 @@
 import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
 
-import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
+import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
+import { config, getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import { getAPINamespace } from '../../api/utils';
@@ -29,10 +30,11 @@ export interface GroupVersionResource {
 
 export class ScopedResourceClient<T = object, S = object, K = string> implements ResourceClient<T, S, K> {
   readonly url: string;
+  readonly gvr: GroupVersionResource;
 
   constructor(gvr: GroupVersionResource, namespaced = true) {
     const ns = namespaced ? `namespaces/${getAPINamespace()}/` : '';
-
+    this.gvr = gvr;
     this.url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
 
@@ -40,26 +42,35 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
   }
 
-  public watch(
-    params?: WatchOptions,
-    config?: Pick<BackendSrvRequest, 'data' | 'method'>
-  ): Observable<ResourceEvent<T, S, K>> {
+  public watch(params?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
+    if (true) {
+      const query = params?.name ? `=${params.name}` : '';
+      return getGrafanaLiveSrv()
+        .getStream<ResourceEvent<T, S, K>>({
+          scope: LiveChannelScope.Watch,
+          namespace: this.gvr.group,
+          path: `${this.gvr.version}/${this.gvr.resource}${query}/${config.bootData.user.uid}`,
+        })
+        .pipe(
+          filter((event) => isLiveChannelMessageEvent(event)),
+          map((event) => event.message)
+        );
+    }
+
     const decoder = new TextDecoder();
-    const { name, ...rest } = params ?? {}; // name needs to be added to fieldSelector
     const requestParams = {
-      ...rest,
       watch: true,
       labelSelector: this.parseListOptionsSelector(params?.labelSelector),
       fieldSelector: this.parseListOptionsSelector(params?.fieldSelector),
     };
-    if (name) {
+    if (params?.name) {
       requestParams.fieldSelector = `metadata.name=${name}`;
     }
     return getBackendSrv()
       .chunked({
         url: this.url,
         params: requestParams,
-        ...config,
+        method: 'GET',
       })
       .pipe(
         filter((response) => response.ok && response.data instanceof Uint8Array),

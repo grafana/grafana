@@ -61,7 +61,6 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 
 	current, ok := b.watching[e.Channel]
 	if ok && !current.done {
-		current.subscriptions++
 		return model.SubscribeReply{
 			JoinLeave: false,
 			Presence:  false,
@@ -69,6 +68,7 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 		}, backend.SubscribeStreamStatusOK, nil
 	}
 
+	// Try to start a watcher for this request
 	gvr, name, err := parseWatchRequest(e.Channel, userID)
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
@@ -95,11 +95,10 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 	}
 
 	current = &watcher{
-		orgId:         u.GetOrgID(),
-		channel:       e.Channel,
-		subscriptions: 1,
-		publisher:     b.publisher,
-		watch:         watch,
+		orgId:     u.GetOrgID(),
+		channel:   e.Channel,
+		publisher: b.publisher,
+		watch:     watch,
 	}
 
 	b.watching[e.Channel] = current
@@ -144,41 +143,32 @@ func (b *WatchRunner) OnPublish(_ context.Context, u identity.Requester, e model
 }
 
 type watcher struct {
-	orgId         int64
-	channel       string
-	subscriptions int
-	publisher     model.ChannelPublisher
-	done          bool
-	watch         watch.Interface
+	orgId     int64
+	channel   string
+	publisher model.ChannelPublisher
+	done      bool
+	watch     watch.Interface
 }
 
 func (b *watcher) run(ctx context.Context) {
-	counter := 1
 	logger := logging.FromContext(ctx).With("channel", b.channel)
 
 	ch := b.watch.ResultChan()
 	for {
 		select {
+		// This is sent when there are no longer any subscriptions
 		case <-ctx.Done():
 			logger.Info("context done", b.channel)
-			b.done = true
 			b.watch.Stop()
+			b.done = true
 			return
 
+		// Each watch event
 		case event, ok := <-ch:
 			if !ok {
 				continue
 			}
-			counter++
 
-			// ddd := map[string]any{
-			// 	"subscriptions": b.subscriptions,
-			// 	"counter":       counter,
-			// 	"channel":       b.channel,
-			// 	"started":       started.UnixMilli(),
-			// 	"elapsed:":      time.Since(started).String(),
-			// 	"orgId":         b.orgId,
-			// }
 			jj, err := json.Marshal(event)
 			if err != nil {
 				logger.Error("unable to marshal event", "err", err)
