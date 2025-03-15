@@ -1,6 +1,10 @@
 package setting
 
-import "time"
+import (
+	"time"
+
+	"github.com/grafana/grafana/pkg/util"
+)
 
 const (
 	extJWTAccessTokenExpectAudience = "grafana"
@@ -22,6 +26,7 @@ type AuthJWTSettings struct {
 	AutoSignUp              bool
 	RoleAttributePath       string
 	RoleAttributeStrict     bool
+	OrgMapping              []string
 	AllowAssignGrafanaAdmin bool
 	SkipOrgRoleSync         bool
 	GroupsAttributePath     string
@@ -71,6 +76,7 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.EmailAttributePath = valueAsString(authJWT, "email_attribute_path", "")
 	jwtSettings.UsernameAttributePath = valueAsString(authJWT, "username_attribute_path", "")
 	jwtSettings.TlsSkipVerify = authJWT.Key("tls_skip_verify_insecure").MustBool(false)
+    jwtSettings.OrgMapping = util.SplitString(valueAsString(authJWT, "org_mapping", ""))
 
 	cfg.JWTAuth = jwtSettings
 }
