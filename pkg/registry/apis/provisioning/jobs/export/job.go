@@ -14,8 +14,8 @@ import (
 // ExportJob holds all context for a running job
 type exportJob struct {
 	logger    logging.Logger
-	client    *resources.DynamicClient // Read from
-	target    repository.ReaderWriter  // Write to
+	client    *resources.ResourceClients // Read from
+	target    repository.ReaderWriter    // Write to
 	namespace string
 
 	progress   jobs.JobProgressRecorder
@@ -29,7 +29,7 @@ type exportJob struct {
 func newExportJob(ctx context.Context,
 	target repository.ReaderWriter,
 	options provisioning.ExportJobOptions,
-	client *resources.DynamicClient,
+	clients *resources.ResourceClients,
 	progress jobs.JobProgressRecorder,
 ) *exportJob {
 	prefix := options.Prefix
@@ -39,7 +39,7 @@ func newExportJob(ctx context.Context,
 	return &exportJob{
 		namespace:      target.Config().Namespace,
 		target:         target,
-		client:         client,
+		client:         clients,
 		logger:         logging.FromContext(ctx),
 		progress:       progress,
 		prefix:         prefix,

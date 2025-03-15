@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -21,17 +23,17 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type MigrationWorker struct {
 	// Tempdir for repo clones
 	clonedir string
 
-	// Read users
-	clients *resources.ClientFactory
+	// required to create clients
+	configProvider apiserver.RestConfigProvider
 
 	// temporary... while we still do an import
 	parsers *resources.ParserFactory
@@ -55,7 +57,8 @@ type MigrationWorker struct {
 	syncWorker *sync.SyncWorker
 }
 
-func NewMigrationWorker(clients *resources.ClientFactory,
+func NewMigrationWorker(
+	configProvider apiserver.RestConfigProvider, // required to create clients
 	legacyMigrator legacy.LegacyMigrator,
 	parsers *resources.ParserFactory, // should not be necessary!
 	storageStatus dualwrite.Service,
@@ -67,7 +70,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 ) *MigrationWorker {
 	return &MigrationWorker{
 		clonedir,
-		clients,
+		configProvider,
 		parsers,
 		storageStatus,
 		legacyMigrator,
@@ -130,17 +133,12 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 
 // migrateFromLegacy will export the resources from legacy storage and import them into the target repository
 func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, buffered *gogit.GoGitRepo, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
-	dynamicClient, _, err := w.clients.New(rw.Config().Namespace)
-	if err != nil {
-		return fmt.Errorf("error getting client: %w", err)
-	}
-
 	parser, err := w.parsers.GetParser(ctx, rw)
 	if err != nil {
 		return fmt.Errorf("error getting parser: %w", err)
 	}
 
-	worker, err := newMigrationJob(ctx, rw, options, dynamicClient, parser, w.bulk, w.legacyMigrator, progress)
+	worker, err := newMigrationJob(ctx, rw, options, parser, w.bulk, w.legacyMigrator, progress)
 	if err != nil {
 		return fmt.Errorf("error creating job: %w", err)
 	}
@@ -211,6 +209,11 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 
 // migrateFromUnifiedStorage will export the resources from unified storage and import them into the target repository
 func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+	parser, err := w.parsers.GetParser(ctx, repo)
+	if err != nil {
+		return fmt.Errorf("error getting parser: %w", err)
+	}
+
 	progress.SetMessage(ctx, "exporting unified storage resources")
 	if err := w.exportWorker.Process(ctx, repo, provisioning.Job{
 		Spec: provisioning.JobSpec{
@@ -226,7 +229,7 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 	progress.ResetResults()
 
 	progress.SetMessage(ctx, "pulling resources")
-	err := w.syncWorker.Process(ctx, repo, provisioning.Job{
+	err = w.syncWorker.Process(ctx, repo, provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Pull: &provisioning.SyncJobOptions{
 				Incremental: false,
@@ -236,27 +239,33 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 	if err != nil {
 		return fmt.Errorf("pull resources: %w", err)
 	}
-	dynamicClient, _, err := w.clients.New(repo.Config().Namespace)
-	if err != nil {
-		return fmt.Errorf("getting client: %w", err)
-	}
 
-	progress.SetMessage(ctx, "removing unprovisioned folders")
-	err = removeUnprovisioned(ctx, dynamicClient.Resource(schema.GroupVersionResource{
+	folderClient, _, err := parser.Clients().ForResource(schema.GroupVersionResource{
 		Group:    folders.GROUP,
 		Version:  folders.VERSION,
 		Resource: folders.RESOURCE,
-	}), progress)
+	})
+	if err != nil {
+		return fmt.Errorf("unable to get folder client: %w", err)
+	}
+
+	dashboardClient, _, err := parser.Clients().ForResource(schema.GroupVersionResource{
+		Group:    dashboard.GROUP,
+		Resource: dashboard.DASHBOARD_RESOURCE,
+		Version:  "v1alpha1",
+	})
+	if err != nil {
+		return fmt.Errorf("unable to get dashboard client: %w", err)
+	}
+
+	progress.SetMessage(ctx, "removing unprovisioned folders")
+	err = removeUnprovisioned(ctx, folderClient, progress)
 	if err != nil {
 		return fmt.Errorf("remove unprovisioned folders: %w", err)
 	}
 
 	progress.SetMessage(ctx, "removing unprovisioned dashboards")
-	err = removeUnprovisioned(ctx, dynamicClient.Resource(schema.GroupVersionResource{
-		Group:    dashboard.GROUP,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-		Version:  "v1alpha1",
-	}), progress)
+	err = removeUnprovisioned(ctx, dashboardClient, progress)
 	if err != nil {
 		return fmt.Errorf("remove unprovisioned dashboards: %w", err)
 	}
@@ -269,7 +278,6 @@ type migrationJob struct {
 	logger logging.Logger
 	target repository.ReaderWriter
 	legacy legacy.LegacyMigrator
-	client *resources.DynamicClient // used to read users
 	parser *resources.Parser
 	batch  resource.BulkStoreClient
 
@@ -286,7 +294,6 @@ type migrationJob struct {
 func newMigrationJob(ctx context.Context,
 	target repository.ReaderWriter,
 	options provisioning.MigrateJobOptions,
-	client *resources.DynamicClient,
 	parser *resources.Parser,
 	batch resource.BulkStoreClient,
 	legacyMigrator legacy.LegacyMigrator,
@@ -302,7 +309,6 @@ func newMigrationJob(ctx context.Context,
 		logger:     logging.FromContext(ctx),
 		progress:   progress,
 		options:    options,
-		client:     client,
 		parser:     parser,
 		batch:      batch,
 		legacy:     legacyMigrator,
