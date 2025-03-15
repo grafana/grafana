@@ -42,12 +42,20 @@ jest.mock('app/core/components/Select/FolderPicker', () => {
   };
 });
 
-jest.mock('app/features/provisioning/hooks', () => {
-  const actual = jest.requireActual('app/features/provisioning/hooks');
+jest.mock('app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile', () => {
   return {
-    ...actual,
     useCreateOrUpdateRepositoryFile: jest.fn(),
+  };
+});
+
+jest.mock('app/features/provisioning/hooks/useGetResourceRepository', () => {
+  return {
     useGetResourceRepository: jest.fn(),
+  };
+});
+
+jest.mock('app/features/provisioning/hooks/useRepositoryList', () => {
+  return {
     useRepositoryList: jest.fn(),
   };
 });
