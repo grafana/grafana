@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -320,15 +319,8 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 			// if the reader cannot be found, it may be an orphaned provisioned dashboard
 			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
 			if resolvedPath != "" {
-				originPath, err := filepath.Rel(
-					resolvedPath,
-					origin_path.String,
-				)
-				if err != nil {
-					return nil, err
-				}
 				meta.SetSourceProperties(utils.SourceProperties{
-					Path:            originPath, // relative path within source
+					Path:            origin_path.String, // relative path within source
 					Checksum:        origin_hash.String,
 					TimestampMillis: origin_ts.Int64,
 				})
