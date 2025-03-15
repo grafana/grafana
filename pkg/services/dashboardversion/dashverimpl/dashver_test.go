@@ -55,6 +55,7 @@ func TestDashboardVersionService(t *testing.T) {
 				"metadata": map[string]any{
 					"name":            "uid",
 					"resourceVersion": "12",
+					"generation":      int64(10),
 					"labels": map[string]any{
 						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
 					},
@@ -63,7 +64,7 @@ func TestDashboardVersionService(t *testing.T) {
 					},
 				},
 				"spec": map[string]any{
-					"version": int64(10),
+					"hello": "world",
 				},
 			}}, nil).Once()
 		res, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
@@ -79,7 +80,7 @@ func TestDashboardVersionService(t *testing.T) {
 			DashboardID:   42,
 			DashboardUID:  "uid",
 			CreatedBy:     1,
-			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(10)}),
+			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(10), "hello": "world"}),
 		})
 
 		mockCli.On("GetUserFromMeta", mock.Anything, "user:2").Return(&user.User{ID: 2}, nil)
@@ -88,6 +89,7 @@ func TestDashboardVersionService(t *testing.T) {
 				"metadata": map[string]any{
 					"name":            "uid",
 					"resourceVersion": "11",
+					"generation":      int64(11),
 					"labels": map[string]any{
 						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
 					},
@@ -96,9 +98,7 @@ func TestDashboardVersionService(t *testing.T) {
 						utils.AnnoKeyUpdatedBy: "user:2", // if updated by is set, that is the version creator
 					},
 				},
-				"spec": map[string]any{
-					"version": int64(11),
-				},
+				"spec": map[string]any{},
 			}}, nil).Once()
 		res, err = dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
 			DashboardID: 42,
@@ -264,13 +264,12 @@ func TestListDashboardVersions(t *testing.T) {
 				"metadata": map[string]any{
 					"name":            "uid",
 					"resourceVersion": "12",
+					"generation":      int64(5),
 					"labels": map[string]any{
 						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
 					},
 				},
-				"spec": map[string]any{
-					"version": int64(5),
-				},
+				"spec": map[string]any{},
 			}}}}, nil).Once()
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, err)

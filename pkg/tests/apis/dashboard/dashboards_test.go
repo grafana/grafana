@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -313,6 +314,22 @@ func TestIntegrationLegacySupport(t *testing.T) {
 			obj, err = client.Get(ctx, name, metav1.GetOptions{}, "dto")
 			require.NoError(t, err)
 			require.Equal(t, name, obj.GetName())
+
+			if obj.Object["spec"] == nil {
+				continue // missing conversions
+			}
+
+			// This should have been moved to metadata
+			spec, _, err := unstructured.NestedMap(obj.Object, "spec")
+			require.NoError(t, err)
+
+			require.Nil(t, spec["id"])
+			require.Nil(t, spec["uid"])
+			require.Nil(t, spec["version"])
+
+			access, _, err := unstructured.NestedMap(obj.Object, "access")
+			require.NoError(t, err)
+			require.Equal(t, slugify.Slugify(spec["title"].(string)), access["slug"])
 		}
 	}
 
