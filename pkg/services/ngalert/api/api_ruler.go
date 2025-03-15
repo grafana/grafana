@@ -662,10 +662,12 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 		},
 	}
 	forDuration := model.Duration(r.For)
+	keepFiringForDuration := model.Duration(r.KeepFiringFor)
 	gettableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
-		For:         &forDuration,
-		Annotations: r.Annotations,
-		Labels:      r.Labels,
+		For:           &forDuration,
+		KeepFiringFor: &keepFiringForDuration,
+		Annotations:   r.Annotations,
+		Labels:        r.Labels,
 	}
 	return gettableExtendedRuleNode
 }

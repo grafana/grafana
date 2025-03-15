@@ -157,6 +157,11 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 		return ngmodels.AlertRule{}, err
 	}
 
+	newRule.KeepFiringFor, err = validateKeepFiringForInterval(in)
+	if err != nil {
+		return ngmodels.AlertRule{}, err
+	}
+
 	return newRule, nil
 }
 
@@ -185,6 +190,7 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 	newRule.ExecErrState = ""
 	newRule.Condition = ""
 	newRule.For = 0
+	newRule.KeepFiringFor = 0
 	newRule.NotificationSettings = nil
 
 	return newRule, nil
@@ -268,6 +274,21 @@ func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Dur
 	duration := time.Duration(*ruleNode.ApiRuleNode.For)
 	if duration < 0 {
 		return 0, fmt.Errorf("field `for` cannot be negative [%v]. 0 or any positive duration are allowed", *ruleNode.ApiRuleNode.For)
+	}
+	return duration, nil
+}
+
+// validateKeepFiringForInterval validates ApiRuleNode.KeepFiringFor and converts it to time.Duration. If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
+func validateKeepFiringForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Duration, error) {
+	if ruleNode.ApiRuleNode == nil || ruleNode.ApiRuleNode.KeepFiringFor == nil {
+		if ruleNode.GrafanaManagedAlert.UID != "" {
+			return -1, nil // will be patched later with the real value of the current version of the rule
+		}
+		return 0, nil // if it's a new rule, use the 0 as the default
+	}
+	duration := time.Duration(*ruleNode.ApiRuleNode.KeepFiringFor)
+	if duration < 0 {
+		return 0, fmt.Errorf("field `keep_firing_for` cannot be negative [%v]. only 0 or any positive value is allowed", *ruleNode.ApiRuleNode.KeepFiringFor)
 	}
 	return duration, nil
 }
