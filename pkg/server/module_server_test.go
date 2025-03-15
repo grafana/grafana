@@ -72,6 +72,13 @@ func addStorageServerToConfig(t *testing.T, cfg *setting.Cfg, dbType string) {
 	_, err = s.NewKey("db_type", dbType)
 	require.NoError(t, err)
 
+	clientAuth, err := cfg.Raw.NewSection("grpc_client_authentication")
+	require.NoError(t, err)
+	_, err = clientAuth.NewKey("token_exchange_url", "token-url")
+	require.NoError(t, err)
+	_, err = clientAuth.NewKey("token", "some-token")
+	require.NoError(t, err)
+
 	if dbType == "postgres" {
 		_, _ = s.NewKey("db_host", "localhost")
 		_, _ = s.NewKey("db_name", "grafanatest")
