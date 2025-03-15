@@ -6,11 +6,11 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
+import { RepositorySpec, RepositoryView } from 'app/api/clients/provisioning';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { AnnoKeyManagerIdentity, Resource } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { RepositorySpec, RepositoryView } from 'app/features/provisioning/api';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 import { WorkflowOption } from 'app/features/provisioning/types';
@@ -43,6 +43,7 @@ export interface Props extends SaveProvisionedDashboardProps {
   repositoryConfig?: RepositorySpec;
   loadedFromRef?: string;
 }
+
 export function SaveProvisionedDashboardForm({
   defaultValues,
   dashboard,
@@ -54,8 +55,11 @@ export function SaveProvisionedDashboardForm({
   isGitHub,
 }: Props) {
   const navigate = useNavigate();
+  const appEvents = getAppEvents();
   const { meta, isDirty } = dashboard.useState();
-  const [action, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
+
+  const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
+
   const {
     register,
     handleSubmit,
@@ -68,7 +72,6 @@ export function SaveProvisionedDashboardForm({
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
 
   useEffect(() => {
-    const appEvents = getAppEvents();
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
       if (workflow === 'branch' && ref !== '' && path !== '') {
@@ -110,43 +113,39 @@ export function SaveProvisionedDashboardForm({
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [
-    request.isSuccess,
-    request.isError,
-    request.error,
-    request.data,
-    dashboard,
-    workflow,
-    isNew,
-    defaultValues.repo,
-    ref,
-    path,
-    navigate,
-  ]);
+  }, [appEvents, dashboard, defaultValues.repo, isNew, navigate, path, ref, request, workflow]);
 
-  const doSave = async ({ ref, path, comment, repo, title, description, folder }: FormData) => {
+  // Submit handler for saving the form data
+  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: FormData) => {
     if (!repo || !path) {
       return;
     }
 
     // The dashboard spec
     const saveModel = dashboard.getSaveAsModel({
-      isNew: isNew,
-      title: title,
-      description: description,
+      isNew,
+      title,
+      description,
     });
 
+    // If user is writing to the original branch, override ref with whatever we loaded from
     if (workflow === 'write') {
-      ref = loadedFromRef; // the original ref from URL or undefined
+      ref = loadedFromRef;
     }
 
-    action({ ref, name: repo, path, message: comment, body: { ...saveModel, uid: meta.uid } });
+    createOrUpdateFile({
+      ref,
+      name: repo,
+      path,
+      message: comment,
+      body: { ...saveModel, uid: meta.uid },
+    });
   };
 
-  const workflows = getWorkflowOptions(repositoryConfig, loadedFromRef);
+  const workflowOptions = getWorkflowOptions(repositoryConfig, loadedFromRef);
 
   return (
-    <form onSubmit={handleSubmit(doSave)} name="save-provisioned-form">
+    <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
       <Stack direction="column" gap={2}>
         {!repositoryConfig?.workflows.length && (
           <Alert title="This repository is read only">
@@ -156,17 +155,20 @@ export function SaveProvisionedDashboardForm({
 
         {isNew && (
           <>
-            <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>
+            <Field label="Title" invalid={!!errors.title} error={errors.title?.message}>
               <Input
                 id="dashboard-title"
-                {...register('title', { required: 'Dashboard title is required', validate: validateDashboardName })}
+                {...register('title', {
+                  required: 'Dashboard title is required',
+                  validate: validateTitle,
+                })}
               />
             </Field>
             <Field label="Description" invalid={!!errors.description} error={errors.description?.message}>
               <TextArea id="dashboard-description" {...register('description')} />
             </Field>
 
-            <Field label={'Target folder'}>
+            <Field label="Target folder">
               <Controller
                 control={control}
                 name={'folder'}
@@ -199,17 +201,15 @@ export function SaveProvisionedDashboardForm({
 
         {!isNew && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
-        <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
-          <Input id="dashboard-path" {...register('path')} readOnly={false} />
+        <Field label="Path" description="File path inside the repository (.json or .yaml)">
+          <Input id="dashboard-path" {...register('path')} />
         </Field>
 
         <Field label="Comment">
           <TextArea
             id="dashboard-comment"
             {...register('comment')}
-            aria-label="comment"
-            placeholder="Add a note to describe your changes (optional)."
-            autoFocus
+            placeholder="Add a note to describe your changes (optional)"
             rows={5}
           />
         </Field>
@@ -219,24 +219,25 @@ export function SaveProvisionedDashboardForm({
             <Field label="Workflow">
               <Controller
                 control={control}
-                name={'workflow'}
-                render={({ field: { ref, ...field } }) => {
-                  return <RadioButtonGroup id="dashboard-workflow" {...field} options={workflows} />;
-                }}
+                name="workflow"
+                render={({ field: { ref: _, ...field } }) => (
+                  <RadioButtonGroup id="dashboard-workflow" {...field} options={workflowOptions} />
+                )}
               />
             </Field>
             {workflow === 'branch' && (
               <Field
                 label="Branch"
                 description="Branch name in GitHub"
-                invalid={!!errors?.ref}
-                error={errors.ref ? <BranchValidationError /> : ''}
+                invalid={!!errors.ref}
+                error={errors.ref && <BranchValidationError />}
               >
                 <Input id="dashboard-branch" {...register('ref', { validate: validateBranchName })} />
               </Field>
             )}
           </>
         )}
+
         <Stack gap={2}>
           <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty}>
             {request.isLoading ? 'Saving...' : 'Save'}
@@ -250,29 +251,30 @@ export function SaveProvisionedDashboardForm({
   );
 }
 
-const BranchValidationError = () => {
-  return (
-    <>
-      Invalid branch name.
-      <ul style={{ padding: '0 20px' }}>
-        <li>It cannot start with '/' or end with '/', '.', or whitespace.</li>
-        <li>It cannot contain '//' or '..'.</li>
-        <li>It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\', or ']'.</li>
-        <li>It must have at least one valid character.</li>
-      </ul>
-    </>
-  );
-};
+const BranchValidationError = () => (
+  <>
+    Invalid branch name.
+    <ul style={{ padding: '0 20px' }}>
+      <li>It cannot start with '/' or end with '/', '.', or whitespace.</li>
+      <li>It cannot contain '//' or '..'.</li>
+      <li>It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\', or ']'.</li>
+      <li>It must have at least one valid character.</li>
+    </ul>
+  </>
+);
 
-async function validateDashboardName(title: string, formValues: FormData) {
+/**
+ * Dashboard title validation to ensure it's not the same as the folder name
+ * and meets other naming requirements.
+ */
+async function validateTitle(title: string, formValues: FormData) {
   if (title === formValues.folder.title?.trim()) {
-    return 'Dashboard name cannot be the same as folder name';
+    return 'Dashboard name cannot be the same as the folder name';
   }
-
   try {
     await validationSrv.validateNewDashboardName(formValues.folder.uid ?? 'general', title);
     return true;
-  } catch (e) {
-    return e instanceof Error ? e.message : 'Dashboard name is invalid';
+  } catch (error) {
+    return error instanceof Error ? error.message : 'Dashboard title validation failed.';
   }
 }
