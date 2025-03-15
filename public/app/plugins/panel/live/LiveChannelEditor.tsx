@@ -9,8 +9,9 @@ import {
   GrafanaTheme2,
   parseLiveChannelAddress,
 } from '@grafana/data';
-import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
+import { Select, Alert, Label, stylesFactory, Combobox } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { discoveryResources, getAPIGroupDiscoveryList, GroupDiscoveryResource } from 'app/features/apiserver/discovery';
 import { getManagedChannelInfo } from 'app/features/live/info';
 
 import { LivePanelOptions } from './types';
@@ -94,6 +95,16 @@ export function LiveChannelEditor(props: Props) {
     });
   };
 
+  const getWatchableResources = async (v: string) => {
+    const apis = await getAPIGroupDiscoveryList();
+    return discoveryResources(apis)
+      .filter((v) => v.verbs.includes('watch'))
+      .map((r) => ({
+        value: `${r.responseKind.group}/${r.responseKind.version}/${r.resource}`, // must be string | number
+        resource: r,
+      }));
+  };
+
   const { scope, namespace, path } = props.value;
   const style = getStyles(config.theme2);
 
@@ -109,6 +120,25 @@ export function LiveChannelEditor(props: Props) {
           <Label>Scope</Label>
           <Select options={scopes} value={scopes.find((s) => s.value === scope)} onChange={onScopeChanged} />
         </div>
+
+        {scope === LiveChannelScope.Watch && (
+          <div className={style.dropWrap}>
+            <Combobox
+              options={getWatchableResources}
+              placeholder="Select watchable resource"
+              onChange={(v) => {
+                const resource = (v as any).resource as GroupDiscoveryResource;
+                if (resource) {
+                  props.onChange({
+                    scope: LiveChannelScope.Watch,
+                    namespace: resource.responseKind.group,
+                    path: `${resource.responseKind.version}/${resource.resource}/${config.bootData.user.uid}`, // only works for this user
+                  });
+                }
+              }}
+            />
+          </div>
+        )}
 
         {scope && (
           <div className={style.dropWrap}>

@@ -20,13 +20,8 @@ import {
   K8sAPIGroupList,
   AnnoKeySavedFromUI,
   ResourceEvent,
+  GroupVersionResource,
 } from './types';
-
-export interface GroupVersionResource {
-  group: string;
-  version: string;
-  resource: string;
-}
 
 export class ScopedResourceClient<T = object, S = object, K = string> implements ResourceClient<T, S, K> {
   readonly url: string;
