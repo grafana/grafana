@@ -1,4 +1,4 @@
-import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
+import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { sceneGraph } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';

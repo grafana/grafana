@@ -4,7 +4,7 @@ import { ComponentType, ReactNode } from 'react';
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2 } from '@grafana/data/';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   config,
   locationService,

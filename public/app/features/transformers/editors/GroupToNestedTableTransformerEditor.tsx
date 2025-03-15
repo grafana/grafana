@@ -16,11 +16,9 @@ import {
   GroupByFieldOptions,
   GroupByOperationID,
   GroupByTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/groupBy';
-import {
   GroupToNestedTableTransformerOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
-} from '@grafana/data/src/transformations/transformers/groupToNestedTable';
+} from '@grafana/data/internal';
 import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert, Stack } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';

@@ -12,7 +12,7 @@ import {
   FieldMatcherID,
   FieldConfigSource,
 } from '@grafana/data';
-import { decoupleHideFromState } from '@grafana/data/src/field/fieldState';
+import { decoupleHideFromState } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { VisibilityMode } from '@grafana/schema';
 
