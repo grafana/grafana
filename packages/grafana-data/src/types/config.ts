@@ -199,6 +199,7 @@ export interface GrafanaConfig {
   trustedTypesDefaultPolicyEnabled: boolean;
   cspReportOnlyEnabled: boolean;
   liveEnabled: boolean;
+  liveMessageSizeLimit: number;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
