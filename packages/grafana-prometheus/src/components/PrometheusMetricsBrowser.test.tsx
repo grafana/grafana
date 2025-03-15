@@ -2,7 +2,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme } from '@grafana/data';
+import { createTheme, getDefaultTimeRange, TimeRange } from '@grafana/data';
 
 import PromQlLanguageProvider from '../language_provider';
 
@@ -146,7 +146,7 @@ describe('PrometheusMetricsBrowser', () => {
   const setupProps = (): BrowserProps => {
     const mockLanguageProvider = {
       start: () => Promise.resolve(),
-      getLabelValues: (name: string) => {
+      getLabelValues: (timeRange: TimeRange, name: string) => {
         switch (name) {
           case 'label1':
             return ['value1-1', 'value1-2'];
@@ -163,7 +163,7 @@ describe('PrometheusMetricsBrowser', () => {
       // The metrics browser expects both label names and label values.
       // The labels endpoint with match does not supply label values
       // and so using it breaks the metrics browser.
-      fetchSeriesLabels: (selector: string) => {
+      fetchSeriesLabels: (timeRange: TimeRange, selector: string) => {
         switch (selector) {
           case '{label1="value1-1"}':
             return { label1: ['value1-1'], label2: ['value2-1'], label3: ['value3-1'] };
@@ -187,6 +187,7 @@ describe('PrometheusMetricsBrowser', () => {
       lastUsedLabels: [],
       storeLastUsedLabels: () => {},
       deleteLastUsedLabels: () => {},
+      timeRange: getDefaultTimeRange(),
     };
 
     return defaults;
