@@ -3,6 +3,7 @@ package template
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"testing"
 
@@ -444,6 +445,75 @@ func TestExpandTemplate(t *testing.T) {
 				require.Nil(t, c.expectedError)
 			}
 			require.Equal(t, c.expected, v)
+		})
+	}
+}
+
+func TestPrometheusModeTemplate(t *testing.T) {
+	ctx := context.Background()
+
+	values := map[string]eval.NumberValueCapture{
+		"A": {
+			Var:    "A",
+			Labels: map[string]string{"instance": "server1"},
+			Value:  util.Pointer(42.5),
+		},
+		"query": {
+			Var:    "query",
+			Labels: map[string]string{"instance": "server1"},
+			Value:  util.Pointer(100.0),
+		},
+	}
+
+	result := eval.Result{
+		Values:           values,
+		EvaluationString: "[ var='A' labels={instance=server1} value=12.3 ], [ var='query' labels={instance=server1} value=100 ]",
+	}
+
+	testCases := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "Standard template with $labels",
+			template: "Instance {{ $labels.instance }} has high CPU",
+			expected: "Instance server1 has high CPU",
+		},
+		{
+			name:     "Standard template with $value",
+			template: "Value is {{ $value }}",
+			expected: fmt.Sprintf("Value is %s", result.EvaluationString),
+		},
+		{
+			name:     "Standard template with .Value",
+			template: "Value is {{ $.Value }}",
+			expected: fmt.Sprintf("Value is %s", result.EvaluationString),
+		},
+		{
+			name:     "Template with prometheus mode and $value",
+			template: "{{- _prometheusMode -}}Value is {{ $value }}",
+			expected: "Value is 100",
+		},
+		{
+			name:     "Template with prometheus mode and .Value",
+			template: "{{- _prometheusMode -}}Value is {{ .Value }}",
+			expected: "Value is 100",
+		},
+		{
+			name:     "Template with prometheus mode and $.Value",
+			template: "{{- _prometheusMode -}}Value is {{ $.Value }}",
+			expected: "Value is 100",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			labels := map[string]string{"alertname": "HighCPU", "severity": "critical", "instance": "server1"}
+			data := NewData(labels, result)
+			result, err := Expand(ctx, "test", tc.template, data, nil, result.EvaluatedAt)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
 		})
 	}
 }

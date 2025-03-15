@@ -25,7 +25,7 @@ func createQueryNode(datasourceUID, datasourceType, expr string, fromTimeRange, 
 		"expr":    expr,
 		"instant": true,
 		"range":   false,
-		"refId":   queryRefID,
+		"refId":   QueryRefID,
 	}
 
 	if datasourceType == datasources.DS_LOKI {
@@ -40,7 +40,7 @@ func createQueryNode(datasourceUID, datasourceType, expr string, fromTimeRange, 
 	return models.AlertQuery{
 		DatasourceUID: datasourceUID,
 		Model:         modelJSON,
-		RefID:         queryRefID,
+		RefID:         QueryRefID,
 		RelativeTimeRange: models.RelativeTimeRange{
 			From: models.Duration(fromTimeRange + evaluationOffset),
 			To:   models.Duration(0 + evaluationOffset),
@@ -66,7 +66,7 @@ func createMathNode() (models.AlertQuery, error) {
 			Type:       expr.QueryTypeMath,
 		},
 		MathQuery: expr.MathQuery{
-			Expression: fmt.Sprintf("is_number($%[1]s) || is_nan($%[1]s) || is_inf($%[1]s)", queryRefID),
+			Expression: fmt.Sprintf("is_number($%[1]s) || is_nan($%[1]s) || is_inf($%[1]s)", QueryRefID),
 		},
 	}
 
