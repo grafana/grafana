@@ -81,6 +81,7 @@ type UserSync struct {
 
 // SyncUserHook syncs a user with the database
 func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+	// fmt.Println("SyncUserHook")
 	ctx, span := s.tracer.Start(ctx, "user.sync.SyncUserHook")
 	defer span.End()
 
@@ -231,7 +232,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 		return nil
 	}
 
-	// If a user does not a connection to a specific auth module, create it.
+	// If a user does not have a connection to a specific auth module, create it.
 	// This can happen when: using multiple auth client where the same user exists in several or
 	// changing to new auth client
 	if createConnection {
@@ -264,6 +265,8 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity, userAuth *login.UserAuth) error {
 	ctx, span := s.tracer.Start(ctx, "user.sync.updateUserAttributes")
 	defer span.End()
+
+	needsConnectionCreation := userAuth == nil
 
 	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthenticatedBy); errProtection != nil {
 		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
@@ -305,6 +308,23 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		needsUpdate = true
 	}
 
+	// If the user is provisioned, we need to validate the authID
+	if usr.IsProvisioned {
+		s.log.Debug("User is provisioned", "id", id.ID)
+		needsConnectionCreation = false
+		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
+		if err != nil {
+			s.log.Error("Error getting auth info", "error", err)
+			return err
+		}
+
+		// Validate the authID matches the identity authId and the userUniqueID
+		if authInfo.AuthId != id.AuthID || id.SAMLSession.UserUniqueID != authInfo.UserUniqueId {
+			s.log.Error("provisioned authID mistmatches identity authID", "authInfo.AuthId", authInfo.AuthId, "id.AuthID", id.AuthID)
+			return errors.New("authID mistmatch") // TODO: assign an error
+		}
+	}
+
 	if needsUpdate {
 		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", fmt.Sprintf("%v", updateCmd))
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
@@ -312,7 +332,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		}
 	}
 
-	return s.upsertAuthConnection(ctx, usr.ID, id, userAuth == nil)
+	return s.upsertAuthConnection(ctx, usr.ID, id, needsConnectionCreation)
 }
 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
