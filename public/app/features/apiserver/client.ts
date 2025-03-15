@@ -106,12 +106,18 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
       obj.metadata.generateName = login ? login.slice(0, 2) : 'g';
     }
     setSavedFromUIAnnotation(obj.metadata);
-    return getBackendSrv().post(this.url, obj);
+    // for v1 in g12, we will ignore the schema version validation from all default clients,
+    // as we implement the necessary backend conversions, we will drop this query param
+    const queryParams = obj.apiVersion?.includes("v1") ? "?fieldValidation=Ignore" : "";
+    return getBackendSrv().post(`${this.url}${queryParams}`, obj);
   }
 
   public async update(obj: Resource<T, S, K>): Promise<Resource<T, S, K>> {
     setSavedFromUIAnnotation(obj.metadata);
-    return getBackendSrv().put<Resource<T, S, K>>(`${this.url}/${obj.metadata.name}`, obj);
+    // for v1 in g12, we will ignore the schema version validation from all default clients,
+    // as we implement the necessary backend conversions, we will drop this query param
+    const queryParams = obj.apiVersion?.includes("v1") ? "?fieldValidation=Ignore" : "";
+    return getBackendSrv().put<Resource<T, S, K>>(`${this.url}/${obj.metadata.name}${queryParams}`, obj);
   }
 
   public async delete(name: string, showSuccessAlert: boolean): Promise<MetaStatus> {
