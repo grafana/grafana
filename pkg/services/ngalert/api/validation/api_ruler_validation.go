@@ -65,14 +65,15 @@ func ValidateRuleNode(
 	queries := AlertQueriesFromApiAlertQueries(ruleNode.GrafanaManagedAlert.Data)
 
 	newAlertRule := ngmodels.AlertRule{
-		OrgID:           orgId,
-		Title:           ruleNode.GrafanaManagedAlert.Title,
-		Condition:       ruleNode.GrafanaManagedAlert.Condition,
-		Data:            queries,
-		UID:             ruleNode.GrafanaManagedAlert.UID,
-		IntervalSeconds: intervalSeconds,
-		NamespaceUID:    namespaceUID,
-		RuleGroup:       groupName,
+		OrgID:                       orgId,
+		Title:                       ruleNode.GrafanaManagedAlert.Title,
+		Condition:                   ruleNode.GrafanaManagedAlert.Condition,
+		Data:                        queries,
+		UID:                         ruleNode.GrafanaManagedAlert.UID,
+		IntervalSeconds:             intervalSeconds,
+		NamespaceUID:                namespaceUID,
+		RuleGroup:                   groupName,
+		MissingSeriesEvalsToResolve: ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve,
 	}
 
 	if isRecordingRule {
