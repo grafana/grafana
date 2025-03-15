@@ -3,7 +3,7 @@ import * as React from 'react';
 import { getCellLinks } from '../../utils';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
-import { TableCellDisplayMode, TableCellProps } from './types';
+import { TableCellProps } from './types';
 import { getCellOptions } from './utils';
 
 const DATALINKS_HEIGHT_OFFSET = 10;
@@ -11,8 +11,7 @@ const DATALINKS_HEIGHT_OFFSET = 10;
 export const ImageCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps } = props;
   const cellOptions = getCellOptions(field);
-  const { title, alt } =
-    cellOptions.type === TableCellDisplayMode.Image ? cellOptions : { title: undefined, alt: undefined };
+  const { title, alt } = cellOptions.type === 'image' ? cellOptions : { title: undefined, alt: undefined };
   const displayValue = field.display!(cell.value);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
 

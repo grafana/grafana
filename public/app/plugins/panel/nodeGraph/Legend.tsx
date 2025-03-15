@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
 import { Field, FieldColorModeId, GrafanaTheme2 } from '@grafana/data';
-import { LegendDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 import { Icon, useStyles2, useTheme2, VizLegend, VizLegendItem, VizLegendListItem } from '@grafana/ui';
 
 import { Config } from './layout';
@@ -50,7 +50,7 @@ export const Legend = function Legend(props: Props) {
     <VizLegend<ItemData>
       className={styles.legend}
       displayMode={LegendDisplayMode.List}
-      placement={'bottom'}
+      placement={LegendPlacement.Bottom}
       items={colorItems}
       itemRenderer={(item) => {
         return (

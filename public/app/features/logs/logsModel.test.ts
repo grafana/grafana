@@ -53,7 +53,7 @@ describe('dedupLogRows()', () => {
         entry: 'WARN test 1.23 on [xxx]',
       },
     ] as LogRowModel[];
-    expect(dedupLogRows(rows, LogsDedupStrategy.none)).toMatchObject(rows);
+    expect(dedupLogRows(rows, LogsDedupStrategy.None)).toMatchObject(rows);
   });
 
   test('should dedup on exact matches', () => {
@@ -71,7 +71,7 @@ describe('dedupLogRows()', () => {
         entry: 'WARN test 1.23 on [xxx]',
       },
     ] as LogRowModel[];
-    expect(dedupLogRows(rows, LogsDedupStrategy.exact)).toEqual([
+    expect(dedupLogRows(rows, LogsDedupStrategy.Exact)).toEqual([
       {
         duplicates: 1,
         entry: 'WARN test 1.23 on [xxx]',
@@ -102,7 +102,7 @@ describe('dedupLogRows()', () => {
         entry: 'WARN test 1.23 on [xxx]',
       },
     ] as LogRowModel[];
-    expect(dedupLogRows(rows, LogsDedupStrategy.numbers)).toEqual([
+    expect(dedupLogRows(rows, LogsDedupStrategy.Numbers)).toEqual([
       {
         duplicates: 1,
         entry: 'WARN test 1.2323423 on [xxx]',
@@ -133,7 +133,7 @@ describe('dedupLogRows()', () => {
         entry: 'WARN test 1.23 on [xxx]',
       },
     ] as LogRowModel[];
-    expect(dedupLogRows(rows, LogsDedupStrategy.signature)).toEqual([
+    expect(dedupLogRows(rows, LogsDedupStrategy.Signature)).toEqual([
       {
         duplicates: 3,
         entry: 'WARN test 1.2323423 on [xxx]',
@@ -153,7 +153,7 @@ describe('dedupLogRows()', () => {
         entry: 'WARN 123',
       },
     ] as LogRowModel[];
-    expect(dedupLogRows(rows, LogsDedupStrategy.exact)).toEqual([
+    expect(dedupLogRows(rows, LogsDedupStrategy.Exact)).toEqual([
       {
         duplicates: 0,
         entry: 'INFO 123',
@@ -164,7 +164,7 @@ describe('dedupLogRows()', () => {
       },
     ]);
 
-    expect(dedupLogRows(rows, LogsDedupStrategy.none)).toEqual(rows);
+    expect(dedupLogRows(rows, LogsDedupStrategy.None)).toEqual(rows);
   });
 });
 
@@ -215,7 +215,7 @@ describe('filterLogLevels()', () => {
       },
     ] as LogRowModel[];
     const filteredLogs = filterLogLevels(rows, new Set([LogLevel.error]));
-    const deduplicatedLogs = dedupLogRows(filteredLogs, LogsDedupStrategy.exact);
+    const deduplicatedLogs = dedupLogRows(filteredLogs, LogsDedupStrategy.Exact);
     expect(deduplicatedLogs.length).toBe(3);
     expect(deduplicatedLogs).toEqual([
       { duplicates: 0, entry: 'DEBUG 1', logLevel: 'debug' },

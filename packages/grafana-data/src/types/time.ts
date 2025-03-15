@@ -55,7 +55,7 @@ export type TimeZoneBrowser = SchemaTimeZoneBrowser;
 export type TimeZoneUtc = SchemaTimeZoneUtc;
 
 /** @deprecated use defaultTimeZone from schema  */
-export const DefaultTimeZone = defaultTimeZone;
+export const DefaultTimeZone = defaultTimeZone();
 
 export interface TimeOptions {
   [key: string]: TimeOption[];

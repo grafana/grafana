@@ -12,6 +12,7 @@ import {
   formattedValueToString,
   Field,
 } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
@@ -20,7 +21,7 @@ import { Button } from '../Button/Button';
 
 import { Table } from './Table';
 import mdx from './Table.mdx';
-import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './types';
+import { FooterItem, TableCustomCellOptions } from './types';
 
 const meta: Meta<typeof Table> = {
   title: 'Visualizations/Table',

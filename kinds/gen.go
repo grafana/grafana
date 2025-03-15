@@ -11,15 +11,12 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
-	"cuelang.org/go/cue/load"
 	"github.com/grafana/codejen"
-	"github.com/grafana/cuetsy"
 	"github.com/grafana/grafana/pkg/codegen"
 )
 
@@ -31,6 +28,7 @@ var CoreDefParentPath = "kinds"
 // TSCoreKindParentPath is the path, relative to the repository root, to the directory that
 // contains one directory per kind, full of generated TS kind output: types and default consts.
 var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src", "raw")
+var CommonPath = filepath.Join("packages", "grafana-schema", "src", "common")
 
 func main() {
 	if len(os.Args) > 1 {
@@ -66,7 +64,10 @@ func main() {
 	groot := filepath.Dir(cwd)
 
 	f := os.DirFS(filepath.Join(groot, CoreDefParentPath))
-	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
+	kinddirs, err := fs.ReadDir(f, ".")
+	if err != nil {
+		die(err)
+	}
 	all, err := loadCueFiles(ctx, kinddirs)
 	if err != nil {
 		die(err)
@@ -81,9 +82,19 @@ func main() {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
 
-	commfsys := elsedie(genCommon(ctx, groot))("common schemas failed")
-	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
-	if err = jfs.Merge(commfsys); err != nil {
+	commonGen := codejen.JennyListWithNamer(func(_ string) string {
+		return "CommonTS"
+	})
+
+	commonGen.Append(codegen.NewTsCommonJenny(CommonPath))
+	commonGen.AddPostprocessors(header)
+
+	commonJfs, err := commonGen.GenerateFS()
+	if err != nil {
+		die(fmt.Errorf("common codegen failed: %w", err))
+	}
+
+	if err = jfs.Merge(commonJfs); err != nil {
 		die(err)
 	}
 
@@ -93,64 +104,6 @@ func main() {
 		}
 	} else if err = jfs.Write(context.Background(), groot); err != nil {
 		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
-	}
-}
-
-type dummyCommonJenny struct{}
-
-func genCommon(ctx *cue.Context, groot string) (*codejen.FS, error) {
-	fsys := codejen.NewFS()
-	path := filepath.Join("packages", "grafana-schema", "src", "common")
-	fsys = elsedie(fsys.Map(packageMapper))("failed remapping fs")
-
-	commonFiles := make([]string, 0)
-	filepath.WalkDir(filepath.Join(groot, path), func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() || filepath.Ext(d.Name()) != ".cue" {
-			return nil
-		}
-		commonFiles = append(commonFiles, path)
-		return nil
-	})
-
-	instance := load.Instances(commonFiles, &load.Config{})[0]
-	if instance.Err != nil {
-		return nil, instance.Err
-	}
-
-	v := ctx.BuildInstance(instance)
-	b := elsedie(cuetsy.Generate(v, cuetsy.Config{
-		Export: true,
-	}))("failed to generate common schema TS")
-
-	_ = fsys.Add(*codejen.NewFile(filepath.Join(path, "common.gen.ts"), b, dummyCommonJenny{}))
-	return fsys, nil
-}
-
-func (j dummyCommonJenny) JennyName() string {
-	return "CommonSchemaJenny"
-}
-
-func (j dummyCommonJenny) Generate(dummy any) ([]codejen.File, error) {
-	return nil, nil
-}
-
-var pkgReplace = regexp.MustCompile("^package kindsys")
-
-func packageMapper(f codejen.File) (codejen.File, error) {
-	f.Data = pkgReplace.ReplaceAllLiteral(f.Data, []byte("package common"))
-	return f, nil
-}
-
-func elsedie[T any](t T, err error) func(msg string) T {
-	if err != nil {
-		return func(msg string) T {
-			fmt.Fprintf(os.Stderr, "%s: %s\n", msg, err)
-			os.Exit(1)
-			return t
-		}
-	}
-	return func(msg string) T {
-		return t
 	}
 }
 
@@ -186,11 +139,17 @@ func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]codegen.SchemaForGen,
 			return nil, err
 		}
 
+		version, err := getVersion(v)
+		if err != nil {
+			return nil, err
+		}
+
 		sch := codegen.SchemaForGen{
 			Name:       name,
 			FilePath:   "./" + filepath.Join(CoreDefParentPath, entry),
 			CueFile:    v,
 			IsGroup:    false,
+			Version:    version,
 			OutputName: strings.ToLower(name),
 		}
 
@@ -209,4 +168,24 @@ func getSchemaName(v cue.Value) (string, error) {
 
 	name = strings.Replace(name, "-", "_", -1)
 	return name, nil
+}
+
+func getVersion(val cue.Value) (string, error) {
+	val = val.LookupPath(cue.ParsePath("lineage.schemas[0].version"))
+	versionValues, err := val.List()
+	if err != nil {
+		return "", fmt.Errorf("missing version in schema: %s", err)
+	}
+
+	version := make([]int64, 0)
+	for versionValues.Next() {
+		v, err := versionValues.Value().Int64()
+		if err != nil {
+			return "", fmt.Errorf("version should be a list of two elements: %s", err)
+		}
+
+		version = append(version, v)
+	}
+
+	return fmt.Sprintf("%d-%d", version[0], version[1]), nil
 }

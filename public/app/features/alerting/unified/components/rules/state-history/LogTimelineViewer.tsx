@@ -2,7 +2,7 @@ import { memo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { DataFrame, InterpolateFunction, TimeRange } from '@grafana/data';
-import { VisibilityMode } from '@grafana/schema';
+import { LegendPlacement, VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, useTheme2 } from '@grafana/ui';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import { TimelineMode } from 'app/core/components/TimelineChart/utils';
@@ -34,7 +34,7 @@ export const LogTimelineViewer = memo(({ frames, timeRange }: LogTimelineViewerP
           legend={{
             calcs: [],
             displayMode: LegendDisplayMode.List,
-            placement: 'bottom',
+            placement: LegendPlacement.Bottom,
             showLegend: true,
           }}
           legendItems={[

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { FC, CSSProperties, ComponentType } from 'react';
 import * as React from 'react';
+import { ComponentType, CSSProperties, FC } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -53,7 +53,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   let { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
 
   if (document.body.clientWidth < theme.breakpoints.values.lg) {
-    placement = 'bottom';
+    placement = LegendPlacement.Bottom;
   }
 
   let size: VizSize | null = null;

@@ -1,6 +1,8 @@
 import { isEmpty } from 'lodash';
 
-import { TimeZone, DefaultTimeZone } from '../types/time';
+import { defaultTimeZone } from '@grafana/schema';
+
+import { TimeZone } from '../types/time';
 
 /**
  * Used for helper functions handling time zones.
@@ -39,7 +41,7 @@ export interface DateTimeOptions extends TimeZoneOptions {
  */
 export type TimeZoneResolver = () => TimeZone | undefined;
 
-let defaultTimeZoneResolver: TimeZoneResolver = () => DefaultTimeZone;
+let defaultTimeZoneResolver: TimeZoneResolver = () => defaultTimeZone();
 
 /**
  * Used by Grafana internals to set the {@link TimeZoneResolver} to access the current
@@ -62,5 +64,5 @@ export const getTimeZone = <T extends TimeZoneOptions>(options?: T): TimeZone =>
   if (options?.timeZone && !isEmpty(options.timeZone)) {
     return options.timeZone;
   }
-  return defaultTimeZoneResolver() ?? DefaultTimeZone;
+  return defaultTimeZoneResolver() ?? defaultTimeZone();
 };

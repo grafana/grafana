@@ -113,7 +113,7 @@ export const LogsMetaRow = memo(
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
 
     // Add deduplication info
-    if (dedupStrategy !== LogsDedupStrategy.none) {
+    if (dedupStrategy !== LogsDedupStrategy.None) {
       logsMetaItem.push({
         label: 'Deduplication count',
         value: dedupCount,

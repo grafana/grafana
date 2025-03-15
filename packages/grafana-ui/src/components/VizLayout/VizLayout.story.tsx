@@ -1,6 +1,8 @@
 import { Meta, StoryFn } from '@storybook/react';
 import { useEffect, useState } from 'react';
 
+import { LegendPlacement } from '@grafana/schema';
+
 import { VizLayout } from './VizLayout';
 
 const meta: Meta = {
@@ -32,7 +34,7 @@ export const BottomLegend: StoryFn = ({ height, width, legendItems }) => {
   }, [legendItems]);
 
   const legend = (
-    <VizLayout.Legend placement="bottom" maxHeight="30%">
+    <VizLayout.Legend placement={LegendPlacement.Bottom} maxHeight="30%">
       {items.map((_, index) => (
         <div style={{ height: '30px', width: '100%', background: 'blue', marginBottom: '2px' }} key={index}>
           Legend item {index}
@@ -62,7 +64,7 @@ export const RightLegend: StoryFn = ({ height, width, legendItems, legendWidth }
   }, [legendItems]);
 
   const legend = (
-    <VizLayout.Legend placement="right" maxWidth="50%">
+    <VizLayout.Legend placement={LegendPlacement.Right} maxWidth="50%">
       {items.map((_, index) => (
         <div style={{ height: '30px', width: `${legendWidth}px`, background: 'blue', marginBottom: '2px' }} key={index}>
           Legend item {index}
