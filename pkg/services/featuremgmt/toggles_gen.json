@@ -1913,12 +1913,15 @@
     {
       "metadata": {
         "name": "frontendSandboxMonitorOnly",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-07-05T11:48:25Z"
+        "resourceVersion": "1741965568775",
+        "creationTimestamp": "2023-07-05T11:48:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-14 15:19:28.77575 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables monitor only in the plugin frontend sandbox (if enabled)",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
       }
