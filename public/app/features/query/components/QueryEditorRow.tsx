@@ -25,7 +25,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -415,7 +415,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const colour = type === 'warning' ? 'orange' : 'blue';
     const iconName = type === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
 
-    const serializedWarnings = uniqueWarnings.map((warning) => warning.text).join('\n');
+    let serializedWarnings;
+    if (uniqueWarnings.length > 1) {
+      const listItems = uniqueWarnings.map((warning) => warning.text);
+      serializedWarnings = <List items={listItems} renderItem={(item) => <>{item}</>} />;
+    } else {
+      serializedWarnings = uniqueWarnings[0].text;
+    }
 
     return (
       <Badge
