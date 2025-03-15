@@ -159,6 +159,23 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
+
+		// go through each request and create a metric for it's corresponding response
+		for _, dsReq := range req.Requests {
+			// do we need go through multiple queries within a request as well or can we assume there is always only one query per request?
+			refId := dsReq.Request.Queries[0].RefID
+			dsRsp := rsp.Responses[refId]
+			// if there is an error at this point, we assume it is a ds_querier error, as our hope is that all errors return a queryDataResponse error
+			// note: I'm not sure if this is 100% accurate... we may want to revisit this
+			if err != nil {
+				r.builder.metrics.dsResponses.WithLabelValues(dsReq.PluginId, "500", "ds_querier").Inc()
+			} else {
+				// creates a metric for each response with corresponding status and error source
+				r.builder.metrics.dsResponses.WithLabelValues(dsReq.PluginId, dsRsp.Status.String(), dsRsp.ErrorSource.String()).Inc()
+			}
+		}
+
+		// handle errors that are not queryDataResponse errors
 		if err != nil {
 			// log unexpected errors
 			var k8sErr *errorsK8s.StatusError
