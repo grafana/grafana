@@ -6,7 +6,7 @@ import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzo
 import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 
@@ -189,7 +189,11 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
     const size = formattedValueToString(formattedSize);
     return (
       <div className={styles.errorAlert}>
-        <Alert title="Upload failed" severity="error" onRemove={clearAlert}>
+        <Alert
+          title={t('grafana-ui.file-dropzone.error-title', 'Upload failed')}
+          severity="error"
+          onRemove={clearAlert}
+        >
           {errors.map((error) => {
             switch (error.code) {
               case ErrorCode.FileTooLarge:
