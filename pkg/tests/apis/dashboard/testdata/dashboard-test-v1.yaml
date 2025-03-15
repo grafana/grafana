@@ -4,3 +4,4 @@ metadata:
   name: test-v1
 spec:
   title: Test dashboard. Created at v1 XXX
+  schemaVersion: 36
