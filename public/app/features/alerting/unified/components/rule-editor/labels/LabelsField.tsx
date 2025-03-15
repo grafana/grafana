@@ -404,6 +404,8 @@ function LabelsField() {
             {getLabelText(type)}
           </Text>
           <NeedHelpInfo
+            externalLink={'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/'}
+            linkText={`Read about labels`}
             contentText="The dropdown only displays labels that you have previously used for alerts.
             Select a label from the options below or type in a new one."
             title="Labels"
