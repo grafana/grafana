@@ -37,6 +37,8 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	gsmEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -159,6 +161,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	legacydualwrite "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
+	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -401,6 +405,13 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideVerifier,
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
+	secretmetadata.ProvideSecureValueMetadataStorage,
+	secretmetadata.ProvideKeeperMetadataStorage,
+	secretmetadata.ProvideDecryptStorage,
+	secretencryption.ProvideDataKeyStorageStorage,
+	secretencryption.ProvideEncryptedValueStorage,
+	encryptionManager.ProvideEncryptionManager,
+	gsmEncryption.ProvideThirdPartyProviderMap,
 	authz.WireSet,
 	// Unified storage
 	resource.ProvideStorageMetrics,
