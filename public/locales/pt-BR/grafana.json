@@ -15,7 +15,7 @@
       "permission": "Permissão"
     },
     "permission-list-item": {
-      "inherited": ""
+      "inherited": "Herdados da pasta"
     },
     "permissions": {
       "add-label": "Adicionar uma permissão",
@@ -36,26 +36,26 @@
   },
   "admin": {
     "anon-users": {
-      "not-found": ""
+      "not-found": "Nenhum usuário anônimo encontrado."
     },
     "edit-org": {
-      "access-denied": "",
-      "heading": "",
-      "update-button": "",
-      "users-heading": ""
+      "access-denied": "Você não tem permissão para ver usuários nesta organização. Para atualizar esta organização, entre em contato com o administrador do servidor.",
+      "heading": "Editar Organização",
+      "update-button": "Atualizar",
+      "users-heading": "Usuários da organização"
     },
     "feature-toggles": {
-      "sub-title": ""
+      "sub-title": "Visualize e edite feature toggles. Leia mais sobre feature toggles em <2>grafana.com</2>."
     },
     "get-enterprise": {
-      "contact-us": "",
-      "description": "",
-      "features-heading": "",
-      "included-description": "",
-      "included-heading": "",
-      "service-title": "",
-      "team-sync-details": "",
-      "title": ""
+      "contact-us": "Contate-nos e faça uma avaliação grátis",
+      "description": "Você pode usar a versão de avaliação gratuitamente por 30 dias. Nós iremos te lembrar cinco dias antes do fim do período de avaliação.",
+      "features-heading": "Melhores funcionalidades",
+      "included-description": "Indenização, colaboração com a Grafana Labs em prioridades futuras e treinamento pela equipe central da Grafana.",
+      "included-heading": "Também inclui:",
+      "service-title": "À sua disposição",
+      "team-sync-details": "LDAP, GitHub OAuth, Auth Proxy, Okta",
+      "title": "Obtenha Grafana Enterprise"
     },
     "ldap": {
       "test-mapping-heading": "",
@@ -95,9 +95,9 @@
     },
     "orgs": {
       "delete-body": "",
-      "id-header": "",
+      "id-header": "ID",
       "name-header": "",
-      "new-org-button": ""
+      "new-org-button": "Nova organização"
     },
     "server-settings": {
       "alerts-button": "",
@@ -111,10 +111,10 @@
       "info-description": ""
     },
     "upgrade-info": {
-      "title": ""
+      "title": "Licença Enterprise"
     },
     "user-orgs": {
-      "add-button": "",
+      "add-button": "Adicionar usuário à organização",
       "change-role-button": "",
       "external-user-tooltip": "",
       "remove-button": "",
@@ -1169,7 +1169,7 @@
       "download-csv": "Baixar CSV",
       "download-excel-description": "Adiciona cabeçalho ao CSV para usar com o Excel",
       "download-excel-label": "Baixar para Excel",
-      "download-logs": "Baixar registros",
+      "download-logs": "",
       "download-service": "Baixar gráfico de serviço",
       "download-traces": "Baixar rastreamentos",
       "excel-header": "Cabeçalho do Excel",
@@ -1556,7 +1556,7 @@
   "explore": {
     "add-to-dashboard": "Adicionar ao painel de controle",
     "drilldownInfo": {
-      "action": "",
+      "action": "Ir para Grafana Aprofundar",
       "description": "",
       "title": ""
     },
@@ -2742,7 +2742,7 @@
       "title": "Detectar"
     },
     "drilldown": {
-      "title": ""
+      "title": "Aprofundar"
     },
     "explore": {
       "title": "Explorar"
@@ -2899,7 +2899,7 @@
     },
     "shared-dashboard": {
       "subtitle": "",
-      "title": ""
+      "title": "Painéis compartilhados"
     },
     "sign-out": {
       "title": "Finalizar sessão"
