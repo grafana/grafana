@@ -354,7 +354,7 @@ require (
 	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
-	github.com/gogo/status v1.1.1
+	github.com/gogo/status v1.1.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
@@ -563,7 +563,7 @@ require (
 	github.com/grafana/grafana/pkg/infra/tracing v0.0.0-00010101000000-000000000000 // @grafana/grafana-backend-group
 )
 
-require github.com/grafana/grafana/pkg/build v0.0.0-20250315003045-45e2cb78f247
+require github.com/grafana/grafana/pkg/build v0.0.0-20250315003045-45e2cb78f247 // @grafana/grafana-backend-group
 
 require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.49.0 // indirect
