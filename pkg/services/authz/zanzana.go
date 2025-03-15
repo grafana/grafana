@@ -18,7 +18,6 @@ import (
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/grafana/authlib/authn"
 	authnlib "github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
@@ -250,7 +249,7 @@ func (fn AuthenticatorFunc) Authenticate(ctx context.Context) (context.Context, 
 
 type AuthenticatorFunc func(context.Context) (context.Context, error)
 
-func NewAuthenticatorInterceptor(auth authn.Authenticator, tracer trace.Tracer) Authenticator {
+func NewAuthenticatorInterceptor(auth authnlib.Authenticator, tracer trace.Tracer) Authenticator {
 	return AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
 		ctx, span := tracer.Start(ctx, "grpcutils.Authenticate")
 		defer span.End()
@@ -260,10 +259,10 @@ func NewAuthenticatorInterceptor(auth authn.Authenticator, tracer trace.Tracer) 
 			return nil, errors.New("missing metedata in context")
 		}
 
-		info, err := auth.Authenticate(ctx, authn.NewGRPCTokenProvider(md))
+		info, err := auth.Authenticate(ctx, authnlib.NewGRPCTokenProvider(md))
 		if err != nil {
 			span.RecordError(err)
-			if authn.IsUnauthenticatedErr(err) {
+			if authnlib.IsUnauthenticatedErr(err) {
 				return nil, status.Error(codes.Unauthenticated, err.Error())
 			}
 
