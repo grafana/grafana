@@ -270,6 +270,7 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 					"generateDashboardPreviews": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
+							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -282,7 +283,7 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 						},
 					},
 				},
-				Required: []string{"branch"},
+				Required: []string{"branch", "generateDashboardPreviews"},
 			},
 		},
 	}
