@@ -201,6 +201,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "insert into resource_history",
 					Data: &sqlResourceRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Generation:  789,
 						WriteEvent: resource.WriteEvent{
 							Key: &resource.ResourceKey{
 								Namespace: "nn",

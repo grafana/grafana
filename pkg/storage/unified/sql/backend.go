@@ -242,6 +242,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
+			Generation:  event.Object.GetGeneration(),
 			GUID:        guid,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
