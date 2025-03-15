@@ -154,8 +154,9 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		return b.validateDelete(ctx, a)
 	case admission.Create, admission.Update:
 		return b.validateCreateUpdate(a)
+	default:
+		return nil
 	}
-	return nil
 }
 
 func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.Attributes) error {
