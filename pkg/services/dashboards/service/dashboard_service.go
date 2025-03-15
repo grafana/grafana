@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/util/retryer"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/maps"
@@ -559,6 +560,21 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 	return isParentFolderChanged, nil
 }
 
+// WaitForSearchQuery waits for the search query to return the expected number of hits.
+// Since US doesn't offer read-after-write guarantees, we can use this to wait after writes until the indexer is up to date.
+func (dr *DashboardServiceImpl) WaitForSearchQuery(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, maxRetries int, expectedHits int) error {
+	return retryer.Retry(func() (retryer.RetrySignal, error) {
+		results, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
+		if err != nil {
+			return retryer.FuncError, err
+		}
+		if len(results.Hits) == expectedHits {
+			return retryer.FuncComplete, nil
+		}
+		return retryer.FuncFailure, nil
+	}, maxRetries, 1*time.Second, 5*time.Second)
+}
+
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		// check each org for orphaned provisioned dashboards
@@ -580,10 +596,17 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 			}
 
 			// delete them
+			var deletedUids []string
 			for _, foundDash := range foundDashs {
 				if err = dr.deleteDashboard(ctx, foundDash.DashboardID, foundDash.DashboardUID, org.ID, false); err != nil {
 					return err
 				}
+				deletedUids = append(deletedUids, foundDash.DashboardUID)
+			}
+			// wait for deleted dashboards to be removed from the index
+			err = dr.WaitForSearchQuery(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: org.ID, DashboardUIDs: deletedUids}, 5, 0)
+			if err != nil {
+				return err
 			}
 		}
 		return nil
