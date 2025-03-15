@@ -84,7 +84,7 @@ type Store interface {
 	GetProvisionedDashboardsByName(ctx context.Context, name string) ([]*Dashboard, error)
 	GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string) ([]*Dashboard, error)
 	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)
-	SaveProvisionedDashboard(ctx context.Context, dash *Dashboard, provisioning *DashboardProvisioning) error
+	SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, id int64) error
 	// ValidateDashboardBeforeSave validates a dashboard before save.
 	ValidateDashboardBeforeSave(ctx context.Context, dashboard *Dashboard, overwrite bool) (bool, error)

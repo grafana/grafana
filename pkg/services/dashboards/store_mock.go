@@ -694,22 +694,34 @@ func (_m *FakeDashboardStore) SaveDashboard(ctx context.Context, cmd SaveDashboa
 	return r0, r1
 }
 
-// SaveProvisionedDashboard provides a mock function with given fields: ctx, dash, provisioning
-func (_m *FakeDashboardStore) SaveProvisionedDashboard(ctx context.Context, dash *Dashboard, provisioning *DashboardProvisioning) error {
-	ret := _m.Called(ctx, dash, provisioning)
+// SaveProvisionedDashboard provides a mock function with given fields: ctx, cmd, provisioning
+func (_m *FakeDashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error) {
+	ret := _m.Called(ctx, cmd, provisioning)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveProvisionedDashboard")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *Dashboard, *DashboardProvisioning) error); ok {
-		r0 = rf(ctx, dash, provisioning)
+	var r0 *Dashboard
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, SaveDashboardCommand, *DashboardProvisioning) (*Dashboard, error)); ok {
+		return rf(ctx, cmd, provisioning)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, SaveDashboardCommand, *DashboardProvisioning) *Dashboard); ok {
+		r0 = rf(ctx, cmd, provisioning)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*Dashboard)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, SaveDashboardCommand, *DashboardProvisioning) error); ok {
+		r1 = rf(ctx, cmd, provisioning)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // SoftDeleteDashboard provides a mock function with given fields: ctx, orgID, dashboardUid
