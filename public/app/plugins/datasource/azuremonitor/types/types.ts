@@ -264,6 +264,15 @@ export interface AzureAPIResponse<T> {
   statusText?: string;
 }
 
+export interface AzureLogAnalyticsTable {
+  name: string;
+  description: string;
+}
+
+export interface MetadataResponse {
+  tables: AzureLogAnalyticsTable[];
+}
+
 export interface Location {
   id: string;
   name: string;
@@ -417,3 +426,46 @@ export type CheatsheetQueries = {
 export type DropdownCategories = {
   [key: string]: boolean;
 };
+
+export enum QueryEditorPropertyType {
+  Number = 'number',
+  String = 'string',
+  Boolean = 'boolean',
+  DateTime = 'datetime',
+  TimeSpan = 'timeSpan',
+  Function = 'function',
+  Interval = 'interval',
+}
+
+export interface QueryEditorProperty {
+  type: QueryEditorPropertyType;
+  name: string;
+}
+
+export type QueryEditorOperatorType = string | boolean | number | SelectableValue<string>;
+export type QueryEditorOperatorValueType = QueryEditorOperatorType | QueryEditorOperatorType[];
+
+export interface QueryEditorOperator<T = QueryEditorOperatorValueType> {
+  name: string;
+  value: T;
+  labelValue?: string;
+}
+
+export interface QueryEditorOperatorDefinition {
+  value: string;
+  supportTypes: QueryEditorPropertyType[];
+  multipleValues: boolean;
+  booleanValues: boolean;
+  label?: string;
+  description?: string;
+}
+
+export enum AggregateFunctions {
+  Sum = 'sum',
+  Avg = 'avg',
+  Count = 'count',
+  Dcount = 'dcount',
+  Max = 'max',
+  Min = 'min',
+  Percentile = 'percentile',
+}
