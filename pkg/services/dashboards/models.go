@@ -267,6 +267,7 @@ type GetDashboardQuery struct {
 	OrgID     int64
 
 	IncludeDeleted bool // only supported when using unified storage
+	IncludeDTO     bool // Add DTO subresource. Used for K8s dashboards when large object support is enabled.
 }
 
 type DashboardTagCloudItem struct {
