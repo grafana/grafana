@@ -6,7 +6,7 @@ import { DataFrame, Field, GrafanaTheme2, LinkModel, LinkTarget } from '@grafana
 import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
 
 import { Config } from './layout';
-import { EdgeDatumLayout, NodeDatum } from './types';
+import { EdgeDatumLayout, NodeDatum, NodeGraphOptions } from './types';
 import { getEdgeFields, getNodeFields, statToString } from './utils';
 
 /**
@@ -21,7 +21,8 @@ export function useContextMenu(
   edges: DataFrame | undefined,
   config: Config,
   setConfig: (config: Config) => void,
-  setFocusedNodeId: (id: string) => void
+  setFocusedNodeId: (id: string) => void,
+  options?: NodeGraphOptions
 ): {
   onEdgeOpen: (event: MouseEvent<SVGElement>, edge: EdgeDatumLayout) => void;
   onNodeOpen: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
@@ -48,9 +49,9 @@ export function useContextMenu(
 
       const links = nodes ? getLinks(nodes, node.dataFrameRowIndex) : [];
       const renderer = getItemsRenderer(links, node, extraNodeItem);
-      setMenu(makeContextMenu(<NodeHeader node={node} nodes={nodes} />, event, setMenu, renderer));
+      setMenu(makeContextMenu(<NodeHeader node={node} nodes={nodes} options={options} />, event, setMenu, renderer));
     },
-    [config, nodes, getLinks, setMenu, setConfig, setFocusedNodeId]
+    [config, nodes, getLinks, setMenu, setConfig, setFocusedNodeId, options]
   );
 
   const onEdgeOpen = useCallback(
@@ -62,9 +63,9 @@ export function useContextMenu(
       }
       const links = getLinks(edges, edge.dataFrameRowIndex);
       const renderer = getItemsRenderer(links, edge);
-      setMenu(makeContextMenu(<EdgeHeader edge={edge} edges={edges} />, event, setMenu, renderer));
+      setMenu(makeContextMenu(<EdgeHeader edge={edge} edges={edges} options={options} />, event, setMenu, renderer));
     },
-    [edges, getLinks, setMenu]
+    [edges, getLinks, setMenu, options]
   );
 
   return { onEdgeOpen, onNodeOpen, MenuComponent: menu };
@@ -198,10 +199,10 @@ function HeaderRow({ label, value }: { label: string; value: string }) {
 /**
  * Shows some field values in a table on top of the context menu.
  */
-function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
+function NodeHeader({ node, nodes, options }: { node: NodeDatum; nodes?: DataFrame; options?: NodeGraphOptions }) {
   const rows = [];
   if (nodes) {
-    const fields = getNodeFields(nodes);
+    const fields = getNodeFields(nodes, options);
     for (const f of [fields.title, fields.subTitle, fields.mainStat, fields.secondaryStat, ...fields.details]) {
       if (f && f.values[node.dataFrameRowIndex]) {
         rows.push(<FieldRow key={f.name} field={f} index={node.dataFrameRowIndex} />);
@@ -227,9 +228,9 @@ function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
 /**
  * Shows some of the field values in a table on top of the context menu.
  */
-function EdgeHeader(props: { edge: EdgeDatumLayout; edges: DataFrame }) {
+function EdgeHeader(props: { edge: EdgeDatumLayout; edges: DataFrame; options?: NodeGraphOptions }) {
   const index = props.edge.dataFrameRowIndex;
-  const fields = getEdgeFields(props.edges);
+  const fields = getEdgeFields(props.edges, props.options);
   const valueSource = fields.source?.values[index] || '';
   const valueTarget = fields.target?.values[index] || '';
 
