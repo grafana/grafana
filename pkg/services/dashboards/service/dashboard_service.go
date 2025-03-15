@@ -1605,12 +1605,16 @@ func (dr *DashboardServiceImpl) createOrUpdateDash(ctx context.Context, obj *uns
 	var out *unstructured.Unstructured
 	current, err := dr.k8sclient.Get(ctx, obj.GetName(), orgID, v1.GetOptions{})
 	if current == nil || err != nil {
-		out, err = dr.k8sclient.Create(ctx, obj, orgID)
+		out, err = dr.k8sclient.Create(ctx, obj, orgID, v1.CreateOptions{
+			FieldValidation: v1.FieldValidationIgnore, // ignore the schema version validation for now, while backend migrations are created
+		})
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		out, err = dr.k8sclient.Update(ctx, obj, orgID)
+		out, err = dr.k8sclient.Update(ctx, obj, orgID, v1.UpdateOptions{
+			FieldValidation: v1.FieldValidationIgnore, // ignore the schema version validation for now, while backend migrations are created
+		})
 		if err != nil {
 			return nil, err
 		}

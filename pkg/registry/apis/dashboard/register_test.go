@@ -8,13 +8,16 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 )
@@ -22,10 +25,49 @@ import (
 func TestDashboardAPIBuilder_Validate(t *testing.T) {
 	oneInt64 := int64(1)
 	zeroInt64 := int64(0)
+	createDashboard := func(schemaVersion interface{}, gvk schema.GroupVersionKind) runtime.Object {
+		var obj runtime.Object
+		switch gvk.Version {
+		case "v0alpha1":
+			obj = &v0alpha1.Dashboard{
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{},
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			}
+			if schemaVersion != nil {
+				obj.(*v0alpha1.Dashboard).Spec.Object["schemaVersion"] = schemaVersion
+			}
+		default:
+			obj = &v1alpha1.Dashboard{
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{},
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			}
+			if schemaVersion != nil {
+				obj.(*v1alpha1.Dashboard).Spec.Object["schemaVersion"] = schemaVersion
+			}
+		}
+		return obj
+	}
+
 	tests := []struct {
 		name                   string
-		inputObj               *v0alpha1.Dashboard
-		deletionOptions        metav1.DeleteOptions
+		inputObj               runtime.Object
+		gvk                    schema.GroupVersionKind
+		operation              admission.Operation
+		operationOptions       interface{}
 		dashboardResponse      *dashboards.DashboardProvisioning
 		dashboardErrorResponse error
 		checkRan               bool
@@ -33,7 +75,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 	}{
 		{
 			name: "should return an error if data is found",
-			inputObj: &v0alpha1.Dashboard{
+			inputObj: &v1alpha1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -42,7 +84,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 					Name: "test",
 				},
 			},
-			deletionOptions: metav1.DeleteOptions{
+			gvk:       v1alpha1.DashboardResourceInfo.GroupVersionKind(),
+			operation: admission.Delete,
+			operationOptions: &metav1.DeleteOptions{
 				GracePeriodSeconds: nil,
 			},
 			dashboardResponse:      &dashboards.DashboardProvisioning{ID: 1},
@@ -52,7 +96,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		},
 		{
 			name: "should return an error if unable to check",
-			inputObj: &v0alpha1.Dashboard{
+			inputObj: &v1alpha1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -61,7 +105,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 					Name: "test",
 				},
 			},
-			deletionOptions: metav1.DeleteOptions{
+			gvk:       v1alpha1.DashboardResourceInfo.GroupVersionKind(),
+			operation: admission.Delete,
+			operationOptions: &metav1.DeleteOptions{
 				GracePeriodSeconds: nil,
 			},
 			dashboardResponse:      nil,
@@ -71,7 +117,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		},
 		{
 			name: "should be okay if error is provisioned dashboard not found",
-			inputObj: &v0alpha1.Dashboard{
+			inputObj: &v1alpha1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -80,7 +126,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 					Name: "test",
 				},
 			},
-			deletionOptions: metav1.DeleteOptions{
+			gvk:       v1alpha1.DashboardResourceInfo.GroupVersionKind(),
+			operation: admission.Delete,
+			operationOptions: &metav1.DeleteOptions{
 				GracePeriodSeconds: nil,
 			},
 			dashboardResponse:      nil,
@@ -90,7 +138,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		},
 		{
 			name: "Should still run the check for delete if grace period is not 0",
-			inputObj: &v0alpha1.Dashboard{
+			inputObj: &v1alpha1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -99,7 +147,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 					Name: "test",
 				},
 			},
-			deletionOptions: metav1.DeleteOptions{
+			gvk:       v1alpha1.DashboardResourceInfo.GroupVersionKind(),
+			operation: admission.Delete,
+			operationOptions: &metav1.DeleteOptions{
 				GracePeriodSeconds: &oneInt64,
 			},
 			dashboardResponse:      nil,
@@ -109,7 +159,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		},
 		{
 			name: "should not run the check for delete if grace period is set to 0",
-			inputObj: &v0alpha1.Dashboard{
+			inputObj: &v1alpha1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -118,7 +168,8 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 					Name: "test",
 				},
 			},
-			deletionOptions: metav1.DeleteOptions{
+			gvk: v1alpha1.DashboardResourceInfo.GroupVersionKind(),
+			operationOptions: &metav1.DeleteOptions{
 				GracePeriodSeconds: &zeroInt64,
 			},
 			dashboardResponse:      nil,
@@ -126,24 +177,148 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			checkRan:               false,
 			expectedError:          false,
 		},
+		{
+			name:             "v0 should skip schema version validation",
+			inputObj:         createDashboard(schemaversion.MIN_VERSION-1, v0alpha1.DashboardResourceInfo.GroupVersionKind()),
+			gvk:              v0alpha1.DashboardResourceInfo.GroupVersionKind(),
+			operation:        admission.Create,
+			operationOptions: &metav1.CreateOptions{},
+			expectedError:    false,
+			checkRan:         false,
+		},
+		{
+			name: "create with warn validation should allow old schema version",
+			inputObj: &v1alpha1.Dashboard{
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{
+						"schemaVersion": schemaversion.MIN_VERSION - 1,
+					},
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			},
+			gvk:       v1alpha1.DashboardResourceInfo.GroupVersionKind(),
+			operation: admission.Create,
+			operationOptions: &metav1.CreateOptions{
+				FieldValidation: metav1.FieldValidationWarn,
+			},
+			expectedError: false,
+			checkRan:      false,
+		},
+		{
+			name: "create with ignore validation should allow old schema version",
+			inputObj: &v1alpha1.Dashboard{
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{
+						"schemaVersion": schemaversion.MIN_VERSION - 1,
+					},
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			},
+			gvk:       v1alpha1.DashboardResourceInfo.GroupVersionKind(),
+			operation: admission.Create,
+			operationOptions: &metav1.CreateOptions{
+				FieldValidation: metav1.FieldValidationIgnore,
+			},
+			expectedError: false,
+			checkRan:      false,
+		},
+		{
+			name: "create with valid schema version should pass",
+			inputObj: &v1alpha1.Dashboard{
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{
+						"schemaVersion": schemaversion.LATEST_VERSION,
+					},
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			},
+			gvk:              v1alpha1.DashboardResourceInfo.GroupVersionKind(),
+			operation:        admission.Create,
+			operationOptions: &metav1.CreateOptions{},
+			expectedError:    false,
+			checkRan:         false,
+		},
+		{
+			name: "update with strict validation should error on old schema version",
+			inputObj: &v1alpha1.Dashboard{
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{
+						"schemaVersion": schemaversion.MIN_VERSION - 1,
+					},
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			},
+			gvk:              v1alpha1.DashboardResourceInfo.GroupVersionKind(),
+			operation:        admission.Update,
+			operationOptions: &metav1.UpdateOptions{},
+			expectedError:    true,
+			checkRan:         false,
+		},
+		{
+			name: "update with valid schema version should pass",
+			inputObj: &v1alpha1.Dashboard{
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{
+						"schemaVersion": schemaversion.LATEST_VERSION,
+					},
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			},
+			gvk:              v1alpha1.DashboardResourceInfo.GroupVersionKind(),
+			operation:        admission.Update,
+			operationOptions: &metav1.UpdateOptions{},
+			expectedError:    false,
+			checkRan:         false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fakeService := &dashboards.FakeDashboardProvisioning{}
 			fakeService.On("GetProvisionedDashboardDataByDashboardUID", mock.Anything, mock.Anything, mock.Anything).Return(tt.dashboardResponse, tt.dashboardErrorResponse).Once()
 			b := &DashboardsAPIBuilder{
+				log:                          log.NewNopLogger(),
 				dashboardProvisioningService: fakeService,
 			}
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
 				tt.inputObj,
 				nil,
-				v0alpha1.DashboardResourceInfo.GroupVersionKind(),
+				tt.gvk,
 				"stacks-123",
-				tt.inputObj.Name,
-				v0alpha1.DashboardResourceInfo.GroupVersionResource(),
+				tt.inputObj.(metav1.Object).GetName(),
+				schema.GroupVersionResource{
+					Group:    tt.gvk.Group,
+					Version:  tt.gvk.Version,
+					Resource: "dashboards",
+				},
 				"",
-				admission.Operation("DELETE"),
-				&tt.deletionOptions,
+				tt.operation,
+				tt.operationOptions.(runtime.Object),
 				true,
 				&user.SignedInUser{},
 			), nil)

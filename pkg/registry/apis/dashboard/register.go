@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -147,39 +148,82 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 // Validate will prevent deletion of provisioned dashboards, unless the grace period is set to 0, indicating a force deletion
-func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	op := a.GetOperation()
-	if op == admission.Delete {
-		obj := a.GetOperationOptions()
-		deleteOptions, ok := obj.(*metav1.DeleteOptions)
-		if !ok {
-			return fmt.Errorf("expected v1.DeleteOptions")
-		}
+func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	switch a.GetOperation() {
+	case admission.Delete:
+		return b.validateDelete(ctx, a)
+	case admission.Create, admission.Update:
+		return b.validateCreateUpdate(a)
+	}
+	return nil
+}
 
-		if deleteOptions.GracePeriodSeconds == nil || *deleteOptions.GracePeriodSeconds != 0 {
-			nsInfo, err := claims.ParseNamespace(a.GetNamespace())
-			if err != nil {
-				return fmt.Errorf("%v: %w", "failed to parse namespace", err)
-			}
-
-			provisioningData, err := b.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, a.GetName())
-			if err != nil {
-				if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) ||
-					errors.Is(err, dashboards.ErrDashboardNotFound) ||
-					apierrors.IsNotFound(err) {
-					return nil
-				}
-
-				return fmt.Errorf("%v: %w", "delete hook failed to check if dashboard is provisioned", err)
-			}
-
-			if provisioningData != nil {
-				return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
-			}
-		}
+func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.Attributes) error {
+	deleteOptions, ok := a.GetOperationOptions().(*metav1.DeleteOptions)
+	if !ok {
+		return fmt.Errorf("expected v1.DeleteOptions")
 	}
 
+	// Allow force deletion (grace period = 0)
+	if deleteOptions.GracePeriodSeconds != nil && *deleteOptions.GracePeriodSeconds == 0 {
+		return nil
+	}
+
+	nsInfo, err := claims.ParseNamespace(a.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("failed to parse namespace: %w", err)
+	}
+
+	provisioningData, err := b.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, a.GetName())
+	if err != nil {
+		if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) ||
+			errors.Is(err, dashboards.ErrDashboardNotFound) ||
+			apierrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %w", err)
+	}
+
+	if provisioningData != nil {
+		return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+	}
 	return nil
+}
+
+func (b *DashboardsAPIBuilder) validateCreateUpdate(a admission.Attributes) error {
+	validationType := b.getValidationType(a)
+	if validationType == metav1.FieldValidationIgnore {
+		return nil
+	}
+
+	if dash, ok := a.GetObject().(*v1alpha1.Dashboard); ok {
+		version := schemaversion.GetSchemaVersion(dash.Spec.Object)
+		// v1 objects are migrated in mutation to bring a dashboard from the min supported migration version to the latest version
+		if version < schemaversion.LATEST_VERSION {
+			if validationType == metav1.FieldValidationStrict {
+				return fmt.Errorf("schema %d+ required for v1 objects", schemaversion.MIN_VERSION)
+			}
+			b.log.Warn("dashboard schema version is less than the latest version", "dashboard", dash.GetName(), "version", version)
+		}
+	}
+	return nil
+}
+
+func (b *DashboardsAPIBuilder) getValidationType(a admission.Attributes) string {
+	var validation string
+	switch opts := a.GetOperationOptions().(type) {
+	case *metav1.CreateOptions:
+		validation = opts.FieldValidation
+	case *metav1.UpdateOptions:
+		validation = opts.FieldValidation
+	default:
+		validation = metav1.FieldValidationStrict
+	}
+
+	if validation == "" {
+		return metav1.FieldValidationStrict
+	}
+	return validation
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {

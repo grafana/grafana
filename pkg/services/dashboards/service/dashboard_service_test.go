@@ -1008,7 +1008,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 			},
 		}}
 		// should update it to be without annotations
-		k8sCliMock.On("Update", mock.Anything, dashWithoutAnnotations, mock.Anything).Return(dashWithoutAnnotations, nil)
+		k8sCliMock.On("Update", mock.Anything, dashWithoutAnnotations, mock.Anything, mock.Anything).Return(dashWithoutAnnotations, nil)
 		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
 		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
