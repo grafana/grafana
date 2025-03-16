@@ -303,12 +303,12 @@ func TestGetDashboard(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		dashboardUnstructured := unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
-				"name": "uid",
+				"name":       "uid",
+				"generation": int64(1),
 			},
 			"spec": map[string]any{
-				"test":    "test",
-				"version": int64(1),
-				"title":   "testing slugify",
+				"test":  "test",
+				"title": "testing slugify",
 			},
 		}}
 
@@ -341,12 +341,12 @@ func TestGetDashboard(t *testing.T) {
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		dashboardUnstructured := unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
-				"name": "uid",
+				"name":       "uid",
+				"generation": int64(2),
 			},
 			"spec": map[string]any{
-				"test":    "test",
-				"version": int64(1),
-				"title":   "testing slugify",
+				"test":  "test",
+				"title": "testing slugify",
 			},
 		}}
 
@@ -355,8 +355,8 @@ func TestGetDashboard(t *testing.T) {
 			Title:   "testing slugify",
 			Slug:    "testing-slugify", // slug is taken from title
 			OrgID:   1,                 // orgID is populated from the query
-			Version: 1,
-			Data:    simplejson.NewFromAny(map[string]any{"test": "test", "title": "testing slugify", "uid": "uid", "version": int64(1)}),
+			Version: 2,
+			Data:    simplejson.NewFromAny(map[string]any{"test": "test", "title": "testing slugify", "uid": "uid", "version": int64(2)}),
 		}
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil).Once()
 		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
