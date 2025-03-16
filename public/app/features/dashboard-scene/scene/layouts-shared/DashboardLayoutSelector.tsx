@@ -45,11 +45,11 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
                     height: '100%',
                   }}
                 >
-                  <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ .-.-.-.-.-</div>
+                  <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ &nbsp; .-.-.-.-.-</div>
                   <GridCell />
                   <GridCell />
                   <GridCell />
-                  <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ .-.-.-.-.-</div>
+                  <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ &nbsp; .-.-.-.-.-</div>
                   <GridCell />
                   <GridCell />
                   <GridCell />
@@ -65,18 +65,25 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
                 isSelected={layoutManager.descriptor.id === opt.id}
                 onSelect={() => changeLayoutTo(layoutManager, opt)}
               >
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gridTemplateRows: 'repeat(2, 1fr)',
-                    gap: '4px',
-                  }}
-                >
-                  <GridCell />
-                  <GridCell />
-                  <GridCell />
-                </div>
+                <Stack direction="column" gap={0.5} height={'100%'}>
+                  <div className={styles.tabsBar}>
+                    <div className={cx(styles.tab, styles.tabActive)}>-.-.-</div>
+                    <div className={styles.tab}>-.-.-</div>
+                    <div className={styles.tab}>-.-.-</div>
+                  </div>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gridTemplateRows: '1fr',
+                      gap: '4px',
+                      flexGrow: 1,
+                    }}
+                  >
+                    <GridCell />
+                    <GridCell />
+                  </div>
+                </Stack>
               </LayoutRadioButton>
             );
           case 'responsive-grid':
@@ -166,7 +173,7 @@ function LayoutRadioButton({ label, id, description, isSelected, children, onSel
         htmlFor={`layout-${id}`}
         tabIndex={0}
         className={cx(styles.radioButton, isSelected && styles.radioButtonActive)}
-        onClick={onSelect}
+        // onClick={onSelect}
       >
         {children}
         <Stack direction="column" gap={1} justifyContent="space-between" grow={1}>
@@ -259,7 +266,32 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     gridCell: css({
       backgroundColor: theme.colors.background.secondary,
-      border: theme.colors.border.weak,
+      border: `1px solid ${theme.colors.border.medium}`,
+    }),
+    tab: css({
+      width: '20px',
+      height: '8px',
+      fontSize: '5px',
+      display: 'flex',
+      alignItems: 'center',
+      position: 'relative',
+      justifyContent: 'center',
+    }),
+    tabActive: css({
+      '&:before': {
+        content: '" "',
+        position: 'absolute',
+        height: 1,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: theme.colors.gradients.brandHorizontal,
+      },
+    }),
+    tabsBar: css({
+      display: 'flex',
+      gap: '4px',
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
     }),
   };
 };
