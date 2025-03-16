@@ -193,10 +193,11 @@ func (b *backend) initLocked(ctx context.Context) error {
 
 func (b *backend) initPruner(ctx context.Context) error {
 	if !b.withPruner {
+		b.log.Debug("using noop history pruner")
 		b.historyPruner = &noopPruner{}
 		return nil
 	}
-
+	b.log.Debug("using debounced history pruner")
 	// Initialize history pruner.
 	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[pruningKey]{
 		Name:       "history_pruner",
