@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { RadioButtonDot, Stack, useStyles2, Text, Icon } from '@grafana/ui';
+import { RadioButtonDot, Stack, useStyles2, Text } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -173,7 +173,6 @@ function LayoutRadioButton({ label, id, description, isSelected, children, onSel
         htmlFor={`layout-${id}`}
         tabIndex={0}
         className={cx(styles.radioButton, isSelected && styles.radioButtonActive)}
-        // onClick={onSelect}
       >
         {children}
         <Stack direction="column" gap={1} justifyContent="space-between" grow={1}>
