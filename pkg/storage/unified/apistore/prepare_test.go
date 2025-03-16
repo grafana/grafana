@@ -34,7 +34,9 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		},
 	}
 
-	ctx := authtypes.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authtypes.TypeUser})
+	ctx := authtypes.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authtypes.TypeUser},
+	)
 
 	t.Run("Error getting auth info from context", func(t *testing.T) {
 		_, err := s.prepareObjectForStorage(context.Background(), nil)
@@ -81,7 +83,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Empty(t, updatedTS)
 	})
 
-	t.Run("Should keep repo info", func(t *testing.T) {
+	t.Run("Should keep manager info", func(t *testing.T) {
 		dashboard := v0alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 		obj := dashboard.DeepCopyObject()
@@ -115,6 +117,34 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, s.Checksum, "hash")
 		require.Equal(t, s.Path, "test/path")
 		require.Equal(t, s.TimestampMillis, now.UnixMilli())
+	})
+
+	t.Run("Update should base update user+timestamp on generation changes", func(t *testing.T) {
+		dashboard := v0alpha1.Dashboard{}
+		dashboard.Name = "test-name"
+		obj := dashboard.DeepCopyObject()
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetGeneration(10)
+
+		encodedData, err := s.prepareObjectForStorage(ctx, obj)
+		require.NoError(t, err)
+
+		insertedObject, _, err := s.codec.Decode(encodedData, nil, &v0alpha1.Dashboard{})
+		require.NoError(t, err)
+		meta, err = utils.MetaAccessor(insertedObject)
+		require.NoError(t, err)
+		require.Equal(t, int64(10), meta.GetGeneration())
+		require.Equal(t, "user:user-uid", meta.GetCreatedBy())
+		require.Equal(t, "", meta.GetUpdatedBy()) // empty
+		ts, err := meta.GetUpdatedTimestamp()
+		require.NoError(t, err)
+		require.Nil(t, ts)
+
+		// Change the user... and only update metadata
+		ctx = authtypes.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "user2", Type: authtypes.TypeUser},
+		)
 	})
 
 	s.opts.RequireDeprecatedInternalID = true
