@@ -36,6 +36,7 @@
         "name": "accessActionSets",
         "resourceVersion": "1731413707429",
         "creationTimestamp": "2024-04-12T16:19:25Z",
+        "deletionTimestamp": "2025-03-11T16:34:55Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-11-12 12:15:07.42916 +0000 UTC"
         }
@@ -323,9 +324,25 @@
     },
     {
       "metadata": {
+        "name": "alertingMigrationUI",
+        "resourceVersion": "1741968018953",
+        "creationTimestamp": "2025-03-14T16:00:18Z"
+      },
+      "spec": {
+        "description": "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNoDataErrorExecution",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-08-15T14:27:15Z",
+        "deletionTimestamp": "2025-03-13T19:16:25Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -1292,15 +1309,15 @@
     {
       "metadata": {
         "name": "datasourceConnectionsTab",
-        "resourceVersion": "1737049826022",
+        "resourceVersion": "1741961069415",
         "creationTimestamp": "2025-01-21T17:39:48Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-16 17:50:26.022636488 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-14 14:04:29.415154706 +0000 UTC"
         }
       },
       "spec": {
         "description": "Shows defined connections for a data source in the plugins detail page",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
       }
@@ -1660,19 +1677,18 @@
     {
       "metadata": {
         "name": "exploreMetricsUseExternalAppPlugin",
-        "resourceVersion": "1738596266973",
+        "resourceVersion": "1741883352541",
         "creationTimestamp": "2025-01-21T23:24:50Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-02-03 15:24:26.973231 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-13 16:29:12.541156 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-        "stage": "experimental",
+        "description": "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
+        "stage": "preview",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true,
-        "requiresRestart": true,
-        "hideFromDocs": true
+        "requiresRestart": true
       }
     },
     {
@@ -2140,6 +2156,18 @@
         "description": "Support overriding cookie preferences per user",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-backend-group"
+      }
+    },
+    {
+      "metadata": {
+        "name": "infinityRunQueriesInParallel",
+        "resourceVersion": "1741881350055",
+        "creationTimestamp": "2025-03-13T15:55:50Z"
+      },
+      "spec": {
+        "description": "Enables running Infinity queries in parallel",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/oss-big-tent"
       }
     },
     {
@@ -2897,6 +2925,21 @@
         "description": "Enables the report creation drawer in a dashboard",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "noBackdropBlur",
+        "resourceVersion": "1741879106163",
+        "creationTimestamp": "2025-03-13T15:18:26Z"
+      },
+      "spec": {
+        "description": "Disables backdrop blur",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }

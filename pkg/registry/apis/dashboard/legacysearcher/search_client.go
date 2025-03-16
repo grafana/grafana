@@ -11,9 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -256,6 +256,8 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), []byte(strconv.FormatInt(dashboard.ID, 10)), {}, {}},
 			})
 		}
+
+		list.TotalHits = int64(len(list.Results.Rows))
 
 		return list, nil
 	}
