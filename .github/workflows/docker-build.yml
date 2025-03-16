@@ -8,9 +8,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/share/swift
+          docker system prune -a -f
+
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y make
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -24,11 +35,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v4
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/grafana-rm:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/grafana-rm:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/grafana-rm:buildcache,mode=max
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/grafana-rm
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Build Docker image using Makefile
+        run: make build-docker-full
+
+      - name: Push Docker image
+        run: |
+          docker tag myrepo/grafana-rm:latest ${{ secrets.DOCKERHUB_USERNAME }}/grafana-rm:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/grafana-rm:latest
