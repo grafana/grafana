@@ -83,7 +83,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}, nil
 }
 
-// pruningKey is a comperable key for pruning history.
+// pruningKey is a comparable key for pruning history.
 type pruningKey struct {
 	namespace string
 	group     string
