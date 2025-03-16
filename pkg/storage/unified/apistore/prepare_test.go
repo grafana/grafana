@@ -30,7 +30,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		codec:     apitesting.TestCodec(codecs, v0alpha1.DashboardResourceInfo.GroupVersion()),
 		snowflake: node,
 		opts: StorageOptions{
-			LargeObjectSupport: nil,
+			EnableFolderSupport: true,
+			LargeObjectSupport:  nil,
 		},
 	}
 
@@ -119,13 +120,13 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, s.TimestampMillis, now.UnixMilli())
 	})
 
-	t.Run("Update should base update user+timestamp on generation changes", func(t *testing.T) {
+	t.Run("Update should manage incrementing generation and metadata", func(t *testing.T) {
 		dashboard := v0alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
+		meta.SetFolder("aaa")
 		require.NoError(t, err)
-		meta.SetGeneration(10)
 
 		encodedData, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
@@ -134,7 +135,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(insertedObject)
 		require.NoError(t, err)
-		require.Equal(t, int64(10), meta.GetGeneration())
+		require.Equal(t, int64(1), meta.GetGeneration())
 		require.Equal(t, "user:user-uid", meta.GetCreatedBy())
 		require.Equal(t, "", meta.GetUpdatedBy()) // empty
 		ts, err := meta.GetUpdatedTimestamp()
@@ -145,6 +146,37 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		ctx = authtypes.WithAuthInfo(context.Background(),
 			&identity.StaticRequester{UserID: 1, UserUID: "user2", Type: authtypes.TypeUser},
 		)
+
+		// Change the status... but generation is the same
+		updatedObject := insertedObject.DeepCopyObject()
+		meta, err = utils.MetaAccessor(updatedObject)
+		require.NoError(t, err)
+		err = meta.SetStatus(v0alpha1.DashboardStatus{
+			Conversion: &v0alpha1.DashboardConversionStatus{
+				Failed: true,
+				Error:  "test",
+			},
+		})
+		require.NoError(t, err)
+		meta.SetUpdatedBy("hello") // will be removed
+		meta.SetGeneration(123)    // will be removed
+
+		metax, err := utils.MetaAccessor(insertedObject)
+		require.NoError(t, err)
+		require.Equal(t, "", metax.GetUpdatedBy())
+
+		// Update status without changing generation or update metadata
+		_, err = s.prepareObjectForUpdate(ctx, updatedObject, insertedObject)
+		require.NoError(t, err)
+		require.Equal(t, "", meta.GetUpdatedBy())
+		require.Equal(t, int64(1), meta.GetGeneration())
+
+		// Update status without changing generation or update metadata
+		meta.SetFolder("xyz") // will bump generation
+		_, err = s.prepareObjectForUpdate(ctx, updatedObject, insertedObject)
+		require.NoError(t, err)
+		require.Equal(t, "user:user2", meta.GetUpdatedBy())
+		require.Equal(t, int64(2), meta.GetGeneration())
 	})
 
 	s.opts.RequireDeprecatedInternalID = true
