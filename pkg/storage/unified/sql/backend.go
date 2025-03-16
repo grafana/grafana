@@ -43,6 +43,10 @@ type BackendOptions struct {
 	IsHA            bool
 	storageMetrics  *resource.StorageMetrics
 
+	// If true, the backend will prune history on write events.
+	// Will be removed once fully rolled out.
+	withPruner bool
+
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
 }
@@ -75,6 +79,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
+		withPruner:              opts.withPruner,
 	}, nil
 }
 
@@ -84,6 +89,19 @@ type pruningKey struct {
 	group     string
 	resource  string
 }
+
+type pruner interface {
+	Add(key pruningKey) error
+	Start(ctx context.Context)
+}
+
+type noopPruner struct{}
+
+func (p *noopPruner) Add(key pruningKey) error {
+	return nil
+}
+
+func (p *noopPruner) Start(ctx context.Context) {}
 
 type backend struct {
 	//general
@@ -119,7 +137,8 @@ type backend struct {
 	// testing
 	simulatedNetworkLatency time.Duration
 
-	historyPruner *debouncer.Group[pruningKey]
+	historyPruner pruner
+	withPruner    bool
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -165,14 +184,27 @@ func (b *backend) initLocked(ctx context.Context) error {
 	}
 	b.notifier = notifier
 
+	if err := b.initPruner(ctx); err != nil {
+		return fmt.Errorf("failed to create pruner: %w", err)
+	}
+
+	return nil
+}
+
+func (b *backend) initPruner(ctx context.Context) error {
+	if !b.withPruner {
+		b.historyPruner = &noopPruner{}
+		return nil
+	}
+
 	// Initialize history pruner.
-	b.historyPruner, err = debouncer.NewGroup(debouncer.DebouncerOpts[pruningKey]{
+	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[pruningKey]{
 		Name:       "history_pruner",
 		BufferSize: 1000,
 		MinWait:    time.Second * 30,
 		MaxWait:    time.Minute * 5,
 		ProcessHandler: func(ctx context.Context, key pruningKey) error {
-			return dbConn.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+			return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 					SQLTemplate:  sqltemplate.New(b.dialect),
 					HistoryLimit: 100,
@@ -207,10 +239,11 @@ func (b *backend) initLocked(ctx context.Context) error {
 		Reg: b.reg,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to start build pruner: %w", err)
+		return err
 	}
-	b.historyPruner.Start(ctx)
 
+	b.historyPruner = pruner
+	b.historyPruner.Start(ctx)
 	return nil
 }
 
