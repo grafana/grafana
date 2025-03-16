@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 	"k8s.io/apimachinery/pkg/api/apitesting"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
@@ -158,12 +159,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		meta.SetUpdatedBy("hello") // will be removed
-		meta.SetGeneration(123)    // will be removed
-
-		metax, err := utils.MetaAccessor(insertedObject)
-		require.NoError(t, err)
-		require.Equal(t, "", metax.GetUpdatedBy())
+		meta.SetGeneration(123) // will be removed
 
 		// Update status without changing generation or update metadata
 		_, err = s.prepareObjectForUpdate(ctx, updatedObject, insertedObject)
@@ -171,12 +167,17 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, "", meta.GetUpdatedBy())
 		require.Equal(t, int64(1), meta.GetGeneration())
 
-		// Update status without changing generation or update metadata
-		meta.SetFolder("xyz") // will bump generation
-		_, err = s.prepareObjectForUpdate(ctx, updatedObject, insertedObject)
+		// Change the folder -- the generation should increase and the updatedBy metadata
+		dashboard2 := &v0alpha1.Dashboard{ObjectMeta: v1.ObjectMeta{
+			Name: dashboard.Name,
+		}} // TODO... deep copy, See: https://github.com/grafana/grafana/pull/102258
+		meta2, err := utils.MetaAccessor(dashboard2)
 		require.NoError(t, err)
-		require.Equal(t, "user:user2", meta.GetUpdatedBy())
-		require.Equal(t, int64(2), meta.GetGeneration())
+		meta2.SetFolder("xyz") // will bump generation
+		_, err = s.prepareObjectForUpdate(ctx, dashboard2, updatedObject)
+		require.NoError(t, err)
+		require.Equal(t, "user:user2", meta2.GetUpdatedBy())
+		require.Equal(t, int64(2), meta2.GetGeneration())
 	})
 
 	s.opts.RequireDeprecatedInternalID = true

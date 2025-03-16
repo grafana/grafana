@@ -104,9 +104,6 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if obj.GetName() == "" {
 		return nil, fmt.Errorf("updated object must have a name")
 	}
-	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
-	}
 
 	previous, err := utils.MetaAccessor(previousObject)
 	if err != nil {
@@ -141,7 +138,12 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	// Check if we should bump the generation
 	changed := obj.GetFolder() != previous.GetFolder()
-	if !changed {
+	if changed {
+		if !s.opts.EnableFolderSupport {
+			return nil, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+		}
+		// TODO: check that we can move the folder?
+	} else {
 		spec, e1 := obj.GetSpec()
 		oldSpec, e2 := previous.GetSpec()
 		if e1 == nil && e2 == nil {
