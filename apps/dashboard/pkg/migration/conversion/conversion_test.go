@@ -58,7 +58,7 @@ func TestDeepCopyValid(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "f1", metaCopy.GetFolder())
 
-	// Changing copy does not effect the original!
+	// Changing a property on the copy should not effect the original
 	metaCopy.SetFolder("XYZ")
-	require.Equal(t, "f1", meta1.GetFolder())
+	require.Equal(t, "f1", meta1.GetFolder()) // 💣💣💣
 }
