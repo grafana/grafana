@@ -91,7 +91,7 @@ type pruningKey struct {
 }
 
 // Small abstraction to allow for different pruner implementations.
-// This can be removed once the debouncer is deployed
+// This can be removed once the debouncer is deployed.
 type pruner interface {
 	Add(key pruningKey) error
 	Start(ctx context.Context)
