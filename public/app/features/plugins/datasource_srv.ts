@@ -2,6 +2,7 @@ import {
   AppEvents,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourceRef,
   DataSourceSelectItem,
   ScopedVars,
   matchPluginId,
@@ -18,7 +19,6 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef, isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { DataSourceRef } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import {
@@ -34,7 +34,6 @@ export class DatasourceSrv implements DataSourceService {
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
-  private settingsTypeToUID: Record<string, string[]> = {};
   private runtimeDataSources: Record<string, RuntimeDataSource> = {}; //
   private defaultName = ''; // actually UID
 
@@ -53,7 +52,6 @@ export class DatasourceSrv implements DataSourceService {
 
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
       this.settingsMapById[dsSettings.id] = dsSettings;
-      this.registerDatasourceByType(dsSettings);
     }
 
     for (const ds of Object.values(this.runtimeDataSources)) {
@@ -79,27 +77,6 @@ export class DatasourceSrv implements DataSourceService {
     this.runtimeDataSources[entry.dataSource.uid] = entry.dataSource;
     this.datasources[entry.dataSource.uid] = entry.dataSource;
     this.settingsMapByUid[entry.dataSource.uid] = entry.dataSource.instanceSettings;
-  }
-
-  private registerDatasourceByType(dsSettings: DataSourceInstanceSettings) {
-    if (
-      dsSettings.type === 'datasource' &&
-      (dsSettings.name === '-- Dashboard --' || dsSettings.name === '-- Mixed --')
-    ) {
-      return; // skip the not real types
-    }
-
-    const types = this.settingsTypeToUID[dsSettings.type];
-    if (types) {
-      if (this.defaultName === dsSettings.uid || this.defaultName === dsSettings.name) {
-        types.unshift(dsSettings.uid); // make it first
-        return;
-      }
-      types.push(dsSettings.uid);
-      return;
-    }
-
-    this.settingsTypeToUID[dsSettings.type] = [dsSettings.uid];
   }
 
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
@@ -157,8 +134,13 @@ export class DatasourceSrv implements DataSourceService {
     let nameOrUid = getNameOrUid(ref);
     if (!nameOrUid) {
       // type exists, but not the other properties
-      if (ref && 'type' in (ref as DataSourceRef)) {
-        return this.getFirtDataSourceOfType(ref as DataSourceRef);
+      if (isDatasourceRef(ref)) {
+        const settings = this.getList({ type: ref.type });
+        if (!settings?.length) {
+          return Promise.reject('no datasource of type');
+        }
+        const ds = settings.find((v) => v.isDefault) ?? settings[0];
+        return this.get(ds.uid);
       }
       return this.get(this.defaultName);
     }
@@ -190,19 +172,6 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     return this.loadDatasource(nameOrUid);
-  }
-
-  async getFirtDataSourceOfType(ref: DataSourceRef): Promise<DataSourceApi> {
-    const uids = this.settingsTypeToUID[ref.type!];
-    if (uids?.length) {
-      return this.get({ ...ref, uid: uids[0] });
-    }
-    switch (ref.type) {
-      case 'grafana':
-        return this.get({ ...ref, uid: ref.type }); // the grafana datasource gets used directly?
-    }
-    console.log('GET FIRST DATASOURCE OF TYPE', { ref, uids }, this);
-    return Promise.reject('unable to find datasource by type');
   }
 
   async loadDatasource(key: string): Promise<DataSourceApi> {
@@ -425,6 +394,13 @@ export function variableInterpolation<T>(value: T | T[]) {
   }
   return value;
 }
+
+const isDatasourceRef = (ref: string | DataSourceRef | null | undefined): ref is DataSourceRef => {
+  if (ref && 'type' in (ref as DataSourceRef)) {
+    return true;
+  }
+  return false;
+};
 
 export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
