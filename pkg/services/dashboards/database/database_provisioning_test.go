@@ -52,14 +52,12 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 			ExternalID: "/var/grafana.json",
 			Updated:    now.Unix(),
 		}
-		dash, err := dashboardStore.SaveDashboard(context.Background(), saveDashboardCmd)
-		require.NoError(t, err)
+
+		dash, err := dashboardStore.SaveProvisionedDashboard(context.Background(), saveDashboardCmd, provisioning)
+		require.Nil(t, err)
 		require.NotNil(t, dash)
 		require.NotEqual(t, 0, dash.ID)
 		dashId := dash.ID
-
-		err = dashboardStore.SaveProvisionedDashboard(context.Background(), dash, provisioning)
-		require.Nil(t, err)
 
 		t.Run("Deleting orphaned provisioned dashboards", func(t *testing.T) {
 			saveCmd := dashboards.SaveDashboardCommand{
@@ -71,8 +69,6 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 					"title": "another_dashboard",
 				}),
 			}
-			anotherDash, err := dashboardStore.SaveDashboard(context.Background(), saveCmd)
-			require.NoError(t, err)
 
 			provisioning := &dashboards.DashboardProvisioning{
 				Name:       "another_reader",
@@ -80,7 +76,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 				Updated:    now.Unix(),
 			}
 
-			err = dashboardStore.SaveProvisionedDashboard(context.Background(), anotherDash, provisioning)
+			anotherDash, err := dashboardStore.SaveProvisionedDashboard(context.Background(), saveCmd, provisioning)
 			require.Nil(t, err)
 
 			query := &dashboards.GetDashboardsQuery{DashboardIDs: []int64{anotherDash.ID}}

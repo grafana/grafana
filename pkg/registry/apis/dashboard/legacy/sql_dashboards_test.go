@@ -6,12 +6,17 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestScanRow(t *testing.T) {
@@ -32,7 +37,7 @@ func TestScanRow(t *testing.T) {
 	title := "Test Dashboard"
 	folderUID := "folder123"
 	timestamp := time.Now()
-	k8sTimestamp := v1.Time{Time: timestamp}
+	k8sTimestamp := metav1.Time{Time: timestamp}
 	version := int64(2)
 	message := "updated message"
 	createdUser := "creator"
@@ -91,7 +96,7 @@ func TestScanRow(t *testing.T) {
 
 		require.Equal(t, utils.ManagerKindClassicFP, m.Kind) // nolint:staticcheck
 		require.Equal(t, "provisioner", m.Identity)
-		require.Equal(t, "../"+pathToFile, s.Path) // relative to provisioner
+		require.Equal(t, pathToFile, s.Path)
 		require.Equal(t, "hashing", s.Checksum)
 		require.NoError(t, err)
 		require.Equal(t, int64(100000), s.TimestampMillis)
@@ -118,4 +123,61 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "slo", manager.Identity)                                // the ID of the plugin
 		require.Equal(t, "", meta.GetAnnotations()[utils.AnnoKeySourceChecksum]) // hash is not used on plugins
 	})
+}
+
+func TestBuildSaveDashboardCommand(t *testing.T) {
+	mockStore := &dashboards.FakeDashboardStore{}
+	access := &dashboardSqlAccess{
+		dashStore: mockStore,
+	}
+	dash := &dashboard.Dashboard{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "dashboard.grafana.app/v0alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-dash",
+		},
+		Spec: common.Unstructured{
+			Object: map[string]interface{}{
+				"title": "Test Dashboard",
+				"id":    123,
+			},
+		},
+	}
+
+	// fail if no user in context
+	_, _, err := access.buildSaveDashboardCommand(context.Background(), 1, dash)
+	require.Error(t, err)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
+		OrgID:   1,
+		OrgRole: "Admin",
+	})
+	// create new dashboard
+	mockStore.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, nil).Once()
+	cmd, created, err := access.buildSaveDashboardCommand(ctx, 1, dash)
+	require.NoError(t, err)
+	require.Equal(t, true, created)
+	require.NotNil(t, cmd)
+	require.Equal(t, "test-dash", cmd.Dashboard.Get("uid").MustString())
+	_, exists := cmd.Dashboard.CheckGet("id")
+	require.False(t, exists) // id should be removed
+	require.Equal(t, cmd.OrgID, int64(1))
+	require.True(t, cmd.Overwrite)
+
+	// now update existing dashboard
+	mockStore.On("GetDashboard", mock.Anything, mock.Anything).Return(
+		&dashboards.Dashboard{
+			ID:         1234,
+			APIVersion: "dashboard.grafana.app/v0alpha1",
+		}, nil).Once()
+	cmd, created, err = access.buildSaveDashboardCommand(ctx, 1, dash)
+	require.NoError(t, err)
+	require.Equal(t, false, created)
+	require.NotNil(t, cmd)
+	require.Equal(t, "test-dash", cmd.Dashboard.Get("uid").MustString())
+	require.Equal(t, cmd.Dashboard.Get("id").MustInt64(), int64(1234)) // should set to existing ID
+	require.Equal(t, cmd.APIVersion, "v0alpha1")                       // should trim prefix
+	require.Equal(t, cmd.OrgID, int64(1))
+	require.True(t, cmd.Overwrite)
 }

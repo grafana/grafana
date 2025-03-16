@@ -178,19 +178,25 @@ func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, n
 	return dashes, nil
 }
 
-func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, dash *dashboards.Dashboard, provisioning *dashboards.DashboardProvisioning) error {
+func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.SaveProvisionedDashboard")
 	defer span.End()
 
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if provisioning.Updated == 0 {
-			provisioning.Updated = dash.Updated.Unix()
+	var result *dashboards.Dashboard
+	var err error
+	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		result, err = saveDashboard(sess, &cmd, d.emitEntityEvent())
+		if err != nil {
+			return err
 		}
 
-		return saveProvisionedData(sess, provisioning, dash)
-	})
+		if provisioning.Updated == 0 {
+			provisioning.Updated = result.Updated.Unix()
+		}
 
-	return err
+		return saveProvisionedData(sess, provisioning, result)
+	})
+	return result, err
 }
 
 func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand) (*dashboards.Dashboard, error) {
