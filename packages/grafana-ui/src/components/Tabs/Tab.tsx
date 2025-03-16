@@ -92,11 +92,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       whiteSpace: 'nowrap',
-      padding: theme.spacing(0.5),
+      padding: theme.spacing(0, 0.5),
     }),
     link: css({
       color: theme.colors.text.secondary,
-      padding: theme.spacing(1, 1.5, 0.5),
+      padding: theme.spacing(1, 1.5, 1),
       borderRadius: theme.shape.radius.default,
 
       display: 'block',
@@ -114,7 +114,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         position: 'absolute',
         left: 0,
         right: 0,
-        height: '4px',
+        height: '2px',
         borderRadius: theme.shape.radius.default,
         bottom: 0,
       },

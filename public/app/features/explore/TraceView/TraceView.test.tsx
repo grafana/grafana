@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { DataFrame, MutableDataFrame } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataFrame, MutableDataFrame, TimeRange } from '@grafana/data';
+import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
@@ -25,6 +25,7 @@ function getTraceView(frames: DataFrame[]) {
         traceProp={transformDataFrames(frames[0])!}
         datasource={undefined}
         topOfViewRef={topOfViewRef}
+        timeRange={{} as TimeRange}
       />
     </Provider>
   );
@@ -47,6 +48,11 @@ function renderTraceViewNew() {
 
 describe('TraceView', () => {
   beforeAll(() => {
+    setPluginLinksHook(() => ({
+      isLoading: false,
+      links: [],
+    }));
+
     setDataSourceSrv({
       getInstanceSettings() {
         return undefined;

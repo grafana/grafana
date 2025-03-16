@@ -20,7 +20,7 @@ import { DEFAULT_GROUP_EVALUATION_INTERVAL, getDefaultFormValues } from '../../.
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { formValuesToRulerGrafanaRuleDTO, getDefaultQueries } from '../../../utils/rule-form';
-import { isGrafanaRulerRule } from '../../../utils/rules';
+import { rulerRuleType } from '../../../utils/rules';
 import { FileExportPreview } from '../../export/FileExportPreview';
 import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
 import { ExportFormats, HclExportProvider, allGrafanaExportProviders } from '../../export/providers';
@@ -92,31 +92,29 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   ];
 
   return (
-    <>
-      <FormProvider {...formAPI}>
-        <AppChromeUpdate actions={actionButtons} />
-        <form onSubmit={(e) => e.preventDefault()}>
-          <div>
-            <Stack direction="column" gap={3}>
-              {/* Step 1 */}
-              <AlertRuleNameAndMetric />
-              {/* Step 2 */}
-              <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} />
-              {/* Step 3-4-5 */}
-              <GrafanaFolderAndLabelsStep />
+    <FormProvider {...formAPI}>
+      <AppChromeUpdate actions={actionButtons} />
+      <form onSubmit={(e) => e.preventDefault()}>
+        <div>
+          <Stack direction="column" gap={3}>
+            {/* Step 1 */}
+            <AlertRuleNameAndMetric />
+            {/* Step 2 */}
+            <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} />
+            {/* Step 3-4-5 */}
+            <GrafanaFolderAndLabelsStep />
 
-              {/* Step 4 & 5 */}
-              <GrafanaEvaluationBehaviorStep existing={Boolean(existing)} enableProvisionedGroups={true} />
-              {/* Notifications step*/}
-              <NotificationsStep alertUid={alertUid} />
-              {/* Annotations only for cloud and Grafana */}
-              <AnnotationsStep />
-            </Stack>
-          </div>
-        </form>
-        {exportData && <GrafanaRuleDesignExporter exportValues={exportData} onClose={onClose} uid={alertUid} />}
-      </FormProvider>
-    </>
+            {/* Step 4 & 5 */}
+            <GrafanaEvaluationBehaviorStep existing={Boolean(existing)} enableProvisionedGroups={true} />
+            {/* Notifications step*/}
+            <NotificationsStep alertUid={alertUid} />
+            {/* Annotations only for cloud and Grafana */}
+            <AnnotationsStep />
+          </Stack>
+        </div>
+      </form>
+      {exportData && <GrafanaRuleDesignExporter exportValues={exportData} onClose={onClose} uid={alertUid} />}
+    </FormProvider>
   );
 }
 
@@ -150,7 +148,7 @@ export const getPayloadToExport = (
     // we have to update the rule in the group in the same position if it exists, otherwise we have to add it at the end
     let alreadyExistsInGroup = false;
     const updatedRules = existingGroup.rules.map((rule: RulerRuleDTO) => {
-      if (isGrafanaRulerRule(rule) && rule.grafana_alert.uid === ruleUid) {
+      if (rulerRuleType.grafana.rule(rule) && rule.grafana_alert.uid === ruleUid) {
         alreadyExistsInGroup = true;
         return updatedRule;
       } else {

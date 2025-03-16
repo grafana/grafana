@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
@@ -15,16 +14,23 @@ import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
+import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
-export interface DashboardSceneSerializerLike<T, M> {
+/**
+ * T is the type of the save model
+ * M is the type of the metadata
+ * I is the type of the initial save model. By default it's the same as T.
+ */
+export interface DashboardSceneSerializerLike<T, M, I = T> {
   /**
    * The save model which the dashboard scene was originally created from
    */
-  initialSaveModel?: T;
+  initialSaveModel?: I;
   metadata?: M;
+  initializeMapping(saveModel: T | undefined): void;
   getSaveModel: (s: DashboardScene) => T;
   getSaveAsModel: (s: DashboardScene, options: SaveDashboardAsOptions) => T;
   getDashboardChangesFromScene: (
@@ -38,6 +44,9 @@ export interface DashboardSceneSerializerLike<T, M> {
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
   getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | undefined;
   getSnapshotUrl: () => string | undefined;
+  getPanelIdForElement: (elementId: string) => number | undefined;
+  getElementIdForPanel: (panelId: number) => string | undefined;
+  getElementPanelMapping: () => Map<string, number>;
 }
 
 interface DashboardTrackingInfo {
@@ -52,6 +61,44 @@ interface DashboardTrackingInfo {
 export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard, DashboardMeta> {
   initialSaveModel?: Dashboard;
   metadata?: DashboardMeta;
+  protected elementPanelMap = new Map<string, number>();
+
+  initializeMapping(saveModel: Dashboard | undefined) {
+    this.elementPanelMap.clear();
+
+    if (!saveModel || !saveModel.panels) {
+      return;
+    }
+    saveModel.panels?.forEach((panel) => {
+      if (panel.id) {
+        const elementKey = getVizPanelKeyForPanelId(panel.id);
+        this.elementPanelMap.set(elementKey, panel.id);
+      }
+    });
+  }
+
+  getElementPanelMapping() {
+    return this.elementPanelMap;
+  }
+
+  getPanelIdForElement(elementId: string) {
+    return this.elementPanelMap.get(elementId);
+  }
+
+  getElementIdForPanel(panelId: number) {
+    // First try to find an existing mapping
+    for (const [elementId, id] of this.elementPanelMap.entries()) {
+      if (id === panelId) {
+        return elementId;
+      }
+    }
+
+    // For runtime-created panels, generate a new element identifier
+    const newElementId = getVizPanelKeyForPanelId(panelId);
+    // Store the new mapping for future lookups
+    this.elementPanelMap.set(newElementId, panelId);
+    return newElementId;
+  }
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModel(s);
@@ -89,6 +136,7 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
       ...changeInfo,
       hasFolderChanges,
       hasChanges: changeInfo.hasChanges || hasFolderChanges,
+      hasMigratedToV2: false,
     };
   }
 
@@ -127,10 +175,55 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
 }
 
 export class V2DashboardSerializer
-  implements DashboardSceneSerializerLike<DashboardV2Spec, DashboardWithAccessInfo<DashboardV2Spec>['metadata']>
+  implements
+    DashboardSceneSerializerLike<
+      DashboardV2Spec,
+      DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
+      Dashboard | DashboardV2Spec
+    >
 {
-  initialSaveModel?: DashboardV2Spec;
+  initialSaveModel?: DashboardV2Spec | Dashboard;
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
+  protected elementPanelMap = new Map<string, number>();
+
+  getElementPanelMapping() {
+    return this.elementPanelMap;
+  }
+
+  initializeMapping(saveModel: DashboardV2Spec | undefined) {
+    this.elementPanelMap.clear();
+
+    if (!saveModel || !saveModel.elements) {
+      return;
+    }
+
+    const elementKeys = Object.keys(saveModel.elements);
+    elementKeys.forEach((key) => {
+      const elementPanel = saveModel.elements[key];
+      if (elementPanel.kind === 'Panel') {
+        this.elementPanelMap.set(key, elementPanel.spec.id);
+      }
+    });
+  }
+
+  getPanelIdForElement(elementId: string) {
+    return this.elementPanelMap.get(elementId);
+  }
+
+  getElementIdForPanel(panelId: number) {
+    // First try to find an existing mapping
+    for (const [elementId, id] of this.elementPanelMap.entries()) {
+      if (id === panelId) {
+        return elementId;
+      }
+    }
+
+    // For runtime-created panels, generate a new element identifier
+    const newElementId = getVizPanelKeyForPanelId(panelId);
+    // Store the new mapping for future lookups
+    this.elementPanelMap.set(newElementId, panelId);
+    return newElementId;
+  }
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModelSchemaV2(s);
@@ -167,6 +260,7 @@ export class V2DashboardSerializer
       hasFolderChanges,
       hasChanges: changeInfo.hasChanges || hasFolderChanges,
       isNew,
+      hasMigratedToV2: !!changeInfo.hasMigratedToV2,
     };
   }
 
@@ -177,27 +271,30 @@ export class V2DashboardSerializer
   }
 
   getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
-    const panelPluginIds =
-      Object.values(this.initialSaveModel?.elements ?? [])
-        .filter((e) => e.kind === 'Panel')
-        .map((p) => p.spec.vizConfig.kind) || [];
-    const panels = getPanelPluginCounts(panelPluginIds);
-    const variables = getV2SchemaVariables(this.initialSaveModel?.variables || []);
-
-    if (this.initialSaveModel) {
-      return {
-        schemaVersion: DASHBOARD_SCHEMA_VERSION,
-        uid: s.state.uid,
-        title: this.initialSaveModel.title,
-        panels_count: panelPluginIds.length || 0,
-        settings_nowdelay: undefined,
-        settings_livenow: !!this.initialSaveModel.liveNow,
-        ...panels,
-        ...variables,
-      };
+    if (!this.initialSaveModel) {
+      return undefined;
     }
 
-    return undefined;
+    const panelPluginIds =
+      'elements' in this.initialSaveModel
+        ? Object.values(this.initialSaveModel.elements)
+            .filter((e) => e.kind === 'Panel')
+            .map((p) => p.spec.vizConfig.kind)
+        : [];
+    const panels = getPanelPluginCounts(panelPluginIds);
+    const variables =
+      'variables' in this.initialSaveModel! ? getV2SchemaVariables(this.initialSaveModel.variables) : [];
+
+    return {
+      schemaVersion: DASHBOARD_SCHEMA_VERSION,
+      uid: s.state.uid,
+      title: this.initialSaveModel.title,
+      panels_count: panelPluginIds.length || 0,
+      settings_nowdelay: undefined,
+      settings_livenow: !!this.initialSaveModel.liveNow,
+      ...panels,
+      ...variables,
+    };
   }
 
   getSnapshotUrl() {
@@ -205,11 +302,18 @@ export class V2DashboardSerializer
   }
 }
 
-export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<
+export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<Dashboard, DashboardMeta>;
+export function getDashboardSceneSerializer(version: 'v1'): DashboardSceneSerializerLike<Dashboard, DashboardMeta>;
+export function getDashboardSceneSerializer(
+  version: 'v2'
+): DashboardSceneSerializerLike<DashboardV2Spec, DashboardWithAccessInfo<DashboardV2Spec>['metadata']>;
+export function getDashboardSceneSerializer(
+  version?: 'v1' | 'v2'
+): DashboardSceneSerializerLike<
   Dashboard | DashboardV2Spec,
   DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
 > {
-  if (config.featureToggles.useV2DashboardsAPI) {
+  if (version === 'v2') {
     return new V2DashboardSerializer();
   }
 
