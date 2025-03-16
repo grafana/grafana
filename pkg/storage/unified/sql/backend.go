@@ -78,6 +78,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}, nil
 }
 
+// pruningKey is a comperable key for pruning history.
 type pruningKey struct {
 	namespace string
 	group     string
@@ -164,6 +165,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 	}
 	b.notifier = notifier
 
+	// Initialize history pruner.
 	b.historyPruner, err = debouncer.NewGroup(debouncer.DebouncerOpts[pruningKey]{
 		Name:       "history_pruner",
 		BufferSize: 1000,
@@ -205,7 +207,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 		Reg: b.reg,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to start history pruner: %w", err)
+		return fmt.Errorf("failed to start build pruner: %w", err)
 	}
 	b.historyPruner.Start(ctx)
 
