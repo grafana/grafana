@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
@@ -35,10 +36,10 @@ type Backend interface {
 type BackendOptions struct {
 	DBProvider      db.DBProvider
 	Tracer          trace.Tracer
+	Reg             prometheus.Registerer
 	PollingInterval time.Duration
 	WatchBufferSize int
 	IsHA            bool
-	storageMetrics  *resource.StorageMetrics
 
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
@@ -68,7 +69,6 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		dbProvider:              opts.DBProvider,
 		pollingInterval:         opts.PollingInterval,
 		watchBufferSize:         opts.WatchBufferSize,
-		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 	}, nil
@@ -85,9 +85,9 @@ type backend struct {
 	initErr  error
 
 	// o11y
-	log            log.Logger
-	tracer         trace.Tracer
-	storageMetrics *resource.StorageMetrics
+	log    log.Logger
+	tracer trace.Tracer
+	reg    prometheus.Registerer
 
 	// database
 	dbProvider db.DBProvider

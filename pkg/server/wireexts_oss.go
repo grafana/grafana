@@ -52,7 +52,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
@@ -157,9 +156,6 @@ var wireExtsBaseCLISet = wire.NewSet(
 var wireExtsModuleServerSet = wire.NewSet(
 	NewModule,
 	wireExtsBaseCLISet,
-	// Unified storage
-	resource.ProvideStorageMetrics,
-	resource.ProvideIndexMetrics,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

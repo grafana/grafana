@@ -7,9 +7,12 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var (
@@ -25,15 +28,33 @@ var (
 	errDialectRequired        = fmt.Errorf("dialect is required")
 )
 
+type pollingMetrics struct {
+	latency prometheus.Histogram
+}
+
+func newPollingMetrics(reg prometheus.Registerer) *pollingMetrics {
+	return &pollingMetrics{
+		latency: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Namespace:                       "storage_server",
+			Name:                            "poller_query_latency_seconds",
+			Help:                            "poller query latency",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1, // enable native histograms
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}),
+	}
+}
+
 // pollingNotifier is a notifier that polls the database for new events.
 type pollingNotifier struct {
 	dialect         sqltemplate.Dialect
 	pollingInterval time.Duration
 	watchBufferSize int
 
-	log            log.Logger
-	tracer         trace.Tracer
-	storageMetrics *resource.StorageMetrics
+	log     log.Logger
+	tracer  trace.Tracer
+	metrics *pollingMetrics
 
 	bulkLock      *bulkLock
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
@@ -47,9 +68,9 @@ type pollingNotifierConfig struct {
 	pollingInterval time.Duration
 	watchBufferSize int
 
-	log            log.Logger
-	tracer         trace.Tracer
-	storageMetrics *resource.StorageMetrics
+	log    log.Logger
+	tracer trace.Tracer
+	reg    prometheus.Registerer
 
 	bulkLock      *bulkLock
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
@@ -103,7 +124,7 @@ func newPollingNotifier(cfg *pollingNotifierConfig) (*pollingNotifier, error) {
 		listLatestRVs:   cfg.listLatestRVs,
 		historyPoll:     cfg.historyPoll,
 		done:            cfg.done,
-		storageMetrics:  cfg.storageMetrics,
+		metrics:         newPollingMetrics(cfg.reg),
 	}, nil
 }
 
@@ -175,9 +196,8 @@ func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, sinc
 	if err != nil {
 		return 0, fmt.Errorf("poll history: %w", err)
 	}
-	if p.storageMetrics != nil {
-		p.storageMetrics.PollerLatency.Observe(time.Since(start).Seconds())
-	}
+
+	p.metrics.latency.Observe(time.Since(start).Seconds())
 
 	var nextRV int64
 	for _, rec := range records {
