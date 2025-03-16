@@ -45,9 +45,9 @@ jobs:
             type=sha
 
       - name: Build Docker image using Makefile
-        run: make build-docker-full
+        run: docker build -t grafana-rm -f Dockerfile .
 
       - name: Push Docker image
         run: |
-          docker tag myrepo/grafana-rm:latest ${{ secrets.DOCKERHUB_USERNAME }}/grafana-rm:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/grafana-rm:latest
+          docker tag grafana-rm ${{ secrets.DOCKERHUB_USERNAME }}/grafana-rm
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/grafana-rm
