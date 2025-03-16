@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -320,15 +319,8 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 			// if the reader cannot be found, it may be an orphaned provisioned dashboard
 			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
 			if resolvedPath != "" {
-				originPath, err := filepath.Rel(
-					resolvedPath,
-					origin_path.String,
-				)
-				if err != nil {
-					return nil, err
-				}
 				meta.SetSourceProperties(utils.SourceProperties{
-					Path:            originPath, // relative path within source
+					Path:            origin_path.String,
 					Checksum:        origin_hash.String,
 					TimestampMillis: origin_ts.Int64,
 				})
@@ -392,8 +384,7 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 	return dash, true, nil
 }
 
-// SaveDashboard implements DashboardAccess.
-func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error) {
+func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboards.SaveDashboardCommand, bool, error) {
 	created := false
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -424,16 +415,17 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		var err error
 		userID, err = identity.UserIdentifier(user.GetSubject())
 		if err != nil {
-			return nil, false, err
+			return nil, created, err
 		}
 	}
 
 	apiVersion := strings.TrimPrefix(dash.APIVersion, dashboard.GROUP+"/")
 	meta, err := utils.MetaAccessor(dash)
 	if err != nil {
-		return nil, false, err
+		return nil, created, err
 	}
-	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
+
+	return &dashboards.SaveDashboardCommand{
 		OrgID:      orgId,
 		Message:    meta.GetMessage(),
 		PluginID:   dashboardOG.GetPluginIDFromMeta(meta),
@@ -442,7 +434,21 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		Overwrite:  true, // already passed the revisionVersion checks!
 		UserID:     userID,
 		APIVersion: apiVersion,
-	})
+	}, created, nil
+}
+
+func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error) {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return nil, false, fmt.Errorf("no user found in context")
+	}
+
+	cmd, created, err := a.buildSaveDashboardCommand(ctx, orgId, dash)
+	if err != nil {
+		return nil, created, err
+	}
+
+	out, err := a.dashStore.SaveDashboard(ctx, *cmd)
 	if err != nil {
 		return nil, false, err
 	}
@@ -452,6 +458,8 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	dash, _, err = a.GetDashboard(ctx, orgId, out.UID, 0)
 	if err != nil {
 		return nil, false, err
+	} else if dash == nil {
+		return nil, false, fmt.Errorf("unable to retrieve dashboard after save")
 	}
 
 	// stash the raw value in context (if requested)
