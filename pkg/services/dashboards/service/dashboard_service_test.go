@@ -440,12 +440,12 @@ func TestGetAllDashboards(t *testing.T) {
 
 		dashboardUnstructured := unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
-				"name": "uid",
+				"name":       "uid",
+				"generation": int64(1),
 			},
 			"spec": map[string]any{
-				"test":    "test",
-				"version": int64(1),
-				"title":   "testing slugify",
+				"test":  "test",
+				"title": "testing slugify",
 			},
 		}}
 
@@ -492,12 +492,12 @@ func TestGetAllDashboardsByOrgId(t *testing.T) {
 
 		dashboardUnstructured := unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
-				"name": "uid",
+				"name":       "uid",
+				"generation": int64(1),
 			},
 			"spec": map[string]any{
-				"test":    "test",
-				"version": int64(1),
-				"title":   "testing slugify",
+				"test":  "test",
+				"title": "testing slugify",
 			},
 		}}
 
@@ -1578,23 +1578,26 @@ func TestGetDashboards(t *testing.T) {
 
 	expectedResult := []*dashboards.Dashboard{
 		{
-			UID:   "uid1",
-			Slug:  "dashboard-1",
-			OrgID: 1,
-			Title: "Dashboard 1",
-			Data:  simplejson.NewFromAny(map[string]any{"title": "Dashboard 1", "uid": "uid1"}),
+			UID:     "uid1",
+			Slug:    "dashboard-1",
+			OrgID:   1,
+			Title:   "Dashboard 1",
+			Version: 1,
+			Data:    simplejson.NewFromAny(map[string]any{"title": "Dashboard 1", "uid": "uid1", "version": int64(1)}),
 		},
 		{
-			UID:   "uid2",
-			Slug:  "dashboard-2",
-			OrgID: 1,
-			Title: "Dashboard 2",
-			Data:  simplejson.NewFromAny(map[string]any{"title": "Dashboard 2", "uid": "uid2"}),
+			UID:     "uid2",
+			Slug:    "dashboard-2",
+			OrgID:   1,
+			Title:   "Dashboard 2",
+			Version: 1,
+			Data:    simplejson.NewFromAny(map[string]any{"title": "Dashboard 2", "uid": "uid2", "version": int64(1)}),
 		},
 	}
 	uid1Unstructured := &unstructured.Unstructured{Object: map[string]any{
 		"metadata": map[string]any{
-			"name": "uid1",
+			"name":       "uid1",
+			"generation": int64(1),
 		},
 		"spec": map[string]any{
 			"title": "Dashboard 1",
@@ -1602,7 +1605,8 @@ func TestGetDashboards(t *testing.T) {
 	}}
 	uid2Unstructured := &unstructured.Unstructured{Object: map[string]any{
 		"metadata": map[string]any{
-			"name": "uid2",
+			"name":       "uid2",
+			"generation": int64(1),
 		},
 		"spec": map[string]any{
 			"title": "Dashboard 2",
