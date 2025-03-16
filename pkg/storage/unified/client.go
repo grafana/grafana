@@ -134,7 +134,6 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		// TODO(JPQ): Should we just pass a nil registery here?
 		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions)
 		if err != nil {
 			return nil, err

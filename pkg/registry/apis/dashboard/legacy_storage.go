@@ -3,7 +3,6 @@ package dashboard
 import (
 	"context"
 
-	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -22,10 +21,9 @@ type DashboardStorage struct {
 	Access legacy.DashboardAccess
 }
 
-func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter, reg prometheus.Registerer) (grafanarest.Storage, error) {
+func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter) (grafanarest.Storage, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: s.Access,
-		Reg:     reg,
 	})
 	if err != nil {
 		return nil, err

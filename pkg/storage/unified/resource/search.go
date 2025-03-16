@@ -484,7 +484,6 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	}
 
 	s.metrics.indexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
-
 }
 
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {

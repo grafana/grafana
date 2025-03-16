@@ -10,8 +10,6 @@ type bleveIndexMetrics struct {
 	indexSize    prometheus.Gauge
 }
 
-var indexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
-
 func newBleveIndexMetrics(reg prometheus.Registerer) *bleveIndexMetrics {
 	return &bleveIndexMetrics{
 		indexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
