@@ -37,6 +37,7 @@ type Backend interface {
 type BackendOptions struct {
 	DBProvider      db.DBProvider
 	Tracer          trace.Tracer
+	Reg             prometheus.Registerer
 	PollingInterval time.Duration
 	WatchBufferSize int
 	IsHA            bool
@@ -67,6 +68,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		cancel:                  cancel,
 		log:                     log.New("sql-resource-server"),
 		tracer:                  opts.Tracer,
+		reg:                     opts.Reg,
 		dbProvider:              opts.DBProvider,
 		pollingInterval:         opts.PollingInterval,
 		watchBufferSize:         opts.WatchBufferSize,
@@ -95,6 +97,7 @@ type backend struct {
 	// o11y
 	log            log.Logger
 	tracer         trace.Tracer
+	reg            prometheus.Registerer
 	storageMetrics *resource.StorageMetrics
 
 	// database
@@ -199,7 +202,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 				"resource", key.resource,
 				"error", err)
 		},
-		Reg: prometheus.DefaultRegisterer,
+		Reg: b.reg,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to start history pruner: %w", err)

@@ -47,7 +47,7 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 
 	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"))
 
-	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer, IsHA: isHA, storageMetrics: storageMetrics})
+	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer, IsHA: isHA, storageMetrics: storageMetrics, Reg: reg})
 	if err != nil {
 		return nil, err
 	}
