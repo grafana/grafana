@@ -12,26 +12,17 @@ const MINUTE_IN_MILLISECONDS = 60 * 1000;
 const DEFAULT_TIME_RANGE_MINUTES = 30;
 
 export function absoluteTimeRangeURL(opts?: AbsoluteTimeRangeURLOptions): string {
+  const { url: urlProp, fromParam = DEFAULT_FROM_PARAM, toParam = DEFAULT_TO_PARAM } = opts ?? {};
+
+  // handle URL parsing
+  let baseUrl: string;
+  let queryParams: URLSearchParams;
+  const url = urlProp ?? window.location.href;
+
   try {
-    const { url, fromParam = DEFAULT_FROM_PARAM, toParam = DEFAULT_TO_PARAM } = opts ?? {};
-
-    // handle URL parsing
-    let baseUrl: string;
-    let queryParams: URLSearchParams;
-
-    try {
-      if (url) {
-        const parsedUrl = new URL(url);
-        baseUrl = parsedUrl.href.split('?')[0];
-        queryParams = new URLSearchParams(parsedUrl.search);
-      } else {
-        baseUrl = window.location.href.split('?')[0];
-        queryParams = new URLSearchParams(window.location.search);
-      }
-    } catch (error) {
-      console.error('Failed to parse URL:', error);
-      return url ?? window.location.href;
-    }
+    const parsedUrl = new URL(url);
+    baseUrl = parsedUrl.href.split('?')[0];
+    queryParams = new URLSearchParams(parsedUrl.search);
 
     const from = queryParams.get(fromParam);
     const to = queryParams.get(toParam);
@@ -70,6 +61,6 @@ export function absoluteTimeRangeURL(opts?: AbsoluteTimeRangeURLOptions): string
     return `${baseUrl}?${queryParams.toString()}`;
   } catch (error) {
     console.error('Error in absoluteTimeRangeURL:', error);
-    return opts?.url ?? window.location.href;
+    return url;
   }
 }

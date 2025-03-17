@@ -2,14 +2,13 @@ import { css } from '@emotion/css';
 import { useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
 
-import { copyText } from '../../utils/clipboard';
-import { absoluteTimeRangeURL } from '../../utils/time';
 import { useStyles2 } from '../../themes';
+import { copyText } from '../../utils/clipboard';
 import { t, Trans } from '../../utils/i18n';
+import { absoluteTimeRangeURL } from '../../utils/time';
 import { Button, ButtonGroup, ButtonProps } from '../Button';
+import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { Menu } from '../Menu/Menu';
 import { MenuItemElement } from '../Menu/MenuItem';
@@ -40,19 +39,16 @@ export interface Props extends ButtonProps {
   toParam?: string;
 }
 
-export function ShareTimeRangeButton({ collapsed, url, fromParam, toParam }: Props) {
+export function ShareTimeRangeButton({ collapsed, url: urlProp, fromParam, toParam }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const styles = useStyles2(getStyles);
+  const url = urlProp ?? window.location.href;
 
   const relativeUrlRef = useRef<MenuItemElement>(null);
   const absoluteUrlRef = useRef<MenuItemElement>(null);
 
   const clickHandler = (text: string, ref: React.RefObject<MenuItemElement>) => {
     copyText(text, ref);
-    getAppEvents().publish({
-      type: AppEvents.alertSuccess.name,
-      payload: t('grafana-ui.toolbar.copy-link-success', 'URL copied to clipboard'),
-    });
     setIsOpen(false);
   };
 
@@ -62,7 +58,7 @@ export function ShareTimeRangeButton({ collapsed, url, fromParam, toParam }: Pro
         key="copy-url-relative"
         label={t('grafana-ui.toolbar.copy-link', 'Copy URL')}
         icon="link"
-        onClick={() => clickHandler(url ?? window.location.href, relativeUrlRef)}
+        onClick={() => clickHandler(url, relativeUrlRef)}
         ref={relativeUrlRef}
       />
       <Menu.Item
@@ -76,23 +72,25 @@ export function ShareTimeRangeButton({ collapsed, url, fromParam, toParam }: Pro
   );
 
   return (
-    <Dropdown overlay={menu} placement="bottom-start" onVisibleChange={() => setIsOpen(!isOpen)}>
-      <ButtonGroup>
-        <Button
-          className={styles.copy}
-          variant="secondary"
-          size="md"
-          icon="share-alt"
-          tooltip={t('grafana-ui.toolbar.copy-link-abs-time', 'Copy absolute URL')}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <span className={collapsed ? styles.collapsed : styles.shareText}>
-            <Trans i18nKey="grafana-ui.toolbar.copy-shortened-link-label">Share</Trans>
-          </span>
-        </Button>
+    <ButtonGroup>
+      <ClipboardButton
+        className={styles.copy}
+        variant="secondary"
+        size="md"
+        icon="share-alt"
+        tooltip={t('grafana-ui.toolbar.copy-link-abs-time', 'Copy absolute URL')}
+        getText={() => absoluteTimeRangeURL({ url, fromParam, toParam })}
+      >
+        <span className={collapsed ? styles.collapsed : styles.shareText}>
+          <Trans i18nKey="grafana-ui.toolbar.copy-shortened-link-label">Share</Trans>
+        </span>
+      </ClipboardButton>
+      <Dropdown overlay={menu} placement="bottom-start" onVisibleChange={() => setIsOpen(!isOpen)}>
+
         <Button variant="secondary" size="md" icon={isOpen ? 'angle-up' : 'angle-down'} />
-      </ButtonGroup>
-    </Dropdown>
+      </Dropdown>
+
+    </ButtonGroup>
   );
 }
 
