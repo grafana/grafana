@@ -7,7 +7,7 @@ import { createLogLine } from '../__mocks__/logRow';
 
 import { getStyles } from './LogLine';
 import { LogLineMenu } from './LogLineMenu';
-import { LogListContext } from './LogListContext';
+import { defaultProps, LogListContextProvider } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 
 const theme = createTheme();
@@ -30,9 +30,9 @@ describe('LogLineMenu', () => {
     test('Allows to copy a permalink', async () => {
       const onPermalinkClick = jest.fn();
       render(
-        <LogListContext.Provider value={{ onPermalinkClick }}>
+        <LogListContextProvider {...defaultProps} onPermalinkClick={onPermalinkClick}>
           <LogLineMenu log={log} styles={styles} />
-        </LogListContext.Provider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       await userEvent.click(screen.getByText('Copy link to log line'));
@@ -44,9 +44,14 @@ describe('LogLineMenu', () => {
       const logSupportsContext = jest.fn().mockReturnValue(true);
       const getRowContextQuery = jest.fn();
       render(
-        <LogListContext.Provider value={{ getRowContextQuery, logSupportsContext, onOpenContext }}>
+        <LogListContextProvider
+          {...defaultProps}
+          getRowContextQuery={getRowContextQuery}
+          logSupportsContext={logSupportsContext}
+          onOpenContext={onOpenContext}
+        >
           <LogLineMenu log={log} styles={styles} />
-        </LogListContext.Provider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       await userEvent.click(screen.getByText('Show context'));
@@ -58,9 +63,14 @@ describe('LogLineMenu', () => {
       const logSupportsContext = jest.fn().mockReturnValue(false);
       const getRowContextQuery = jest.fn();
       render(
-        <LogListContext.Provider value={{ getRowContextQuery, logSupportsContext, onOpenContext }}>
+        <LogListContextProvider
+          {...defaultProps}
+          getRowContextQuery={getRowContextQuery}
+          logSupportsContext={logSupportsContext}
+          onOpenContext={onOpenContext}
+        >
           <LogLineMenu log={log} styles={styles} />
-        </LogListContext.Provider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       expect(screen.queryByText('Show context')).not.toBeInTheDocument();
@@ -69,9 +79,9 @@ describe('LogLineMenu', () => {
     test('Allows to pin log line', async () => {
       const onPinLine = jest.fn();
       render(
-        <LogListContext.Provider value={{ pinnedLogs: [], onPinLine }}>
+        <LogListContextProvider {...defaultProps} pinnedLogs={[]} onPinLine={onPinLine}>
           <LogLineMenu log={log} styles={styles} />
-        </LogListContext.Provider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       await userEvent.click(screen.getByText('Pin log'));
@@ -81,9 +91,9 @@ describe('LogLineMenu', () => {
     test('Allows to unpin log line', async () => {
       const onUnpinLine = jest.fn();
       render(
-        <LogListContext.Provider value={{ pinnedLogs: [log.uid], onUnpinLine }}>
+        <LogListContextProvider {...defaultProps} pinnedLogs={[log.uid]} onUnpinLine={onUnpinLine}>
           <LogLineMenu log={log} styles={styles} />
-        </LogListContext.Provider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       expect(screen.queryByText('Pin log')).not.toBeInTheDocument();
