@@ -10,7 +10,7 @@ import { RepositorySpec, RepositoryView } from 'app/api/clients/provisioning';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
-import { AnnoKeyManagerIdentity, Resource } from 'app/features/apiserver/types';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind, Resource } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
@@ -206,7 +206,14 @@ export function SaveProvisionedDashboardForm({
                         }
                         dashboard.setState({
                           meta: {
-                            k8s: name ? { annotations: { [AnnoKeyManagerIdentity]: name } } : undefined,
+                            k8s: name
+                              ? {
+                                  annotations: {
+                                    [AnnoKeyManagerIdentity]: name,
+                                    [AnnoKeyManagerKind]: ManagerKind.Repo,
+                                  },
+                                }
+                              : undefined,
                             folderUid: uid,
                           },
                         });
