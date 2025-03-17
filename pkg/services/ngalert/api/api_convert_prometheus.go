@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
@@ -409,7 +408,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostDatasource(c *context
 		return errorToResponse(err)
 	}
 
-	grafanaGroups := make([]*ngmodels.AlertRuleGroup, 0, len(promGroups))
+	grafanaGroups := make([]*models.AlertRuleGroup, 0, len(promGroups))
 	for ns, rgs := range promGroups {
 		// Check Namespace filter
 		if namespaceFilter != "" && ns != namespaceFilter {
@@ -474,13 +473,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostDatasource(c *context
 	// 3. Update the GMA Rules in the DB
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
 		for _, grafanaGroup := range grafanaGroups {
-			rules := make([]*ngmodels.AlertRuleWithOptionals, 0, len(grafanaGroup.Rules))
+			rules := make([]*models.AlertRuleWithOptionals, 0, len(grafanaGroup.Rules))
 			for _, r := range grafanaGroup.Rules {
-				rules = append(rules, &ngmodels.AlertRuleWithOptionals{
+				rules = append(rules, &models.AlertRuleWithOptionals{
 					AlertRule: r,
 				})
 			}
-			groupKey := ngmodels.AlertRuleGroupKey{
+			groupKey := models.AlertRuleGroupKey{
 				OrgID:        c.SignedInUser.GetOrgID(),
 				NamespaceUID: grafanaGroup.FolderUID,
 				RuleGroup:    grafanaGroup.Title,

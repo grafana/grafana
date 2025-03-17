@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"time"
 
@@ -189,7 +188,6 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		muteTimingService: api.MuteTimings,
 	}), m)
 
-	fmt.Println("FAZ ENABLED: ", api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingConversionAPI))
 	if api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingConversionAPI) {
 		api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(
 			NewConvertPrometheusSrv(
