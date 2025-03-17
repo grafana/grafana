@@ -144,6 +144,10 @@ pkg/services/quota/quotaimpl/storage/storage.json
 /devenv/datasources_bulk.yaml
 
 /scripts/build/release_publisher/release_publisher
+# iam-access-dev
+/scripts/iam/.env
+/scripts/iam/custom.ini
+!/scripts/iam/custom-iam-template.ini
 *.patch
 !.yarn/patches/*.patch
 
