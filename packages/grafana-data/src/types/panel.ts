@@ -1,6 +1,8 @@
 import { defaultsDeep } from 'lodash';
 import React from 'react';
 
+import { SortOrder, DataTransformerConfig } from '@grafana/schema';
+
 import { EventBus } from '../events/types';
 import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
 import { Registry } from '../utils/Registry';
@@ -10,14 +12,14 @@ import { ScopedVars } from './ScopedVars';
 import { AlertStateInfo } from './alerts';
 import { PanelModel } from './dashboard';
 import { LoadingState, PreferredVisualisationType } from './data';
-import { DataFrame, FieldType } from './dataFrame';
+import { DataFrame, Field, FieldType } from './dataFrame';
+import { LinkModel } from './dataLink';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { FieldConfigSource } from './fieldOverrides';
 import { IconName } from './icon';
 import { OptionEditorConfig } from './options';
 import { PluginMeta } from './plugin';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
-import { DataTransformerConfig } from './transformations';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -72,6 +74,25 @@ export interface PanelData {
   traceIds?: string[];
 }
 
+export interface PanelCustomTimeSeriesTooltip {
+  data: DataFrame[]; // Unified structure including both series & non-series data
+  isGraphable?: (field: Field) => boolean; // Optional helper to check if a field is graphable
+
+  // hovered points
+  dataIdxs: Array<number | null>;
+  // closest/hovered series
+  seriesIdx?: number | null;
+  sortOrder?: SortOrder;
+
+  isPinned: boolean;
+
+  maxHeight?: number;
+
+  replaceVariables?: InterpolateFunction;
+  dataLinks: LinkModel[];
+  hideZeros?: boolean;
+}
+
 export interface PanelProps<T = any> {
   /** Unique ID of the panel within the current dashboard */
   id: number;
@@ -89,7 +110,7 @@ export interface PanelProps<T = any> {
   options: T;
 
   /**  * When set, it disregards the <options.tooltip> in favor of a fully customizable one.*/
-  getCustomTooltip?: (props: any) => React.ReactNode;
+  getCustomTooltip?: (props: PanelCustomTimeSeriesTooltip) => React.ReactNode;
 
   /** Indicates whether or not panel should be rendered transparent */
   transparent: boolean;
