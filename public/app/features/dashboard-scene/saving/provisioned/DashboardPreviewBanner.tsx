@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { Alert, Icon, Stack } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning';
 import { t, Trans } from 'app/core/internationalization';
@@ -109,7 +110,8 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
 }
 
 export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
-  if ('kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
+  const provisioningEnabled = config.featureToggles.provisioning;
+  if (!provisioningEnabled || 'kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
     return null;
   }
 
