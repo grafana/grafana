@@ -113,6 +113,7 @@ function setup(props: Partial<DashboardPageProxyProps> & { uid?: string }) {
 describe('DashboardPageProxy', () => {
   describe('when dashboardSceneForViewers feature toggle disabled', () => {
     beforeEach(() => {
+      jest.clearAllMocks();
       config.featureToggles.dashboardSceneForViewers = false;
     });
 
@@ -147,6 +148,7 @@ describe('DashboardPageProxy', () => {
 
   describe('when dashboardSceneForViewers feature toggle enabled', () => {
     beforeEach(() => {
+      jest.clearAllMocks();
       config.featureToggles.dashboardSceneForViewers = true;
     });
 
