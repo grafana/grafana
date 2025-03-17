@@ -1413,6 +1413,43 @@
       "title": "There are no dashboard links added yet"
     }
   },
+  "dashboard-scene": {
+    "branch-validation-error": {
+      "cannot-contain-invalid-characters": "It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\\\', or ']'.",
+      "cannot-start-with": "It cannot start with '/' or end with '/', '.', or whitespace.",
+      "invalid-branch-name": "Invalid branch name.",
+      "it-cannot-contain-or": "It cannot contain '//' or '..'.",
+      "least-valid-character": "It must have at least one valid character."
+    },
+    "provisioned-resource-delete-modal": {
+      "file-path": "File path:",
+      "managed-by-version-control": "This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository and synchronise to apply the changes.",
+      "ok": "OK",
+      "title-cannot-delete-provisioned-resource": "Cannot delete provisioned resource"
+    },
+    "save-provisioned-dashboard-form": {
+      "api-error": "Error saving dashboard",
+      "api-success": "Dashboard changes saved",
+      "cancel": "Cancel",
+      "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",
+      "dashboard-comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
+      "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "description-inside-repository": "File path inside the repository (.json or .yaml)",
+      "label-branch": "Branch",
+      "label-comment": "Comment",
+      "label-description": "Description",
+      "label-path": "Path",
+      "label-target-folder": "Target folder",
+      "label-title": "Title",
+      "label-workflow": "Workflow",
+      "save": "Save",
+      "saving": "Saving...",
+      "title-required": "Dashboard title is required",
+      "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
+      "title-this-repository-is-read-only": "This repository is read only",
+      "title-validation-failed": "Dashboard title validation failed."
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Annotations"
