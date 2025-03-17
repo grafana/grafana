@@ -57,6 +57,7 @@
 /go.work @grafana/grafana-app-platform-squad
 /go.work.sum @grafana/grafana-app-platform-squad
 /.bingo/ @grafana/grafana-backend-group
+/.citools @grafana/grafana-developer-enablement-squad
 /pkg/README.md @grafana/grafana-backend-group
 /pkg/ruleguard.rules.go @grafana/grafana-backend-group
 /.bra.toml @grafana/grafana-backend-group
@@ -79,6 +80,7 @@
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/query @grafana/grafana-datasources-core-services
 /pkg/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
+/pkg/apis/secret @grafana/grafana-operator-experience-squad
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/cmd/ @grafana/grafana-backend-group
 /pkg/cmd/grafana-cli/commands/install_command.go @grafana/plugins-platform-backend
@@ -504,7 +506,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/explore/ @grafana/observability-traces-and-profiling
 /public/app/features/expressions/ @grafana/grafana-datasources-core-services
 /public/app/features/folders/ @grafana/grafana-frontend-platform
-/public/app/features/iam/ @grafana/grafana-frontend-platform
 /public/app/features/inspector/ @grafana/dashboards-squad
 /public/app/features/invites/ @grafana/grafana-frontend-platform
 /public/app/features/library-panels/ @grafana/dashboards-squad
@@ -791,7 +792,9 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev
+/.github/workflows/pr-lint-build-docs.yml @grafana/docs-tooling
 /.github/workflows/pr-patch-check.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
 /.github/workflows/pr-backend-unit-tests.yml @grafana/grafana-backend-group
 /.github/workflows/pr-backend-coverage.yml @grafana/grafana-backend-group
 /.github/workflows/sync-mirror.yml @grafana/grafana-developer-enablement-squad

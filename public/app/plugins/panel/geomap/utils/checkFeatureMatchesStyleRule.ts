@@ -1,6 +1,6 @@
 import { FeatureLike } from 'ol/Feature';
 
-import { compareValues } from '@grafana/data/src/transformations/matchers/compareValues';
+import { compareValues } from '@grafana/data/internal';
 
 import { FeatureRuleConfig } from '../types';
 

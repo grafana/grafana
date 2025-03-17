@@ -1,7 +1,7 @@
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { useUrlParams } from 'app/core/navigation/hooks';
 
 import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
-import { useGetFrontendSettingsQuery } from '../api';
 
 import { useGetResourceRepository } from './useGetResourceRepository';
 
