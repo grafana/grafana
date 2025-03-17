@@ -1,4 +1,5 @@
-import { RepositorySpec } from '../api';
+import { RepositorySpec } from 'app/api/clients/provisioning';
+
 import { RepositoryFormData } from '../types';
 
 export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
@@ -36,5 +37,6 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     ...spec.local,
     branch: spec.github?.branch || '',
     url: spec.github?.url || '',
+    generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
   };
 };

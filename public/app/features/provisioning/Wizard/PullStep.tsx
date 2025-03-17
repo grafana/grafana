@@ -1,4 +1,5 @@
-import { useCreateRepositorySyncMutation } from '../api';
+import { useCreateRepositorySyncMutation } from 'app/api/clients/provisioning';
+
 import { StepStatus } from '../hooks/useStepStatus';
 
 import { JobStep } from './JobStep';

@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, ComboboxOption, Field, Input, SecretInput, Stack } from '@grafana/ui';
 
-import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
+import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 
 import { WizardFormData } from './types';
 

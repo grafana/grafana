@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { Alert, Stack, Text, Box } from '@grafana/ui';
-
-import { useGetFrontendSettingsQuery } from '../api';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';

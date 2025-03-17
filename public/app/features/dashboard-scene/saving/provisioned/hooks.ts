@@ -1,29 +1,19 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { Chance } from 'chance';
 
-import { dateTime } from '@grafana/data';
+import { useGetFolderQuery } from 'app/api/clients/folder';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { useGetResourceRepository, useRepositoryList } from 'app/features/provisioning/hooks';
+import { useGetResourceRepository } from 'app/features/provisioning/hooks/useGetResourceRepository';
+import { useRepositoryList } from 'app/features/provisioning/hooks/useRepositoryList';
 import { DashboardMeta } from 'app/types';
 
-import { useGetFolderQuery } from '../../../folders/api';
-
 import { getDefaultWorkflow } from './defaults';
+import { generatePath } from './utils/path';
+import { generateTimestamp } from './utils/timestamp';
 
 interface UseDefaultValuesParams {
   meta: DashboardMeta;
   defaultTitle: string;
   defaultDescription?: string;
-}
-
-function generatePath(timestamp: string, pathFromAnnotation?: string, slug?: string) {
-  if (pathFromAnnotation) {
-    const hashIndex = pathFromAnnotation.indexOf('#');
-    return hashIndex > 0 ? pathFromAnnotation.substring(0, hashIndex) : pathFromAnnotation;
-  }
-
-  const pathSlug = slug || `new-dashboard-${timestamp}`;
-  return `${pathSlug}.json`;
 }
 
 export function useDefaultValues({ meta, defaultTitle, defaultDescription }: UseDefaultValuesParams) {
@@ -33,19 +23,20 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
   const sourcePath = annotations?.[AnnoKeySourcePath];
   const repositoryConfig = useConfig({ folderUid: meta.folderUid, managerKind, managerIdentity });
   const repository = repositoryConfig?.spec;
-  const random = Chance();
-  const timestamp = `${dateTime().format('YYYY-MM-DD')}-${random.string({ length: 5, alpha: true })}`;
+  const timestamp = generateTimestamp();
 
   // Get folder data to retrieve the folder path
   const folderQuery = useGetFolderQuery(meta.folderUid ? { name: meta.folderUid } : skipToken);
-  let dashboardPath = generatePath(timestamp, sourcePath, meta.slug);
 
-  if (meta.folderUid) {
-    const folderPath = folderQuery.data?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
-    if (folderPath) {
-      dashboardPath = `${folderPath}/${dashboardPath}`;
-    }
-  }
+  const folderPath = meta.folderUid ? (folderQuery.data?.metadata?.annotations?.[AnnoKeySourcePath] ?? '') : '';
+
+  const dashboardPath = generatePath({
+    timestamp,
+    pathFromAnnotation: sourcePath,
+    slug: meta.slug,
+    folderPath,
+  });
+
   if (folderQuery.isLoading || !repositoryConfig) {
     return null;
   }

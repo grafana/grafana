@@ -6,8 +6,9 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
+import { useGetFolderQuery } from 'app/api/clients/folder';
+import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { useCreateRepositoryFilesWithPathMutation } from 'app/features/provisioning/api';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam, useRepositoryList } from 'app/features/provisioning/hooks';
 import { WorkflowOption } from 'app/features/provisioning/types';
@@ -16,7 +17,6 @@ import { validateBranchName } from 'app/features/provisioning/utils/git';
 import { FolderDTO } from '../../../types';
 import { AnnoKeySourcePath, Resource } from '../../apiserver/types';
 import { getDefaultWorkflow, getWorkflowOptions } from '../../dashboard-scene/saving/provisioned/defaults';
-import { useGetFolderQuery } from '../../folders/api';
 
 type FormData = {
   ref?: string;

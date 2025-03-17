@@ -2,8 +2,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { getDefaultValues } from '../ConfigForm';
-import { useGetFrontendSettingsQuery } from '../api';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
+
+import { getDefaultValues } from '../Config/ConfigForm';
 import { PROVISIONING_URL } from '../constants';
 
 import { Step } from './Stepper';

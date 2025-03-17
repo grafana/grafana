@@ -1,6 +1,6 @@
 import { Container, Text } from '@grafana/ui';
 
-import { CodeBlock } from '../components/CodeBlock';
+import { CodeBlock } from '../Shared/CodeBlock';
 
 import { Step } from './types';
 

@@ -1,4 +1,5 @@
 import { Button, Modal } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { FolderDataType } from '../../../browse-dashboards/api/browseDashboardsAPI';
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -11,18 +12,35 @@ export interface Props {
 export function ProvisionedResourceDeleteModal({ onDismiss, resource }: Props) {
   const type = isDashboard(resource) ? 'dashboard' : 'folder';
   return (
-    <Modal isOpen={true} title="Cannot delete provisioned resource" onDismiss={onDismiss}>
+    <Modal
+      isOpen={true}
+      title={t(
+        'dashboard-scene.provisioned-resource-delete-modal.title-cannot-delete-provisioned-resource',
+        'Cannot delete provisioned resource'
+      )}
+      onDismiss={onDismiss}
+    >
       <>
         <p>
-          This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository
-          and synchronise to apply the changes.
+          <Trans
+            i18nKey="dashboard-scene.provisioned-resource-delete-modal.managed-by-version-control"
+            values={{ type }}
+          >
+            This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository
+            and synchronise to apply the changes.
+          </Trans>
         </p>
-        {isDashboard(resource) && <p>File path: {resource.getPath()}</p>}
+        {isDashboard(resource) && (
+          <p>
+            <Trans i18nKey="dashboard-scene.provisioned-resource-delete-modal.file-path">File path:</Trans>{' '}
+            {resource.getPath()}
+          </p>
+        )}
       </>
 
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onDismiss}>
-          OK
+          <Trans i18nKey="dashboard-scene.provisioned-resource-delete-modal.ok">OK</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

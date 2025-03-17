@@ -1,5 +1,5 @@
 import { Badge } from '@grafana/ui';
-import { RepositoryView } from 'app/features/provisioning/api';
+import { RepositoryView } from 'app/api/clients/provisioning';
 
 export interface Props {
   repo?: RepositoryView | string;

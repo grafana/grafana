@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Alert, Field, FieldSet, Input, MultiCombobox, Stack, Switch, Text } from '@grafana/ui';
 
-import { getWorkflowOptions } from '../ConfigForm';
+import { getWorkflowOptions } from '../Config/ConfigForm';
 import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
 import { GETTING_STARTED_URL } from '../constants';
 

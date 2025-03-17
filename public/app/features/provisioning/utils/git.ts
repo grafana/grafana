@@ -1,4 +1,4 @@
-import { RepositorySpec } from '../api';
+import { RepositorySpec } from 'app/api/clients/provisioning';
 
 /**
  * Validates a Git branch name according to the following rules:

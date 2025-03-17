@@ -1,4 +1,5 @@
-import { SyncOptions } from '../api';
+import { SyncOptions } from 'app/api/clients/provisioning';
+
 import { RepositoryFormData } from '../types';
 
 export type WizardStep = 'connection' | 'bootstrap' | 'migrate' | 'pull' | 'finish';

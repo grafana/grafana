@@ -1,8 +1,7 @@
 import { Action } from 'redux';
 
 import { WithAccessControlMetadata } from '@grafana/data';
-
-import { RepositoryView } from '../provisioning/api';
+import { RepositoryView } from 'app/api/clients/provisioning';
 
 import { QueryResponse } from './service/types';
 

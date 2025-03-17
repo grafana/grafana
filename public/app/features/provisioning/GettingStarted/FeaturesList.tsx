@@ -1,6 +1,6 @@
 import { Stack, Text, Box, LinkButton, Icon } from '@grafana/ui';
+import { RepositoryViewList } from 'app/api/clients/provisioning';
 
-import { RepositoryViewList } from '../api';
 import { CONNECT_URL } from '../constants';
 
 interface FeatureItemProps {

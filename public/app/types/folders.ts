@@ -1,5 +1,5 @@
 import { WithAccessControlMetadata } from '@grafana/data';
-import { RepositoryView } from 'app/features/provisioning/api';
+import { RepositoryView } from 'app/api/clients/provisioning';
 
 export interface FolderListItemDTO {
   uid: string;
