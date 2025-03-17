@@ -36,15 +36,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
                 isSelected={layoutManager.descriptor.id === opt.id}
                 onSelect={() => changeLayoutTo(layoutManager, opt)}
               >
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gridTemplateRows: '10px 1fr 10px 1fr',
-                    gap: '4px',
-                    height: '100%',
-                  }}
-                >
+                <div className={styles.rowsLayoutViz}>
                   <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ &nbsp; .-.-.-.-.-</div>
                   <GridCell />
                   <GridCell />
@@ -71,15 +63,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
                     <div className={styles.tab}>-.-.-</div>
                     <div className={styles.tab}>-.-.-</div>
                   </div>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gridTemplateRows: '1fr',
-                      gap: '4px',
-                      flexGrow: 1,
-                    }}
-                  >
+                  <div className={styles.tabsVizTabContent}>
                     <GridCell />
                     <GridCell />
                   </div>
@@ -95,15 +79,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
                 isSelected={layoutManager.descriptor.id === opt.id}
                 onSelect={() => changeLayoutTo(layoutManager, opt)}
               >
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gridTemplateRows: 'repeat(2, 1fr)',
-                    gap: '4px',
-                    height: '100%',
-                  }}
-                >
+                <div className={styles.autoGridViz}>
                   <GridCell />
                   <GridCell />
                   <GridCell />
@@ -121,24 +97,9 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
                 isSelected={layoutManager.descriptor.id === opt.id}
                 onSelect={() => changeLayoutTo(layoutManager, opt)}
               >
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gridTemplateRows: 'repeat(2, 1fr)',
-                    gap: '4px',
-                    height: '100%',
-                  }}
-                >
+                <div className={styles.customGridViz}>
                   <GridCell colSpan={2} />
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(1, 1fr)',
-                      gridTemplateRows: 'repeat(2, 1fr)',
-                      gap: '4px',
-                    }}
-                  >
+                  <div className={styles.customGridVizInner}>
                     <GridCell />
                     <GridCell />
                   </div>
@@ -257,7 +218,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: 'pointer',
       borderRadius: theme.shape.radius.default,
       display: 'grid',
-      gridTemplateColumns: '80px 1fr',
+      gridTemplateColumns: `80px 1fr`,
       gridTemplateRows: '70px',
     }),
     radioButtonActive: css({
@@ -268,8 +229,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.colors.border.medium}`,
     }),
     tab: css({
-      width: '20px',
-      height: '8px',
+      width: theme.spacing(2),
+      height: theme.spacing(1),
       fontSize: '5px',
       display: 'flex',
       alignItems: 'center',
@@ -289,8 +250,42 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     tabsBar: css({
       display: 'flex',
-      gap: '4px',
+      gap: theme.spacing(0.5),
       borderBottom: `1px solid ${theme.colors.border.medium}`,
+    }),
+    rowsLayoutViz: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(3, 1fr)',
+      gridTemplateRows: '10px 1fr 10px 1fr',
+      gap: '4px',
+      height: '100%',
+    }),
+    tabsVizTabContent: css({
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gridTemplateRows: '1fr',
+      gap: '4px',
+      flexGrow: 1,
+    }),
+    autoGridViz: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gridTemplateRows: 'repeat(2, 1fr)',
+      gap: '4px',
+      height: '100%',
+    }),
+    customGridViz: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(3, 1fr)',
+      gridTemplateRows: 'repeat(2, 1fr)',
+      gap: '4px',
+      height: '100%',
+    }),
+    customGridVizInner: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(1, 1fr)',
+      gridTemplateRows: 'repeat(2, 1fr)',
+      gap: '4px',
     }),
   };
 };
