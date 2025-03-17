@@ -29,10 +29,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
   if (file.data?.errors) {
     return (
       <Alert
-        title={t(
-          'dashboard-scene.dashboard-preview-banner-content.title-error-loading-dashboard',
-          'Error loading dashboard'
-        )}
+        title={t('dashboard-scene.dashboard-preview-banner.title-error-loading-dashboard', 'Error loading dashboard')}
         severity="error"
         style={{ flex: 0 }}
       >
@@ -49,12 +46,12 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
       <Alert
         {...commonAlertProps}
         title={t(
-          'dashboard-scene.dashboard-preview-banner-content.title-dashboard-loaded-request-git-hub',
+          'dashboard-scene.dashboard-preview-banner.title-dashboard-loaded-request-git-hub',
           'This dashboard is loaded from a pull request in GitHub.'
         )}
         buttonContent={
           <Stack alignItems="center">
-            <Trans i18nKey="dashboard-scene.dashboard-preview-banner-content.view-pull-request-in-git-hub">
+            <Trans i18nKey="dashboard-scene.dashboard-preview-banner.view-pull-request-in-git-hub">
               View pull request in GitHub
             </Trans>
             <Icon name="external-link-alt" />
@@ -62,8 +59,8 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
         }
         onRemove={() => window.open(prParam, '_blank')}
       >
-        <Trans i18nKey="dashboard-scene.dashboard-preview-banner-content.value-saved-grafana-database">
-          The value is not yet saved in the grafana database
+        <Trans i18nKey="dashboard-scene.dashboard-preview-banner.value-not-saved">
+          The value is not yet saved in the Grafana database
         </Trans>
       </Alert>
     );
@@ -76,12 +73,12 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
       <Alert
         {...commonAlertProps}
         title={t(
-          'dashboard-scene.dashboard-preview-banner-content.title-dashboard-loaded-branch-git-hub',
+          'dashboard-scene.dashboard-preview-banner.title-dashboard-loaded-branch-git-hub',
           'This dashboard is loaded from a branch in GitHub.'
         )}
         buttonContent={
           <Stack alignItems="center">
-            <Trans i18nKey="dashboard-scene.dashboard-preview-banner-content.open-pull-request-in-git-hub">
+            <Trans i18nKey="dashboard-scene.dashboard-preview-banner.open-pull-request-in-git-hub">
               Open pull request in GitHub
             </Trans>
             <Icon name="external-link-alt" />
@@ -89,8 +86,8 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
         }
         onRemove={() => window.open(githubURL, '_blank')}
       >
-        <Trans i18nKey="dashboard-scene.dashboard-preview-banner-content.value-saved-grafana-database">
-          The value is not yet saved in the grafana database
+        <Trans i18nKey="dashboard-scene.dashboard-preview-banner.not-saved">
+          The value is not yet saved in the Grafana database
         </Trans>
       </Alert>
     );
@@ -100,12 +97,12 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
     <Alert
       {...commonAlertProps}
       title={t(
-        'dashboard-scene.dashboard-preview-banner-content.title-dashboard-loaded-external-repository',
+        'dashboard-scene.dashboard-preview-banner.title-dashboard-loaded-external-repository',
         'This dashboard is loaded from an external repository'
       )}
     >
-      <Trans i18nKey="dashboard-scene.dashboard-preview-banner-content.value-saved-grafana-database">
-        The value is not saved in the grafana database
+      <Trans i18nKey="dashboard-scene.dashboard-preview-banner.not-yet-saved">
+        The value is not saved in the Grafana database
       </Trans>
     </Alert>
   );
