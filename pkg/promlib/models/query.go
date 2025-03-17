@@ -162,7 +162,7 @@ type TimeRange struct {
 	Step  time.Duration
 }
 
-// The internal query object
+// Query is the internal query object
 type Query struct {
 	Expr          string
 	Step          time.Duration
@@ -174,6 +174,7 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
+	Format        PromQueryFormat
 
 	Scopes []ScopeSpec
 }
@@ -183,7 +184,7 @@ type Query struct {
 // may be either a string or DataSourceRef
 type internalQueryModel struct {
 	PrometheusQueryProperties `json:",inline"`
-	//sdkapi.CommonQueryProperties `json:",inline"`
+	// sdkapi.CommonQueryProperties `json:",inline"`
 	IntervalMS float64 `json:"intervalMs,omitempty"`
 
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
@@ -277,6 +278,7 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 		RangeQuery:    model.Range,
 		ExemplarQuery: model.Exemplar,
 		UtcOffsetSec:  model.UtcOffsetSec,
+		Format:        model.Format,
 	}, nil
 }
 

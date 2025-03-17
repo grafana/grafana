@@ -49,6 +49,13 @@ func TestReadPromFrames(t *testing.T) {
 	}
 }
 
+func TestReadPromFramesAsTable(t *testing.T) {
+	// Don't test loki streams as prom table format
+	for _, name := range files[:len(files)-3] {
+		t.Run(name, runScenario(name, Options{FormatTable: true}))
+	}
+}
+
 func runScenario(name string, opts Options) func(t *testing.T) {
 	return func(t *testing.T) {
 		// Safe to disable, this is a test.
@@ -101,6 +108,9 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 		require.NoError(t, rsp.Error)
 
 		fname := name + "-frame"
+		if opts.FormatTable {
+			fname = name + "-frame_format_table"
+		}
 		experimental.CheckGoldenJSONResponse(t, "testdata", fname, &rsp, update)
 	}
 }

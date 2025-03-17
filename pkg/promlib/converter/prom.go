@@ -21,6 +21,7 @@ func logf(format string, a ...any) {
 }
 
 type Options struct {
+	FormatTable bool
 }
 
 func rspErr(e error) backend.DataResponse {
@@ -680,21 +681,38 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 			}
 			rsp.Frames = append(rsp.Frames, frame)
 		} else {
-			frame := data.NewFrame("", data.NewField(data.TimeSeriesTimeFieldName, nil, tempTimes), data.NewField(data.TimeSeriesValueFieldName, labels, tempValues))
-			frame.Meta = &data.FrameMeta{
-				Type:        data.FrameTypeTimeSeriesMulti,
-				Custom:      resultTypeToCustomMeta(resultType),
-				TypeVersion: data.FrameTypeVersion{0, 1},
+			var frame *data.Frame
+			if opt.FormatTable {
+				if len(rsp.Frames) > 0 {
+					frame = rsp.Frames[0]
+				} else {
+					frame = newFrame(tempTimes, labels, tempValues, resultType)
+					frame.Meta.Custom = data.FrameTypeTimeSeriesLong
+					rsp.Frames = append(rsp.Frames, frame)
+				}
+			} else {
+				frame = newFrame(tempTimes, labels, tempValues, resultType)
+				rsp.Frames = append(rsp.Frames, frame)
+				size = len(tempTimes)
 			}
-			if resultType == "vector" {
-				frame.Meta.Type = data.FrameTypeNumericMulti
-			}
-			rsp.Frames = append(rsp.Frames, frame)
-			size = len(tempTimes)
 		}
 	}
 
 	return rsp
+}
+
+func newFrame(tempTimes []time.Time, labels data.Labels, tempValues []float64, resultType string) *data.Frame {
+	frame := data.NewFrame("", data.NewField(data.TimeSeriesTimeFieldName, nil, tempTimes), data.NewField(data.TimeSeriesValueFieldName, labels, tempValues))
+	frame.Meta = &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		Custom:      resultTypeToCustomMeta(resultType),
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	}
+	if resultType == "vector" {
+		frame.Meta.Type = data.FrameTypeNumericMulti
+	}
+
+	return frame
 }
 
 func readTimeValuePair(iter *sdkjsoniter.Iterator) (time.Time, float64, error) {
