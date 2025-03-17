@@ -25,9 +25,10 @@ import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { ScopesSelector } from 'app/features/scopes';
+import { useSelector } from 'app/types';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
+import { selectFolderRepository } from '../../provisioning/utils/selectors';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
@@ -76,9 +77,9 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-  const isManaged = Boolean(dashboard.isManaged());
+  const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
+  const isManaged = Boolean(dashboard.isManaged() || folderRepo);
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -132,7 +133,7 @@ export function ToolbarActions({ dashboard }: Props) {
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return <ManagedDashboardNavBarBadge meta={meta} />;
+        return <ManagedDashboardNavBarBadge meta={meta} key="managed-dashboard-badge" />;
       },
     });
   }
@@ -417,25 +418,27 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 
-  toolbarActions.push({
-    group: 'settings',
-    condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
-    render: () => (
-      <Button
-        onClick={() => {
-          dashboard.onOpenSettings();
-        }}
-        tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
-        fill="text"
-        size="sm"
-        key="settings"
-        variant="secondary"
-        data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
-      >
-        <Trans i18nKey="dashboard.toolbar.dashboard-settings.label">Settings</Trans>
-      </Button>
-    ),
-  });
+  if (!dashboardNewLayouts) {
+    toolbarActions.push({
+      group: 'settings',
+      condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
+      render: () => (
+        <Button
+          onClick={() => {
+            dashboard.onOpenSettings();
+          }}
+          tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+          fill="text"
+          size="sm"
+          key="settings"
+          variant="secondary"
+          data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
+        >
+          <Trans i18nKey="dashboard.toolbar.dashboard-settings.label">Settings</Trans>
+        </Button>
+      ),
+    });
+  }
 
   toolbarActions.push({
     group: 'main-buttons',
@@ -623,10 +626,10 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  // Will open a schema v2 editor drawer. Only available with useV2DashboardsAPI feature toggle on.
+  // Will open a schema v2 editor drawer. Only available with new dashboard layouts.
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && config.featureToggles.useV2DashboardsAPI,
+    condition: uid && dashboardNewLayouts,
     render: () => {
       return (
         <ToolbarButton
@@ -643,11 +646,10 @@ export function ToolbarActions({ dashboard }: Props) {
 
   const rightActionsElements: ReactNode[] = renderActionElements(toolbarActions);
   const leftActionsElements: ReactNode[] = renderActionElements(leftActions);
-  const hasActionsToLeftAndRight = showScopesSelector || leftActionsElements.length > 0;
+  const hasActionsToLeftAndRight = leftActionsElements.length > 0;
 
   return (
     <Stack flex={1} minWidth={0} justifyContent={hasActionsToLeftAndRight ? 'space-between' : 'flex-end'}>
-      {showScopesSelector && <ScopesSelector />}
       {leftActionsElements.length > 0 && <ToolbarButtonRow alignment="left">{leftActionsElements}</ToolbarButtonRow>}
       <ToolbarButtonRow alignment="right">{rightActionsElements}</ToolbarButtonRow>
     </Stack>
