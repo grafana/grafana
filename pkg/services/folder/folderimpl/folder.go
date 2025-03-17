@@ -366,6 +366,9 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
 
+	f.CreatedBy = dashFolder.CreatedBy
+	f.UpdatedBy = dashFolder.UpdatedBy
+
 	return f, err
 }
 
