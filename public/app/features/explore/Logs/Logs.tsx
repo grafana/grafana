@@ -82,7 +82,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 
 interface Props extends Themeable2 {
   width: number;
@@ -1080,6 +1080,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
                   loadMore={loadMoreLogs}
+                  logOptionsStorageKey={SETTING_KEY_ROOT}
                   logs={dedupedRows}
                   logSupportsContext={showContextToggle}
                   onLogOptionsChange={onLogOptionsChange}

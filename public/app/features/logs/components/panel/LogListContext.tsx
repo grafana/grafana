@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 
-import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder, shallowCompare } from '@grafana/data';
+import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder, shallowCompare, store } from '@grafana/data';
 import { PopoverContent } from '@grafana/ui';
 
 import { GetRowContextQueryFn } from './LogLineMenu';
@@ -74,6 +74,7 @@ export interface Props {
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   getRowContextQuery?: GetRowContextQueryFn;
+  logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
   onLogOptionsChange?: (option: keyof LogListState, value: string | boolean | string[]) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
@@ -95,6 +96,7 @@ export const LogListContextProvider = ({
   dedupStrategy,
   displayedFields,
   getRowContextQuery,
+  logOptionsStorageKey,
   logSupportsContext,
   onLogOptionsChange,
   onPermalinkClick,
@@ -189,32 +191,44 @@ export const LogListContextProvider = ({
     (showTime: boolean) => {
       setLogListState({ ...logListState, showTime });
       onLogOptionsChange?.('showTime', showTime);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.showTime`, showTime);
+      }
     },
-    [logListState, onLogOptionsChange]
+    [logListState, logOptionsStorageKey, onLogOptionsChange]
   );
 
   const setSyntaxHighlighting = useCallback(
     (syntaxHighlighting: boolean) => {
       setLogListState({ ...logListState, syntaxHighlighting });
       onLogOptionsChange?.('syntaxHighlighting', syntaxHighlighting);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.syntaxHighlighting`, syntaxHighlighting);
+      }
     },
-    [logListState, onLogOptionsChange]
+    [logListState, logOptionsStorageKey, onLogOptionsChange]
   );
 
   const setSortOrder = useCallback(
     (sortOrder: LogsSortOrder) => {
       setLogListState({ ...logListState, sortOrder });
       onLogOptionsChange?.('sortOrder', sortOrder);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.sortOrder`, sortOrder);
+      }
     },
-    [logListState, onLogOptionsChange]
+    [logListState, logOptionsStorageKey, onLogOptionsChange]
   );
 
   const setWrapLogMessage = useCallback(
     (wrapLogMessage: boolean) => {
       setLogListState({ ...logListState, wrapLogMessage });
       onLogOptionsChange?.('wrapLogMessage', wrapLogMessage);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.wrapLogMessage`, wrapLogMessage);
+      }
     },
-    [logListState, onLogOptionsChange]
+    [logListState, logOptionsStorageKey, onLogOptionsChange]
   );
 
   return (
