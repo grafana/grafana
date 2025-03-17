@@ -1754,6 +1754,11 @@
     "tags-input": {
       "add": "Åđđ"
     },
+    "toolbar": {
+      "copy-link": "Cőpy ŮŖĿ",
+      "copy-link-abs-time": "Cőpy äþşőľūŧę ŮŖĿ",
+      "copy-shortened-link-label": "Ŝĥäřę"
+    },
     "user-icon": {
       "active-text": "Åčŧįvę ľäşŧ 15m"
     },

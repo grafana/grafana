@@ -1556,7 +1556,6 @@
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
       "copy-link-abs-time": "Copy absolute URL",
-      "copy-link-success": "URL copied to clipboard",
       "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
       "copy-links-normal-category": "Normal URL links",
       "copy-shortened-link": "Copy shortened URL",
@@ -1754,6 +1753,11 @@
     },
     "tags-input": {
       "add": "Add"
+    },
+    "toolbar": {
+      "copy-link": "Copy URL",
+      "copy-link-abs-time": "Copy absolute URL",
+      "copy-shortened-link-label": "Share"
     },
     "user-icon": {
       "active-text": "Active last 15m"
