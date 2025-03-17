@@ -562,13 +562,13 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 
 // WaitForSearchQuery waits for the search query to return the expected number of hits.
 // Since US doesn't offer search-after-write guarantees, we can use this to wait after writes until the indexer is up to date.
-func (dr *DashboardServiceImpl) WaitForSearchQuery(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, maxRetries int, expectedHits int) error {
+func (dr *DashboardServiceImpl) WaitForSearchQuery(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, maxRetries int, expectedHits int64) error {
 	return retryer.Retry(func() (retryer.RetrySignal, error) {
 		results, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
 		if err != nil {
 			return retryer.FuncError, err
 		}
-		if len(results.Hits) == expectedHits {
+		if results.TotalHits == expectedHits {
 			return retryer.FuncComplete, nil
 		}
 		return retryer.FuncFailure, nil
