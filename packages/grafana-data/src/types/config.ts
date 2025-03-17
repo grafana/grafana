@@ -240,6 +240,8 @@ export interface GrafanaConfig {
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset?: string;
   exploreHideLogsDownload?: boolean;
+  /** Custom quick ranges for the time picker */
+  quickRanges?: Array<{ from: string; to?: string; display: string }>;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;

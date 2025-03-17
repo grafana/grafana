@@ -36,7 +36,11 @@ export function getQuickRanges(): TimeOption[] {
     if (typeof window !== 'undefined' && window.grafanaBootData?.settings?.quickRanges) {
       const quickRanges = window.grafanaBootData.settings.quickRanges;
       if (Array.isArray(quickRanges) && quickRanges.length > 0) {
-        return quickRanges;
+        // Ensure each quickRange has a 'to' property to match TimeOption interface
+        return quickRanges.map((range) => ({
+          ...range,
+          to: range.to || 'now', // Set default 'to' value if not provided
+        }));
       }
     }
   } catch (e) {

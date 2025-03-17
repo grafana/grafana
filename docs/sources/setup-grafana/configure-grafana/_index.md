@@ -2815,7 +2815,8 @@ Set the default start of the week, valid values are: `saturday`, `sunday`, `mond
 This section controls system-wide defaults for the time picker, such as the default quick ranges.
 
 #### `quick_ranges`
-Set the default set of quick relative offset time ranges that show up in the right column of the time picker. Each config entry should have a `from`, `to` and `display`field.
+
+Set the default set of quick relative offset time ranges that show up in the right column of the time picker. Each configuration entry should have a `from`, `to` and `display`field.
 
 The following format is used for the `from` and `to` fields:
 
@@ -2844,6 +2845,7 @@ Usage of now:
 - `now-X/X` is the current time minus X time unit(s) and then rounded down to the nearest X time unit. This is useful for getting the start of a previous time unit
 
 The following quick ranges are the default if no configuration is provided:
+
 - Last 5 minutes
 - Last 15 minutes
 - Last 30 minutes
@@ -2879,8 +2881,6 @@ The following quick ranges are the default if no configuration is provided:
 - This fiscal year so far
 - This fiscal year
 
-
-
 For example:
 
 ```ini
@@ -2902,9 +2902,6 @@ quick_ranges = [
   }
 ]
 ```
-
-
-
 
 ### `[expressions]`
 
