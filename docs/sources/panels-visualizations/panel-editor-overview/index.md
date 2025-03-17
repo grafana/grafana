@@ -29,7 +29,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
     - pattern: /docs/grafana-cloud/
-      destination: //docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
   the-overview-of-grafana-alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
@@ -82,7 +82,7 @@ The data section contains tabs where you enter queries, transform your data, and
 
 - **Queries**
   - Select your data source. You can also set or update the data source in existing dashboards using the drop-down menu in the **Queries** tab.
-  - [Enter queries](ref:add-a-query). You can add a query from the query library and save queries you've created to the library (Enterprise and Cloud only). For more information, refer to [Query library](ref:query-library). Query library is in [private preview](https://grafana.com/docs/release-life-cycle/).
+  - [Add queries](ref:add-a-query). Write or construct a query in the query language of your data source or click **+ Add query from library** to add one from the [query library](ref:query-library) (Grafana Enterprise and Cloud only). To use again in other dashboards, add it to the query library by clicking the save icon on the query editor. Query library is in [private preview](https://grafana.com/docs/release-life-cycle/).
 - **Transformations** - Apply data transformations. For more information, refer to [Transform data](ref:transform-data).
 - **Alert** - Write alert rules. For more information, refer to [the overview of Grafana Alerting](ref:the-overview-of-grafana-alerting).
 

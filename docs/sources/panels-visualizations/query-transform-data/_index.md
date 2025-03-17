@@ -128,7 +128,7 @@ The query library lets you save queries that you've created so you can reuse the
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-library-v11.6.png" max-width="550px" alt="" >}}
 
-In the query library drawer, you can:
+In the **Query library** drawer, you can:
 
 - Search for queries by data source name, query content, and description.
 - Filter by data source name and author name (filters use the OR operator).
@@ -142,7 +142,7 @@ To view your saved queries, click **+ Add query from library** from the query ed
 The query library isn't accessible from all instances of the query editor yet, so the **+ Add query from library** button doesn't appear in all instances of it.
 {{< /admonition >}}
 
-To add a query you've created to the library, click the save query to library icon:
+To add a query you've created to the library, click the **Save to query library** icon:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-library-v11.6.png" max-width="750px" alt="" >}}
 
@@ -177,7 +177,7 @@ When you create a panel, Grafana automatically selects the default data source.
 
 To add a query, follow these steps:
 
-1. In the panel to which you're adding a query, hover over any part of the panel you want to work on to display the menu on the top right corner.
+1. Hover the cursor over any part of the panel to which you're adding a query to display the menu icon in the top-right corner.
 1. Click the menu and select **Edit**.
 1. In the panel editor, click the **Queries** tab.
 1. Click the **Data source** drop-down menu and select a data source.
@@ -193,10 +193,12 @@ To add a query, follow these steps:
    - Write or construct a query in the query language of your data source.
    - Click **+ Add query from library**, search or filter for the query you want to use, and click **Select query** (Grafana Enterprise and Cloud only).
 
-1. (Optional) To save the query for reuse, click the save to query library icon.
+1. (Optional) To save the query for reuse, click the save to query library icon (Grafana Enterprise and Cloud only).
 1. Click **Run queries**.
 
 Grafana queries the data source and visualizes the data.
+
+{{< docs/private-preview product="Query library" >}}
 
 ## Manage queries
 
