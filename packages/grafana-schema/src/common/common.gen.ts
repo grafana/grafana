@@ -955,6 +955,7 @@ export interface TableFieldOptions {
    */
   displayMode?: TableCellDisplayMode;
   filterable?: boolean;
+  footer?: TableFooterOptions;
   hidden?: boolean; // ?? default is missing or false ??
   /**
    * Hides any header for a column, useful for columns that show some static content or buttons.

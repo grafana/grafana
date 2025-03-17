@@ -104,6 +104,70 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           name: 'Hide in table',
           defaultValue: undefined,
           hideFromDefaults: true,
+        })
+        .addBooleanSwitch({
+          path: 'footer.show',
+          category: [footerCategory],
+          name: 'Show table footer',
+          defaultValue: defaultOptions.footer?.show,
+        })
+        .addCustomEditor({
+          id: 'footer.reducer',
+          category: [footerCategory],
+          path: 'footer.reducer',
+          name: 'Calculation',
+          description: 'Choose a reducer function / calculation',
+          editor: standardEditorsRegistry.get('stats-picker').editor,
+          override: TableCellOptionEditor,
+          defaultValue: [ReducerID.sum],
+          process: identityOverrideProcessor,
+          showIf: (cfg: FieldConfig) => cfg.footer?.show,
+          shouldApply: () => true,
+        })
+        .addBooleanSwitch({
+          path: 'footer.countRows',
+          category: [footerCategory],
+          name: 'Count rows',
+          description: 'Display a single count for all data rows',
+          defaultValue: defaultOptions.footer?.countRows,
+          showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
+        })
+        .addMultiSelect({
+          path: 'footer.fields',
+          category: [footerCategory],
+          name: 'Fields',
+          description: 'Select the fields that should be calculated',
+          settings: {
+            allowCustomValue: false,
+            options: [],
+            placeholder: 'All Numeric Fields',
+            getOptions: async (context: FieldOverrideContext) => {
+              const options = [];
+              if (context && context.data && context.data.length > 0) {
+                const frame = context.data[0];
+                for (const field of frame.fields) {
+                  if (field.type === FieldType.number) {
+                    const name = getFieldDisplayName(field, frame, context.data);
+                    const value = field.name;
+                    options.push({ value, label: name });
+                  }
+                }
+              }
+              return options;
+            },
+          },
+          defaultValue: '',
+          showIf: (cfg) => cfg.footer?.show && !cfg.footer?.countRows,
+        })
+        .addCustomEditor({
+          id: 'footer.enablePagination',
+          path: 'footer.enablePagination',
+          name: 'Enable pagination',
+          editor: PaginationEditor,
+          override: PaginationEditor,
+          defaultValue: defaultOptions.footer?.enablePagination,
+          process: identityOverrideProcessor,
+          shouldApply: () => true,
         });
     },
   })
@@ -125,63 +189,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
             { value: TableCellHeight.Lg, label: 'Large' },
           ],
         },
-      })
-      .addBooleanSwitch({
-        path: 'footer.show',
-        category: [footerCategory],
-        name: 'Show table footer',
-        defaultValue: defaultOptions.footer?.show,
-      })
-      .addCustomEditor({
-        id: 'footer.reducer',
-        category: [footerCategory],
-        path: 'footer.reducer',
-        name: 'Calculation',
-        description: 'Choose a reducer function / calculation',
-        editor: standardEditorsRegistry.get('stats-picker').editor,
-        defaultValue: [ReducerID.sum],
-        showIf: (cfg) => cfg.footer?.show,
-      })
-      .addBooleanSwitch({
-        path: 'footer.countRows',
-        category: [footerCategory],
-        name: 'Count rows',
-        description: 'Display a single count for all data rows',
-        defaultValue: defaultOptions.footer?.countRows,
-        showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
-      })
-      .addMultiSelect({
-        path: 'footer.fields',
-        category: [footerCategory],
-        name: 'Fields',
-        description: 'Select the fields that should be calculated',
-        settings: {
-          allowCustomValue: false,
-          options: [],
-          placeholder: 'All Numeric Fields',
-          getOptions: async (context: FieldOverrideContext) => {
-            const options = [];
-            if (context && context.data && context.data.length > 0) {
-              const frame = context.data[0];
-              for (const field of frame.fields) {
-                if (field.type === FieldType.number) {
-                  const name = getFieldDisplayName(field, frame, context.data);
-                  const value = field.name;
-                  options.push({ value, label: name });
-                }
-              }
-            }
-            return options;
-          },
-        },
-        defaultValue: '',
-        showIf: (cfg) => cfg.footer?.show && !cfg.footer?.countRows,
-      })
-      .addCustomEditor({
-        id: 'footer.enablePagination',
-        path: 'footer.enablePagination',
-        name: 'Enable pagination',
-        editor: PaginationEditor,
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

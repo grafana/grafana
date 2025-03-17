@@ -84,6 +84,21 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
+  addMultiSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
+    config: FieldConfigEditorConfig<TOptions, TSettings, TOption>
+  ) {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      override: standardEditorsRegistry.get('multi-select').editor,
+      editor: standardEditorsRegistry.get('multi-select').editor,
+      process: selectOverrideProcessor,
+      // ???
+      shouldApply: config.shouldApply ? config.shouldApply : () => true,
+      settings: config.settings || { options: [] },
+    });
+  }
+
   addRadio<TOption, TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings, TOption>) {
     return this.addCustomEditor({
       ...config,
