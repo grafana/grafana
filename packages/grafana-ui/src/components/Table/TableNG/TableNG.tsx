@@ -666,7 +666,9 @@ export function mapFrameToDataGrid({
           column={column}
           rows={rows}
           field={field}
-          onSort={() => handleSort(column.key, sortDirection ?? 'ASC', false, setSortColumns, sortColumnsRef)}
+          onSort={(columnKey, direction, isMultiSort) =>
+            handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumnsRef)
+          }
           direction={sortDirection}
           justifyContent={justifyColumnContent}
           filter={filter}

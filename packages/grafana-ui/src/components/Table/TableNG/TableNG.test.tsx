@@ -450,6 +450,135 @@ describe('TableNG', () => {
         }
       }
     });
+
+    it('cycles through ascending, descending, and no sort states', () => {
+      // Mock scrollIntoView
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+      );
+
+      // Get the first column header
+      const columnHeader = container.querySelector('[role="columnheader"]');
+      expect(columnHeader).toBeInTheDocument();
+
+      if (columnHeader) {
+        const sortButton = columnHeader.querySelector('button') || columnHeader;
+
+        // Initial state - no sort
+        expect(columnHeader.getAttribute('aria-sort')).toBeNull();
+
+        // First click - should sort ascending
+        fireEvent.click(sortButton);
+        expect(columnHeader.getAttribute('aria-sort')).toBe('ascending');
+
+        // Second click - should sort descending
+        fireEvent.click(sortButton);
+        expect(columnHeader.getAttribute('aria-sort')).toBe('descending');
+
+        // Third click - should remove sort
+        fireEvent.click(sortButton);
+        expect(columnHeader.getAttribute('aria-sort')).toBeNull();
+      }
+    });
+
+    // TODO: The react-data-grid library does not have aria-sort support for multi-column
+    // sorting with shift key. We should open an issue to add this feature.
+    it.skip('supports multi-column sorting with shift key', () => {
+      // Mock scrollIntoView
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+      );
+
+      // Get all column headers
+      const columnHeaders = container.querySelectorAll('[role="columnheader"]');
+      expect(columnHeaders.length).toBeGreaterThanOrEqual(2);
+
+      if (columnHeaders.length >= 2) {
+        const firstColumnButton = columnHeaders[0].querySelector('button') || columnHeaders[0];
+        const secondColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
+
+        // Sort by first column
+        fireEvent.click(firstColumnButton);
+        expect(columnHeaders[0].getAttribute('aria-sort')).toBe('ascending');
+
+        // Sort by second column with shift key
+        fireEvent.click(secondColumnButton, { shiftKey: true });
+
+        // Both columns should now be sorted
+        expect(columnHeaders[0].getAttribute('aria-sort')).toBe('ascending');
+        expect(columnHeaders[1].getAttribute('aria-sort')).toBe('ascending');
+
+        // Verify that the table has multiple sort indicators
+        const sortIcons = container.querySelectorAll('[aria-label="arrow-up"], [aria-label="arrow-down"]');
+        expect(sortIcons.length).toBe(2);
+      }
+    });
+
+    it('correctly sorts different data types', () => {
+      // Create a data frame with different data types
+      const mixedDataFrame = toDataFrame({
+        name: 'MixedData',
+        fields: [
+          {
+            name: 'String',
+            type: FieldType.string,
+            values: ['C', 'A', 'B'],
+            config: { custom: {} },
+            display: (v: string) => ({ text: v, numeric: 0 }),
+          },
+          {
+            name: 'Number',
+            type: FieldType.number,
+            values: [3, 1, 2],
+            config: { custom: {} },
+            display: (v: number) => ({ text: String(v), numeric: v }),
+          },
+        ],
+      });
+
+      const processedFrame = applyFieldOverrides({
+        data: [mixedDataFrame],
+        fieldConfig: { defaults: {}, overrides: [] },
+        replaceVariables: (value) => value,
+        timeZone: 'utc',
+        theme: createTheme(),
+      })[0];
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={processedFrame} width={800} height={600} />
+      );
+
+      // Get column headers
+      const columnHeaders = container.querySelectorAll('[role="columnheader"]');
+
+      // Test string column sorting
+      const stringColumnButton = columnHeaders[0].querySelector('button') || columnHeaders[0];
+      fireEvent.click(stringColumnButton);
+
+      // Get cell values after sorting
+      let cells = container.querySelectorAll('[role="gridcell"]');
+      let stringColumnCells = Array.from(cells).filter((_, index) => index % 2 === 0);
+      let stringValues = stringColumnCells.map((cell) => cell.textContent);
+
+      // Verify string values are sorted alphabetically
+      expect(stringValues).toEqual(['A', 'B', 'C']);
+
+      // Test number column sorting
+      const numberColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
+      fireEvent.click(numberColumnButton);
+
+      // Get cell values after sorting
+      cells = container.querySelectorAll('[role="gridcell"]');
+      let numberColumnCells = Array.from(cells).filter((_, index) => index % 2 === 1);
+      let numberValues = numberColumnCells.map((cell) => cell.textContent);
+
+      // Verify number values are sorted numerically
+      expect(numberValues).toEqual(['1', '2', '3']);
+    });
   });
 
   describe('Filtering', () => {
