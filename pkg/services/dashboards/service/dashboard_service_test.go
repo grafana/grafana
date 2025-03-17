@@ -18,7 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -33,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -836,9 +840,6 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		_, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		fakeStore.On("CleanupAfterDelete", mock.Anything, &dashboards.DeleteDashboardCommand{UID: "uid", OrgID: 1}).Return(nil).Once()
-		fakeStore.On("CleanupAfterDelete", mock.Anything, &dashboards.DeleteDashboardCommand{UID: "uid3", OrgID: 2}).Return(nil).Once()
-		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name": "uid",
@@ -1036,8 +1037,6 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 
 		// Mock deleteDashboard()
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Once()
 
 		// Mock WaitForSearchQuery()
 		// First call returns 1 hit
@@ -1492,8 +1491,6 @@ func TestDeleteDashboard(t *testing.T) {
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-		fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Once()
-		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		err := service.DeleteDashboard(ctx, 1, "uid", 1)
 		require.NoError(t, err)
@@ -1504,8 +1501,6 @@ func TestDeleteDashboard(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-		fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Once()
-		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
@@ -2329,4 +2324,331 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 		// folder annotation should not be set if not inside a folder
 		assert.Equal(t, result.GetAnnotations(), map[string]string(nil))
 	})
+}
+
+func TestCleanUpDashboard(t *testing.T) {
+	tests := []struct {
+		name          string
+		deleteError   error
+		cleanupError  error
+		expectCleanup bool
+		expectedError error
+	}{
+		{
+			name:          "Should delete public dashboards and clean up after delete",
+			expectCleanup: true,
+		},
+		{
+			name:          "Should return error if DeleteByDashboardUIDs fails",
+			deleteError:   fmt.Errorf("deletion error"),
+			expectCleanup: false,
+			expectedError: fmt.Errorf("deletion error"),
+		},
+		{
+			name:          "Should return error if CleanupAfterDelete fails",
+			cleanupError:  fmt.Errorf("cleanup error"),
+			expectCleanup: true,
+			expectedError: fmt.Errorf("cleanup error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeStore := dashboards.FakeDashboardStore{}
+			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+			service := &DashboardServiceImpl{
+				cfg:                    setting.NewCfg(),
+				dashboardStore:         &fakeStore,
+				publicDashboardService: fakePublicDashboardService,
+			}
+
+			ctx := context.Background()
+			dashboardUID := "dash-uid"
+			orgID := int64(1)
+
+			// Setup mocks
+			fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, orgID, []string{dashboardUID}).Return(tc.deleteError).Maybe()
+
+			if tc.expectCleanup {
+				fakeStore.On("CleanupAfterDelete", mock.Anything, &dashboards.DeleteDashboardCommand{
+					OrgID: orgID,
+					UID:   dashboardUID,
+				}).Return(tc.cleanupError).Maybe()
+			}
+
+			// Execute
+			err := service.CleanUpDashboard(ctx, dashboardUID, orgID)
+
+			// Assert
+			if tc.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tc.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			fakePublicDashboardService.AssertExpectations(t)
+			fakeStore.AssertExpectations(t)
+		})
+	}
+}
+
+func TestK8sDashboardCleanupJob(t *testing.T) {
+	tests := []struct {
+		name           string
+		featureEnabled bool
+		batchSize      int
+		setupFunc      func(*DashboardServiceImpl, context.Context, *client.MockK8sHandler)
+		verifyFunc     func(*testing.T, *DashboardServiceImpl, context.Context, *client.MockK8sHandler, *kvstore.FakeKVStore)
+	}{
+		{
+			name:           "Should not run cleanup when feature flag is disabled",
+			featureEnabled: false,
+			batchSize:      10,
+		},
+		{
+			name:           "Should process dashboard cleanup for all orgs",
+			featureEnabled: true,
+			batchSize:      10,
+			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler) {
+				// Test organizations
+				fakeOrgService := service.orgService.(*orgtest.FakeOrgService)
+				fakeOrgService.ExpectedOrgs = []*org.OrgDTO{
+					{ID: 1, Name: "org1"},
+					{ID: 2, Name: "org2"},
+				}
+
+				kv := service.kvstore.(*kvstore.FakeKVStore)
+				fakeStore := service.dashboardStore.(*dashboards.FakeDashboardStore)
+				fakePublicDashboardService := service.publicDashboardService.(*publicdashboards.FakePublicDashboardServiceWrapper)
+
+				// Create dashboard unstructured items for response
+				dashboard1 := createTestUnstructuredDashboard("dash1", "org1-dashboard")
+				dashboard2 := createTestUnstructuredDashboard("dash2", "org2-dashboard")
+
+				// Setup test data in KV store. Only populate org 1.
+				_ = kv.Set(ctx, int64(1), k8sDashboardKvNamespace, k8sDashboardKvLastResourceVersionKey, "100")
+
+				// Mock K8s responses for org 1
+				resourceVersion1 := "101"
+				k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
+					return opts.LabelSelector == utils.LabelKeyGetTrash+"=true" &&
+						opts.ResourceVersionMatch == metav1.ResourceVersionMatchNotOlderThan &&
+						opts.ResourceVersion == "100"
+				})).Return(&unstructured.UnstructuredList{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"resourceVersion": resourceVersion1,
+						},
+					},
+					Items: []unstructured.Unstructured{dashboard1},
+				}, nil).Once()
+
+				// Mock K8s responses for org 2
+				resourceVersion2 := "201"
+				k8sCliMock.On("List", mock.Anything, int64(2), mock.MatchedBy(func(opts metav1.ListOptions) bool {
+					return opts.LabelSelector == utils.LabelKeyGetTrash+"=true" &&
+						opts.ResourceVersionMatch == metav1.ResourceVersionMatchNotOlderThan &&
+						opts.ResourceVersion == "0"
+				})).Return(&unstructured.UnstructuredList{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"resourceVersion": resourceVersion2,
+						},
+					},
+					Items: []unstructured.Unstructured{dashboard2},
+				}, nil).Once()
+
+				// Mock GetUserFromMeta calls
+				k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil).Times(4)
+
+				// Mock cleanup
+				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash1"}).Return(nil).Once()
+				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(2), []string{"dash2"}).Return(nil).Once()
+				fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Times(2)
+			},
+			verifyFunc: func(t *testing.T, service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler, kv *kvstore.FakeKVStore) {
+				k8sCliMock.AssertExpectations(t)
+
+				// Verify KV store was updated with new resource versions
+				val1, found1, _ := kv.Get(ctx, int64(1), k8sDashboardKvNamespace, k8sDashboardKvLastResourceVersionKey)
+				require.True(t, found1)
+				require.Equal(t, "101", val1)
+
+				val2, found2, _ := kv.Get(ctx, int64(2), k8sDashboardKvNamespace, k8sDashboardKvLastResourceVersionKey)
+				require.True(t, found2)
+				require.Equal(t, "201", val2)
+			},
+		},
+		{
+			name:           "Should handle pagination and batching when processing large sets of dashboards",
+			featureEnabled: true,
+			batchSize:      3,
+			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler) {
+				// Test organization
+				fakeOrgService := service.orgService.(*orgtest.FakeOrgService)
+				fakeOrgService.ExpectedOrgs = []*org.OrgDTO{
+					{ID: 1, Name: "org1"},
+				}
+
+				kv := service.kvstore.(*kvstore.FakeKVStore)
+				fakeStore := service.dashboardStore.(*dashboards.FakeDashboardStore)
+				fakePublicDashboardService := service.publicDashboardService.(*publicdashboards.FakePublicDashboardServiceWrapper)
+
+				// Setup initial resource version
+				initialVersion := "100"
+				_ = kv.Set(ctx, int64(1), k8sDashboardKvNamespace, k8sDashboardKvLastResourceVersionKey, initialVersion)
+
+				// Create dashboard batches (5 dashboards total, to be processed in 2 batches)
+				firstBatch := []unstructured.Unstructured{
+					createTestUnstructuredDashboard("dash1", "dashboard1"),
+					createTestUnstructuredDashboard("dash2", "dashboard2"),
+					createTestUnstructuredDashboard("dash3", "dashboard3"),
+				}
+				secondBatch := []unstructured.Unstructured{
+					createTestUnstructuredDashboard("dash4", "dashboard4"),
+					createTestUnstructuredDashboard("dash5", "dashboard5"),
+				}
+
+				// First batch response
+				firstBatchRV := "150"
+				k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
+					return opts.LabelSelector == utils.LabelKeyGetTrash+"=true" &&
+						opts.ResourceVersionMatch == metav1.ResourceVersionMatchNotOlderThan &&
+						opts.ResourceVersion == initialVersion &&
+						opts.Limit == int64(3)
+				})).Return(&unstructured.UnstructuredList{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"resourceVersion": firstBatchRV,
+							"continue":        "next-token",
+						},
+					},
+					Items: firstBatch,
+				}, nil).Once()
+
+				// Second batch response
+				secondBatchRV := "200"
+				k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
+					return opts.LabelSelector == utils.LabelKeyGetTrash+"=true" &&
+						opts.ResourceVersionMatch == metav1.ResourceVersionMatchNotOlderThan &&
+						opts.ResourceVersion == firstBatchRV &&
+						opts.Continue == "next-token" &&
+						opts.Limit == int64(3)
+				})).Return(&unstructured.UnstructuredList{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"resourceVersion": secondBatchRV,
+						},
+					},
+					Items: secondBatch,
+				}, nil).Once()
+
+				// Mock GetUserFromMeta calls for each dashboard
+				k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil).Times(10)
+
+				// Mock public dashboard deletion for each dashboard individually
+				// This matches how the actual implementation processes dashboards one by one
+				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash1"}).Return(nil).Once()
+				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash2"}).Return(nil).Once()
+				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash3"}).Return(nil).Once()
+				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash4"}).Return(nil).Once()
+				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash5"}).Return(nil).Once()
+
+				// Mock cleanup after delete for each dashboard
+				fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Times(5)
+			},
+			verifyFunc: func(t *testing.T, service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler, kv *kvstore.FakeKVStore) {
+				k8sCliMock.AssertExpectations(t)
+
+				// Verify KV store was updated with latest resource version
+				val, found, _ := kv.Get(ctx, int64(1), k8sDashboardKvNamespace, k8sDashboardKvLastResourceVersionKey)
+				require.True(t, found)
+				require.Equal(t, "200", val)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup test database and utilities
+			sqlStore, _ := sqlstore.InitTestDB(t)
+			lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
+			kv := kvstore.NewFakeKVStore()
+
+			fakeStore := dashboards.FakeDashboardStore{}
+			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+			fakeOrgService := orgtest.NewOrgServiceFake()
+
+			features := featuremgmt.WithFeatures()
+			if tc.featureEnabled {
+				features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
+			}
+
+			service := &DashboardServiceImpl{
+				cfg:                    setting.NewCfg(),
+				log:                    log.New("test.logger"),
+				dashboardStore:         &fakeStore,
+				publicDashboardService: fakePublicDashboardService,
+				orgService:             fakeOrgService,
+				serverLockService:      lockService,
+				kvstore:                kv,
+				features:               features,
+			}
+
+			ctx, k8sCliMock := setupK8sDashboardTests(service)
+
+			if tc.setupFunc != nil {
+				tc.setupFunc(service, ctx, k8sCliMock)
+			}
+
+			// Execute
+			err := service.cleanupK8sDashboardResources(ctx, int64(tc.batchSize), 20*time.Second)
+			require.NoError(t, err)
+
+			if tc.verifyFunc != nil {
+				tc.verifyFunc(t, service, ctx, k8sCliMock, kv)
+			}
+		})
+	}
+
+	t.Run("Should start and stop background job correctly", func(t *testing.T) {
+		// Setup test database and utilities
+		sqlStore, _ := sqlstore.InitTestDB(t)
+		lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
+
+		service := &DashboardServiceImpl{
+			cfg:               setting.NewCfg(),
+			log:               log.New("test.logger"),
+			features:          featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
+			serverLockService: lockService,
+		}
+
+		// Start job
+		service.startK8sDeletedDashboardsCleanupJob()
+		require.NotNil(t, service.k8sDeletedDashboardsCleanupJob)
+		require.NotNil(t, service.k8sDeletedDashboardsCleanupJob.stop)
+
+		// Stop job
+		service.k8sDeletedDashboardsCleanupJob.Stop()
+	})
+}
+
+// Helper functions for testing
+
+func createTestUnstructuredDashboard(uid, title string) unstructured.Unstructured {
+	return unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": dashboardv0alpha1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"metadata": map[string]interface{}{
+				"name":              uid,
+				"deletionTimestamp": "2023-01-01T00:00:00Z",
+				"resourceVersion":   "1",
+			},
+			"spec": map[string]interface{}{
+				"title": title,
+			},
+		},
+	}
 }

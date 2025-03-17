@@ -22,8 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -882,6 +884,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 			cfg, dashboardStore, folderStore, features, folderPermissions,
 			ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 			dualwrite.ProvideTestService(), sort.ProvideService(),
+			serverlock.ProvideService(db, tracing.InitializeTracerForTest()), kvstore.NewFakeKVStore(),
 		)
 		require.NoError(t, err)
 		dashboardService.(dashboards.PermissionsRegistrationService).RegisterDashboardPermissions(dashboardPermissions)
@@ -891,6 +894,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		cfg, dashboardStore, folderStore, features, folderPermissions,
 		ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 		dualwrite.ProvideTestService(), sort.ProvideService(),
+		serverlock.ProvideService(db, tracing.InitializeTracerForTest()), kvstore.NewFakeKVStore(),
 	)
 	require.NoError(t, err)
 
