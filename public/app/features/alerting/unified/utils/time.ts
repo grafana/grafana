@@ -1,4 +1,4 @@
-import { rangeUtil } from '@grafana/data';
+import { describeInterval } from '@grafana/data/src/datetime/rangeutil';
 
 import { TimeOptions } from '../types/time';
 
@@ -18,7 +18,7 @@ export function parseInterval(value: string): [number, string] {
 }
 
 export function intervalToSeconds(interval: string): number {
-  const { sec, count } = rangeUtil.describeInterval(interval);
+  const { sec, count } = describeInterval(interval);
   return sec * count;
 }
 
