@@ -8,7 +8,10 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { ConcatenateFrameNameMode, ConcatenateTransformerOptions } from '@grafana/data/internal';
+import {
+  ConcatenateFrameNameMode,
+  ConcatenateTransformerOptions,
+} from '@grafana/data/src/transformations/transformers/concat';
 import { InlineField, Input, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import Prism, { Grammar } from 'prismjs';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data/src';
 import { useTheme2 } from '@grafana/ui';
 
 export interface Props {

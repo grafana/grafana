@@ -20,8 +20,8 @@ import {
   DataHoverClearEvent,
   DataFrame,
   FieldType,
-  colorManipulator
 } from '@grafana/data';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
@@ -207,10 +207,10 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       image: new Circle({
         radius: crosshairRadius,
         stroke: new Stroke({
-          color: colorManipulator.alpha(crosshairColor, 1),
+          color: alpha(crosshairColor, 1),
           width: 1,
         }),
-        fill: new Fill({ color: colorManipulator.alpha(crosshairColor, 0.4) }),
+        fill: new Fill({ color: alpha(crosshairColor, 0.4) }),
       }),
     });
     const lineStyle = new Style({

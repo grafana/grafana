@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { ComponentProps } from 'react';
 
 import { DataFrame, FieldType, LogsSortOrder, standardTransformersRegistry, toUtc } from '@grafana/data';
-import { organizeFieldsTransformer } from '@grafana/data/internal';
+import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 

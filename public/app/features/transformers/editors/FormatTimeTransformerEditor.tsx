@@ -9,7 +9,7 @@ import {
   getFieldDisplayName,
   PluginState,
 } from '@grafana/data';
-import { FormatTimeTransformerOptions } from '@grafana/data/internal';
+import { FormatTimeTransformerOptions } from '@grafana/data/src/transformations/transformers/formatTime';
 import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

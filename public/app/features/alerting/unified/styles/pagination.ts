@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data/src';
 
 export const getPaginationStyles = (theme: GrafanaTheme2) => {
   return css({

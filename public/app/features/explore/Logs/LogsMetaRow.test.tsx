@@ -4,7 +4,7 @@ import saveAs from 'file-saver';
 import { ComponentProps } from 'react';
 
 import { FieldType, LogLevel, LogsDedupStrategy, standardTransformersRegistry, toDataFrame } from '@grafana/data';
-import { organizeFieldsTransformer } from '@grafana/data/internal';
+import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
 
 import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';

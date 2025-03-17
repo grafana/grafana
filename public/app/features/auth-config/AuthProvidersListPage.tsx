@@ -1,7 +1,7 @@
 import { JSX, useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaEdition } from '@grafana/data/internal';
+import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { reportInteraction } from '@grafana/runtime';
 import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';

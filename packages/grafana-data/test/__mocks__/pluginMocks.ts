@@ -1,7 +1,7 @@
 import { defaultsDeep } from 'lodash';
 import { ComponentType } from 'react';
 
-import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '../../';
+import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '../../src';
 
 export const getMockPlugins = (amount: number): PluginMeta[] => {
   const plugins: PluginMeta[] = [];

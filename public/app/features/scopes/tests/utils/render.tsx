@@ -2,7 +2,7 @@ import { cleanup, waitFor } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
 import { render } from 'test/test-utils';
 
-import { getPanelPlugin } from '@grafana/data/test';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { defaultDashboard } from '@grafana/schema';

@@ -11,7 +11,7 @@ import {
   TransformerCategory,
   SelectableValue,
 } from '@grafana/data';
-import { FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
+import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
 import { getTemplateSrv } from '@grafana/runtime/src/services';
 import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
 

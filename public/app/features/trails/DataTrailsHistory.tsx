@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { getTimeZoneInfo, GrafanaTheme2, InternalTimeZones, TIME_FORMAT, rangeUtil } from '@grafana/data';
+import { getTimeZoneInfo, GrafanaTheme2, InternalTimeZones, TIME_FORMAT } from '@grafana/data';
+import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
 import { config } from '@grafana/runtime';
 import {
   SceneComponentProps,
@@ -348,7 +349,7 @@ export function parseTimeTooltip(urlValues: SceneObjectUrlValues): string {
     return '';
   }
 
-  const range = rangeUtil.convertRawToRange({
+  const range = convertRawToRange({
     from: urlValues.from,
     to: urlValues.to,
   });

@@ -27,7 +27,8 @@ import {
   ValueMapping,
   VariableHide,
 } from '@grafana/data';
-import { labelsToFieldsTransformer, mergeTransformer } from '@grafana/data/internal';
+import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
+import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';

@@ -4,8 +4,8 @@ import {
   FieldType,
   identityOverrideProcessor,
   PanelPlugin,
-  histogramFieldInfo,
 } from '@grafana/data';
+import { histogramFieldInfo } from '@grafana/data/src/transformations/transformers/histogram';
 import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
 import { StackingEditor } from '@grafana/ui/internal';
 
