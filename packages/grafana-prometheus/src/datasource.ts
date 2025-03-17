@@ -691,7 +691,7 @@ export class PrometheusDatasource
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
     const requestId = `[${this.uid}][${options.key}]`;
-    if (config.featureToggles.promQLScope) {
+    if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
       return (
         await this.languageProvider.fetchSuggestions(
           options.timeRange,

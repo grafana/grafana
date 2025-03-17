@@ -409,20 +409,19 @@ func (ng *AlertNG) init() error {
 	ng.InstanceStore, ng.StartupInstanceReader = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
 
 	stateManagerCfg := state.ManagerCfg{
-		Metrics:                        ng.Metrics.GetStateMetrics(),
-		ExternalURL:                    appUrl,
-		DisableExecution:               !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
-		InstanceStore:                  ng.InstanceStore,
-		Images:                         ng.ImageService,
-		Clock:                          clk,
-		Historian:                      history,
-		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
-		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
-		StatePeriodicSaveBatchSize:     ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
-		RulesPerRuleGroupLimit:         ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
-		Tracer:                         ng.tracer,
-		Log:                            log.New("ngalert.state.manager"),
-		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
+		Metrics:                    ng.Metrics.GetStateMetrics(),
+		ExternalURL:                appUrl,
+		DisableExecution:           !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
+		InstanceStore:              ng.InstanceStore,
+		Images:                     ng.ImageService,
+		Clock:                      clk,
+		Historian:                  history,
+		MaxStateSaveConcurrency:    ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
+		StatePeriodicSaveBatchSize: ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
+		RulesPerRuleGroupLimit:     ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
+		Tracer:                     ng.tracer,
+		Log:                        log.New("ngalert.state.manager"),
+		ResolvedRetention:          ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
 	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
 	stateManager := state.NewManager(stateManagerCfg, statePersister)
@@ -760,14 +759,12 @@ func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings s
 	if settings.Enabled {
 		if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
 			cfg := writer.DatasourceWriterConfig{
-				Timeout:               settings.Timeout,
-				DefaultDatasourceUID:  settings.DefaultDatasourceUID,
-				RemoteWritePathSuffix: settings.RemoteWritePathSuffix,
+				Timeout:              settings.Timeout,
+				DefaultDatasourceUID: settings.DefaultDatasourceUID,
 			}
 
 			logger.Info("Setting up remote write using data sources",
-				"timeout", cfg.Timeout, "default_datasource_uid", cfg.DefaultDatasourceUID,
-				"remote_write_path_suffix", cfg.RemoteWritePathSuffix)
+				"timeout", cfg.Timeout, "default_datasource_uid", cfg.DefaultDatasourceUID)
 
 			return writer.NewDatasourceWriter(cfg, datasourceService, httpClientProvider, clock, logger, m), nil
 		} else {
