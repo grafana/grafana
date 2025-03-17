@@ -292,8 +292,8 @@ export class DatasourceSrv implements DataSourceService {
         }
       }
     }
-
-    const sorted = base.sort((a, b) => {
+    
+    let sorted = base.sort((a, b) => {
       if (a.name.toLowerCase() > b.name.toLowerCase()) {
         return 1;
       }
@@ -302,6 +302,12 @@ export class DatasourceSrv implements DataSourceService {
       }
       return 0;
     });
+
+    if (!filters.pluginId) {
+      sorted = sorted.filter((x) => {
+        return x.meta.id !== 'grafana-amazonprometheus-datasource';
+      });
+    }
 
     if (!filters.pluginId && !filters.alerting) {
       if (filters.mixed) {
