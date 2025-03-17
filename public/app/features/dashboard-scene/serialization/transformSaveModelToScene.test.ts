@@ -1,5 +1,5 @@
 import { LoadingState } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,

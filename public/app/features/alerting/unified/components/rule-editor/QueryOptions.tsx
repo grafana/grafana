@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2, RelativeTimeRange, dateTime, getDefaultRelativeTimeRange, rangeUtil } from '@grafana/data';
+import { GrafanaTheme2, RelativeTimeRange, dateTime, getDefaultRelativeTimeRange } from '@grafana/data';
+import { relativeToTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { Icon, InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles, useStyles2 } from '@grafana/ui';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -26,7 +27,7 @@ export const QueryOptions = ({
 
   const [showOptions, setShowOptions] = useState(false);
 
-  const timeRange = query.relativeTimeRange ? rangeUtil.relativeToTimeRange(query.relativeTimeRange) : undefined;
+  const timeRange = query.relativeTimeRange ? relativeToTimeRange(query.relativeTimeRange) : undefined;
 
   return (
     <>
