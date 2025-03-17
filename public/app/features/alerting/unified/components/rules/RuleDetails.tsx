@@ -34,6 +34,8 @@ export const RuleDetails = ({ rule }: Props) => {
   } = rule;
 
   const annotations = useCleanAnnotations(rule.annotations);
+  const isAlertingRule =
+    rulerRuleType.any.alertingRule(rule.rulerRule) || prometheusRuleType.alertingRule(rule.promRule);
 
   return (
     <div>
@@ -53,12 +55,11 @@ export const RuleDetails = ({ rule }: Props) => {
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      {rulerRuleType.any.alertingRule(rule.rulerRule) ||
-        (prometheusRuleType.alertingRule(rule.promRule) && (
-          <DetailsField label="Instances" horizontal={true}>
-            <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
-          </DetailsField>
-        ))}
+      {isAlertingRule && (
+        <DetailsField label="Instances" horizontal={true}>
+          <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
+        </DetailsField>
+      )}
     </div>
   );
 };
