@@ -83,15 +83,16 @@ refs:
 Prometheus is an open-source database that uses a telemetry collector agent to scrape and store metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?](ref:intro-to-prometheus).
 
 Grafana provides native support for Prometheus, so there's no need to install a plugin. 
+
+ If you are new to Prometheus the following documentation will help you get started working with Prometheus and Grafana:
+
 <!-- For instructions on downloading Prometheus see [Get started with Grafana and Prometheus](ref:get-started-prometheus). -->
 
+The following documents will help you get started with the Prometheus data source:
 
-
-
-Once you've added the Prometheus data source, you can [configure it](ref:configure-prometheus-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards), use [Explore](ref:explore), and [annotate visualizations](ref:annotate-visualizations).
-
-The following guides will help you get started with the Prometheus data source:
-
+- [What is Prometheus?](ref:intro-to-prometheus)
+- [Prometheus data model](https://prometheus.io/docs/concepts/data_model/)
+- [Getting started](https://prometheus.io/docs/prometheus/latest/getting_started/)
 - [Configure the Prometheus data source](ref:configure-prometheus-data-source)
 - [Prometheus query editor](query-editor/)
 - [Template variables](template-variables/)
@@ -105,44 +106,6 @@ For more information on how to query other Prometheus-compatible projects from G
 - [Grafana Mimir](/docs/mimir/latest/)
 - [Thanos](https://thanos.io/tip/components/query.md/)
 
-## Provision the data source
-
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
-
-{{% admonition type="note" %}}
-Once you have provisioned a data source you cannot edit it.
-{{% /admonition %}}
-
-### Provisioning example
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: Prometheus
-    type: prometheus
-    access: proxy
-    # Access mode - proxy (server in the UI) or direct (browser in the UI).
-    url: http://localhost:9090
-    jsonData:
-      httpMethod: POST
-      manageAlerts: true
-      prometheusType: Prometheus
-      prometheusVersion: 2.44.0
-      cacheLevel: 'High'
-      disableRecordingRules: false
-      incrementalQueryOverlapWindow: 10m
-      exemplarTraceIdDestinations:
-        # Field with internal link pointing to data source in Grafana.
-        # datasourceUid value can be anything, but it should be unique across all defined data source uids.
-        - datasourceUid: my_jaeger_uid
-          name: traceID
-
-        # Field with external link.
-        - name: traceID
-          url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
-```
 
 ## View Grafana metrics with Prometheus
 
@@ -180,31 +143,17 @@ azure_auth_enabled = true
 If you are using Azure authentication settings do not enable `Forward OAuth identity`. Both use the same HTTP authorization headers. Azure settings will get overwritten by the Oauth token.
 {{% /admonition %}}
 
-## Exemplars
 
-Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars](ref:exemplars) in Prometheus documentation for detailed information on how they work.
+## Get the most out of the Prometheus data source
 
-{{% admonition type="note" %}}
-Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
-{{% /admonition %}}
+After After installing and configuring Prometheus you can:
 
-Grafana can show exemplars data alongside a metric both in Explore and in Dashboards.
+- Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/).
+- Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/annotations/).
+- Configure and use [templates and variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/variables/).
+- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels/transformations/).
+- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/).
 
-{{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
 
-See the Exemplars section in [Configure Prometheus data source](ref:configure-prometheus-data-source).
 
-{{< figure src="/static/img/docs/prometheus/exemplars-10-1.png" max-width="500px" class="docs-image--no-shadow" caption="Exemplars" >}}
-
-## Incremental dashboard queries (beta)
-
-As of Grafana 10, the Prometheus data source can be configured to query live dashboards incrementally, instead of re-querying the entire duration on each dashboard refresh.
-
-This can be toggled on or off in the data source configuration or provisioning file (under `incrementalQuerying` in jsonData).
-Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is `10m` (10 minutes).
-
-Increasing the duration of the `incrementalQueryOverlapWindow` will increase the size of every incremental query, but might be helpful for instances that have inconsistent results for recent data.
-
-## Recording Rules (beta)
-
-The Prometheus data source can be configured to disable recording rules under the data source configuration or provisioning file (under `disableRecordingRules` in jsonData).
+<!-- Once you've added the Prometheus data source, you can [configure it](ref:configure-prometheus-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards), use [Explore](ref:explore), and [annotate visualizations](ref:annotate-visualizations). -->
