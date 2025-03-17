@@ -25,7 +25,7 @@ func (m *datasourceDrilldownRemovalMigrator) SQL(dialect migrator.Dialect) strin
 }
 
 func (m *datasourceDrilldownRemovalMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	result, err := sess.Exec("DELETE FROM permission WHERE action IS ?", "%datasources:drilldown%")
+	result, err := sess.Exec("DELETE FROM permission WHERE action = ?", "datasources:drilldown")
 	if err != nil {
 		return err
 	}
