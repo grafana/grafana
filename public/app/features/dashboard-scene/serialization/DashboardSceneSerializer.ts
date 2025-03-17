@@ -31,6 +31,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T> {
   initialSaveModel?: I;
   metadata?: M;
   initializeMapping(saveModel: T | undefined): void;
+  initializeDSReferencesMapping(saveModel: T | undefined): void;
   getSaveModel: (s: DashboardScene) => T;
   getSaveAsModel: (s: DashboardScene, options: SaveDashboardAsOptions) => T;
   getDashboardChangesFromScene: (
@@ -47,6 +48,12 @@ export interface DashboardSceneSerializerLike<T, M, I = T> {
   getPanelIdForElement: (elementId: string) => number | undefined;
   getElementIdForPanel: (panelId: number) => string | undefined;
   getElementPanelMapping: () => Map<string, number>;
+  getDefaultDsReferencesForElement: (elementId: string) => ElementDsReferences | undefined;
+}
+
+interface ElementDsReferences {
+  queries: { [refId: string]: boolean };
+  variables: { [name: string]: boolean };
 }
 
 interface DashboardTrackingInfo {
@@ -185,6 +192,8 @@ export class V2DashboardSerializer
   initialSaveModel?: DashboardV2Spec | Dashboard;
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
   protected elementPanelMap = new Map<string, number>();
+  // map of elementId that will contain all the queries, variables and annotations that dont have a ds defined
+  protected defaultDsReferencesMap = new Map<string, ElementDsReferences>();
 
   getElementPanelMapping() {
     return this.elementPanelMap;
@@ -204,6 +213,43 @@ export class V2DashboardSerializer
         this.elementPanelMap.set(key, elementPanel.spec.id);
       }
     });
+  }
+
+  initializeDSReferencesMapping(saveModel: DashboardV2Spec | undefined) {
+    this.defaultDsReferencesMap.clear();
+
+    // get all the element keys
+    const elementKeys = Object.keys(saveModel?.elements || {});
+    elementKeys.forEach((key) => {
+      const elementPanel = saveModel?.elements[key];
+      if (elementPanel?.kind === 'Panel') {
+        // check if the elementPanel.spec.datasource is defined
+        const panelQueries = elementPanel.spec.data.spec.queries;
+
+        for (const query of panelQueries) {
+          if (!query.spec.datasource) {
+            const elementId = this.getElementIdForPanel(elementPanel.spec.id);
+            if (!this.defaultDsReferencesMap.has(elementId)) {
+              this.defaultDsReferencesMap.set(elementId, {
+                queries: {},
+                variables: {},
+              });
+            }
+
+            const elementRef = this.defaultDsReferencesMap.get(elementId)!;
+
+            elementRef.queries[query.spec.refId] = true;
+
+            this.defaultDsReferencesMap.set(elementId, elementRef);
+          }
+        }
+      }
+    });
+    console.log('resolver map ds', this.defaultDsReferencesMap);
+  }
+
+  getDefaultDsReferencesForElement(elementId: string) {
+    return this.defaultDsReferencesMap.get(elementId);
   }
 
   getPanelIdForElement(elementId: string) {
