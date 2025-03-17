@@ -30,7 +30,7 @@ describe('LogRows', () => {
     render(
       <LogRows
         logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
+        dedupStrategy={LogsDedupStrategy.None}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
@@ -59,7 +59,7 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         deduplicatedRows={dedupedRows}
-        dedupStrategy={LogsDedupStrategy.none}
+        dedupStrategy={LogsDedupStrategy.None}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
@@ -88,7 +88,7 @@ describe('LogRows', () => {
     render(
       <LogRows
         logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
+        dedupStrategy={LogsDedupStrategy.None}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
@@ -118,7 +118,7 @@ describe('LogRows', () => {
     render(
       <LogRows
         logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
+        dedupStrategy={LogsDedupStrategy.None}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
@@ -147,7 +147,7 @@ describe('Popover menu', () => {
     return render(
       <LogRows
         logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
+        dedupStrategy={LogsDedupStrategy.None}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}

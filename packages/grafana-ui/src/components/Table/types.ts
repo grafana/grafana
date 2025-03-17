@@ -19,8 +19,6 @@ import { TableStyles } from './styles';
 
 export {
   type FieldTextAlignment,
-  TableCellBackgroundDisplayMode,
-  TableCellDisplayMode,
   type TableAutoCellOptions,
   type TableSparklineCellOptions,
   type TableBarGaugeCellOptions,
@@ -28,6 +26,7 @@ export {
   type TableColorTextCellOptions,
   type TableImageCellOptions,
   type TableJsonViewCellOptions,
+  type TableCellDisplayMode,
 } from '@grafana/schema';
 
 export interface TableRow {

@@ -50,5 +50,6 @@ type SchemaForGen struct {
 	CueFile    cue.Value
 	FilePath   string
 	IsGroup    bool
+	Version    string
 	OutputName string // Some TS output files are capitalised and others not.
 }

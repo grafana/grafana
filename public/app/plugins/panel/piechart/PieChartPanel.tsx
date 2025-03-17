@@ -11,7 +11,7 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { HideSeriesConfig, LegendDisplayMode } from '@grafana/schema';
+import { HideSeriesConfig, LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
@@ -22,13 +22,13 @@ import {
 } from '@grafana/ui';
 
 import { PieChart } from './PieChart';
-import { PieChartLegendOptions, PieChartLegendValues, Options } from './panelcfg.gen';
+import { Options, PieChartLegendOptions, PieChartLegendValues } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
   showLegend: true,
-  placement: 'right',
+  placement: LegendPlacement.Right,
   calcs: [],
   values: [PieChartLegendValues.Percent],
 };
