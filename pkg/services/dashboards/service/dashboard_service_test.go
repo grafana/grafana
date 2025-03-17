@@ -946,6 +946,13 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			},
 			TotalHits: 2,
 		}, nil).Once()
+
+		// mock call to waitForSearchQuery()
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
+			Results:   &resource.ResourceTable{},
+			TotalHits: 0,
+		}, nil).Twice()
+
 		err := service.DeleteOrphanedProvisionedDashboards(context.Background(), &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
 			ReaderNames: []string{"test"},
 		})
