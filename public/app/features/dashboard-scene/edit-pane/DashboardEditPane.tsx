@@ -63,7 +63,9 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     this._subs.add(
       dashboard.subscribeToEvent(ObjectsReorderedOnCanvasEvent, ({ payload }) => {
-        this.forceRender();
+        if (this.state.tab === 'outline') {
+          this.forceRender();
+        }
       })
     );
   }
