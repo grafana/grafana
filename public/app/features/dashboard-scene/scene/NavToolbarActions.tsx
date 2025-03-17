@@ -25,8 +25,10 @@ import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { useSelector } from 'app/types';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
+import { selectFolderRepository } from '../../provisioning/utils/selectors';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
@@ -76,7 +78,8 @@ export function ToolbarActions({ dashboard }: Props) {
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-  const isManaged = Boolean(dashboard.isManaged());
+  const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
+  const isManaged = Boolean(dashboard.isManaged() || folderRepo);
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -130,7 +133,7 @@ export function ToolbarActions({ dashboard }: Props) {
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return <ManagedDashboardNavBarBadge meta={meta} />;
+        return <ManagedDashboardNavBarBadge meta={meta} key="managed-dashboard-badge" />;
       },
     });
   }

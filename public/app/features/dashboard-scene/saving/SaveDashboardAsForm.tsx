@@ -4,9 +4,11 @@ import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
+import { RepositoryView } from 'app/api/clients/provisioning';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from '../../apiserver/types';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
@@ -131,10 +133,20 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
       <Field label="Folder">
         <FolderPicker
-          onChange={(uid: string | undefined, title: string | undefined) => {
+          onChange={(uid: string | undefined, title: string | undefined, repository?: RepositoryView) => {
+            const name = repository?.name;
             setValue('folder', { uid, title });
             const folderUid = dashboard.state.meta.folderUid;
             setHasFolderChanged(uid !== folderUid);
+            dashboard.setState({
+              // This is necessary to switch to the provisioning flow if a folder is provisioned
+              meta: {
+                k8s: name
+                  ? { annotations: { [AnnoKeyManagerIdentity]: name, [AnnoKeyManagerKind]: ManagerKind.Repo } }
+                  : undefined,
+                folderUid: uid,
+              },
+            });
           }}
           // Old folder picker fields
           value={formValues.folder?.uid}
