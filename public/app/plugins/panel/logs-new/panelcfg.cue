@@ -30,9 +30,11 @@ composableKinds: PanelCfg: {
 					showTime:                 bool
 					wrapLogMessage:           bool
 					enableLogDetails:         bool
+					syntaxHighlighting:       bool
 					sortOrder:                common.LogsSortOrder
 					dedupStrategy:            common.LogsDedupStrategy
 					enableInfiniteScrolling?: bool
+					onLogOptionsChange?:      _
 					onNewLogsReceived?:       _
 				} @cuetsy(kind="interface")
 			}

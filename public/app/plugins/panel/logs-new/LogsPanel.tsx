@@ -17,10 +17,10 @@ import { PanelDataErrorView } from 'app/features/panel/components/PanelDataError
 
 import { dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 import { requestMoreLogs } from '../logs/LogsPanel';
-import { isOnNewLogsReceivedType } from '../logs/types';
 import { useDatasourcesFromTargets } from '../logs/useDatasourcesFromTargets';
 
 import { Options } from './panelcfg.gen';
+import { isOnLogOptionsChange, isOnNewLogsReceivedType } from './types';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -31,10 +31,12 @@ export const LogsPanel = ({
   options: {
     dedupStrategy,
     enableInfiniteScrolling,
+    onLogOptionsChange,
     onNewLogsReceived,
     showControls,
     showTime,
     sortOrder,
+    syntaxHighlighting,
     wrapLogMessage,
   },
   id,
@@ -116,10 +118,11 @@ export const LogsPanel = ({
           initialScrollPosition={initialScrollPosition}
           logs={logs}
           loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
+          onLogOptionsChange={isOnLogOptionsChange(onLogOptionsChange) ? onLogOptionsChange : undefined}
           showControls={showControls}
           showTime={showTime}
           sortOrder={sortOrder}
-          syntaxHighlighting={true}
+          syntaxHighlighting={syntaxHighlighting}
           timeRange={data.timeRange}
           timeZone={timeZone}
           wrapLogMessage={wrapLogMessage}
