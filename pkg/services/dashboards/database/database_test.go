@@ -293,16 +293,23 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, res[0], provisioningData)
 
 		// get dashboards within the provisioner
-		dashs, err := dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test")
+		dashs, err := dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test", 1)
 		require.NoError(t, err)
 		require.Len(t, dashs, 1)
+		dashs, err = dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test", 2)
+		require.NoError(t, err)
+		require.Len(t, dashs, 0)
 
 		// find dashboards not within that provisioner
-		dashs, err = dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test"})
+		dashs, err = dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test"}, 1)
 		require.NoError(t, err)
 		require.Len(t, dashs, 1)
+		dashs, err = dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test"}, 2)
+		require.NoError(t, err)
+		require.Len(t, dashs, 0)
+
 		// if both are provided, nothing should be returned
-		dashs, err = dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test", "orphaned"})
+		dashs, err = dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test", "orphaned"}, 1)
 		require.NoError(t, err)
 		require.Len(t, dashs, 0)
 
