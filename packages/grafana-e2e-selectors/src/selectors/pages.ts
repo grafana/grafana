@@ -867,6 +867,9 @@ export const versionedPages = {
       scrollView: {
         '9.0.0': 'data-testid explorer scroll view',
       },
+      addFromQueryLibrary: {
+        '11.5.0': 'data-testid explore add from query library button',
+      },
     },
     QueryHistory: {
       container: {
