@@ -37,5 +37,6 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     ...spec.local,
     branch: spec.github?.branch || '',
     url: spec.github?.url || '',
+    generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
   };
 };
