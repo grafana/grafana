@@ -57,7 +57,7 @@ export const useLogIsPinned = (log: LogRowModel) => {
   return pinnedLogs?.some((logId) => logId === log.rowId);
 };
 
-type LogListState = Pick<
+export type LogListState = Pick<
   LogListContextData,
   | 'dedupStrategy'
   | 'displayedFields'
@@ -75,6 +75,7 @@ export interface Props {
   displayedFields: string[];
   getRowContextQuery?: GetRowContextQueryFn;
   logSupportsContext?: (row: LogRowModel) => boolean;
+  onLogOptionsChange?: (option: keyof LogListState, value: string | boolean | string[]) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
@@ -87,142 +88,167 @@ export interface Props {
   wrapLogMessage: boolean;
 }
 
-export const LogListContextProvider = (props: Props) => {
+export const LogListContextProvider = ({
+  app,
+  children,
+  dedupStrategy,
+  displayedFields,
+  getRowContextQuery,
+  logSupportsContext,
+  onLogOptionsChange,
+  onPermalinkClick,
+  onPinLine,
+  onOpenContext,
+  onUnpinLine,
+  pinLineButtonTooltipTitle,
+  pinnedLogs,
+  showTime,
+  sortOrder,
+  syntaxHighlighting,
+  wrapLogMessage,
+}: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
-    dedupStrategy: props.dedupStrategy,
-    displayedFields: props.displayedFields,
-    pinnedLogs: props.pinnedLogs,
-    showTime: props.showTime,
-    sortOrder: props.sortOrder,
-    syntaxHighlighting: props.syntaxHighlighting,
-    wrapLogMessage: props.wrapLogMessage,
+    dedupStrategy,
+    displayedFields,
+    pinnedLogs,
+    showTime,
+    sortOrder,
+    syntaxHighlighting,
+    wrapLogMessage,
   });
 
   useEffect(() => {
-    if (props.dedupStrategy !== logListState.dedupStrategy) {
+    if (dedupStrategy !== logListState.dedupStrategy) {
       setLogListState({
         ...logListState,
-        dedupStrategy: props.dedupStrategy,
+        dedupStrategy: dedupStrategy,
       });
     }
-  }, [logListState, props.dedupStrategy]);
+  }, [logListState, dedupStrategy]);
 
   useEffect(() => {
-    if (!shallowCompare(logListState.displayedFields, props.displayedFields)) {
+    if (!shallowCompare(logListState.displayedFields, displayedFields)) {
       setLogListState({
         ...logListState,
-        displayedFields: props.displayedFields,
+        displayedFields: displayedFields,
       });
     }
-  }, [logListState, props.displayedFields]);
+  }, [logListState, displayedFields]);
 
   useEffect(() => {
-    if (!shallowCompare(logListState.pinnedLogs ?? [], props.pinnedLogs ?? [])) {
+    if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
       setLogListState({
         ...logListState,
-        pinnedLogs: props.pinnedLogs,
+        pinnedLogs: pinnedLogs,
       });
     }
-  }, [logListState, props.pinnedLogs]);
+  }, [logListState, pinnedLogs]);
 
   useEffect(() => {
-    if (props.showTime !== logListState.showTime) {
+    if (showTime !== logListState.showTime) {
       setLogListState({
         ...logListState,
-        showTime: props.showTime,
+        showTime: showTime,
       });
     }
-  }, [logListState, props.showTime]);
+  }, [logListState, showTime]);
 
   useEffect(() => {
-    if (props.sortOrder !== logListState.sortOrder) {
+    if (sortOrder !== logListState.sortOrder) {
       setLogListState({
         ...logListState,
-        sortOrder: props.sortOrder,
+        sortOrder: sortOrder,
       });
     }
-  }, [logListState, props.sortOrder]);
+  }, [logListState, sortOrder]);
 
   useEffect(() => {
-    if (props.syntaxHighlighting !== logListState.syntaxHighlighting) {
+    if (syntaxHighlighting !== logListState.syntaxHighlighting) {
       setLogListState({
         ...logListState,
-        syntaxHighlighting: props.syntaxHighlighting,
+        syntaxHighlighting: syntaxHighlighting,
       });
     }
-  }, [logListState, props.syntaxHighlighting]);
+  }, [logListState, syntaxHighlighting]);
 
   useEffect(() => {
-    if (props.wrapLogMessage !== logListState.wrapLogMessage) {
+    if (wrapLogMessage !== logListState.wrapLogMessage) {
       setLogListState({
         ...logListState,
-        wrapLogMessage: props.wrapLogMessage,
+        wrapLogMessage: wrapLogMessage,
       });
     }
-  }, [logListState, props.wrapLogMessage]);
+  }, [logListState, wrapLogMessage]);
 
   const setDedupStrategy = useCallback(
     (dedupStrategy: LogsDedupStrategy) => {
       setLogListState({ ...logListState, dedupStrategy });
+      onLogOptionsChange?.('dedupStrategy', dedupStrategy);
     },
-    [logListState]
+    [logListState, onLogOptionsChange]
   );
 
   const setDisplayedFields = useCallback(
     (displayedFields: string[]) => {
       setLogListState({ ...logListState, displayedFields });
+      onLogOptionsChange?.('displayedFields', displayedFields);
     },
-    [logListState]
+    [logListState, onLogOptionsChange]
   );
 
   const setPinnedLogs = useCallback(
     (pinnedLogs: string[]) => {
       setLogListState({ ...logListState, pinnedLogs });
+      onLogOptionsChange?.('pinnedLogs', pinnedLogs);
     },
-    [logListState]
+    [logListState, onLogOptionsChange]
   );
 
   const setShowTime = useCallback(
     (showTime: boolean) => {
       setLogListState({ ...logListState, showTime });
+      onLogOptionsChange?.('showTime', showTime);
     },
-    [logListState]
+    [logListState, onLogOptionsChange]
   );
 
   const setSyntaxHighlighting = useCallback(
     (syntaxHighlighting: boolean) => {
       setLogListState({ ...logListState, syntaxHighlighting });
+      onLogOptionsChange?.('syntaxHighlighting', syntaxHighlighting);
     },
-    [logListState]
+    [logListState, onLogOptionsChange]
   );
 
   const setSortOrder = useCallback(
     (sortOrder: LogsSortOrder) => {
       setLogListState({ ...logListState, sortOrder });
+      onLogOptionsChange?.('sortOrder', sortOrder);
     },
-    [logListState]
+    [logListState, onLogOptionsChange]
   );
 
   const setWrapLogMessage = useCallback(
     (wrapLogMessage: boolean) => {
       setLogListState({ ...logListState, wrapLogMessage });
+      onLogOptionsChange?.('wrapLogMessage', wrapLogMessage);
     },
-    [logListState]
+    [logListState, onLogOptionsChange]
   );
 
   return (
     <LogListContext.Provider
       value={{
-        app: props.app,
+        app,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields: logListState.displayedFields,
-        getRowContextQuery: props.getRowContextQuery,
-        logSupportsContext: props.logSupportsContext,
-        onPermalinkClick: props.onPermalinkClick,
-        onPinLine: props.onPinLine,
-        onOpenContext: props.onOpenContext,
-        onUnpinLine: props.onUnpinLine,
-        pinLineButtonTooltipTitle: props.pinLineButtonTooltipTitle,
+        getRowContextQuery,
+        logSupportsContext,
+        onPermalinkClick,
+        onPinLine,
+        onOpenContext,
+        onUnpinLine,
+        pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
         setDedupStrategy,
         setDisplayedFields,
@@ -238,7 +264,7 @@ export const LogListContextProvider = (props: Props) => {
         wrapLogMessage: logListState.wrapLogMessage,
       }}
     >
-      {props.children}
+      {children}
     </LogListContext.Provider>
   );
 };

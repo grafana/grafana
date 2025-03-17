@@ -55,7 +55,7 @@ import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/sh
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
-import { LogList } from 'app/features/logs/components/panel/LogList';
+import { LogList, LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 import { ScrollToLogsEvent } from 'app/features/logs/components/panel/virtualization';
 import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
 import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
@@ -450,42 +450,50 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [scrollElement]
   );
 
-  const onChangeLogsSortOrder = () => {
-    setIsFlipping(true);
-    // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
-    flipOrderTimer.current = window.setTimeout(() => {
-      const newSortOrder =
-        logsSortOrder === LogsSortOrder.Descending ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
-      store.set(SETTINGS_KEYS.logsSortOrder, newSortOrder);
-      if (logsQueries) {
-        let hasLokiQueries = false;
-        const newQueries = logsQueries.map((query) => {
-          if (query.datasource?.type !== 'loki' || !isLokiQuery(query)) {
-            return query;
-          }
-          if (query.direction === LokiQueryDirection.Scan) {
-            // Don't override Scan. When the direction is Scan it means that the user specifically assigned this direction to the query.
-            return query;
-          }
-          hasLokiQueries = true;
-          const newDirection =
-            newSortOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
-          if (newDirection !== query.direction) {
-            query.direction = newDirection;
-          }
-          return query;
-        });
-
-        if (hasLokiQueries) {
-          dispatch(changeQueries({ exploreId, queries: newQueries }));
-          dispatch(runQueries({ exploreId }));
-        }
+  const sortOrderChanged = useCallback(
+    (newSortOrder: LogsSortOrder) => {
+      if (!logsQueries) {
+        return;
       }
+      let hasLokiQueries = false;
+      const newQueries = logsQueries.map((query) => {
+        if (query.datasource?.type !== 'loki' || !isLokiQuery(query)) {
+          return query;
+        }
+        if (query.direction === LokiQueryDirection.Scan) {
+          // Don't override Scan. When the direction is Scan it means that the user specifically assigned this direction to the query.
+          return query;
+        }
+        hasLokiQueries = true;
+        const newDirection =
+          newSortOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
+        if (newDirection !== query.direction) {
+          query.direction = newDirection;
+        }
+        return query;
+      });
 
-      setLogsSortOrder(newSortOrder);
-    }, 0);
-    cancelFlippingTimer.current = window.setTimeout(() => setIsFlipping(false), 1000);
-  };
+      if (hasLokiQueries) {
+        dispatch(changeQueries({ exploreId, queries: newQueries }));
+        dispatch(runQueries({ exploreId }));
+      }
+    },
+    [dispatch, exploreId, logsQueries]
+  );
+
+  const onChangeLogsSortOrder = useCallback(
+    (newSortOrder: LogsSortOrder) => {
+      setIsFlipping(true);
+      // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
+      flipOrderTimer.current = window.setTimeout(() => {
+        store.set(SETTINGS_KEYS.logsSortOrder, newSortOrder);
+        sortOrderChanged(newSortOrder);
+        setLogsSortOrder(newSortOrder);
+      }, 0);
+      cancelFlippingTimer.current = window.setTimeout(() => setIsFlipping(false), 1000);
+    },
+    [sortOrderChanged]
+  );
 
   const onEscapeNewlines = useCallback(() => {
     setForceEscape(!forceEscape);
@@ -769,6 +777,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const infiniteScrollAvailable = useMemo(
     () => !logsQueries?.some((query) => 'direction' in query && query.direction === LokiQueryDirection.Scan),
     [logsQueries]
+  );
+
+  const onChangeLogsOption = useCallback(
+    (option: keyof LogListControlOptions, value: string | string[] | boolean) => {
+      if (option === 'sortOrder' && (value === LogsSortOrder.Ascending || value === LogsSortOrder.Descending)) {
+        sortOrderChanged(value);
+      }
+    },
+    [sortOrderChanged]
   );
 
   return (
@@ -1065,6 +1082,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   loadMore={loadMoreLogs}
                   logs={dedupedRows}
                   logSupportsContext={showContextToggle}
+                  onChangeLogsOption={onChangeLogsOption}
                   onOpenContext={onOpenContext}
                   onPermalinkClick={onPermalinkClick}
                   onPinLine={onPinToContentOutlineClick}

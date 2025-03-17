@@ -20,7 +20,7 @@ import { PopoverContent, useTheme2 } from '@grafana/ui';
 import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
 import { GetRowContextQueryFn } from './LogLineMenu';
-import { LogListContextProvider, useLogListContext } from './LogListContext';
+import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { preProcessLogs, LogListModel } from './processing';
 import {
@@ -48,6 +48,7 @@ interface Props {
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: LogRowModel[];
   logSupportsContext?: (row: LogRowModel) => boolean;
+  onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
@@ -63,6 +64,8 @@ interface Props {
   syntaxHighlighting: boolean;
   wrapLogMessage: boolean;
 }
+
+export type LogListControlOptions = LogListState;
 
 type LogListComponentProps = Omit<
   Props,
@@ -82,6 +85,7 @@ export const LogList = ({
   loadMore,
   logs,
   logSupportsContext,
+  onLogOptionsChange,
   onPermalinkClick,
   onPinLine,
   onOpenContext,
@@ -103,6 +107,7 @@ export const LogList = ({
       displayedFields={displayedFields}
       getRowContextQuery={getRowContextQuery}
       logSupportsContext={logSupportsContext}
+      onLogOptionsChange={onLogOptionsChange}
       onPermalinkClick={onPermalinkClick}
       onPinLine={onPinLine}
       onOpenContext={onOpenContext}
