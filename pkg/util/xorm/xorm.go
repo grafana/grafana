@@ -83,19 +83,27 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	}
 
 	engine := &Engine{
-		db:             db,
-		dialect:        dialect,
-		Tables:         make(map[reflect.Type]*core.Table),
-		mutex:          &sync.RWMutex{},
-		TagIdentifier:  "xorm",
-		TZLocation:     time.Local,
-		tagHandlers:    defaultTagHandlers,
-		defaultContext: context.Background(),
+		db:              db,
+		dialect:         dialect,
+		Tables:          make(map[reflect.Type]*core.Table),
+		mutex:           &sync.RWMutex{},
+		TagIdentifier:   "xorm",
+		TZLocation:      time.Local,
+		tagHandlers:     defaultTagHandlers,
+		defaultContext:  context.Background(),
+		timestampFormat: "2006-01-02 15:04:05",
 	}
 
-	if uri.DbType == core.SQLITE {
+	switch uri.DbType {
+	case core.SQLITE:
 		engine.DatabaseTZ = time.UTC
-	} else {
+	case "spanner":
+		engine.DatabaseTZ = time.UTC
+		// We need to specify "Z" to indicate that timestamp is in UTC.
+		// Otherwise Spanner uses default America/Los_Angeles timezone.
+		// https://cloud.google.com/spanner/docs/reference/standard-sql/data-types#time_zones
+		engine.timestampFormat = "2006-01-02 15:04:05Z"
+	default:
 		engine.DatabaseTZ = time.Local
 	}
 
