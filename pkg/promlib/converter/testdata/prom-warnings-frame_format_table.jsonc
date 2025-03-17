@@ -1,0 +1,122 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "timeseries-long",
+//      "typeVersion": [
+//          0,
+//          1
+//      ],
+//      "custom": {
+//          "resultType": "vector"
+//      },
+//      "notices": [
+//          {
+//              "severity": "warning",
+//              "text": "warning 1"
+//          },
+//          {
+//              "severity": "warning",
+//              "text": "warning 2"
+//          }
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 5 Rows
+//  +-----------------------------------+------------------------------------------------------------------------------------+
+//  | Name: Time                        | Name: Value                                                                        |
+//  | Labels:                           | Labels: __name__=up, instance=localhost:9100, job=node, level=debug, location=moon |
+//  | Type: []time.Time                 | Type: []float64                                                                    |
+//  +-----------------------------------+------------------------------------------------------------------------------------+
+//  | 2015-07-01 20:10:51.781 +0000 UTC | 1                                                                                  |
+//  | 2015-07-01 20:10:51.781 +0000 UTC | 0                                                                                  |
+//  | 2022-02-16 16:41:39 +0000 UTC     | +Inf                                                                               |
+//  | 2022-02-16 16:41:39 +0000 UTC     | -Inf                                                                               |
+//  | 2022-02-16 16:41:39 +0000 UTC     | NaN                                                                                |
+//  +-----------------------------------+------------------------------------------------------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-long",
+          "typeVersion": [
+            0,
+            1
+          ],
+          "custom": {
+            "resultType": "vector"
+          },
+          "notices": [
+            {
+              "severity": "warning",
+              "text": "warning 1"
+            },
+            {
+              "severity": "warning",
+              "text": "warning 2"
+            }
+          ]
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "__name__": "up",
+              "instance": "localhost:9100",
+              "job": "node",
+              "level": "debug",
+              "location": "moon"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1435781451781,
+            1435781451781,
+            1645029699000,
+            1645029699000,
+            1645029699000
+          ],
+          [
+            1,
+            0,
+            null,
+            null,
+            null
+          ]
+        ],
+        "entities": [
+          null,
+          {
+            "NaN": [
+              4
+            ],
+            "Inf": [
+              2
+            ],
+            "NegInf": [
+              3
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

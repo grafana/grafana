@@ -21,6 +21,9 @@ func logf(format string, a ...any) {
 }
 
 type Options struct {
+	// FormatTable determines if Prometheus query results should be formatted as a table.
+	// When true, results are combined into a single frame using the 'TimeSeriesLong' format.
+	// When false, each series gets its own frame in 'TimeSeriesMulti' format.
 	FormatTable bool
 }
 
@@ -596,6 +599,9 @@ func readScalar(iter *sdkjsoniter.Iterator) backend.DataResponse {
 func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rsp := backend.DataResponse{}
 	size := 0
+	var tempTimes []time.Time
+	var tempValues []float64
+	var labels data.Labels
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
@@ -603,9 +609,12 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 		}
 
 		// First read all values to temporary storage
-		tempTimes := make([]time.Time, 0, size)
-		tempValues := make([]float64, 0, size)
-		var labels data.Labels
+		if !opt.FormatTable {
+			tempTimes = make([]time.Time, 0, size)
+			tempValues = make([]float64, 0, size)
+			labels = data.Labels{}
+		}
+		// var labels data.Labels
 		var histogram *histogramInfo
 
 		for l1Field, err := iter.ReadObject(); l1Field != ""; l1Field, err = iter.ReadObject() {
@@ -681,36 +690,47 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 			}
 			rsp.Frames = append(rsp.Frames, frame)
 		} else {
-			var frame *data.Frame
-			if opt.FormatTable {
-				if len(rsp.Frames) > 0 {
-					frame = rsp.Frames[0]
-				} else {
-					frame = newFrame(tempTimes, labels, tempValues, resultType)
-					frame.Meta.Custom = data.FrameTypeTimeSeriesLong
-					rsp.Frames = append(rsp.Frames, frame)
-				}
-			} else {
-				frame = newFrame(tempTimes, labels, tempValues, resultType)
+			// Result format is "time series" so we use multiple frames
+			// https://grafana.github.io/dataplane/timeseries#time-series-multi-format-timeseriesmulti
+			if !opt.FormatTable {
+				frame := newFrame(tempTimes, labels, tempValues, resultType)
 				rsp.Frames = append(rsp.Frames, frame)
-				size = len(tempTimes)
 			}
+			size = len(tempTimes)
 		}
+	}
+
+	// Result format is "table". We use "long" format for better visualization
+	// https://grafana.github.io/dataplane/timeseries#time-series-long-format-timeserieslong-sql-like
+	if opt.FormatTable {
+		frame := newFrame(tempTimes, labels, tempValues, resultType)
+		frame.Meta.Type = data.FrameTypeTimeSeriesLong
+		rsp.Frames = append(rsp.Frames, frame)
 	}
 
 	return rsp
 }
 
-func newFrame(tempTimes []time.Time, labels data.Labels, tempValues []float64, resultType string) *data.Frame {
-	frame := data.NewFrame("", data.NewField(data.TimeSeriesTimeFieldName, nil, tempTimes), data.NewField(data.TimeSeriesValueFieldName, labels, tempValues))
-	frame.Meta = &data.FrameMeta{
-		Type:        data.FrameTypeTimeSeriesMulti,
+// newFrame creates a data frame for time series data with appropriate metadata based on Prometheus result type.
+// It configures the frame with the right type and version information for proper visualization in Grafana.
+func newFrame(times []time.Time, labels data.Labels, values []float64, resultType string) *data.Frame {
+	// Determine the appropriate frame meta type based on the Prometheus result type
+	frameMetaType := data.FrameTypeTimeSeriesMulti
+	if resultType == "vector" {
+		frameMetaType = data.FrameTypeNumericMulti
+	}
+
+	// Create time and value fields with appropriate names
+	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, times)
+	valueField := data.NewField(data.TimeSeriesValueFieldName, labels, values)
+
+	// Create frame and set metadata
+	frame := data.NewFrame("", timeField, valueField)
+	frame.SetMeta(&data.FrameMeta{
+		Type:        frameMetaType,
 		Custom:      resultTypeToCustomMeta(resultType),
 		TypeVersion: data.FrameTypeVersion{0, 1},
-	}
-	if resultType == "vector" {
-		frame.Meta.Type = data.FrameTypeNumericMulti
-	}
+	})
 
 	return frame
 }

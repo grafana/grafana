@@ -17,7 +17,7 @@ import (
 
 const update = false
 
-var files = []string{
+var promFiles = []string{
 	"prom-labels",
 	"prom-matrix",
 	"prom-matrix-with-nans",
@@ -38,20 +38,22 @@ var files = []string{
 	"prom-exemplars-diff-labels",
 	"prom-query-range",
 	"prom-query-range-big",
+}
+var lokiFiles = []string{
 	"loki-streams-a",
 	"loki-streams-b",
 	"loki-streams-c",
 }
 
 func TestReadPromFrames(t *testing.T) {
-	for _, name := range files {
+	for _, name := range append(promFiles, lokiFiles...) {
 		t.Run(name, runScenario(name, Options{}))
 	}
 }
 
 func TestReadPromFramesAsTable(t *testing.T) {
 	// Don't test loki streams as prom table format
-	for _, name := range files[:len(files)-3] {
+	for _, name := range promFiles {
 		t.Run(name, runScenario(name, Options{FormatTable: true}))
 	}
 }
