@@ -20,7 +20,7 @@ type ExportWorker struct {
 	clonedir string
 
 	// required to create clients
-	clientFactory resources.ClientFactory
+	clientFactory *resources.ClientFactory
 
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
@@ -29,7 +29,7 @@ type ExportWorker struct {
 	secrets secrets.Service
 }
 
-func NewExportWorker(clientFactory resources.ClientFactory,
+func NewExportWorker(clientFactory *resources.ClientFactory,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 	clonedir string,

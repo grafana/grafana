@@ -118,7 +118,7 @@ func NewAPIBuilder(
 		features:          features,
 		ghFactory:         ghFactory,
 		parsers: &resources.ParserFactory{
-			ClientFactory: *resources.NewClientFactory(configProvider),
+			ClientFactory: resources.NewClientFactory(configProvider),
 		},
 		render:         render,
 		clonedir:       clonedir,

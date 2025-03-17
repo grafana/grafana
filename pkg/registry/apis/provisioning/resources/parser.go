@@ -25,7 +25,7 @@ import (
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 
 type ParserFactory struct {
-	ClientFactory ClientFactory
+	ClientFactory *ClientFactory
 }
 
 func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
