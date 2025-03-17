@@ -1991,6 +1991,10 @@
     "file-upload": {
       "file-name": "File name"
     },
+    "filter-by-name-transformer-editor": {
+      "deselect-all": "Deselect All",
+      "select-all": "Select All"
+    },
     "filter-input": {
       "clear": "Clear"
     },
