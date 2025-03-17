@@ -42,6 +42,9 @@ dashboard: {
 		}
 		go: {
 			enabled: true
+			config: {
+				allowMarshalEmptyDisjunctions: true
+			}
 		}
 	}
 
