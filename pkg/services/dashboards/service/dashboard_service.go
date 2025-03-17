@@ -560,9 +560,9 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 	return isParentFolderChanged, nil
 }
 
-// WaitForSearchQuery waits for the search query to return the expected number of hits.
+// waitForSearchQuery waits for the search query to return the expected number of hits.
 // Since US doesn't offer search-after-write guarantees, we can use this to wait after writes until the indexer is up to date.
-func (dr *DashboardServiceImpl) WaitForSearchQuery(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, maxRetries int, expectedHits int64) error {
+func (dr *DashboardServiceImpl) waitForSearchQuery(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, maxRetries int, expectedHits int64) error {
 	return retryer.Retry(func() (retryer.RetrySignal, error) {
 		results, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
 		if err != nil {
@@ -604,7 +604,7 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 				deletedUids = append(deletedUids, foundDash.DashboardUID)
 			}
 			// wait for deleted dashboards to be removed from the index
-			err = dr.WaitForSearchQuery(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: org.ID, DashboardUIDs: deletedUids}, 5, 0)
+			err = dr.waitForSearchQuery(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: org.ID, DashboardUIDs: deletedUids}, 5, 0)
 			if err != nil {
 				return err
 			}
