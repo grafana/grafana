@@ -30,7 +30,7 @@ export function ConfigFormGithubCollapse({ previews }: ConfigFormGithubCollapseP
           onRemove={() => navigate(GETTING_STARTED_URL)}
         >
           Changes in git will eventually be pulled depending on the synchronization interval. Pull requests will not be
-          proccessed
+          processed
         </Alert>
       )}
 
