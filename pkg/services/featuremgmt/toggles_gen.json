@@ -4197,6 +4197,20 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageHistoryPruner",
+        "resourceVersion": "1742163088045",
+        "creationTimestamp": "2025-03-16T22:11:28Z"
+      },
+      "spec": {
+        "description": "Enables the unified storage history pruner",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageSearch",
         "resourceVersion": "1726771421439",
         "creationTimestamp": "2024-09-30T19:46:14Z"

@@ -10,6 +10,7 @@ import (
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -18,7 +19,9 @@ import (
 
 // Creates a new ResourceServer
 func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
-	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient, searchOptions resource.SearchOptions, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics) (resource.ResourceServer, error) {
+	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient,
+	searchOptions resource.SearchOptions, storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics, features featuremgmt.FeatureToggles) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
@@ -46,8 +49,16 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	}
 
 	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"))
+	withPruner := features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
 
-	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer, IsHA: isHA, storageMetrics: storageMetrics})
+	store, err := NewBackend(BackendOptions{
+		DBProvider:     eDB,
+		Tracer:         tracer,
+		Reg:            reg,
+		IsHA:           isHA,
+		withPruner:     withPruner,
+		storageMetrics: storageMetrics,
+	})
 	if err != nil {
 		return nil, err
 	}
