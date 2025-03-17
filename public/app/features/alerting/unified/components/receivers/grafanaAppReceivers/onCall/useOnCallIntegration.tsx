@@ -3,6 +3,8 @@ import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
+import { Badge } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
@@ -11,7 +13,6 @@ import { NotifierDTO } from '../../../../../../../types';
 import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { option } from '../../../../utils/notifier-types';
-import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from '../types';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE, ReceiverTypes } from './onCall';
 
@@ -100,10 +101,18 @@ export function useOnCallIntegration() {
           return true;
         } catch (error) {
           if (isFetchError(error) && error.status === 409) {
-            return 'Integration of this name already exists in OnCall';
+            return t(
+              'alerting.irm-integration.integration-name-exists',
+              'Integration of this name already exists in IRM'
+            );
           }
 
-          notifyApp.error('Failed to validate OnCall integration name. Is the OnCall API available?');
+          notifyApp.error(
+            t(
+              'alerting.irm-integration.validation-failed',
+              'Failed to validate IRM integration name. Is the OnCall API available?'
+            )
+          );
           throw error;
         }
       },
@@ -114,7 +123,7 @@ export function useOnCallIntegration() {
 
         return grafanaOnCallIntegrations.map((i) => i.integration_url).includes(value)
           ? true
-          : 'Selection of existing OnCall integration is required';
+          : t('alerting.irm-integration.integration-required', 'Selection of existing IRM integration is required');
       },
     };
   }, [grafanaOnCallIntegrations, validateIntegrationNameQuery, isAlertingV2IntegrationEnabled, notifyApp]);
@@ -187,41 +196,57 @@ export function useOnCallIntegration() {
 
         const newIntegrationOption: SelectableValue<string> = {
           value: OnCallIntegrationType.NewIntegration,
-          label: 'New OnCall integration',
-          description: 'A new OnCall integration without escalation chains will be automatically created',
+          label: t('alerting.irm-integration.new-integration', 'New IRM integration'),
+          description: t(
+            'alerting.irm-integration.new-integration-description',
+            'A new IRM integration without escalation chains will be automatically created'
+          ),
         };
         const existingIntegrationOption: SelectableValue<string> = {
           value: OnCallIntegrationType.ExistingIntegration,
-          label: 'Existing OnCall integration',
-          description: 'Use an existing OnCall integration',
+          label: t('alerting.irm-integration.existing-integration', 'Existing IRM integration'),
+          description: t(
+            'alerting.irm-integration.existing-integration-description',
+            'Use an existing IRM integration'
+          ),
         };
 
         options.unshift(
-          option(OnCallIntegrationSetting.IntegrationType, 'How to connect to OnCall', '', {
-            required: true,
-            element: 'radio',
-            defaultValue: newIntegrationOption,
-            selectOptions: [newIntegrationOption, existingIntegrationOption],
-          }),
+          option(
+            OnCallIntegrationSetting.IntegrationType,
+            t('alerting.irm-integration.connection-method', 'How to connect to IRM'),
+            '',
+            {
+              required: true,
+              element: 'radio',
+              defaultValue: newIntegrationOption,
+              selectOptions: [newIntegrationOption, existingIntegrationOption],
+            }
+          ),
           option(
             OnCallIntegrationSetting.IntegrationName,
-            'Integration name',
-            'The name of the new OnCall integration',
+            t('alerting.irm-integration.integration-name', 'Integration name'),
+            t('alerting.irm-integration.integration-name-description', 'The name of the new IRM integration'),
             {
               required: true,
               showWhen: { field: 'integration_type', is: OnCallIntegrationType.NewIntegration },
             }
           ),
-          option('url', 'OnCall Integration', 'The OnCall integration to send alerts to', {
-            element: 'select',
-            required: true,
-            showWhen: { field: 'integration_type', is: OnCallIntegrationType.ExistingIntegration },
-            selectOptions: grafanaOnCallIntegrations.map((i) => ({
-              label: i.display_name,
-              description: i.integration_url,
-              value: i.integration_url,
-            })),
-          })
+          option(
+            'url',
+            t('alerting.irm-integration.integration', 'IRM Integration'),
+            t('alerting.irm-integration.integration-description', 'The IRM integration to send alerts to'),
+            {
+              element: 'select',
+              required: true,
+              showWhen: { field: 'integration_type', is: OnCallIntegrationType.ExistingIntegration },
+              selectOptions: grafanaOnCallIntegrations.map((i) => ({
+                label: i.display_name,
+                description: i.integration_url,
+                value: i.integration_url,
+              })),
+            }
+          )
         );
 
         return { ...notifier, options };
@@ -238,9 +263,9 @@ export function useOnCallIntegration() {
       enabled: !!isOnCallEnabled,
       order: -1, // The default is 0. We want OnCall to be the first on the list
       description: isOnCallEnabled
-        ? 'Connect effortlessly to Grafana OnCall'
-        : 'Enable Grafana OnCall plugin to use this integration',
-      iconUrl: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[getIrmIfPresentOrOnCallPluginId()],
+        ? t('alerting.irm-integration.enabled-description', 'Seamless way to handle alerts and manage incidents')
+        : t('alerting.irm-integration.disabled-description', 'Enable Grafana IRM to use this integration'),
+      badge: <Badge color="blue" text={t('alerting.irm-integration.recommended', 'Recommended')} />,
     },
     extendOnCallNotifierFeatures,
     extendOnCallReceivers,

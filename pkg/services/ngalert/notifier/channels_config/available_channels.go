@@ -425,9 +425,9 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 		},
 		{
 			Type:        "oncall",
-			Name:        "Grafana OnCall",
-			Description: "Sends alerts to Grafana OnCall",
-			Heading:     "Grafana OnCall settings",
+			Name:        "Grafana IRM",
+			Description: "Sends alerts to Grafana IRM",
+			Heading:     "Grafana IRM settings",
 			Options: []NotifierOption{
 				{
 					Label:        "URL",
