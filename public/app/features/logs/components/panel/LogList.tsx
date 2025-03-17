@@ -114,6 +114,7 @@ export const LogList = ({
       onUnpinLine={onUnpinLine}
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
+      showControls={showControls}
       showTime={showTime}
       sortOrder={sortOrder}
       syntaxHighlighting={syntaxHighlighting}

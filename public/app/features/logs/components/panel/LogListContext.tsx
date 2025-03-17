@@ -14,7 +14,7 @@ import { PopoverContent } from '@grafana/ui';
 
 import { GetRowContextQueryFn } from './LogLineMenu';
 
-export interface LogListContextData extends Props {
+export interface LogListContextData extends Omit<Props, 'showControls'> {
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDisplayedFields: (displayedFields: string[]) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
@@ -82,6 +82,7 @@ export interface Props {
   onUnpinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  showControls: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
   syntaxHighlighting: boolean;
@@ -102,6 +103,7 @@ export const LogListContextProvider = ({
   onUnpinLine,
   pinLineButtonTooltipTitle,
   pinnedLogs,
+  showControls,
   showTime,
   sortOrder,
   syntaxHighlighting,
@@ -127,58 +129,58 @@ export const LogListContextProvider = ({
   }, [logListState, dedupStrategy]);
 
   useEffect(() => {
-    if (!shallowCompare(logListState.displayedFields, displayedFields)) {
+    if (!showControls && !shallowCompare(logListState.displayedFields, displayedFields)) {
       setLogListState({
         ...logListState,
         displayedFields: displayedFields,
       });
     }
-  }, [logListState, displayedFields]);
+  }, [displayedFields, logListState, showControls]);
 
   useEffect(() => {
-    if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
+    if (!showControls && !shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
       setLogListState({
         ...logListState,
         pinnedLogs: pinnedLogs,
       });
     }
-  }, [logListState, pinnedLogs]);
+  }, [logListState, pinnedLogs, showControls]);
 
   useEffect(() => {
-    if (showTime !== logListState.showTime) {
+    if (!showControls && showTime !== logListState.showTime) {
       setLogListState({
         ...logListState,
         showTime: showTime,
       });
     }
-  }, [logListState, showTime]);
+  }, [logListState, showControls, showTime]);
 
   useEffect(() => {
-    if (sortOrder !== logListState.sortOrder) {
+    if (!showControls && sortOrder !== logListState.sortOrder) {
       setLogListState({
         ...logListState,
         sortOrder: sortOrder,
       });
     }
-  }, [logListState, sortOrder]);
+  }, [logListState, showControls, sortOrder]);
 
   useEffect(() => {
-    if (syntaxHighlighting !== logListState.syntaxHighlighting) {
+    if (!showControls && syntaxHighlighting !== logListState.syntaxHighlighting) {
       setLogListState({
         ...logListState,
         syntaxHighlighting: syntaxHighlighting,
       });
     }
-  }, [logListState, syntaxHighlighting]);
+  }, [logListState, showControls, syntaxHighlighting]);
 
   useEffect(() => {
-    if (wrapLogMessage !== logListState.wrapLogMessage) {
+    if (!showControls && wrapLogMessage !== logListState.wrapLogMessage) {
       setLogListState({
         ...logListState,
         wrapLogMessage: wrapLogMessage,
       });
     }
-  }, [logListState, wrapLogMessage]);
+  }, [logListState, showControls, wrapLogMessage]);
 
   const setDedupStrategy = useCallback(
     (dedupStrategy: LogsDedupStrategy) => {
