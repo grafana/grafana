@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, FieldErrors, FieldValues, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, Button, Field, Select, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
@@ -106,11 +106,16 @@ export function ChannelSubForm<R extends ChannelValues>({
       sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name])
         // .notifiers.sort((a, b) => a.dto.name.localeCompare(b.dto.name))
         .map<SelectableValue>(({ dto: { name, type }, meta }) => ({
-          label: name,
+          // @ts-expect-error ReactNode is supported
+          label: (
+            <Stack alignItems="center" gap={1}>
+              {name}
+              {meta?.badge}
+            </Stack>
+          ),
           value: type,
           description: meta?.description,
           isDisabled: meta ? !meta.enabled : false,
-          imgUrl: meta?.iconUrl,
         })),
     [notifiers]
   );
