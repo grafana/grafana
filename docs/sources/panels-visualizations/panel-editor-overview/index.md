@@ -82,7 +82,7 @@ The data section contains tabs where you enter queries, transform your data, and
 
 - **Queries**
   - Select your data source. You can also set or update the data source in existing dashboards using the drop-down menu in the **Queries** tab.
-  - [Enter queries](ref:add-a-query). You can add a query from the query library and save queries you've created to the library (Enterprise and Cloud only). For more information, refer to [Query library](ref:query-library).
+  - [Enter queries](ref:add-a-query). You can add a query from the query library and save queries you've created to the library (Enterprise and Cloud only). For more information, refer to [Query library](ref:query-library). Query library is in [private preview](https://grafana.com/docs/release-life-cycle/).
 - **Transformations** - Apply data transformations. For more information, refer to [Transform data](ref:transform-data).
 - **Alert** - Write alert rules. For more information, refer to [the overview of Grafana Alerting](ref:the-overview-of-grafana-alerting).
 
