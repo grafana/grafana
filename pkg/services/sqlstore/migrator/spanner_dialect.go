@@ -14,6 +14,7 @@ import (
 	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
+	"github.com/grafana/dskit/concurrency"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -55,6 +56,11 @@ func (s *SpannerDialect) SQLType(col *Column) string {
 }
 
 func (s *SpannerDialect) BatchSize() int { return 1000 }
+
+func (s *SpannerDialect) BooleanValue(b bool) any {
+	return b
+}
+
 func (s *SpannerDialect) BooleanStr(b bool) string {
 	if b {
 		return "true"
@@ -127,12 +133,15 @@ func (s *SpannerDialect) ColStringNoPk(col *Column) string {
 }
 
 func (s *SpannerDialect) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.DBMetas()
+	// Get tables names only, no columns or indexes.
+	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
 	}
 	sess := engine.NewSession()
 	defer sess.Close()
+
+	var statements []string
 
 	for _, table := range tables {
 		switch table.Name {
@@ -142,17 +151,17 @@ func (s *SpannerDialect) TruncateDBTables(engine *xorm.Engine) error {
 			continue
 		case "dashboard_acl":
 			// keep default dashboard permissions
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", s.Quote(table.Name))); err != nil {
-				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
-			}
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", s.Quote(table.Name)))
 		default:
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE TRUE;", s.Quote(table.Name))); err != nil {
-				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
-			}
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE TRUE;", s.Quote(table.Name)))
 		}
 	}
 
-	return nil
+	// Run statements concurrently.
+	return concurrency.ForEachJob(context.Background(), len(statements), 10, func(ctx context.Context, idx int) error {
+		_, err := sess.Exec(statements[idx])
+		return err
+	})
 }
 
 // CleanDB drops all existing tables and their indexes.
@@ -279,7 +288,7 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 		return err
 	}
 
-	opts := confToClientOptions(cfg)
+	opts := SpannerConnectorConfigToClientOptions(cfg)
 
 	databaseAdminClient, err := database.NewDatabaseAdminClient(ctx, opts...)
 	if err != nil {
@@ -304,8 +313,8 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 	return nil
 }
 
-// Adapted from https://github.com/googleapis/go-sql-spanner/blob/main/driver.go#L341-L477, from version 1.11.1.
-func confToClientOptions(connectorConfig spannerdriver.ConnectorConfig) []option.ClientOption {
+// SpannerConnectorConfigToClientOptions is adapted from https://github.com/googleapis/go-sql-spanner/blob/main/driver.go#L341-L477, from version 1.11.1.
+func SpannerConnectorConfigToClientOptions(connectorConfig spannerdriver.ConnectorConfig) []option.ClientOption {
 	var opts []option.ClientOption
 	if connectorConfig.Host != "" {
 		opts = append(opts, option.WithEndpoint(connectorConfig.Host))

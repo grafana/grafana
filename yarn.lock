@@ -12508,13 +12508,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:5.3.2":
-  version: 5.3.2
-  resolution: "centrifuge@npm:5.3.2"
+"centrifuge@npm:5.3.4":
+  version: 5.3.4
+  resolution: "centrifuge@npm:5.3.4"
   dependencies:
     events: "npm:^3.3.0"
     protobufjs: "npm:^7.2.5"
-  checksum: 10/110c88c01206761dffb148f28aa89eb14ec345b564b2613d2aea9cf686db35b77330098df983fd6feed70a97ea4926791ac095c9bc2401894695840173e18eb4
+  checksum: 10/38b753c4f1b365056e0838d0f7db0dbb6892641dc0c9995626020faf0dd57d2fa1ec794f6e3a46b7a0a527525b53abc6c3c6eeb784a035da0793ea719becd307
   languageName: node
   linkType: hard
 
@@ -17811,7 +17811,7 @@ __metadata:
     blob-polyfill: "npm:9.0.20240710"
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
-    centrifuge: "npm:5.3.2"
+    centrifuge: "npm:5.3.4"
     chance: "npm:^1.0.10"
     chrome-remote-interface: "npm:0.33.2"
     classnames: "npm:2.5.1"
