@@ -67,7 +67,6 @@ featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,f
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
 permissionsFilterRemoveSubquery,experimental,@grafana/grafana-backend-group,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
-alertingNoDataErrorExecution,GA,@grafana/alerting-squad,false,true,false
 angularDeprecationUI,GA,@grafana/plugins-platform-backend,false,false,true
 dashgpt,GA,@grafana/dashboards-squad,false,false,true
 aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
@@ -221,7 +220,7 @@ ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
 grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 exploreMetricsUseExternalAppPlugin,preview,@grafana/observability-metrics,false,true,true
-datasourceConnectionsTab,experimental,@grafana/plugins-platform-backend,false,false,true
+datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 alertingConversionAPI,experimental,@grafana/alerting-squad,false,false,false
 alertingAlertmanagerExtraDedupStage,experimental,@grafana/alerting-squad,false,true,false
@@ -236,5 +235,8 @@ rendererDisableAppPluginsPreload,experimental,@grafana/sharing-squad,false,false
 assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
 alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 grafanaManagedRecordingRulesDatasources,experimental,@grafana/alerting-squad,false,false,false
+infinityRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
 extraLanguages,experimental,@grafana/grafana-frontend-platform,false,false,true
+noBackdropBlur,experimental,@grafana/grafana-frontend-platform,false,false,true
+alertingMigrationUI,experimental,@grafana/alerting-squad,false,false,true

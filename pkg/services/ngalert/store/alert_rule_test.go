@@ -745,7 +745,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 			called = true
 			return nil
 		}
-		err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, rule.UID)
+		err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, false, rule.UID)
 		require.NoError(t, err)
 		require.True(t, called)
 	})
@@ -772,7 +772,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.Len(t, savedInstances, 1)
 
 		// Delete the rule
-		err = store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, rule.UID)
+		err = store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, false, rule.UID)
 		require.NoError(t, err)
 
 		// Now there should be no alert rule state
@@ -820,7 +820,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -887,7 +887,60 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uids...)
+		require.NoError(t, err)
+
+		guids := make([]string, 0, len(rules))
+		for _, rule := range rules {
+			guids = append(guids, rule.GUID)
+		}
+
+		_ = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			var versions []alertRuleVersion
+			err = sess.Table(alertRuleVersion{}).Where(`rule_uid = ''`).In("rule_guid", guids).Find(&versions)
+			require.NoError(t, err)
+			require.Emptyf(t, versions, "some rules were not permanently deleted") // should be one version per GUID
+			return nil
+		})
+	})
+
+	t.Run("should remove all versions and not keep history if permanently is true", func(t *testing.T) {
+		orgID := int64(rand.Intn(1000))
+		gen = gen.With(gen.WithOrgID(orgID))
+		// Create a new store to pass the custom bus to check the signal
+		b := &fakeBus{}
+		logger := log.New("test-dbstore")
+
+		cfg.UnifiedAlerting.DeletedRuleRetention = 1000 * time.Hour
+
+		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
+
+		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, gen.GenerateMany(3))
+		uids := make([]string, 0, len(result))
+		for _, rule := range result {
+			uids = append(uids, rule.UID)
+		}
+		require.NoError(t, err)
+		rules, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: orgID, RuleUIDs: uids})
+		require.NoError(t, err)
+
+		updates := make([]models.UpdateRule, 0, len(rules))
+		for _, rule := range rules {
+			rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
+			updates = append(updates, models.UpdateRule{
+				Existing: rule,
+				New:      *rule2,
+			})
+		}
+		err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, updates)
+		require.NoError(t, err)
+
+		versions, err := store.GetAlertRuleVersions(context.Background(), orgID, rules[0].GUID)
+		require.NoError(t, err)
+		require.Len(t, versions, 2)
+
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), true, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -2055,7 +2108,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 		require.Empty(t, list)
 	})
 
-	err = store.DeleteAlertRulesByUID(context.Background(), orgID, &models.AlertingUserUID, rule.UID)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, &models.AlertingUserUID, false, rule.UID)
 	require.NoError(t, err)
 
 	t.Run("should return the last deleted rule", func(t *testing.T) {
@@ -2113,7 +2166,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 		TimeNow = func() time.Time {
 			return t0.Add(time.Duration(idx) * 10 * time.Second)
 		}
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), uid)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uid)
 		require.NoError(t, err)
 	}
 
