@@ -25,7 +25,7 @@ import { useCreateOrUpdateRepository } from '../hooks';
 import { RepositoryFormData, WorkflowOption } from '../types';
 import { dataToSpec, specToData } from '../utils/data';
 
-import { ConfigFormGithubCollpase } from './ConfigFormGithubCollapse';
+import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 
 const typeOptions = ['GitHub', 'Local'].map((label) => ({ label, value: label.toLowerCase() }));
 const targetOptions = [
@@ -223,7 +223,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
       </Field>
 
       {type === 'github' && (
-        <ConfigFormGithubCollpase
+        <ConfigFormGithubCollapse
           previews={<Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />}
         />
       )}
