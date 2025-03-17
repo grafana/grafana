@@ -199,7 +199,6 @@ func (s *RBACSync) ClearUserPermissionCacheHook(ctx context.Context, ident *auth
 
 	ctxLogger := s.log.FromContext(ctx)
 	if !ident.IsIdentityType(claims.TypeUser) {
-
 		ctxLogger.Debug("Skipping user permission cache clear, not a user", "type", ident.GetIdentityType())
 		return
 	}
