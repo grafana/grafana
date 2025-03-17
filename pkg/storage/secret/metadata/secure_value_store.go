@@ -14,20 +14,21 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func ProvideSecureValueMetadataStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, accessClient claims.AccessClient, keeperService secretkeeper.Service) (contracts.SecureValueMetadataStorage, error) {
+func ProvideSecureValueMetadataStorage(db db.DB, features featuremgmt.FeatureToggles, accessClient claims.AccessClient, keeperService secretkeeper.Service) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueMetadataStorage{}, nil
 	}
 
-	if err := migrator.MigrateSecretSQL(db.GetEngine(), cfg); err != nil {
+	// Pass `cfg` as `nil` because it is not used. If it ends up being used, it will panic.
+	// This is intended, as we shouldn't need any configuration settings here for secrets migrations.
+	if err := migrator.MigrateSecretSQL(db.GetEngine(), nil); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
