@@ -21,7 +21,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
@@ -32,7 +32,6 @@ import {
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
   isProvisionedRuleGroup,
-  rulerRuleType,
 } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';

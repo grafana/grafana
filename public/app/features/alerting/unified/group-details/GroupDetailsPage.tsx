@@ -24,7 +24,6 @@ import {
   calcRuleEvalsToStartAlerting,
   getRuleName,
   isFederatedRuleGroup,
-  isProvisionedRule,
   isProvisionedRuleGroup,
   rulerRuleType,
 } from '../utils/rules';
