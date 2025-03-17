@@ -376,6 +376,23 @@
       "export": "Export",
       "reorder": "Re-order rules"
     },
+    "irm-integration": {
+      "connection-method": "How to connect to IRM",
+      "disabled-description": "Enable Grafana IRM to use this integration",
+      "enabled-description": "Seamless way to handle alerts and manage incidents",
+      "existing-integration": "Existing IRM integration",
+      "existing-integration-description": "Use an existing IRM integration",
+      "integration": "IRM Integration",
+      "integration-description": "The IRM integration to send alerts to",
+      "integration-name": "Integration name",
+      "integration-name-description": "The name of the new IRM integration",
+      "integration-name-exists": "Integration of this name already exists in IRM",
+      "integration-required": "Selection of existing IRM integration is required",
+      "new-integration": "New IRM integration",
+      "new-integration-description": "A new IRM integration without escalation chains will be automatically created",
+      "recommended": "Recommended",
+      "validation-failed": "Failed to validate IRM integration name. Is the OnCall API available?"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
@@ -512,6 +529,11 @@
       "label-target-data-source": "Target data source"
     },
     "rule-form": {
+      "annotations": {
+        "description1": "Annotations add additional information to alerts, helping alert responders identify and address potential issues.",
+        "description2": "For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.",
+        "description3": "Annotations can contain a combination of text and template code, which is used to include data from queries."
+      },
       "evaluation": {
         "evaluation-group-and-interval": "Evaluation group and interval",
         "group": {
@@ -1061,7 +1083,7 @@
       }
     },
     "default-layout": {
-      "description": "Manually size and position panels",
+      "description": "Position and size each panel individually",
       "item-options": {
         "repeat": {
           "direction": {
@@ -1210,6 +1232,7 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
+        "grid": "Grid",
         "layout": "Layout"
       }
     },
@@ -1233,8 +1256,8 @@
       }
     },
     "responsive-layout": {
-      "description": "Automatically positions panels into a grid.",
-      "name": "Auto",
+      "description": "Panels resize to fit and form uniform grids",
+      "name": "Auto grid",
       "options": {
         "columns": "Columns",
         "fixed": "Fixed: {{size}}px",
@@ -1246,7 +1269,7 @@
       }
     },
     "rows-layout": {
-      "description": "Rows layout",
+      "description": "Collapsable panel groups with headings",
       "name": "Rows",
       "option": {
         "height": "Height",
@@ -1281,7 +1304,7 @@
       }
     },
     "tabs-layout": {
-      "description": "Tabs layout",
+      "description": "Organize panels into horizontal tabs",
       "menu": {
         "move-tab": "Move tab"
       },
@@ -1405,6 +1428,43 @@
       "button-title": "Add dashboard link",
       "info-box-content": "Dashboard links allow you to place links to other dashboards and web sites directly below the dashboard header. <2>Learn more</2>",
       "title": "There are no dashboard links added yet"
+    }
+  },
+  "dashboard-scene": {
+    "branch-validation-error": {
+      "cannot-contain-invalid-characters": "It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\\\', or ']'.",
+      "cannot-start-with": "It cannot start with '/' or end with '/', '.', or whitespace.",
+      "invalid-branch-name": "Invalid branch name.",
+      "it-cannot-contain-or": "It cannot contain '//' or '..'.",
+      "least-valid-character": "It must have at least one valid character."
+    },
+    "provisioned-resource-delete-modal": {
+      "file-path": "File path:",
+      "managed-by-version-control": "This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository and synchronise to apply the changes.",
+      "ok": "OK",
+      "title-cannot-delete-provisioned-resource": "Cannot delete provisioned resource"
+    },
+    "save-provisioned-dashboard-form": {
+      "api-error": "Error saving dashboard",
+      "api-success": "Dashboard changes saved",
+      "cancel": "Cancel",
+      "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",
+      "dashboard-comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
+      "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "description-inside-repository": "File path inside the repository (.json or .yaml)",
+      "label-branch": "Branch",
+      "label-comment": "Comment",
+      "label-description": "Description",
+      "label-path": "Path",
+      "label-target-folder": "Target folder",
+      "label-title": "Title",
+      "label-workflow": "Workflow",
+      "save": "Save",
+      "saving": "Saving...",
+      "title-required": "Dashboard title is required",
+      "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
+      "title-this-repository-is-read-only": "This repository is read only",
+      "title-validation-failed": "Dashboard title validation failed."
     }
   },
   "dashboard-settings": {
@@ -1802,6 +1862,10 @@
       "saved": "Saved!",
       "saving": "Saving <1></1>"
     },
+    "axis-builder": {
+      "linear-threshold": "Linear threshold",
+      "log-base": "Log base"
+    },
     "card": {
       "option": "option"
     },
@@ -1928,15 +1992,37 @@
     "field-link-list": {
       "external-links-heading": "External links"
     },
+    "field-name-by-regex-matcher": {
+      "input-placeholder": "Enter regular expression"
+    },
+    "field-value-matcher": {
+      "operator-label": "Comparison operator",
+      "select-field-placeholder": "Select field reducer"
+    },
     "file-dropzone": {
       "cancel-upload": "Cancel upload",
-      "file-too-large": "File is larger than {{size}}"
+      "error-title": "Upload failed",
+      "file-too-large": "File is larger than {{size}}",
+      "item-retry": "Retry"
+    },
+    "file-upload": {
+      "file-name": "File name"
     },
     "filter-input": {
       "clear": "Clear"
     },
+    "interactive-table": {
+      "expand-row-tooltip": "Toggle row expanded"
+    },
+    "menu-item": {
+      "keyboard-shortcut-label": "Keyboard shortcut"
+    },
     "modal": {
       "close-tooltip": "Close"
+    },
+    "monaco": {
+      "error-label": "React Monaco Editor failed to load",
+      "loading-placeholder": "Loading editor"
     },
     "named-colors-palette": {
       "text-color-swatch": "Text color",
@@ -1952,6 +2038,10 @@
       "next-page": "next page",
       "previous-page": "previous page"
     },
+    "panel-menu": {
+      "label": "Menu for panel {{ title }}",
+      "title": "Menu"
+    },
     "secret-form-field": {
       "reset": "Reset"
     },
@@ -1961,7 +2051,11 @@
       "no-options": "No options found"
     },
     "select": {
+      "clear-value": "Clear value",
       "default-create-label": "Hit enter to add",
+      "empty-options": "No options provided",
+      "menu-label": "Select options menu",
+      "multi-value-remove": "Remove",
       "no-options-label": "No options found",
       "placeholder": "Choose"
     },
@@ -1971,21 +2065,49 @@
     "spinner": {
       "aria-label": "Loading"
     },
+    "stacking-builder": {
+      "group": "Group",
+      "group-tooltip": "Name of the stacking group"
+    },
     "table": {
+      "cell-filter-on": "Filter for value",
+      "cell-filter-out": "Filter out value",
+      "cell-inspect": "Inspect value",
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
+      "csv-placeholder": "Enter CSV here...",
+      "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
       "filter-popup-cancel": "Cancel",
       "filter-popup-clear": "Clear filter",
       "filter-popup-heading": "Filter by values:",
+      "filter-popup-match-case": "Match case",
+      "inspect-drawer-title": "Inspect value",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
     },
+    "tags": {
+      "list-label": "Tags"
+    },
     "tags-input": {
-      "add": "Add"
+      "add": "Add",
+      "remove": "Remove tag: {{name}}"
+    },
+    "toggletip": {
+      "close": "Close"
+    },
+    "toolbar-button-row": {
+      "show-more": "Show more items"
+    },
+    "unit-picker": {
+      "placeholder": "Choose"
     },
     "user-icon": {
-      "active-text": "Active last 15m"
+      "active-text": "Active last 15m",
+      "label": "{{name}} icon"
+    },
+    "users-indicator": {
+      "container-label": "Users indicator container"
     },
     "value-pill": {
       "remove-button": "Remove {{children}}"
@@ -1999,7 +2121,8 @@
       "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation",
       "footer-click-to-action": "Click to {{actionTitle}}",
-      "footer-click-to-navigate": "Click to open {{linkTitle}}"
+      "footer-click-to-navigate": "Click to open {{linkTitle}}",
+      "timestamp": "Timestamp"
     }
   },
   "graph": {
@@ -3101,6 +3224,19 @@
     "details": {
       "connections-tab": {
         "description": "You currently have the following data sources configured for {{pluginName}}, click a tile to view the configuration details. You can find all of your data source connections in <4><0>Connections</0> - <3>Data sources</3>.</4>"
+      },
+      "disabled-error": {
+        "angular-deprecation-link": "Read more about angular deprecation",
+        "angular-error-text": "This plugin has been disabled as Grafana no longer supports Angular based plugins. You can try updating the plugin to the latest version to resolve this issue. You should then test to confirm it works as expected.",
+        "angular-error-text-no-non-angular-version": "This plugin has been disabled as Grafana no longer supports Angular based plugins. Unfortunately, the latest version of this plugin still uses Angular so you need to wait for the plugin author to migrate to continue using this plugin.",
+        "contact-server-admin": "Please contact your server administrator to get this resolved.",
+        "failed-backend-start-text": "This plugin failed to start. Server logs can provide more information.",
+        "invalid-signature-text": "Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we discovered that it was invalid. We can not guarantee the trustworthy of this plugin and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a verified version of this plugin.",
+        "manage-plugins-link": "Read more about managing plugins",
+        "missing-signature-text": "Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we discovered that there is no signature for this plugin. We can not guarantee the trustworthy of this plugin and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a verified version of this plugin.",
+        "modified-signature-text": "Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we discovered that the content of this plugin does not match its signature. We can not guarantee the trustworthy of this plugin and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a verified version of this plugin.",
+        "title": "Plugin disabled",
+        "unknown-error-text": "We failed to run this plugin due to an unkown reason and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a working version of this plugin."
       },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",

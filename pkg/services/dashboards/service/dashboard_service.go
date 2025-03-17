@@ -700,24 +700,17 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	if err != nil {
 		return nil, err
 	}
+	if cmd == nil {
+		return nil, fmt.Errorf("failed to build save dashboard command. cmd is nil")
+	}
 
 	var dash *dashboards.Dashboard
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		// save the dashboard but then do NOT return
-		// we want to save the provisioning data to the dashboard_provisioning table still
-		// to ensure we can safely rollback to mode2 if needed
 		dash, err = dr.saveProvisionedDashboardThroughK8s(ctx, cmd, provisioning, false)
-		if err != nil {
-			return nil, err
-		}
 	} else {
-		dash, err = dr.saveDashboard(ctx, cmd)
-		if err != nil {
-			return nil, err
-		}
+		dash, err = dr.dashboardStore.SaveProvisionedDashboard(ctx, *cmd, provisioning)
 	}
 
-	err = dr.dashboardStore.SaveProvisionedDashboard(ctx, dash, provisioning)
 	if err != nil {
 		return nil, err
 	}
@@ -1976,18 +1969,17 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	uid := obj.GetName()
 	spec["uid"] = uid
 
-	dashVersion := 0
-	if version, ok := spec["version"].(int64); ok {
-		dashVersion = int(version)
-	}
+	dashVersion := obj.GetGeneration()
+	spec["version"] = dashVersion
 
+	title, _, _ := unstructured.NestedString(spec, "title")
 	out := dashboards.Dashboard{
 		OrgID:      orgID,
 		ID:         obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		UID:        uid,
-		Slug:       obj.GetSlug(),
+		Slug:       slugify.Slugify(title),
 		FolderUID:  obj.GetFolder(),
-		Version:    dashVersion,
+		Version:    int(dashVersion),
 		Data:       simplejson.NewFromAny(spec),
 		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboardv0alpha1.GROUP+"/"),
 	}

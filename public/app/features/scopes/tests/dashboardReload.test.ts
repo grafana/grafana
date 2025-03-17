@@ -40,7 +40,10 @@ describe('Dashboard reload', () => {
       config.featureToggles.reloadDashboardsOnParamsChange = reloadDashboardsOnParamsChange;
       setDashboardAPI(undefined);
 
-      const dashboardScene = await renderDashboard({ uid: withUid ? 'dash-1' : undefined }, { reloadOnParamsChange });
+      const { scene: dashboardScene, scopesService } = await renderDashboard(
+        { uid: withUid ? 'dash-1' : undefined },
+        { reloadOnParamsChange }
+      );
 
       dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
 
@@ -67,7 +70,7 @@ describe('Dashboard reload', () => {
         expect(dashboardReloadSpy).toHaveBeenCalled();
       }
 
-      await updateScopes(['grafana']);
+      await updateScopes(scopesService, ['grafana']);
       await jest.advanceTimersToNextTimerAsync();
       if (!shouldReload) {
         expect(dashboardReloadSpy).not.toHaveBeenCalled();
