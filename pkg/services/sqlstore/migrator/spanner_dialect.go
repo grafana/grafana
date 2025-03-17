@@ -14,6 +14,7 @@ import (
 	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
+	"github.com/grafana/dskit/concurrency"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -132,12 +133,15 @@ func (s *SpannerDialect) ColStringNoPk(col *Column) string {
 }
 
 func (s *SpannerDialect) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.DBMetas()
+	// Get tables names only, no columns or indexes.
+	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
 	}
 	sess := engine.NewSession()
 	defer sess.Close()
+
+	var statements []string
 
 	for _, table := range tables {
 		switch table.Name {
@@ -147,17 +151,17 @@ func (s *SpannerDialect) TruncateDBTables(engine *xorm.Engine) error {
 			continue
 		case "dashboard_acl":
 			// keep default dashboard permissions
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", s.Quote(table.Name))); err != nil {
-				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
-			}
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", s.Quote(table.Name)))
 		default:
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE TRUE;", s.Quote(table.Name))); err != nil {
-				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
-			}
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE TRUE;", s.Quote(table.Name)))
 		}
 	}
 
-	return nil
+	// Run statements concurrently.
+	return concurrency.ForEachJob(context.Background(), len(statements), 10, func(ctx context.Context, idx int) error {
+		_, err := sess.Exec(statements[idx])
+		return err
+	})
 }
 
 // CleanDB drops all existing tables and their indexes.
