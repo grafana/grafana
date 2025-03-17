@@ -17,7 +17,8 @@ export const PluginStateInfo = (props: Props) => {
     <Badge
       className={props.className}
       color={display.color}
-      {...(typeof display.tooltip === 'string' ? { title: display.tooltip } : { tooltip: display.tooltip })}
+      title={typeof display.tooltip === 'string' ? display.tooltip : undefined}
+      tooltip={typeof display.tooltip !== 'string' ? display.tooltip : undefined}
       text={display.text}
       icon={display.icon}
     />
