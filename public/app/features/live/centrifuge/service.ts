@@ -16,15 +16,15 @@ import {
   LiveChannelId,
   toLiveChannelId,
 } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime/src/services/backendSrv';
 import {
+  FetchResponse,
   GrafanaLiveSrv,
   LiveDataStreamOptions,
   LiveQueryDataOptions,
   StreamingFrameAction,
   StreamingFrameOptions,
-} from '@grafana/runtime/src/services/live';
-import { BackendDataSourceResponse } from '@grafana/runtime/src/utils/queryResponse';
+  BackendDataSourceResponse,
+} from '@grafana/runtime';
 
 import { StreamingResponseData } from '../data/utils';
 
