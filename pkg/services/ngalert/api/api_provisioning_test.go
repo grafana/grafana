@@ -693,6 +693,47 @@ func TestProvisioningApi(t *testing.T) {
 				require.Contains(t, string(response.Body()), "invalid alert rule")
 			})
 		})
+
+		t.Run("are valid", func(t *testing.T) {
+			t.Run("PUT returns 200", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				group := createTestAlertRuleGroup(1)
+
+				response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+
+				require.Equal(t, 200, response.Status())
+				require.NotEmpty(t, response.Body())
+
+				updated := deserializeRuleGroup(t, response.Body())
+				require.Equal(t, group.Title, updated.Title)
+			})
+
+			t.Run("PUT with MissingSeriesEvalsToResolve updates the value", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				group := createTestAlertRuleGroup(1)
+
+				response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+				updated := deserializeRuleGroup(t, response.Body())
+				require.Nil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
+
+				// Put the same group with a new value
+				group.Rules[0].MissingSeriesEvalsToResolve = util.Pointer(5)
+				response = sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+				require.Equal(t, 200, response.Status())
+				updated = deserializeRuleGroup(t, response.Body())
+				require.NotNil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
+				require.Equal(t, 5, *updated.Rules[0].MissingSeriesEvalsToResolve)
+
+				// Reset the value again
+				group.Rules[0].MissingSeriesEvalsToResolve = nil
+				response = sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+				require.Equal(t, 200, response.Status())
+				updated = deserializeRuleGroup(t, response.Body())
+				require.Nil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
+			})
+		})
 	})
 
 	t.Run("exports", func(t *testing.T) {
@@ -2214,6 +2255,18 @@ func createInvalidAlertRuleGroup() definitions.AlertRuleGroup {
 	}
 }
 
+func createTestAlertRuleGroup(orgID int64) definitions.AlertRuleGroup {
+	return definitions.AlertRuleGroup{
+		Title:    "test rule group",
+		Interval: 60,
+		Rules: []definitions.ProvisionedAlertRule{
+			createTestAlertRule("test-alert-rule", orgID),
+			createTestAlertRule("test-alert-rule-2", orgID),
+			createTestRecordingRule("test-recording-rule", orgID),
+		},
+	}
+}
+
 func createTestAlertRuleWithFolderAndGroup(title string, orgID int64, folderUid string, group string) definitions.ProvisionedAlertRule {
 	rule := createTestAlertRule(title, orgID)
 	rule.FolderUID = folderUid
@@ -2290,6 +2343,15 @@ func insertRuleInOrg(t *testing.T, srv ProvisioningSrv, rule definitions.Provisi
 	rc.OrgID = orgID
 	resp := srv.RoutePostAlertRule(&rc, rule)
 	require.Equal(t, 201, resp.Status())
+}
+
+func deserializeRuleGroup(t *testing.T, data []byte) definitions.AlertRuleGroup {
+	t.Helper()
+
+	var rule definitions.AlertRuleGroup
+	err := json.Unmarshal(data, &rule)
+	require.NoError(t, err)
+	return rule
 }
 
 func deserializeRule(t *testing.T, data []byte) definitions.ProvisionedAlertRule {

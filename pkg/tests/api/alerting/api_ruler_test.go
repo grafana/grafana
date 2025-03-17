@@ -1758,24 +1758,28 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			name           string
 			initialValue   *int
 			updatedValue   *int
+			expectedValue  *int
 			expectedStatus int
 		}{
 			{
 				name:           "should be able to set missing_series_evals_to_resolve to 5",
 				initialValue:   nil,
 				updatedValue:   util.Pointer(5),
+				expectedValue:  util.Pointer(5),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should be able to update missing_series_evals_to_resolve",
 				initialValue:   util.Pointer(1),
 				updatedValue:   util.Pointer(2),
+				expectedValue:  util.Pointer(2),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
-				name:           "should be able to set missing_series_evals_to_resolve to nil",
+				name:           "should preserve missing_series_evals_to_resolve when it's set nil",
 				initialValue:   util.Pointer(5),
 				updatedValue:   nil,
+				expectedValue:  util.Pointer(5),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
@@ -1785,10 +1789,11 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 				expectedStatus: http.StatusBadRequest,
 			},
 			{
-				name:           "should not be able to set missing_series_evals_to_resolve to 0",
+				name:           "should be able to reset missing_series_evals_to_resolve by setting it to 0",
 				initialValue:   util.Pointer(1),
 				updatedValue:   util.Pointer(0),
-				expectedStatus: http.StatusBadRequest,
+				expectedValue:  nil,
+				expectedStatus: http.StatusAccepted,
 			},
 		}
 
@@ -1827,10 +1832,10 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 				getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
 				require.Equal(t, http.StatusAccepted, status)
 
-				if tc.updatedValue == nil {
+				if tc.expectedValue == nil {
 					require.Nil(t, getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
 				} else {
-					require.Equal(t, *tc.updatedValue, *getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+					require.Equal(t, *tc.expectedValue, *getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
 				}
 			})
 		}
@@ -3445,16 +3450,17 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 											}`),
 							},
 						},
-						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+						NoDataState:                 apimodels.NoDataState(ngmodels.Alerting),
+						ExecErrState:                apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+						MissingSeriesEvalsToResolve: util.Pointer(2), // If UID is specified, this field is required
 					},
 				},
 			},
 			Interval: interval,
 		}
 
-		response, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
-		assert.Equal(t, http.StatusAccepted, status)
+		response, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
+		assert.Equal(t, http.StatusAccepted, status, body)
 
 		require.Len(t, response.Created, 1)
 		require.Len(t, response.Updated, 2)

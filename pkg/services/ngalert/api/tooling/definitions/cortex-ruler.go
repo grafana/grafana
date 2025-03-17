@@ -559,17 +559,22 @@ type Record struct {
 
 // swagger:model
 type PostableGrafanaRule struct {
-	Title                       string                         `json:"title" yaml:"title"`
-	Condition                   string                         `json:"condition" yaml:"condition"`
-	Data                        []AlertQuery                   `json:"data" yaml:"data"`
-	UID                         string                         `json:"uid" yaml:"uid"`
-	NoDataState                 NoDataState                    `json:"no_data_state" yaml:"no_data_state"`
-	ExecErrState                ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
-	IsPaused                    *bool                          `json:"is_paused" yaml:"is_paused"`
-	NotificationSettings        *AlertRuleNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
-	Record                      *Record                        `json:"record" yaml:"record"`
-	Metadata                    *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-	MissingSeriesEvalsToResolve *int                           `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty"`
+	Title                string                         `json:"title" yaml:"title"`
+	Condition            string                         `json:"condition" yaml:"condition"`
+	Data                 []AlertQuery                   `json:"data" yaml:"data"`
+	UID                  string                         `json:"uid" yaml:"uid"`
+	NoDataState          NoDataState                    `json:"no_data_state" yaml:"no_data_state"`
+	ExecErrState         ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
+	IsPaused             *bool                          `json:"is_paused" yaml:"is_paused"`
+	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
+	Record               *Record                        `json:"record" yaml:"record"`
+	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	// Number of consecutive evaluation intervals with no data for a dimension must pass
+	// before the alert state is considered stale and automatically resolved.
+	// If set to 0, the value is reset to the default.
+	// required: false
+	// example: 3
+	MissingSeriesEvalsToResolve *int `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty"`
 }
 
 // swagger:model

@@ -7099,8 +7099,10 @@
           "$ref": "#/definitions/AlertRuleMetadata"
         },
         "missing_series_evals_to_resolve": {
+          "description": "Number of consecutive evaluation intervals with no data for a dimension must pass\nbefore the alert state is considered stale and automatically resolved.\nIf set to 0, the value is reset to the default.",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "example": 3
         },
         "no_data_state": {
           "type": "string",
@@ -9056,7 +9058,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
@@ -9218,7 +9219,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
