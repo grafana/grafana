@@ -23,12 +23,12 @@ import (
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcegrpc "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
@@ -149,7 +149,7 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 		return resource.NewLegacyResourceClient(conn), nil
 	}
 
-	clientCfg := grpcutils.ReadGrpcClientConfig(cfg)
+	clientCfg := resourcegrpc.ReadGrpcClientConfig(cfg)
 
 	return resource.NewRemoteResourceClient(tracer, conn, resource.RemoteResourceClientConfig{
 		Token:            clientCfg.Token,

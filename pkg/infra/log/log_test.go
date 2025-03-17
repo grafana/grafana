@@ -10,8 +10,6 @@ import (
 	"github.com/go-kit/log/level"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestLogger(t *testing.T) {
@@ -200,13 +198,13 @@ func TestWithSuffix_appendsContext(t *testing.T) {
 func TestGetFilters(t *testing.T) {
 	t.Run("Parsing filters on single line with only space should return expected result", func(t *testing.T) {
 		filter := `   `
-		filters := getFilters(util.SplitString(filter))
+		filters := getFilters(splitString(filter))
 		require.Len(t, filters, 0)
 	})
 
 	t.Run("Parsing filters on single line with should return expected result", func(t *testing.T) {
 		filter := `rendering:debug oauth.generic_oauth:debug testwithoutlevel provisioning.dashboard:debug`
-		filters := getFilters(util.SplitString(filter))
+		filters := getFilters(splitString(filter))
 		keys := []string{}
 		for k := range filters {
 			keys = append(keys, k)
@@ -241,7 +239,7 @@ func TestGetFilters(t *testing.T) {
           plugin.finder:debug \
           plugin.installer:debug \
           plugin.signature.validator:debug`
-		filters := getFilters(util.SplitString(filter))
+		filters := getFilters(splitString(filter))
 		keys := []string{}
 		for k := range filters {
 			keys = append(keys, k)
