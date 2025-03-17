@@ -511,9 +511,6 @@ exports[`better eslint`] = {
     "packages/grafana-runtime/src/services/pluginExtensions/usePluginFunctions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-runtime/src/services/pluginExtensions/utils.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-runtime/src/utils/DataSourceWithBackend.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],

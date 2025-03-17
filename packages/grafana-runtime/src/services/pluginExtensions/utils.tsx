@@ -5,6 +5,7 @@ import {
   type PluginExtensionLink,
   PluginExtensionTypes,
 } from '@grafana/data';
+import React from 'react';
 
 export function isPluginExtensionLink(extension: PluginExtension | undefined): extension is PluginExtensionLink {
   if (!extension) {
@@ -22,7 +23,7 @@ export function isPluginExtensionComponent(
   return extension.type === PluginExtensionTypes.component && 'component' in extension;
 }
 
-export function getLimitedAddedComponents<Props>({
+export function getLimitedAddedComponents<Props extends {}>({
   props,
   components,
   limit,
@@ -52,7 +53,7 @@ export function getLimitedAddedComponents<Props>({
       continue;
     }
 
-    if ((Component as Function)(props) != null) {
+    if (React.createElement<Props>(Component, props) !== null) {
       renderedComponents.push(Component);
     }
 
@@ -65,7 +66,7 @@ export function getLimitedAddedComponents<Props>({
   return renderedComponents;
 }
 
-export function renderLimitedAddedComponents<Props>({
+export function renderLimitedAddedComponents<Props extends {}>({
   props,
   components,
   limit,
