@@ -5037,8 +5037,7 @@ exports[`better eslint`] = {
     "public/app/features/plugins/admin/components/PluginDetailsBody.tsx:5381": [
       [0, 0, 0, "\'@grafana/runtime/src/components/PluginPage\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/plugins/admin/components/PluginDetailsDeprecatedWarning.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
