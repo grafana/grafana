@@ -9,21 +9,21 @@ import { ModeOption, SystemState } from './types';
 const migrateInstance: ModeOption = {
   target: 'instance',
   operation: 'migrate',
-  label: 'Migrate Instance to Repository',
+  label: 'Migrate instance to repository',
   description: 'Save all Grafana resources to repository',
 };
 
 const pullInstance: ModeOption = {
   target: 'instance',
   operation: 'pull',
-  label: 'Pull from Repository to Instance',
+  label: 'Pull from repository to instance',
   description: 'Pull resources from repository into this Grafana instance',
 };
 
 const pullFolder: ModeOption = {
   target: 'folder',
   operation: 'pull',
-  label: 'Pull from Repository to Folder',
+  label: 'Pull from repository to folder',
   description: 'Pull repository resources into a specific folder',
 };
 
@@ -99,7 +99,7 @@ export function getState(
   }
 
   const actionsToEvaluate = resourceCount
-    ? [pullFolder, pullInstance, migrateInstance] // reccomend pull when resources already exist
+    ? [pullFolder, pullInstance, migrateInstance] // recommend pull when resources already exist
     : [migrateInstance, pullInstance, pullFolder];
   actionsToEvaluate.forEach((action) => {
     const reason = getDisabledReason(action, resourceCount, folderConnected);

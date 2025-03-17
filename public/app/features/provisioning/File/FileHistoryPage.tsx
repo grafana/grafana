@@ -21,7 +21,7 @@ export default function FileHistoryPage() {
     <Page
       navId="provisioning"
       pageNav={{
-        text: `History: ${path}`, //,
+        text: `History: ${path}`,
         subTitle: query.data?.spec?.title ?? 'Repository',
       }}
     >
