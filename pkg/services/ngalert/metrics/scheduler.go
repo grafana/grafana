@@ -60,7 +60,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "rule_evaluation_failures_total",
 				Help:      "The total number of rule evaluation failures.",
 			},
-			[]string{"org"},
+			[]string{"org", "rule_uid"}, // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add more observability to alerting based on rule uid
 		),
 		EvalDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -70,7 +70,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:      "The time to evaluate a rule.",
 				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
 			},
-			[]string{"org"},
+			[]string{"org", "rule_uid"}, // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add more observability to alerting based on rule uid
 		),
 		ProcessDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -80,7 +80,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:      "The time to process the evaluation results for a rule.",
 				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
 			},
-			[]string{"org"},
+			[]string{"org", "rule_uid"}, // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add more observability to alerting based on rule uid
 		),
 		SendDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -90,7 +90,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:      "The time to send the alerts to Alertmanager.",
 				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
 			},
-			[]string{"org"},
+			[]string{"org", "rule_uid"}, // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add more observability to alerting based on rule uid
 		),
 		SimpleNotificationRules: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{

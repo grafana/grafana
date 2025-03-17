@@ -404,10 +404,12 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 
 	orgID := fmt.Sprint(key.OrgID)
 	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
-	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
-	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
-	processDuration := sch.metrics.ProcessDuration.WithLabelValues(orgID)
-	sendDuration := sch.metrics.SendDuration.WithLabelValues(orgID)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add more observability to alerting based on rule uid
+	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID, key.UID)
+	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID, key.UID)
+	processDuration := sch.metrics.ProcessDuration.WithLabelValues(orgID, key.UID)
+	sendDuration := sch.metrics.SendDuration.WithLabelValues(orgID, key.UID)
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	notify := func(states []state.StateTransition) {
 		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
