@@ -33,11 +33,10 @@ export interface TooltipProps {
    * Set to true if you want the tooltip to stay long enough so the user can move mouse over content to select text or click a link
    */
   interactive?: boolean;
-  html?: boolean;
 }
 
 export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
-  ({ children, theme, interactive, show, placement, content, html }, forwardedRef) => {
+  ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
     const arrowRef = useRef(null);
     const [controlledVisible, setControlledVisible] = useState(show);
     const isOpen = show ?? controlledVisible;
@@ -77,7 +76,6 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 
     const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, hover, focus]);
 
-    const contentIsString = typeof content === 'string';
     const contentIsFunction = typeof content === 'function';
 
     const styles = useStyles2(getStyles);
@@ -118,8 +116,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
                 role="tooltip"
                 className={style.container}
               >
-                {contentIsString && !html && content}
-                {contentIsString && html && <div dangerouslySetInnerHTML={{ __html: content }} />}
+                {typeof content === 'string' && content}
                 {isValidElement(content) && cloneElement(content)}
                 {contentIsFunction && content({})}
               </div>
