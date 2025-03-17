@@ -104,11 +104,29 @@ function getUnloadEvaluatorTypeFromEvaluatorType(type: EvalFunction) {
   if (type === EvalFunction.IsBelow) {
     return EvalFunction.IsAbove;
   }
+  if (type === EvalFunction.IsEqual) {
+    return EvalFunction.IsNotEqual;
+  }
+  if (type === EvalFunction.IsNotEqual) {
+    return EvalFunction.IsEqual;
+  }
+  if (type === EvalFunction.IsGreaterThanEqual) {
+    return EvalFunction.IsLessThanEqual;
+  }
+  if (type === EvalFunction.IsLessThanEqual) {
+    return EvalFunction.IsGreaterThanEqual;
+  }
   if (type === EvalFunction.IsWithinRange) {
     return EvalFunction.IsOutsideRange;
   }
   if (type === EvalFunction.IsOutsideRange) {
     return EvalFunction.IsWithinRange;
+  }
+  if (type === EvalFunction.IsWithinRangeIncluded) {
+    return EvalFunction.IsOutsideRangeIncluded;
+  }
+  if (type === EvalFunction.IsOutsideRangeIncluded) {
+    return EvalFunction.IsWithinRangeIncluded;
   }
   return EvalFunction.IsBelow;
 }
@@ -126,7 +144,12 @@ export function isInvalid(condition: ClassicCondition) {
   const { type, params: loadParams } = evaluator;
   const { params: unloadParams } = unloadEvaluator;
 
-  if (type === EvalFunction.IsWithinRange || type === EvalFunction.IsOutsideRange) {
+  if (
+    type === EvalFunction.IsWithinRange ||
+    type === EvalFunction.IsOutsideRange ||
+    type === EvalFunction.IsWithinRangeIncluded ||
+    type === EvalFunction.IsOutsideRangeIncluded
+  ) {
     if (unloadParams[0] === undefined || Number.isNaN(unloadParams[0])) {
       return { errorMsgFrom: 'This value cannot be empty' };
     }
@@ -149,6 +172,26 @@ export function isInvalid(condition: ClassicCondition) {
         return { errorMsg: `Enter a number more than or equal to ${firstParamInEvaluator}` };
       }
       break;
+    case EvalFunction.IsEqual:
+      if (firstParamInUnloadEvaluator === firstParamInEvaluator) {
+        return { errorMsg: `Enter a different number than ${firstParamInEvaluator}` };
+      }
+      break;
+    case EvalFunction.IsNotEqual:
+      if (firstParamInUnloadEvaluator !== firstParamInEvaluator) {
+        return { errorMsg: `Enter the same number as ${firstParamInEvaluator}` };
+      }
+      break;
+    case EvalFunction.IsGreaterThanEqual:
+      if (firstParamInUnloadEvaluator >= firstParamInEvaluator) {
+        return { errorMsg: `Enter a number less than ${firstParamInEvaluator}` };
+      }
+      break;
+    case EvalFunction.IsLessThanEqual:
+      if (firstParamInUnloadEvaluator <= firstParamInEvaluator) {
+        return { errorMsg: `Enter a number more than ${firstParamInEvaluator}` };
+      }
+      break;
     case EvalFunction.IsOutsideRange:
       if (firstParamInUnloadEvaluator < firstParamInEvaluator) {
         return { errorMsgFrom: `Enter a number more than or equal to ${firstParamInEvaluator}` };
@@ -163,6 +206,22 @@ export function isInvalid(condition: ClassicCondition) {
       }
       if (secondParamInUnloadEvaluator < secondParamInEvaluator) {
         return { errorMsgTo: `Enter a number be more than or equal to ${secondParamInEvaluator}` };
+      }
+      break;
+    case EvalFunction.IsOutsideRangeIncluded:
+      if (firstParamInUnloadEvaluator <= firstParamInEvaluator) {
+        return { errorMsgFrom: `Enter a number more than ${firstParamInEvaluator}` };
+      }
+      if (secondParamInUnloadEvaluator >= secondParamInEvaluator) {
+        return { errorMsgTo: `Enter a number less than ${secondParamInEvaluator}` };
+      }
+      break;
+    case EvalFunction.IsWithinRangeIncluded:
+      if (firstParamInUnloadEvaluator >= firstParamInEvaluator) {
+        return { errorMsgFrom: `Enter a number less than ${firstParamInEvaluator}` };
+      }
+      if (secondParamInUnloadEvaluator <= secondParamInEvaluator) {
+        return { errorMsgTo: `Enter a number be more than ${secondParamInEvaluator}` };
       }
       break;
     default:

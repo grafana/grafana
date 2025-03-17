@@ -26,9 +26,9 @@ import (
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
 	ResourceStoreServer
-	BatchStoreServer
+	BulkStoreServer
 	ResourceIndexServer
-	RepositoryIndexServer
+	ManagedObjectIndexServer
 	BlobStoreServer
 	DiagnosticsServer
 }
@@ -182,6 +182,10 @@ type ResourceServerOptions struct {
 
 	// Registerer to register prometheus Metrics for the Resource server
 	Reg prometheus.Registerer
+
+	storageMetrics *StorageMetrics
+
+	IndexMetrics *BleveIndexMetrics
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -230,30 +234,28 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	logger := slog.Default().With("logger", "resource-server")
-	// register metrics
-	if err := prometheus.Register(NewStorageMetrics()); err != nil {
-		logger.Warn("failed to register storage metrics", "error", err)
-	}
 
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
-		tracer:      opts.Tracer,
-		log:         logger,
-		backend:     opts.Backend,
-		blob:        blobstore,
-		diagnostics: opts.Diagnostics,
-		access:      opts.AccessClient,
-		writeHooks:  opts.WriteHooks,
-		lifecycle:   opts.Lifecycle,
-		now:         opts.Now,
-		ctx:         ctx,
-		cancel:      cancel,
+		tracer:         opts.Tracer,
+		log:            logger,
+		backend:        opts.Backend,
+		blob:           blobstore,
+		diagnostics:    opts.Diagnostics,
+		access:         opts.AccessClient,
+		writeHooks:     opts.WriteHooks,
+		lifecycle:      opts.Lifecycle,
+		now:            opts.Now,
+		ctx:            ctx,
+		cancel:         cancel,
+		storageMetrics: opts.storageMetrics,
+		indexMetrics:   opts.IndexMetrics,
 	}
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics)
 		if err != nil {
 			return nil, err
 		}
@@ -271,17 +273,19 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	tracer       trace.Tracer
-	log          *slog.Logger
-	backend      StorageBackend
-	blob         BlobSupport
-	search       *searchSupport
-	diagnostics  DiagnosticsServer
-	access       claims.AccessClient
-	writeHooks   WriteAccessHooks
-	lifecycle    LifecycleHooks
-	now          func() int64
-	mostRecentRV atomic.Int64 // The most recent resource version seen by the server
+	tracer         trace.Tracer
+	log            *slog.Logger
+	backend        StorageBackend
+	blob           BlobSupport
+	search         *searchSupport
+	diagnostics    DiagnosticsServer
+	access         claims.AccessClient
+	writeHooks     WriteAccessHooks
+	lifecycle      LifecycleHooks
+	now            func() int64
+	mostRecentRV   atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics *StorageMetrics
+	indexMetrics   *BleveIndexMetrics
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -456,12 +460,9 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		}
 	}
 
-	repo, err := obj.GetRepositoryInfo()
-	if err != nil {
-		return nil, NewBadRequestError("invalid repository info")
-	}
-	if repo != nil {
-		err = s.writeHooks.CanWriteValueFromRepository(ctx, user, repo.Name)
+	m, ok := obj.GetManagerProperties()
+	if ok && m.Kind == utils.ManagerKindRepo {
+		err = s.writeHooks.CanWriteValueFromRepository(ctx, user, m.Identity)
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
@@ -752,7 +753,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 				Value:           iter.Value(),
 			}
 
-			if !checker(iter.Namespace(), iter.Name(), iter.Folder()) {
+			if !checker(iter.Name(), iter.Folder()) {
 				continue
 			}
 
@@ -919,10 +920,11 @@ func (s *server) initWatcher() error {
 			return err
 		}
 		go func() {
-			for {
-				// pipe all events
-				v := <-events
-
+			for v := range events {
+				if v == nil {
+					s.log.Error("received nil event")
+					continue
+				}
 				// Skip events during batch updates
 				if v.PreviousRV < 0 {
 					continue
@@ -1034,7 +1036,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			}
 			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				if !checker(event.Key.Namespace, event.Key.Name, event.Folder) {
+				if !checker(event.Key.Name, event.Folder) {
 					continue
 				}
 
@@ -1072,10 +1074,12 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 					return err
 				}
 
-				// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
-				latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
-				if latencySeconds > 0 {
-					StorageServerMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+				if s.storageMetrics != nil {
+					// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
+					latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+					if latencySeconds > 0 {
+						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+					}
 				}
 			}
 		}
@@ -1105,12 +1109,12 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 	return s.search.GetStats(ctx, req)
 }
 
-func (s *server) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
-	return s.search.ListRepositoryObjects(ctx, req)
+func (s *server) ListManagedObjects(ctx context.Context, req *ListManagedObjectsRequest) (*ListManagedObjectsResponse, error) {
+	return s.search.ListManagedObjects(ctx, req)
 }
 
-func (s *server) CountRepositoryObjects(ctx context.Context, req *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
-	return s.search.CountRepositoryObjects(ctx, req)
+func (s *server) CountManagedObjects(ctx context.Context, req *CountManagedObjectsRequest) (*CountManagedObjectsResponse, error) {
+	return s.search.CountManagedObjects(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.
@@ -1168,18 +1172,23 @@ func (s *server) GetBlob(ctx context.Context, req *GetBlobRequest) (*GetBlobResp
 		}}, nil
 	}
 
-	// The linked blob is stored in the resource metadata attributes
-	obj, status := s.getPartialObject(ctx, req.Resource, req.ResourceVersion)
-	if status != nil {
-		return &GetBlobResponse{Error: status}, nil
-	}
+	var info *utils.BlobInfo
+	if req.Uid == "" {
+		// The linked blob is stored in the resource metadata attributes
+		obj, status := s.getPartialObject(ctx, req.Resource, req.ResourceVersion)
+		if status != nil {
+			return &GetBlobResponse{Error: status}, nil
+		}
 
-	info := obj.GetBlob()
-	if info == nil || info.UID == "" {
-		return &GetBlobResponse{Error: &ErrorResult{
-			Message: "Resource does not have a linked blob",
-			Code:    404,
-		}}, nil
+		info = obj.GetBlob()
+		if info == nil || info.UID == "" {
+			return &GetBlobResponse{Error: &ErrorResult{
+				Message: "Resource does not have a linked blob",
+				Code:    404,
+			}}, nil
+		}
+	} else {
+		info = &utils.BlobInfo{UID: req.Uid}
 	}
 
 	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)

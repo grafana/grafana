@@ -178,19 +178,25 @@ func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, n
 	return dashes, nil
 }
 
-func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, dash *dashboards.Dashboard, provisioning *dashboards.DashboardProvisioning) error {
+func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.SaveProvisionedDashboard")
 	defer span.End()
 
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if provisioning.Updated == 0 {
-			provisioning.Updated = dash.Updated.Unix()
+	var result *dashboards.Dashboard
+	var err error
+	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		result, err = saveDashboard(sess, &cmd, d.emitEntityEvent())
+		if err != nil {
+			return err
 		}
 
-		return saveProvisionedData(sess, provisioning, dash)
-	})
+		if provisioning.Updated == 0 {
+			provisioning.Updated = result.Updated.Unix()
+		}
 
-	return err
+		return saveProvisionedData(sess, provisioning, result)
+	})
+	return result, err
 }
 
 func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand) (*dashboards.Dashboard, error) {
@@ -400,6 +406,20 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		userId = -1
 	}
 
+	// we don't save FolderID in kubernetes object when saving through k8s
+	// this block guarantees we save dashboards with folder_id and folder_uid in those cases
+	if !dash.IsFolder && dash.FolderUID != "" && dash.FolderID == 0 { // nolint:staticcheck
+		var existing dashboards.Dashboard
+		folderIdFound, err := sess.Where("uid=? AND org_id=?", dash.FolderUID, dash.OrgID).Get(&existing)
+		if err != nil {
+			return nil, err
+		}
+
+		if folderIdFound {
+			dash.FolderID = existing.ID // nolint:staticcheck
+		}
+	}
+
 	if dash.ID > 0 {
 		var existing dashboards.Dashboard
 		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.ID, dash.OrgID).Get(&existing)
@@ -472,6 +492,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		CreatedBy:     dash.UpdatedBy,
 		Message:       cmd.Message,
 		Data:          dash.Data,
+		APIVersion:    cmd.APIVersion,
 	}
 
 	// insert version entry
@@ -612,7 +633,7 @@ func (d *dashboardStore) SoftDeleteDashboardsInFolders(ctx context.Context, orgI
 		for _, folderUID := range folderUids {
 			args = append(args, folderUID)
 		}
-		args = append(args, orgID, d.store.GetDialect().BooleanStr(false))
+		args = append(args, orgID, d.store.GetDialect().BooleanValue(false))
 
 		_, err := sess.Exec(args...)
 		return err
@@ -659,14 +680,20 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 
 	if dashboard.IsFolder {
 		if !d.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-			sqlStatements = append(sqlStatements, statement{SQL: "DELETE FROM dashboard WHERE org_id = ? AND folder_uid = ? AND is_folder = ? AND deleted IS NULL", args: []any{dashboard.OrgID, dashboard.UID, d.store.GetDialect().BooleanStr(false)}})
+			sqlStatements = append(sqlStatements, statement{
+				SQL:  "DELETE FROM dashboard WHERE org_id = ? AND folder_uid = ? AND is_folder = ? AND deleted IS NULL",
+				args: []any{dashboard.OrgID, dashboard.UID, d.store.GetDialect().BooleanValue(false)},
+			})
 
 			if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
 				return err
 			}
 		} else {
 			// soft delete all dashboards in the folder
-			sqlStatements = append(sqlStatements, statement{SQL: "UPDATE dashboard SET deleted = ? WHERE org_id = ? AND folder_uid = ? AND is_folder = ? ", args: []any{time.Now(), dashboard.OrgID, dashboard.UID, d.store.GetDialect().BooleanStr(false)}})
+			sqlStatements = append(sqlStatements, statement{
+				SQL:  "UPDATE dashboard SET deleted = ? WHERE org_id = ? AND folder_uid = ? AND is_folder = ? ",
+				args: []any{time.Now(), dashboard.OrgID, dashboard.UID, d.store.GetDialect().BooleanValue(false)},
+			})
 		}
 
 		// remove all access control permission with folder scope
@@ -987,7 +1014,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if !query.SkipAccessControlFilter {
-		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported))
+		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported, d.store.GetDialect()))
 	}
 
 	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
@@ -1068,7 +1095,7 @@ func (d *dashboardStore) CountDashboardsInFolders(
 			}
 		}
 		s.WriteString(" AND org_id = ? AND is_folder = ? AND deleted IS NULL")
-		args = append(args, req.OrgID, d.store.GetDialect().BooleanStr(false))
+		args = append(args, req.OrgID, d.store.GetDialect().BooleanValue(false))
 		sql := s.String()
 		_, err := sess.SQL(sql, args...).Get(&count)
 		return err

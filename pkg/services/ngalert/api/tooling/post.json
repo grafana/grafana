@@ -396,6 +396,9 @@
     },
     "metric": {
      "type": "string"
+    },
+    "targetDatasourceUid": {
+     "type": "string"
     }
    },
    "title": "Record is the provisioned export of models.Record.",
@@ -1605,6 +1608,9 @@
       "Alerting",
       "Error"
      ],
+     "type": "string"
+    },
+    "guid": {
      "type": "string"
     },
     "intervalSeconds": {
@@ -3492,6 +3498,11 @@
      "description": "Name of the recorded metric.",
      "example": "grafana_alerts_ratio",
      "type": "string"
+    },
+    "target_datasource_uid": {
+     "description": "Which data source should be used to write the output of the recording rule, specified by UID.",
+     "example": "my-prom",
+     "type": "string"
     }
    },
    "required": [
@@ -4355,6 +4366,15 @@
      "description": "Name of the associated template definition for this result.",
      "type": "string"
     },
+    "scope": {
+     "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+     "enum": [
+      ".",
+      ".Alerts",
+      ".Alert"
+     ],
+     "type": "string"
+    },
     "text": {
      "description": "Interpolated value of the template.",
      "type": "string"
@@ -4932,6 +4952,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -6398,11 +6419,11 @@
     ]
    }
   },
-  "/convert/prometheus/config/v1/rules": {
+  "/convert/api/prom/rules": {
    "get": {
-    "operationId": "RouteConvertPrometheusGetRules",
+    "operationId": "RouteConvertPrometheusCortexGetRules",
     "produces": [
-     "application/json"
+     "application/yaml"
     ],
     "responses": {
      "200": {
@@ -6424,7 +6445,254 @@
       }
      }
     },
-    "summary": "Gets all namespaces with their rule groups in Prometheus format.",
+    "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   }
+  },
+  "/convert/api/prom/rules/{NamespaceTitle}": {
+   "delete": {
+    "operationId": "RouteConvertPrometheusCortexDeleteNamespace",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "get": {
+    "operationId": "RouteConvertPrometheusCortexGetNamespace",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "PrometheusNamespace",
+      "schema": {
+       "$ref": "#/definitions/PrometheusNamespace"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/yaml"
+    ],
+    "description": "If the group already exists and was not imported from a Prometheus-compatible source initially,\nit will not be replaced and an error will be returned.",
+    "operationId": "RouteConvertPrometheusCortexPostRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-grafana-alerting-datasource-uid",
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-grafana-alerting-recording-rules-paused",
+      "type": "boolean"
+     },
+     {
+      "in": "header",
+      "name": "x-grafana-alerting-alert-rules-paused",
+      "type": "boolean"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PrometheusRuleGroup"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
+    "tags": [
+     "convert_prometheus"
+    ],
+    "x-raw-request": "true"
+   }
+  },
+  "/convert/api/prom/rules/{NamespaceTitle}/{Group}": {
+   "delete": {
+    "operationId": "RouteConvertPrometheusCortexDeleteRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "get": {
+    "operationId": "RouteConvertPrometheusCortexGetRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "NamespaceTitle",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "PrometheusRuleGroup",
+      "schema": {
+       "$ref": "#/definitions/PrometheusRuleGroup"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   }
+  },
+  "/convert/prometheus/config/v1/rules": {
+   "get": {
+    "operationId": "RouteConvertPrometheusGetRules",
+    "produces": [
+     "application/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "PrometheusNamespace",
+      "schema": {
+       "$ref": "#/definitions/PrometheusNamespace"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
     "tags": [
      "convert_prometheus"
     ]
@@ -6458,7 +6726,7 @@
       }
      }
     },
-    "summary": "Deletes all rule groups in the given namespace.",
+    "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
     "tags": [
      "convert_prometheus"
     ]
@@ -6474,7 +6742,7 @@
      }
     ],
     "produces": [
-     "application/json"
+     "application/yaml"
     ],
     "responses": {
      "200": {
@@ -6496,7 +6764,7 @@
       }
      }
     },
-    "summary": "Gets rules in prometheus format for a given namespace.",
+    "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
     "tags": [
      "convert_prometheus"
     ]
@@ -6505,6 +6773,7 @@
     "consumes": [
      "application/yaml"
     ],
+    "description": "If the group already exists and was not imported from a Prometheus-compatible source initially,\nit will not be replaced and an error will be returned.",
     "operationId": "RouteConvertPrometheusPostRuleGroup",
     "parameters": [
      {
@@ -6515,17 +6784,17 @@
      },
      {
       "in": "header",
-      "name": "x-datasource-uid",
+      "name": "x-grafana-alerting-datasource-uid",
       "type": "string"
      },
      {
       "in": "header",
-      "name": "x-recording-rules-paused",
+      "name": "x-grafana-alerting-recording-rules-paused",
       "type": "boolean"
      },
      {
       "in": "header",
-      "name": "x-alert-rules-paused",
+      "name": "x-grafana-alerting-alert-rules-paused",
       "type": "boolean"
      },
      {
@@ -6553,7 +6822,7 @@
       }
      }
     },
-    "summary": "Creates or updates a rule group in Prometheus format.",
+    "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
     "tags": [
      "convert_prometheus"
     ],
@@ -6594,7 +6863,7 @@
       }
      }
     },
-    "summary": "Deletes a rule group in Prometheus format.",
+    "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
     "tags": [
      "convert_prometheus"
     ]
@@ -6616,7 +6885,7 @@
      }
     ],
     "produces": [
-     "application/json"
+     "application/yaml"
     ],
     "responses": {
      "200": {
@@ -6638,7 +6907,7 @@
       }
      }
     },
-    "summary": "Gets a rule group in Prometheus format.",
+    "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
     "tags": [
      "convert_prometheus"
     ]
@@ -7214,6 +7483,43 @@
       "schema": {
        "$ref": "#/definitions/NotFound"
       }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/ruler/grafana/api/v1/trash/rule/guid/{RuleGUID}": {
+   "delete": {
+    "description": "Permanently delete a rule from trash by GUID",
+    "operationId": "RouteDeleteRuleFromTrashByGUID",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "RuleGUID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": " Not found."
      }
     },
     "tags": [

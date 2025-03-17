@@ -120,7 +120,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if s.cfg.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
-		exploreChildNavLinks := s.buildExploreNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Explore",
 			Id:         navtree.NavIDExplore,
@@ -128,7 +127,20 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			Icon:       "compass",
 			SortWeight: navtree.WeightExplore,
 			Url:        s.cfg.AppSubURL + "/explore",
-			Children:   exploreChildNavLinks,
+		})
+	}
+
+	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+		drilldownChildNavLinks := s.buildDrilldownNavLinks(c)
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Drilldown",
+			Id:         navtree.NavIDDrilldown,
+			SubTitle:   "Drill down into your data using Grafana's powerful queryless apps",
+			Icon:       "drilldown",
+			IsNew:      true,
+			SortWeight: navtree.WeightDrilldown,
+			Url:        s.cfg.AppSubURL + "/drilldown",
+			Children:   drilldownChildNavLinks,
 		})
 	}
 
@@ -281,18 +293,6 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		children = append(children, &navtree.NavLink{
 			Text: "Change password", Id: "profile/password", Url: s.cfg.AppSubURL + "/profile/password",
 			Icon: "lock",
-		})
-	}
-
-	if !s.cfg.DisableSignoutMenu {
-		// add sign out first
-		children = append(children, &navtree.NavLink{
-			Text:         "Sign out",
-			Id:           "sign-out",
-			Url:          s.cfg.AppSubURL + "/logout",
-			Icon:         "arrow-from-right",
-			Target:       "_self",
-			HideFromTabs: true,
 		})
 	}
 
@@ -560,10 +560,10 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 	return nil
 }
 
-func (s *ServiceImpl) buildExploreNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
-	exploreChildNavs := []*navtree.NavLink{}
+func (s *ServiceImpl) buildDrilldownNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
+	drilldownChildNavs := []*navtree.NavLink{}
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetrics) && !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {
-		exploreChildNavs = append(exploreChildNavs, &navtree.NavLink{
+		drilldownChildNavs = append(drilldownChildNavs, &navtree.NavLink{
 			Text:     "Metrics",
 			SubTitle: "Queryless exploration of your metrics",
 			Id:       "explore/metrics",
@@ -571,5 +571,5 @@ func (s *ServiceImpl) buildExploreNavLinks(c *contextmodel.ReqContext) []*navtre
 			Icon:     "code-branch",
 		})
 	}
-	return exploreChildNavs
+	return drilldownChildNavs
 }

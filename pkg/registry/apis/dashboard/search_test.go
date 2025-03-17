@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -276,7 +276,7 @@ func TestSearchHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("Sort - default sort by resource then title", func(t *testing.T) {
+	t.Run("Sort - default sort by resource", func(t *testing.T) {
 		rows := make([]*resource.ResourceTableRow, len(mockResults))
 		for i, r := range mockResults {
 			rows[i] = &resource.ResourceTableRow{
@@ -334,7 +334,7 @@ func TestSearchHandler(t *testing.T) {
 		err := json.NewDecoder(resp.Body).Decode(p)
 		require.NoError(t, err)
 		assert.Equal(t, len(mockResults), len(p.Hits))
-		assert.Equal(t, mockResults[3].Value, p.Hits[0].Title)
+		assert.Equal(t, mockResults[2].Value, p.Hits[0].Title)
 		assert.Equal(t, mockResults[1].Value, p.Hits[3].Title)
 	})
 }
@@ -357,7 +357,131 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		searchHandler.DoSearch(rr, req)
 
-		assert.Equal(t, mockClient.CallCount, 1)
+		assert.Equal(t, mockClient.CallCount, 0)
+	})
+
+	t.Run("should return empty result without searching if user does not have shared dashboards", func(t *testing.T) {
+		mockClient := &MockClient{}
+
+		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
+		req.Header.Add("content-type", "application/json")
+		// "Permissions" prop in "SignedInUser" is where we store the uid of dashboards shared with the user
+		// doesn't exist here, which represents a user without any shared dashboards
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+
+		assert.Equal(t, mockClient.CallCount, 0)
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(p.Hits))
+	})
+
+	t.Run("should return empty result if user has access to folder of all shared dashboards", func(t *testing.T) {
+		// dashboardSearchRequest
+		mockResponse1 := &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "dashboardinroot",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{[]byte("")}, // root folder doesn't have uid
+					},
+					{
+						Key: &resource.ResourceKey{
+							Name:     "dashboardinpublicfolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("publicfolder"), // folder uid
+						},
+					},
+				},
+			},
+		}
+
+		// folderSearchRequest
+		mockResponse2 := &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "publicfolder",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte(""), // root folder uid
+						},
+					},
+				},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resource.ResourceSearchResponse{mockResponse1, mockResponse2},
+		}
+
+		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
+		req.Header.Add("content-type", "application/json")
+		allPermissions := make(map[int64]map[string][]string)
+		permissions := make(map[string][]string)
+		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinpublicfolder"}
+		allPermissions[1] = permissions
+		// "Permissions" is where we store the uid of dashboards shared with the user
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
+
+		searchHandler.DoSearch(rr, req)
+
+		assert.Equal(t, mockClient.CallCount, 2)
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(p.Hits))
 	})
 
 	t.Run("should return the dashboards shared with the user", func(t *testing.T) {
@@ -421,8 +545,29 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 			},
 		}
 
+		mockResponse3 := &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "dashboardinprivatefolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
+				},
+			},
+		}
+
 		mockClient := &MockClient{
-			MockResponses: []*resource.ResourceSearchResponse{mockResponse1, mockResponse2},
+			MockResponses: []*resource.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
 		}
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
@@ -439,6 +584,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
 		allPermissions[1] = permissions
+		// "Permissions" is where we store the uid of dashboards shared with the user
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
 
 		searchHandler.DoSearch(rr, req)
@@ -455,6 +601,18 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		// permission to read
 		thirdCall := mockClient.MockCalls[2]
 		assert.Equal(t, thirdCall.Options.Fields[0].Values, []string{"dashboardinprivatefolder"})
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
 	})
 }
 
@@ -489,14 +647,14 @@ var mockResults = []MockResult{
 		Value:    "Dashboard 2",
 	},
 	{
-		Name:     "f2",
-		Resource: "folder",
-		Value:    "Folder 2",
-	},
-	{
 		Name:     "f1",
 		Resource: "folder",
 		Value:    "Folder 1",
+	},
+	{
+		Name:     "f2",
+		Resource: "folder",
+		Value:    "Folder 2",
 	},
 }
 
@@ -516,7 +674,7 @@ func (m *MockClient) Search(ctx context.Context, in *resource.ResourceSearchRequ
 func (m *MockClient) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) CountRepositoryObjects(ctx context.Context, in *resource.CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.CountRepositoryObjectsResponse, error) {
+func (m *MockClient) CountManagedObjects(ctx context.Context, in *resource.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resource.CountManagedObjectsResponse, error) {
 	return nil, nil
 }
 func (m *MockClient) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
@@ -546,12 +704,12 @@ func (m *MockClient) PutBlob(ctx context.Context, in *resource.PutBlobRequest, o
 func (m *MockClient) List(ctx context.Context, in *resource.ListRequest, opts ...grpc.CallOption) (*resource.ListResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) ListRepositoryObjects(ctx context.Context, in *resource.ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.ListRepositoryObjectsResponse, error) {
+func (m *MockClient) ListManagedObjects(ctx context.Context, in *resource.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resource.ListManagedObjectsResponse, error) {
 	return nil, nil
 }
 func (m *MockClient) IsHealthy(ctx context.Context, in *resource.HealthCheckRequest, opts ...grpc.CallOption) (*resource.HealthCheckResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) BatchProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BatchStore_BatchProcessClient, error) {
+func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BulkStore_BulkProcessClient, error) {
 	return nil, nil
 }
