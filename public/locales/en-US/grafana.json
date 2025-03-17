@@ -184,7 +184,8 @@
       "rule-identifier": "Rule identifier",
       "rule-type": "Rule type",
       "state-error-timeout": "Alert state if execution error or timeout",
-      "state-no-data": "Alert state if no data or all values are null"
+      "state-no-data": "Alert state if no data or all values are null",
+      "target-datasource-uid": "Target data source"
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -209,6 +210,8 @@
       "alerting": "Alerting",
       "alerting-change-description": "This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules",
       "annotations": "Annotations",
+      "compare": "Compare",
+      "compare-with-latest": "Compare with latest version",
       "compareVersions": "Compare versions",
       "comparing-versions": "Comparing versions",
       "condition": "Alert condition",
@@ -228,17 +231,22 @@
       "provisioning": "Provisioning",
       "provisioning-change-description": "Version update was made via provisioning",
       "queryAndAlertCondition": "Query and alert condition",
-      "reset": "Reset to version {{version}}",
       "restore": "Restore",
+      "restore-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the rule version",
       "restore-modal": {
         "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
+        "confirm": "Yes, restore configuration",
+        "error": "Could not restore alert rule version ",
         "summary": "Summary of changes to be applied:",
-        "title": "Restore Version"
+        "title": "Restore version"
       },
+      "restore-version": "Restore to version {{version}}",
       "rule_group": "Rule group",
       "unknown": "Unknown",
       "unknown-change-description": "This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user",
-      "user-id": "User ID {{uid}}"
+      "user-id": "User ID {{uid}}",
+      "warning-restore-manually": "You are manually restoring an old version of this alert rule. Please review the changes carefully before saving the rule definition.",
+      "warning-restore-manually-title": "Restoring rule manually"
     },
     "annotations": {
       "description": "Add more context to your alert notifications.",
@@ -295,6 +303,9 @@
       "export-all": "Export all",
       "loading": "Loading...",
       "search-by-matchers": "Search by matchers",
+      "titles": {
+        "notification-templates": "Notification Templates"
+      },
       "view": "View"
     },
     "contact-points": {
@@ -311,6 +322,10 @@
       "delivery-duration": "Last delivery took <1></1>",
       "empty-state": {
         "title": "You don't have any contact points yet"
+      },
+      "key-value-map": {
+        "add": "Add",
+        "confirm-add": "Confirm to add"
       },
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
@@ -361,9 +376,28 @@
       "export": "Export",
       "reorder": "Re-order rules"
     },
+    "irm-integration": {
+      "connection-method": "How to connect to IRM",
+      "disabled-description": "Enable Grafana IRM to use this integration",
+      "enabled-description": "Seamless way to handle alerts and manage incidents",
+      "existing-integration": "Existing IRM integration",
+      "existing-integration-description": "Use an existing IRM integration",
+      "integration": "IRM Integration",
+      "integration-description": "The IRM integration to send alerts to",
+      "integration-name": "Integration name",
+      "integration-name-description": "The name of the new IRM integration",
+      "integration-name-exists": "Integration of this name already exists in IRM",
+      "integration-required": "Selection of existing IRM integration is required",
+      "new-integration": "New IRM integration",
+      "new-integration-description": "A new IRM integration without escalation chains will be automatically created",
+      "recommended": "Recommended",
+      "validation-failed": "Failed to validate IRM integration name. Is the OnCall API available?"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
+        "new-ds-managed-recording-rule": "New data source-managed recording rule",
+        "new-grafana-recording-rule": "New Grafana-managed recording rule",
         "new-recording-rule": "New recording rule",
         "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
       },
@@ -403,6 +437,20 @@
       "preview-routing": "Preview routing",
       "title": "Alert instance routing preview",
       "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
+    },
+    "notification-templates": {
+      "duplicate": {
+        "subTitle": "Duplicate a group of notification templates",
+        "title": "Duplicate notification template group"
+      },
+      "edit": {
+        "subTitle": "Edit a group of notification templates",
+        "title": "Edit notification template group"
+      },
+      "new": {
+        "subTitle": "Create a new group of notification templates",
+        "title": "New notification template group"
+      }
     },
     "policies": {
       "default-policy": {
@@ -476,7 +524,16 @@
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
     },
+    "recording-rules": {
+      "description-target-data-source": "The Prometheus data source to store the recording rule in",
+      "label-target-data-source": "Target data source"
+    },
     "rule-form": {
+      "annotations": {
+        "description1": "Annotations add additional information to alerts, helping alert responders identify and address potential issues.",
+        "description2": "For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.",
+        "description3": "Annotations can contain a combination of text and template code, which is used to include data from queries."
+      },
       "evaluation": {
         "evaluation-group-and-interval": "Evaluation group and interval",
         "group": {
@@ -528,6 +585,19 @@
       },
       "pause": {
         "label": "Pause evaluation"
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "Stop alerting when above",
+          "stop-alerting-bellow": "Stop alerting when below",
+          "stop-alerting-equal": "Stop alerting when equal to",
+          "stop-alerting-inside-range": "Stop alerting when inside range",
+          "stop-alerting-less": "Stop alerting when less than",
+          "stop-alerting-more": "Stop alerting when more than",
+          "stop-alerting-not-equal": "Stop alerting when not equal to",
+          "stop-alerting-outside-range": "Stop alerting when outside range",
+          "title": "Custom recovery threshold"
+        }
       }
     },
     "rule-groups": {
@@ -579,6 +649,7 @@
       }
     },
     "rule-viewer": {
+      "error-loading": "Something went wrong loading the rule",
       "prometheus-consistency-check": {
         "alert-message": "Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"
@@ -810,6 +881,7 @@
     "collapse": "Collapse",
     "edit": "Edit",
     "help": "Help",
+    "loading": "Loading...",
     "locale": {
       "default": "Default"
     },
@@ -957,6 +1029,9 @@
     }
   },
   "dashboard": {
+    "actions": {
+      "open-settings": "Settings"
+    },
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",
@@ -967,8 +1042,48 @@
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
     },
+    "conditional-rendering": {
+      "data": {
+        "disable": "Disable",
+        "enable": "Enable",
+        "label": "Data"
+      },
+      "group": {
+        "add": {
+          "button": "Add condition based on",
+          "data": "Data",
+          "interval": "Interval",
+          "variable": "Variable value"
+        },
+        "condition": {
+          "label": "Evaluate conditions",
+          "meet-all": "Meet all",
+          "meet-any": "Meet any"
+        },
+        "label": "Group"
+      },
+      "interval": {
+        "input-label": "Value",
+        "invalid-message": "Invalid interval",
+        "label": "Time range interval"
+      },
+      "shared": {
+        "delete-condition": "Delete Condition"
+      },
+      "title": "Conditional rendering options",
+      "variable": {
+        "label": "Variable",
+        "operator": {
+          "equals": "Equals",
+          "not-equal": "Not equal"
+        },
+        "select-operator": "Operator",
+        "select-variable": "Select variable",
+        "value-input": "Value"
+      }
+    },
     "default-layout": {
-      "description": "The default grid layout",
+      "description": "Position and size each panel individually",
       "item-options": {
         "repeat": {
           "direction": {
@@ -984,7 +1099,7 @@
           }
         }
       },
-      "name": "Default grid",
+      "name": "Custom",
       "row-actions": {
         "delete": "Delete row",
         "modal": {
@@ -1011,37 +1126,39 @@
         },
         "modal": {
           "title": "Row options"
-        }
+        },
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "title": "Variable"
+          }
+        },
+        "title": "Row options"
       }
     },
     "edit-pane": {
-      "objects": {
-        "multi-select": {
-          "selection-number": "No. of objects selected: {{length}}"
-        }
+      "elements": {
+        "dashboard": "Dashboard",
+        "objects": "Objects",
+        "panel": "Panel",
+        "panels": "Panels",
+        "row": "Row",
+        "rows": "Rows",
+        "tab": "Tab",
+        "tabs": "Tabs"
       },
       "open": "Open options pane",
-      "panels": {
-        "multi-select": {
-          "selection-number": "No. of panels selected: {{length}}"
-        }
-      },
       "row": {
         "header": {
           "hide": "Hide",
           "title": "Row header"
-        },
-        "multi-select": {
-          "options-header": "Multi-selected Row options",
-          "selection-number": "No. of rows selected: {{length}}"
-        }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "Multi-selected Tab options",
-          "selection-number": "No. of tabs selected: "
         }
       }
+    },
+    "editpane": {
+      "add": "Add",
+      "configure": "Configure",
+      "outline": "Outline"
     },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
@@ -1109,10 +1226,28 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
+    "layout": {
+      "common": {
+        "copy": "Copy",
+        "copy-or-duplicate": "Copy or Duplicate",
+        "delete": "Delete",
+        "duplicate": "Duplicate",
+        "grid": "Grid",
+        "layout": "Layout"
+      }
+    },
     "options": {
       "description": "Description",
-      "title": "Dashboard options",
       "title-option": "Title"
+    },
+    "outline": {
+      "tree": {
+        "item": {
+          "collapse": "Collapse item",
+          "empty": "(empty)",
+          "expand": "Expand item"
+        }
+      }
     },
     "panel-edit": {
       "alerting-tab": {
@@ -1121,12 +1256,8 @@
       }
     },
     "responsive-layout": {
-      "description": "CSS layout that adjusts to the available space",
-      "item-options": {
-        "hide-no-data": "Hide when no data",
-        "title": "Layout options"
-      },
-      "name": "Responsive grid",
+      "description": "Panels resize to fit and form uniform grids",
+      "name": "Auto grid",
       "options": {
         "columns": "Columns",
         "fixed": "Fixed: {{size}}px",
@@ -1138,11 +1269,30 @@
       }
     },
     "rows-layout": {
-      "description": "Rows layout",
+      "description": "Collapsable panel groups with headings",
       "name": "Rows",
+      "option": {
+        "height": "Height",
+        "hide-header": "Hide row header",
+        "repeat": "Repeat for",
+        "title": "Title"
+      },
+      "options": {
+        "height-expand": "Expand",
+        "height-min": "Min"
+      },
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
+        "menu": {
+          "add": "Add row",
+          "add-panel": "Panel",
+          "add-row-above": "Row above",
+          "add-row-below": "Row below",
+          "move-down": "Move row down",
+          "move-row": "Move row",
+          "move-up": "Move row up"
+        },
         "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
@@ -1150,37 +1300,36 @@
         }
       },
       "row-options": {
-        "height": {
-          "expand": "Expand",
-          "hide-row-header": "Hide row header",
-          "min": "Min",
-          "title": "Height"
-        },
-        "repeat": {
-          "title": "Repeat options",
-          "variable": {
-            "title": "Variable"
-          }
-        },
-        "title": "Row options",
         "title-option": "Title"
       }
     },
     "tabs-layout": {
-      "description": "Tabs layout",
+      "description": "Organize panels into horizontal tabs",
+      "menu": {
+        "move-tab": "Move tab"
+      },
       "name": "Tabs",
       "tab": {
+        "menu": {
+          "add": "Add tab",
+          "add-panel": "Panel",
+          "add-tab-above": "Tab before",
+          "add-tab-after": "Tab after",
+          "add-tab-before": "Tab before",
+          "move-left": "Move tab left",
+          "move-right": "Move tab right"
+        },
         "new": "New tab"
       },
       "tab-options": {
-        "title": "Tab options",
         "title-option": "Title"
       }
     },
     "toolbar": {
       "add": "Add",
       "add-panel": "Panel",
-      "add-panel-lib": "Import",
+      "add-panel-description": "A container for visualizations and other content",
+      "add-panel-lib": "Import library panel",
       "add-row": "Row",
       "add-tab": "Tab",
       "alert-rules": "Alert rules",
@@ -1205,6 +1354,7 @@
         "label": "Exit edit",
         "tooltip": "Exits edit mode and discards unsaved changes"
       },
+      "libray-panel-description": "Libray panels allow you share and reuse panels between dashboards",
       "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "open-original": "Open original dashboard",
@@ -1213,6 +1363,7 @@
       "playlist-stop": "Stop playlist",
       "public-dashboard": "Public",
       "refresh": "Refresh dashboard",
+      "row-description": "A group of panels with an optional header",
       "save": "Save dashboard",
       "save-dashboard": {
         "label": "Save dashboard",
@@ -1232,6 +1383,7 @@
       "share-button": "Share",
       "show-hidden-elements": "Show hidden",
       "switch-old-dashboard": "Switch to old dashboard page",
+      "tabs-description": "Break up your dashboard into different horizontal tabs",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
@@ -1244,7 +1396,8 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "title": "Panel options",
+        "open-edit": "Open panel editor",
+        "plugin-type-image": "Image of plugin type",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }
@@ -1275,6 +1428,43 @@
       "button-title": "Add dashboard link",
       "info-box-content": "Dashboard links allow you to place links to other dashboards and web sites directly below the dashboard header. <2>Learn more</2>",
       "title": "There are no dashboard links added yet"
+    }
+  },
+  "dashboard-scene": {
+    "branch-validation-error": {
+      "cannot-contain-invalid-characters": "It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\\\', or ']'.",
+      "cannot-start-with": "It cannot start with '/' or end with '/', '.', or whitespace.",
+      "invalid-branch-name": "Invalid branch name.",
+      "it-cannot-contain-or": "It cannot contain '//' or '..'.",
+      "least-valid-character": "It must have at least one valid character."
+    },
+    "provisioned-resource-delete-modal": {
+      "file-path": "File path:",
+      "managed-by-version-control": "This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository and synchronise to apply the changes.",
+      "ok": "OK",
+      "title-cannot-delete-provisioned-resource": "Cannot delete provisioned resource"
+    },
+    "save-provisioned-dashboard-form": {
+      "api-error": "Error saving dashboard",
+      "api-success": "Dashboard changes saved",
+      "cancel": "Cancel",
+      "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",
+      "dashboard-comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
+      "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "description-inside-repository": "File path inside the repository (.json or .yaml)",
+      "label-branch": "Branch",
+      "label-comment": "Comment",
+      "label-description": "Description",
+      "label-path": "Path",
+      "label-target-folder": "Target folder",
+      "label-title": "Title",
+      "label-workflow": "Workflow",
+      "save": "Save",
+      "saving": "Saving...",
+      "title-required": "Dashboard title is required",
+      "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
+      "title-this-repository-is-read-only": "This repository is read only",
+      "title-validation-failed": "Dashboard title validation failed."
     }
   },
   "dashboard-settings": {
@@ -1336,6 +1526,12 @@
       "time-options-label": "Time options",
       "time-zone-label": "Time zone",
       "week-start-label": "Week start"
+    },
+    "time-regions": {
+      "advanced-description-cron": "Cron syntax",
+      "advanced-description-rest": " to define a recurrence schedule and duration",
+      "advanced-description-use": "Use ",
+      "advanced-label": "Advanced"
     },
     "variables": {
       "title": "Variables"
@@ -1419,6 +1615,11 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "drilldownInfo": {
+      "action": "Go to Grafana Drilldown",
+      "description": "Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps and can be found under <1>Menu > Drilldown</1>",
+      "title": "Explore Metrics, Logs, Traces and Profiles have moved!"
+    },
     "logs": {
       "logs-volume": {
         "add-filters": "Add more labels to your query to narrow down your search.",
@@ -1631,6 +1832,10 @@
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
     "send-custom-feedback": "Send"
   },
+  "get-enterprise": {
+    "requires-license": "Requires a Grafana Enterprise license",
+    "title": "Enterprise"
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -1647,12 +1852,25 @@
         "action-query-params": "Query parameters",
         "action-title": "Title",
         "action-title-placeholder": "Action title",
-        "one-click-description": "Only one link {{ action }} can have one click enabled at a time"
+        "one-click-description": "Only one link or action can have one click enabled at a time"
       }
+    },
+    "alert": {
+      "close-button": "Close alert"
     },
     "auto-save-field": {
       "saved": "Saved!",
       "saving": "Saving <1></1>"
+    },
+    "axis-builder": {
+      "linear-threshold": "Linear threshold",
+      "log-base": "Log base"
+    },
+    "card": {
+      "option": "option"
+    },
+    "cascader": {
+      "clear-button": "Clear selection"
     },
     "color-picker-popover": {
       "palette-tab": "Colors",
@@ -1661,8 +1879,15 @@
     "confirm-button": {
       "cancel": "Cancel"
     },
+    "confirm-content": {
+      "placeholder": "Type \"{{confirmPromptText}}\" to confirm"
+    },
     "data-link-editor": {
-      "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions."
+      "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions.",
+      "new-tab-label": "Open in new tab",
+      "title-label": "Title",
+      "title-placeholder": "Show details",
+      "url-label": "URL"
     },
     "data-link-editor-modal": {
       "cancel": "Cancel",
@@ -1682,48 +1907,140 @@
       "tooltip-remove": "Remove",
       "url-not-provided": "Data link url not provided"
     },
+    "data-source-basic-auth-settings": {
+      "user-label": "User",
+      "user-placeholder": "user"
+    },
+    "data-source-http-proxy-settings": {
+      "oauth-identity-label": "Forward OAuth Identity",
+      "oauth-identity-tooltip": "Forward the user's upstream OAuth identity to the data source (Their access token gets passed along).",
+      "skip-tls-verify-label": "Skip TLS Verify",
+      "ts-client-auth-label": "TLS Client Auth",
+      "with-ca-cert-label": "With CA Cert",
+      "with-ca-cert-tooltip": "Needed for verifying self-signed TLS Certs"
+    },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
       "access-help-details": "Access mode controls how requests to the data source will be handled.<1> <1>Server</1></1> should be the preferred way if nothing else is stated.",
+      "access-help-title": "Access help",
+      "access-label": "Access",
       "allowed-cookies": "Allowed cookies",
+      "allowed-cookies-description": "Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.",
       "auth": "Auth",
+      "azure-auth-label": "Azure Authentication",
+      "azure-auth-tooltip": "Use Azure authentication for Azure endpoint.",
       "basic-auth": "Basic Auth Details",
+      "basic-auth-label": "Basic auth",
       "browser-mode-description": "All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.",
+      "browser-mode-label": "Browser",
       "browser-mode-title": "<0>Browser access mode:</0>",
       "default-url-tooltip": "Specify a complete HTTP URL (for example http://your_server:8080)",
       "direct-url-tooltip": "Your access method is <1>Browser</1>, this means the URL needs to be accessible from the browser.",
       "heading": "HTTP",
+      "invalid-url-error": "Invalid URL",
       "proxy-url-tooltip": "Your access method is <1>Server</1>, this means the URL needs to be accessible from the grafana backend/server.",
       "server-mode-description": "All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.",
-      "server-mode-title": "<0>Server access mode (Default):</0>"
+      "server-mode-label": "Server (default)",
+      "server-mode-title": "<0>Server access mode (Default):</0>",
+      "sigv4-auth-label": "SigV4 auth",
+      "timeout-description": "HTTP request timeout in seconds",
+      "timeout-label": "Timeout",
+      "timeout-placeholder": "Timeout in seconds",
+      "with-credentials-label": "With Credentials",
+      "with-credentials-tooltip": "Whether credentials such as cookies or auth headers should be sent with cross-site requests."
     },
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
+      "alerting-settings-label": "Manage alert rules in Alerting UI",
+      "alerting-settings-tooltip": "Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source.",
       "cert-key-reset": "Reset",
       "custom-headers-add": "Add header",
+      "custom-headers-header": "Header",
+      "custom-headers-header-placeholder": "Header Value",
+      "custom-headers-header-remove": "Remove header",
+      "custom-headers-header-value": "Value",
       "custom-headers-title": "Custom HTTP Headers",
       "secure-socks-heading": "Secure Socks Proxy",
-      "tls-heading": "TLS/SSL Auth Details"
+      "secure-socks-label": "Enabled",
+      "secure-socks-tooltip": "Connect to this datasource via the secure socks proxy.",
+      "tls-certification-label": "CA Cert",
+      "tls-certification-placeholder": "Begins with {{certificateBeginsWith}}",
+      "tls-client-certification-label": "Client Cert",
+      "tls-client-key-label": "Client Key",
+      "tls-client-key-placeholder": "Begins with {{privateKeyBeginsWith}}",
+      "tls-heading": "TLS/SSL Auth Details",
+      "tls-server-name-label": "ServerName",
+      "tls-tooltip": "TLS/SSL Certs are encrypted and stored in the Grafana database."
     },
     "date-time-picker": {
       "apply": "Apply",
-      "cancel": "Cancel"
+      "calendar-icon-label": "Time picker",
+      "cancel": "Cancel",
+      "next-label": "Next month",
+      "previous-label": "Previous month",
+      "select-placeholder": "Select date/time"
     },
     "drawer": {
       "close": "Close"
     },
+    "feature-badge": {
+      "experimental": "Experimental",
+      "new": "New!",
+      "preview": "Preview",
+      "private-preview": "Private preview"
+    },
     "field-link-list": {
       "external-links-heading": "External links"
     },
+    "field-name-by-regex-matcher": {
+      "input-placeholder": "Enter regular expression"
+    },
+    "field-value-matcher": {
+      "operator-label": "Comparison operator",
+      "select-field-placeholder": "Select field reducer"
+    },
     "file-dropzone": {
       "cancel-upload": "Cancel upload",
-      "file-too-large": "File is larger than {{size}}"
+      "error-title": "Upload failed",
+      "file-too-large": "File is larger than {{size}}",
+      "item-retry": "Retry"
+    },
+    "file-upload": {
+      "file-name": "File name"
     },
     "filter-input": {
       "clear": "Clear"
     },
+    "interactive-table": {
+      "expand-row-tooltip": "Toggle row expanded"
+    },
+    "menu-item": {
+      "keyboard-shortcut-label": "Keyboard shortcut"
+    },
     "modal": {
       "close-tooltip": "Close"
+    },
+    "monaco": {
+      "error-label": "React Monaco Editor failed to load",
+      "loading-placeholder": "Loading editor"
+    },
+    "named-colors-palette": {
+      "text-color-swatch": "Text color",
+      "transparent-swatch": "Transparent"
+    },
+    "page-toolbar": {
+      "go-back": "Go back (Esc)",
+      "search-dashboard-name": "Search dashboard by name",
+      "search-links": "Search links",
+      "search-parent-folder": "Search dashboard in the {{parent}} folder"
+    },
+    "pagination": {
+      "next-page": "next page",
+      "previous-page": "previous page"
+    },
+    "panel-menu": {
+      "label": "Menu for panel {{ title }}",
+      "title": "Menu"
     },
     "secret-form-field": {
       "reset": "Reset"
@@ -1734,25 +2051,56 @@
       "no-options": "No options found"
     },
     "select": {
+      "clear-value": "Clear value",
       "default-create-label": "Hit enter to add",
+      "empty-options": "No options provided",
+      "menu-label": "Select options menu",
+      "multi-value-remove": "Remove",
       "no-options-label": "No options found",
       "placeholder": "Choose"
+    },
+    "series-color-picker-popover": {
+      "y-axis-usage": "Use right y-axis"
     },
     "spinner": {
       "aria-label": "Loading"
     },
+    "stacking-builder": {
+      "group": "Group",
+      "group-tooltip": "Name of the stacking group"
+    },
     "table": {
+      "cell-filter-on": "Filter for value",
+      "cell-filter-out": "Filter out value",
+      "cell-inspect": "Inspect value",
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
+      "csv-placeholder": "Enter CSV here...",
+      "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
       "filter-popup-cancel": "Cancel",
       "filter-popup-clear": "Clear filter",
       "filter-popup-heading": "Filter by values:",
+      "filter-popup-match-case": "Match case",
+      "inspect-drawer-title": "Inspect value",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
     },
+    "tags": {
+      "list-label": "Tags"
+    },
     "tags-input": {
-      "add": "Add"
+      "add": "Add",
+      "remove": "Remove tag: {{name}}"
+    },
+    "toggletip": {
+      "close": "Close"
+    },
+    "toolbar-button-row": {
+      "show-more": "Show more items"
+    },
+    "unit-picker": {
+      "placeholder": "Choose"
     },
     "toolbar": {
       "copy-link": "Copy URL",
@@ -1760,7 +2108,14 @@
       "copy-shortened-link-label": "Share"
     },
     "user-icon": {
-      "active-text": "Active last 15m"
+      "active-text": "Active last 15m",
+      "label": "{{name}} icon"
+    },
+    "users-indicator": {
+      "container-label": "Users indicator container"
+    },
+    "value-pill": {
+      "remove-button": "Remove {{children}}"
     },
     "viz-legend": {
       "right-axis-indicator": "(right y-axis)"
@@ -1771,7 +2126,8 @@
       "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation",
       "footer-click-to-action": "Click to {{actionTitle}}",
-      "footer-click-to-navigate": "Click to open {{linkTitle}}"
+      "footer-click-to-navigate": "Click to open {{linkTitle}}",
+      "timestamp": "Timestamp"
     }
   },
   "graph": {
@@ -2039,6 +2395,7 @@
       "render-image-error-description": "An error occurred when generating the image"
     }
   },
+  "lock-icon": "lock icon",
   "login": {
     "divider": {
       "connecting-text": "or"
@@ -2094,6 +2451,14 @@
       "links": "Links",
       "log-line": "Log line",
       "no-details": "No details available"
+    },
+    "log-line-menu": {
+      "copy-link": "Copy link to log line",
+      "copy-log": "Copy log line",
+      "icon-label": "Log menu",
+      "pin-to-outline": "Pin log",
+      "show-context": "Show context",
+      "unpin-from-outline": "Unpin log"
     },
     "log-row-message": {
       "ellipsis": "… ",
@@ -2504,6 +2869,9 @@
     "detect": {
       "title": "Detect"
     },
+    "drilldown": {
+      "title": "Drilldown"
+    },
     "explore": {
       "title": "Explore"
     },
@@ -2541,6 +2909,8 @@
     "history-wrapper": {
       "collapse": "Collapse",
       "expand": "Expand",
+      "icon-selected": "Selected Entry",
+      "icon-unselected": "Normal Entry",
       "show-more": "Show more",
       "today": "Today",
       "yesterday": "Yesterday"
@@ -2706,6 +3076,10 @@
     }
   },
   "navigation": {
+    "invite-user": {
+      "invite-button": "Invite",
+      "invite-tooltip": "Invite new member"
+    },
     "item": {
       "add-bookmark": "Add to Bookmarks",
       "remove-bookmark": "Remove from Bookmarks"
@@ -2827,10 +3201,11 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "No updates available",
       "update-all": {
         "all-plugins-updated": "All plugins updated!",
         "available-header": "Available",
-        "button": "Update all",
+        "button": "Update all ({{length}})",
         "cloud-update-message": "* It may take a few minutes for the plugins to be available for usage.",
         "error": "Error updating plugin:",
         "error-status-text": "failed - see error messages",
@@ -2853,7 +3228,20 @@
     },
     "details": {
       "connections-tab": {
-        "description": "The data source connections below are all {{pluginName}}. You can find all of your data source connections of all types in <4><0>Connections</0> - <3>Data sources</3>.</4>"
+        "description": "You currently have the following data sources configured for {{pluginName}}, click a tile to view the configuration details. You can find all of your data source connections in <4><0>Connections</0> - <3>Data sources</3>.</4>"
+      },
+      "disabled-error": {
+        "angular-deprecation-link": "Read more about angular deprecation",
+        "angular-error-text": "This plugin has been disabled as Grafana no longer supports Angular based plugins. You can try updating the plugin to the latest version to resolve this issue. You should then test to confirm it works as expected.",
+        "angular-error-text-no-non-angular-version": "This plugin has been disabled as Grafana no longer supports Angular based plugins. Unfortunately, the latest version of this plugin still uses Angular so you need to wait for the plugin author to migrate to continue using this plugin.",
+        "contact-server-admin": "Please contact your server administrator to get this resolved.",
+        "failed-backend-start-text": "This plugin failed to start. Server logs can provide more information.",
+        "invalid-signature-text": "Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we discovered that it was invalid. We can not guarantee the trustworthy of this plugin and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a verified version of this plugin.",
+        "manage-plugins-link": "Read more about managing plugins",
+        "missing-signature-text": "Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we discovered that there is no signature for this plugin. We can not guarantee the trustworthy of this plugin and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a verified version of this plugin.",
+        "modified-signature-text": "Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we discovered that the content of this plugin does not match its signature. We can not guarantee the trustworthy of this plugin and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a verified version of this plugin.",
+        "title": "Plugin disabled",
+        "unknown-error-text": "We failed to run this plugin due to an unkown reason and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a working version of this plugin."
       },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",
@@ -2886,6 +3274,12 @@
     "empty-state": {
       "message": "No plugins found"
     },
+    "filter": {
+      "disabled": "This filter has been disabled because the Grafana server cannot access grafana.com",
+      "sort": "Sort",
+      "sort-list": "Sort Plugins List",
+      "state": "State"
+    },
     "plugin-help": {
       "error": "An error occurred when loading help.",
       "not-found": "No query help could be found."
@@ -2906,7 +3300,8 @@
       "old-password-required": "Old password is required",
       "passwords-must-match": "Passwords must match",
       "strong-password-validation-register": "Password does not comply with the strong password policy"
-    }
+    },
+    "change-theme": "Change theme"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -3313,7 +3708,6 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "Export as JSON",
-      "invite-user-title": "Invite new member",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
@@ -3492,7 +3886,7 @@
       "home-dashboard-placeholder": "Default dashboard",
       "locale-label": "Language",
       "locale-placeholder": "Choose language",
-      "theme-description": "Enjoying the limited edition themes? Tell us what you'd like to see <2>here.</2>",
+      "theme-description": "Enjoying the experimental themes? Tell us what you'd like to see <2>here.</2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },
@@ -3585,6 +3979,16 @@
       "title": "You haven't created any teams yet"
     }
   },
+  "theme-preview": {
+    "breadcrumbs": {
+      "dashboards": "Dashboards",
+      "home": "Home"
+    },
+    "panel": {
+      "form-label": "Form label",
+      "title": "Panel"
+    }
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Recently used absolute ranges",
@@ -3641,10 +4045,13 @@
       "example": "Example: to select a time range from 10 minutes ago to now",
       "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
+      "from-label": "From",
       "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
       "more-info": "For more information see <2>docs <1></1></2>.",
       "specify": "Specify time range <1></1>",
-      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>"
+      "submit-button-label": "TimePicker submit button",
+      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>",
+      "to-label": "To"
     },
     "zone": {
       "select-aria-label": "Time zone picker",

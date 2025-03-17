@@ -131,7 +131,10 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 	if s.stream != nil {
 		go func() {
 			write := &WrittenEvent{
-				WriteEvent:      event,
+				Type:            event.Type,
+				Key:             event.Key,
+				PreviousRV:      event.PreviousRV,
+				Value:           event.Value,
 				Timestamp:       time.Now().UnixMilli(),
 				ResourceVersion: rv,
 			}

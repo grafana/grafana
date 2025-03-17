@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash';
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import kbn from 'app/core/utils/kbn';
 
 import { getAPINamespace } from '../../../api/utils';
 
@@ -321,7 +322,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     return {
       ...hit,
       uid: hit.name,
-      url: toURL(hit.resource, hit.name),
+      url: toURL(hit.resource, hit.name, hit.title),
       tags: hit.tags || [],
       folder: hit.folder || 'general',
       location,
@@ -369,7 +370,7 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
         locationInfo[hit.name] = {
           name: hit.title,
           kind: 'folder',
-          url: toURL('folders', hit.name),
+          url: toURL('folders', hit.name, hit.title),
         };
       }
       return locationInfo;
@@ -377,9 +378,10 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
   return rsp;
 }
 
-function toURL(resource: string, name: string): string {
+function toURL(resource: string, name: string, title: string): string {
   if (resource === 'folders') {
     return `/dashboards/f/${name}`;
   }
-  return `/d/${name}`;
+  const slug = kbn.slugifyForUrl(title);
+  return `/d/${name}/${slug}`;
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -62,6 +63,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -693,6 +695,46 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			assert.Equal(t, false, dash.Meta.Provisioned)
 		}, mockSQLStore)
 	})
+
+	t.Run("v2 dashboards should not be returned in api", func(t *testing.T) {
+		mockSQLStore := dbtest.NewFakeDB()
+		dashboardService := dashboards.NewFakeDashboardService(t)
+
+		dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "apiVersion": "v2"}`))
+		require.NoError(t, err)
+		qResult := &dashboards.Dashboard{
+			ID:         1,
+			UID:        "dash",
+			OrgID:      1,
+			APIVersion: "v2",
+			Data:       dataValue,
+		}
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
+
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
+			hs := &HTTPServer{
+				Cfg:                          setting.NewCfg(),
+				LibraryPanelService:          &mockLibraryPanelService{},
+				LibraryElementService:        &libraryelementsfake.LibraryElementService{},
+				SQLStore:                     mockSQLStore,
+				AccessControl:                accesscontrolmock.New(),
+				DashboardService:             dashboardService,
+				Features:                     featuremgmt.WithFeatures(),
+				starService:                  startest.NewStarServiceFake(),
+				tracer:                       tracing.InitializeTracerForTest(),
+				dashboardProvisioningService: mockDashboardProvisioningService{},
+				folderService:                foldertest.NewFakeService(),
+				log:                          log.New("test"),
+				namespacer:                   func(orgID int64) string { return strconv.FormatInt(orgID, 10) },
+			}
+			hs.callGetDashboard(sc)
+
+			assert.Equal(t, http.StatusNotAcceptable, sc.resp.Code)
+			result := sc.ToJSON()
+			assert.Equal(t, "dashboard api version not supported, use /apis/dashboard.grafana.app/v2/namespaces/1/dashboards/dash instead", result.Get("message").MustString())
+		}, mockSQLStore)
+	})
 }
 
 func TestDashboardVersionsAPIEndpoint(t *testing.T) {
@@ -833,11 +875,13 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	quotaService := quotatest.New(false, nil)
 	folderSvc := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, sort.ProvideService())
+		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil,
+		dualwrite.ProvideTestService(), sort.ProvideService())
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, features, folderPermissions,
-			ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, sort.ProvideService(),
+			ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
+			dualwrite.ProvideTestService(), sort.ProvideService(),
 		)
 		require.NoError(t, err)
 		dashboardService.(dashboards.PermissionsRegistrationService).RegisterDashboardPermissions(dashboardPermissions)
@@ -846,7 +890,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, features, folderPermissions,
 		ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
-		sort.ProvideService(),
+		dualwrite.ProvideTestService(), sort.ProvideService(),
 	)
 	require.NoError(t, err)
 

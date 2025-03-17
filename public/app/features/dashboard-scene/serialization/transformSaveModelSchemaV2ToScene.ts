@@ -66,7 +66,6 @@ import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehavi
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getIntervalsFromQueryString } from '../utils/utils';
@@ -156,62 +155,63 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   //createLayoutManager(dashboard);
 
-  const dashboardScene = new DashboardScene({
-    description: dashboard.description,
-    editable: dashboard.editable,
-    preload: dashboard.preload,
-    id: dashboardId,
-    isDirty: false,
-    links: dashboard.links,
-    meta,
-    tags: dashboard.tags,
-    title: dashboard.title,
-    uid: metadata.name,
-    version: parseInt(metadata.resourceVersion, 10),
-    body: layoutManager,
-    $timeRange: new SceneTimeRange({
-      from: dashboard.timeSettings.from,
-      to: dashboard.timeSettings.to,
-      fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
-      timeZone: dashboard.timeSettings.timezone,
-      weekStart: dashboard.timeSettings.weekStart,
-      UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
-    }),
-    $variables: getVariables(dashboard, meta.isSnapshot ?? false),
-    $behaviors: [
-      new behaviors.CursorSync({
-        sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
+  const dashboardScene = new DashboardScene(
+    {
+      description: dashboard.description,
+      editable: dashboard.editable,
+      preload: dashboard.preload,
+      id: dashboardId,
+      isDirty: false,
+      links: dashboard.links,
+      meta,
+      tags: dashboard.tags,
+      title: dashboard.title,
+      uid: metadata.name,
+      version: parseInt(metadata.resourceVersion, 10),
+      body: layoutManager,
+      $timeRange: new SceneTimeRange({
+        from: dashboard.timeSettings.from,
+        to: dashboard.timeSettings.to,
+        fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
+        timeZone: dashboard.timeSettings.timezone,
+        weekStart: dashboard.timeSettings.weekStart,
+        UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
       }),
-      new behaviors.SceneQueryController(),
-      registerDashboardMacro,
-      registerPanelInteractionsReporter,
-      new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
-      preserveDashboardSceneStateInLocalStorage,
-      addPanelsOnLoadBehavior,
-      new DashboardScopesFacade({
-        reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: dashboardId?.toString(),
+      $variables: getVariables(dashboard, meta.isSnapshot ?? false),
+      $behaviors: [
+        new behaviors.CursorSync({
+          sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
+        }),
+        new behaviors.SceneQueryController(),
+        registerDashboardMacro,
+        registerPanelInteractionsReporter,
+        new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
+        preserveDashboardSceneStateInLocalStorage,
+        addPanelsOnLoadBehavior,
+        new DashboardReloadBehavior({
+          reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
+          uid: dashboardId?.toString(),
+          version: 1,
+        }),
+      ],
+      $data: new DashboardDataLayerSet({
+        annotationLayers,
       }),
-      new DashboardReloadBehavior({
-        reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: dashboardId?.toString(),
-        version: 1,
+      controls: new DashboardControls({
+        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
+        timePicker: new SceneTimePicker({
+          quickRanges: dashboard.timeSettings.quickRanges,
+        }),
+        refreshPicker: new SceneRefreshPicker({
+          refresh: dashboard.timeSettings.autoRefresh,
+          intervals: dashboard.timeSettings.autoRefreshIntervals,
+          withText: true,
+        }),
+        hideTimeControls: dashboard.timeSettings.hideTimepicker,
       }),
-    ],
-    $data: new DashboardDataLayerSet({
-      annotationLayers,
-    }),
-    controls: new DashboardControls({
-      variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
-      timePicker: new SceneTimePicker({}),
-      refreshPicker: new SceneRefreshPicker({
-        refresh: dashboard.timeSettings.autoRefresh,
-        intervals: dashboard.timeSettings.autoRefreshIntervals,
-        withText: true,
-      }),
-      hideTimeControls: dashboard.timeSettings.hideTimepicker,
-    }),
-  });
+    },
+    'v2'
+  );
 
   dashboardScene.setInitialSaveModel(dto.spec, dto.metadata);
 

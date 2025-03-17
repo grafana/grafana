@@ -33,6 +33,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -244,6 +245,18 @@ func SetupConfig(
 
 	serverConfig.EffectiveVersion = v
 
+	// set priority for aggregated discovery
+	for i, b := range builders {
+		gvs := GetGroupVersions(b)
+		if len(gvs) == 0 {
+			return fmt.Errorf("builder did not return any API group versions: %T", b)
+		}
+		pvs := scheme.PrioritizedVersionsForGroup(gvs[0].Group)
+		for j, gv := range pvs {
+			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 15000+i, len(pvs)-j)
+		}
+	}
+
 	if err := AddPostStartHooks(serverConfig, builders); err != nil {
 		return err
 	}
@@ -275,6 +288,7 @@ func InstallAPIs(
 	namespaceMapper request.NamespaceMapper,
 	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
+	dualWriteService dualwrite.Service,
 	optsregister apistore.StorageOptionsRegister,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
@@ -284,7 +298,12 @@ func InstallAPIs(
 
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
-		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+		dualWrite = func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+			// Dashboards + Folders may be managed (depends on feature toggles and database state)
+			if dualWriteService != nil && dualWriteService.ShouldManage(gr) {
+				return dualWriteService.NewStorage(gr, legacy, storage) // eventually this can replace this whole function
+			}
+
 			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
 
 			// Get the option from custom.ini/command line
@@ -353,7 +372,7 @@ func InstallAPIs(
 			if currentMode != mode {
 				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
 			}
-			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
+			return dualwrite.NewDualWriter(gr, currentMode, legacy, storage)
 		}
 	}
 

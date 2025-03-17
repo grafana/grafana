@@ -51,6 +51,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -1922,15 +1923,16 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderService := folderimpl.ProvideService(
 		fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, sort.ProvideService())
+		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
 	store := store.DBstore{
 		Logger:   log,
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Second * 10,
 		},
-		FolderService: folderService,
-		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
+		FolderService:  folderService,
+		Bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
+		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 	user := &user.SignedInUser{
 		OrgID: 1,

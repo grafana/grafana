@@ -60,6 +60,13 @@ export function AlertInstanceModalSelector({
         if (!rules[instance.labels.alertname]) {
           rules[instance.labels.alertname] = [];
         }
+        const filteredAnnotations = Object.fromEntries(
+          Object.entries(instance.annotations).filter(([key]) => !key.startsWith('__'))
+        );
+        const filteredLabels = Object.fromEntries(
+          Object.entries(instance.labels).filter(([key]) => !key.startsWith('__'))
+        );
+        instance = { ...instance, annotations: filteredAnnotations, labels: filteredLabels };
         rules[instance.labels.alertname].push(instance);
       });
     }
@@ -106,9 +113,7 @@ export function AlertInstanceModalSelector({
       >
         <div className={cx(styles.ruleTitle, styles.rowButtonTitle)}>{ruleName}</div>
         <div className={styles.alertFolder}>
-          <>
-            <Icon name="folder" /> {filteredRules[ruleName][0].labels.grafana_folder ?? ''}
-          </>
+          <Icon name="folder" /> {filteredRules[ruleName][0].labels.grafana_folder ?? ''}
         </div>
       </button>
     );

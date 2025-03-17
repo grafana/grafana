@@ -12,16 +12,6 @@ function checkCanCreateFolders(folderDTO?: FolderDTO) {
     return false;
   }
 
-  if (!config.featureToggles.accessActionSets) {
-    if (!folderDTO || folderDTO.uid === 'general') {
-      return checkFolderPermission(AccessControlAction.FoldersCreate);
-    }
-    return (
-      checkFolderPermission(AccessControlAction.FoldersCreate) &&
-      checkFolderPermission(AccessControlAction.FoldersWrite, folderDTO)
-    );
-  }
-
   return checkFolderPermission(AccessControlAction.FoldersCreate, folderDTO);
 }
 

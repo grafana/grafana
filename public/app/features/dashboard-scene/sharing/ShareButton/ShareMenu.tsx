@@ -1,19 +1,16 @@
-import { css } from '@emotion/css';
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { Icon, IconName, Menu, useStyles2 } from '@grafana/ui';
+import { IconName, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
-import { getExternalUserMngLinkUrl } from '../../../users/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 
@@ -43,7 +40,6 @@ export function resetDashboardShareDrawerItems() {
 }
 
 export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
-  const styles = useStyles2(getStyles);
   const onMenuItemClick = (shareView: string) => {
     locationService.partial({ shareView });
   };
@@ -87,24 +83,8 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
 
     customShareDrawerItems.forEach((d) => menuItems.push(d));
 
-    menuItems.push({
-      shareId: shareDashboardType.inviteUser,
-      testId: newShareButtonSelector.inviteUser,
-      icon: 'add-user',
-      label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
-      renderCondition: !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
-      onClick: () => {
-        const url = getExternalUserMngLinkUrl('share-invite');
-
-        window.open(url.toString(), '_blank');
-      },
-      renderDividerAbove: true,
-      component: () => <Icon name="external-link-alt" className={styles.inviteUserItemIcon} />,
-      className: styles.inviteUserItem,
-    });
-
     return menuItems.filter((item) => item.renderCondition);
-  }, [panel, styles]);
+  }, [panel]);
 
   const onClick = (item: ShareDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({
@@ -134,17 +114,3 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
     </Menu>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    inviteUserItem: css({
-      display: 'flex',
-      justifyContent: 'start',
-      flexDirection: 'row',
-      alignItems: 'center',
-    }),
-    inviteUserItemIcon: css({
-      color: theme.colors.text.link,
-    }),
-  };
-};
