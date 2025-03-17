@@ -7,7 +7,7 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { SortByField, SortByTransformerOptions } from '@grafana/data/internal';
+import { SortByField, SortByTransformerOptions } from '@grafana/data/src/transformations/transformers/sortBy';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
 

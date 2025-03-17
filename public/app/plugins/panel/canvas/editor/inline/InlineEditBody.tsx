@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
-import { NestedValueAccess, PanelOptionsSupplier } from '@grafana/data/internal';
+import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { useStyles2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { FrameState } from 'app/features/canvas/runtime/frame';
