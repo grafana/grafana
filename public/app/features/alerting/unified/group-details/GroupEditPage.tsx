@@ -255,6 +255,7 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
           required
           invalid={!!errors.namespace}
           error={errors.namespace?.message}
+          className={styles.input}
         >
           <Input
             id="namespace"
@@ -274,6 +275,7 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
         required
         invalid={!!errors.name}
         error={errors.name?.message}
+        className={styles.input}
       >
         <Input
           id="group-name"
@@ -287,6 +289,7 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
         description={t('alerting.group-edit.form.interval-description', 'How often is the group evaluated')}
         invalid={!!errors.interval}
         error={errors.interval?.message}
+        className={styles.input}
         htmlFor="interval"
       >
         <>
@@ -317,7 +320,7 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
         </LinkButton>
         {groupIdentifier.groupOrigin === 'datasource' && (
           <>
-            <Button variant="destructive" onClick={() => setConfirmDeleteOpened(true)}>
+            <Button variant="destructive" onClick={() => setConfirmDeleteOpened(true)} disabled={isSubmitting}>
               <Trans i18nKey="alerting.group-edit.form.delete">Delete</Trans>
             </Button>
             <ConfirmModal
@@ -338,6 +341,9 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
 const getStyles = (theme: GrafanaTheme2) => ({
   intervalInput: css({
     marginBottom: theme.spacing(0.5),
+  }),
+  input: css({
+    maxWidth: '600px',
   }),
 });
 
