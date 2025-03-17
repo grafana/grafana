@@ -3238,15 +3238,15 @@
     {
       "metadata": {
         "name": "pluginsDetailsRightPanel",
-        "resourceVersion": "1720788722220",
+        "resourceVersion": "1741965023728",
         "creationTimestamp": "2024-08-13T09:55:30Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-12 12:52:02.22099 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-14 15:10:23.728257 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables right panel for the plugins details page",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
       }
