@@ -120,67 +120,46 @@ export const LogListContextProvider = ({
   });
 
   useEffect(() => {
+    // Props are updated in the context only of the panel is being externally controlled.
+    if (showControls) {
+      return;
+    }
+    const newState = {
+      ...logListState,
+    };
     if (dedupStrategy !== logListState.dedupStrategy) {
-      setLogListState({
-        ...logListState,
-        dedupStrategy: dedupStrategy,
-      });
+      newState.dedupStrategy = dedupStrategy;
     }
-  }, [logListState, dedupStrategy]);
-
-  useEffect(() => {
-    if (!showControls && !shallowCompare(logListState.displayedFields, displayedFields)) {
-      setLogListState({
-        ...logListState,
-        displayedFields: displayedFields,
-      });
+    if (!shallowCompare(logListState.displayedFields, displayedFields)) {
+      newState.displayedFields = displayedFields;
     }
-  }, [displayedFields, logListState, showControls]);
-
-  useEffect(() => {
-    if (!showControls && !shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
-      setLogListState({
-        ...logListState,
-        pinnedLogs: pinnedLogs,
-      });
+    if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
+      newState.pinnedLogs = pinnedLogs;
     }
-  }, [logListState, pinnedLogs, showControls]);
-
-  useEffect(() => {
-    if (!showControls && showTime !== logListState.showTime) {
-      setLogListState({
-        ...logListState,
-        showTime: showTime,
-      });
+    if (showTime !== logListState.showTime) {
+      newState.showTime = showTime;
     }
-  }, [logListState, showControls, showTime]);
-
-  useEffect(() => {
-    if (!showControls && sortOrder !== logListState.sortOrder) {
-      setLogListState({
-        ...logListState,
-        sortOrder: sortOrder,
-      });
+    if (sortOrder !== logListState.sortOrder) {
+      newState.sortOrder = sortOrder;
     }
-  }, [logListState, showControls, sortOrder]);
-
-  useEffect(() => {
-    if (!showControls && syntaxHighlighting !== logListState.syntaxHighlighting) {
-      setLogListState({
-        ...logListState,
-        syntaxHighlighting: syntaxHighlighting,
-      });
+    if (syntaxHighlighting !== logListState.syntaxHighlighting) {
+      newState.syntaxHighlighting = syntaxHighlighting;
     }
-  }, [logListState, showControls, syntaxHighlighting]);
-
-  useEffect(() => {
-    if (!showControls && wrapLogMessage !== logListState.wrapLogMessage) {
-      setLogListState({
-        ...logListState,
-        wrapLogMessage: wrapLogMessage,
-      });
+    if (wrapLogMessage !== logListState.wrapLogMessage) {
+      newState.wrapLogMessage = wrapLogMessage;
     }
-  }, [logListState, showControls, wrapLogMessage]);
+    setLogListState(newState);
+  }, [
+    dedupStrategy,
+    displayedFields,
+    logListState,
+    pinnedLogs,
+    showControls,
+    showTime,
+    sortOrder,
+    syntaxHighlighting,
+    wrapLogMessage,
+  ]);
 
   const setDedupStrategy = useCallback(
     (dedupStrategy: LogsDedupStrategy) => {
