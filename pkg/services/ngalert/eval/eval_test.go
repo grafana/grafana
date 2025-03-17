@@ -732,6 +732,67 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 	}
 }
 
+func TestQueryDataResponseToExecutionResults(t *testing.T) {
+	t.Run("should set datasource type for captured values", func(t *testing.T) {
+		c := models.Condition{
+			Condition: "B",
+			Data: []models.AlertQuery{
+				{
+					RefID:         "A",
+					DatasourceUID: "test-ds",
+				},
+				{
+					RefID:         "B",
+					DatasourceUID: expr.DatasourceUID,
+				},
+			},
+		}
+
+		execResp := &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{
+						{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						},
+					},
+				},
+				"B": {
+					Frames: []*data.Frame{
+						{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(1.0)},
+								),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		results := queryDataResponseToExecutionResults(c, execResp)
+		evaluatedResults := evaluateExecutionResult(results, time.Now())
+
+		require.Len(t, evaluatedResults, 1)
+		result := evaluatedResults[0]
+
+		// Validate that datasource types were correctly set
+		require.Equal(t, expr.TypeDatasourceNode, result.Values["A"].Type)
+		require.Equal(t, expr.TypeCMDNode, result.Values["B"].Type)
+	})
+}
+
 func TestEvaluate(t *testing.T) {
 	cases := []struct {
 		name     string
