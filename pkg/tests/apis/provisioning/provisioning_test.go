@@ -19,7 +19,6 @@ import (
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/rand"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -587,25 +586,9 @@ func mustNestedString(obj map[string]interface{}, fields ...string) string {
 	return v
 }
 
-func mustNested(obj map[string]interface{}, fields ...string) interface{} {
-	v, _, _ := unstructured.NestedFieldNoCopy(obj, fields...)
-	return v
-}
-
 func asJSON(obj any) []byte {
 	jj, _ := json.Marshal(obj)
 	return jj
-}
-
-func randomAsciiStr(n int) string {
-	const alphabet string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	b := strings.Builder{}
-	b.Grow(n)
-	for range n {
-		char := alphabet[rand.Intn(len(alphabet))]
-		b.WriteByte(char)
-	}
-	return b.String()
 }
 
 func treeEntryDir(dirName string, sha string) *gh.TreeEntry {
