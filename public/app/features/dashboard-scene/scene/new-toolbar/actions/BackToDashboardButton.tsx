@@ -17,6 +17,6 @@ export const BackToDashboardButton = ({ dashboard }: ToolbarActionProps) => (
     icon="arrow-left"
     data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
   >
-    <Trans i18nKey="dashboard.toolbar.back-to-dashboard">Back to dashboard</Trans>
+    <Trans i18nKey="dashboard.toolbar.new.back-to-dashboard">Back to dashboard</Trans>
   </Button>
 );

@@ -9,8 +9,8 @@ export const StarButton = ({ dashboard }: ToolbarActionProps) => (
   <ToolbarButton
     tooltip={
       dashboard.state.meta.isStarred
-        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
-        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite')
+        ? t('dashboard.toolbar.new.unmark-favorite', 'Unmark as favorite')
+        : t('dashboard.toolbar.new.mark-favorite', 'Mark as favorite')
     }
     icon={
       <Icon

@@ -5,7 +5,7 @@ import { ToolbarActionProps } from '../types';
 
 export const EditSchemaV2Button = ({ dashboard }: ToolbarActionProps) => (
   <ToolbarButton
-    tooltip={t('dashboard.toolbar.edit-dashboard-v2-schema', 'Edit dashboard v2 schema')}
+    tooltip={t('dashboard.toolbar.new.edit-dashboard-v2-schema', 'Edit dashboard v2 schema')}
     icon={<Icon name="brackets-curly" size="lg" type="default" />}
     onClick={() => dashboard.openV2SchemaEditor()}
   />

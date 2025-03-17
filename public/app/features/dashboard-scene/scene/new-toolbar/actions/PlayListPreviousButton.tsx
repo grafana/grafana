@@ -8,7 +8,7 @@ import { ToolbarActionProps } from '../types';
 export const PlayListPreviousButton = ({}: ToolbarActionProps) => (
   <ToolbarButton
     data-testid={selectors.pages.Dashboard.DashNav.playlistControls.prev}
-    tooltip={t('dashboard.toolbar.playlist-previous', 'Go to previous dashboard')}
+    tooltip={t('dashboard.toolbar.new.playlist-previous', 'Go to previous dashboard')}
     icon="backward"
     onClick={() => playlistSrv.prev()}
   />

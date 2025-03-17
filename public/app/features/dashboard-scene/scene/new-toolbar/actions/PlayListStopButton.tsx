@@ -10,6 +10,6 @@ export const PlayListStopButton = ({}: ToolbarActionProps) => (
     onClick={() => playlistSrv.stop()}
     data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
   >
-    <Trans i18nKey="dashboard.toolbar.playlist-stop">Stop playlist</Trans>
+    <Trans i18nKey="dashboard.toolbar.new.playlist-stop">Stop playlist</Trans>
   </ToolbarButton>
 );

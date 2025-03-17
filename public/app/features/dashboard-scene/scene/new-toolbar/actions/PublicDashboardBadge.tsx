@@ -12,7 +12,7 @@ export const PublicDashboardBadge = ({}: ToolbarActionProps) => {
   return (
     <Badge
       color="blue"
-      text={t('dashboard.toolbar.public-dashboard', 'Public')}
+      text={t('dashboard.toolbar.new.public-dashboard', 'Public')}
       className={styles.badge}
       data-testid={selectors.pages.Dashboard.DashNav.publicDashboardTag}
     />

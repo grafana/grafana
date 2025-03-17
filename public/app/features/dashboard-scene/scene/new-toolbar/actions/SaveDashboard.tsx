@@ -15,12 +15,12 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     return (
       <Button
         onClick={() => dashboard.openSaveDrawer({})}
-        tooltip={t('dashboard.toolbar.save-dashboard.tooltip', 'Save changes')}
+        tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
         size="sm"
         variant="primary"
         data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
       >
-        <Trans i18nKey="dashboard.toolbar.save-dashboard.label">Save dashboard</Trans>
+        <Trans i18nKey="dashboard.toolbar.new.save-dashboard.label">Save</Trans>
       </Button>
     );
   }
@@ -30,11 +30,11 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     return (
       <Button
         onClick={() => dashboard.openSaveDrawer({ saveAsCopy: true })}
-        tooltip={t('dashboard.toolbar.save-dashboard-copy.tooltip', 'Save as copy')}
+        tooltip={t('dashboard.toolbar.new.save-dashboard-copy.tooltip', 'Save as copy')}
         size="sm"
         variant={isDirty ? 'primary' : 'secondary'}
       >
-        <Trans i18nKey="dashboard.toolbar.save-dashboard-copy.label">Save as copy</Trans>
+        <Trans i18nKey="dashboard.toolbar.new.save-dashboard-copy.label">Save as copy</Trans>
       </Button>
     );
   }
@@ -43,23 +43,23 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     <ButtonGroup>
       <Button
         onClick={() => dashboard.openSaveDrawer({})}
-        tooltip={t('dashboard.toolbar.save-dashboard.tooltip', 'Save changes')}
+        tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
         variant={isDirty ? 'primary' : 'secondary'}
       >
-        <Trans i18nKey="dashboard.toolbar.save-dashboard.label">Save dashboard</Trans>
+        <Trans i18nKey="dashboard.toolbar.new.save-dashboard.label">Save</Trans>
       </Button>
       <Dropdown
         overlay={
           <Menu>
             <Menu.Item
-              label={t('dashboard.toolbar.save-dashboard-short', 'Save')}
+              label={t('dashboard.toolbar.new.save-dashboard-short', 'Save')}
               icon="save"
               onClick={() => dashboard.openSaveDrawer({})}
             />
             <Menu.Item
-              label={t('dashboard.toolbar.save-dashboard-copy.label', 'Save as copy')}
+              label={t('dashboard.toolbar.new.save-dashboard-copy.label', 'Save as copy')}
               icon="copy"
               onClick={() => dashboard.openSaveDrawer({ saveAsCopy: true })}
             />
@@ -67,7 +67,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
         }
       >
         <Button
-          aria-label={t('dashboard.toolbar.more-save-options', 'More save options')}
+          aria-label={t('dashboard.toolbar.new.more-save-options', 'More save options')}
           icon="angle-down"
           variant={isDirty ? 'primary' : 'secondary'}
           size="sm"

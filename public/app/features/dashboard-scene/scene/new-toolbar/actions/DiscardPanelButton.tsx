@@ -15,8 +15,8 @@ export const DiscardPanelButton = ({ dashboard }: ToolbarActionProps) => {
       onClick={() => dashboard.state.editPanel?.onDiscard()}
       tooltip={
         dashboard.state.editPanel?.state.isNewPanel
-          ? t('dashboard.toolbar.discard-panel-new', 'Discard panel')
-          : t('dashboard.toolbar.discard-panel', 'Discard panel changes')
+          ? t('dashboard.toolbar.new.discard-panel-new', 'Discard panel')
+          : t('dashboard.toolbar.new.discard-panel', 'Discard panel changes')
       }
       size="sm"
       disabled={!isEditedPanelDirty}
@@ -25,9 +25,9 @@ export const DiscardPanelButton = ({ dashboard }: ToolbarActionProps) => {
       data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
     >
       {dashboard.state.editPanel?.state.isNewPanel ? (
-        <Trans i18nKey="dashboard.toolbar.discard-panel-new">Discard panel</Trans>
+        <Trans i18nKey="dashboard.toolbar.new.discard-panel-new">Discard panel</Trans>
       ) : (
-        <Trans i18nKey="dashboard.toolbar.discard-panel">Discard panel changes</Trans>
+        <Trans i18nKey="dashboard.toolbar.new.discard-panel">Discard panel changes</Trans>
       )}
     </Button>
   );

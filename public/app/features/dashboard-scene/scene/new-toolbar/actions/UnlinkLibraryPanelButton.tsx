@@ -7,12 +7,12 @@ import { ToolbarActionProps } from '../types';
 export const UnlinkLibraryPanelButton = ({ dashboard }: ToolbarActionProps) => (
   <Button
     onClick={() => dashboard.state.editPanel?.onUnlinkLibraryPanel()}
-    tooltip={t('dashboard.toolbar.unlink-library-panel', 'Unlink library panel')}
+    tooltip={t('dashboard.toolbar.new.unlink-library-panel', 'Unlink library panel')}
     size="sm"
     fill="outline"
     variant="secondary"
     data-testid={selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton}
   >
-    <Trans i18nKey="dashboard.toolbar.unlink-library-panel">Unlink library panel</Trans>
+    <Trans i18nKey="dashboard.toolbar.new.unlink-library-panel">Unlink library panel</Trans>
   </Button>
 );

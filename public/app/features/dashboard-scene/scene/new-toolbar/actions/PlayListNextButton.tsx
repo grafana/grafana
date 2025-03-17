@@ -8,7 +8,7 @@ import { ToolbarActionProps } from '../types';
 export const PlayListNextButton = ({}: ToolbarActionProps) => (
   <ToolbarButton
     data-testid={selectors.pages.Dashboard.DashNav.playlistControls.next}
-    tooltip={t('dashboard.toolbar.playlist-next', 'Go to next dashboard')}
+    tooltip={t('dashboard.toolbar.new.playlist-next', 'Go to next dashboard')}
     icon="forward"
     onClick={() => playlistSrv.next()}
     narrow

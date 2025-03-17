@@ -28,7 +28,7 @@ export const ExportDashboardButton = ({ dashboard }: ToolbarActionProps) => {
       <Button
         data-testid={newExportButtonSelector.container}
         size="sm"
-        tooltip={t('export.menu.export-as-json-tooltip', 'Export')}
+        tooltip={t('dashboard.toolbar.new.export.tooltip', 'Export')}
         variant="secondary"
         onClick={() => {
           locationService.partial({ shareView: shareDashboardType.export });
@@ -39,11 +39,11 @@ export const ExportDashboardButton = ({ dashboard }: ToolbarActionProps) => {
           });
         }}
       >
-        <Trans i18nKey="export.menu.export-as-json-label">Export</Trans>
+        <Trans i18nKey="dashboard.toolbar.new.export.title">Export</Trans>
       </Button>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
         <Button
-          aria-label={t('export.menu.export-as-json-tooltip', 'Export')}
+          aria-label={t('dashboard.toolbar.new.export.tooltip', 'Export')}
           data-testid={newExportButtonSelector.arrowMenu}
           size="sm"
           icon={isOpen ? 'angle-up' : 'angle-down'}
