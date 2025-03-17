@@ -1282,7 +1282,7 @@
       }
     },
     "tabs-layout": {
-      "description": "Tabs layout",
+      "description": "Organize panels into horizontal tabs",
       "menu": {
         "move-tab": "Move tab"
       },
