@@ -12,8 +12,6 @@ import { Props as InputProps } from '../Input/Input';
 import ColorInput from './ColorInput';
 import { getStyles as getPaletteStyles } from './SpectrumPalette';
 
-const COLOR_POPOVER_ID = 'grafana-ui-color-popover';
-
 export interface ColorPickerInputProps extends Omit<InputProps, 'value' | 'onChange'> {
   value?: string;
   onChange: (color: string) => void;
@@ -52,7 +50,7 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
 
     const handleBlur = (evt: FocusEvent<HTMLInputElement>) => {
       // Unless the user clicked inside the color picker, close it on blur
-      const isClickInPopover = document.getElementById(COLOR_POPOVER_ID)?.contains(evt.relatedTarget);
+      const isClickInPopover = document.querySelector('[data-testid="color-popover"]')?.contains(evt.relatedTarget);
       if (!isClickInPopover) {
         setIsOpen(false);
       }
@@ -63,7 +61,6 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
         <div className={styles.wrapper}>
           {isOpen && !inputProps.disabled && (
             <RgbaStringColorPicker
-              id={COLOR_POPOVER_ID}
               data-testid={'color-popover'}
               color={currentColor}
               onChange={setColor}
