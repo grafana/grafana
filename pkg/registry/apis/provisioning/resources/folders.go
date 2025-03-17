@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -15,6 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+)
+
+var (
+	ErrFolderUnmanaged       = errors.New("folder is not managed")
+	ErrFolderManagedByOthers = errors.New("folder is managed by another repository")
 )
 
 type FolderManager struct {
@@ -89,21 +95,12 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 // - it will error if the folder is not owned by this repository
 func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
 	cfg := fm.repo.Config()
-	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
-	if err == nil {
-		current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
-		if !ok {
-			return fmt.Errorf("target folder is not managed by a repository")
-		}
-		if current != cfg.Name {
-			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
-		}
-		return nil
-	} else if !apierrors.IsNotFound(err) {
-		return fmt.Errorf("failed to check if folder exists: %w", err)
+	exists, err := fm.checkFolderIsOurs(ctx, folder)
+	if err != nil || exists {
+		return err
 	}
 
-	obj = &unstructured.Unstructured{
+	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]any{
 				"title": folder.Title,
@@ -132,9 +129,38 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 	})
 
 	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
+		if apierrors.IsConflict(err) {
+			// Might be a race of two jobs causing this code to run.
+			exists, err := fm.checkFolderIsOurs(ctx, folder)
+			if err != nil || exists {
+				return err
+			}
+		}
 		return fmt.Errorf("failed to create folder: %w", err)
 	}
 	return nil
+}
+
+func (fm *FolderManager) checkFolderIsOurs(ctx context.Context, folder Folder) (exists bool, err error) {
+	cfg := fm.repo.Config()
+	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		// The folder simply doesn't exist. There is no ownership to check.
+		return false, nil
+	} else if err != nil {
+		// Another error occurred. This is unexpected.
+		return false, fmt.Errorf("failed to get folder: %w", err)
+	}
+	// exists should always be true by now.
+
+	current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
+	if !ok {
+		return true, ErrFolderUnmanaged
+	}
+	if current != cfg.Name {
+		return true, fmt.Errorf("%w (current owner is %s, we are %s)", ErrFolderManagedByOthers, current, cfg.Name)
+	}
+	return true, nil
 }
 
 func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
