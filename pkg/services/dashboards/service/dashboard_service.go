@@ -1946,10 +1946,8 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	uid := obj.GetName()
 	spec["uid"] = uid
 
-	dashVersion := 0
-	if version, ok := spec["version"].(int64); ok {
-		dashVersion = int(version)
-	}
+	dashVersion := obj.GetGeneration()
+	spec["version"] = dashVersion
 
 	title, _, _ := unstructured.NestedString(spec, "title")
 	out := dashboards.Dashboard{
@@ -1958,7 +1956,7 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		UID:        uid,
 		Slug:       slugify.Slugify(title),
 		FolderUID:  obj.GetFolder(),
-		Version:    dashVersion,
+		Version:    int(dashVersion),
 		Data:       simplejson.NewFromAny(spec),
 		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboardv0alpha1.GROUP+"/"),
 	}
