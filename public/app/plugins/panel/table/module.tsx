@@ -118,7 +118,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           name: 'Calculation',
           description: 'Choose a reducer function / calculation',
           editor: standardEditorsRegistry.get('stats-picker').editor,
-          override: TableCellOptionEditor,
+          override: standardEditorsRegistry.get('stats-picker').editor,
           defaultValue: [ReducerID.sum],
           process: identityOverrideProcessor,
           showIf: (cfg: FieldConfig) => cfg.footer?.show,
