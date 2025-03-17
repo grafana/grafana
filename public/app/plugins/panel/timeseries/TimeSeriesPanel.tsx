@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
-import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
+import { PanelProps, DataFrameType, DashboardCursorSync, FieldType } from '@grafana/data';
+import { Field } from '@grafana/data/';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
@@ -124,18 +125,58 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
+                  const isGraphable = (field: Field): boolean => {
+                    // Skip fields that are explicitly hidden
+                    if (field.config?.custom?.hideFrom?.viz) {
+                      return false;
+                    }
+
+                    // Time fields are graphable but as X axis, not as series
+                    if (field.type === FieldType.time) {
+                      return true;
+                    }
+
+                    // Number fields are the primary graphable type
+                    if (field.type === FieldType.number) {
+                      if (!field.values || field.values.length === 0) {
+                        return false;
+                      }
+
+                      // Check for non-finite values (handled in prepareGraphableFields by mapping to null)
+                      // This is a basic check - the actual implementation converts non-finite to null
+                      return true;
+                    }
+
+                    // Enum fields are graphable
+                    if (field.type === FieldType.enum) {
+                      return true;
+                    }
+
+                    // String fields are graphable
+                    if (field.type === FieldType.string) {
+                      return true;
+                    }
+
+                    // Boolean fields are graphable (converted to 0/1)
+                    if (field.type === FieldType.boolean) {
+                      return true;
+                    }
+
+                    // All other field types are not graphable
+                    return false;
+                  };
+
                   return getCustomTooltip ? (
                     getCustomTooltip({
-                      series: alignedFrame,
+                      data: data.series,
+                      isGraphable,
                       dataIdxs,
                       seriesIdx,
-                      mode: viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode,
-                      sortOrder: options.tooltip.sort,
                       isPinned,
-                      annotate: enableAnnotationCreation ? annotate : undefined,
-                      maxHeight: options.tooltip.maxHeight,
                       replaceVariables,
                       dataLinks,
+                      sortOrder: options.tooltip.sort,
+                      maxHeight: options.tooltip.maxHeight,
                       hideZeros: options.tooltip.hideZeros,
                     })
                   ) : (
