@@ -1,6 +1,39 @@
-import ShareButton from '../../../sharing/ShareButton/ShareButton';
+import { useAsyncFn } from 'react-use';
+
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { t } from 'app/core/internationalization';
+
+import ShareMenu from '../../../sharing/ShareButton/ShareMenu';
+import { buildShareUrl } from '../../../sharing/ShareButton/utils';
+import { DashboardInteractions } from '../../../utils/interactions';
 import { ToolbarActionProps } from '../types';
 
-export const ShareDashboardButton = ({ dashboard }: ToolbarActionProps) => (
-  <ShareButton dashboard={dashboard} variant={dashboard.state.isEditing ? 'secondary' : 'primary'} />
-);
+import { ShareExportDashboardButton } from './ShareExportDashboardButton';
+
+const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton;
+
+export const ShareDashboardButton = ({ dashboard }: ToolbarActionProps) => {
+  const [_, buildUrl] = useAsyncFn(async () => {
+    DashboardInteractions.toolbarShareClick();
+    return await buildShareUrl(dashboard);
+  }, [dashboard]);
+
+  return (
+    <ShareExportDashboardButton
+      menu={() => <ShareMenu dashboard={dashboard} />}
+      onMenuVisibilityChange={(isOpen) => {
+        if (isOpen) {
+          DashboardInteractions.toolbarShareDropdownClick();
+        }
+      }}
+      groupTestId={newShareButtonSelector.shareLink}
+      buttonLabel={t('dashboard.toolbar.new.share.title', 'Share')}
+      buttonTooltip={t('dashboard.toolbar.new.share.tooltip', 'Copy link')}
+      buttonTestId={newShareButtonSelector.container}
+      onButtonClick={buildUrl}
+      arrowLabel={t('dashboard.toolbar.new.share.tooltip', 'Share')}
+      arrowTestId={newShareButtonSelector.arrowMenu}
+      dashboard={dashboard}
+    />
+  );
+};
