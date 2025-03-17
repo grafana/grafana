@@ -41,7 +41,6 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -411,14 +410,24 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if isParentFolderChanged {
-		// Check that the user is allowed to add a dashboard to the folder
-		guardian, err := guardian.NewByDashboard(ctx, dash, dto.OrgID, dto.User)
-		if err != nil {
-			return nil, err
+		if canCreate, err := dr.canCreateDashboard(ctx, dto.User, dash); err != nil || !canCreate {
+			if err != nil {
+				return nil, err
+			}
+			return nil, dashboards.ErrDashboardUpdateAccessDenied
 		}
+	}
+
+	if dash.ID == 0 {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		// nolint:staticcheck
-		if canSave, err := guardian.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canSave {
+		if canCreate, err := dr.canCreateDashboard(ctx, dto.User, dash); err != nil || !canCreate {
+			if err != nil {
+				return nil, err
+			}
+			return nil, dashboards.ErrDashboardUpdateAccessDenied
+		}
+	} else {
+		if canSave, err := dr.canSaveDashboard(ctx, dto.User, dash); err != nil || !canSave {
 			if err != nil {
 				return nil, err
 			}
@@ -434,29 +443,6 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 		if provisionedData != nil {
 			return nil, dashboards.ErrDashboardCannotSaveProvisionedDashboard
-		}
-	}
-
-	guard, err := getGuardianForSavePermissionCheck(ctx, dash, dto.User)
-	if err != nil {
-		return nil, err
-	}
-
-	if dash.ID == 0 {
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		// nolint:staticcheck
-		if canCreate, err := guard.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canCreate {
-			if err != nil {
-				return nil, err
-			}
-			return nil, dashboards.ErrDashboardUpdateAccessDenied
-		}
-	} else {
-		if canSave, err := guard.CanSave(); err != nil || !canSave {
-			if err != nil {
-				return nil, err
-			}
-			return nil, dashboards.ErrDashboardUpdateAccessDenied
 		}
 	}
 
@@ -559,6 +545,30 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 	return isParentFolderChanged, nil
 }
 
+func (dr *DashboardServiceImpl) canSaveDashboard(ctx context.Context, user identity.Requester, dash *dashboards.Dashboard) (bool, error) {
+	action := dashboards.ActionDashboardsWrite
+	if dash.IsFolder {
+		action = dashboards.ActionFoldersWrite
+	}
+	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID)
+	if dash.IsFolder {
+		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.UID)
+	}
+	return dr.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
+}
+
+func (dr *DashboardServiceImpl) canCreateDashboard(ctx context.Context, user identity.Requester, dash *dashboards.Dashboard) (bool, error) {
+	action := dashboards.ActionDashboardsCreate
+	if dash.IsFolder {
+		action = dashboards.ActionFoldersCreate
+	}
+	scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.FolderUID)
+	if dash.FolderUID == "" {
+		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
+	}
+	return dr.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
+}
+
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		// check each org for orphaned provisioned dashboards
@@ -590,46 +600,6 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 	}
 
 	return dr.dashboardStore.DeleteOrphanedProvisionedDashboards(ctx, cmd)
-}
-
-// getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
-// It replaces deleted Dashboard.GetDashboardIdForSavePermissionCheck()
-func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user identity.Requester) (guardian.DashboardGuardian, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.service.getGuardianForSavePermissionCheck")
-	defer span.End()
-
-	newDashboard := d.ID == 0
-
-	if newDashboard {
-		// if it's a new dashboard/folder check the parent folder permissions
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		guard, err := guardian.NewByFolder(ctx, &folder.Folder{
-			ID:    d.FolderID, // nolint:staticcheck
-			OrgID: d.OrgID,
-		}, d.OrgID, user)
-		if err != nil {
-			return nil, err
-		}
-		return guard, nil
-	}
-
-	if d.IsFolder {
-		guard, err := guardian.NewByFolder(ctx, &folder.Folder{
-			ID:    d.ID, // nolint:staticcheck
-			UID:   d.UID,
-			OrgID: d.OrgID,
-		}, d.OrgID, user)
-		if err != nil {
-			return nil, err
-		}
-		return guard, nil
-	}
-
-	guard, err := guardian.NewByDashboard(ctx, d, d.OrgID, user)
-	if err != nil {
-		return nil, err
-	}
-	return guard, nil
 }
 
 func validateDashboardRefreshInterval(minRefreshInterval string, dash *dashboards.Dashboard) error {

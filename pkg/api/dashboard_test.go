@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -327,12 +328,16 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			hs.starService = startest.NewStarServiceFake()
 
-			hs.dashboardVersionService = &dashvertest.FakeDashboardVersionService{
-				ExpectedListDashboarVersions: []*dashver.DashboardVersionDTO{},
-				ExpectedDashboardVersion:     &dashver.DashboardVersionDTO{},
+			expectedDashVersions := []*dashver.DashboardVersionDTO{
+				{Data: simplejson.NewFromAny(map[string]any{"title": "Dash"})},
+				{Data: simplejson.NewFromAny(map[string]any{"title": "Dash updated"})},
 			}
 
-			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService, log.NewNopLogger())
+			hs.dashboardVersionService = &dashvertest.FakeDashboardVersionService{
+				ExpectedListDashboarVersions: []*dashver.DashboardVersionDTO{},
+				ExpectedDashboardVersions:    expectedDashVersions,
+				ExpectedDashboardVersion:     &dashver.DashboardVersionDTO{},
+			}
 		})
 	}
 
@@ -342,6 +347,17 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 
 	getVersions := func(server *webtest.Server, permissions []accesscontrol.Permission) (*http.Response, error) {
 		return server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/dashboards/uid/1/versions"), userWithPermissions(1, permissions)))
+	}
+
+	calculateDiff := func(server *webtest.Server, permissions []accesscontrol.Permission) (*http.Response, error) {
+		cmd := &dtos.CalculateDiffOptions{
+			Base:     dtos.CalculateDiffTarget{DashboardId: 1, Version: 1},
+			New:      dtos.CalculateDiffTarget{DashboardId: 1, Version: 2},
+			DiffType: "json",
+		}
+		jsonBytes, err := json.Marshal(cmd)
+		require.NoError(t, err)
+		return server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/dashboards/calculate-diff", bytes.NewReader(jsonBytes)), userWithPermissions(1, permissions)))
 	}
 
 	t.Run("Should not be able to list dashboard versions without correct permission", func(t *testing.T) {
@@ -363,7 +379,6 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 		server := setup()
 
 		permissions := []accesscontrol.Permission{
-			{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
 			{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
 		}
 
@@ -377,6 +392,27 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 
 		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Should be able to diff dashboards with correct permissions", func(t *testing.T) {
+		server := setup()
+
+		permissions := []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
+		}
+
+		res, err := calculateDiff(server, permissions)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Should not be able to diff dashboards without permissions", func(t *testing.T) {
+		server := setup()
+
+		res, err := calculateDiff(server, []accesscontrol.Permission{})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
 	})
 }
 
@@ -527,39 +563,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}),
 			},
 		}
-		sqlmock := dbtest.NewFakeDB()
-		cmd := dtos.CalculateDiffOptions{
-			Base: dtos.CalculateDiffTarget{
-				DashboardId: 1,
-				Version:     1,
-			},
-			New: dtos.CalculateDiffTarget{
-				DashboardId: 2,
-				Version:     2,
-			},
-			DiffType: "basic",
-		}
-
-		t.Run("when user does not have permission", func(t *testing.T) {
-			role := org.RoleViewer
-			postDiffScenario(t, "When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
-				guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: false})
-
-				callPostDashboard(sc)
-				assert.Equal(t, http.StatusForbidden, sc.resp.Code)
-			}, sqlmock, fakeDashboardVersionService)
-		})
-
-		t.Run("when user does have permission", func(t *testing.T) {
-			role := org.RoleAdmin
-			postDiffScenario(t, "When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
-				guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
-				// This test shouldn't hit GetDashboardACLInfoList, so no setup needed
-				sc.dashboardVersionService = fakeDashboardVersionService
-				callPostDashboard(sc)
-				assert.Equal(t, http.StatusOK, sc.resp.Code)
-			}, sqlmock, fakeDashboardVersionService)
-		})
 	})
 
 	t.Run("Given dashboard in folder being restored should restore to folder", func(t *testing.T) {
@@ -588,11 +591,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			},
 		}
 		mockSQLStore := dbtest.NewFakeDB()
-		origNewGuardian := guardian.New
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
-		t.Cleanup(func() {
-			guardian.New = origNewGuardian
-		})
 
 		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
 			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
@@ -648,7 +646,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		require.NoError(t, err)
 		qResult := &dashboards.Dashboard{ID: 1, Data: dataValue}
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
 
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
@@ -678,7 +675,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				LibraryElementService:        &libraryelementsfake.LibraryElementService{},
 				dashboardProvisioningService: mockDashboardProvisioningService{},
 				SQLStore:                     mockSQLStore,
-				AccessControl:                accesscontrolmock.New(),
+				AccessControl:                actest.FakeAccessControl{ExpectedEvaluate: true},
 				DashboardService:             dashboardService,
 				Features:                     featuremgmt.WithFeatures(),
 				starService:                  startest.NewStarServiceFake(),
@@ -710,7 +707,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Data:       dataValue,
 		}
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
 
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			hs := &HTTPServer{
@@ -718,7 +714,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				LibraryPanelService:          &mockLibraryPanelService{},
 				LibraryElementService:        &libraryelementsfake.LibraryElementService{},
 				SQLStore:                     mockSQLStore,
-				AccessControl:                accesscontrolmock.New(),
+				AccessControl:                actest.FakeAccessControl{ExpectedEvaluate: true},
 				DashboardService:             dashboardService,
 				Features:                     featuremgmt.WithFeatures(),
 				starService:                  startest.NewStarServiceFake(),
@@ -753,7 +749,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			Cfg:                     cfg,
 			pluginStore:             &pluginstore.FakePluginStore{},
 			SQLStore:                mockSQLStore,
-			AccessControl:           accesscontrolmock.New(),
+			AccessControl:           actest.FakeAccessControl{ExpectedEvaluate: true},
 			Features:                featuremgmt.WithFeatures(),
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
@@ -765,13 +761,8 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 		}
 	}
 
-	setUp := func() {
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
-	}
-
 	loggedInUserScenarioWithRole(t, "When user exists and calling GET on", "GET", "/api/dashboards/id/2/versions",
 		"/api/dashboards/id/:dashboardId/versions", org.RoleEditor, func(sc *scenarioContext) {
-			setUp()
 			fakeDashboardVersionService.ExpectedListDashboarVersions = []*dashver.DashboardVersionDTO{
 				{
 					Version:   1,
@@ -797,7 +788,6 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 
 	loggedInUserScenarioWithRole(t, "When user does not exist and calling GET on", "GET", "/api/dashboards/id/2/versions",
 		"/api/dashboards/id/:dashboardId/versions", org.RoleEditor, func(sc *scenarioContext) {
-			setUp()
 			fakeDashboardVersionService.ExpectedListDashboarVersions = []*dashver.DashboardVersionDTO{
 				{
 					Version:   1,
@@ -823,7 +813,6 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 
 	loggedInUserScenarioWithRole(t, "When failing to get user and calling GET on", "GET", "/api/dashboards/id/2/versions",
 		"/api/dashboards/id/:dashboardId/versions", org.RoleEditor, func(sc *scenarioContext) {
-			setUp()
 			fakeDashboardVersionService.ExpectedListDashboarVersions = []*dashver.DashboardVersionDTO{
 				{
 					Version:   1,
