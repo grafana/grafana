@@ -83,7 +83,7 @@ export function SaveProvisionedDashboardForm({
 
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['Dashboard changes saved'],
+        payload: [t('dashboard-scene.save-provisioned-dashboard-form.api-success', 'Dashboard changes saved')],
       });
 
       // Load the new URL
@@ -111,7 +111,10 @@ export function SaveProvisionedDashboardForm({
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: ['Error saving dashboard', request.error],
+        payload: [
+          t('dashboard-scene.save-provisioned-dashboard-form.api-error', 'Error saving dashboard'),
+          request.error,
+        ],
       });
     }
   }, [appEvents, dashboard, defaultValues.repo, isNew, navigate, path, ref, request, workflow]);
@@ -149,27 +152,45 @@ export function SaveProvisionedDashboardForm({
     <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
       <Stack direction="column" gap={2}>
         {!repositoryConfig?.workflows.length && (
-          <Alert title={t("dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only", "This repository is read only")}>
-            If you have direct access to the target, copy the JSON and paste it there.
+          <Alert
+            title={t(
+              'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
+              'This repository is read only'
+            )}
+          >
+            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.copy-json-message">
+              If you have direct access to the target, copy the JSON and paste it there.
+            </Trans>
           </Alert>
         )}
 
         {isNew && (
           <>
-            <Field label={t("dashboard-scene.save-provisioned-dashboard-form.label-title", "Title")} invalid={!!errors.title} error={errors.title?.message}>
+            <Field
+              label={t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}
+              invalid={!!errors.title}
+              error={errors.title?.message}
+            >
               <Input
                 id="dashboard-title"
                 {...register('title', {
-                  required: 'Dashboard title is required',
+                  required: t(
+                    'dashboard-scene.save-provisioned-dashboard-form.title-required',
+                    'Dashboard title is required'
+                  ),
                   validate: validateTitle,
                 })}
               />
             </Field>
-            <Field label={t("dashboard-scene.save-provisioned-dashboard-form.label-description", "Description")} invalid={!!errors.description} error={errors.description?.message}>
+            <Field
+              label={t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}
+              invalid={!!errors.description}
+              error={errors.description?.message}
+            >
               <TextArea id="dashboard-description" {...register('description')} />
             </Field>
 
-            <Field label={t("dashboard-scene.save-provisioned-dashboard-form.label-target-folder", "Target folder")}>
+            <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}>
               <Controller
                 control={control}
                 name={'folder'}
@@ -202,22 +223,31 @@ export function SaveProvisionedDashboardForm({
 
         {!isNew && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
-        <Field label={t("dashboard-scene.save-provisioned-dashboard-form.label-path", "Path")} description={t("dashboard-scene.save-provisioned-dashboard-form.description-inside-repository", "File path inside the repository (.json or .yaml)")}>
+        <Field
+          label={t('dashboard-scene.save-provisioned-dashboard-form.label-path', 'Path')}
+          description={t(
+            'dashboard-scene.save-provisioned-dashboard-form.description-inside-repository',
+            'File path inside the repository (.json or .yaml)'
+          )}
+        >
           <Input id="dashboard-path" {...register('path')} />
         </Field>
 
-        <Field label={t("dashboard-scene.save-provisioned-dashboard-form.label-comment", "Comment")}>
+        <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-comment', 'Comment')}>
           <TextArea
             id="dashboard-comment"
             {...register('comment')}
-            placeholder={t("dashboard-scene.save-provisioned-dashboard-form.dashboard-comment-placeholder-describe-changes-optional", "Add a note to describe your changes (optional)")}
+            placeholder={t(
+              'dashboard-scene.save-provisioned-dashboard-form.dashboard-comment-placeholder-describe-changes-optional',
+              'Add a note to describe your changes (optional)'
+            )}
             rows={5}
           />
         </Field>
 
         {isGitHub && (
           <>
-            <Field label={t("dashboard-scene.save-provisioned-dashboard-form.label-workflow", "Workflow")}>
+            <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-workflow', 'Workflow')}>
               <Controller
                 control={control}
                 name="workflow"
@@ -228,8 +258,11 @@ export function SaveProvisionedDashboardForm({
             </Field>
             {workflow === 'branch' && (
               <Field
-                label={t("dashboard-scene.save-provisioned-dashboard-form.label-branch", "Branch")}
-                description={t("dashboard-scene.save-provisioned-dashboard-form.description-branch-name-in-git-hub", "Branch name in GitHub")}
+                label={t('dashboard-scene.save-provisioned-dashboard-form.label-branch', 'Branch')}
+                description={t(
+                  'dashboard-scene.save-provisioned-dashboard-form.description-branch-name-in-git-hub',
+                  'Branch name in GitHub'
+                )}
                 invalid={!!errors.ref}
                 error={errors.ref && <BranchValidationError />}
               >
@@ -241,11 +274,13 @@ export function SaveProvisionedDashboardForm({
 
         <Stack gap={2}>
           <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty}>
-            {request.isLoading ? 'Saving...' : 'Save'}
+            {request.isLoading
+              ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
+              : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
           </Button>
-          <Button variant="secondary" onClick={drawer.onClose} fill="outline"><Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">
-            Cancel
-          </Trans></Button>
+          <Button variant="secondary" onClick={drawer.onClose} fill="outline">
+            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
+          </Button>
         </Stack>
       </Stack>
     </form>
@@ -254,12 +289,28 @@ export function SaveProvisionedDashboardForm({
 
 const BranchValidationError = () => (
   <>
-    Invalid branch name.
+    <Trans i18nKey="dashboard-scene.branch-validation-error.invalid-branch-name">Invalid branch name.</Trans>
     <ul style={{ padding: '0 20px' }}>
-      <li>It cannot start with '/' or end with '/', '.', or whitespace.</li>
-      <li><Trans i18nKey="dashboard-scene.branch-validation-error.it-cannot-contain-or">It cannot contain '//' or '..'.</Trans></li>
-      <li>It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\', or ']'.</li>
-      <li><Trans i18nKey="dashboard-scene.branch-validation-error.least-valid-character">It must have at least one valid character.</Trans></li>
+      <li>
+        <Trans i18nKey="dashboard-scene.branch-validation-error.cannot-start-with">
+          It cannot start with '/' or end with '/', '.', or whitespace.
+        </Trans>
+      </li>
+      <li>
+        <Trans i18nKey="dashboard-scene.branch-validation-error.it-cannot-contain-or">
+          It cannot contain '//' or '..'.
+        </Trans>
+      </li>
+      <li>
+        <Trans i18nKey="dashboard-scene.branch-validation-error.cannot-contain-invalid-characters">
+          It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\', or ']'.
+        </Trans>
+      </li>
+      <li>
+        <Trans i18nKey="dashboard-scene.branch-validation-error.least-valid-character">
+          It must have at least one valid character.
+        </Trans>
+      </li>
     </ul>
   </>
 );
@@ -270,12 +321,20 @@ const BranchValidationError = () => (
  */
 async function validateTitle(title: string, formValues: FormData) {
   if (title === formValues.folder.title?.trim()) {
-    return 'Dashboard name cannot be the same as the folder name';
+    return t(
+      'dashboard-scene.save-provisioned-dashboard-form.title-same-as-folder',
+      'Dashboard name cannot be the same as the folder name'
+    );
   }
   try {
     await validationSrv.validateNewDashboardName(formValues.folder.uid ?? 'general', title);
     return true;
   } catch (error) {
-    return error instanceof Error ? error.message : 'Dashboard title validation failed.';
+    return error instanceof Error
+      ? error.message
+      : t(
+          'dashboard-scene.save-provisioned-dashboard-form.title-validation-failed',
+          'Dashboard title validation failed.'
+        );
   }
 }
