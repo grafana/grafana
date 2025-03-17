@@ -607,7 +607,7 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 		c.env.Server.HTTPServer.AlertNG.AccesscontrolService,
 		c.teamSvc,
 		c.userSvc,
-		resourcepermissions.NewActionSetService(c.env.FeatureToggles),
+		resourcepermissions.NewActionSetService(),
 	)
 	require.NoError(c.t, err)
 
