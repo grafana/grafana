@@ -31,7 +31,7 @@ export const ShareDashboardButton = ({ dashboard }: ToolbarActionProps) => {
       buttonTooltip={t('dashboard.toolbar.new.share.tooltip', 'Copy link')}
       buttonTestId={newShareButtonSelector.container}
       onButtonClick={buildUrl}
-      arrowLabel={t('dashboard.toolbar.new.share.tooltip', 'Share')}
+      arrowLabel={t('dashboard.toolbar.new.share.arrow', 'Share')}
       arrowTestId={newShareButtonSelector.arrowMenu}
       dashboard={dashboard}
     />

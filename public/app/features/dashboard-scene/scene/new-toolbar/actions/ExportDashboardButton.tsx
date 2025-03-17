@@ -16,7 +16,7 @@ export const ExportDashboardButton = ({ dashboard }: ToolbarActionProps) => (
     menu={() => <ExportMenu dashboard={dashboard} />}
     groupTestId={newExportButtonSelector.container}
     buttonLabel={t('dashboard.toolbar.new.export.title', 'Export')}
-    buttonTooltip={t('dashboard.toolbar.new.export.tooltip', 'Export')}
+    buttonTooltip={t('dashboard.toolbar.new.export.tooltip', 'Export as JSON')}
     buttonTestId={newExportButtonSelector.container}
     onButtonClick={() => {
       locationService.partial({ shareView: shareDashboardType.export });
@@ -26,7 +26,7 @@ export const ExportDashboardButton = ({ dashboard }: ToolbarActionProps) => (
         shareResource: getTrackingSource(),
       });
     }}
-    arrowLabel={t('dashboard.toolbar.new.export.tooltip', 'Export')}
+    arrowLabel={t('dashboard.toolbar.new.export.arrow', 'Export')}
     arrowTestId={newExportButtonSelector.arrowMenu}
     dashboard={dashboard}
   />
