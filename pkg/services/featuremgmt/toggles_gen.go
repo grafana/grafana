@@ -279,10 +279,6 @@ const (
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 
-	// FlagAlertingNoDataErrorExecution
-	// Changes how Alerting state manager handles execution of NoData/Error
-	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
-
 	// FlagAngularDeprecationUI
 	// Display Angular warnings in dashboards and panels
 	FlagAngularDeprecationUI = "angularDeprecationUI"
@@ -966,4 +962,16 @@ const (
 	// FlagExtraLanguages
 	// Enables additional languages
 	FlagExtraLanguages = "extraLanguages"
+
+	// FlagNoBackdropBlur
+	// Disables backdrop blur
+	FlagNoBackdropBlur = "noBackdropBlur"
+
+	// FlagAlertingMigrationUI
+	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+	FlagAlertingMigrationUI = "alertingMigrationUI"
+
+	// FlagUnifiedStorageHistoryPruner
+	// Enables the unified storage history pruner
+	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
 )
