@@ -342,6 +342,7 @@
         "name": "alertingNoDataErrorExecution",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-08-15T14:27:15Z",
+        "deletionTimestamp": "2025-03-13T19:16:25Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -3237,15 +3238,15 @@
     {
       "metadata": {
         "name": "pluginsDetailsRightPanel",
-        "resourceVersion": "1720788722220",
+        "resourceVersion": "1741965023728",
         "creationTimestamp": "2024-08-13T09:55:30Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-12 12:52:02.22099 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-14 15:10:23.728257 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables right panel for the plugins details page",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
       }
@@ -4192,6 +4193,20 @@
         "description": "Enables to save big objects in blob storage",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageHistoryPruner",
+        "resourceVersion": "1742163088045",
+        "creationTimestamp": "2025-03-16T22:11:28Z"
+      },
+      "spec": {
+        "description": "Enables the unified storage history pruner",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
