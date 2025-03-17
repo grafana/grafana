@@ -32,6 +32,9 @@ export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
 }
 
 export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGridRow {
+  /**
+   * If new layouts feature is disabled we add old school rows to the custom grid layout
+   */
   if (!config.featureToggles.dashboardNewLayouts) {
     if (layout instanceof DefaultGridLayoutManager) {
       const row = layout.addNewRow();
