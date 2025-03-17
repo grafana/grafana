@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   ComponentTypeWithExtensionMeta,
   type PluginExtension,
@@ -5,7 +7,6 @@ import {
   type PluginExtensionLink,
   PluginExtensionTypes,
 } from '@grafana/data';
-import React from 'react';
 
 export function isPluginExtensionLink(extension: PluginExtension | undefined): extension is PluginExtensionLink {
   if (!extension) {
@@ -23,16 +24,16 @@ export function isPluginExtensionComponent(
   return extension.type === PluginExtensionTypes.component && 'component' in extension;
 }
 
-export function getLimitedAddedComponents<Props extends {}>({
+export function getLimitedComponentsToRender<Props extends {}>({
   props,
   components,
   limit,
-  pluginIdPatterns,
+  pluginId,
 }: {
   props: Props;
   components: Array<ComponentTypeWithExtensionMeta<Props>>;
   limit?: number;
-  pluginIdPatterns?: string[];
+  pluginId?: string | string[] | RegExp;
 }) {
   if (!components.length) {
     return null;
@@ -43,7 +44,15 @@ export function getLimitedAddedComponents<Props extends {}>({
   for (const Component of components) {
     const { meta } = Component;
 
-    if (pluginIdPatterns && !createRegexFromPluginIdPatterns(pluginIdPatterns).test(meta.pluginId)) {
+    if (pluginId && typeof pluginId === 'string' && pluginId !== meta.pluginId) {
+      continue;
+    }
+
+    if (pluginId && Array.isArray(pluginId) && !pluginId.includes(meta.pluginId)) {
+      continue;
+    }
+
+    if (pluginId instanceof RegExp && !pluginId.test(meta.pluginId)) {
       continue;
     }
 
@@ -53,6 +62,7 @@ export function getLimitedAddedComponents<Props extends {}>({
       continue;
     }
 
+    // If a component does not render anything, do not count it in the limit
     if (React.createElement<Props>(Component, props) !== null) {
       renderedComponents.push(Component);
     }
@@ -66,18 +76,18 @@ export function getLimitedAddedComponents<Props extends {}>({
   return renderedComponents;
 }
 
-export function renderLimitedAddedComponents<Props extends {}>({
+export function renderLimitedComponents<Props extends {}>({
   props,
   components,
   limit,
-  pluginIdPatterns,
+  pluginId,
 }: {
   props: Props;
   components: Array<ComponentTypeWithExtensionMeta<Props>>;
   limit?: number;
-  pluginIdPatterns?: string[];
+  pluginId?: string | string[] | RegExp;
 }) {
-  const limitedComponents = getLimitedAddedComponents({ props, components, limit, pluginIdPatterns });
+  const limitedComponents = getLimitedComponentsToRender({ props, components, limit, pluginId });
 
   if (!limitedComponents?.length) {
     return null;
@@ -90,10 +100,4 @@ export function renderLimitedAddedComponents<Props extends {}>({
       ))}
     </>
   );
-}
-
-export function createRegexFromPluginIdPatterns(patterns: string[]): RegExp {
-  const regexPatterns = patterns.map((pattern) => pattern.replace(/\*/g, '.*'));
-
-  return new RegExp(`^(${regexPatterns.join('|')})$`);
 }
