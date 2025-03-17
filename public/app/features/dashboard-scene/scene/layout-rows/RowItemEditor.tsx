@@ -12,7 +12,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
 import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
-import { DashboardLayoutSelector } from '../layouts-shared/DashboardLayoutSelector';
+import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { RowItem } from './RowItem';
@@ -32,19 +32,7 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
           title: t('dashboard.rows-layout.option.height', 'Height'),
           render: () => <RowHeightSelect row={model} />,
         })
-      )
-      .addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.layout.common.layout', 'Layout'),
-          render: () => <DashboardLayoutSelector layoutManager={layout} />,
-        })
       );
-
-    if (layout.getOptions) {
-      for (const option of layout.getOptions()) {
-        editPaneHeaderOptions.addItem(option);
-      }
-    }
 
     editPaneHeaderOptions
       .addItem(
@@ -61,13 +49,15 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
       );
 
     return editPaneHeaderOptions;
-  }, [layout, model]);
+  }, [model]);
+
+  const layoutCategory = useLayoutCategory(layout);
 
   const conditionalRenderingOptions = useMemo(() => {
     return useConditionalRenderingEditor(model.state.conditionalRendering);
   }, [model]);
 
-  const editOptions = [rowOptions];
+  const editOptions = [rowOptions, layoutCategory];
 
   if (conditionalRenderingOptions) {
     editOptions.push(conditionalRenderingOptions);
