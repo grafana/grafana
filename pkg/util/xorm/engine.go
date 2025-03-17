@@ -36,9 +36,10 @@ type Engine struct {
 	showSQL      bool
 	showExecTime bool
 
-	logger     core.ILogger
-	TZLocation *time.Location // The timezone of the application
-	DatabaseTZ *time.Location // The timezone of the database
+	logger          core.ILogger
+	TZLocation      *time.Location // The timezone of the application
+	DatabaseTZ      *time.Location // The timezone of the database
+	timestampFormat string         // Format applied to time.Time before passing it to database in Timestamp and DateTime columns.
 
 	tagHandlers map[string]tagHandler
 
@@ -748,7 +749,9 @@ func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v any) {
 		v = s[11:19]
 	case core.Date:
 		v = t.Format("2006-01-02")
-	case core.DateTime, core.TimeStamp, core.Varchar: // !DarthPestilane! format time when sqlTypeName is core.Varchar.
+	case core.DateTime, core.TimeStamp:
+		v = t.Format(engine.timestampFormat)
+	case core.Varchar: // !DarthPestilane! format time when sqlTypeName is core.Varchar.
 		v = t.Format("2006-01-02 15:04:05")
 	case core.TimeStampz:
 		v = t.Format(time.RFC3339Nano)
