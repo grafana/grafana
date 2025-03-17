@@ -52,8 +52,11 @@ export const AnnoKeySourcePath = 'grafana.app/sourcePath';
 export const AnnoKeySourceChecksum = 'grafana.app/sourceChecksum';
 export const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
 
+// for auditing... when saving from the UI, mark which version saved it from where
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 
+/** @deprecated NOT A REAL annotation -- this is just a shim */
+export const AnnoKeySlug = 'grafana.app/slug';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyDashboardIsSnapshot = 'grafana.app/dashboard-is-snapshot';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
@@ -88,6 +91,8 @@ type GrafanaAnnotations = {
 // Annotations provided by the front-end client
 type GrafanaClientAnnotations = {
   [AnnoKeyMessage]?: string;
+
+  [AnnoKeySlug]?: string;
   [AnnoKeyFolderTitle]?: string;
   [AnnoKeyFolderUrl]?: string;
   [AnnoKeyFolderId]?: number;

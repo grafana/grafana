@@ -658,6 +658,7 @@ describe('ResponseTransformers', () => {
             'grafana.app/updatedBy': 'user2',
             'grafana.app/updatedTimestamp': '2023-01-02T00:00:00Z',
             'grafana.app/folder': 'folder1',
+            'grafana.app/slug': 'dashboard-slug',
             'grafana.app/dashboard-gnet-id': 'something-like-a-uid',
           },
         },
@@ -735,6 +736,7 @@ describe('ResponseTransformers', () => {
       expect(transformed.meta.updated).toBe(dashboardV2.metadata.annotations?.['grafana.app/updatedTimestamp']);
       expect(transformed.meta.updatedBy).toBe(dashboardV2.metadata.annotations?.['grafana.app/updatedBy']);
       expect(transformed.meta.folderUid).toBe(dashboardV2.metadata.annotations?.['grafana.app/folder']);
+      expect(transformed.meta.slug).toBe(dashboardV2.metadata.annotations?.['grafana.app/slug']);
       expect(transformed.meta.url).toBe(dashboardV2.access.url);
       expect(transformed.meta.canAdmin).toBe(dashboardV2.access.canAdmin);
       expect(transformed.meta.canDelete).toBe(dashboardV2.access.canDelete);
