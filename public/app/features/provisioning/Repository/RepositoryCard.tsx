@@ -3,10 +3,11 @@ import { ReactNode } from 'react';
 import { IconName, Stack, Text, TextLink, Icon, Card, LinkButton } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning';
 
+import { StatusBadge } from '../Shared/StatusBadge';
+import { PROVISIONING_URL } from '../constants';
+
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
-import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { PROVISIONING_URL } from './constants';
 
 interface Props {
   repository: Repository;

@@ -6,7 +6,7 @@ import { getAppEvents } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { Repository, useCreateRepositorySyncMutation } from 'app/api/clients/provisioning';
 
-import { PROVISIONING_URL } from './constants';
+import { PROVISIONING_URL } from '../constants';
 
 interface Props {
   repository: Repository;

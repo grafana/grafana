@@ -4,8 +4,8 @@ import { EmptyState, Text, TextLink } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 
-import { ConfigForm } from './ConfigForm';
-import { PROVISIONING_URL } from './constants';
+import { ConfigForm } from '../Config/ConfigForm';
+import { PROVISIONING_URL } from '../constants';
 
 export default function EditRepositoryPage() {
   const { name = '' } = useParams();

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Box, Button, Field, FieldSet, Input, Switch } from '@grafana/ui';
 import { Repository, useCreateRepositoryMigrateMutation, MigrateJobOptions } from 'app/api/clients/provisioning';
 
-import { JobStatus } from './JobStatus';
+import { JobStatus } from '../Job/JobStatus';
 
 interface Props {
   repo: Repository;

@@ -3,12 +3,11 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { Card, EmptyState, Spinner, Stack, Text, TextLink, UserIcon } from '@grafana/ui';
 import { useGetRepositoryHistoryWithPathQuery, useGetRepositoryStatusQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
+import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
-import { isNotFoundError } from '../alerting/unified/api/util';
-
-import { PROVISIONING_URL } from './constants';
-import { HistoryListResponse } from './types';
-import { formatTimestamp } from './utils/time';
+import { PROVISIONING_URL } from '../constants';
+import { HistoryListResponse } from '../types';
+import { formatTimestamp } from '../utils/time';
 
 export default function FileHistoryPage() {
   const params = useParams();

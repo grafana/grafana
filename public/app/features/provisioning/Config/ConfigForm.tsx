@@ -20,11 +20,12 @@ import {
 import { Repository, RepositorySpec } from 'app/api/clients/provisioning';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
+import { useCreateOrUpdateRepository } from '../hooks';
+import { RepositoryFormData, WorkflowOption } from '../types';
+import { dataToSpec, specToData } from '../utils/data';
+
 import { ConfigFormGithubCollpase } from './ConfigFormGithubCollapse';
-import { TokenPermissionsInfo } from './TokenPermissionsInfo';
-import { useCreateOrUpdateRepository } from './hooks';
-import { RepositoryFormData, WorkflowOption } from './types';
-import { dataToSpec, specToData } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local'].map((label) => ({ label, value: label.toLowerCase() }));
 const targetOptions = [

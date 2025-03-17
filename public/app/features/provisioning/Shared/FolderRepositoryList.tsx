@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { EmptySearchResult, FilterInput, LinkButton, Stack } from '@grafana/ui';
 import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 
-import { RepositoryCard } from './RepositoryCard';
-import { CONNECT_URL } from './constants';
-import { checkSyncSettings } from './utils/checkSyncSettings';
+import { RepositoryCard } from '../Repository/RepositoryCard';
+import { CONNECT_URL } from '../constants';
+import { checkSyncSettings } from '../utils/checkSyncSettings';
 
 export function FolderRepositoryList({ items }: { items: Repository[] }) {
   const [query, setQuery] = useState('');

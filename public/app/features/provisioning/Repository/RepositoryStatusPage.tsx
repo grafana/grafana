@@ -7,16 +7,16 @@ import { Alert, EmptyState, Modal, Tab, TabContent, TabsBar, Text, TextLink } fr
 import { useGetFrontendSettingsQuery, useListRepositoryQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
-import { isNotFoundError } from '../alerting/unified/api/util';
+import { FilesView } from '../File/FilesView';
+import { PROVISIONING_URL } from '../constants';
 
 import { ExportToRepository } from './ExportToRepository';
-import { FilesView } from './FilesView';
 import { MigrateToRepository } from './MigrateToRepository';
 import { RepositoryActions } from './RepositoryActions';
 import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
-import { PROVISIONING_URL } from './constants';
 
 enum TabSelection {
   Overview = 'overview',

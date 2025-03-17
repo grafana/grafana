@@ -1,11 +1,12 @@
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
 
+import { StatusBadge } from '../Shared/StatusBadge';
+import { PROVISIONING_URL } from '../constants';
+import { getRepoHref } from '../utils/git';
+
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
-import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { PROVISIONING_URL } from './constants';
-import { getRepoHref } from './utils/git';
 
 interface RepositoryActionsProps {
   repository: Repository;

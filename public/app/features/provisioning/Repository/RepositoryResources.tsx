@@ -19,7 +19,7 @@ import {
   useDeleteRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning';
 
-import { PROVISIONING_URL } from './constants';
+import { PROVISIONING_URL } from '../constants';
 
 interface RepoProps {
   repo: Repository;

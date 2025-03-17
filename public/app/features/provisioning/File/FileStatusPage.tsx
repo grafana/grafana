@@ -14,7 +14,7 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { PROVISIONING_URL } from './constants';
+import { PROVISIONING_URL } from '../constants';
 
 export default function FileStatusPage() {
   const params = useParams();

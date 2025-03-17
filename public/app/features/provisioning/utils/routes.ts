@@ -45,25 +45,29 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
     {
       path: PROVISIONING_URL + '/:name',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "RepositoryStatusPage"*/ 'app/features/provisioning/RepositoryStatusPage')
+        () =>
+          import(
+            /* webpackChunkName: "RepositoryStatusPage"*/ 'app/features/provisioning/Repository/RepositoryStatusPage'
+          )
       ),
     },
     {
       path: PROVISIONING_URL + '/:name/edit',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "EditRepositoryPage"*/ 'app/features/provisioning/EditRepositoryPage')
+        () =>
+          import(/* webpackChunkName: "EditRepositoryPage"*/ 'app/features/provisioning/Repository/EditRepositoryPage')
       ),
     },
     {
       path: PROVISIONING_URL + '/:name/file/*',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "FileStatusPage"*/ 'app/features/provisioning/FileStatusPage')
+        () => import(/* webpackChunkName: "FileStatusPage"*/ 'app/features/provisioning/File/FileStatusPage')
       ),
     },
     {
       path: PROVISIONING_URL + '/:name/history/*',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "FileHistoryPage"*/ 'app/features/provisioning/FileHistoryPage')
+        () => import(/* webpackChunkName: "FileHistoryPage"*/ 'app/features/provisioning/File/FileHistoryPage')
       ),
     },
     {
