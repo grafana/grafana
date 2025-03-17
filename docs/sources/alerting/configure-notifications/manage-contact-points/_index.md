@@ -147,7 +147,7 @@ Each contact point integration has its own configuration options and setup proce
 - [Google Chat](ref:gchat)
 - [Grafana OnCall](ref:oncall)
 - Kafka REST Proxy
-- [Jira](ref:jira)  
+- [Jira](ref:jira)
 - Line
 - [Microsoft Teams](ref:teams)
 - [MQTT](ref:mqtt)
