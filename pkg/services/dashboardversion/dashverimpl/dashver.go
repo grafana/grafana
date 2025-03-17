@@ -286,11 +286,13 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 	uid := obj.GetName()
 	spec["uid"] = uid
 
-	dashVersion := 0
-	parentVersion := 0
-	if version, ok := spec["version"].(int64); ok {
-		dashVersion = int(version)
-		parentVersion = dashVersion - 1
+	dashVersion := obj.GetGeneration()
+	parentVersion := dashVersion - 1
+	if parentVersion < 0 {
+		parentVersion = 0
+	}
+	if dashVersion > 0 {
+		spec["version"] = dashVersion
 	}
 
 	createdBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
@@ -325,8 +327,8 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 		CreatedBy:     createdBy.ID,
 		Message:       obj.GetMessage(),
 		RestoredFrom:  restoreVer,
-		Version:       dashVersion,
-		ParentVersion: parentVersion,
+		Version:       int(dashVersion),
+		ParentVersion: int(parentVersion),
 		Data:          simplejson.NewFromAny(spec),
 	}
 
