@@ -1066,7 +1066,7 @@
       }
     },
     "default-layout": {
-      "description": "Manually size and position panels",
+      "description": "Position and size each panel individually",
       "item-options": {
         "repeat": {
           "direction": {
@@ -1215,6 +1215,7 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
+        "grid": "Grid",
         "layout": "Layout"
       }
     },
@@ -1238,8 +1239,8 @@
       }
     },
     "responsive-layout": {
-      "description": "Automatically positions panels into a grid.",
-      "name": "Auto",
+      "description": "Panels resize to fit and form uniform grids",
+      "name": "Auto grid",
       "options": {
         "columns": "Columns",
         "fixed": "Fixed: {{size}}px",
@@ -1251,7 +1252,7 @@
       }
     },
     "rows-layout": {
-      "description": "Rows layout",
+      "description": "Collapsable panel groups with headings",
       "name": "Rows",
       "option": {
         "height": "Height",
@@ -1286,7 +1287,7 @@
       }
     },
     "tabs-layout": {
-      "description": "Tabs layout",
+      "description": "Organize panels into horizontal tabs",
       "menu": {
         "move-tab": "Move tab"
       },
