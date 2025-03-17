@@ -25,7 +25,6 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
-    continue-on-error: true # adding this temporarily not to block merges to main while we agree if we want to run this on all branches
     if: github.repository == 'grafana/grafana'
 
     strategy:
