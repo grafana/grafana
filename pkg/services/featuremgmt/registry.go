@@ -382,7 +382,7 @@ var (
 		{
 			Name:         "pluginsDetailsRightPanel",
 			Description:  "Enables right panel for the plugins details page",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
@@ -507,15 +507,6 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			HideFromDocs:    true,
-		},
-		{
-			Name:            "alertingNoDataErrorExecution",
-			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:         "angularDeprecationUI",
@@ -1819,6 +1810,23 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
+		},
+		{
+			Name:              "alertingMigrationUI",
+			Description:       "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
+			FrontendOnly:      true,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "unifiedStorageHistoryPruner",
+			Description:       "Enables the unified storage history pruner",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 		},
 	}
 )

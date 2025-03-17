@@ -78,7 +78,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	require.NoError(t, json.Unmarshal(postGroupRaw, &group1))
 
 	// Create rule under folder1
-	_, status, response := apiClient.PostRulesGroupWithStatus(t, "folder1", &group1)
+	_, status, response := apiClient.PostRulesGroupWithStatus(t, "folder1", &group1, false)
 	require.Equalf(t, http.StatusAccepted, status, response)
 
 	postGroupRaw, err = testData.ReadFile(path.Join("test-data", "rulegroup-2-post.json"))
@@ -87,7 +87,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	require.NoError(t, json.Unmarshal(postGroupRaw, &group2))
 
 	// Create rule under folder2
-	_, status, response = apiClient.PostRulesGroupWithStatus(t, "folder2", &group2)
+	_, status, response = apiClient.PostRulesGroupWithStatus(t, "folder2", &group2, false)
 	require.Equalf(t, http.StatusAccepted, status, response)
 
 	// With the rules created, let's make sure that rule definitions are stored.
@@ -128,6 +128,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 				"GrafanaManagedAlert.Data.Model",
 				"GrafanaManagedAlert.NamespaceUID",
 				"GrafanaManagedAlert.NamespaceID",
+				"GrafanaManagedAlert.GUID",
 			}
 
 			// compare expected and actual and ignore the dynamic fields
@@ -384,7 +385,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	require.NoError(t, json.Unmarshal(postGroupRaw, &group1))
 
 	// Create rule under folder1
-	_, status, response := apiClient.PostRulesGroupWithStatus(t, "folder1", &group1)
+	_, status, response := apiClient.PostRulesGroupWithStatus(t, "folder1", &group1, false)
 	require.Equalf(t, http.StatusAccepted, status, response)
 
 	postGroupRaw, err = testData.ReadFile(path.Join("test-data", "rulegroup-2-post.json"))
@@ -393,7 +394,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	require.NoError(t, json.Unmarshal(postGroupRaw, &group2))
 
 	// Create rule under folder2
-	_, status, response = apiClient.PostRulesGroupWithStatus(t, "folder2", &group2)
+	_, status, response = apiClient.PostRulesGroupWithStatus(t, "folder2", &group2, false)
 	require.Equalf(t, http.StatusAccepted, status, response)
 
 	postGroupRaw, err = testData.ReadFile(path.Join("test-data", "rulegroup-3-post.json"))
@@ -402,7 +403,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	require.NoError(t, json.Unmarshal(postGroupRaw, &group3))
 
 	// Create rule under subfolder
-	_, status, response = apiClient.PostRulesGroupWithStatus(t, "subfolder", &group3)
+	_, status, response = apiClient.PostRulesGroupWithStatus(t, "subfolder", &group3, false)
 	require.Equalf(t, http.StatusAccepted, status, response)
 
 	// With the rules created, let's make sure that rule definitions are stored.
@@ -449,6 +450,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 				"GrafanaManagedAlert.Data.Model",
 				"GrafanaManagedAlert.NamespaceUID",
 				"GrafanaManagedAlert.NamespaceID",
+				"GrafanaManagedAlert.GUID",
 			}
 
 			// compare expected and actual and ignore the dynamic fields
@@ -842,7 +844,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 			},
 		}
 
-		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rules, false)
 		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, respModel.Created, 1)
 
@@ -874,7 +876,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
 		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection = true
 
-		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
+		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID, false)
 		require.Equal(t, http.StatusAccepted, status)
 
 		updatedRuleGroup, status := apiClient.GetRulesGroup(t, folderName, groupName)
@@ -896,7 +898,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		// disabling the editor
 		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection = false
 
-		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
+		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID, false)
 		require.Equal(t, http.StatusAccepted, status)
 
 		updatedRuleGroup, status := apiClient.GetRulesGroup(t, folderName, groupName)
@@ -916,7 +918,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
 		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection = true
 
-		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
+		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID, false)
 		require.Equal(t, http.StatusAccepted, status)
 
 		updatedRuleGroup, status := apiClient.GetRulesGroup(t, folderName, groupName)
@@ -938,7 +940,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		// disabling the editor
 		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection = false
 
-		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
+		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID, false)
 		require.Equal(t, http.StatusAccepted, status)
 
 		updatedRuleGroup, status := apiClient.GetRulesGroup(t, folderName, groupName)
@@ -988,7 +990,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 
 	rules := newTestingRuleConfig(t)
 
-	respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rules)
+	respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rules, false)
 	require.Equal(t, http.StatusAccepted, status)
 	require.Len(t, respModel.Created, len(rules.Rules))
 
@@ -1002,7 +1004,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup.GettableRuleGroupConfig)
 		rulesWithUID.Rules = append(rulesWithUID.Rules, rules.Rules[0]) // Create new copy of first rule.
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID, false)
 		requireStatusCode(t, http.StatusAccepted, status, body)
 	})
 
@@ -1010,13 +1012,13 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup.GettableRuleGroupConfig)
 		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = "AlwaysFiring"
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID, false)
 		requireStatusCode(t, http.StatusAccepted, status, body)
 	})
 
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {
 		rules := newTestingRuleConfig(t)
-		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder2", &rules)
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder2", &rules, false)
 		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, resp.Created, len(rules.Rules))
 	})
@@ -1028,7 +1030,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		rulesWithUID.Rules[0].GrafanaManagedAlert.Title = title1
 		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = title0
 
-		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID, false)
 		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, resp.Updated, 2)
 	})
@@ -1038,7 +1040,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		rulesWithUID.Rules[0].GrafanaManagedAlert.Title = rulesWithUID.Rules[1].GrafanaManagedAlert.Title
 		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = "something new"
 
-		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID, false)
 		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, resp.Updated, len(rulesWithUID.Rules))
 	})
@@ -1128,7 +1130,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				},
 			},
 		}
-		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, resp.Created, len(rules.Rules))
 	}
@@ -1172,6 +1174,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
+				"guid": "guid",
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
@@ -1213,6 +1216,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
+				"guid": "guid",
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "Alerting",
@@ -1266,6 +1270,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
+				"guid": "guid",
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
@@ -1435,9 +1440,9 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 	group1 := generateAlertRuleGroup(5, alertRuleGen())
 	group2 := generateAlertRuleGroup(5, alertRuleGen())
 
-	_, status, _ := client.PostRulesGroupWithStatus(t, folderUID, &group1)
+	_, status, _ := client.PostRulesGroupWithStatus(t, folderUID, &group1, false)
 	require.Equal(t, http.StatusAccepted, status)
-	_, status, _ = client.PostRulesGroupWithStatus(t, folderUID, &group2)
+	_, status, _ = client.PostRulesGroupWithStatus(t, folderUID, &group2, false)
 	require.Equal(t, http.StatusAccepted, status)
 
 	t.Run("should persist order of the rules in a group", func(t *testing.T) {
@@ -1461,7 +1466,7 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 		for _, rule := range postableGroup1.Rules {
 			expectedUids = append(expectedUids, rule.GrafanaManagedAlert.UID)
 		}
-		_, status, _ = client.PostRulesGroupWithStatus(t, folderUID, &postableGroup1)
+		_, status, _ = client.PostRulesGroupWithStatus(t, folderUID, &postableGroup1, false)
 		require.Equal(t, http.StatusAccepted, status)
 
 		group1Get, status = client.GetRulesGroup(t, folderUID, group1.Name)
@@ -1490,7 +1495,7 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 		for _, rule := range postableGroup1.Rules {
 			expectedUids = append(expectedUids, rule.GrafanaManagedAlert.UID)
 		}
-		_, status, _ = client.PostRulesGroupWithStatus(t, folderUID, &postableGroup1)
+		_, status, _ = client.PostRulesGroupWithStatus(t, folderUID, &postableGroup1, false)
 		require.Equal(t, http.StatusAccepted, status)
 
 		group1Get, status = client.GetRulesGroup(t, folderUID, group1.Name)
@@ -1619,7 +1624,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			resp, status, _ := client.PostRulesGroupWithStatus(t, namespaceUID, &tc.config)
+			resp, status, _ := client.PostRulesGroupWithStatus(t, namespaceUID, &tc.config, false)
 			require.Equal(t, http.StatusAccepted, status)
 			require.Len(t, resp.Created, 1)
 			require.Len(t, resp.Updated, 0)
@@ -1632,6 +1637,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 				"GrafanaManagedAlert.UID",
 				"GrafanaManagedAlert.ID",
 				"GrafanaManagedAlert.NamespaceID",
+				"GrafanaManagedAlert.GUID",
 			}
 
 			// compare expected and actual and ignore the dynamic fields
@@ -1703,7 +1709,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		expected := model.Duration(10 * time.Second)
 		group.Rules[0].ApiRuleNode.For = &expected
 
-		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, http.StatusAccepted, status)
@@ -1712,7 +1718,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 		expected = 0
 		group.Rules[0].ApiRuleNode.For = &expected
-		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group)
+		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 		getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
@@ -1725,7 +1731,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			ds1 := adminClient.CreateTestDatasource(t)
 			group := generateAlertRuleGroup(3, alertRuleGen(withDatasourceQuery(ds1.Body.Datasource.UID)))
 
-			_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+			_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 			require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 			getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
@@ -1747,7 +1753,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			require.Equal(t, http.StatusAccepted, status)
 			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 
-			_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+			_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 			require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
 		})
 		t.Run("should not let update rule if it does not fix datasource", func(t *testing.T) {
@@ -1756,7 +1762,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 
 			group.Rules[0].GrafanaManagedAlert.Title = uuid.NewString()
-			resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+			resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 
 			if status == http.StatusAccepted {
 				assert.Len(t, resp.Deleted, 1)
@@ -1774,7 +1780,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 
 			// remove the last rule.
 			group.Rules = group.Rules[0 : len(group.Rules)-1]
-			resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+			resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 			require.Equalf(t, http.StatusAccepted, status, "failed to delete last rule from group. Response: %s", body)
 			assert.Len(t, resp.Deleted, 1)
 
@@ -1790,7 +1796,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 
 			ds2 := adminClient.CreateTestDatasource(t)
 			withDatasourceQuery(ds2.Body.Datasource.UID)(&group.Rules[0])
-			resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+			resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 			require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
 			assert.Len(t, resp.Deleted, 0)
 			assert.Len(t, resp.Updated, 2)
@@ -1802,7 +1808,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			require.Equal(t, ds2.Body.Datasource.UID, group.Rules[0].GrafanaManagedAlert.Data[0].DatasourceUID)
 		})
 		t.Run("should let delete group", func(t *testing.T) {
-			status, body := client.DeleteRulesGroup(t, folderUID, groupName)
+			status, body := client.DeleteRulesGroup(t, folderUID, groupName, false)
 			require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
 		})
 	})
@@ -1811,7 +1817,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		expected := model.Duration(10 * time.Second)
 		group.Rules[0].ApiRuleNode.For = &expected
 
-		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, http.StatusAccepted, status)
@@ -1947,7 +1953,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 			},
 		}
 
-		_, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		_, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 		require.Equal(t, http.StatusAccepted, status)
 	}
 
@@ -2087,7 +2093,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 					},
 				},
 			}
-			_, status, body := tc.client.PostRulesGroupWithStatus(t, "default", &rules)
+			_, status, body := tc.client.PostRulesGroupWithStatus(t, "default", &rules, false)
 			assert.Equal(t, tc.expStatus, status)
 			res := &Response{}
 			err = json.Unmarshal([]byte(body), &res)
@@ -2468,7 +2474,7 @@ func TestIntegrationQuota(t *testing.T) {
 				},
 			},
 		}
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 		assert.Equal(t, http.StatusForbidden, status)
 		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
@@ -2505,7 +2511,7 @@ func TestIntegrationQuota(t *testing.T) {
 			},
 		}
 
-		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, respModel.Updated, 1)
 
@@ -2567,6 +2573,7 @@ func TestIntegrationQuota(t *testing.T) {
 						  "is_paused": false,
 						  "version":2,
 						  "uid":"uid",
+						  "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
@@ -2680,6 +2687,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 									"is_paused": false,
 									"version": 1,
 									"uid": "uid",
+									"guid": "guid",
 									"namespace_uid": "nsuid",
 									"rule_group": "arulegroup",
 									"no_data_state": "NoData",
@@ -3011,7 +3019,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						tc.rule,
 					},
 				}
-				_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+				_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 				res := &Response{}
 				err = json.Unmarshal([]byte(body), &res)
 				require.NoError(t, err)
@@ -3084,7 +3092,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				},
 			},
 		}
-		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 		require.Equal(t, http.StatusAccepted, status)
 		require.Equal(t, "rule group updated successfully", resp.Message)
 		assert.Len(t, resp.Created, 2)
@@ -3161,7 +3169,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":1,
-						  "uid":"uid",
+						  "uid":"uid", 
+                          "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
@@ -3206,6 +3215,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "is_paused": false,
 						  "version":1,
 						  "uid":"uid",
+                          "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
@@ -3324,7 +3334,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			Interval: interval,
 		}
 
-		response, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		response, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 		assert.Equal(t, http.StatusAccepted, status)
 
 		require.Len(t, response.Created, 1)
@@ -3395,7 +3405,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			Interval: interval,
 		}
 
-		response, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		response, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 		assert.Equal(t, http.StatusAccepted, status)
 
 		require.Len(t, response.Created, 0)
@@ -3482,7 +3492,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 		assert.Equal(t, http.StatusBadRequest, status)
 		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
@@ -3551,6 +3561,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "is_paused": false,
 						  "version":3,
 						  "uid":"uid",
+						  "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
@@ -3595,6 +3606,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "is_paused": false,
 						  "version":3,
 						  "uid":"uid",
+						  "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
@@ -3661,7 +3673,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 		require.Equal(t, http.StatusAccepted, status)
 		require.Equal(t, respModel.Updated, []string{ruleUID})
 		require.Len(t, respModel.Deleted, 1)
@@ -3732,6 +3744,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  "is_paused": false,
 		                  "version":4,
 		                  "uid":"uid",
+						  "guid": "guid",
 		                  "namespace_uid":"nsuid",
 		                  "rule_group":"arulegroup",
 		                  "no_data_state":"Alerting",
@@ -3787,7 +3800,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 		require.Equal(t, http.StatusAccepted, status)
 		require.Equal(t, respModel.Updated, []string{ruleUID})
 
@@ -3849,6 +3862,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "is_paused":false,
 					  "version":5,
 					  "uid":"uid",
+					  "guid": "guid",
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
@@ -3880,7 +3894,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
 		require.Equal(t, http.StatusAccepted, status)
 		require.Equal(t, "no changes detected in the rule group", respModel.Message)
 		assert.Empty(t, respModel.Created)
@@ -3945,6 +3959,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "is_paused":false,
 					  "version":5,
 					  "uid":"uid",
+                      "guid": "guid",
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
@@ -4032,7 +4047,7 @@ func TestIntegrationRulePause(t *testing.T) {
 		expectedIsPaused := true
 		group.Rules[0].GrafanaManagedAlert.IsPaused = &expectedIsPaused
 
-		resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		require.Len(t, resp.Created, 1)
 		getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
@@ -4046,7 +4061,7 @@ func TestIntegrationRulePause(t *testing.T) {
 		expectedIsPaused := false
 		group.Rules[0].GrafanaManagedAlert.IsPaused = &expectedIsPaused
 
-		resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		require.Len(t, resp.Created, 1)
 		getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
@@ -4059,7 +4074,7 @@ func TestIntegrationRulePause(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		group.Rules[0].GrafanaManagedAlert.IsPaused = nil
 
-		resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		require.Len(t, resp.Created, 1)
 		getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
@@ -4117,14 +4132,14 @@ func TestIntegrationRulePause(t *testing.T) {
 			group := generateAlertRuleGroup(1, alertRuleGen())
 			group.Rules[0].GrafanaManagedAlert.IsPaused = &tc.isPausedInDb
 
-			_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+			_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 			require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 			getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
 			require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
 
 			group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 			group.Rules[0].GrafanaManagedAlert.IsPaused = tc.isPausedInBody
-			_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group)
+			_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 			require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 			getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
@@ -4172,7 +4187,7 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 			rule.GrafanaManagedAlert.Data[i].DatasourceUID = strings.ReplaceAll(rule.GrafanaManagedAlert.Data[i].DatasourceUID, "REPLACE_ME", testDs.Body.Datasource.UID)
 		}
 	}
-	changes, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &postData)
+	changes, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &postData, false)
 	require.Equalf(t, http.StatusAccepted, status, body)
 	require.Len(t, changes.Created, 1)
 	ruleUid := changes.Created[0]
@@ -4257,7 +4272,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
 		ns.Receiver = "random-receiver"
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
 		require.Equalf(t, http.StatusBadRequest, status, body)
 		t.Log(body)
 	})
@@ -4269,7 +4284,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
 		ns.MuteTimeIntervals = []string{"random-time-interval"}
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
 		require.Equalf(t, http.StatusBadRequest, status, body)
 		t.Log(body)
 	})
@@ -4281,7 +4296,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
 		ns.GroupBy = []string{"label1"}
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, body)
 
 		cfg, status, body := apiClient.GetAlertmanagerConfigWithStatus(t)
@@ -4305,7 +4320,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
 		ns.GroupBy = []string{ngmodels.FolderTitleLabel, model.AlertNameLabel, ngmodels.GroupByAll}
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, body)
 
 		// Now update the config with no changes.
@@ -4325,7 +4340,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 	})
 
 	t.Run("should create rule and generate route", func(t *testing.T) {
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &d.RuleGroup)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &d.RuleGroup, false)
 		require.Equalf(t, http.StatusAccepted, status, body)
 		notificationSettings := d.RuleGroup.Rules[0].GrafanaManagedAlert.NotificationSettings
 
@@ -4446,7 +4461,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		notificationSettings := group.Rules[0].GrafanaManagedAlert.NotificationSettings
 		group.Rules[0].GrafanaManagedAlert.NotificationSettings = nil
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, body)
 
 		var routeBody string
@@ -4516,7 +4531,7 @@ func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
 		group := generateAlertRuleGroup(3, alertRuleGen())
 		groupName := group.Name
 
-		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, http.StatusAccepted, status)
@@ -4526,7 +4541,7 @@ func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
 		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 		newGroup := strings.ToUpper(group.Name)
 		group.Name = newGroup
-		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group)
+		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 		getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
@@ -4534,7 +4549,7 @@ func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
 		require.Lenf(t, getGroup.Rules, 3, "expected 3 rules in group")
 		require.Equal(t, newGroup, getGroup.Rules[0].GrafanaManagedAlert.RuleGroup)
 
-		status, body = client.DeleteRulesGroup(t, folderUID, groupName)
+		status, body = client.DeleteRulesGroup(t, folderUID, groupName, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
 
 		// Old group is gone.
@@ -4580,7 +4595,7 @@ func TestIntegrationRuleVersions(t *testing.T) {
 	require.NoError(t, json.Unmarshal(postGroupRaw, &group1))
 
 	// Create rule under folder1
-	response := apiClient.PostRulesGroup(t, "folder1", &group1)
+	response := apiClient.PostRulesGroup(t, "folder1", &group1, false)
 
 	require.NotEmptyf(t, response.Created, "Expected created to be set")
 	uid := response.Created[0]
@@ -4599,7 +4614,7 @@ func TestIntegrationRuleVersions(t *testing.T) {
 	group1 = convertGettableRuleGroupToPostable(group1Gettable.GettableRuleGroupConfig)
 	group1.Rules[0].Annotations[util.GenerateShortUID()] = util.GenerateShortUID()
 
-	_ = apiClient.PostRulesGroup(t, "folder1", &group1)
+	_ = apiClient.PostRulesGroup(t, "folder1", &group1, false)
 
 	ruleV2 := apiClient.GetRuleByUID(t, uid)
 
@@ -4623,7 +4638,7 @@ func TestIntegrationRuleVersions(t *testing.T) {
 		assert.Empty(t, diff)
 	})
 
-	_ = apiClient.PostRulesGroup(t, "folder1", &group1) // Noop update
+	_ = apiClient.PostRulesGroup(t, "folder1", &group1, false) // Noop update
 
 	t.Run("should not add new version if rule was not changed", func(t *testing.T) {
 		versions, status, raw := apiClient.GetRuleVersionsWithStatus(t, uid)
@@ -4631,7 +4646,7 @@ func TestIntegrationRuleVersions(t *testing.T) {
 		require.Lenf(t, versions, 2, "Expected 2 versions, got %d", len(versions))
 	})
 
-	apiClient.DeleteRulesGroup(t, "folder1", group1.Name)
+	apiClient.DeleteRulesGroup(t, "folder1", group1.Name, false)
 
 	t.Run("should NotFound after rule was deleted", func(t *testing.T) {
 		_, status, raw := apiClient.GetRuleVersionsWithStatus(t, uid)
@@ -4684,7 +4699,7 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 		require.NoError(t, json.Unmarshal(postGroupRaw, &group1))
 
 		// Create rule under folder1
-		response := adminClient.PostRulesGroup(t, "folder1", &group1)
+		response := adminClient.PostRulesGroup(t, "folder1", &group1, false)
 		require.NotEmptyf(t, response.Created, "Expected created to be set")
 
 		// create some versions of the rule
@@ -4693,14 +4708,14 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 			require.Equal(t, http.StatusAccepted, status)
 			group1 = convertGettableRuleGroupToPostable(groups.GettableRuleGroupConfig)
 			group1.Rules[0].Annotations[util.GenerateShortUID()] = util.GenerateShortUID()
-			_ = adminClient.PostRulesGroup(t, "folder1", &group1)
+			_ = adminClient.PostRulesGroup(t, "folder1", &group1, false)
 		}
 		group, status = adminClient.GetRulesGroup(t, "folder1", group1.Name)
 		require.Equal(t, http.StatusAccepted, status)
 	}
 
 	// deleting group by using editor user
-	status, body := editorClient.DeleteRulesGroup(t, "folder1", group.Name)
+	status, body := editorClient.DeleteRulesGroup(t, "folder1", group.Name, false)
 	require.Equalf(t, http.StatusAccepted, status, "failed to delete group. Response: %s", body)
 
 	t.Run("should see deleted rules", func(t *testing.T) {
@@ -4731,6 +4746,120 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 			client := newAlertingApiClient(grafanaListedAddr, "viewer", "password")
 			_, status, raw := client.GetDeletedRulesWithStatus(t)
 			requireStatusCode(t, http.StatusForbidden, status, raw)
+		})
+	})
+
+	t.Run("permanently delete rule from deleted rules", func(t *testing.T) {
+		rules, status, raw := adminClient.GetDeletedRulesWithStatus(t)
+		requireStatusCode(t, http.StatusOK, status, raw)
+		require.NotEmpty(t, rules[""][0].Rules)
+		ruleGUID := rules[""][0].Rules[0].GrafanaManagedAlert.GUID
+		t.Run("non-admins should not be able to do it", func(t *testing.T) {
+			status, raw := editorClient.DeleteRuleFromTrashByGUID(t, ruleGUID)
+			requireStatusCode(t, http.StatusForbidden, status, raw)
+		})
+
+		status, raw = adminClient.DeleteRuleFromTrashByGUID(t, ruleGUID)
+		requireStatusCode(t, http.StatusOK, status, raw)
+
+		rules, status, raw = adminClient.GetDeletedRulesWithStatus(t)
+		requireStatusCode(t, http.StatusOK, status, raw)
+		idx := slices.IndexFunc(rules[""][0].Rules, func(node apimodels.GettableExtendedRuleNode) bool {
+			return node.GrafanaManagedAlert.GUID == ruleGUID
+		})
+		require.Equalf(t, -1, idx, "rule is expected to be deleted but it was returned by list operation")
+	})
+}
+
+func TestIntegrationRulePermanentlyDelete(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database
+	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableFeatureToggles:  []string{featuremgmt.FlagAlertRuleRestore},
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "editor",
+	})
+
+	adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+	editorClient := newAlertingApiClient(grafanaListedAddr, "editor", "password")
+
+	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-post.json"))
+	require.NoError(t, err)
+	var group1 apimodels.PostableRuleGroupConfig
+	require.NoError(t, json.Unmarshal(postGroupRaw, &group1))
+	require.Greaterf(t, len(group1.Rules), 1, "group should contain at least 2 rules")
+
+	// Create the namespace we'll save our alerts to.
+	adminClient.CreateFolder(t, "folder1", "folder1")
+	// Create rule under folder1
+	response := adminClient.PostRulesGroup(t, "folder1", &group1, false)
+	require.NotEmptyf(t, response.Created, "Expected created to be set")
+
+	deleted, status, raw := adminClient.GetDeletedRulesWithStatus(t)
+	requireStatusCode(t, http.StatusOK, status, raw)
+	require.Emptyf(t, deleted, "Expected empty list of deleted rules, got %v", deleted)
+
+	t.Run("delete rule in group permanently", func(t *testing.T) {
+		group1Before, _ := adminClient.GetRulesGroup(t, "folder1", group1.Name)
+		group1 = convertGettableRuleGroupToPostable(group1Before.GettableRuleGroupConfig)
+		group1.Rules = group1.Rules[:1] // remove one rule
+
+		t.Run("denied to non-admin", func(t *testing.T) {
+			_, status, raw := editorClient.PostRulesGroupWithStatus(t, "folder1", &group1, true)
+			require.Equalf(t, http.StatusForbidden, status, "got unexpected response: %s", raw)
+			g, _ := editorClient.GetRulesGroup(t, "folder1", group1.Name)
+			require.Len(t, g.Rules, len(group1Before.Rules))
+		})
+
+		t.Run("allowed to admin", func(t *testing.T) {
+			_, status, raw := adminClient.PostRulesGroupWithStatus(t, "folder1", &group1, true)
+			require.Equalf(t, http.StatusAccepted, status, "got unexpected response: %s", raw)
+			g, _ := adminClient.GetRulesGroup(t, "folder1", group1.Name)
+			require.Len(t, g.Rules, len(group1.Rules))
+
+			deleted, status, raw := adminClient.GetDeletedRulesWithStatus(t)
+			requireStatusCode(t, http.StatusOK, status, raw)
+			require.Emptyf(t, deleted, "Expected empty list of deleted rules, got %v", deleted)
+		})
+	})
+
+	t.Run("delete group permanently", func(t *testing.T) {
+		group1, status, raw := adminClient.GetRulesGroupWithStatus(t, "folder1", group1.Name)
+		require.Equalf(t, http.StatusAccepted, status, "got unexpected response: %s", raw)
+
+		t.Run("denied to non-admin", func(t *testing.T) {
+			status, raw := editorClient.DeleteRulesGroup(t, "folder1", group1.Name, true)
+			require.Equalf(t, http.StatusForbidden, status, "got unexpected response: %s", raw)
+			g, _ := editorClient.GetRulesGroup(t, "folder1", group1.Name)
+			require.Len(t, g.Rules, len(group1.Rules))
+		})
+		t.Run("allowed to admin", func(t *testing.T) {
+			status, raw := adminClient.DeleteRulesGroup(t, "folder1", group1.Name, true)
+			require.Equalf(t, http.StatusAccepted, status, "got unexpected response: %s", raw)
+			_, status, rawb := adminClient.GetRulesGroupWithStatus(t, "folder1", group1.Name)
+			require.Equalf(t, http.StatusNotFound, status, "got unexpected response: %s", string(rawb))
+
+			deleted, status, raw := adminClient.GetDeletedRulesWithStatus(t)
+			requireStatusCode(t, http.StatusOK, status, raw)
+			require.Emptyf(t, deleted, "Expected empty list of deleted rules, got %v", deleted)
 		})
 	})
 }
@@ -4825,6 +4954,7 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 				rule.GrafanaManagedAlert.NamespaceUID = "nsuid"
 				rule.GrafanaManagedAlert.Updated = time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC)
 				rule.GrafanaManagedAlert.UpdatedBy.UID = "uid"
+				rule.GrafanaManagedAlert.GUID = "guid"
 			}
 		}
 	}
@@ -4871,7 +5001,7 @@ func createRule(t *testing.T, client apiClient, folder string) (apimodels.Postab
 			},
 		},
 	}
-	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules)
+	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules, false)
 	require.Equal(t, http.StatusAccepted, status)
 	require.Len(t, resp.Created, 1)
 	return rules, resp.Created[0]
