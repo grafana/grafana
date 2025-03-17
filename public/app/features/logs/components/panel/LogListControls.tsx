@@ -111,7 +111,7 @@ export const LogListControls = ({ eventBus }: Props) => {
       <Dropdown overlay={deduplicationMenu} placement="auto-end">
         <IconButton
           name={'filter'}
-          className={styles.controlButton}
+          className={dedupStrategy !== LogsDedupStrategy.none ? styles.controlButtonActive : styles.controlButton}
           onClick={onSortOrderClick}
           tooltip={t('logs.logs-controls.deduplication', 'Deduplication')}
           size="md"
@@ -190,14 +190,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     controlButtonActive: css({
       margin: 0,
       color: theme.colors.text.secondary,
-      height: theme.spacing(2.5),
-      '&:before': {
+      height: theme.spacing(2),
+      '&:after': {
         display: 'block',
         content: '" "',
         position: 'absolute',
         height: 2,
         borderRadius: theme.shape.radius.default,
-        bottom: -4,
+        bottom: -6,
         backgroundImage: theme.colors.gradients.brandHorizontal,
         width: '95%',
         opacity: 1,
