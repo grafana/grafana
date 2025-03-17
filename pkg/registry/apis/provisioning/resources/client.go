@@ -12,32 +12,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
-type ResourceClients struct {
-	namespace string
-
-	dynamic   dynamic.Interface
-	discovery client.DiscoveryClient
-
-	// ResourceInterface cache for this context + namespace
-	mutex      sync.Mutex
-	byKind     map[schema.GroupVersionKind]*clientInfo
-	byResource map[schema.GroupVersionResource]*clientInfo
+type ClientFactory struct {
+	configProvider apiserver.RestConfigProvider
 }
 
-type clientInfo struct {
-	gvk    schema.GroupVersionKind
-	gvr    schema.GroupVersionResource
-	client dynamic.ResourceInterface
+func NewClientFactory(configProvider apiserver.RestConfigProvider) *ClientFactory {
+	return &ClientFactory{configProvider}
 }
 
-func NewResourceClients(ctx context.Context, configProvider apiserver.RestConfigProvider, namespace string) (*ResourceClients, error) {
-	if namespace == "" {
-		return nil, fmt.Errorf("missing namespace")
-	}
-
-	restConfig, err := configProvider.GetRestConfig(ctx)
+func (f *ClientFactory) Clients(ctx context.Context, namespace string) (*ResourceClients, error) {
+	restConfig, err := f.configProvider.GetRestConfig(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if namespace == "" {
+		return nil, fmt.Errorf("missing namespace")
 	}
 
 	discovery, err := client.NewDiscoveryClient(restConfig)
@@ -57,6 +47,24 @@ func NewResourceClients(ctx context.Context, configProvider apiserver.RestConfig
 		byKind:     make(map[schema.GroupVersionKind]*clientInfo),
 		byResource: make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
+}
+
+type ResourceClients struct {
+	namespace string
+
+	dynamic   dynamic.Interface
+	discovery client.DiscoveryClient
+
+	// ResourceInterface cache for this context + namespace
+	mutex      sync.Mutex
+	byKind     map[schema.GroupVersionKind]*clientInfo
+	byResource map[schema.GroupVersionResource]*clientInfo
+}
+
+type clientInfo struct {
+	gvk    schema.GroupVersionKind
+	gvr    schema.GroupVersionResource
+	client dynamic.ResourceInterface
 }
 
 func (c *ResourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {

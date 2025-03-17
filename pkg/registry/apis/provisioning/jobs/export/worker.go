@@ -12,7 +12,6 @@ import (
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -21,7 +20,7 @@ type ExportWorker struct {
 	clonedir string
 
 	// required to create clients
-	configProvider apiserver.RestConfigProvider
+	clientFactory resources.ClientFactory
 
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
@@ -30,14 +29,14 @@ type ExportWorker struct {
 	secrets secrets.Service
 }
 
-func NewExportWorker(configProvider apiserver.RestConfigProvider,
+func NewExportWorker(clientFactory resources.ClientFactory,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 	clonedir string,
 ) *ExportWorker {
 	return &ExportWorker{
 		clonedir,
-		configProvider,
+		clientFactory,
 		storageStatus,
 		secrets,
 	}
@@ -81,7 +80,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return errors.New("export job submitted targeting repository that is not a ReaderWriter")
 	}
 
-	clients, err := resources.NewResourceClients(ctx, r.configProvider, repo.Config().Namespace)
+	clients, err := r.clientFactory.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
 		return err
 	}

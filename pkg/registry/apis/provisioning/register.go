@@ -118,7 +118,7 @@ func NewAPIBuilder(
 		features:          features,
 		ghFactory:         ghFactory,
 		parsers: &resources.ParserFactory{
-			ConfigProvider: configProvider,
+			ClientFactory: *resources.NewClientFactory(configProvider),
 		},
 		render:         render,
 		clonedir:       clonedir,
@@ -515,7 +515,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.repositoryLister = repoInformer.Lister()
 
 			exportWorker := export.NewExportWorker(
-				b.parsers.ConfigProvider,
+				b.parsers.ClientFactory,
 				b.storageStatus,
 				b.secrets,
 				b.clonedir,
@@ -529,7 +529,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.jobs.Register(exportWorker)
 			b.jobs.Register(syncWorker)
 			b.jobs.Register(migrate.NewMigrationWorker(
-				b.parsers.ConfigProvider,
 				b.legacyMigrator,
 				b.parsers,
 				b.storageStatus,

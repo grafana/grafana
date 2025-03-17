@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -31,9 +30,6 @@ import (
 type MigrationWorker struct {
 	// Tempdir for repo clones
 	clonedir string
-
-	// required to create clients
-	configProvider apiserver.RestConfigProvider
 
 	// temporary... while we still do an import
 	parsers *resources.ParserFactory
@@ -58,7 +54,6 @@ type MigrationWorker struct {
 }
 
 func NewMigrationWorker(
-	configProvider apiserver.RestConfigProvider, // required to create clients
 	legacyMigrator legacy.LegacyMigrator,
 	parsers *resources.ParserFactory, // should not be necessary!
 	storageStatus dualwrite.Service,
@@ -70,7 +65,6 @@ func NewMigrationWorker(
 ) *MigrationWorker {
 	return &MigrationWorker{
 		clonedir,
-		configProvider,
 		parsers,
 		storageStatus,
 		legacyMigrator,

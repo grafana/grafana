@@ -17,7 +17,6 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 )
 
 // RemoveOrphanResourcesFinalizer removes everything this repo created
@@ -30,8 +29,8 @@ const ReleaseOrphanResourcesFinalizer = "release-orphan-resources"
 const CleanFinalizer = "cleanup"
 
 type finalizer struct {
-	lister         resources.ResourceLister
-	configProvider apiserver.RestConfigProvider
+	lister        resources.ResourceLister
+	clientFactory resources.ClientFactory
 }
 
 func (f *finalizer) process(ctx context.Context,
@@ -89,7 +88,7 @@ func (f *finalizer) processExistingItems(
 	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
 ) error {
 	logger := logging.FromContext(ctx)
-	clients, err := resources.NewResourceClients(ctx, f.configProvider, repo.Namespace)
+	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
 	if err != nil {
 		return err
 	}

@@ -20,19 +20,18 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 )
 
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 
 type ParserFactory struct {
-	ConfigProvider apiserver.RestConfigProvider
+	ClientFactory ClientFactory
 }
 
 func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
 	config := repo.Config()
 
-	clients, err := NewResourceClients(ctx, f.ConfigProvider, config.GetNamespace())
+	clients, err := f.ClientFactory.Clients(ctx, config.GetNamespace())
 	if err != nil {
 		return nil, err
 	}
