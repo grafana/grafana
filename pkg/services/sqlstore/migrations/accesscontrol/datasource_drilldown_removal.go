@@ -25,18 +25,15 @@ func (m *datasourceDrilldownRemovalMigrator) SQL(dialect migrator.Dialect) strin
 }
 
 func (m *datasourceDrilldownRemovalMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	result, err := sess.Exec("DELETE FROM permission WHERE action LIKE ?", "%datasources:drilldown%")
+	result, err := sess.Exec("DELETE FROM permission WHERE action IS ?", "%datasources:drilldown%")
 	if err != nil {
-		mg.Logger.Error("Failed to delete datasources:drilldown permissions", "error", err)
-		// This is a critical step, but we'll continue with the migration
-	} else {
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
-			mg.Logger.Info("Removed datasources:drilldown permissions, but couldn't determine how many")
-		} else {
-			mg.Logger.Info(fmt.Sprintf("Removed %d datasources:drilldown permissions", rowsAffected))
-		}
+		return err
 	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	mg.Logger.Info(fmt.Sprintf("Removed %d datasources:drilldown permissions", rowsAffected))
 
 	return nil
 }
