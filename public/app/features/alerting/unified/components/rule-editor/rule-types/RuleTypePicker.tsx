@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data/src';
 import { Stack, useStyles2 } from '@grafana/ui';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';

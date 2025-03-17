@@ -3,7 +3,7 @@ import { capitalize } from 'lodash';
 import * as React from 'react';
 
 import { DataFrame, FieldType } from '@grafana/data';
-import { convertFieldType } from '@grafana/data/internal';
+import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { reportInteraction } from '@grafana/runtime';
 import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/internal';

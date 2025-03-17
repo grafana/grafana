@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { config } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
