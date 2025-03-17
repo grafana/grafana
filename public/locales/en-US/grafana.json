@@ -2096,16 +2096,16 @@
     "toggletip": {
       "close": "Close"
     },
+    "toolbar": {
+      "copy-link": "Copy URL",
+      "copy-link-abs-time": "Copy absolute URL",
+      "copy-shortened-link-label": "Share"
+    },
     "toolbar-button-row": {
       "show-more": "Show more items"
     },
     "unit-picker": {
       "placeholder": "Choose"
-    },
-    "toolbar": {
-      "copy-link": "Copy URL",
-      "copy-link-abs-time": "Copy absolute URL",
-      "copy-shortened-link-label": "Share"
     },
     "user-icon": {
       "active-text": "Active last 15m",
