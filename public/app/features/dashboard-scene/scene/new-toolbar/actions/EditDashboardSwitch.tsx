@@ -11,6 +11,7 @@ export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => (
     label={t('dashboard.toolbar.edit-toggle.label', 'Toggle edit mode')}
     checked={!!dashboard.state.isEditing}
     disabled={playlistSrv.state.isPlaying}
+    variant="yellow"
     data-testid={selectors.components.NavToolbar.editDashboard.editButton}
     onClick={(evt) => {
       evt.preventDefault();

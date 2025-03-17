@@ -9,6 +9,7 @@ export const ToggleHiddenElementsSwitch = ({ dashboard }: ToolbarActionProps) =>
     icon="eye"
     label={t('dashboard.toolbar.toggle-hidden-elements', 'Toggle hidden elements')}
     checked={!!dashboard.state.showHiddenElements}
+    variant="gray"
     data-testid={selectors.components.PageToolbar.itemButton('toggle_hidden_elements')}
     onClick={(evt) => {
       evt.preventDefault();
