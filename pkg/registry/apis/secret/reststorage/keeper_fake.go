@@ -9,7 +9,6 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -89,7 +88,7 @@ func (s *fakeKeeperMetadataStorage) Delete(ctx context.Context, namespace xkube.
 	return nil
 }
 
-func (s *fakeKeeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
+func (s *fakeKeeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.Keeper, error) {
 	ns, ok := s.values[namespace.String()]
 	if !ok {
 		s.values[namespace.String()] = ns
@@ -98,7 +97,5 @@ func (s *fakeKeeperMetadataStorage) List(ctx context.Context, namespace xkube.Na
 	for _, v := range ns {
 		l = append(l, v)
 	}
-	return &secretv0alpha1.KeeperList{
-		Items: l,
-	}, nil
+	return l, nil
 }
