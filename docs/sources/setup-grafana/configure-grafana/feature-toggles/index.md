@@ -32,6 +32,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logsContextDatasourceUi`              | Allow datasource to provide custom UI for context view                                                                              | Yes                |
 | `lokiQuerySplitting`                   | Split large interval queries into subqueries with smaller time intervals                                                            | Yes                |
 | `influxdbBackendMigration`             | Query InfluxDB InfluxQL without the proxy                                                                                           | Yes                |
+| `prometheusRunQueriesInParallel`       | Enables running Prometheus queries in parallel                                                                                      | Yes                |
 | `dataplaneFrontendFallback`            | Support dataplane contract field name change for transformations and field name matchers where the name is different                | Yes                |
 | `unifiedRequestLog`                    | Writes error logs to the request logger                                                                                             | Yes                |
 | `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                          | Yes                |
