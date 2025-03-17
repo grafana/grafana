@@ -252,4 +252,5 @@ export interface FeatureToggles {
   extraLanguages?: boolean;
   noBackdropBlur?: boolean;
   alertingMigrationUI?: boolean;
+  unifiedStorageHistoryPruner?: boolean;
 }

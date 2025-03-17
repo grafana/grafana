@@ -1,6 +1,7 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { colorManipulator, DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import {
   StackingMode,
   VisibilityMode,
@@ -544,8 +545,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         });
 
         barsColors.push({
-          fill:
-            fillOpacity < 1 ? colors.map((c) => (c != null ? colorManipulator.alpha(c, fillOpacity) : null)) : colors,
+          fill: fillOpacity < 1 ? colors.map((c) => (c != null ? alpha(c, fillOpacity) : null)) : colors,
           stroke: colors,
         });
       }
