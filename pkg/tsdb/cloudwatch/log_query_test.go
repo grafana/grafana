@@ -550,11 +550,11 @@ func TestGroupingResultsWithFromSyncQueryTrue(t *testing.T) {
 		aws.String("fakelog-b"),
 	})
 
-	streamField := data.NewField("stream", data.Labels{}, []*int32{
-		aws.Int32(1),
-		aws.Int32(1),
-		aws.Int32(1),
-		aws.Int32(1),
+	streamField := data.NewField("stream", data.Labels{}, []*string{
+		aws.String("1"),
+		aws.String("1"),
+		aws.String("1"),
+		aws.String("1"),
 	})
 
 	countField := data.NewField("count", data.Labels{}, []*string{
