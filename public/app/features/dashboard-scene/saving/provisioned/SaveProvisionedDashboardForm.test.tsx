@@ -9,7 +9,6 @@ import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SaveDashboardDrawer } from '../SaveDashboardDrawer';
-import { DashboardChangeInfo } from '../shared';
 
 import { SaveProvisionedDashboardForm, Props } from './SaveProvisionedDashboardForm';
 
@@ -86,25 +85,6 @@ jest.mock('../SaveDashboardForm', () => {
   };
 });
 
-jest.mock('./defaults', () => {
-  const actual = jest.requireActual('./defaults');
-  return {
-    ...actual,
-    getWorkflowOptions: jest.fn().mockReturnValue([
-      {
-        label: 'Write directly',
-        value: 'write',
-        description: 'Write directly to the repository',
-      },
-      {
-        label: 'Create branch',
-        value: 'branch',
-        description: 'Create a new branch',
-      },
-    ]),
-  };
-});
-
 function setup(props: Partial<Props> = {}) {
   const user = userEvent.setup();
 
@@ -122,7 +102,6 @@ function setup(props: Partial<Props> = {}) {
         description: 'Test Description',
         isDirty: true,
       }),
-      state: { isDirty: true },
       setState: jest.fn(),
       closeModal: jest.fn(),
       getSaveAsModel: jest.fn().mockReturnValue(mockDashboard),
@@ -134,14 +113,13 @@ function setup(props: Partial<Props> = {}) {
     changeInfo: {
       changedSaveModel: mockDashboard,
       initialSaveModel: mockDashboard,
-      diffs: [],
       diffCount: 0,
       hasChanges: true,
       hasTimeChanges: false,
       hasVariableValueChanges: false,
       hasRefreshChange: false,
-      message: 'Test message',
-    } as unknown as DashboardChangeInfo,
+      diffs: {},
+    },
     isNew: true,
     isGitHub: true,
     defaultValues: {
@@ -159,6 +137,9 @@ function setup(props: Partial<Props> = {}) {
       workflows: ['write', 'branch'],
       sync: { enabled: false, target: 'folder' },
       title: 'Test Repository',
+      github: {
+        branch: 'main',
+      },
     },
     ...props,
   };
@@ -227,16 +208,20 @@ describe('SaveProvisionedDashboardForm', () => {
     const descriptionInput = screen.getByRole('textbox', { name: /description/i });
     const pathInput = screen.getByRole('textbox', { name: /path/i });
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
+
     await user.clear(titleInput);
     await user.clear(descriptionInput);
     await user.clear(pathInput);
     await user.clear(commentInput);
+
     await user.type(titleInput, 'New Dashboard');
     await user.type(descriptionInput, 'New Description');
     await user.type(pathInput, 'test-dashboard.json');
     await user.type(commentInput, 'Initial commit');
+
     const submitButton = screen.getByRole('button', { name: /save/i });
     await user.click(submitButton);
+
     await waitFor(() => {
       expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
     });
