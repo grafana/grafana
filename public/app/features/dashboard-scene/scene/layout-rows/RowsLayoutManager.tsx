@@ -29,12 +29,12 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       return t('dashboard.rows-layout.name', 'Rows');
     },
     get description() {
-      return t('dashboard.rows-layout.description', 'Rows layout');
+      return t('dashboard.rows-layout.description', 'Collapsable panel groups with headings');
     },
     id: 'rows-layout',
     createFromLayout: RowsLayoutManager.createFromLayout,
-
     kind: 'RowsLayout',
+    isGridLayout: false,
   };
 
   public readonly descriptor = RowsLayoutManager.descriptor;

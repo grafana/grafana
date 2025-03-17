@@ -51,11 +51,12 @@ export class DefaultGridLayoutManager
       return t('dashboard.default-layout.name', 'Custom');
     },
     get description() {
-      return t('dashboard.default-layout.description', 'Manually size and position panels');
+      return t('dashboard.default-layout.description', 'Position and size each panel individually');
     },
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
     kind: 'GridLayout',
+    isGridLayout: true,
   };
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;

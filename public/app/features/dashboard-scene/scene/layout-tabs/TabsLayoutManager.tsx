@@ -30,11 +30,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       return t('dashboard.tabs-layout.name', 'Tabs');
     },
     get description() {
-      return t('dashboard.tabs-layout.description', 'Tabs layout');
+      return t('dashboard.tabs-layout.description', 'Organize panels into horizontal tabs');
     },
     id: 'tabs-layout',
     createFromLayout: TabsLayoutManager.createFromLayout,
     kind: 'TabsLayout',
+    isGridLayout: false,
   };
 
   public readonly descriptor = TabsLayoutManager.descriptor;
