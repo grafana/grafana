@@ -13,7 +13,7 @@ import {
   isPluginExtensionLink,
   renderLimitedAddedComponents,
 } from './utils';
-import React, { Component } from 'react';
+import React from 'react';
 
 describe('Plugin Extensions / Utils', () => {
   describe('isPluginExtensionLink()', () => {
