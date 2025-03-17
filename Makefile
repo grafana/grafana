@@ -105,12 +105,12 @@ cleanup-old-git-hooks:
 	./scripts/cleanup-husky.sh
 
 .PHONY: lefthook-install
-lefthook-install: cleanup-old-git-hooks $(LEFTHOOK) # install lefthook for pre-commit hooks
-	$(LEFTHOOK) install -f
+lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
+	$(GO) tool lefthook install -f
 
 .PHONY: lefthook-uninstall
-lefthook-uninstall: $(LEFTHOOK)
-	$(LEFTHOOK) uninstall
+lefthook-uninstall:
+	$(GO) tool lefthook uninstall
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
@@ -163,10 +163,10 @@ gen-go:
 	$(GO) run $(GO_RACE_FLAG) ./pkg/build/wire/cmd/wire/main.go gen -tags $(WIRE_TAGS) ./pkg/server
 
 .PHONY: fix-cue
-fix-cue: $(CUE)
+fix-cue:
 	@echo "formatting cue files"
-	$(CUE) fix kinds/**/*.cue
-	$(CUE) fix public/app/plugins/**/**/*.cue
+	$(GO) tool cue fix kinds/**/*.cue
+	$(GO) tool cue fix public/app/plugins/**/**/*.cue
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
@@ -219,8 +219,8 @@ build-plugin-go: ## Build decoupled plugins
 build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
-run: $(BRA) ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(BRA) run
+run: ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
+	$(GO) tool bra run
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
@@ -253,7 +253,7 @@ test-go-unit-pretty: check-tparse
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
-	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -timeout=5m $(GO_INTEGRATION_TESTS)
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE)  -timeout=5m $(GO_INTEGRATION_TESTS) $(GO_TEST_OUTPUT)
 
 .PHONY: test-go-integration-alertmanager
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
@@ -297,9 +297,9 @@ test: test-go test-js ## Run all tests.
 
 ##@ Linting
 .PHONY: golangci-lint
-golangci-lint: $(GOLANGCI_LINT)
+golangci-lint:
 	@echo "lint via golangci-lint"
-	$(GOLANGCI_LINT) run \
+	$(GO) tool golangci-lint run \
 		--config .golangci.yml \
 		$(GO_LINT_FILES)
 
@@ -307,13 +307,13 @@ golangci-lint: $(GOLANGCI_LINT)
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_FILES to specify exact files to check
 
 .PHONY: lint-go-diff
-lint-go-diff: $(GOLANGCI_LINT)
-	git diff --name-only remotes/origin/main | \
+lint-go-diff:
+	git diff --name-only $(GIT_BASE) | \
 		grep '\.go$$' | \
 		$(XARGSR) dirname | \
 		sort -u | \
 		sed 's,^,./,' | \
-		$(XARGSR) $(GOLANGCI_LINT) run --config .golangci.toml
+		$(XARGSR) $(GO) tool golangci-lint run --config .golangci.toml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
