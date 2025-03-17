@@ -20,6 +20,7 @@ import {
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
+import grafanaConfig from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
@@ -77,6 +78,11 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
   const isManaged = Boolean(dashboard.isManaged());
+
+  // Internal only;
+  // allows viewer editing without ability to save
+  // used for grafana play
+  const canEdit = grafanaConfig.viewersCanEdit;
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -364,7 +370,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
+    condition: !isEditing && (dashboard.canEditDashboard() || canEdit) && !isViewingPanel && !isPlaying && editable,
     render: () => (
       <Button
         onClick={() => {
