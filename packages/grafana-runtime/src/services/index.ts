@@ -56,8 +56,8 @@ export {
 export {
   isPluginExtensionLink,
   isPluginExtensionComponent,
-  getLimitedComponents,
-  renderLimitedComponents,
+  getLimitedAddedComponents,
+  renderLimitedAddedComponents,
 } from './pluginExtensions/utils';
 export { setCurrentUser } from './user';
 export { RuntimeDataSource } from './RuntimeDataSource';

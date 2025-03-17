@@ -29,7 +29,7 @@ import {
   AngularComponent,
   getAngularLoader,
   getDataSourceSrv,
-  renderLimitedComponents,
+  renderLimitedAddedComponents,
   reportInteraction,
   usePluginComponents,
 } from '@grafana/runtime';
@@ -685,7 +685,7 @@ function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
       return null;
     }
 
-    return renderLimitedComponents({
+    return renderLimitedAddedComponents({
       props: { query, contextHints: ['queryeditorrow', 'header'] },
       components,
       limit: 1,

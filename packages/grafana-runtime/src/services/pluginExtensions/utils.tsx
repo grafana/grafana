@@ -22,7 +22,7 @@ export function isPluginExtensionComponent(
   return extension.type === PluginExtensionTypes.component && 'component' in extension;
 }
 
-export function getLimitedComponents<Props>({
+export function getLimitedAddedComponents<Props>({
   props,
   components,
   limit,
@@ -65,7 +65,7 @@ export function getLimitedComponents<Props>({
   return renderedComponents;
 }
 
-export function renderLimitedComponents<Props>({
+export function renderLimitedAddedComponents<Props>({
   props,
   components,
   limit,
@@ -76,7 +76,7 @@ export function renderLimitedComponents<Props>({
   limit?: number;
   pluginIdPatterns?: string[];
 }) {
-  const limitedComponents = getLimitedComponents({ props, components, limit, pluginIdPatterns });
+  const limitedComponents = getLimitedAddedComponents({ props, components, limit, pluginIdPatterns });
 
   if (!limitedComponents?.length) {
     return null;
@@ -84,8 +84,8 @@ export function renderLimitedComponents<Props>({
 
   return (
     <>
-      {limitedComponents.map((Component, index) => (
-        <Component key={index} {...props} />
+      {limitedComponents.map((Component) => (
+        <Component key={Component.meta.id} {...props} />
       ))}
     </>
   );
