@@ -7,7 +7,7 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { LimitTransformerOptions } from '@grafana/data/src/transformations/transformers/limit';
+import { LimitTransformerOptions } from '@grafana/data/internal';
 import { InlineFieldRow } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
