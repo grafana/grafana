@@ -20,7 +20,14 @@ import { useRulesAccess } from '../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { makeFolderLink, stringifyErrorLike } from '../utils/misc';
 import { createListFilterLink, groups } from '../utils/navigation';
-import { calcRuleEvalsToStartAlerting, getRuleName, rulerRuleType } from '../utils/rules';
+import {
+  calcRuleEvalsToStartAlerting,
+  getRuleName,
+  isFederatedRuleGroup,
+  isProvisionedRule,
+  isProvisionedRuleGroup,
+  rulerRuleType,
+} from '../utils/rules';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
 
 import { Title } from './Title';
@@ -111,7 +118,13 @@ function GroupDetailsPage() {
       actions={
         <>
           {dsFeatures && (
-            <GroupActions dsFeatures={dsFeatures} namespaceId={namespaceId} groupName={groupName} folder={folder} />
+            <GroupActions
+              dsFeatures={dsFeatures}
+              namespaceId={namespaceId}
+              groupName={groupName}
+              folder={folder}
+              rulerGroup={rulerGroup}
+            />
           )}
         </>
       }
@@ -147,20 +160,26 @@ interface GroupActionsProps {
   dsFeatures: RulesSourceFeatures;
   namespaceId: string;
   groupName: string;
+  rulerGroup: RulerRuleGroupDTO | undefined;
   folder: FolderDTO | undefined;
 }
 
-function GroupActions({ dsFeatures, namespaceId, groupName, folder }: GroupActionsProps) {
+function GroupActions({ dsFeatures, namespaceId, groupName, folder, rulerGroup }: GroupActionsProps) {
   const { canEditRules } = useRulesAccess();
   const [isExporting, setIsExporting] = useState<boolean>(false);
 
   const isGrafanaSource = dsFeatures.uid === GRAFANA_RULES_SOURCE_NAME;
   const canSaveInFolder = isGrafanaSource ? Boolean(folder?.canSave) : true;
-  const canEdit = Boolean(dsFeatures.rulerConfig) && canEditRules(dsFeatures.name) && canSaveInFolder;
 
-  if (!canEdit) {
-    return null;
-  }
+  const isFederated = rulerGroup ? isFederatedRuleGroup(rulerGroup) : false;
+  const isProvisioned = rulerGroup ? isProvisionedRuleGroup(rulerGroup) : false;
+
+  const canEdit =
+    Boolean(dsFeatures.rulerConfig) &&
+    canEditRules(dsFeatures.name) &&
+    canSaveInFolder &&
+    !isFederated &&
+    !isProvisioned;
 
   return (
     <>
@@ -169,13 +188,15 @@ function GroupActions({ dsFeatures, namespaceId, groupName, folder }: GroupActio
           <Trans i18nKey="alerting.group-details.export">Export</Trans>
         </Button>
       )}
-      <LinkButton
-        icon="pen"
-        href={groups.editPageLink(dsFeatures.uid, namespaceId, groupName, { includeReturnTo: true })}
-        variant="secondary"
-      >
-        <Trans i18nKey="alerting.group-details.edit">Edit</Trans>
-      </LinkButton>
+      {canEdit && (
+        <LinkButton
+          icon="pen"
+          href={groups.editPageLink(dsFeatures.uid, namespaceId, groupName, { includeReturnTo: true })}
+          variant="secondary"
+        >
+          <Trans i18nKey="alerting.group-details.edit">Edit</Trans>
+        </LinkButton>
+      )}
       {folder && isExporting && (
         <GrafanaRuleGroupExporter folderUid={folder.uid} groupName={groupName} onClose={() => setIsExporting(false)} />
       )}

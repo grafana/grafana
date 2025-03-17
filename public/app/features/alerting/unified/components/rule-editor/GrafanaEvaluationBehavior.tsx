@@ -31,6 +31,7 @@ import {
   isGrafanaAlertingRuleByType,
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
+  isProvisionedRuleGroup,
   rulerRuleType,
 } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
@@ -67,7 +68,7 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
 
   return folderGroups
     .map<SelectableValue<string>>((group) => {
-      const isProvisioned = isProvisionedGroup(group);
+      const isProvisioned = isProvisionedRuleGroup(group);
       return {
         label: group.name,
         value: group.name,
@@ -79,12 +80,6 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
     })
 
     .sort(sortByLabel);
-};
-
-const isProvisionedGroup = (group: RulerRuleGroupDTO) => {
-  return group.rules.some(
-    (rule) => rulerRuleType.grafana.rule(rule) && Boolean(rule.grafana_alert.provenance) === true
-  );
 };
 
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {

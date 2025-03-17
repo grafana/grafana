@@ -65,11 +65,18 @@ describe('GroupDetailsPage', () => {
   describe('Grafana managed rules', () => {
     const rule1 = mockRulerGrafanaRule({ for: '10m' }, { title: 'High CPU Usage' });
     const rule2 = mockRulerGrafanaRule({ for: '5m' }, { title: 'Memory Pressure' });
+    const provisionedRule = mockRulerGrafanaRule({ for: '10m' }, { title: 'Provisioned Rule', provenance: 'api' });
 
     const group = mockRulerRuleGroup({
       name: 'test-group-cpu',
       interval: '3m',
       rules: [rule1, rule2],
+    });
+
+    const provisionedGroup = mockRulerRuleGroup({
+      name: 'provisioned-group-cpu',
+      interval: '15m',
+      rules: [provisionedRule],
     });
 
     beforeEach(() => {
@@ -169,6 +176,21 @@ describe('GroupDetailsPage', () => {
       // Assert
       expect(tableRows).toHaveLength(2);
       expect(ui.editLink.query()).not.toBeInTheDocument(); // Edit button should not be present
+    });
+
+    it('should not allow editing if the group is provisioned', async () => {
+      setRulerRuleGroupHandler({ response: HttpResponse.json(provisionedGroup) });
+
+      // Act
+      renderGroupDetailsPage('grafana', 'test-folder-uid', provisionedGroup.name);
+
+      const tableRows = await ui.tableRow.findAll(await ui.rowsTable.find());
+
+      // Assert
+      expect(tableRows).toHaveLength(1);
+      expect(tableRows[0]).toHaveTextContent('Provisioned Rule');
+      expect(ui.editLink.query()).not.toBeInTheDocument();
+      expect(ui.exportButton.query()).toBeInTheDocument();
     });
 
     it('should allow exporting groups', async () => {
