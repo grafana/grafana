@@ -415,13 +415,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const colour = type === 'warning' ? 'orange' : 'blue';
     const iconName = type === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
 
-    let serializedWarnings, hasMultipleWarnings;
+    let serializedWarnings;
     if (uniqueWarnings.length > 1) {
-      serializedWarnings = '<ul>' + uniqueWarnings.map((warning) => '<li>' + warning.text + '</li>').join('') + '</ul>';
-      hasMultipleWarnings = true;
+      let textWarnings = uniqueWarnings.map((warning) => <li>{warning.text}</li>);
+      serializedWarnings = <ul>{textWarnings}</ul>;
     } else {
       serializedWarnings = uniqueWarnings[0].text;
-      hasMultipleWarnings = false;
     }
 
     return (
@@ -435,7 +434,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           </>
         }
         tooltip={serializedWarnings}
-        html={hasMultipleWarnings}
       />
     );
   };
