@@ -39,34 +39,24 @@ const config: ConfigFile = {
       apiImport: 'baseAPI',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
-    '../public/app/features/iam/api/endpoints.gen.ts': {
+    '../public/app/api/clients/iam/endpoints.gen.ts': {
       schemaFile: '../data/openapi/iam.grafana.app-v0alpha1.json',
-      apiFile: '../public/app/features/iam/api/api.ts',
-      apiImport: 'iamApi',
+      apiFile: '../public/app/api/clients/iam/baseAPI.ts',
       filterEndpoints: ['getDisplayMapping'],
-      exportName: 'generatedIamApi',
-      flattenArg: false,
       tag: true,
     },
-    '../public/app/features/provisioning/api/endpoints.gen.ts': {
-      apiFile: '../public/app/features/provisioning/api/baseAPI.ts',
+    '../public/app/api/clients/provisioning/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/provisioning/baseAPI.ts',
       schemaFile: '../data/openapi/provisioning.grafana.app-v0alpha1.json',
-      apiImport: 'baseAPI',
       filterEndpoints,
-      argSuffix: 'Arg',
-      responseSuffix: 'Response',
       tag: true,
       hooks: true,
     },
-    '../public/app/features/folders/api/endpoints.gen.ts': {
-      apiFile: '../public/app/features/folders/api/baseAPI.ts',
+    '../public/app/api/clients/folder/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/folder/baseAPI.ts',
       schemaFile: '../data/openapi/folder.grafana.app-v0alpha1.json',
-      apiImport: 'baseAPI',
       filterEndpoints: ['getFolder'],
-      argSuffix: 'Arg',
-      responseSuffix: 'Response',
       tag: true,
-      hooks: true,
     },
   },
 };

@@ -1011,6 +1011,46 @@
       "redirect-link": "",
       "subtitle": ""
     },
+    "conditional-rendering": {
+      "data": {
+        "disable": "",
+        "enable": "",
+        "label": ""
+      },
+      "group": {
+        "add": {
+          "button": "",
+          "data": "",
+          "interval": "",
+          "variable": ""
+        },
+        "condition": {
+          "label": "",
+          "meet-all": "",
+          "meet-any": ""
+        },
+        "label": ""
+      },
+      "interval": {
+        "input-label": "",
+        "invalid-message": "",
+        "label": ""
+      },
+      "shared": {
+        "delete-condition": ""
+      },
+      "title": "",
+      "variable": {
+        "label": "",
+        "operator": {
+          "equals": "",
+          "not-equal": ""
+        },
+        "select-operator": "",
+        "select-variable": "",
+        "value-input": ""
+      }
+    },
     "default-layout": {
       "description": "",
       "item-options": {
@@ -1185,16 +1225,6 @@
     },
     "responsive-layout": {
       "description": "",
-      "item-options": {
-        "hide-no-data": "",
-        "repeat": {
-          "variable": {
-            "description": "",
-            "title": ""
-          }
-        },
-        "title": ""
-      },
       "name": "",
       "options": {
         "columns": "",
@@ -1819,31 +1849,32 @@
     "data-source-http-settings": {
       "access-help": "",
       "access-help-details": "",
+      "access-help-title": "",
       "access-label": "",
-      "access-options-browser": "",
-      "access-options-proxy": "",
       "allowed-cookies": "",
-      "allowed-cookies-tooltip": "",
+      "allowed-cookies-description": "",
       "auth": "",
       "azure-auth-label": "",
       "azure-auth-tooltip": "",
       "basic-auth": "",
       "basic-auth-label": "",
       "browser-mode-description": "",
+      "browser-mode-label": "",
       "browser-mode-title": "",
-      "default-url-access-select": "",
       "default-url-tooltip": "",
       "direct-url-tooltip": "",
       "heading": "",
+      "invalid-url-error": "",
       "proxy-url-tooltip": "",
       "server-mode-description": "",
+      "server-mode-label": "",
       "server-mode-title": "",
-      "timeout-form-label": "",
+      "sigv4-auth-label": "",
+      "timeout-description": "",
       "timeout-label": "",
-      "timeout-tooltip": "",
-      "url-label": "",
-      "with-credential-label": "",
-      "with-credential-tooltip": ""
+      "timeout-placeholder": "",
+      "with-credentials-label": "",
+      "with-credentials-tooltip": ""
     },
     "data-source-settings": {
       "alerting-settings-heading": "",
