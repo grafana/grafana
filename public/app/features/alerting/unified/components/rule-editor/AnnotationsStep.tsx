@@ -98,9 +98,30 @@ const AnnotationsStep = () => {
           <Trans i18nKey="alerting.annotations.description">Add more context to your alert notifications.</Trans>
         </Text>
         <NeedHelpInfo
-          contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages.
-          For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
-          Annotations can contain a combination of text and template code.`}
+          externalLink={
+            'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations'
+          }
+          linkText={`Read about annotations`}
+          contentText={
+            <>
+              <p>
+                {t(
+                  'alerting.rule-form.annotations.description1',
+                  'Annotations add additional information to alerts, helping alert responders identify and address potential issues.'
+                )}
+              </p>
+              <p>
+                {t(
+                  'alerting.rule-form.annotations.description2',
+                  'For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.'
+                )}
+              </p>
+              {t(
+                'alerting.rule-form.annotations.description3',
+                'Annotations can contain a combination of text and template code, which is used to include data from queries.'
+              )}
+            </>
+          }
           title="Annotations"
         />
       </Stack>
