@@ -18,8 +18,11 @@ import (
 type Check struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
-	Spec              CheckSpec   `json:"spec" yaml:"spec"`
-	CheckStatus       CheckStatus `json:"status" yaml:"status"`
+
+	// Spec is the spec of the Check
+	Spec CheckSpec `json:"spec" yaml:"spec"`
+
+	Status CheckStatus `json:"status" yaml:"status"`
 }
 
 func (o *Check) GetSpec() any {
@@ -37,14 +40,14 @@ func (o *Check) SetSpec(spec any) error {
 
 func (o *Check) GetSubresources() map[string]any {
 	return map[string]any{
-		"status": o.CheckStatus,
+		"status": o.Status,
 	}
 }
 
 func (o *Check) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
-		return o.CheckStatus, true
+		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -57,7 +60,7 @@ func (o *Check) SetSubresource(name string, value any) error {
 		if !ok {
 			return fmt.Errorf("cannot set status type %#v, not of type CheckStatus", value)
 		}
-		o.CheckStatus = cast
+		o.Status = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
