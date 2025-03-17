@@ -87,8 +87,7 @@ export const DataLinkSuggestions = ({ suggestions, ...otherProps }: DataLinkSugg
           <DataLinkSuggestionsList
             {...otherProps}
             suggestions={groupedSuggestions[key]}
-            // eslint-disable-next-line @grafana/no-untranslated-strings
-            label={`${capitalize(key)}`}
+            label={capitalize(key)}
             activeIndex={otherProps.activeIndex}
             activeIndexOffset={indexOffset}
             key={key}
