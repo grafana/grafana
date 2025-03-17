@@ -542,6 +542,11 @@
       "label-target-data-source": "Target data source"
     },
     "rule-form": {
+      "annotations": {
+        "description1": "Annotations add additional information to alerts, helping alert responders identify and address potential issues.",
+        "description2": "For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.",
+        "description3": "Annotations can contain a combination of text and template code, which is used to include data from queries."
+      },
       "evaluation": {
         "evaluation-group-and-interval": "Evaluation group and interval",
         "group": {
@@ -1040,6 +1045,9 @@
     }
   },
   "dashboard": {
+    "actions": {
+      "open-settings": "Settings"
+    },
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",
@@ -1049,6 +1057,46 @@
     "alert-rules-drawer": {
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
+    },
+    "conditional-rendering": {
+      "data": {
+        "disable": "Disable",
+        "enable": "Enable",
+        "label": "Data"
+      },
+      "group": {
+        "add": {
+          "button": "Add condition based on",
+          "data": "Data",
+          "interval": "Interval",
+          "variable": "Variable value"
+        },
+        "condition": {
+          "label": "Evaluate conditions",
+          "meet-all": "Meet all",
+          "meet-any": "Meet any"
+        },
+        "label": "Group"
+      },
+      "interval": {
+        "input-label": "Value",
+        "invalid-message": "Invalid interval",
+        "label": "Time range interval"
+      },
+      "shared": {
+        "delete-condition": "Delete Condition"
+      },
+      "title": "Conditional rendering options",
+      "variable": {
+        "label": "Variable",
+        "operator": {
+          "equals": "Equals",
+          "not-equal": "Not equal"
+        },
+        "select-operator": "Operator",
+        "select-variable": "Select variable",
+        "value-input": "Value"
+      }
     },
     "default-layout": {
       "description": "Manually size and position panels",
@@ -1224,16 +1272,6 @@
     },
     "responsive-layout": {
       "description": "Automatically positions panels into a grid.",
-      "item-options": {
-        "hide-no-data": "Hide when no data",
-        "repeat": {
-          "variable": {
-            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
-            "title": "Repeat by variable"
-          }
-        },
-        "title": "Layout options"
-      },
       "name": "Auto",
       "options": {
         "columns": "Columns",
@@ -1858,31 +1896,32 @@
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
       "access-help-details": "Access mode controls how requests to the data source will be handled.<1> <1>Server</1></1> should be the preferred way if nothing else is stated.",
+      "access-help-title": "Access help",
       "access-label": "Access",
-      "access-options-browser": "Browser",
-      "access-options-proxy": "Server (default)",
       "allowed-cookies": "Allowed cookies",
-      "allowed-cookies-tooltip": "Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.",
+      "allowed-cookies-description": "Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.",
       "auth": "Auth",
       "azure-auth-label": "Azure Authentication",
       "azure-auth-tooltip": "Use Azure authentication for Azure endpoint.",
       "basic-auth": "Basic Auth Details",
       "basic-auth-label": "Basic auth",
       "browser-mode-description": "All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.",
+      "browser-mode-label": "Browser",
       "browser-mode-title": "<0>Browser access mode:</0>",
-      "default-url-access-select": "Access",
       "default-url-tooltip": "Specify a complete HTTP URL (for example http://your_server:8080)",
       "direct-url-tooltip": "Your access method is <1>Browser</1>, this means the URL needs to be accessible from the browser.",
       "heading": "HTTP",
+      "invalid-url-error": "Invalid URL",
       "proxy-url-tooltip": "Your access method is <1>Server</1>, this means the URL needs to be accessible from the grafana backend/server.",
       "server-mode-description": "All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.",
+      "server-mode-label": "Server (default)",
       "server-mode-title": "<0>Server access mode (Default):</0>",
-      "timeout-form-label": "Timeout",
-      "timeout-label": "Timeout in seconds",
-      "timeout-tooltip": "HTTP request timeout in seconds",
-      "url-label": "URL",
-      "with-credential-label": "With Credentials",
-      "with-credential-tooltip": "Whether credentials such as cookies or auth headers should be sent with cross-site requests."
+      "sigv4-auth-label": "SigV4 auth",
+      "timeout-description": "HTTP request timeout in seconds",
+      "timeout-label": "Timeout",
+      "timeout-placeholder": "Timeout in seconds",
+      "with-credentials-label": "With Credentials",
+      "with-credentials-tooltip": "Whether credentials such as cookies or auth headers should be sent with cross-site requests."
     },
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
@@ -3105,6 +3144,19 @@
       "connections-tab": {
         "description": "You currently have the following data sources configured for {{pluginName}}, click a tile to view the configuration details. You can find all of your data source connections in <4><0>Connections</0> - <3>Data sources</3>.</4>"
       },
+      "disabled-error": {
+        "angular-deprecation-link": "Read more about angular deprecation",
+        "angular-error-text": "This plugin has been disabled as Grafana no longer supports Angular based plugins. You can try updating the plugin to the latest version to resolve this issue. You should then test to confirm it works as expected.",
+        "angular-error-text-no-non-angular-version": "This plugin has been disabled as Grafana no longer supports Angular based plugins. Unfortunately, the latest version of this plugin still uses Angular so you need to wait for the plugin author to migrate to continue using this plugin.",
+        "contact-server-admin": "Please contact your server administrator to get this resolved.",
+        "failed-backend-start-text": "This plugin failed to start. Server logs can provide more information.",
+        "invalid-signature-text": "Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we discovered that it was invalid. We can not guarantee the trustworthy of this plugin and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a verified version of this plugin.",
+        "manage-plugins-link": "Read more about managing plugins",
+        "missing-signature-text": "Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we discovered that there is no signature for this plugin. We can not guarantee the trustworthy of this plugin and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a verified version of this plugin.",
+        "modified-signature-text": "Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we discovered that the content of this plugin does not match its signature. We can not guarantee the trustworthy of this plugin and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a verified version of this plugin.",
+        "title": "Plugin disabled",
+        "unknown-error-text": "We failed to run this plugin due to an unkown reason and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a working version of this plugin."
+      },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",
         "customLinks": "Custom links ",
@@ -3748,7 +3800,7 @@
       "home-dashboard-placeholder": "Default dashboard",
       "locale-label": "Language",
       "locale-placeholder": "Choose language",
-      "theme-description": "Enjoying the limited edition themes? Tell us what you'd like to see <2>here.</2>",
+      "theme-description": "Enjoying the experimental themes? Tell us what you'd like to see <2>here.</2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },
