@@ -1,4 +1,5 @@
 import { Button, Modal } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { FolderDTO, FolderListItemDTO } from '../../../../types';
 import { NestedFolderDTO } from '../../../search/service/types';
@@ -14,7 +15,7 @@ export interface Props {
 export function ProvisionedResourceDeleteModal({ onDismiss, resource }: Props) {
   const type = isDashboard(resource) ? 'dashboard' : 'folder';
   return (
-    <Modal isOpen={true} title="Cannot delete provisioned resource" onDismiss={onDismiss}>
+    <Modal isOpen={true} title={t("dashboard-scene.provisioned-resource-delete-modal.title-cannot-delete-provisioned-resource", "Cannot delete provisioned resource")} onDismiss={onDismiss}>
       <>
         <p>
           This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository
@@ -24,9 +25,9 @@ export function ProvisionedResourceDeleteModal({ onDismiss, resource }: Props) {
       </>
 
       <Modal.ButtonRow>
-        <Button variant="primary" onClick={onDismiss}>
+        <Button variant="primary" onClick={onDismiss}><Trans i18nKey="dashboard-scene.provisioned-resource-delete-modal.ok">
           OK
-        </Button>
+        </Trans></Button>
       </Modal.ButtonRow>
     </Modal>
   );
