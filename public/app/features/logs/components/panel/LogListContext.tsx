@@ -86,7 +86,7 @@ export interface Props {
   showControls: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
-  syntaxHighlighting: boolean;
+  syntaxHighlighting?: boolean;
   wrapLogMessage: boolean;
 }
 
@@ -108,7 +108,7 @@ export const LogListContextProvider = ({
   showControls,
   showTime,
   sortOrder,
-  syntaxHighlighting,
+  syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
   wrapLogMessage,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
