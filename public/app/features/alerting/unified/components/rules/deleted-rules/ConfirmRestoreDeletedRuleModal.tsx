@@ -14,7 +14,7 @@ import { RuleFormValues } from '../../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { grafanaRuleDtoToFormValues } from '../../../utils/rule-form';
-import { isGrafanaRecordingRule, isGrafanaRulerRule } from '../../../utils/rules';
+import { rulerRuleType } from '../../../utils/rules';
 import { createRelativeUrl } from '../../../utils/url';
 
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
@@ -44,7 +44,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
     if (!ruleToRestore) {
       return;
     }
-    if (!isGrafanaRulerRule(ruleToRestore)) {
+    if (!rulerRuleType.grafana.rule(ruleToRestore)) {
       return;
     }
     return restoreMethod
@@ -62,7 +62,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
     if (!ruleToRestore) {
       return;
     }
-    if (!isGrafanaRulerRule(ruleToRestore)) {
+    if (!rulerRuleType.grafana.rule(ruleToRestore)) {
       return;
     }
     const namespaceName = await backendSrv
@@ -159,7 +159,7 @@ const createAlert = async (ruleToRecover: RulerGrafanaRuleDTO, namespace: string
     throw new Error(message);
   }
 
-  const urlPath = isGrafanaRecordingRule(ruleToRecover) ? '/alerting/new/grafana-recording' : '/alerting/new';
+  const urlPath = rulerRuleType.any.recordingRule(ruleToRecover) ? '/alerting/new/grafana-recording' : '/alerting/new';
 
   const ruleFormUrl = createRelativeUrl(urlPath, {
     isManualRestore: 'true',

@@ -373,7 +373,7 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
   const duration = rule.for;
   const annotations = rule.annotations;
   const labels = rule.labels;
-  if (isGrafanaRecordingRule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     // grafana recording rule
     return {
       ...defaultFormValues,
