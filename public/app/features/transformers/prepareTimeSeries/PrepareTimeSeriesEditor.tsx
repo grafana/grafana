@@ -59,7 +59,22 @@ const longInfo = {
   ),
 };
 
-const formats: Array<SelectableValue<timeSeriesFormat>> = [wideInfo, multiInfo, longInfo];
+const flatInfo = {
+  label: 'Flat time series',
+  value: timeSeriesFormat.TimeSeriesFlat,
+  description: 'Convert each frame to flat format',
+  info: (
+    <ul>
+      <li>Single frame</li>
+      <li>1st field is time field</li>
+      <li>Time in ascending order, but may have duplicates</li>
+      <li>Strings and booleans remain as columns</li>
+      <li>All non-time, non string columns will be repeated as individual rows</li>
+    </ul>
+  ),
+};
+
+const formats: Array<SelectableValue<timeSeriesFormat>> = [wideInfo, multiInfo, longInfo, flatInfo];
 
 export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSeriesOptions>): React.ReactElement {
   const { options, onChange } = props;

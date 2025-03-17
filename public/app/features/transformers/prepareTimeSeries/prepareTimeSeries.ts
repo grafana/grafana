@@ -29,6 +29,7 @@ import { partitionByValues } from '../partitionByValues/partitionByValues';
 export enum timeSeriesFormat {
   TimeSeriesWide = 'wide',
   TimeSeriesLong = 'long',
+  TimeSeriesFlat = 'flat',
   TimeSeriesMulti = 'multi',
 
   /** @deprecated use multi */
@@ -142,7 +143,7 @@ export function toTimeSeriesMulti(data: DataFrame[]): DataFrame[] {
   return result;
 }
 
-export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
+export function toTimeSeriesLong(data: DataFrame[], flatten = false): DataFrame[] {
   if (!Array.isArray(data) || data.length === 0) {
     return data;
   }
@@ -155,6 +156,8 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
     const uniqueLabelKeys: Record<string, boolean> = {};
     const labelKeyToWideIndices: Record<string, number[]> = {};
     const uniqueFactorNamesToWideIndex: Record<string, number> = {};
+
+    let allSameType = true;
 
     for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
       const field = frame.fields[fieldIndex];
@@ -184,6 +187,12 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
             }
           } else {
             uniqueValueNamesToType[field.name] = field.type;
+
+            if (allSameType && uniqueValueNames.length > 0) {
+              const lastUniqueVal = uniqueValueNames[uniqueValueNames.length - 1];
+              allSameType = field.type === uniqueValueNamesToType[lastUniqueVal];
+            }
+
             uniqueValueNames.push(field.name);
           }
 
@@ -242,40 +251,77 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
       fields: [{ name: timeField.name, type: timeField.type }],
     });
 
-    for (const name of uniqueValueNames) {
-      longFrame.addField({ name: name, type: uniqueValueNamesToType[name] });
-    }
+    if (flatten) {
+      for (const name of uniqueFactorNames) {
+        longFrame.addField({ name: name, type: FieldType.string });
+      }
 
-    for (const name of uniqueFactorNames) {
-      longFrame.addField({ name: name, type: FieldType.string });
-    }
+      // repeat a row for each of these with columns of variable and value
+      if (uniqueValueNames.length > 0) {
+        longFrame.addField({ name: 'Variable', type: FieldType.string });
+        longFrame.addField({
+          name: 'Value',
+          type: allSameType
+            ? ((uniqueValueNamesToType[uniqueValueNames[0]] as FieldType) ?? FieldType.string)
+            : FieldType.string,
+        });
+      }
 
-    for (const timeWideRowIndex of sortedTimeRowIndices) {
-      const { time, wideRowIndex } = timeWideRowIndex;
+      for (const timeWideRowIndex of sortedTimeRowIndices) {
+        const { time, wideRowIndex } = timeWideRowIndex;
 
-      for (const labelKeys of sortedUniqueLabelKeys) {
-        const rowValues: Record<string, any> = {};
+        for (const labelKeys of sortedUniqueLabelKeys) {
+          const rowValues: Record<string, any> = {};
 
-        for (const name of uniqueFactorNamesWithWideIndices) {
-          rowValues[name] = frame.fields[uniqueFactorNamesToWideIndex[name]].values[wideRowIndex];
-        }
-
-        let index = 0;
-
-        for (const wideFieldIndex of labelKeyToWideIndices[labelKeys]) {
-          const wideField = frame.fields[wideFieldIndex];
-
-          if (index++ === 0 && wideField.labels != null) {
-            for (const labelKey in wideField.labels) {
-              rowValues[labelKey] = wideField.labels[labelKey];
+          for (const wideFieldIndex of labelKeyToWideIndices[labelKeys]) {
+            const wideField = frame.fields[wideFieldIndex];
+            rowValues['Variable'] = wideField.name;
+            rowValues['Value'] = wideField.values[wideRowIndex];
+            for (const name of uniqueFactorNamesWithWideIndices) {
+              rowValues[name] = frame.fields[uniqueFactorNamesToWideIndex[name]].values[wideRowIndex];
             }
+
+            rowValues[timeField.name] = time;
+            longFrame.add(rowValues);
+          }
+        }
+      }
+    } else {
+      for (const name of uniqueValueNames) {
+        longFrame.addField({ name: name, type: uniqueValueNamesToType[name] });
+      }
+
+      for (const name of uniqueFactorNames) {
+        longFrame.addField({ name: name, type: FieldType.string });
+      }
+
+      for (const timeWideRowIndex of sortedTimeRowIndices) {
+        const { time, wideRowIndex } = timeWideRowIndex;
+
+        for (const labelKeys of sortedUniqueLabelKeys) {
+          const rowValues: Record<string, any> = {};
+
+          for (const name of uniqueFactorNamesWithWideIndices) {
+            rowValues[name] = frame.fields[uniqueFactorNamesToWideIndex[name]].values[wideRowIndex];
           }
 
-          rowValues[wideField.name] = wideField.values[wideRowIndex];
-        }
+          let index = 0;
 
-        rowValues[timeField.name] = time;
-        longFrame.add(rowValues);
+          for (const wideFieldIndex of labelKeyToWideIndices[labelKeys]) {
+            const wideField = frame.fields[wideFieldIndex];
+
+            if (index++ === 0 && wideField.labels != null) {
+              for (const labelKey in wideField.labels) {
+                rowValues[labelKey] = wideField.labels[labelKey];
+              }
+            }
+
+            rowValues[wideField.name] = wideField.values[wideRowIndex];
+          }
+
+          rowValues[timeField.name] = time;
+          longFrame.add(rowValues);
+        }
       }
     }
 
@@ -299,6 +345,10 @@ export function longToMultiTimeSeries(frame: DataFrame): DataFrame[] {
   });
 }
 
+function toTimeSeriesFlat(data: DataFrame[]): DataFrame[] {
+  return toTimeSeriesLong(data, true);
+}
+
 export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<PrepareTimeSeriesOptions> = {
   id: DataTransformerID.prepareTimeSeries,
   name: 'Prepare time series',
@@ -314,6 +364,8 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
       return toTimeSeriesMulti;
     } else if (format === timeSeriesFormat.TimeSeriesLong) {
       return toTimeSeriesLong;
+    } else if (format === timeSeriesFormat.TimeSeriesFlat) {
+      return toTimeSeriesFlat;
     }
     const joinBy = fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
 
