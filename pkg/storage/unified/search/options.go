@@ -8,9 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
-func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tracer tracing.Tracer, docs resource.DocumentBuilderSupplier, indexMetrics *resource.BleveIndexMetrics) (resource.SearchOptions, error) {
+func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tracer tracing.Tracer, reg prometheus.Registerer, docs resource.DocumentBuilderSupplier) (resource.SearchOptions, error) {
 	// Setup the search server
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
 		root := cfg.IndexPath
@@ -25,7 +26,8 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 			Root:          root,
 			FileThreshold: int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
 			BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
-		}, tracer, features, indexMetrics)
+			Reg:           reg,
+		}, tracer, features)
 
 		if err != nil {
 			return resource.SearchOptions{}, err
@@ -36,6 +38,7 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 			Resources:     docs,
 			WorkerThreads: cfg.IndexWorkers,
 			InitMinCount:  cfg.IndexMinCount,
+			Reg:           reg,
 		}, nil
 	}
 	return resource.SearchOptions{}, nil

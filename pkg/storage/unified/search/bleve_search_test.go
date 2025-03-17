@@ -335,7 +335,7 @@ func newTestDashboardsIndex(t *testing.T) resource.ResourceIndex {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 9999, // use in-memory for tests
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering))
 	require.NoError(t, err)
 
 	rv := int64(10)

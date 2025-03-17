@@ -49,10 +49,8 @@ type service struct {
 
 	authenticator interceptors.Authenticator
 
-	log            log.Logger
-	reg            prometheus.Registerer
-	storageMetrics *resource.StorageMetrics
-	indexMetrics   *resource.BleveIndexMetrics
+	log log.Logger
+	reg prometheus.Registerer
 
 	docBuilders resource.DocumentBuilderSupplier
 }
@@ -64,8 +62,6 @@ func ProvideUnifiedStorageGrpcService(
 	log log.Logger,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
-	storageMetrics *resource.StorageMetrics,
-	indexMetrics *resource.BleveIndexMetrics,
 ) (UnifiedStorageGrpcService, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
@@ -88,17 +84,15 @@ func ProvideUnifiedStorageGrpcService(
 	authn := grpcutils.NewAuthenticatorWithFallback(cfg, reg, tracing, &grpc.Authenticator{Tracer: tracing})
 
 	s := &service{
-		cfg:            cfg,
-		features:       features,
-		stopCh:         make(chan struct{}),
-		authenticator:  authn,
-		tracing:        tracing,
-		db:             db,
-		log:            log,
-		reg:            reg,
-		docBuilders:    docBuilders,
-		storageMetrics: storageMetrics,
-		indexMetrics:   indexMetrics,
+		cfg:           cfg,
+		features:      features,
+		stopCh:        make(chan struct{}),
+		authenticator: authn,
+		tracing:       tracing,
+		db:            db,
+		log:           log,
+		reg:           reg,
+		docBuilders:   docBuilders,
 	}
 
 	// This will be used when running as a dskit service
@@ -113,12 +107,12 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics)
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.reg, s.docBuilders)
 	if err != nil {
 		return err
 	}
 
-	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics)
+	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions)
 	if err != nil {
 		return err
 	}

@@ -20,6 +20,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -47,23 +48,25 @@ type BleveOptions struct {
 	// How big should a batch get before flushing
 	// ?? not totally sure the units
 	BatchSize int
+
+	Reg prometheus.Registerer
 }
 
 type bleveBackend struct {
-	tracer trace.Tracer
-	log    *slog.Logger
-	opts   BleveOptions
-	start  time.Time
+	tracer  trace.Tracer
+	log     *slog.Logger
+	metrics *bleveIndexMetrics
+	opts    BleveOptions
+	start   time.Time
 
 	// cache info
 	cache   map[resource.NamespacedResource]*bleveIndex
 	cacheMu sync.RWMutex
 
-	features     featuremgmt.FeatureToggles
-	indexMetrics *resource.BleveIndexMetrics
+	features featuremgmt.FeatureToggles
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -76,13 +79,13 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 	}
 
 	bleveBackend := &bleveBackend{
-		log:          slog.Default().With("logger", "bleve-backend"),
-		tracer:       tracer,
-		cache:        make(map[resource.NamespacedResource]*bleveIndex),
-		opts:         opts,
-		start:        time.Now(),
-		features:     features,
-		indexMetrics: indexMetrics,
+		log:      slog.Default().With("logger", "bleve-backend"),
+		tracer:   tracer,
+		cache:    make(map[resource.NamespacedResource]*bleveIndex),
+		opts:     opts,
+		start:    time.Now(),
+		features: features,
+		metrics:  newBleveIndexMetrics(opts.Reg),
 	}
 
 	go bleveBackend.updateIndexSizeMetric(opts.Root)
@@ -104,10 +107,6 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
 func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
-	if b.indexMetrics == nil {
-		return
-	}
-
 	for {
 		var totalSize int64
 
@@ -126,7 +125,7 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 		})
 
 		if err == nil {
-			b.indexMetrics.IndexSize.Set(float64(totalSize))
+			b.metrics.indexSize.Set(float64(totalSize))
 		} else {
 			b.log.Error("got error while trying to calculate bleve file index size", "error", err)
 		}
@@ -205,14 +204,10 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		if index != nil && err == nil {
 			go b.cleanOldIndexes(resourceDir, fname)
 		}
-		if b.indexMetrics != nil {
-			b.indexMetrics.IndexTenants.WithLabelValues("file").Inc()
-		}
+		b.metrics.indexTenants.WithLabelValues("file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
-		if b.indexMetrics != nil {
-			b.indexMetrics.IndexTenants.WithLabelValues("memory").Inc()
-		}
+		b.metrics.indexTenants.WithLabelValues("memory").Inc()
 	}
 	if err != nil {
 		return nil, err
