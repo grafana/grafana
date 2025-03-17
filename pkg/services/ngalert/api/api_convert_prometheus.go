@@ -117,7 +117,6 @@ type ConvertPrometheusSrv struct {
 	xactManager      provisioning.TransactionManager
 	proxySvc         *LotexRuler
 
-	// TODO: Refactor
 	rulerSrv *RulerSrv
 }
 
