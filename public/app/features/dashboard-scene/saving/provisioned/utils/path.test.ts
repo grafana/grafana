@@ -68,4 +68,4 @@ describe('generatePath', () => {
 
     expect(result).toBe('my-dashboard.json');
   });
-}); 
+});

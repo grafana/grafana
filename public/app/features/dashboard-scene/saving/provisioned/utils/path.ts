@@ -16,7 +16,7 @@ export interface GeneratePathParams {
  */
 export function generatePath({ timestamp, pathFromAnnotation, slug, folderPath = '' }: GeneratePathParams): string {
   let path = '';
-  
+
   if (pathFromAnnotation) {
     const hashIndex = pathFromAnnotation.indexOf('#');
     path = hashIndex > 0 ? pathFromAnnotation.substring(0, hashIndex) : pathFromAnnotation;
@@ -29,6 +29,6 @@ export function generatePath({ timestamp, pathFromAnnotation, slug, folderPath =
   if (folderPath) {
     return `${folderPath}/${path}`;
   }
-  
+
   return path;
-} 
+}

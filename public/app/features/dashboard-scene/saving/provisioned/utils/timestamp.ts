@@ -8,4 +8,4 @@ import { dateTime } from '@grafana/data';
 export function generateTimestamp(): string {
   const random = new Chance();
   return `${dateTime().format('YYYY-MM-DD')}-${random.string({ length: 5, alpha: true })}`;
-} 
+}
