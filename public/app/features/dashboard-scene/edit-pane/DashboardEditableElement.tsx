@@ -6,7 +6,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardLayoutSelector } from '../scene/layouts-shared/DashboardLayoutSelector';
+import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 export class DashboardEditableElement implements EditableDashboardElement {
@@ -41,24 +41,14 @@ export class DashboardEditableElement implements EditableDashboardElement {
             title: t('dashboard.options.description', 'Description'),
             render: () => <DashboardDescriptionInput dashboard={dashboard} />,
           })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.layout.common.layout', 'Layout'),
-            render: () => <DashboardLayoutSelector layoutManager={body} />,
-          })
         );
 
-      if (body.getOptions) {
-        for (const option of body.getOptions()) {
-          editPaneHeaderOptions.addItem(option);
-        }
-      }
-
       return editPaneHeaderOptions;
-    }, [body, dashboard]);
+    }, [dashboard]);
 
-    return [dashboardOptions];
+    const layoutCategory = useLayoutCategory(body);
+
+    return [dashboardOptions, layoutCategory];
   }
 
   public renderActions(): ReactNode {

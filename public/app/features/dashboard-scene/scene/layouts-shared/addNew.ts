@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { SceneGridRow } from '@grafana/scenes';
 
 import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
@@ -31,13 +32,20 @@ export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
 }
 
 export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGridRow {
-  if (layout instanceof RowsLayoutManager) {
-    const row = layout.addNewRow();
-    layout.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
-    return row;
+  /**
+   * If new layouts feature is disabled we add old school rows to the custom grid layout
+   */
+  if (!config.featureToggles.dashboardNewLayouts) {
+    if (layout instanceof DefaultGridLayoutManager) {
+      const row = layout.addNewRow();
+      layout.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
+      return row;
+    } else {
+      throw new Error('New dashboard layouts feature not enabled but new layout found');
+    }
   }
 
-  if (layout instanceof DefaultGridLayoutManager) {
+  if (layout instanceof RowsLayoutManager) {
     const row = layout.addNewRow();
     layout.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
     return row;
@@ -47,6 +55,9 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
     const currentTab = layout.getCurrentTab();
     return addNewRowTo(currentTab.state.layout);
   }
+
+  // If we want to add a row and current layout is custom grid or auto we migrate to rows layout
+  // And wrap current layout in a row
 
   const layoutParent = layout.parent!;
   if (!isLayoutParent(layoutParent)) {

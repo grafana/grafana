@@ -23,4 +23,9 @@ export interface LayoutRegistryItem<S = {}> extends RegistryItem {
    * Schema kind of layout
    */
   kind?: DashboardV2Spec['layout']['kind'];
+
+  /**
+   * Is grid layout (that contains panels)
+   */
+  isGridLayout: boolean;
 }
