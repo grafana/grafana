@@ -6,13 +6,9 @@ import (
 	"fmt"
 	"sync"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
@@ -39,6 +35,9 @@ func getStatusAnnotation(obj resource.Object) string {
 
 func setStatusAnnotation(ctx context.Context, client resource.Client, obj resource.Object, status string) error {
 	annotations := obj.GetAnnotations()
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
 	annotations[checks.StatusAnnotation] = status
 	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
 		Operations: []resource.PatchOperation{{
@@ -59,20 +58,6 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	if !ok {
 		return fmt.Errorf("invalid object type")
 	}
-	// Populate ctx with the user that created the check
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return err
-	}
-	createdBy := meta.GetCreatedBy()
-	typ, uid, err := claims.ParseTypeID(createdBy)
-	if err != nil {
-		return err
-	}
-	ctx = identity.WithRequester(ctx, &user.SignedInUser{
-		UserUID:      uid,
-		FallbackType: typ,
-	})
 	// Get the items to check
 	items, err := check.Items(ctx)
 	if err != nil {
