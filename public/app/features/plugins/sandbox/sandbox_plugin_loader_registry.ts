@@ -1,5 +1,6 @@
 import { PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
 
 import { getPluginDetails } from '../admin/api';
 import { getPluginSettings } from '../pluginSettings';
@@ -47,6 +48,10 @@ export async function isPluginFrontendSandboxEligible({ pluginId }: SandboxEligi
 
   // no sandbox in test mode. it often breaks e2e tests
   if (process.env.NODE_ENV === 'test') {
+    return false;
+  }
+
+  if (!contextSrv.isSignedIn) {
     return false;
   }
 

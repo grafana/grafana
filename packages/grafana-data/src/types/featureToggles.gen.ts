@@ -79,7 +79,6 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   configurableSchedulerTick?: boolean;
-  alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
   aiGeneratedDashboardChanges?: boolean;
@@ -156,7 +155,6 @@ export interface FeatureToggles {
   oauthRequireSubClaim?: boolean;
   newDashboardWithFiltersAndGroupBy?: boolean;
   cloudWatchNewLabelParsing?: boolean;
-  accessActionSets?: boolean;
   disableNumericMetricsSortingInExpressions?: boolean;
   grafanaManagedRecordingRules?: boolean;
   queryLibrary?: boolean;
@@ -218,7 +216,6 @@ export interface FeatureToggles {
   alertingUIOptimizeReducer?: boolean;
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
-  useV2DashboardsAPI?: boolean;
   feedbackButton?: boolean;
   unifiedStorageSearchUI?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
@@ -250,6 +247,9 @@ export interface FeatureToggles {
   assetSriChecks?: boolean;
   alertRuleRestore?: boolean;
   grafanaManagedRecordingRulesDatasources?: boolean;
+  infinityRunQueriesInParallel?: boolean;
   inviteUserExperimental?: boolean;
   extraLanguages?: boolean;
+  noBackdropBlur?: boolean;
+  alertingMigrationUI?: boolean;
 }

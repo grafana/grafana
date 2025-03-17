@@ -47,9 +47,7 @@ describe('DashboardModel', () => {
   describe('when creating dashboard with old schema', () => {
     let model: DashboardModel;
     let graph: any;
-    let singlestat: any;
     let table: any;
-    let singlestatGauge: any;
     const panelIdWithRepeatId = 500;
 
     config.panels = {
@@ -146,8 +144,6 @@ describe('DashboardModel', () => {
       });
 
       graph = model.panels[0];
-      singlestat = model.panels[1];
-      singlestatGauge = model.panels[2];
       table = model.panels[3];
     });
 

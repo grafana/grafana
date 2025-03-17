@@ -459,15 +459,6 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:            "alertingNoDataErrorExecution",
-			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-		},
-		{
 			Name:         "angularDeprecationUI",
 			Description:  "Display Angular warnings in dashboards and panels",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1056,13 +1047,6 @@ var (
 			AllowSelfServe: false,
 		},
 		{
-			Name:        "accessActionSets",
-			Description: "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       identityAccessTeam,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:            "disableNumericMetricsSortingInExpressions",
 			Description:     "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
 			Stage:           FeatureStageExperimental,
@@ -1510,13 +1494,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:            "useV2DashboardsAPI",
-			Description:     "Use the v2 kubernetes API in the frontend for dashboards",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDashboardsSquad,
-			RequiresRestart: true, // changes the API routing
-		},
-		{
 			Name:         "feedbackButton",
 			Description:  "Enables a button to send feedback from the Grafana UI",
 			Stage:        FeatureStageExperimental,
@@ -1624,17 +1601,16 @@ var (
 		},
 		{
 			Name:            "exploreMetricsUseExternalAppPlugin",
-			Description:     "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-			Stage:           FeatureStageExperimental,
+			Description:     "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
+			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaObservabilityMetricsSquad,
 			FrontendOnly:    true,
 			RequiresRestart: true,
-			HideFromDocs:    true,
 		},
 		{
 			Name:            "datasourceConnectionsTab",
 			Description:     "Shows defined connections for a data source in the plugins detail page",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePrivatePreview,
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresDevMode: false,
 			FrontendOnly:    true,
@@ -1754,6 +1730,13 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:         "infinityRunQueriesInParallel",
+			Description:  "Enables running Infinity queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaOSSBigTent,
+		},
+		{
 			Name:              "inviteUserExperimental",
 			Description:       "Renders invite user button along the app",
 			Stage:             FeatureStageExperimental,
@@ -1768,6 +1751,24 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:              "noBackdropBlur",
+			Description:       "Disables backdrop blur",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+		},
+		{
+			Name:              "alertingMigrationUI",
+			Description:       "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
+			FrontendOnly:      true,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 		},
 	}
 )

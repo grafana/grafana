@@ -33,7 +33,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from '../../apiserver/types';
+import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -171,9 +171,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
     DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
-  > = getDashboardSceneSerializer();
+  >;
 
-  public constructor(state: Partial<DashboardSceneState>) {
+  public constructor(state: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
     super({
       title: 'Dashboard',
       meta: {},
@@ -185,6 +185,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       editPane: new DashboardEditPane(),
       scopesBridge: config.featureToggles.scopeFilters ? new SceneScopesBridge({}) : undefined,
     });
+
+    this._serializer =
+      serializerVersion === 'v2' ? getDashboardSceneSerializer('v2') : getDashboardSceneSerializer('v1');
 
     this._changeTracker = new DashboardSceneChangeTracker(this);
 
@@ -744,19 +747,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   getPath() {
     return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
-  }
-
-  setManager(kind: ManagerKind, id: string) {
-    this.setState({
-      meta: {
-        k8s: {
-          annotations: {
-            [AnnoKeyManagerKind]: kind,
-            [AnnoKeyManagerIdentity]: id,
-          },
-        },
-      },
-    });
   }
 }
 

@@ -13,6 +13,7 @@ import { getExtraStyles } from './extra';
 import { getFilterTableStyles } from './filterTable';
 import { getFontStyles } from './fonts';
 import { getFormElementStyles } from './forms';
+import { getHacksStyles } from './hacks';
 import { getJsonFormatterStyles } from './jsonFormatter';
 import { getLegacySelectStyles } from './legacySelect';
 import { getMarkdownStyles } from './markdownStyles';
@@ -23,9 +24,14 @@ import { getSlateStyles } from './slate';
 import { getUplotStyles } from './uPlot';
 import { getUtilityClassStyles } from './utilityClasses';
 
+interface GlobalStylesProps {
+  hackNoBackdropBlur?: boolean;
+}
+
 /** @internal */
-export function GlobalStyles() {
+export function GlobalStyles(props: GlobalStylesProps) {
   const theme = useTheme2();
+  const { hackNoBackdropBlur } = props;
 
   return (
     <Global
@@ -50,6 +56,7 @@ export function GlobalStyles() {
         getUplotStyles(theme),
         getUtilityClassStyles(theme),
         getLegacySelectStyles(theme),
+        getHacksStyles({ hackNoBackdropBlur }),
       ]}
     />
   );
