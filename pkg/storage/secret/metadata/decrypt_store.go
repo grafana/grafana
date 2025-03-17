@@ -36,7 +36,7 @@ func ProvideDecryptStorage(
 		return nil, fmt.Errorf("failed to get keepers: %w", err)
 	}
 
-	return &decryptStorage{db: db, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage, allowList: allowList.AllowList()}, nil
+	return &decryptStorage{db: db, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage, allowList: allowList}, nil
 }
 
 // decryptStorage is the actual implementation of the decrypt storage.
@@ -46,7 +46,7 @@ type decryptStorage struct {
 
 	keepers                    map[contracts.KeeperType]contracts.Keeper
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
-	allowList                  map[string]struct{}
+	allowList                  contracts.DecryptAllowList
 }
 
 // Decrypt decrypts a secure value from the keeper.
