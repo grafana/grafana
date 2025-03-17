@@ -1,14 +1,13 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 import { useLocation } from 'react-router';
 
-import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
+import { locationUtil, textUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Tab, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Tab, useElementSelection } from '@grafana/ui';
 
 import { TabItem } from './TabItem';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
-  const styles = useStyles2(getStyles);
   const { title, key } = model.useState();
   const parentLayout = model.getParentLayout();
   const { tabs, currentTabIndex } = parentLayout.useState();
@@ -21,8 +20,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   return (
     <Tab
+      truncate
       className={cx(
-        styles.container,
         isSelected && 'dashboard-selected-element',
         isSelectable && !isSelected && 'dashboard-selectable-element'
       )}
@@ -36,16 +35,3 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
     />
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    maxWidth: theme.spacing(40),
-
-    '& > :is(a,button)': css({
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-      wordBreak: 'break-word',
-      overflow: 'hidden',
-    }),
-  }),
-});
