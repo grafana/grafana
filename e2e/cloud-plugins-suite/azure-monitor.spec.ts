@@ -222,10 +222,7 @@ describe('Azure monitor datasource', () => {
       queriesForm: () => {
         e2eSelectors.queryEditor.header.select().find('input').type('Azure Resource Graph{enter}');
         cy.wait(1000); // Need to wait for code editor to completely load
-        e2eSelectors.queryEditor.argsQueryEditor.subscriptions
-          .input()
-          .find('[aria-label="select-clear-value"]')
-          .click();
+        e2eSelectors.queryEditor.argsQueryEditor.subscriptions.input().find('[aria-label="Clear value"]').click();
         e2eSelectors.queryEditor.argsQueryEditor.subscriptions.input().find('input').type('datasources{enter}');
         e2e.components.CodeEditor.container().type(
           "Resources | where resourceGroup == 'cloud-plugins-e2e-test-azmon' | project name, resourceGroup"

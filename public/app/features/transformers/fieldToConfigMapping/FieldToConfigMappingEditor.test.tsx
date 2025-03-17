@@ -56,7 +56,7 @@ describe('FieldToConfigMappingEditor', () => {
     setup({ mappings: [{ fieldName: 'max', handlerKey: 'min' }] });
 
     const select = (await screen.findByTestId('max-config-key')).childNodes[0];
-    await userEvent.click(getByLabelText(select as HTMLElement, 'select-clear-value'));
+    await userEvent.click(getByLabelText(select as HTMLElement, 'Clear value'));
 
     expect(mockOnChange).toHaveBeenCalledWith(expect.arrayContaining([]));
   });

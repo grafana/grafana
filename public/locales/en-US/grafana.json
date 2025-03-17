@@ -1807,6 +1807,10 @@
       "saved": "Saved!",
       "saving": "Saving <1></1>"
     },
+    "axis-builder": {
+      "linear-threshold": "Linear threshold",
+      "log-base": "Log base"
+    },
     "card": {
       "option": "option"
     },
@@ -1933,15 +1937,37 @@
     "field-link-list": {
       "external-links-heading": "External links"
     },
+    "field-name-by-regex-matcher": {
+      "input-placeholder": "Enter regular expression"
+    },
+    "field-value-matcher": {
+      "operator-label": "Comparison operator",
+      "select-field-placeholder": "Select field reducer"
+    },
     "file-dropzone": {
       "cancel-upload": "Cancel upload",
-      "file-too-large": "File is larger than {{size}}"
+      "error-title": "Upload failed",
+      "file-too-large": "File is larger than {{size}}",
+      "item-retry": "Retry"
+    },
+    "file-upload": {
+      "file-name": "File name"
     },
     "filter-input": {
       "clear": "Clear"
     },
+    "interactive-table": {
+      "expand-row-tooltip": "Toggle row expanded"
+    },
+    "menu-item": {
+      "keyboard-shortcut-label": "Keyboard shortcut"
+    },
     "modal": {
       "close-tooltip": "Close"
+    },
+    "monaco": {
+      "error-label": "React Monaco Editor failed to load",
+      "loading-placeholder": "Loading editor"
     },
     "named-colors-palette": {
       "text-color-swatch": "Text color",
@@ -1957,6 +1983,10 @@
       "next-page": "next page",
       "previous-page": "previous page"
     },
+    "panel-menu": {
+      "label": "Menu for panel {{ title }}",
+      "title": "Menu"
+    },
     "secret-form-field": {
       "reset": "Reset"
     },
@@ -1966,7 +1996,11 @@
       "no-options": "No options found"
     },
     "select": {
+      "clear-value": "Clear value",
       "default-create-label": "Hit enter to add",
+      "empty-options": "No options provided",
+      "menu-label": "Select options menu",
+      "multi-value-remove": "Remove",
       "no-options-label": "No options found",
       "placeholder": "Choose"
     },
@@ -1976,21 +2010,49 @@
     "spinner": {
       "aria-label": "Loading"
     },
+    "stacking-builder": {
+      "group": "Group",
+      "group-tooltip": "Name of the stacking group"
+    },
     "table": {
+      "cell-filter-on": "Filter for value",
+      "cell-filter-out": "Filter out value",
+      "cell-inspect": "Inspect value",
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
+      "csv-placeholder": "Enter CSV here...",
+      "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
       "filter-popup-cancel": "Cancel",
       "filter-popup-clear": "Clear filter",
       "filter-popup-heading": "Filter by values:",
+      "filter-popup-match-case": "Match case",
+      "inspect-drawer-title": "Inspect value",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
     },
+    "tags": {
+      "list-label": "Tags"
+    },
     "tags-input": {
-      "add": "Add"
+      "add": "Add",
+      "remove": "Remove tag: {{name}}"
+    },
+    "toggletip": {
+      "close": "Close"
+    },
+    "toolbar-button-row": {
+      "show-more": "Show more items"
+    },
+    "unit-picker": {
+      "placeholder": "Choose"
     },
     "user-icon": {
-      "active-text": "Active last 15m"
+      "active-text": "Active last 15m",
+      "label": "{{name}} icon"
+    },
+    "users-indicator": {
+      "container-label": "Users indicator container"
     },
     "value-pill": {
       "remove-button": "Remove {{children}}"
@@ -2004,7 +2066,8 @@
       "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation",
       "footer-click-to-action": "Click to {{actionTitle}}",
-      "footer-click-to-navigate": "Click to open {{linkTitle}}"
+      "footer-click-to-navigate": "Click to open {{linkTitle}}",
+      "timestamp": "Timestamp"
     }
   },
   "graph": {

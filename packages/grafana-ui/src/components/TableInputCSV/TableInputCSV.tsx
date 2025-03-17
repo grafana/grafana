@@ -7,7 +7,7 @@ import { DataFrame, CSVConfig, readCSV, GrafanaTheme2 } from '@grafana/data';
 
 import { stylesFactory, withTheme2 } from '../../themes';
 import { Themeable2 } from '../../types/theme';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { TextArea } from '../TextArea/TextArea';
 
@@ -74,7 +74,7 @@ export class UnThemedTableInputCSV extends PureComponent<Props, State> {
       <div className={styles.tableInputCsv}>
         <TextArea
           style={{ width, height }}
-          placeholder="Enter CSV here..."
+          placeholder={t('grafana-ui.table.csv-placeholder', 'Enter CSV here...')}
           value={this.state.text}
           onChange={this.onTextChange}
           className={styles.textarea}
