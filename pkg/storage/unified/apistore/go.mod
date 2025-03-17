@@ -4,7 +4,6 @@ go 1.23.7
 
 replace (
 	github.com/grafana/grafana => ../../../..
-	github.com/grafana/grafana/apps/dashboard => ../../../../apps/dashboard
 	github.com/grafana/grafana/pkg/apimachinery => ../../../apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../../apiserver
 	github.com/grafana/grafana/pkg/storage/unified/resource => ../resource
@@ -17,10 +16,10 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20250224151205-5ef97131cc82
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250220154326-6e5de80ef295
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250220154326-6e5de80ef295
+	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250317130411-3f270d1de043
 	github.com/stretchr/testify v1.10.0
 	gocloud.dev v0.40.0
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0

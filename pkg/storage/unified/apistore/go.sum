@@ -1275,6 +1275,8 @@ github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 h1:OfCkitCuomzZKW1WYHrG8MxKwtM
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6/go.mod h1:V7y2BmsWxS3A9Ohebwn4OiSfJJqi//4JQydQ8fHTduo=
 github.com/grafana/grafana-plugin-sdk-go v0.272.0 h1:TmPIG+6e3lYGzkyfUfCHuaMaaiwDbkCacTZ7V/JaSeg=
 github.com/grafana/grafana-plugin-sdk-go v0.272.0/go.mod h1:i/9KH9y/6m5hkRnG3H6aR2nOMPbJUmvo4XNrHjI15cU=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043 h1:wdJy5x6M7auWDjUIubqhfZuZvphUMyjD7hxB3RqV4aE=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043/go.mod h1:jwYig4wlnLLq4HQKDpS95nDeZi4+DmcD17KYYS1gMJg=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 h1:9qOLpC21AmXZqZ6rUhrBWl2mVqS3CzV53pzw0BCuHt0=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8/go.mod h1:deLQ/ywLvpVGbncRGUA4UDGt8a5Ei9sivOP+x6AQ2ko=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
