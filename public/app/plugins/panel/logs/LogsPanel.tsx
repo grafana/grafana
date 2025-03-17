@@ -29,8 +29,8 @@ import {
   urlUtil,
   LogSortOrderChangeEvent,
   LoadingState,
+  rangeUtil,
 } from '@grafana/data';
-import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
 import { config, getAppEvents } from '@grafana/runtime';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -574,7 +574,7 @@ export async function requestMoreLogs(
     return [];
   }
 
-  const range: TimeRange = convertRawToRange({
+  const range: TimeRange = rangeUtil.convertRawToRange({
     from: dateTimeForTimeZone(timeZone, timeRange.from),
     to: dateTimeForTimeZone(timeZone, timeRange.to),
   });

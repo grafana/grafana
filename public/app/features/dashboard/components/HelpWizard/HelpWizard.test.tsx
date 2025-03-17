@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 
 import { PanelModel } from '../../state/PanelModel';
 

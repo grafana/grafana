@@ -12,10 +12,7 @@ import {
   FieldNamePickerConfigSettings,
   TransformerCategory,
 } from '@grafana/data';
-import {
-  FormatStringOutput,
-  FormatStringTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/formatString';
+import { FormatStringOutput, FormatStringTransformerOptions } from '@grafana/data/internal';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';

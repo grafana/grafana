@@ -12,10 +12,7 @@ import {
   TransformerCategory,
   getTimeZones,
 } from '@grafana/data';
-import {
-  ConvertFieldTypeOptions,
-  ConvertFieldTypeTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/convertFieldType';
+import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { allFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
 import { findField } from 'app/features/dimensions';
