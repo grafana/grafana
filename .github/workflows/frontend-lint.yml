@@ -7,7 +7,7 @@ on:
       - release-*.*.*
 
 jobs:
-  verify-i18n:
+  lint-frontend-verify-i18n:
     name: Verify i18n
     runs-on: ubuntu-latest
     steps:
@@ -29,7 +29,7 @@ jobs:
             echo "${uncommited_error_message}"
             exit 1
         fi
-  prettier:
+  lint-frontend-prettier:
     name: Prettier
     runs-on: ubuntu-latest
     steps:
@@ -41,7 +41,7 @@ jobs:
         cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
     - run: yarn run prettier:check
-  typecheck:
+  lint-fronetnd-typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
     steps:

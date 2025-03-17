@@ -7,11 +7,10 @@ on:
       - release-*.*.*
 
 jobs:
-  test-frontend:
+  frontend-unit-tests:
     runs-on: ubuntu-latest-8-cores
     name: "Unit tests (${{ matrix.chunk }} / 8)"
     strategy:
-      fail-fast: true
       matrix:
         chunk: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
