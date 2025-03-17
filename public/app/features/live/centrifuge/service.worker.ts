@@ -3,7 +3,7 @@ import './transferHandlers';
 import * as comlink from 'comlink';
 
 import { LiveChannelAddress } from '@grafana/data';
-import { LiveDataStreamOptions, LiveQueryDataOptions } from '@grafana/runtime';
+import { LiveDataStreamOptions, LivePublishOptions, LiveQueryDataOptions } from '@grafana/runtime';
 
 import { remoteObservableAsObservable } from './remoteObservable';
 import { CentrifugeService, CentrifugeSrvDeps } from './service';
@@ -42,6 +42,10 @@ const getPresence = async (address: LiveChannelAddress) => {
   return await centrifuge.getPresence(address);
 };
 
+const publish = async (address: LiveChannelAddress, data: unknown, options?: LivePublishOptions) => {
+  return await centrifuge.publish(address, data, options);
+};
+
 const workObj = {
   initialize,
   getConnectionState,
@@ -49,6 +53,7 @@ const workObj = {
   getStream,
   getQueryData,
   getPresence,
+  publish,
 };
 
 export type RemoteCentrifugeService = typeof workObj;
