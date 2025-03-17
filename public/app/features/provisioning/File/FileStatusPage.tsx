@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { urlUtil } from '@grafana/data';
+import { isFetchError } from '@grafana/runtime';
 import { Alert, CodeEditor, LinkButton, Button, Stack, Tab, TabContent, TabsBar, DeleteButton } from '@grafana/ui';
 import {
   useGetRepositoryFilesWithPathQuery,
@@ -34,8 +35,7 @@ export default function FileStatusPage() {
     >
       <Page.Contents isLoading={file.isLoading}>
         <>
-          {file.error && <Alert title="Error loading file">{(file.error as any).message}</Alert>}
-
+          {isFetchError(file.error) && <Alert title="Error loading file">{file.error.message}</Alert>}
           {file.isSuccess && file.data && <ResourceView wrap={file.data} repo={name} repoRef={ref} tab={tab} />}
         </>
       </Page.Contents>

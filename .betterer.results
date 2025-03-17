@@ -5200,10 +5200,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
-    "public/app/features/provisioning/CheckRepository.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
-    "public/app/features/provisioning/ConfigForm.tsx:5381": [
+    "public/app/features/provisioning/Config/ConfigForm.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
@@ -5231,7 +5228,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "24"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "25"]
     ],
-    "public/app/features/provisioning/ConfigFormGithubCollapse.tsx:5381": [
+    "public/app/features/provisioning/Config/ConfigFormGithubCollapse.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
@@ -5246,53 +5243,28 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"]
     ],
-    "public/app/features/provisioning/DeleteRepositoryButton.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
-    ],
-    "public/app/features/provisioning/EditRepositoryPage.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
-    ],
-    "public/app/features/provisioning/ExportToRepository.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
-    ],
-    "public/app/features/provisioning/FileHistoryPage.tsx:5381": [
+    "public/app/features/provisioning/File/FileHistoryPage.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
-    "public/app/features/provisioning/FileStatusPage.tsx:5381": [
+    "public/app/features/provisioning/File/FileStatusPage.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"]
     ],
-    "public/app/features/provisioning/FilesView.tsx:5381": [
+    "public/app/features/provisioning/File/FilesView.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
-    ],
-    "public/app/features/provisioning/FolderRepositoryList.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/provisioning/GettingStarted/EnhancedFeatures.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5333,7 +5305,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
-    "public/app/features/provisioning/JobStatus.tsx:5381": [
+    "public/app/features/provisioning/Job/JobStatus.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
@@ -5343,7 +5315,37 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
     ],
-    "public/app/features/provisioning/MigrateToRepository.tsx:5381": [
+    "public/app/features/provisioning/Job/RecentJobs.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
+    ],
+    "public/app/features/provisioning/Repository/CheckRepository.tsx:5381": [
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+    ],
+    "public/app/features/provisioning/Repository/DeleteRepositoryButton.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
+    ],
+    "public/app/features/provisioning/Repository/EditRepositoryPage.tsx:5381": [
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+    ],
+    "public/app/features/provisioning/Repository/ExportToRepository.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
+    ],
+    "public/app/features/provisioning/Repository/MigrateToRepository.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
@@ -5353,33 +5355,24 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
     ],
-    "public/app/features/provisioning/RecentJobs.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
-    ],
-    "public/app/features/provisioning/RepositoryActions.tsx:5381": [
+    "public/app/features/provisioning/Repository/RepositoryActions.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
-    "public/app/features/provisioning/RepositoryCard.tsx:5381": [
+    "public/app/features/provisioning/Repository/RepositoryCard.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
-    "public/app/features/provisioning/RepositoryHealth.tsx:5381": [
+    "public/app/features/provisioning/Repository/RepositoryHealth.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
-    "public/app/features/provisioning/RepositoryOverview.tsx:5381": [
+    "public/app/features/provisioning/Repository/RepositoryOverview.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
@@ -5395,7 +5388,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"]
     ],
-    "public/app/features/provisioning/RepositoryResources.tsx:5381": [
+    "public/app/features/provisioning/Repository/RepositoryResources.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
@@ -5403,10 +5396,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
-    "public/app/features/provisioning/RepositorySelect.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
-    ],
-    "public/app/features/provisioning/RepositoryStatusPage.tsx:5381": [
+    "public/app/features/provisioning/Repository/RepositoryStatusPage.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
@@ -5415,11 +5405,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
     ],
-    "public/app/features/provisioning/SyncRepository.tsx:5381": [
+    "public/app/features/provisioning/Repository/SyncRepository.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
-    "public/app/features/provisioning/TokenPermissionsInfo.tsx:5381": [
+    "public/app/features/provisioning/Shared/FolderRepositoryList.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+    ],
+    "public/app/features/provisioning/Shared/TokenPermissionsInfo.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
