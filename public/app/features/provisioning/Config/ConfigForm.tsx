@@ -20,11 +20,12 @@ import {
 import { Repository, RepositorySpec } from 'app/api/clients/provisioning';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
-import { ConfigFormGithubCollpase } from './ConfigFormGithubCollapse';
-import { TokenPermissionsInfo } from './TokenPermissionsInfo';
-import { useCreateOrUpdateRepository } from './hooks';
-import { RepositoryFormData, WorkflowOption } from './types';
-import { dataToSpec, specToData } from './utils/data';
+import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
+import { useCreateOrUpdateRepository } from '../hooks';
+import { RepositoryFormData, WorkflowOption } from '../types';
+import { dataToSpec, specToData } from '../utils/data';
+
+import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 
 const typeOptions = ['GitHub', 'Local'].map((label) => ({ label, value: label.toLowerCase() }));
 const targetOptions = [
@@ -222,7 +223,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
       </Field>
 
       {type === 'github' && (
-        <ConfigFormGithubCollpase
+        <ConfigFormGithubCollapse
           previews={<Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />}
         />
       )}

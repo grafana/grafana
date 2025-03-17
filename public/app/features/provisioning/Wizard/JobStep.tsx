@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { Stack, Text } from '@grafana/ui';
 
-import { JobStatus } from '../JobStatus';
+import { JobStatus } from '../Job/JobStatus';
 import { StepStatus, useStepStatus } from '../hooks/useStepStatus';
 
 import { WizardFormData } from './types';

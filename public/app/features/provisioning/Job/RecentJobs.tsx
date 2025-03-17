@@ -3,12 +3,12 @@ import { useMemo } from 'react';
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
 import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
 import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
+import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
-import KeyValuesTable from '../explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
+import { useRepositoryJobs } from '../hooks';
+import { formatTimestamp } from '../utils/time';
 
 import { JobSummary } from './JobSummary';
-import { useRepositoryJobs } from './hooks';
-import { formatTimestamp } from './utils/time';
 
 interface Props {
   repo: Repository;

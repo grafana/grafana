@@ -6,15 +6,15 @@ import { Alert, ConfirmModal, Modal, Stack, Tab, TabContent, TabsBar } from '@gr
 import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 
-import { ExportToRepository } from './ExportToRepository';
-import { FilesView } from './FilesView';
-import { FolderRepositoryList } from './FolderRepositoryList';
+import { FilesView } from './File/FilesView';
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
-import { MigrateToRepository } from './MigrateToRepository';
-import { RepositoryActions } from './RepositoryActions';
-import { RepositoryOverview } from './RepositoryOverview';
-import { RepositoryResources } from './RepositoryResources';
+import { ExportToRepository } from './Repository/ExportToRepository';
+import { MigrateToRepository } from './Repository/MigrateToRepository';
+import { RepositoryActions } from './Repository/RepositoryActions';
+import { RepositoryOverview } from './Repository/RepositoryOverview';
+import { RepositoryResources } from './Repository/RepositoryResources';
+import { FolderRepositoryList } from './Shared/FolderRepositoryList';
 import { useRepositoryList } from './hooks';
 import { checkSyncSettings } from './utils/checkSyncSettings';
 

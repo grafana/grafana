@@ -1,15 +1,16 @@
+import { ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
 import { Alert, ControlledCollapse, Field } from '@grafana/ui';
 
-import { checkPublicAccess } from './GettingStarted/features';
-import { GETTING_STARTED_URL } from './constants';
+import { checkPublicAccess } from '../GettingStarted/features';
+import { GETTING_STARTED_URL } from '../constants';
 
-export interface ConfigFormGithubCollpaseProps {
-  previews: React.ReactElement;
+export interface ConfigFormGithubCollapseProps {
+  previews: ReactElement;
 }
-export function ConfigFormGithubCollpase({ previews }: ConfigFormGithubCollpaseProps) {
+export function ConfigFormGithubCollapse({ previews }: ConfigFormGithubCollapseProps) {
   const navigate = useNavigate();
 
   return (
@@ -29,7 +30,7 @@ export function ConfigFormGithubCollpase({ previews }: ConfigFormGithubCollpaseP
           onRemove={() => navigate(GETTING_STARTED_URL)}
         >
           Changes in git will eventually be pulled depending on the synchronization interval. Pull requests will not be
-          proccessed
+          processed
         </Alert>
       )}
 

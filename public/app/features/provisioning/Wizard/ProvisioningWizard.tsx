@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 
-import { getDefaultValues } from '../ConfigForm';
+import { getDefaultValues } from '../Config/ConfigForm';
 import { PROVISIONING_URL } from '../constants';
 
 import { Step } from './Stepper';

@@ -4,9 +4,10 @@ import { useEffect } from 'react';
 import { Alert, ControlledCollapse, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
 import { useGetRepositoryQuery, useListJobQuery } from 'app/api/clients/provisioning';
 
+import ProgressBar from '../Shared/ProgressBar';
+import { getRepoHref } from '../utils/git';
+
 import { JobSummary } from './JobSummary';
-import ProgressBar from './ProgressBar';
-import { getRepoHref } from './utils/git';
 
 export interface JobStatusProps {
   name: string;

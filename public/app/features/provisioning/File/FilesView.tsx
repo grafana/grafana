@@ -17,8 +17,8 @@ import {
   useDeleteRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning';
 
-import { PROVISIONING_URL } from './constants';
-import { FileDetails } from './types';
+import { PROVISIONING_URL } from '../constants';
+import { FileDetails } from '../types';
 
 interface FilesViewProps {
   repo: Repository;
