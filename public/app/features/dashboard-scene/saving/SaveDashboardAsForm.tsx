@@ -139,6 +139,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
             const folderUid = dashboard.state.meta.folderUid;
             setHasFolderChanged(uid !== folderUid);
             dashboard.setState({
+              // This is necessary to switch to the provisioning flow if a folder is provisioned
               meta: {
                 k8s: name ? { annotations: { [AnnoKeyManagerIdentity]: name } } : undefined,
                 folderUid: uid,
