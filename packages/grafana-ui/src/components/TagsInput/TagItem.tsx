@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { getTagColorsFromName } from '../../utils';
+import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 
 interface Props {
@@ -28,7 +29,7 @@ export const TagItem = ({ name, disabled, onRemove }: Props) => {
         name="times"
         size="lg"
         disabled={disabled}
-        tooltip={`Remove "${name}" tag`}
+        tooltip={t('grafana-ui.tags-input.remove', 'Remove tag: {{name}}', { name })}
         onClick={() => onRemove(name)}
         className={styles.buttonStyles}
       />

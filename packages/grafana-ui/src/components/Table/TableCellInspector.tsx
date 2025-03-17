@@ -1,7 +1,7 @@
 import { isString } from 'lodash';
 import { useState } from 'react';
 
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Drawer } from '../Drawer/Drawer';
 import { Stack } from '../Layout/Stack/Stack';
@@ -68,7 +68,7 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
   );
 
   return (
-    <Drawer onClose={onDismiss} title="Inspect value" tabs={tabBar}>
+    <Drawer onClose={onDismiss} title={t('grafana-ui.table.inspect-drawer-title', 'Inspect value')} tabs={tabBar}>
       <Stack direction="column" gap={2}>
         <ClipboardButton icon="copy" getText={() => text} style={{ marginLeft: 'auto', width: '200px' }}>
           <Trans i18nKey="grafana-ui.table.copy">Copy to Clipboard</Trans>
