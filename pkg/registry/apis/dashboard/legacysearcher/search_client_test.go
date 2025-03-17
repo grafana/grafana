@@ -437,7 +437,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 	})
 
 	t.Run("Should retrieve dashboards by provisioner name through a different function", func(t *testing.T) {
-		mockStore.On("GetProvisionedDashboardsByName", mock.Anything, "test").Return([]*dashboards.Dashboard{
+		mockStore.On("GetProvisionedDashboardsByName", mock.Anything, "test", mock.Anything).Return([]*dashboards.Dashboard{
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
 
@@ -470,7 +470,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 	})
 
 	t.Run("Should retrieve orphaned dashboards if provisioner not in is specified", func(t *testing.T) {
-		mockStore.On("GetOrphanedProvisionedDashboards", mock.Anything, []string{"test", "test2"}).Return([]*dashboards.Dashboard{
+		mockStore.On("GetOrphanedProvisionedDashboards", mock.Anything, []string{"test", "test2"}, mock.Anything).Return([]*dashboards.Dashboard{
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
 
