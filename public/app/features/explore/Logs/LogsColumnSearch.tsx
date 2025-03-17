@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { Field, Input, useTheme2 } from '@grafana/ui/src';
+import { Field, Input, useTheme2 } from '@grafana/ui';
 
 function getStyles(theme: GrafanaTheme2) {
   return {

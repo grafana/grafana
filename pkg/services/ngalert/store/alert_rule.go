@@ -39,7 +39,7 @@ var (
 )
 
 // DeleteAlertRulesByUID is a handler for deleting an alert rule.
-func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, ruleUID ...string) error {
+func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, permanently bool, ruleUID ...string) error {
 	if len(ruleUID) == 0 {
 		return nil
 	}
@@ -73,7 +73,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		logger.Debug("Deleted alert rule state", "count", rows)
 
 		var versions []alertRuleVersion
-		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) {
+		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) && st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
 			versions, err = st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
 			if err != nil {
 				logger.Error("Failed to get latest version of deleted alert rules. The recovery will not be possible", "error", err)
@@ -919,7 +919,7 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 			}
 		}
 
-		if err := st.DeleteAlertRulesByUID(ctx, orgID, ngmodels.NewUserUID(user), uids...); err != nil {
+		if err := st.DeleteAlertRulesByUID(ctx, orgID, ngmodels.NewUserUID(user), false, uids...); err != nil {
 			return err
 		}
 	}
@@ -1243,6 +1243,24 @@ func (st DBstore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids 
 	return result, err
 }
 
+func (st DBstore) CleanUpDeletedAlertRules(ctx context.Context) (int64, error) {
+	affectedRows := int64(-1)
+	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		expire := TimeNow().Add(-st.Cfg.DeletedRuleRetention)
+		st.Logger.Debug("Permanently remove expired deleted rules", "deletedBefore", expire)
+		result, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_uid='' AND created <= ?", expire)
+		if err != nil {
+			return err
+		}
+		affectedRows, err = result.RowsAffected()
+		if err != nil {
+			st.Logger.Warn("Failed to get rows affected by the delete operation", "error", err)
+		}
+		return nil
+	})
+	return affectedRows, err
+}
+
 func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
 	args := make([]any, 0, len(inputSlice))
 	in := make([]string, 0, len(inputSlice))
@@ -1252,4 +1270,21 @@ func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
 	}
 
 	return args, in
+}
+
+func (st DBstore) DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ruleGUID string) (int64, error) {
+	affectedRows := int64(-1)
+	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		st.Logger.FromContext(ctx).Debug("Deleting a deleted rule by GUID", "ruleGUID", ruleGUID)
+		result, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_uid='' AND rule_org_id = ? AND rule_guid = ? ", orgID, ruleGUID)
+		if err != nil {
+			return err
+		}
+		affectedRows, err = result.RowsAffected()
+		if err != nil {
+			st.Logger.FromContext(ctx).Warn("Failed to get rows affected by the delete operation", "error", err)
+		}
+		return nil
+	})
+	return affectedRows, err
 }

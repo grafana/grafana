@@ -8,12 +8,12 @@ import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
 import { userPreferencesAPI } from 'app/features/preferences/api';
 import { StoreState } from 'app/types/store';
 
+import { folderAPI } from '../api/clients/folder';
+import { iamAPI } from '../api/clients/iam';
+import { provisioningAPI } from '../api/clients/provisioning';
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
-import { folderAPI } from '../features/folders/api';
-import { iamApi } from '../features/iam/api/api';
-import { provisioningAPI } from '../features/provisioning/api';
 
 import { setStore } from './store';
 
@@ -42,7 +42,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         browseDashboardsAPI.middleware,
         cloudMigrationAPI.middleware,
         userPreferencesAPI.middleware,
-        iamApi.middleware,
+        iamAPI.middleware,
         provisioningAPI.middleware,
         folderAPI.middleware,
         ...extraMiddleware

@@ -2,7 +2,7 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
+import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -26,15 +26,15 @@ export class ResponsiveGridLayoutManager
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
-      return t('dashboard.responsive-layout.name', 'Auto');
+      return t('dashboard.responsive-layout.name', 'Auto grid');
     },
     get description() {
-      return t('dashboard.responsive-layout.description', 'Automatically positions panels into a grid.');
+      return t('dashboard.responsive-layout.description', 'Panels resize to fit and form uniform grids');
     },
     id: 'responsive-grid',
     createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
-
     kind: 'ResponsiveGridLayout',
+    isGridLayout: true,
   };
 
   public readonly descriptor = ResponsiveGridLayoutManager.descriptor;
@@ -68,6 +68,7 @@ export class ResponsiveGridLayoutManager
   public removePanel(panel: VizPanel) {
     const element = panel.parent;
     this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
+    this.publishEvent(new ObjectRemovedFromCanvasEvent(panel), true);
   }
 
   public duplicatePanel(panel: VizPanel) {

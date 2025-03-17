@@ -142,27 +142,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardList"
                 }
               }
             }
@@ -214,17 +214,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
               }
             }
           },
@@ -236,17 +236,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               }
             }
@@ -256,17 +256,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               }
             }
@@ -276,17 +276,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               }
             }
@@ -488,17 +488,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               }
             }
@@ -550,17 +550,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
               }
             }
           },
@@ -572,17 +572,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               }
             }
@@ -592,17 +592,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               }
             }
@@ -792,17 +792,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               }
             }
@@ -812,17 +812,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               }
             }
@@ -880,7 +880,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardWithAccessInfo"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardWithAccessInfo"
                 }
               }
             }
@@ -929,27 +929,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
                 }
               }
             }
@@ -1087,17 +1087,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanel"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanel"
                 }
               }
             }
@@ -1438,12 +1438,7 @@
         "type": "object",
         "additionalProperties": true
       },
-      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
-        "type": "object",
-        "additionalProperties": true,
-        "x-kubernetes-preserve-unknown-fields": true
-      },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.AnnotationActions": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.AnnotationActions": {
         "type": "object",
         "required": [
           "canAdd",
@@ -1465,7 +1460,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.AnnotationPermission": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.AnnotationPermission": {
         "type": "object",
         "required": [
           "dashboard",
@@ -1476,7 +1471,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.AnnotationActions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.AnnotationActions"
               }
             ]
           },
@@ -1484,13 +1479,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.AnnotationActions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.AnnotationActions"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard": {
         "type": "object",
         "required": [
           "metadata",
@@ -1519,7 +1514,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSpec"
               }
             ]
           },
@@ -1527,7 +1522,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardStatus"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardStatus"
               }
             ]
           }
@@ -1540,7 +1535,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAccess": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAccess": {
         "description": "Information about how the requesting user can use a given dashboard",
         "type": "object",
         "required": [
@@ -1553,7 +1548,7 @@
         ],
         "properties": {
           "annotationsPermissions": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.AnnotationPermission"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.AnnotationPermission"
           },
           "canAdmin": {
             "type": "boolean",
@@ -1585,7 +1580,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAdHocFilterWithLabels": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAdHocFilterWithLabels": {
         "description": "Define the AdHocFilterWithLabels type",
         "type": "object",
         "required": [
@@ -1632,7 +1627,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAdhocVariableKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAdhocVariableKind": {
         "description": "Adhoc variable kind",
         "type": "object",
         "required": [
@@ -1648,13 +1643,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAdhocVariableSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAdhocVariableSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAdhocVariableSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAdhocVariableSpec": {
         "description": "Adhoc variable specification",
         "type": "object",
         "required": [
@@ -1672,13 +1667,13 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAdHocFilterWithLabels"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAdHocFilterWithLabels"
                 }
               ]
             }
           },
           "datasource": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
           },
           "defaultKeys": {
             "type": "array",
@@ -1686,7 +1681,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardMetricFindValue"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMetricFindValue"
                 }
               ]
             }
@@ -1700,7 +1695,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAdHocFilterWithLabels"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAdHocFilterWithLabels"
                 }
               ]
             }
@@ -1722,7 +1717,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAnnotationPanelFilter": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationPanelFilter": {
         "type": "object",
         "required": [
           "ids"
@@ -1743,7 +1738,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQueryKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQueryKind": {
         "type": "object",
         "required": [
           "kind",
@@ -1758,13 +1753,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQuerySpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQuerySpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQuerySpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQuerySpec": {
         "type": "object",
         "required": [
           "enable",
@@ -1777,14 +1772,14 @@
             "type": "boolean"
           },
           "datasource": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
           },
           "enable": {
             "type": "boolean",
             "default": false
           },
           "filter": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAnnotationPanelFilter"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationPanelFilter"
           },
           "hide": {
             "type": "boolean",
@@ -1799,11 +1794,174 @@
             "default": ""
           },
           "query": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardConstantVariableKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingDataKind": {
+        "type": "object",
+        "required": [
+          "kind",
+          "spec"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingDataSpec"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingDataSpec": {
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupKind": {
+        "type": "object",
+        "required": [
+          "kind",
+          "spec"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupSpec"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupSpec": {
+        "type": "object",
+        "required": [
+          "condition",
+          "items"
+        ],
+        "properties": {
+          "condition": {
+            "type": "string",
+            "default": ""
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind"
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeIntervalKind": {
+        "type": "object",
+        "required": [
+          "kind",
+          "spec"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeIntervalSpec"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeIntervalSpec": {
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableKind": {
+        "type": "object",
+        "required": [
+          "kind",
+          "spec"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableSpec"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind": {
+        "type": "object",
+        "properties": {
+          "ConditionalRenderingDataKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingDataKind"
+          },
+          "ConditionalRenderingTimeIntervalKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeIntervalKind"
+          },
+          "ConditionalRenderingVariableKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableKind"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableSpec": {
+        "type": "object",
+        "required": [
+          "variable",
+          "operator",
+          "value"
+        ],
+        "properties": {
+          "operator": {
+            "type": "string",
+            "default": ""
+          },
+          "value": {
+            "type": "string",
+            "default": ""
+          },
+          "variable": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConstantVariableKind": {
         "description": "Constant variable kind",
         "type": "object",
         "required": [
@@ -1819,13 +1977,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardConstantVariableSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConstantVariableSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardConstantVariableSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConstantVariableSpec": {
         "description": "Constant variable specification",
         "type": "object",
         "required": [
@@ -1840,7 +1998,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
               }
             ]
           },
@@ -1868,7 +2026,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardConversionStatus": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConversionStatus": {
         "description": "ConversionStatus is the status of the conversion of the dashboard.",
         "type": "object",
         "required": [
@@ -1894,7 +2052,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableKind": {
         "description": "Custom variable kind",
         "type": "object",
         "required": [
@@ -1910,13 +2068,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableSpec": {
         "description": "Custom variable specification",
         "type": "object",
         "required": [
@@ -1937,7 +2095,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
               }
             ]
           },
@@ -1969,7 +2127,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
                 }
               ]
             }
@@ -1984,7 +2142,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDashboardLink": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDashboardLink": {
         "description": "Links with references to other dashboards or external resources",
         "type": "object",
         "required": [
@@ -2053,7 +2211,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataLink": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataLink": {
         "type": "object",
         "required": [
           "title",
@@ -2073,7 +2231,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind": {
         "type": "object",
         "required": [
           "kind",
@@ -2093,7 +2251,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef": {
         "type": "object",
         "properties": {
           "type": {
@@ -2106,7 +2264,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataTransformerConfig": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataTransformerConfig": {
         "description": "Transformations allow to manipulate data returned by a query before the system applies a visualization. Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, use the output of one transformation as the input to another transformation, etc.",
         "type": "object",
         "required": [
@@ -2122,7 +2280,7 @@
             "description": "Optional frame matcher. When missing it will be applied to all results",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardMatcherConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMatcherConfig"
               }
             ]
           },
@@ -2141,7 +2299,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDatasourceVariableKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDatasourceVariableKind": {
         "description": "Datasource variable kind",
         "type": "object",
         "required": [
@@ -2157,13 +2315,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDatasourceVariableSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDatasourceVariableSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDatasourceVariableSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDatasourceVariableSpec": {
         "description": "Datasource variable specification",
         "type": "object",
         "required": [
@@ -2186,7 +2344,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
               }
             ]
           },
@@ -2218,7 +2376,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
                 }
               ]
             }
@@ -2241,7 +2399,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDynamicConfigValue": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDynamicConfigValue": {
         "type": "object",
         "required": [
           "id"
@@ -2256,7 +2414,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardElementReference": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardElementReference": {
         "type": "object",
         "required": [
           "kind",
@@ -2273,7 +2431,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardFieldColor": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFieldColor": {
         "description": "Map a field to a color.",
         "type": "object",
         "required": [
@@ -2295,7 +2453,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardFieldConfig": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFieldConfig": {
         "description": "The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a field. A field can represent a single time series or table column. Field options allow you to change how the data is displayed in your visualizations.",
         "type": "object",
         "properties": {
@@ -2303,7 +2461,7 @@
             "description": "Panel color configuration",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardFieldColor"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFieldColor"
               }
             ]
           },
@@ -2346,7 +2504,7 @@
             "description": "Convert input values into a display string",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap"
             }
           },
           "max": {
@@ -2371,7 +2529,7 @@
             "description": "Map numeric values to states",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardThresholdsConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardThresholdsConfig"
               }
             ]
           },
@@ -2385,7 +2543,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardFieldConfigSource": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFieldConfigSource": {
         "description": "The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a field. A field can represent a single time series or table column. Field options allow you to change how the data is displayed in your visualizations.",
         "type": "object",
         "required": [
@@ -2398,7 +2556,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardFieldConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFieldConfig"
               }
             ]
           },
@@ -2409,14 +2567,14 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1FieldConfigSourceOverrides"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1FieldConfigSourceOverrides"
                 }
               ]
             }
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind": {
         "type": "object",
         "required": [
           "kind",
@@ -2431,24 +2589,24 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKindOrGridLayoutRowKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKindOrGridLayoutRowKind": {
         "type": "object",
         "properties": {
           "GridLayoutItemKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind"
           },
           "GridLayoutRowKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowKind"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemSpec": {
         "type": "object",
         "required": [
           "x",
@@ -2463,7 +2621,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardElementReference"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardElementReference"
               }
             ]
           },
@@ -2473,7 +2631,7 @@
             "default": 0
           },
           "repeat": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRepeatOptions"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRepeatOptions"
           },
           "width": {
             "type": "integer",
@@ -2492,7 +2650,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind": {
         "type": "object",
         "required": [
           "kind",
@@ -2507,58 +2665,58 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind": {
         "type": "object",
         "properties": {
           "GridLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind"
           },
           "ResponsiveGridLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind"
           },
           "TabsLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutKind"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind": {
         "type": "object",
         "properties": {
           "GridLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind"
           },
           "ResponsiveGridLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind"
           },
           "RowsLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutKind"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind": {
         "type": "object",
         "properties": {
           "GridLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind"
           },
           "ResponsiveGridLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind"
           },
           "RowsLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutKind"
           },
           "TabsLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutKind"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowKind": {
         "type": "object",
         "required": [
           "kind",
@@ -2573,13 +2731,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowSpec": {
         "type": "object",
         "required": [
           "y",
@@ -2599,13 +2757,13 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind"
                 }
               ]
             }
           },
           "repeat": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowRepeatOptions"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowRepeatOptions"
           },
           "title": {
             "type": "string",
@@ -2618,7 +2776,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutSpec": {
         "type": "object",
         "required": [
           "items"
@@ -2627,12 +2785,12 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKindOrGridLayoutRowKind"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKindOrGridLayoutRowKind"
             }
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGroupByVariableKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGroupByVariableKind": {
         "description": "Group variable kind",
         "type": "object",
         "required": [
@@ -2648,13 +2806,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGroupByVariableSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGroupByVariableSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGroupByVariableSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGroupByVariableSpec": {
         "description": "GroupBy variable specification",
         "type": "object",
         "required": [
@@ -2670,12 +2828,12 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
               }
             ]
           },
           "datasource": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
           },
           "description": {
             "type": "string"
@@ -2701,7 +2859,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
                 }
               ]
             }
@@ -2712,7 +2870,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardIntervalVariableKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardIntervalVariableKind": {
         "description": "Interval variable kind",
         "type": "object",
         "required": [
@@ -2728,13 +2886,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardIntervalVariableSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardIntervalVariableSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardIntervalVariableSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardIntervalVariableSpec": {
         "description": "Interval variable specification",
         "type": "object",
         "required": [
@@ -2767,7 +2925,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
               }
             ]
           },
@@ -2791,7 +2949,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
                 }
               ]
             }
@@ -2810,7 +2968,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelKind": {
         "type": "object",
         "required": [
           "kind",
@@ -2825,13 +2983,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelKindSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelKindSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelKindSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelKindSpec": {
         "type": "object",
         "required": [
           "id",
@@ -2849,7 +3007,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelRef"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelRef"
               }
             ]
           },
@@ -2860,7 +3018,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelRef": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelRef": {
         "description": "A library panel is a reusable panel that you can use in any dashboard. When you make a change to a library panel, that change propagates to all instances of where the panel is used. Library panels streamline reuse of panels across multiple dashboards.",
         "type": "object",
         "required": [
@@ -2880,7 +3038,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardList": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardList": {
         "type": "object",
         "required": [
           "metadata",
@@ -2897,7 +3055,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.Dashboard"
                 }
               ]
             }
@@ -2923,7 +3081,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardMatcherConfig": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMatcherConfig": {
         "description": "Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation. It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.",
         "type": "object",
         "required": [
@@ -2941,7 +3099,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardMetricFindValue": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMetricFindValue": {
         "description": "Define the MetricFindValue type",
         "type": "object",
         "required": [
@@ -2959,11 +3117,11 @@
             "default": ""
           },
           "value": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardStringOrFloat64"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardStringOrFloat64"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardPanelKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelKind": {
         "type": "object",
         "required": [
           "kind",
@@ -2978,24 +3136,24 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardPanelSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardPanelKindOrLibraryPanelKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelKindOrLibraryPanelKind": {
         "type": "object",
         "properties": {
           "LibraryPanelKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelKind"
           },
           "PanelKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardPanelKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelKind"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardPanelQueryKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelQueryKind": {
         "type": "object",
         "required": [
           "kind",
@@ -3010,13 +3168,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardPanelQuerySpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelQuerySpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardPanelQuerySpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelQuerySpec": {
         "type": "object",
         "required": [
           "query",
@@ -3025,7 +3183,7 @@
         ],
         "properties": {
           "datasource": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
           },
           "hidden": {
             "type": "boolean",
@@ -3035,7 +3193,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
               }
             ]
           },
@@ -3045,7 +3203,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardPanelSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelSpec": {
         "type": "object",
         "required": [
           "id",
@@ -3060,7 +3218,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryGroupKind"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryGroupKind"
               }
             ]
           },
@@ -3079,7 +3237,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataLink"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataLink"
                 }
               ]
             }
@@ -3095,13 +3253,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVizConfigKind"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVizConfigKind"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryGroupKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryGroupKind": {
         "type": "object",
         "required": [
           "kind",
@@ -3116,13 +3274,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryGroupSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryGroupSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryGroupSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryGroupSpec": {
         "type": "object",
         "required": [
           "queries",
@@ -3136,7 +3294,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardPanelQueryKind"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelQueryKind"
                 }
               ]
             }
@@ -3145,7 +3303,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryOptionsSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryOptionsSpec"
               }
             ]
           },
@@ -3155,14 +3313,14 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTransformationKind"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTransformationKind"
                 }
               ]
             }
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryOptionsSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryOptionsSpec": {
         "type": "object",
         "properties": {
           "cacheTimeout": {
@@ -3190,7 +3348,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKind": {
         "description": "Query variable kind",
         "type": "object",
         "required": [
@@ -3206,42 +3364,42 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind": {
         "type": "object",
         "properties": {
           "AdhocVariableKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAdhocVariableKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAdhocVariableKind"
           },
           "ConstantVariableKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardConstantVariableKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConstantVariableKind"
           },
           "CustomVariableKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableKind"
           },
           "DatasourceVariableKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDatasourceVariableKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDatasourceVariableKind"
           },
           "GroupByVariableKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGroupByVariableKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGroupByVariableKind"
           },
           "IntervalVariableKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardIntervalVariableKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardIntervalVariableKind"
           },
           "QueryVariableKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKind"
           },
           "TextVariableKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTextVariableKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTextVariableKind"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableSpec": {
         "description": "Query variable specification",
         "type": "object",
         "required": [
@@ -3265,12 +3423,12 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
               }
             ]
           },
           "datasource": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
           },
           "definition": {
             "type": "string"
@@ -3303,7 +3461,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
                 }
               ]
             }
@@ -3315,7 +3473,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
               }
             ]
           },
@@ -3337,7 +3495,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRangeMap": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRangeMap": {
         "description": "Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.",
         "type": "object",
         "required": [
@@ -3350,18 +3508,17 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1RangeMapOptions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1RangeMapOptions"
               }
             ]
           },
           "type": {
-            "description": "And this is no longer producing valid TS / Go output type: MappingType \u0026 \"range\"",
             "type": "string",
             "default": ""
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRegexMap": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRegexMap": {
         "description": "Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.",
         "type": "object",
         "required": [
@@ -3374,18 +3531,17 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1RegexMapOptions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1RegexMapOptions"
               }
             ]
           },
           "type": {
-            "description": "And this is no longer producing valid TS / Go output type: MappingType \u0026 \"regex\"",
             "type": "string",
             "default": ""
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRepeatOptions": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRepeatOptions": {
         "type": "object",
         "required": [
           "mode",
@@ -3409,7 +3565,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemKind": {
         "type": "object",
         "required": [
           "kind",
@@ -3424,32 +3580,35 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemSpec": {
         "type": "object",
         "required": [
           "element"
         ],
         "properties": {
+          "conditionalRendering": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupKind"
+          },
           "element": {
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardElementReference"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardElementReference"
               }
             ]
           },
           "repeat": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridRepeatOptions"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridRepeatOptions"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind": {
         "type": "object",
         "required": [
           "kind",
@@ -3464,13 +3623,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutSpec": {
         "type": "object",
         "required": [
           "row",
@@ -3488,7 +3647,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemKind"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemKind"
                 }
               ]
             }
@@ -3499,7 +3658,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridRepeatOptions": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridRepeatOptions": {
         "type": "object",
         "required": [
           "mode",
@@ -3516,7 +3675,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowRepeatOptions": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowRepeatOptions": {
         "type": "object",
         "required": [
           "mode",
@@ -3533,7 +3692,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutKind": {
         "type": "object",
         "required": [
           "kind",
@@ -3548,13 +3707,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutRowKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutRowKind": {
         "type": "object",
         "required": [
           "kind",
@@ -3569,13 +3728,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutRowSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutRowSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutRowSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutRowSpec": {
         "type": "object",
         "required": [
           "collapsed",
@@ -3586,18 +3745,21 @@
             "type": "boolean",
             "default": false
           },
+          "conditionalRendering": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupKind"
+          },
           "layout": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind"
           },
           "repeat": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowRepeatOptions"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowRepeatOptions"
           },
           "title": {
             "type": "string"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutSpec": {
         "type": "object",
         "required": [
           "rows"
@@ -3609,14 +3771,14 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutRowKind"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutRowKind"
                 }
               ]
             }
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSpec": {
         "type": "object",
         "required": [
           "annotations",
@@ -3638,7 +3800,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQueryKind"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQueryKind"
                 }
               ]
             }
@@ -3659,11 +3821,11 @@
           "elements": {
             "type": "object",
             "additionalProperties": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardPanelKindOrLibraryPanelKind"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelKindOrLibraryPanelKind"
             }
           },
           "layout": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind"
           },
           "links": {
             "description": "Links with references to other dashboards or external websites.",
@@ -3672,7 +3834,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDashboardLink"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDashboardLink"
                 }
               ]
             }
@@ -3703,7 +3865,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTimeSettingsSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTimeSettingsSpec"
               }
             ]
           },
@@ -3716,12 +3878,12 @@
             "description": "Configured template variables.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind"
             }
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardSpecialValueMap": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSpecialValueMap": {
         "description": "Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.",
         "type": "object",
         "required": [
@@ -3733,31 +3895,30 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1SpecialValueMapOptions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1SpecialValueMapOptions"
               }
             ]
           },
           "type": {
-            "description": "And this is no longer producing valid TS / Go output type: MappingType \u0026 \"special\"",
             "type": "string",
             "default": ""
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardStatus": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardStatus": {
         "type": "object",
         "properties": {
           "conversion": {
             "description": "Optional conversion status.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardConversionStatus"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConversionStatus"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardStringOrArrayOfString": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardStringOrArrayOfString": {
         "type": "object",
         "properties": {
           "ArrayOfString": {
@@ -3772,7 +3933,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardStringOrFloat64": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardStringOrFloat64": {
         "type": "object",
         "properties": {
           "Float64": {
@@ -3784,7 +3945,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutKind": {
         "type": "object",
         "required": [
           "kind",
@@ -3799,13 +3960,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutSpec": {
         "type": "object",
         "required": [
           "tabs"
@@ -3817,14 +3978,14 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutTabKind"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutTabKind"
                 }
               ]
             }
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutTabKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutTabKind": {
         "type": "object",
         "required": [
           "kind",
@@ -3839,27 +4000,27 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutTabSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutTabSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutTabSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutTabSpec": {
         "type": "object",
         "required": [
           "layout"
         ],
         "properties": {
           "layout": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind"
           },
           "title": {
             "type": "string"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTextVariableKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTextVariableKind": {
         "description": "Text variable kind",
         "type": "object",
         "required": [
@@ -3875,13 +4036,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTextVariableSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTextVariableSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTextVariableSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTextVariableSpec": {
         "description": "Text variable specification",
         "type": "object",
         "required": [
@@ -3896,7 +4057,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
               }
             ]
           },
@@ -3924,7 +4085,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardThreshold": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardThreshold": {
         "type": "object",
         "required": [
           "value",
@@ -3942,7 +4103,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardThresholdsConfig": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardThresholdsConfig": {
         "type": "object",
         "required": [
           "mode",
@@ -3959,14 +4120,14 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardThreshold"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardThreshold"
                 }
               ]
             }
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTimeRangeOption": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTimeRangeOption": {
         "type": "object",
         "required": [
           "display",
@@ -3988,7 +4149,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTimeSettingsSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTimeSettingsSpec": {
         "description": "Time configuration It defines the default time config for the time picker, the refresh picker for the specific dashboard.",
         "type": "object",
         "required": [
@@ -4040,7 +4201,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTimeRangeOption"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTimeRangeOption"
                 }
               ]
             }
@@ -4060,7 +4221,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardTransformationKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTransformationKind": {
         "type": "object",
         "required": [
           "kind",
@@ -4076,13 +4237,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDataTransformerConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataTransformerConfig"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1FieldConfigSourceOverrides": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1FieldConfigSourceOverrides": {
         "type": "object",
         "required": [
           "matcher",
@@ -4093,7 +4254,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardMatcherConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMatcherConfig"
               }
             ]
           },
@@ -4103,14 +4264,14 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardDynamicConfigValue"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDynamicConfigValue"
                 }
               ]
             }
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1RangeMapOptions": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1RangeMapOptions": {
         "type": "object",
         "required": [
           "from",
@@ -4128,7 +4289,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardValueMappingResult"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMappingResult"
               }
             ]
           },
@@ -4139,7 +4300,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1RegexMapOptions": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1RegexMapOptions": {
         "type": "object",
         "required": [
           "pattern",
@@ -4156,13 +4317,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardValueMappingResult"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMappingResult"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1SpecialValueMapOptions": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1SpecialValueMapOptions": {
         "type": "object",
         "required": [
           "match",
@@ -4179,13 +4340,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardValueMappingResult"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMappingResult"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardValueMap": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMap": {
         "description": "Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.",
         "type": "object",
         "required": [
@@ -4200,36 +4361,35 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardValueMappingResult"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMappingResult"
                 }
               ]
             }
           },
           "type": {
-            "description": "And this is no longer producing valid TS / Go output type: MappingType \u0026 \"value\"",
             "type": "string",
             "default": ""
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap": {
         "type": "object",
         "properties": {
           "RangeMap": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRangeMap"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRangeMap"
           },
           "RegexMap": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardRegexMap"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRegexMap"
           },
           "SpecialValueMap": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardSpecialValueMap"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSpecialValueMap"
           },
           "ValueMap": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardValueMap"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMap"
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardValueMappingResult": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMappingResult": {
         "description": "Result used as replacement with text and color when the value matches",
         "type": "object",
         "properties": {
@@ -4252,7 +4412,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVariableOption": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption": {
         "description": "Variable option specification",
         "type": "object",
         "required": [
@@ -4268,7 +4428,7 @@
             "description": "Text to be displayed for the option",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardStringOrArrayOfString"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardStringOrArrayOfString"
               }
             ]
           },
@@ -4276,13 +4436,13 @@
             "description": "Value of the option",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardStringOrArrayOfString"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardStringOrArrayOfString"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVizConfigKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVizConfigKind": {
         "type": "object",
         "required": [
           "kind",
@@ -4298,13 +4458,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVizConfigSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVizConfigSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardVizConfigSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVizConfigSpec": {
         "description": "--- Kinds ---",
         "type": "object",
         "required": [
@@ -4317,7 +4477,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardFieldConfigSource"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFieldConfigSource"
               }
             ]
           },
@@ -4333,7 +4493,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardWithAccessInfo": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardWithAccessInfo": {
         "description": "This is like the legacy DTO where access and metadata are all returned in a single call",
         "type": "object",
         "required": [
@@ -4347,7 +4507,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardAccess"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAccess"
               }
             ]
           },
@@ -4372,7 +4532,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSpec"
               }
             ]
           },
@@ -4380,7 +4540,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.DashboardStatus"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardStatus"
               }
             ]
           }
@@ -4393,7 +4553,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanel": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanel": {
         "type": "object",
         "required": [
           "spec"
@@ -4421,7 +4581,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanelSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelSpec"
               }
             ]
           },
@@ -4429,7 +4589,7 @@
             "description": "Status will show errors",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanelStatus"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelStatus"
               }
             ]
           }
@@ -4442,7 +4602,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanelList": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList": {
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -4455,7 +4615,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanel"
                 }
               ]
             }
@@ -4481,7 +4641,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanelSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelSpec": {
         "type": "object",
         "required": [
           "type",
@@ -4540,7 +4700,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v2alpha1.LibraryPanelStatus": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelStatus": {
         "type": "object",
         "properties": {
           "missing": {
@@ -4560,6 +4720,11 @@
             }
           }
         }
+      },
+      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
+        "type": "object",
+        "additionalProperties": true,
+        "x-kubernetes-preserve-unknown-fields": true
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
