@@ -29,7 +29,7 @@ import {
   Action,
   DataLinksFieldConfigSettings,
 } from '@grafana/data';
-import { actionsOverrideProcessor } from '@grafana/data/internal';
+import { actionsOverrideProcessor } from '@grafana/data/src/field/overrides/processors';
 import { FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';

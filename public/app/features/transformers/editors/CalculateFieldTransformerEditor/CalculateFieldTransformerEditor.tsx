@@ -21,7 +21,7 @@ import {
   CalculateFieldTransformerOptions,
   getNameFromOptions,
   defaultWindowOptions,
-} from '@grafana/data/internal';
+} from '@grafana/data/src/transformations/transformers/calculateField';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';
 

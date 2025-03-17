@@ -5,7 +5,7 @@ import {
   CalculateFieldTransformerOptions,
   WindowOptions,
   WindowSizeMode,
-} from '@grafana/data/internal';
+} from '@grafana/data/src/transformations/transformers/calculateField';
 import { InlineField, RadioButtonGroup, Select, StatsPicker } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 

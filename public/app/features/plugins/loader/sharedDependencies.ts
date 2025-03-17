@@ -49,7 +49,7 @@ export const sharedDependenciesMap = {
   '@emotion/css': () => import('@emotion/css'),
   '@emotion/react': () => import('@emotion/react'),
   '@grafana/data': grafanaData,
-  '@grafana/data/unstable': () => import('@grafana/data/unstable'),
+  '@grafana/data/unstable': () => import('@grafana/data/src/unstable'),
   '@grafana/runtime': grafanaRuntime,
   '@grafana/runtime/unstable': () => import('@grafana/runtime/src/unstable'),
   '@grafana/slate-react': () => import('slate-react'),

@@ -1,14 +1,13 @@
-import {
-  type PluginExtensionAddedLinkConfig,
-  type PluginExtension,
-  type PluginExtensionLink,
-  type PluginContextType,
-  type PluginExtensionAddedComponentConfig,
-  type PluginExtensionExposedComponentConfig,
-  type PluginExtensionAddedFunctionConfig,
-  PluginExtensionPoints,
+import type {
+  PluginExtensionAddedLinkConfig,
+  PluginExtension,
+  PluginExtensionLink,
+  PluginContextType,
+  PluginExtensionAddedComponentConfig,
+  PluginExtensionExposedComponentConfig,
+  PluginExtensionAddedFunctionConfig,
 } from '@grafana/data';
-import { PluginAddedLinksConfigureFunc } from '@grafana/data/internal';
+import { PluginAddedLinksConfigureFunc, PluginExtensionPoints } from '@grafana/data/src/types/pluginExtensions';
 import { config, isPluginExtensionLink } from '@grafana/runtime';
 
 import * as errors from './errors';

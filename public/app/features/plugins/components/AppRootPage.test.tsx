@@ -4,7 +4,7 @@ import { Routes, Route, Link } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { AppPlugin, PluginType, AppRootProps, NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
-import { getMockPlugin } from '@grafana/data/test';
+import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setEchoSrv } from '@grafana/runtime';
 import { GrafanaRouteWrapper } from 'app/core/navigation/GrafanaRoute';
 import { contextSrv } from 'app/core/services/context_srv';

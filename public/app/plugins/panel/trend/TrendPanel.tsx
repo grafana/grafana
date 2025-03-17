@@ -1,14 +1,7 @@
 import { useMemo } from 'react';
 
-import {
-  isLikelyAscendingVector,
-  DataFrame,
-  FieldMatcherID,
-  fieldMatchers,
-  FieldType,
-  PanelProps,
-  TimeRange,
-} from '@grafana/data';
+import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
+import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';

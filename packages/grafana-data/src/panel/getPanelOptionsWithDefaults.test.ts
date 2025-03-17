@@ -11,7 +11,8 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 
-import { getPanelPlugin, mockStandardFieldConfigOptions } from '../../test';
+import { getPanelPlugin } from '../../test/__mocks__/pluginMocks';
+import { mockStandardFieldConfigOptions } from '../../test/helpers/fieldConfig';
 
 import { getPanelOptionsWithDefaults, restoreCustomOverrideRules } from './getPanelOptionsWithDefaults';
 

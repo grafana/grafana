@@ -7,7 +7,10 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { histogramFieldInfo, HistogramTransformerInputs } from '@grafana/data/internal';
+import {
+  histogramFieldInfo,
+  HistogramTransformerInputs,
+} from '@grafana/data/src/transformations/transformers/histogram';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

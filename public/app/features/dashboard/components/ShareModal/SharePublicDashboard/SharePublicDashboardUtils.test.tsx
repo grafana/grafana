@@ -1,4 +1,5 @@
-import { DataSourceRef, DataQuery, TypedVariableModel } from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
+import { DataSourceRef, DataQuery } from '@grafana/data/src/types/query';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { updateConfig } from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
