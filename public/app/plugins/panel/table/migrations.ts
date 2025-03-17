@@ -20,9 +20,35 @@ import { Options } from './panelcfg.gen';
  * a saved table configuration exists.
  */
 export const tableMigrationHandler = (panel: PanelModel<Options>): Partial<Options> => {
+  const pluginVersion = panel?.pluginVersion ?? '';
+
   // Table was saved as an angular table, lets just swap to the 'table-old' panel
-  if (!panel.pluginVersion && 'columns' in panel) {
+  if (!pluginVersion && 'columns' in panel) {
     console.log('Was angular table', panel);
+  }
+
+  // move footer options to field config
+  if (parseFloat(pluginVersion) <= 11.6) {
+    panel.fieldConfig = {
+      defaults: {
+        ...panel.fieldConfig.defaults,
+        custom: {
+          ...panel.fieldConfig.defaults.custom,
+          footer: {
+            countRows: panel.options.footer?.countRows ?? false,
+            fields: panel.options.footer?.fields ?? [],
+            reducer: panel.options.footer?.reducer ?? [],
+            show: panel.options.footer?.show ?? false,
+            enablePagination: panel.options.footer?.enablePagination ?? false,
+          },
+        },
+      },
+      overrides: [...panel.fieldConfig.overrides],
+    };
+
+    if (panel.options.footer) {
+      delete panel.options.footer;
+    }
   }
 
   // Nothing changed
