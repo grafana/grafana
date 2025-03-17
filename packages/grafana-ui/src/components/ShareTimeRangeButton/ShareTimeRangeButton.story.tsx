@@ -1,11 +1,11 @@
 import { StoryFn, Meta } from '@storybook/react';
 
-import { ShareUrlButton as ShareUrlButtonImpl, Props } from './ShareUrlButton';
-import mdx from './ShareUrlButton.mdx';
+import { ShareTimeRangeButton as ShareTimeRangeButtonImpl, Props } from './ShareTimeRangeButton';
+import mdx from './ShareTimeRangeButton.mdx';
 
 const meta: Meta = {
-  title: 'Buttons/ShareUrlButton',
-  component: ShareUrlButtonImpl,
+  title: 'Buttons/ShareTimeRangeButton',
+  component: ShareTimeRangeButtonImpl,
   args: {
     url: 'http://mygrafanainstance.grafana.net/dashboard/1?from=now-1h&to=now',
     fromParam: 'from',
@@ -36,8 +36,8 @@ const meta: Meta = {
 
 interface StoryProps extends Props {}
 
-export const ShareUrlButton: StoryFn<StoryProps> = (args) => {
-  return <ShareUrlButtonImpl {...args} />;
+export const ShareTimeRangeButton: StoryFn<StoryProps> = (args) => {
+  return <ShareTimeRangeButtonImpl {...args} />;
 };
 
 export default meta;

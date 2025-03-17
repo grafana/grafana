@@ -3,8 +3,8 @@ import { useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { copyText } from '../../../src/utils/clipboard';
-import { absoluteTimeRangeURL } from '../../../src/utils/time';
+import { copyText } from '../../utils/clipboard';
+import { absoluteTimeRangeURL } from '../../utils/time';
 import { useStyles2 } from '../../themes';
 import { t, Trans } from '../../utils/i18n';
 import { Button, ButtonGroup, ButtonProps } from '../Button';
@@ -39,7 +39,7 @@ export interface Props extends ButtonProps {
   toParam?: string;
 }
 
-export function ShareUrlButton({ collapsed, url, fromParam, toParam }: Props) {
+export function ShareTimeRangeButton({ collapsed, url, fromParam, toParam }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const styles = useStyles2(getStyles);
 

@@ -1,11 +1,11 @@
 import { Meta, ArgTypes } from '@storybook/blocks';
-import { ShareUrlButton } from './ShareUrlButton';
+import { ShareTimeRangeButton } from './ShareTimeRangeButton';
 
-<Meta title="MDX|ShareUrlButton" component={ShareUrlButton} />
+<Meta title="MDX|ShareTimeRangeButton" component={ShareTimeRangeButton} />
 
-# ShareUrlButton
+# ShareTimeRangeButton
 
-ShareUrlButton is a component that provides URL sharing functionality with time range preservation for use cases where
+ShareTimeRangeButton is a component that provides URL sharing functionality with time range preservation for use cases where
 time range info is stored in the URL as a query parameter such as "from" and "to".
 
 It consists of a button group with a primary share button and a dropdown menu offering different URL copying options as
@@ -20,11 +20,11 @@ When copying URLs:
 # Usage
 
 ```jsx
-<ShareUrlButton />
+<ShareTimeRangeButton />
 ```
 
 ```jsx
-<ShareUrlButton collapsed={true} />
+<ShareTimeRangeButton collapsed={true} />
 ```
 
-<ArgTypes of={ShareUrlButton} />
+<ArgTypes of={ShareTimeRangeButton} />
