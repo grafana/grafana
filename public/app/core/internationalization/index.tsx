@@ -27,6 +27,10 @@ export async function initializeI18n(language: string): Promise<{ language: stri
     fallbackLng: DEFAULT_LANGUAGE,
 
     ns: NAMESPACES,
+    postProcess: [
+      // Add pseudo processing even if we aren't necessarily going to use it
+      'pseudo',
+    ],
   };
 
   i18nInstance = i18n;
@@ -38,12 +42,20 @@ export async function initializeI18n(language: string): Promise<{ language: stri
     options.lng = VALID_LANGUAGES.includes(language) ? language : undefined;
   }
 
-  const loadPromise = i18nInstance
-    .use(loadTranslations)
-    .use(initReactI18next) // passes i18n down to react-i18next
-    .init(options);
+  i18nInstance.use(loadTranslations).use(initReactI18next); // passes i18n down to react-i18next
 
-  await loadPromise;
+  if (process.env.NODE_ENV === 'development') {
+    const { default: Pseudo } = await import('i18next-pseudo');
+    i18nInstance.use(
+      new Pseudo({
+        languageToPseudo: 'pseudo',
+        enabled: true,
+        wrapped: true,
+      })
+    );
+  }
+
+  await i18nInstance.init(options);
 
   tFunc = i18n.getFixedT(null, NAMESPACES);
 
