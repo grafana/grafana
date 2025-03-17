@@ -483,7 +483,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostDatasource(c *context
 				NamespaceUID: grafanaGroup.FolderUID,
 				RuleGroup:    grafanaGroup.Title,
 			}
-			updateResp := srv.rulerSrv.updateAlertRulesInGroup(c, groupKey, rules)
+			updateResp := srv.rulerSrv.updateAlertRulesInGroup(c, groupKey, rules, false)
 			if updateResp.Status() != http.StatusAccepted {
 				return fmt.Errorf("failed to update group %s with folder_uid %s", groupKey.RuleGroup, grafanaGroup.FolderUID)
 			}
