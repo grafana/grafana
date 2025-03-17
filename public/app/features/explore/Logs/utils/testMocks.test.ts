@@ -1,4 +1,4 @@
-import { DataFrame, Field, FieldType } from '@grafana/data/src';
+import { DataFrame, Field, FieldType } from '@grafana/data';
 
 import { DataFrameType } from '../../../../../../packages/grafana-data';
 

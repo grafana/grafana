@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { FieldType } from '@grafana/data/src';
+import { FieldType } from '@grafana/data';
 
 import { Node } from './Node';
 

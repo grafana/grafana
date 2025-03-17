@@ -11,8 +11,7 @@ import {
   PanelMigrationHandler,
   PanelTypeChangedHandler,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { mockStandardFieldConfigOptions } from '@grafana/data/test/helpers/fieldConfig';
+import { getPanelPlugin, mockStandardFieldConfigOptions } from '@grafana/data/test';
 import { setTemplateSrv } from '@grafana/runtime';
 import { queryBuilder } from 'app/features/variables/shared/testing/builders';
 

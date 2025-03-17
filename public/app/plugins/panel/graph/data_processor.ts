@@ -1,7 +1,7 @@
 import { find } from 'lodash';
 
 import { DataFrame, dateTime, Field, FieldType, getFieldDisplayName, getTimeField, TimeRange } from '@grafana/data';
-import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
+import { applyNullInsertThreshold } from '@grafana/data/internal';
 import { colors } from '@grafana/ui';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';

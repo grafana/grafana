@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
 import type { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
-import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getMockPlugin } from '@grafana/data/test';
 import * as runtime from '@grafana/runtime';
 
 import { MetricsLogsConnector } from './base';

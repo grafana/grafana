@@ -2,8 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useRef, useState } from 'react';
 
-import { CoreApp, LogRowModel, dateTimeForTimeZone } from '@grafana/data';
-import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
+import { CoreApp, LogRowModel, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { LogsSortOrder } from '@grafana/schema';
 
@@ -16,7 +15,7 @@ const absoluteRange = {
   from: 1702578600000,
   to: 1702578900000,
 };
-const defaultRange = convertRawToRange({
+const defaultRange = rangeUtil.convertRawToRange({
   from: dateTimeForTimeZone(defaultTz, absoluteRange.from),
   to: dateTimeForTimeZone(defaultTz, absoluteRange.to),
 });
