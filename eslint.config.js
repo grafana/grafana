@@ -73,6 +73,7 @@ module.exports = [
       'jsx-a11y': jsxA11yPlugin,
       'no-barrel-files': barrelPlugin,
       '@grafana': grafanaPlugin,
+      unicorn: unicornPlugin,
     },
 
     settings: {
@@ -129,6 +130,7 @@ module.exports = [
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
       '@typescript-eslint/no-redeclare': ['error'],
+      'unicorn/no-empty-file': 'error',
     },
   },
   {
