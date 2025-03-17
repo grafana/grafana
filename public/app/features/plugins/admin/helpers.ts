@@ -480,3 +480,15 @@ export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
 
   return false;
 }
+
+export function isNonAngularVersion(version?: Version) {
+  if (!version) {
+    return false;
+  }
+
+  return version.angularDetected === false;
+}
+
+export function isDisabledAngularPlugin(plugin: CatalogPlugin) {
+  return plugin.isDisabled && plugin.error === PluginErrorCode.angular;
+}
