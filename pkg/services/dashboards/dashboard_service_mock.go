@@ -562,6 +562,24 @@ func (_m *FakeDashboardService) SoftDeleteDashboard(ctx context.Context, orgID i
 	return r0
 }
 
+// CleanUpDashboard provides a mock function with given fields: ctx, dashboardUID, orgId
+func (_m *FakeDashboardService) CleanUpDashboard(ctx context.Context, dashboardUID string, orgId int64) error {
+	ret := _m.Called(ctx, dashboardUID, orgId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CleanUpDashboard")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
+		r0 = rf(ctx, dashboardUID, orgId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewFakeDashboardService creates a new instance of FakeDashboardService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewFakeDashboardService(t interface {
