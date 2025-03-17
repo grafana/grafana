@@ -8,10 +8,7 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import {
-  LabelsToFieldsMode,
-  LabelsToFieldsOptions,
-} from '@grafana/data/src/transformations/transformers/labelsToFields';
+import { LabelsToFieldsMode, LabelsToFieldsOptions } from '@grafana/data/internal';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill, Stack } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
