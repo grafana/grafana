@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 interface Props {
   labelKey: string;
@@ -18,7 +19,14 @@ export const AlertLabel = ({ labelKey, value, operator = '=', onRemoveLabel }: P
       {labelKey}
       {operator}
       {value}
-      {!!onRemoveLabel && <IconButton name="times" size="xs" onClick={onRemoveLabel} tooltip="Remove label" />}
+      {!!onRemoveLabel && (
+        <IconButton
+          name="times"
+          size="xs"
+          onClick={onRemoveLabel}
+          tooltip={t('alerting.alert-label.tooltip-remove-label', 'Remove label')}
+        />
+      )}
     </div>
   );
 };

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -41,7 +42,7 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
               icon={'bell'}
               size={'sm'}
             >
-              Manage silences
+              <Trans i18nKey="alerting.alert-details.manage-silences">Manage silences</Trans>
             </LinkButton>
           </Authorize>
         )}
@@ -53,7 +54,7 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
               icon={'bell-slash'}
               size={'sm'}
             >
-              Silence
+              <Trans i18nKey="alerting.alert-details.silence">Silence</Trans>
             </LinkButton>
           </Authorize>
         )}

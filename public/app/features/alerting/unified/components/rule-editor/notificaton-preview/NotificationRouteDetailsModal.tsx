@@ -3,6 +3,7 @@ import { compact } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { AlertmanagerAction } from '../../../hooks/useAbilities';
@@ -28,13 +29,17 @@ function PolicyPath({ route, routesByIdMap, matcherFormatter }: Props) {
 
   return (
     <div className={styles.policyPathWrapper}>
-      <div className={styles.defaultPolicy}>Default policy</div>
+      <div className={styles.defaultPolicy}>
+        <Trans i18nKey="alerting.policy-path.default-policy">Default policy</Trans>
+      </div>
       {routePathObjects.map((pathRoute, index) => {
         return (
           <div key={pathRoute.id}>
             <div className={styles.policyInPath(index, index === routePathObjects.length - 1)}>
               {hasEmptyMatchers(pathRoute) ? (
-                <div className={styles.textMuted}>No matchers</div>
+                <div className={styles.textMuted}>
+                  <Trans i18nKey="alerting.policy-path.no-matchers">No matchers</Trans>
+                </div>
               ) : (
                 <Matchers matchers={pathRoute.object_matchers ?? []} formatter={matcherFormatter} />
               )}
@@ -69,16 +74,26 @@ export function NotificationRouteDetailsModal({
       <Modal
         className={styles.detailsModal}
         isOpen={true}
-        title="Routing details"
+        title={t('alerting.notification-route-details-modal.title-routing-details', 'Routing details')}
         onDismiss={onClose}
         onClickBackdrop={onClose}
       >
         <Stack gap={0} direction="column">
           <div className={cx(styles.textMuted, styles.marginBottom(2))}>
-            Your alert instances are routed as follows.
+            <Trans i18nKey="alerting.notification-route-details-modal.alert-instances-routed-follows">
+              Your alert instances are routed as follows.
+            </Trans>
           </div>
-          <div>Notification policy path</div>
-          {isDefault && <div className={styles.textMuted}>Default policy</div>}
+          <div>
+            <Trans i18nKey="alerting.notification-route-details-modal.notification-policy-path">
+              Notification policy path
+            </Trans>
+          </div>
+          {isDefault && (
+            <div className={styles.textMuted}>
+              <Trans i18nKey="alerting.notification-route-details-modal.default-policy">Default policy</Trans>
+            </div>
+          )}
           <div className={styles.separator(1)} />
           {!isDefault && (
             <PolicyPath
@@ -108,7 +123,7 @@ export function NotificationRouteDetailsModal({
           </div>
           <div className={styles.button}>
             <Button variant="primary" type="button" onClick={onClose}>
-              Close
+              <Trans i18nKey="alerting.notification-route-details-modal.close">Close</Trans>
             </Button>
           </div>
         </Stack>

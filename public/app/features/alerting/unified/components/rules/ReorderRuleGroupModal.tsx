@@ -13,7 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Button, Icon, Modal, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import {
   CombinedRuleGroup,
@@ -188,7 +188,7 @@ const ListItem = ({ provided, rule, isClone = false, isDragging = false }: ListI
         {rulerRuleType.any.recordingRule(rule) && (
           <>
             {' '}
-            <Badge text="Recording" color="purple" />
+            <Badge text={t('alerting.list-item.text-recording', 'Recording')} color="purple" />
           </>
         )}
       </div>

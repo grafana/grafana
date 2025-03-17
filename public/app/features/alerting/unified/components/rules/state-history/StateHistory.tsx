@@ -5,6 +5,7 @@ import * as React from 'react';
 
 import { AlertState, GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
 import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -84,7 +85,9 @@ const StateHistory = ({ ruleUID }: Props) => {
           label={
             <Label>
               <Stack gap={0.5} alignItems="center">
-                <span>Filter group</span>
+                <span>
+                  <Trans i18nKey="alerting.state-history.filter-group">Filter group</Trans>
+                </span>
                 <Tooltip
                   content={
                     <div>
@@ -99,7 +102,11 @@ const StateHistory = ({ ruleUID }: Props) => {
             </Label>
           }
         >
-          <Input prefix={<Icon name={'search'} />} onChange={handleTextFilter} placeholder="Search" />
+          <Input
+            prefix={<Icon name={'search'} />}
+            onChange={handleTextFilter}
+            placeholder={t('alerting.state-history.placeholder-search', 'Search')}
+          />
         </Field>
       </nav>
       {tables}

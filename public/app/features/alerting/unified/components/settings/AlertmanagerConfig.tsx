@@ -5,7 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { reportFormErrors } from '../../Analytics';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
@@ -99,7 +99,13 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   /* loading error, if this fails don't bother rendering the form */
   if (loadingError) {
     return (
-      <Alert severity="error" title="Failed to load Alertmanager configuration">
+      <Alert
+        severity="error"
+        title={t(
+          'alerting.alertmanager-config.title-failed-to-load-alertmanager-configuration',
+          'Failed to load Alertmanager configuration'
+        )}
+      >
         {loadingError.message ?? 'An unknown error occurred.'}
       </Alert>
     );
@@ -108,8 +114,16 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   /* resetting configuration state */
   if (isDeleting) {
     return (
-      <Alert severity="info" title="Resetting Alertmanager configuration">
-        Resetting configuration, this might take a while.
+      <Alert
+        severity="info"
+        title={t(
+          'alerting.alertmanager-config.title-resetting-alertmanager-configuration',
+          'Resetting Alertmanager configuration'
+        )}
+      >
+        <Trans i18nKey="alerting.alertmanager-config.resetting-configuration-might-while">
+          Resetting configuration, this might take a while.
+        </Trans>
       </Alert>
     );
   }
@@ -122,7 +136,10 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
     <div className={styles.container}>
       {/* form error state */}
       {errors.configJSON && (
-        <Alert severity="error" title="Oops, something went wrong">
+        <Alert
+          severity="error"
+          title={t('alerting.alertmanager-config.title-oops-something-went-wrong', 'Oops, something went wrong')}
+        >
           {errors.configJSON.message || 'An unknown error occurred.'}
         </Alert>
       )}
@@ -153,7 +170,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
       <Stack justifyContent="flex-end">
         {!readOnly && (
           <Button variant="destructive" onClick={() => setShowResetConfirmation(true)} disabled={isOperating}>
-            Reset
+            <Trans i18nKey="alerting.alertmanager-config.reset">Reset</Trans>
           </Button>
         )}
         <Spacer />
@@ -168,7 +185,10 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
       </Stack>
       <ConfirmModal
         isOpen={showResetConfirmation}
-        title="Reset Alertmanager configuration"
+        title={t(
+          'alerting.alertmanager-config.title-reset-alertmanager-configuration',
+          'Reset Alertmanager configuration'
+        )}
         body={confirmationText}
         confirmText="Yes, reset configuration"
         onConfirm={() => {

@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CollapsableSection, Stack, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
@@ -71,7 +72,10 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       )}
       <div className={styles.routingSection}>
         <CollapsableSection
-          label="Muting, grouping and timings (optional)"
+          label={t(
+            'alerting.alert-manager-manual-routing.label-muting-grouping-and-timings-optional',
+            'Muting, grouping and timings (optional)'
+          )}
           isOpen={hasRouteSettings}
           className={styles.collapsableSection}
         >

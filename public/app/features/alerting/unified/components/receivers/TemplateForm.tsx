@@ -167,10 +167,18 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   return (
     <>
       <FormProvider {...formApi}>
-        <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form} aria-label="Template form">
+        <form
+          onSubmit={handleSubmit(submit)}
+          ref={formRef}
+          className={styles.form}
+          aria-label={t('alerting.template-form.aria-label-template-form', 'Template form')}
+        >
           {/* error message */}
           {error && (
-            <Alert severity="error" title="Error saving template">
+            <Alert
+              severity="error"
+              title={t('alerting.template-form.title-error-saving-template', 'Error saving template')}
+            >
               {error.message || (isFetchError(error) && error.data?.message) || String(error)}
             </Alert>
           )}
@@ -187,7 +195,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
               {/* name and save buttons */}
               <Stack direction="row" alignItems="center">
                 <InlineField
-                  label="Template group name"
+                  label={t('alerting.template-form.label-template-group-name', 'Template group name')}
                   error={errors?.title?.message}
                   invalid={!!errors.title?.message}
                   required
@@ -197,7 +205,10 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       required: { value: true, message: 'Required.' },
                       validate: { titleIsUnique },
                     })}
-                    placeholder="Give your template group a name"
+                    placeholder={t(
+                      'alerting.template-form.new-template-name-placeholder-give-your-template-group-a-name',
+                      'Give your template group a name'
+                    )}
                     width={42}
                     autoFocus={true}
                     id="new-template-name"
@@ -231,7 +242,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       <div className={cx(styles.flexColumn, styles.containerWithBorderAndRadius, styles.minEditorSize)}>
                         <div>
                           <EditorColumnHeader
-                            label="Template group"
+                            label={t('alerting.template-form.label-template-group', 'Template group')}
                             actions={
                               <>
                                 {/* examples dropdown – only available for Grafana Alertmanager */}
@@ -334,7 +345,11 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
         </form>
       </FormProvider>
       {cheatsheetOpened && (
-        <Drawer title="Templating cheat sheet" onClose={toggleCheatsheetOpened} size="lg">
+        <Drawer
+          title={t('alerting.template-form.title-templating-cheat-sheet', 'Templating cheat sheet')}
+          onClose={toggleCheatsheetOpened}
+          size="lg"
+        >
           <TemplatingCheatSheet />
         </Drawer>
       )}
