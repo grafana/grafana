@@ -5,18 +5,22 @@ import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Button, InlineField, InlineSwitch, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
 
+import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { Folder } from '../../types/rule-form';
-import { createRelativeUrl } from '../../utils/url';
+import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
+import { createListFilterLink } from '../rule-viewer/RuleViewer';
 
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
 
 export interface ImportFormValues {
-  selectedDatasource: string | null;
+  selectedDatasourceUID: string;
+  selectedDatasourceName: string | null;
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
   targetFolder?: Folder;
@@ -27,7 +31,8 @@ export interface ImportFormValues {
 const ImportFromDSRules = () => {
   const formAPI = useForm<ImportFormValues>({
     defaultValues: {
-      selectedDatasource: undefined,
+      selectedDatasourceUID: undefined,
+      selectedDatasourceName: '',
       pauseAlertingRules: true,
       pauseRecordingRules: true,
       targetFolder: undefined,
@@ -46,15 +51,37 @@ const ImportFromDSRules = () => {
   const styles = useStyles2(getStyles);
 
   const targetFolder = watch('targetFolder');
-  const selectedDatasource = watch('selectedDatasource');
+  const [convert, convertState] = convertToGMAApi.useConvertToGMAMutation();
+  const selectedDatasourceName = watch('selectedDatasourceName');
 
   const onSubmit = async (data: ImportFormValues) => {
     console.log(data);
     // await response calling api to import rules ..if we get an error show and not redirect
     // if success show success message and redirect to alerting page /list
-    const ruleListUrl = createRelativeUrl('/alerting/list');
-    locationService.push(ruleListUrl);
+    convert({
+      datasourceUID: data.selectedDatasourceUID,
+      targetFolderUID: data.targetFolder!.uid,
+      pauseRecordingRules: data.pauseRecordingRules,
+      pauseAlerts: data.pauseAlertingRules,
+      ...(data.namespace ? { namespace: data.namespace } : {}),
+      ...(data.ruleGroup ? { group: data.ruleGroup } : {}),
+    })
+      .unwrap()
+      .then(() => {
+        const ruleListUrl = createListFilterLink([['namespace', data.targetFolder?.title ?? '']]);
+        locationService.push(ruleListUrl);
+      });
   };
+
+  const notifyApp = useAppNotification();
+
+  if (convertState.error) {
+    notifyApp.error(
+      t('alerting.import-to-gma.error', 'Failed to export alert rules: {{error}}', {
+        error: stringifyErrorLike(convertState.error),
+      })
+    );
+  }
 
   return (
     <AlertingPageWrapper
@@ -74,19 +101,20 @@ const ImportFromDSRules = () => {
                 transparent={true}
                 label={t('alerting.import-to-gma.datasource.label', 'Datasource')}
                 labelWidth={20}
-                invalid={!!errors.selectedDatasource}
-                error={errors.selectedDatasource?.message}
+                invalid={!!errors.selectedDatasourceName}
+                error={errors.selectedDatasourceName?.message}
               >
                 <Controller
                   render={({ field: { onChange, ref, ...field } }) => (
                     <CloudRulesSourcePicker
                       {...field}
                       onChange={(ds: DataSourceInstanceSettings) => {
-                        setValue('selectedDatasource', ds.name);
+                        setValue('selectedDatasourceUID', ds.uid);
+                        setValue('selectedDatasourceName', ds.name);
                       }}
                     />
                   )}
-                  name="selectedDatasource"
+                  name="selectedDatasourceName"
                   rules={{
                     required: {
                       value: true,
@@ -101,8 +129,8 @@ const ImportFromDSRules = () => {
                 transparent={true}
                 label={t('alerting.import-to-gma.target-folder.label', 'Target Folder')}
                 labelWidth={20}
-                invalid={!!errors.selectedDatasource}
-                error={errors.selectedDatasource?.message}
+                invalid={!!errors.selectedDatasourceName}
+                error={errors.selectedDatasourceName?.message}
               >
                 <Controller
                   render={({ field: { onChange, ref, ...field } }) => (
@@ -154,13 +182,13 @@ const ImportFromDSRules = () => {
                 <InlineSwitch {...register('pauseRecordingRules')} />
               </InlineField>
 
-              {selectedDatasource ? <NamespaceAndGroupFilter rulesSourceName={selectedDatasource} /> : null}
+              {selectedDatasourceName ? <NamespaceAndGroupFilter rulesSourceName={selectedDatasourceName} /> : null}
 
               <Stack>
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={isSubmitting || !watch('selectedDatasource') || !watch('targetFolder')}
+                  disabled={isSubmitting || !watch('selectedDatasourceName') || !watch('targetFolder')}
                   onClick={() => clearErrors()}
                 >
                   {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
