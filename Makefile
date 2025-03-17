@@ -7,7 +7,6 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-
 GO = go
 GO_VERSION = 1.23.7
 GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
@@ -100,12 +99,12 @@ cleanup-old-git-hooks:
 	./scripts/cleanup-husky.sh
 
 .PHONY: lefthook-install
-lefthook-install: cleanup-old-git-hooks $(LEFTHOOK) # install lefthook for pre-commit hooks
-	$(LEFTHOOK) install -f
+lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
+	$(GO) tool lefthook install -f
 
 .PHONY: lefthook-uninstall
-lefthook-uninstall: $(LEFTHOOK)
-	$(LEFTHOOK) uninstall
+lefthook-uninstall:
+	$(GO) tool lefthook uninstall
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
@@ -209,8 +208,8 @@ build-plugin-go: ## Build decoupled plugins
 build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
-run: $(BRA) ## Build and run web server on filesystem changes.
-	$(BRA) run
+run: ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
+	$(GO) tool bra run
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
@@ -279,9 +278,9 @@ test: test-go test-js ## Run all tests.
 
 ##@ Linting
 .PHONY: golangci-lint
-golangci-lint: $(GOLANGCI_LINT)
+golangci-lint:
 	@echo "lint via golangci-lint"
-	$(GOLANGCI_LINT) run \
+	$(GO) tool golangci-lint run \
 		--config .golangci.yml \
 		$(GO_FILES)
 
