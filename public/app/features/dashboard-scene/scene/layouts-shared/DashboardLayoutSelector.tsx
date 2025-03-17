@@ -37,10 +37,12 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
                 onSelect={() => changeLayoutTo(layoutManager, opt)}
               >
                 <div className={styles.rowsLayoutViz}>
+                  {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
                   <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ &nbsp; .-.-.-.-.-</div>
                   <GridCell />
                   <GridCell />
                   <GridCell />
+                  {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
                   <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ &nbsp; .-.-.-.-.-</div>
                   <GridCell />
                   <GridCell />
@@ -59,8 +61,11 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
               >
                 <Stack direction="column" gap={0.5} height={'100%'}>
                   <div className={styles.tabsBar}>
+                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
                     <div className={cx(styles.tab, styles.tabActive)}>-.-.-</div>
+                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
                     <div className={styles.tab}>-.-.-</div>
+                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
                     <div className={styles.tab}>-.-.-</div>
                   </div>
                   <div className={styles.tabsVizTabContent}>
