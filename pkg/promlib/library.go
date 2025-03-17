@@ -67,8 +67,10 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 			return nil, fmt.Errorf("error creating http client: %v", err)
 		}
 
+		featureToggles := backend.GrafanaConfigFromContext(ctx).FeatureToggles()
+
 		// New version using custom client and better response parsing
-		qd, err := querydata.New(httpClient, settings, log)
+		qd, err := querydata.New(httpClient, settings, log, featureToggles)
 		if err != nil {
 			return nil, err
 		}
