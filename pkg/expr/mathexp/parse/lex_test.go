@@ -256,7 +256,7 @@ func TestGoroutineLeak(t *testing.T) {
 	// Get the final number of goroutines
 	finalGoroutines := runtime.NumGoroutine()
 
-	// Check if we've leaked goroutines - add a buffer of 5 to avoid flakiness
+	// Check if we've leaked goroutines - add a buffer of 10 to avoid flakiness
 	// If no leak, finalGoroutines should be very close to initialGoroutines
 	// If leaking, we expect finalGoroutines to be much higher (50+ more)
 	if finalGoroutines > initialGoroutines+10 {
