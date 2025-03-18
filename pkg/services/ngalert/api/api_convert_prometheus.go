@@ -31,6 +31,8 @@ import (
 const (
 	// datasourceUIDHeader is the name of the header that specifies the UID of the datasource to be used for the rules.
 	datasourceUIDHeader = "X-Grafana-Alerting-Datasource-UID"
+	// targetDatasourceUIDHeader is the name of the header that specifies the UID of the target datasource to be used for recording rules.
+	targetDatasourceUIDHeader = "X-Grafana-Alerting-Target-Datasource-UID"
 
 	// If the folderUIDHeader is present, namespaces and rule groups will be created in the specified folder.
 	// If not, the root folder will be used as the default.
@@ -351,7 +353,18 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 	ds, err := srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), datasourceUID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		logger.Error("Failed to get datasource", "datasource_uid", datasourceUID, "error", err)
-		return errorToResponse(err)
+		return errorToResponse(fmt.Errorf("failed to get datasource: %w", err))
+	}
+
+	// By default the target datasource is the same as the query datasource,
+	// but if the header "X-Grafana-Alerting-Target-Datasource-UID" is present, we use that instead.
+	tds := ds
+	if uid := strings.TrimSpace(c.Req.Header.Get(targetDatasourceUIDHeader)); uid != "" {
+		tds, err = srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), uid, c.SignedInUser, c.SkipDSCache)
+		if err != nil {
+			logger.Error("Failed to get target datasource for recording rules", "datasource_uid", uid, "error", err)
+			return errorToResponse(fmt.Errorf("failed to get recording rules target datasource: %w", err))
+		}
 	}
 
 	provenance := getProvenance(c)
@@ -362,7 +375,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 	// to ensure we can return them in this API in Prometheus format.
 	keepOriginalRuleDefinition := provenance == models.ProvenanceConvertedPrometheus
 
-	group, err := srv.convertToGrafanaRuleGroup(c, ds, ns.UID, promGroup, keepOriginalRuleDefinition, logger)
+	group, err := srv.convertToGrafanaRuleGroup(c, ds, tds, ns.UID, promGroup, keepOriginalRuleDefinition, logger)
 	if err != nil {
 		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 		return errorToResponse(err)
@@ -400,6 +413,7 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 	c *contextmodel.ReqContext,
 	ds *datasources.DataSource,
+	tds *datasources.DataSource,
 	namespaceUID string,
 	promGroup apimodels.PrometheusRuleGroup,
 	keepOriginalRuleDefinition bool,
@@ -437,9 +451,11 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 
 	converter, err := prom.NewConverter(
 		prom.Config{
-			DatasourceUID:   ds.UID,
-			DatasourceType:  ds.Type,
-			DefaultInterval: srv.cfg.DefaultRuleEvaluationInterval,
+			DatasourceUID:        ds.UID,
+			DatasourceType:       ds.Type,
+			TargetDatasourceUID:  tds.UID,
+			TargetDatasourceType: tds.Type,
+			DefaultInterval:      srv.cfg.DefaultRuleEvaluationInterval,
 			RecordingRules: prom.RulesConfig{
 				IsPaused: pauseRecordingRules,
 			},
