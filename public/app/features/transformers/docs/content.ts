@@ -1218,30 +1218,9 @@ Use this transformation to address issues when a data source returns time series
 
 #### Available options
 
-##### Multi-frame time series
-
-Use this option to transform the time series data frame from the wide format to the long format. This is particularly helpful when your data source delivers time series information in a format that needs to be reshaped for optimal compatibility with your visualization.
-
-**Example: Converting from wide to long format**
-
-| Timestamp           | Value1 | Value2 |
-|---------------------|--------|--------|
-| 2023-01-01 00:00:00 | 10     | 20     |
-| 2023-01-01 01:00:00 | 15     | 25     |
-
-**Transformed to:**
-
-| Timestamp           | Variable | Value |
-|---------------------|----------|-------|
-| 2023-01-01 00:00:00 | Value1   | 10    |
-| 2023-01-01 00:00:00 | Value2   | 20    |
-| 2023-01-01 01:00:00 | Value1   | 15    |
-| 2023-01-01 01:00:00 | Value2   | 25    |
-
-
 ##### Wide time series
 
-Select this option to transform the time series data frame from the long format to the wide format. If your data source returns time series data in a long format and your visualization requires a wide format, this transformation simplifies the process.
+Select this option to transform the time series data frame from the long format to the wide format. If your data source returns time series data in a long format and your visualization requires a wide format, this transformation simplifies the process. A wide time series will combine data to one frame with one shared, ascending time field. Time fields will not repeat, and multiple values will extend in separate columns.
 
 **Example: Converting from long to wide format**
 
@@ -1258,6 +1237,34 @@ Select this option to transform the time series data frame from the long format 
 |---------------------|--------|--------|
 | 2023-01-01 00:00:00 | 10     | 20     |
 | 2023-01-01 01:00:00 | 15     | 25     |
+
+##### Multi-frame time series
+
+Multi frame time series will break data into multiple frames that all contain two fields: a time and numeric value field. Time will always be ascending. String values will be represented as field labels.
+
+##### Long time series
+
+A wide time series will combine data to one frame, with the first field being an ascending time field. The time field may have duplicates. String values will be in separate fields, and there may be more than one. 
+
+##### Flat time series
+
+A flat series will combine data to one frame, with the first field being an ascending time field. The time field may have duplicates. Numeric fields will have their own row, with the name of their fields being represented in the "Variable" column, and the value of that field in the "Value" column. String fields will stay in their own column.
+
+**Example: Converting from wide to flat format**
+
+| Timestamp           | Value1 | Value2 |
+|---------------------|--------|--------|
+| 2023-01-01 00:00:00 | 10     | 20     |
+| 2023-01-01 01:00:00 | 15     | 25     |
+
+**Transformed to:**
+
+| Timestamp           | Variable | Value |
+|---------------------|----------|-------|
+| 2023-01-01 00:00:00 | Value1   | 10    |
+| 2023-01-01 00:00:00 | Value2   | 20    |
+| 2023-01-01 01:00:00 | Value1   | 15    |
+| 2023-01-01 01:00:00 | Value2   | 25    |
 
   `;
     },
