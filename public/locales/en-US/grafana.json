@@ -376,6 +376,23 @@
       "export": "Export",
       "reorder": "Re-order rules"
     },
+    "irm-integration": {
+      "connection-method": "How to connect to IRM",
+      "disabled-description": "Enable Grafana IRM to use this integration",
+      "enabled-description": "Seamless way to handle alerts and manage incidents",
+      "existing-integration": "Existing IRM integration",
+      "existing-integration-description": "Use an existing IRM integration",
+      "integration": "IRM Integration",
+      "integration-description": "The IRM integration to send alerts to",
+      "integration-name": "Integration name",
+      "integration-name-description": "The name of the new IRM integration",
+      "integration-name-exists": "Integration of this name already exists in IRM",
+      "integration-required": "Selection of existing IRM integration is required",
+      "new-integration": "New IRM integration",
+      "new-integration-description": "A new IRM integration without escalation chains will be automatically created",
+      "recommended": "Recommended",
+      "validation-failed": "Failed to validate IRM integration name. Is the OnCall API available?"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
@@ -1420,6 +1437,17 @@
       "invalid-branch-name": "Invalid branch name.",
       "it-cannot-contain-or": "It cannot contain '//' or '..'.",
       "least-valid-character": "It must have at least one valid character."
+    },
+    "dashboard-preview-banner": {
+      "not-saved": "The value is not yet saved in the Grafana database",
+      "not-yet-saved": "The value is not saved in the Grafana database",
+      "open-pull-request-in-git-hub": "Open pull request in GitHub",
+      "title-dashboard-loaded-branch-git-hub": "This dashboard is loaded from a branch in GitHub.",
+      "title-dashboard-loaded-external-repository": "This dashboard is loaded from an external repository",
+      "title-dashboard-loaded-request-git-hub": "This dashboard is loaded from a pull request in GitHub.",
+      "title-error-loading-dashboard": "Error loading dashboard",
+      "value-not-saved": "The value is not yet saved in the Grafana database",
+      "view-pull-request-in-git-hub": "View pull request in GitHub"
     },
     "provisioned-resource-delete-modal": {
       "file-path": "File path:",
