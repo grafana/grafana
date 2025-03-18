@@ -2990,7 +2990,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
-    uplot: "npm:1.6.31"
+    uplot: "npm:1.6.32"
     xss: "npm:^1.0.14"
   peerDependencies:
     react: ^18.0.0
@@ -3729,7 +3729,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
-    uplot: "npm:1.6.31"
+    uplot: "npm:1.6.32"
     uuid: "npm:11.0.5"
     webpack: "npm:5.97.1"
   peerDependencies:
@@ -17991,7 +17991,7 @@ __metadata:
     tween-functions: "npm:^1.2.0"
     type-fest: "npm:^4.18.2"
     typescript: "npm:5.7.3"
-    uplot: "npm:1.6.31"
+    uplot: "npm:1.6.32"
     uuid: "npm:11.0.5"
     visjs-network: "npm:4.25.0"
     webpack: "npm:5.97.1"
@@ -30417,10 +30417,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.31":
-  version: 1.6.31
-  resolution: "uplot@npm:1.6.31"
-  checksum: 10/8a24bed5c56aa45928102ff964a6a42e3ec806369278ce52dbc65d65e453a7e4b1ee73d525c53618223b712207266f7be752853284c7e5d5bc04c2d23bcc85b1
+"uplot@npm:1.6.32":
+  version: 1.6.32
+  resolution: "uplot@npm:1.6.32"
+  checksum: 10/78a4ea0cf46ee1ea2814304b3c24002d52b7e98995dfc5fe9dcf05ce4873b62d26f81f03613dbb8b63e451cbfe369e314591c4fe8113f8453860ca71b8dc7430
   languageName: node
   linkType: hard
 
