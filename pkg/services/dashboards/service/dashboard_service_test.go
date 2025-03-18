@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -947,7 +946,110 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			},
 			TotalHits: 2,
 		}, nil).Once()
+
+		// mock call to waitForSearchQuery()
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
+			Results:   &resource.ResourceTable{},
+			TotalHits: 0,
+		}, nil).Twice()
+
 		err := service.DeleteOrphanedProvisionedDashboards(context.Background(), &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
+			ReaderNames: []string{"test"},
+		})
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("Should retry until deleted dashboard not found in search", func(t *testing.T) {
+		repo := "test"
+		singleOrgService := &DashboardServiceImpl{
+			cfg:            setting.NewCfg(),
+			dashboardStore: &fakeStore,
+			orgService: &orgtest.FakeOrgService{
+				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
+			},
+			publicDashboardService: fakePublicDashboardService,
+		}
+		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
+		provisioningTimestamp := int64(1234567)
+
+		// Call to searchProvisionedDashboardsThroughK8s()
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": dashboardv0alpha1.DashboardResourceInfo.GroupVersion().String(),
+				"kind":       dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"name": "uid",
+					"labels": map[string]interface{}{
+						utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
+					},
+					"annotations": map[string]interface{}{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "test",
+						utils.AnnoKeySourceChecksum:  "hash",
+						utils.AnnoKeySourcePath:      "path/to/file",
+						utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
+					},
+				},
+				"spec": map[string]interface{}{
+					"test":    "test",
+					"version": int64(1),
+					"title":   "testing slugify",
+				},
+			},
+		}, nil).Once()
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+			// make sure the kind is added to the query
+			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
+				req.Options.Fields[1].Values[0] == repo
+		})).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "uid",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Dashboard 1"),
+							[]byte("folder 1"),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil)
+
+		// Mock deleteDashboard()
+		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Once()
+
+		// Mock WaitForSearchQuery()
+		// First call returns 1 hit
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
+			Results:   &resource.ResourceTable{},
+			TotalHits: 1,
+		}, nil).Once()
+
+		// Second call returns 0 hits
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
+			Results:   &resource.ResourceTable{},
+			TotalHits: 0,
+		}, nil).Once()
+
+		err := singleOrgService.DeleteOrphanedProvisionedDashboards(ctx, &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
 			ReaderNames: []string{"test"},
 		})
 		require.NoError(t, err)
