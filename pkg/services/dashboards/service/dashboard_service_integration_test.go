@@ -102,8 +102,6 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 		})
 
 		t.Run("Given user has permission to save", func(t *testing.T) {
-			const canSave = true
-
 			t.Run("and overwrite flag is set to false", func(t *testing.T) {
 				const shouldOverwrite = false
 
@@ -746,6 +744,8 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 					dashboards.ActionDashboardsCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)},
 				},
 			}
+			_, err = callSaveWithResult(t, cmd, sc.sqlStore, permissions)
+			assert.NoError(t, err)
 		})
 	})
 }

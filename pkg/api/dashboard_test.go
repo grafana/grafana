@@ -413,6 +413,7 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 		res, err := calculateDiff(server, []accesscontrol.Permission{})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -959,47 +960,6 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			sc.context.SignedInUser = &user.SignedInUser{OrgID: cmd.OrgID, UserID: cmd.UserID}
 
 			return hs.PostDashboard(c)
-		})
-
-		sc.m.Post(routePattern, sc.defaultHandler)
-
-		fn(sc)
-	})
-}
-
-func postDiffScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CalculateDiffOptions,
-	role org.RoleType, fn scenarioFunc, sqlmock db.DB, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService,
-) {
-	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		cfg := setting.NewCfg()
-
-		dashSvc := dashboards.NewFakeDashboardService(t)
-		hs := HTTPServer{
-			Cfg:                     cfg,
-			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                    newTestLive(t, db.InitTestDB(t)),
-			QuotaService:            quotatest.New(false, nil),
-			LibraryPanelService:     &mockLibraryPanelService{},
-			LibraryElementService:   &libraryelementsfake.LibraryElementService{},
-			SQLStore:                sqlmock,
-			dashboardVersionService: fakeDashboardVersionService,
-			Features:                featuremgmt.WithFeatures(),
-			DashboardService:        dashSvc,
-			tracer:                  tracing.InitializeTracerForTest(),
-		}
-
-		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-			c.Req.Body = mockRequestBody(cmd)
-			c.Req.Header.Add("Content-Type", "application/json")
-			sc.context = c
-			sc.context.SignedInUser = &user.SignedInUser{
-				OrgID:  testOrgID,
-				UserID: testUserID,
-			}
-			sc.context.OrgRole = role
-
-			return hs.CalculateDashboardDiff(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)

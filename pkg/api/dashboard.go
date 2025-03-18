@@ -145,6 +145,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	writeEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashScope)
 	canSave, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, writeEvaluator)
 	canEdit := canSave
+	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
 	if hs.Cfg.ViewersCanEdit {
 		canEdit = true
 	}
