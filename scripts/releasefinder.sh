@@ -1,5 +1,26 @@
 #!/bin/bash
 
+# This script finds which Grafana releases include a specific commit.
+# It checks both release branches and tags to determine:
+# 1. Which release branches contain the commit
+# 2. If the commit is directly tagged with a release version
+# 3. Which release tags include the commit
+# 4. The first release that included the commit
+#
+# Usage: ./scripts/releasefinder.sh <commit-hash>
+# Example: ./scripts/releasefinder.sh a1b2c3d4e5f6
+#
+# If you get a "Permission denied" error, make the script executable with:
+#   chmod +x scripts/releasefinder.sh
+
+# Check if script is executable
+if [ ! -x "$0" ]; then
+    echo "Error: This script is not executable."
+    echo "To fix this, run: chmod +x $0"
+    echo "Then try running the script again."
+    exit 1
+fi
+
 # Check if a commit hash was provided
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <commit-hash>"
