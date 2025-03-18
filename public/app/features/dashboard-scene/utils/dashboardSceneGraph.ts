@@ -83,7 +83,7 @@ export function getCursorSync(scene: DashboardScene) {
 export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
   const scene = getDashboardSceneFor(vizPanel);
   const panelId = getPanelIdForVizPanel(vizPanel);
-  let elementKey = scene.getElementIdentifierForPanel(panelId);
+  let elementKey = scene.serializer.getElementIdForPanel(panelId);
 
   if (!elementKey) {
     // assign a panel-id key
