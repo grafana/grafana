@@ -1301,7 +1301,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				if err != nil {
 					return nil, err
 				}
-				result.SortMeta = int64(hit.Field.GetNestedInt64(fieldName))
+				result.SortMeta = hit.Field.GetNestedInt64(fieldName)
 			}
 
 			if hit.Resource == folderv0alpha1.RESOURCE {
