@@ -3442,16 +3442,17 @@
     {
       "metadata": {
         "name": "prometheusRunQueriesInParallel",
-        "resourceVersion": "1735845919509",
+        "resourceVersion": "1741880974067",
         "creationTimestamp": "2024-08-12T12:31:39Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-13 15:49:34.067699 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables running Prometheus queries in parallel",
-        "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent"
+        "stage": "GA",
+        "codeowner": "@grafana/oss-big-tent",
+        "expression": "true"
       }
     },
     {
