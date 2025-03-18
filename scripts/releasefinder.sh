@@ -45,7 +45,7 @@ if ! git cat-file -t "$COMMIT_HASH" >/dev/null 2>&1; then
 fi
 
 echo "Fetching latest remote information..."
-git fetch --all --tags --prune
+git fetch --all --tags --prune 2>/dev/null
 
 echo "Finding release branches containing the commit..."
 echo "Finding tags associated with the commit..."
@@ -76,7 +76,8 @@ for tag in $(git tag); do
         fi
         
         # Check if this is a direct tag on the commit
-        if git rev-parse "$tag" == "$COMMIT_HASH" 2>/dev/null; then
+        tag_commit=$(git rev-parse "$tag")
+        if [ "$tag_commit" = "$COMMIT_HASH" ]; then
             direct_tags+=("${tag#v}")
         else
             included_tags+=("${tag#v}")
