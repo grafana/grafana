@@ -51,6 +51,7 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 // TODO: document the synchronous write and delete on the API Spec
+// TODO: Move dual write logic to `resources` package and keep this connector simple
 func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
