@@ -6,7 +6,7 @@
 ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:22-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.23.7-alpine
+ARG GO_IMAGE=golang:1.24.1-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
@@ -60,9 +60,17 @@ WORKDIR /tmp/grafana
 
 COPY go.* ./
 COPY .bingo .bingo
+COPY .citools/bra .citools/bra
+COPY .citools/cue .citools/cue
+COPY .citools/cog .citools/cog
+COPY .citools/lefthook .citools/lefthook
+COPY .citools/jb .citools/jb
+COPY .citools/drone .citools/drone
+COPY .citools/golangci-lint .citools/golangci-lint
 
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
+COPY pkg/apis/secret pkg/apis/secret
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build

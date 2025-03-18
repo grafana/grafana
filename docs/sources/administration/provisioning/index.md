@@ -617,13 +617,31 @@ Grafana encrypts secure settings in the database.
 
 #### Alert notification `webhook`
 
-| Name         | Secure setting |
-| ------------ | -------------- |
-| `url`        |                |
-| `httpMethod` |                |
-| `username`   |                |
-| `password`   | yes            |
-| `tls_config` |                |
+| Name          | Secure setting |
+| ------------- | -------------- |
+| `url`         |                |
+| `http_method` |                |
+| `username`    |                |
+| `password`    | yes            |
+| `tls_config`  |                |
+| `hmac_config` |                |
+
+##### TLS configuration
+
+| Name                 | Secure setting |
+| -------------------- | -------------- |
+| `insecureSkipVerify` |                |
+| `clientCertificate`  | yes            |
+| `clientKey`          | yes            |
+| `caCertificate`      | yes            |
+
+##### HMAC signature configuration
+
+| Name              | Secure setting |
+| ----------------- | -------------- |
+| `secret`          | yes            |
+| `header`          |                |
+| `timestampHeader` |                |
 
 #### Alert notification `googlechat`
 
