@@ -8,15 +8,14 @@ import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder';
 import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning';
+import { AnnoKeyManagerIdentity, AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
+import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam, useRepositoryList } from 'app/features/provisioning/hooks';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
-
-import { FolderDTO } from '../../../types';
-import { AnnoKeySourcePath, Resource } from '../../apiserver/types';
-import { getDefaultWorkflow, getWorkflowOptions } from '../../dashboard-scene/saving/provisioned/defaults';
+import { FolderDTO } from 'app/types';
 
 type FormData = {
   ref?: string;
@@ -40,7 +39,6 @@ const initialFormValues: Partial<FormData> = {
 };
 
 export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: Props) {
-  const repositoryName = parentFolder?.repository?.name;
   const [items, isLoading] = useRepositoryList();
   const prURL = usePullRequestParam();
   const navigate = useNavigate();
@@ -48,7 +46,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
 
   // Get k8s folder data, necessary to get parent folder path
   const folderQuery = useGetFolderQuery(parentFolder ? { name: parentFolder.uid } : skipToken);
-
+  const repositoryName = folderQuery.data?.metadata?.annotations?.[AnnoKeyManagerIdentity];
   if (!items && !isLoading) {
     return <Alert title="Repository not found" severity="error" />;
   }
