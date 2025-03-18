@@ -695,11 +695,8 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-ui/src/components/Table/TableRT/FilterList.tsx:5381": [
-      [0, 0, 0, "Parsing error: Merge conflict marker encountered.", "0"]
-    ],
     "packages/grafana-ui/src/components/Table/TableRT/FilterPopup.tsx:5381": [
-      [0, 0, 0, "Parsing error: Merge conflict marker encountered.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-ui/src/components/Table/TableRT/FooterRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
