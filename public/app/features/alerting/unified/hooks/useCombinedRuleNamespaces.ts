@@ -448,7 +448,7 @@ function getExistingRuleInGroup(
   // Otherwise we would perform find method multiple times on (possibly) thousands of rules
 
   const fieldToSearch = getIdToCompare(rule);
-  const uidOrNameMatchingRules = existingCombinedRulesMap.get(fieldToSearch ?? '');
+  const uidOrNameMatchingRules = existingCombinedRulesMap.get(fieldToSearch);
   if (!uidOrNameMatchingRules) {
     return undefined;
   }
