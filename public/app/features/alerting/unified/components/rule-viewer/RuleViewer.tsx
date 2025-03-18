@@ -73,7 +73,7 @@ const RuleViewer = () => {
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = rulerRuleType.grafana.rule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
-  const isPaused = rulerRuleType.grafana.alertingRule(rulerRule) && isPausedRule(rulerRule);
+  const isPaused = rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule);
 
   const showError = hasError && !isPaused;
   const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
