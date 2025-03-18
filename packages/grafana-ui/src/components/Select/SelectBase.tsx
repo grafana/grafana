@@ -1,4 +1,3 @@
-import { t } from 'i18next';
 import { isArray, negate } from 'lodash';
 import { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
@@ -15,7 +14,7 @@ import Creatable from 'react-select/creatable';
 import { SelectableValue, toOption } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
 
@@ -351,7 +350,7 @@ export function SelectBase<T, Rest = {}>({
               <Icon
                 name="times"
                 role="button"
-                aria-label="select-clear-value"
+                aria-label={t('grafana-ui.select.clear-value', 'Clear value')}
                 className={styles.singleValueRemove}
                 onMouseDown={(e) => {
                   e.preventDefault();
@@ -369,7 +368,10 @@ export function SelectBase<T, Rest = {}>({
           },
           NoOptionsMessage() {
             return (
-              <div className={styles.loadingMessage} aria-label="No options provided">
+              <div
+                className={styles.loadingMessage}
+                aria-label={t('grafana-ui.select.empty-options', 'No options provided')}
+              >
                 {noOptionsMessage}
               </div>
             );

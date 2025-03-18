@@ -407,10 +407,7 @@ func NewDashboardValueMapping() *DashboardValueMapping {
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
 // +k8s:openapi-gen=true
 type DashboardValueMap struct {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "value"
-	Type string `json:"type"`
+	Type DashboardMappingType `json:"type"`
 	// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
 	Options map[string]DashboardValueMappingResult `json:"options"`
 }
@@ -418,9 +415,24 @@ type DashboardValueMap struct {
 // NewDashboardValueMap creates a new DashboardValueMap object.
 func NewDashboardValueMap() *DashboardValueMap {
 	return &DashboardValueMap{
-		Type: "value",
+		Type: DashboardMappingTypeValue,
 	}
 }
+
+// Supported value mapping types
+// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
+// +k8s:openapi-gen=true
+type DashboardMappingType string
+
+const (
+	DashboardMappingTypeValue   DashboardMappingType = "value"
+	DashboardMappingTypeRange   DashboardMappingType = "range"
+	DashboardMappingTypeRegex   DashboardMappingType = "regex"
+	DashboardMappingTypeSpecial DashboardMappingType = "special"
+)
 
 // Result used as replacement with text and color when the value matches
 // +k8s:openapi-gen=true
@@ -444,10 +456,7 @@ func NewDashboardValueMappingResult() *DashboardValueMappingResult {
 // For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 // +k8s:openapi-gen=true
 type DashboardRangeMap struct {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "range"
-	Type string `json:"type"`
+	Type DashboardMappingType `json:"type"`
 	// Range to match against and the result to apply when the value is within the range
 	Options DashboardV2alpha1RangeMapOptions `json:"options"`
 }
@@ -455,7 +464,7 @@ type DashboardRangeMap struct {
 // NewDashboardRangeMap creates a new DashboardRangeMap object.
 func NewDashboardRangeMap() *DashboardRangeMap {
 	return &DashboardRangeMap{
-		Type:    "range",
+		Type:    DashboardMappingTypeRange,
 		Options: *NewDashboardV2alpha1RangeMapOptions(),
 	}
 }
@@ -464,10 +473,7 @@ func NewDashboardRangeMap() *DashboardRangeMap {
 // For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 // +k8s:openapi-gen=true
 type DashboardRegexMap struct {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "regex"
-	Type string `json:"type"`
+	Type DashboardMappingType `json:"type"`
 	// Regular expression to match against and the result to apply when the value matches the regex
 	Options DashboardV2alpha1RegexMapOptions `json:"options"`
 }
@@ -475,7 +481,7 @@ type DashboardRegexMap struct {
 // NewDashboardRegexMap creates a new DashboardRegexMap object.
 func NewDashboardRegexMap() *DashboardRegexMap {
 	return &DashboardRegexMap{
-		Type:    "regex",
+		Type:    DashboardMappingTypeRegex,
 		Options: *NewDashboardV2alpha1RegexMapOptions(),
 	}
 }
@@ -485,17 +491,14 @@ func NewDashboardRegexMap() *DashboardRegexMap {
 // For example, you can configure a special value mapping so that null values appear as N/A.
 // +k8s:openapi-gen=true
 type DashboardSpecialValueMap struct {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "special"
-	Type    string                                  `json:"type"`
+	Type    DashboardMappingType                    `json:"type"`
 	Options DashboardV2alpha1SpecialValueMapOptions `json:"options"`
 }
 
 // NewDashboardSpecialValueMap creates a new DashboardSpecialValueMap object.
 func NewDashboardSpecialValueMap() *DashboardSpecialValueMap {
 	return &DashboardSpecialValueMap{
-		Type:    "special",
+		Type:    DashboardMappingTypeSpecial,
 		Options: *NewDashboardV2alpha1SpecialValueMapOptions(),
 	}
 }
@@ -833,10 +836,11 @@ func NewDashboardRowsLayoutRowKind() *DashboardRowsLayoutRowKind {
 
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutRowSpec struct {
-	Title     *string                                                           `json:"title,omitempty"`
-	Collapsed bool                                                              `json:"collapsed"`
-	Repeat    *DashboardRowRepeatOptions                                        `json:"repeat,omitempty"`
-	Layout    DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	Title                *string                                                           `json:"title,omitempty"`
+	Collapsed            bool                                                              `json:"collapsed"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind                           `json:"conditionalRendering,omitempty"`
+	Repeat               *DashboardRowRepeatOptions                                        `json:"repeat,omitempty"`
+	Layout               DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind `json:"layout"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -844,6 +848,105 @@ func NewDashboardRowsLayoutRowSpec() *DashboardRowsLayoutRowSpec {
 	return &DashboardRowsLayoutRowSpec{
 		Layout: *NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind(),
 	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingGroupKind struct {
+	Kind string                                 `json:"kind"`
+	Spec DashboardConditionalRenderingGroupSpec `json:"spec"`
+}
+
+// NewDashboardConditionalRenderingGroupKind creates a new DashboardConditionalRenderingGroupKind object.
+func NewDashboardConditionalRenderingGroupKind() *DashboardConditionalRenderingGroupKind {
+	return &DashboardConditionalRenderingGroupKind{
+		Kind: "ConditionalRenderingGroup",
+		Spec: *NewDashboardConditionalRenderingGroupSpec(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingGroupSpec struct {
+	Condition DashboardConditionalRenderingGroupSpecCondition                                                                 `json:"condition"`
+	Items     []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind `json:"items"`
+}
+
+// NewDashboardConditionalRenderingGroupSpec creates a new DashboardConditionalRenderingGroupSpec object.
+func NewDashboardConditionalRenderingGroupSpec() *DashboardConditionalRenderingGroupSpec {
+	return &DashboardConditionalRenderingGroupSpec{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableKind struct {
+	Kind string                                    `json:"kind"`
+	Spec DashboardConditionalRenderingVariableSpec `json:"spec"`
+}
+
+// NewDashboardConditionalRenderingVariableKind creates a new DashboardConditionalRenderingVariableKind object.
+func NewDashboardConditionalRenderingVariableKind() *DashboardConditionalRenderingVariableKind {
+	return &DashboardConditionalRenderingVariableKind{
+		Kind: "ConditionalRenderingVariable",
+		Spec: *NewDashboardConditionalRenderingVariableSpec(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableSpec struct {
+	Variable string                                            `json:"variable"`
+	Operator DashboardConditionalRenderingVariableSpecOperator `json:"operator"`
+	Value    string                                            `json:"value"`
+}
+
+// NewDashboardConditionalRenderingVariableSpec creates a new DashboardConditionalRenderingVariableSpec object.
+func NewDashboardConditionalRenderingVariableSpec() *DashboardConditionalRenderingVariableSpec {
+	return &DashboardConditionalRenderingVariableSpec{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingDataKind struct {
+	Kind string                                `json:"kind"`
+	Spec DashboardConditionalRenderingDataSpec `json:"spec"`
+}
+
+// NewDashboardConditionalRenderingDataKind creates a new DashboardConditionalRenderingDataKind object.
+func NewDashboardConditionalRenderingDataKind() *DashboardConditionalRenderingDataKind {
+	return &DashboardConditionalRenderingDataKind{
+		Kind: "ConditionalRenderingData",
+		Spec: *NewDashboardConditionalRenderingDataSpec(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingDataSpec struct {
+	Value bool `json:"value"`
+}
+
+// NewDashboardConditionalRenderingDataSpec creates a new DashboardConditionalRenderingDataSpec object.
+func NewDashboardConditionalRenderingDataSpec() *DashboardConditionalRenderingDataSpec {
+	return &DashboardConditionalRenderingDataSpec{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingTimeIntervalKind struct {
+	Kind string                                        `json:"kind"`
+	Spec DashboardConditionalRenderingTimeIntervalSpec `json:"spec"`
+}
+
+// NewDashboardConditionalRenderingTimeIntervalKind creates a new DashboardConditionalRenderingTimeIntervalKind object.
+func NewDashboardConditionalRenderingTimeIntervalKind() *DashboardConditionalRenderingTimeIntervalKind {
+	return &DashboardConditionalRenderingTimeIntervalKind{
+		Kind: "ConditionalRenderingTimeInterval",
+		Spec: *NewDashboardConditionalRenderingTimeIntervalSpec(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingTimeIntervalSpec struct {
+	Value string `json:"value"`
+}
+
+// NewDashboardConditionalRenderingTimeIntervalSpec creates a new DashboardConditionalRenderingTimeIntervalSpec object.
+func NewDashboardConditionalRenderingTimeIntervalSpec() *DashboardConditionalRenderingTimeIntervalSpec {
+	return &DashboardConditionalRenderingTimeIntervalSpec{}
 }
 
 // +k8s:openapi-gen=true
@@ -888,8 +991,9 @@ func NewDashboardResponsiveGridLayoutItemKind() *DashboardResponsiveGridLayoutIt
 
 // +k8s:openapi-gen=true
 type DashboardResponsiveGridLayoutItemSpec struct {
-	Element DashboardElementReference             `json:"element"`
-	Repeat  *DashboardResponsiveGridRepeatOptions `json:"repeat,omitempty"`
+	Element              DashboardElementReference               `json:"element"`
+	Repeat               *DashboardResponsiveGridRepeatOptions   `json:"repeat,omitempty"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind `json:"conditionalRendering,omitempty"`
 }
 
 // NewDashboardResponsiveGridLayoutItemSpec creates a new DashboardResponsiveGridLayoutItemSpec object.
@@ -1676,6 +1780,22 @@ const (
 )
 
 // +k8s:openapi-gen=true
+type DashboardConditionalRenderingGroupSpecCondition string
+
+const (
+	DashboardConditionalRenderingGroupSpecConditionAnd DashboardConditionalRenderingGroupSpecCondition = "and"
+	DashboardConditionalRenderingGroupSpecConditionOr  DashboardConditionalRenderingGroupSpecCondition = "or"
+)
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableSpecOperator string
+
+const (
+	DashboardConditionalRenderingVariableSpecOperatorEquals    DashboardConditionalRenderingVariableSpecOperator = "equals"
+	DashboardConditionalRenderingVariableSpecOperatorNotEquals DashboardConditionalRenderingVariableSpecOperator = "notEquals"
+)
+
+// +k8s:openapi-gen=true
 type DashboardTimeSettingsSpecWeekStart string
 
 const (
@@ -1703,8 +1823,7 @@ func (resource DashboardPanelKindOrLibraryPanelKind) MarshalJSON() ([]byte, erro
 	if resource.LibraryPanelKind != nil {
 		return json.Marshal(resource.LibraryPanelKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardPanelKindOrLibraryPanelKind` from JSON.
@@ -1773,8 +1892,7 @@ func (resource DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) MarshalJS
 	if resource.SpecialValueMap != nil {
 		return json.Marshal(resource.SpecialValueMap)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap` from JSON.
@@ -1851,8 +1969,7 @@ func (resource DashboardGridLayoutItemKindOrGridLayoutRowKind) MarshalJSON() ([]
 	if resource.GridLayoutRowKind != nil {
 		return json.Marshal(resource.GridLayoutRowKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutItemKindOrGridLayoutRowKind` from JSON.
@@ -1917,8 +2034,7 @@ func (resource DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind
 	if resource.TabsLayoutKind != nil {
 		return json.Marshal(resource.TabsLayoutKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` from JSON.
@@ -1969,6 +2085,79 @@ func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKin
 }
 
 // +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind struct {
+	ConditionalRenderingVariableKind     *DashboardConditionalRenderingVariableKind     `json:"ConditionalRenderingVariableKind,omitempty"`
+	ConditionalRenderingDataKind         *DashboardConditionalRenderingDataKind         `json:"ConditionalRenderingDataKind,omitempty"`
+	ConditionalRenderingTimeIntervalKind *DashboardConditionalRenderingTimeIntervalKind `json:"ConditionalRenderingTimeIntervalKind,omitempty"`
+}
+
+// NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind creates a new DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind object.
+func NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind() *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind {
+	return &DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind` as JSON.
+func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind) MarshalJSON() ([]byte, error) {
+	if resource.ConditionalRenderingVariableKind != nil {
+		return json.Marshal(resource.ConditionalRenderingVariableKind)
+	}
+	if resource.ConditionalRenderingDataKind != nil {
+		return json.Marshal(resource.ConditionalRenderingDataKind)
+	}
+	if resource.ConditionalRenderingTimeIntervalKind != nil {
+		return json.Marshal(resource.ConditionalRenderingTimeIntervalKind)
+	}
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind` from JSON.
+func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["kind"]
+	if !found {
+		return errors.New("discriminator field 'kind' not found in payload")
+	}
+
+	switch discriminator {
+	case "ConditionalRenderingData":
+		var dashboardConditionalRenderingDataKind DashboardConditionalRenderingDataKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingDataKind); err != nil {
+			return err
+		}
+
+		resource.ConditionalRenderingDataKind = &dashboardConditionalRenderingDataKind
+		return nil
+	case "ConditionalRenderingTimeInterval":
+		var dashboardConditionalRenderingTimeIntervalKind DashboardConditionalRenderingTimeIntervalKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingTimeIntervalKind); err != nil {
+			return err
+		}
+
+		resource.ConditionalRenderingTimeIntervalKind = &dashboardConditionalRenderingTimeIntervalKind
+		return nil
+	case "ConditionalRenderingVariable":
+		var dashboardConditionalRenderingVariableKind DashboardConditionalRenderingVariableKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingVariableKind); err != nil {
+			return err
+		}
+
+		resource.ConditionalRenderingVariableKind = &dashboardConditionalRenderingVariableKind
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+}
+
+// +k8s:openapi-gen=true
 type DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind struct {
 	GridLayoutKind           *DashboardGridLayoutKind           `json:"GridLayoutKind,omitempty"`
 	RowsLayoutKind           *DashboardRowsLayoutKind           `json:"RowsLayoutKind,omitempty"`
@@ -1991,8 +2180,7 @@ func (resource DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind
 	if resource.ResponsiveGridLayoutKind != nil {
 		return json.Marshal(resource.ResponsiveGridLayoutKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind` from JSON.
@@ -2085,8 +2273,7 @@ func (resource DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKin
 	if resource.AdhocVariableKind != nil {
 		return json.Marshal(resource.AdhocVariableKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind` from JSON.
@@ -2197,7 +2384,7 @@ func (resource DashboardStringOrArrayOfString) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.ArrayOfString)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardStringOrArrayOfString` from JSON.
@@ -2252,7 +2439,7 @@ func (resource DashboardStringOrFloat64) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.Float64)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardStringOrFloat64` from JSON.
@@ -2313,8 +2500,7 @@ func (resource DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind
 	if resource.TabsLayoutKind != nil {
 		return json.Marshal(resource.TabsLayoutKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` from JSON.
