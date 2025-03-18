@@ -122,3 +122,9 @@ type UserStats struct {
 	Editors int64
 	Viewers int64
 }
+
+type ProvisioningStats struct {
+	Resources int64
+	Local     int64
+	Github    int64
+}

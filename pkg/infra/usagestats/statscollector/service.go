@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const (
@@ -41,6 +42,7 @@ type Service struct {
 	datasources        datasources.DataSourceService
 	httpClientProvider httpclient.Provider
 	sandbox            sandbox.Sandbox
+	unified            resource.ResourceClient
 
 	log log.Logger
 
@@ -61,6 +63,7 @@ func ProvideService(
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
 	sandbox sandbox.Sandbox,
+	unified resource.ResourceClient,
 ) *Service {
 	s := &Service{
 		cfg:                cfg,
@@ -73,6 +76,7 @@ func ProvideService(
 		datasources:        datasourceService,
 		httpClientProvider: httpClientProvider,
 		sandbox:            sandbox,
+		unified:            unified,
 
 		startTime: time.Now(),
 		log:       log.New("infra.usagestats.collector"),
@@ -85,6 +89,7 @@ func ProvideService(
 		s.collectDatasourceAccess,
 		s.collectAlertNotifierStats,
 		s.collectPrometheusFlavors,
+		s.collectProvisioningStats,
 	}
 
 	for _, c := range collectors {
