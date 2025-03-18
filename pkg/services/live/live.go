@@ -190,7 +190,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
-	g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
+
+	// Testing watch with just the provisioning support -- this will be removed when it is well validated
+	if toggles.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
+	}
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
