@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
+import { Grammar } from 'prismjs';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { VariableSizeList } from 'react-window';
 
@@ -45,6 +46,7 @@ interface Props {
   forceEscape?: boolean;
   getFieldLinks?: GetFieldLinksFn;
   getRowContextQuery?: GetRowContextQueryFn;
+  grammar?: Grammar;
   initialScrollPosition?: 'top' | 'bottom';
   loadMore?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
@@ -83,6 +85,7 @@ export const LogList = ({
   forceEscape = false,
   getFieldLinks,
   getRowContextQuery,
+  grammar,
   initialScrollPosition = 'top',
   loadMore,
   logOptionsStorageKey,
@@ -129,6 +132,7 @@ export const LogList = ({
         eventBus={eventBus}
         forceEscape={forceEscape}
         getFieldLinks={getFieldLinks}
+        grammar={grammar}
         initialScrollPosition={initialScrollPosition}
         loadMore={loadMore}
         logs={logs}
@@ -145,6 +149,7 @@ const LogListComponent = ({
   eventBus = new EventBusSrv(),
   forceEscape = false,
   getFieldLinks,
+  grammar,
   initialScrollPosition = 'top',
   loadMore,
   logs,
@@ -179,8 +184,8 @@ const LogListComponent = ({
   }, [eventBus, logs.length]);
 
   useEffect(() => {
-    setProcessedLogs(preProcessLogs(logs, { getFieldLinks, escape: forceEscape, order: sortOrder, timeZone }));
-  }, [forceEscape, getFieldLinks, logs, sortOrder, timeZone]);
+    setProcessedLogs(preProcessLogs(logs, { getFieldLinks, escape: forceEscape, order: sortOrder, timeZone }, grammar));
+  }, [forceEscape, getFieldLinks, grammar, logs, sortOrder, timeZone]);
 
   useEffect(() => {
     resetLogLineSizes();

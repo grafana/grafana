@@ -20,7 +20,7 @@ import { requestMoreLogs } from '../logs/LogsPanel';
 import { useDatasourcesFromTargets } from '../logs/useDatasourcesFromTargets';
 
 import { Options } from './panelcfg.gen';
-import { isOnLogOptionsChange, isOnNewLogsReceivedType } from './types';
+import { isLogsGrammar, isOnLogOptionsChange, isOnNewLogsReceivedType } from './types';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -31,6 +31,7 @@ export const LogsPanel = ({
   options: {
     dedupStrategy,
     enableInfiniteScrolling,
+    grammar,
     onLogOptionsChange,
     onNewLogsReceived,
     showControls,
@@ -113,6 +114,7 @@ export const LogsPanel = ({
           containerElement={logsContainer}
           dedupStrategy={dedupStrategy}
           displayedFields={[]}
+          grammar={isLogsGrammar(grammar) ? grammar : undefined}
           initialScrollPosition={initialScrollPosition}
           logs={logs}
           loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}

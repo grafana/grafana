@@ -1,3 +1,5 @@
+import { Grammar } from 'prismjs';
+
 import { DataFrame } from '@grafana/data';
 import { LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 
@@ -10,4 +12,8 @@ export function isOnNewLogsReceivedType(callback: unknown): callback is onNewLog
 
 export function isOnLogOptionsChange(callback: unknown): callback is onLogOptionsChangeType {
   return typeof callback === 'function';
+}
+
+export function isLogsGrammar(grammar: unknown): grammar is Grammar {
+  return grammar !== null && typeof grammar === 'object' && Object.getPrototypeOf(grammar) === Object.prototype;
 }

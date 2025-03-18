@@ -33,6 +33,7 @@ composableKinds: PanelCfg: {
 					syntaxHighlighting:       bool
 					sortOrder:                common.LogsSortOrder
 					dedupStrategy:            common.LogsDedupStrategy
+					grammar?:                 _
 					enableInfiniteScrolling?: bool
 					onLogOptionsChange?:      _
 					onNewLogsReceived?:       _
