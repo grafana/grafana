@@ -10,6 +10,7 @@ import {
   formattedValueToString,
   reduceField,
   GrafanaTheme2,
+  fieldReducers,
   DisplayValue,
   LinkModel,
   DisplayValueAlignmentFactors,
@@ -37,7 +38,6 @@ import {
   FrameToRowsConverter,
   TableNGProps,
   Comparator,
-  TableFooterCalc,
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
@@ -276,39 +276,63 @@ export function getAlignmentFactor(
   }
 }
 
+export interface FooterItem {
+  [reducerId: string]: {
+    value: string;
+    formattedValue: string;
+    reducerName: string;
+  };
+}
+
 /* ------------------------------ Footer calculations ------------------------------ */
-export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFooterCalc | undefined): string {
-  if (options === undefined) {
-    return '';
-  }
-
+export function getFooterItemNG(rows: TableRow[], field: Field): FooterItem | null {
   if (field.type !== FieldType.number) {
-    return '';
+    return null;
   }
 
-  // Check if reducer array exists and has at least one element
-  if (!options.reducer || !options.reducer.length) {
-    return '';
+  const reducers: string[] = field.config.custom?.footer?.reducer ?? [];
+  if (!reducers || reducers.length === 0) {
+    return null;
   }
 
-  const calc = options.reducer[0];
-  const value = reduceField({
+  // Calculate all specified reducers
+  const results = reduceField({
     field: {
       ...field,
       values: rows.map((row) => row[field.name]),
     },
-    reducers: options.reducer,
-  })[calc];
+    reducers,
+  });
 
-  const formattedValue = formattedValueToString(field.display!(value));
+  // Create an object with reducer names as keys and their formatted values
+  const footerItem: FooterItem = {};
 
-  return formattedValue;
+  reducers.forEach((reducerId: string) => {
+    if (results[reducerId] !== undefined) {
+      const value = results[reducerId];
+      const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
+      const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
+
+      footerItem[reducerId] = {
+        value,
+        formattedValue,
+        reducerName,
+      };
+    }
+  });
+
+  return Object.keys(footerItem).length > 0 ? footerItem : null;
 }
 
 export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
   footerCell: css({
     display: 'flex',
-    justifyContent: justifyContent || 'space-between',
+    flexDirection: 'column',
+    alignItems: justifyContent,
+    justifyContent: 'flex-start',
+    height: '100%', // Ensure the footer cell takes full height of its container
+    boxSizing: 'border-box',
+    width: '100%',
   }),
 });
 
@@ -480,10 +504,11 @@ export interface MapFrameToGridOptions extends TableNGProps {
   expandedRows: number[];
   filter: FilterType;
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
-  isCountRowsSet: boolean;
   osContext: OffscreenCanvasRenderingContext2D | null;
   rows: TableRow[];
+  sortedRows: TableRow[];
   setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
+  setFooterHeight: (height: number) => void;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   setIsInspecting: (isInspecting: boolean) => void;
   setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>;

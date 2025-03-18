@@ -4,16 +4,7 @@ import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } fr
 import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
-import {
-  DataFrame,
-  Field,
-  fieldReducers,
-  FieldType,
-  formattedValueToString,
-  getDefaultTimeRange,
-  GrafanaTheme2,
-  ReducerID,
-} from '@grafana/data';
+import { DataFrame, Field, FieldType, formattedValueToString, getDefaultTimeRange, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { Trans } from '../../../utils/i18n';
@@ -57,7 +48,6 @@ export function TableNG(props: TableNGProps) {
     enablePagination,
     enableVirtualization = true,
     fieldConfig,
-    footerOptions,
     height,
     noHeader,
     onColumnResize,
@@ -83,6 +73,7 @@ export function TableNG(props: TableNGProps) {
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
+  const [footerHeight, setFooterHeight] = useState(0);
 
   /* ------------------------------- Local refs ------------------------------- */
   const crossFilterOrder = useRef<string[]>([]);
@@ -99,13 +90,9 @@ export function TableNG(props: TableNGProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles, textWrap);
 
-  const isFooterVisible = Boolean(footerOptions?.show && footerOptions.reducer?.length);
-  const isCountRowsSet = Boolean(
-    footerOptions?.countRows &&
-      footerOptions.reducer &&
-      footerOptions.reducer.length &&
-      footerOptions.reducer[0] === ReducerID.count
-  );
+  const isFooterVisible = useMemo(() => {
+    return props.data.fields.some((field) => field.config?.custom?.footer?.reducer?.length ?? false);
+  }, [props.data.fields]);
 
   /* --------------------------------- Effects -------------------------------- */
   useEffect(() => {
@@ -293,22 +280,6 @@ export function TableNG(props: TableNGProps) {
     return sortedRows.slice(pageOffset, pageOffset + rowsPerPage);
   }, [rows, sortedRows, page, rowsPerPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useMemo(() => {
-    calcsRef.current = props.data.fields.map((field, index) => {
-      if (field.state?.calcs) {
-        delete field.state?.calcs;
-      }
-      if (isCountRowsSet) {
-        return index === 0 ? `${sortedRows.length}` : '';
-      }
-      if (index === 0) {
-        const footerCalcReducer = footerOptions?.reducer?.[0];
-        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
-      }
-      return getFooterItemNG(sortedRows, field, footerOptions);
-    });
-  }, [sortedRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const onCellExpand = (rowIdx: number) => {
     if (!expandedRows.includes(rowIdx)) {
       setExpandedRows([...expandedRows, rowIdx]);
@@ -338,14 +309,15 @@ export function TableNG(props: TableNGProps) {
           expandedRows,
           filter,
           headerCellRefs,
-          isCountRowsSet,
           osContext,
           rows,
           setContextMenuProps,
           setFilter,
+          setFooterHeight,
           setIsInspecting,
           setSortColumns,
           sortColumnsRef,
+          sortedRows,
           styles,
           textWrap,
           theme,
@@ -356,7 +328,7 @@ export function TableNG(props: TableNGProps) {
           onColumnResize: onColumnResize!,
         },
       }),
-    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
+    [props.data, calcsRef, filter, expandedRows, expandedRows.length] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // This effect needed to set header cells refs before row height calculation
@@ -416,6 +388,7 @@ export function TableNG(props: TableNGProps) {
             resizable: true,
           }}
           rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
+          summaryRowHeight={footerHeight}
           // TODO: This doesn't follow current table behavior
           style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
           renderers={{ renderRow: (key, props) => myRowRenderer(key, props, expandedRows) }}
@@ -515,14 +488,15 @@ export function mapFrameToDataGrid({
     expandedRows,
     filter,
     headerCellRefs,
-    isCountRowsSet,
     osContext,
     rows,
     setContextMenuProps,
+    setFooterHeight,
     setFilter,
     setIsInspecting,
     setSortColumns,
     sortColumnsRef,
+    sortedRows,
     styles,
     textWrap,
     fieldConfig,
@@ -651,15 +625,25 @@ export function mapFrameToDataGrid({
         );
       },
       renderSummaryCell: () => {
-        if (isCountRowsSet && fieldIndex === 0) {
-          return (
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Count</span>
-              <span>{calcsRef.current[fieldIndex]}</span>
-            </div>
-          );
+        const footerItem = getFooterItemNG(sortedRows, field);
+
+        if (!footerItem) {
+          return null;
         }
-        return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
+
+        // Calculate appropriate row height based on number of reducers
+        const reducerCount = Object.keys(footerItem).length;
+        // Base height plus additional height per reducer after the first one
+        const dynamicHeight = 30 + Math.max(0, reducerCount - 1) * 22; // 30px base + 22px per additional reducer
+        setFooterHeight(dynamicHeight);
+        // Render each reducer in the footer
+        return (
+          <div className={footerStyles.footerCell}>
+            {Object.entries(footerItem).map(([reducerId, { reducerName, formattedValue }]) => (
+              <div key={reducerId}>{`${reducerName}: ${formattedValue}`}</div>
+            ))}
+          </div>
+        );
       },
       renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
         <HeaderCell
