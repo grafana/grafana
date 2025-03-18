@@ -415,13 +415,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const colour = type === 'warning' ? 'orange' : 'blue';
     const iconName = type === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
 
-    let serializedWarnings;
-    if (uniqueWarnings.length > 1) {
-      const listItems = uniqueWarnings.map((warning) => warning.text);
-      serializedWarnings = <List items={listItems} renderItem={(item) => <>{item}</>} />;
-    } else {
-      serializedWarnings = uniqueWarnings[0].text;
-    }
+    const listItems = uniqueWarnings.map((warning) => warning.text);
+    const serializedWarnings = <List items={listItems} renderItem={(item) => <>{item}</>} />;
 
     return (
       <Badge
