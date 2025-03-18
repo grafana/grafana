@@ -8,6 +8,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
@@ -99,7 +102,18 @@ func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.
 		return info.client, info.gvk, nil
 	}
 
-	gvk, err := c.discovery.GetKindForResource(gvr)
+	var err error
+	var gvk schema.GroupVersionKind
+	var versionless schema.GroupVersionResource
+	if gvr.Version == "" {
+		versionless = gvr
+		gvr, gvk, err = c.discovery.GetPreferredVesion(schema.GroupResource{
+			Group:    gvr.Group,
+			Resource: gvr.Resource,
+		})
+	} else {
+		gvk, err = c.discovery.GetKindForResource(gvr)
+	}
 	if err != nil {
 		return nil, schema.GroupVersionKind{}, err
 	}
@@ -110,5 +124,35 @@ func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.
 	}
 	c.byKind[gvk] = info
 	c.byResource[gvr] = info
+	if versionless.Group != "" {
+		c.byResource[versionless] = info
+	}
 	return info.client, info.gvk, nil
+}
+
+func (c *ResourceClients) Folder() (dynamic.ResourceInterface, error) {
+	v, _, err := c.ForResource(schema.GroupVersionResource{
+		Group:    folders.GROUP,
+		Version:  folders.VERSION,
+		Resource: folders.RESOURCE,
+	})
+	return v, err
+}
+
+func (c *ResourceClients) User() (dynamic.ResourceInterface, error) {
+	v, _, err := c.ForResource(schema.GroupVersionResource{
+		Group:    iam.GROUP,
+		Version:  iam.VERSION,
+		Resource: iam.UserResourceInfo.GroupResource().Resource,
+	})
+	return v, err
+}
+
+func (c *ResourceClients) Dashboard() (dynamic.ResourceInterface, error) {
+	v, _, err := c.ForResource(schema.GroupVersionResource{
+		Group:    dashboard.GROUP,
+		Version:  dashboard.VERSION,
+		Resource: dashboard.DASHBOARD_RESOURCE,
+	})
+	return v, err
 }

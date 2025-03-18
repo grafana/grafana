@@ -11,7 +11,6 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -105,21 +104,9 @@ func (f *finalizer) processExistingItems(
 	errors := 0
 
 	for _, item := range items.Items {
-		// HACK: we need to find a better way to know the API version
-		var version string
-		switch item.Group {
-		case folders.GROUP:
-			version = folders.VERSION
-		case dashboard.GROUP:
-			version = "v0alpha1" // the constant is internal
-		default:
-			version = "v0alpha1"
-		}
-
 		res, _, err := clients.ForResource(schema.GroupVersionResource{
 			Group:    item.Group,
 			Resource: item.Resource,
-			Version:  version,
 		})
 		if err != nil {
 			return err

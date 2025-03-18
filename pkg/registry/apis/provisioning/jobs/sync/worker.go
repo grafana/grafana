@@ -9,7 +9,6 @@ import (
 	"sort"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
@@ -141,20 +140,12 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.Reader, prog
 		return nil, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
 	}
 
-	folderClient, _, err := parser.Clients().ForResource(schema.GroupVersionResource{
-		Group:    folders.GROUP,
-		Version:  folders.VERSION,
-		Resource: folders.RESOURCE,
-	})
+	folderClient, err := parser.Clients().Dashboard()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get folder client: %w", err)
 	}
 
-	dashboardClient, _, err := parser.Clients().ForResource(schema.GroupVersionResource{
-		Group:    folders.GROUP,
-		Version:  folders.VERSION,
-		Resource: folders.RESOURCE,
-	})
+	dashboardClient, err := parser.Clients().Dashboard()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get dashboard client: %w", err)
 	}

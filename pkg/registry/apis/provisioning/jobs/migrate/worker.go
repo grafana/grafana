@@ -7,12 +7,8 @@ import (
 	"fmt"
 	"io"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -234,20 +230,12 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 		return fmt.Errorf("pull resources: %w", err)
 	}
 
-	folderClient, _, err := parser.Clients().ForResource(schema.GroupVersionResource{
-		Group:    folders.GROUP,
-		Version:  folders.VERSION,
-		Resource: folders.RESOURCE,
-	})
+	folderClient, err := parser.Clients().Folder()
 	if err != nil {
 		return fmt.Errorf("unable to get folder client: %w", err)
 	}
 
-	dashboardClient, _, err := parser.Clients().ForResource(schema.GroupVersionResource{
-		Group:    dashboard.GROUP,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-		Version:  "v1alpha1",
-	})
+	dashboardClient, err := parser.Clients().Dashboard()
 	if err != nil {
 		return fmt.Errorf("unable to get dashboard client: %w", err)
 	}

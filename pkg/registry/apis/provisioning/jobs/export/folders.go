@@ -7,7 +7,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -24,11 +23,7 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 
 	// TODO: should this be logging or message or both?
 	r.progress.SetMessage(ctx, "read folder tree from unified storage")
-	client, _, err := r.client.ForResource(schema.GroupVersionResource{
-		Group:    folders.GROUP,
-		Version:  folders.VERSION,
-		Resource: folders.RESOURCE,
-	})
+	client, err := r.client.Folder()
 	if err != nil {
 		return err
 	}

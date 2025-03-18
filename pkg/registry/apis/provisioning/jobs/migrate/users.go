@@ -7,18 +7,12 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 func (j *migrationJob) loadUsers(ctx context.Context) error {
-	client, _, err := j.parser.Clients().ForResource(schema.GroupVersionResource{
-		Group:    iam.GROUP,
-		Version:  iam.VERSION,
-		Resource: iam.UserResourceInfo.GroupResource().Resource,
-	})
+	client, err := j.parser.Clients().User()
 	if err != nil {
 		return err
 	}

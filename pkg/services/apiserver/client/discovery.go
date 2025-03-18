@@ -12,6 +12,7 @@ type DiscoveryClient interface {
 	discovery.DiscoveryInterface
 	GetResourceForKind(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
 	GetKindForResource(gvr schema.GroupVersionResource) (schema.GroupVersionKind, error)
+	GetPreferredVesion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error)
 }
 
 type DiscoveryClientImpl struct {
@@ -62,4 +63,27 @@ func (d *DiscoveryClientImpl) GetKindForResource(gvr schema.GroupVersionResource
 		}
 	}
 	return schema.GroupVersionKind{}, fmt.Errorf("kind not found for %s", gvr.String())
+}
+
+func (d *DiscoveryClientImpl) GetPreferredVesion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error) {
+	apiList, err := d.ServerPreferredResources()
+	if err != nil {
+		return schema.GroupVersionResource{}, schema.GroupVersionKind{}, err
+	}
+	for _, gv := range apiList {
+		for _, resource := range gv.APIResources {
+			if resource.Group == gr.Group && resource.Name == gr.Resource {
+				return schema.GroupVersionResource{
+						Group:    resource.Group,
+						Version:  resource.Version,
+						Resource: resource.Name,
+					}, schema.GroupVersionKind{
+						Group:   resource.Group,
+						Version: resource.Version,
+						Kind:    resource.Kind,
+					}, nil
+			}
+		}
+	}
+	return schema.GroupVersionResource{}, schema.GroupVersionKind{}, fmt.Errorf("preferred version not found for %s", gr.String())
 }
