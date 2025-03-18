@@ -267,11 +267,14 @@ export function NestedFolderPicker({
     label = 'Dashboards';
   }
 
-  const labelComponent = (
+  // Display the folder name and provisioning status when the picker is closed
+  const labelComponent = label ? (
     <Stack alignItems={'center'}>
-      <Text truncate>{label ?? ''}</Text>
+      <Text truncate>{label}</Text>
       <FolderRepo folder={selectedFolder.data} />
     </Stack>
+  ) : (
+    ''
   );
 
   if (!overlayOpen) {
