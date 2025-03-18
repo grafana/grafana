@@ -15,7 +15,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 )
 
 type groupResource map[string]map[string]interface{}
@@ -108,6 +107,12 @@ func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) claims
 	}
 }
 
+type contextFallbackKey struct{}
+
+func fallbackUsed(ctx context.Context) bool {
+	return ctx.Value(contextFallbackKey{}) != nil
+}
+
 // Check implements claims.AccessClient.
 func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req claims.CheckRequest) (claims.CheckResponse, error) {
 	t := time.Now()
@@ -118,11 +123,11 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		attribute.String("name", req.Name),
 		attribute.String("verb", req.Verb),
 		attribute.String("folder", req.Folder),
-		attribute.Bool("fallback_used", grpcutils.FallbackUsed(ctx)),
+		attribute.Bool("fallback_used", fallbackUsed(ctx)),
 	))
 	defer span.End()
 
-	if grpcutils.FallbackUsed(ctx) {
+	if fallbackUsed(ctx) {
 		if req.Namespace == "" {
 			// cross namespace queries are not allowed when fallback is used
 			span.SetAttributes(attribute.Bool("allowed", false))
@@ -163,7 +168,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 // Compile implements claims.AccessClient.
 func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.ListRequest) (claims.ItemChecker, error) {
 	t := time.Now()
-	fallbackUsed := grpcutils.FallbackUsed(ctx)
+	fallbackUsed := fallbackUsed(ctx)
 	ctx, span := c.tracer.Start(ctx, "authzLimitedClient.Compile", trace.WithAttributes(
 		attribute.String("group", req.Group),
 		attribute.String("resource", req.Resource),

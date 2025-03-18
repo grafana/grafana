@@ -6,12 +6,17 @@ import (
 	"fmt"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	"github.com/gogo/status"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opencensus.io/trace"
+	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 
 	authnlib "github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -21,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -143,6 +147,7 @@ type Zanzana struct {
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
+	//TODO: use otel
 	tracingCfg, err := tracing.ProvideTracingConfig(z.cfg)
 	if err != nil {
 		return err
@@ -182,7 +187,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	z.handle, err = grpcserver.ProvideService(
 		z.cfg,
 		z.features,
-		grpcutils.NewAuthenticatorInterceptor(authenticator, tracer),
+		NewAuthenticatorInterceptor(authenticator, tracer), // TODO: use authlib/grpcutils
 		tracer,
 		prometheus.DefaultRegisterer,
 	)
@@ -230,4 +235,32 @@ func (z *Zanzana) stopping(err error) error {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
 	}
 	return nil
+}
+
+// TODO: use authlib/grpcutils
+func NewAuthenticatorInterceptor(auth authnlib.Authenticator, tracer trace.Tracer) Authenticator {
+	return func(ctx context.Context) (context.Context, error) {
+		ctx, span := tracer.Start(ctx, "grpcutils.Authenticate")
+		defer span.End()
+
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			return nil, errors.New("missing metedata in context")
+		}
+
+		info, err := auth.Authenticate(ctx, authnlib.NewGRPCTokenProvider(md))
+		if err != nil {
+			span.RecordError(err)
+			if authnlib.IsUnauthenticatedErr(err) {
+				return nil, status.Error(codes.Unauthenticated, err.Error())
+			}
+
+			return ctx, status.Error(codes.Internal, err.Error())
+		}
+
+		// FIXME: Add attribute with service subject once https://github.com/grafana/authlib/issues/139 is closed.
+		span.SetAttributes(attribute.String("subject", info.GetUID()))
+		span.SetAttributes(attribute.Bool("service", types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy)))
+		return types.WithAuthInfo(ctx, info), nil
+	}
 }

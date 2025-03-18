@@ -3,21 +3,24 @@ package resource
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	"github.com/golang-jwt/jwt"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/authlib/authn"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
@@ -56,7 +59,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 
-	grpcAuthInt := grpcutils.NewInProcGrpcAuthenticator()
+	grpcAuthInt := NewInProcGrpcAuthenticator()
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
@@ -76,7 +79,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 
 	clientInt := authnlib.NewGrpcClientInterceptor(
-		grpcutils.ProvideInProcExchanger(),
+		ProvideInProcExchanger(),
 		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
 	)
 
@@ -158,4 +161,43 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	}
 
 	return "", nil
+}
+
+func createInProcToken() (string, error) {
+	claims := authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Issuer:   "grafana",
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "grafana"),
+			Audience: []string{"resourceStore"},
+		},
+		Rest: authn.AccessTokenClaims{
+			Namespace:            "*",
+			Permissions:          identity.ServiceIdentityClaims.Rest.Permissions,
+			DelegatedPermissions: identity.ServiceIdentityClaims.Rest.DelegatedPermissions,
+		},
+	}
+
+	header, err := json.Marshal(map[string]string{
+		"alg": "none",
+		"typ": authn.TokenTypeAccess,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	payload, err := json.Marshal(claims)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.RawURLEncoding.EncodeToString(header) + "." + base64.RawURLEncoding.EncodeToString(payload) + ".", nil
+}
+
+func ProvideInProcExchanger() authn.StaticTokenExchanger {
+	token, err := createInProcToken()
+	if err != nil {
+		panic(err)
+	}
+
+	return authn.NewStaticTokenExchanger(token)
 }

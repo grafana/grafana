@@ -33,6 +33,8 @@ require (
 	k8s.io/apimachinery v0.32.1
 )
 
+require github.com/golang-jwt/jwt v3.2.2+incompatible
+
 require (
 	cel.dev/expr v0.19.1 // indirect
 	cloud.google.com/go v0.118.2 // indirect
