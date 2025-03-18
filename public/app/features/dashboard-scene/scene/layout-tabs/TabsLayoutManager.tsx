@@ -8,6 +8,7 @@ import {
 import { t } from 'app/core/internationalization';
 
 import { ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -29,11 +30,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       return t('dashboard.tabs-layout.name', 'Tabs');
     },
     get description() {
-      return t('dashboard.tabs-layout.description', 'Tabs layout');
+      return t('dashboard.tabs-layout.description', 'Organize panels into horizontal tabs');
     },
     id: 'tabs-layout',
     createFromLayout: TabsLayoutManager.createFromLayout,
     kind: 'TabsLayout',
+    isGridLayout: false,
   };
 
   public readonly descriptor = TabsLayoutManager.descriptor;
@@ -177,7 +179,14 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
-    const tab = new TabItem({ layout: layout.clone() });
-    return new TabsLayoutManager({ tabs: [tab] });
+    let tabs: TabItem[] = [];
+
+    if (layout instanceof RowsLayoutManager) {
+      tabs = layout.state.rows.map((row) => new TabItem({ layout: row.state.layout.clone(), title: row.state.title }));
+    } else {
+      tabs.push(new TabItem({ layout: layout.clone() }));
+    }
+
+    return new TabsLayoutManager({ tabs });
   }
 }

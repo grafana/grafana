@@ -11,9 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -240,9 +240,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				OrgID:    user.GetOrgID(),
 			})
 		} else if query.ManagerIdentity != "" {
-			dashes, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity)
+			dashes, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity, user.GetOrgID())
 		} else if len(query.ManagerIdentityNotIn) > 0 {
-			dashes, err = c.dashboardStore.GetOrphanedProvisionedDashboards(ctx, query.ManagerIdentityNotIn)
+			dashes, err = c.dashboardStore.GetOrphanedProvisionedDashboards(ctx, query.ManagerIdentityNotIn, user.GetOrgID())
 		}
 		if err != nil {
 			return nil, err
@@ -253,9 +253,11 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				Key: getResourceKey(&dashboards.DashboardSearchProjection{
 					UID: dashboard.UID,
 				}, req.Options.Key.Namespace),
-				Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), {}, {}},
+				Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), []byte(strconv.FormatInt(dashboard.ID, 10)), {}, {}},
 			})
 		}
+
+		list.TotalHits = int64(len(list.Results.Rows))
 
 		return list, nil
 	}
