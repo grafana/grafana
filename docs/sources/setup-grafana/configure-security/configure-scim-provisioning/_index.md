@@ -118,7 +118,7 @@ SCIM handles user and team synchronization, but role management works differentl
 - Role assignments are handled through [Role Sync](../configure-authentication/saml#configure-role-sync)
 - Role changes take effect when users authenticate through SAML
 
-For role management, continue using Role Sync to map users to their appropriate roles in Grafana. This separation of concerns allows you to maintain flexible role assignments while benefiting from SCIM's automated user and team management.
+For role management, continue using Role Sync to map users to their appropriate roles in Grafana. This separation of concerns allows you to maintain flexible role assignments while benefiting from automated user and team management through SCIM.
 
 ## Next steps
 
