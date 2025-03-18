@@ -55,6 +55,14 @@ echo "Results for commit: $COMMIT_HASH"
 echo "============================================="
 echo
 
+# Get commit details
+echo "Commit details:"
+echo "  Author: $(git log -1 --format="%an <%ae>" "$COMMIT_HASH")"
+echo "  Date: $(git log -1 --format="%ad" --date=iso "$COMMIT_HASH")"
+echo "  Message:"
+git log -1 --format="  %B" "$COMMIT_HASH" | sed 's/^/    /'
+echo
+
 # Arrays to store results
 declare -a release_branches=()
 declare -a direct_tags=()
