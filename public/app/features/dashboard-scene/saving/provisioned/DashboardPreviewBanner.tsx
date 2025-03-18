@@ -1,7 +1,9 @@
+import { config } from '@grafana/runtime';
 import { Alert, Icon, Stack } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning';
+import { t, Trans } from 'app/core/internationalization';
 import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
-import { usePullRequestParam } from 'app/features/provisioning/hooks';
+import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types';
 
 interface CommonBannerProps {
@@ -27,7 +29,11 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
 
   if (file.data?.errors) {
     return (
-      <Alert title="Error loading dashboard" severity="error" style={{ flex: 0 }}>
+      <Alert
+        title={t('dashboard-scene.dashboard-preview-banner.title-error-loading-dashboard', 'Error loading dashboard')}
+        severity="error"
+        style={{ flex: 0 }}
+      >
         {file.data.errors.map((error, index) => (
           <div key={index}>{error}</div>
         ))}
@@ -40,49 +46,72 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
     return (
       <Alert
         {...commonAlertProps}
-        title="This dashboard is loaded from a pull request in GitHub."
+        title={t(
+          'dashboard-scene.dashboard-preview-banner.title-dashboard-loaded-request-git-hub',
+          'This dashboard is loaded from a pull request in GitHub.'
+        )}
         buttonContent={
           <Stack alignItems="center">
-            <span>View pull request in GitHub</span>
+            <Trans i18nKey="dashboard-scene.dashboard-preview-banner.view-pull-request-in-git-hub">
+              View pull request in GitHub
+            </Trans>
             <Icon name="external-link-alt" />
           </Stack>
         }
         onRemove={() => window.open(prParam, '_blank')}
       >
-        The value is <strong>not yet</strong> saved in the grafana database
+        <Trans i18nKey="dashboard-scene.dashboard-preview-banner.value-not-saved">
+          The value is not yet saved in the Grafana database
+        </Trans>
       </Alert>
     );
   }
 
-  // Check if this is a github link
+  // Check if this is a GitHub link
   const githubURL = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
   if (githubURL) {
     return (
       <Alert
         {...commonAlertProps}
-        title="This dashboard is loaded from a branch in GitHub."
+        title={t(
+          'dashboard-scene.dashboard-preview-banner.title-dashboard-loaded-branch-git-hub',
+          'This dashboard is loaded from a branch in GitHub.'
+        )}
         buttonContent={
           <Stack alignItems="center">
-            <span>Open pull request in GitHub</span>
+            <Trans i18nKey="dashboard-scene.dashboard-preview-banner.open-pull-request-in-git-hub">
+              Open pull request in GitHub
+            </Trans>
             <Icon name="external-link-alt" />
           </Stack>
         }
         onRemove={() => window.open(githubURL, '_blank')}
       >
-        The value is <strong>not yet</strong> saved in the grafana database
+        <Trans i18nKey="dashboard-scene.dashboard-preview-banner.not-saved">
+          The value is not yet saved in the Grafana database
+        </Trans>
       </Alert>
     );
   }
 
   return (
-    <Alert {...commonAlertProps} title="This dashboard is loaded from an external repository">
-      The value is <strong>not</strong> saved in the grafana database
+    <Alert
+      {...commonAlertProps}
+      title={t(
+        'dashboard-scene.dashboard-preview-banner.title-dashboard-loaded-external-repository',
+        'This dashboard is loaded from an external repository'
+      )}
+    >
+      <Trans i18nKey="dashboard-scene.dashboard-preview-banner.not-yet-saved">
+        The value is not saved in the Grafana database
+      </Trans>
     </Alert>
   );
 }
 
 export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
-  if ('kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
+  const provisioningEnabled = config.featureToggles.provisioning;
+  if (!provisioningEnabled || 'kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
     return null;
   }
 
