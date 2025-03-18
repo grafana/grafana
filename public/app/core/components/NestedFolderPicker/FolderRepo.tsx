@@ -10,7 +10,12 @@ export interface Props {
 
 export function FolderRepo({ folder }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance();
-  if (!folder || folder.managedBy !== ManagerKind.Repo || isProvisionedInstance) {
+  if (
+    !folder ||
+    ('parentUID' in folder && folder.parentUID) ||
+    folder.managedBy !== ManagerKind.Repo ||
+    isProvisionedInstance
+  ) {
     return null;
   }
 
