@@ -1358,6 +1358,8 @@
       "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "open-original": "Open original dashboard",
+      "paste-panel": "Paste panel",
+      "paste-panel-description": "Paste a panel from the clipboard",
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
