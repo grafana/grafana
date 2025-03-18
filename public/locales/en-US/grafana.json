@@ -918,6 +918,9 @@
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
     },
+    "browse-view": {
+      "this-folder-is-empty": "This folder is empty"
+    },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
       "alertRule_other": "{{count}} alert rule",
@@ -937,6 +940,9 @@
       "select-all-header-checkbox": "Select all",
       "select-checkbox": "Select",
       "tags-column": "Tags"
+    },
+    "descendant-count": {
+      "title-unable-to-retrieve-descendant-information": "Unable to retrieve descendant information"
     },
     "empty-state": {
       "button-title": "Create dashboard",
@@ -967,6 +973,9 @@
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
       "panels": "Panels"
+    },
+    "name-cell": {
+      "no-items": "No items"
     },
     "new-folder-form": {
       "cancel-label": "Cancel",
@@ -2527,8 +2536,31 @@
     }
   },
   "library-panels": {
+    "add-library-panel-modal": {
+      "title-create-library-panel": "Create library panel"
+    },
+    "confirm": {
+      "delete-panel": "Do you want to delete this panel?"
+    },
+    "delete-library-panel-modal": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "title-delete-library-panel": "Delete library panel"
+    },
     "empty-state": {
       "message": "No library panels found"
+    },
+    "folder-link": {
+      "dashboards": "Dashboards"
+    },
+    "has-connected-dashboards": {
+      "dashboard-name": "Dashboard name"
+    },
+    "library-panels-search": {
+      "placeholder-search-by-name-or-description": "Search by name or description"
+    },
+    "loading-indicator": {
+      "loading-library-panel": "Loading library panel..."
     },
     "loading-panel-text": "Loading library panel",
     "modal": {
@@ -2542,9 +2574,20 @@
       "select-placeholder": "Start typing to search for dashboard",
       "title": "View panel in dashboard"
     },
+    "panel-library-options-group": {
+      "create-new-library-panel": "Create new library panel"
+    },
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
+    },
+    "save-library-panel-modal": {
+      "cancel": "Cancel",
+      "dashboard-name": "Dashboard name",
+      "discard": "Discard",
+      "loading-connected-dashboards": "Loading connected dashboards...",
+      "placeholder-search-affected-dashboards": "Search affected dashboards",
+      "update-all": "Update all"
     }
   },
   "link": {
@@ -3286,6 +3329,27 @@
       "error": "Login provider denied login request"
     }
   },
+  "org": {
+    "new-org-page": {
+      "create": "Create",
+      "label-organization-name": "Organization name",
+      "placeholder-org-name": "Org name"
+    },
+    "org-profile": {
+      "label-organization-name": "Organization name",
+      "label-organization-profile": "Organization profile",
+      "update-organization-name": "Update organization name"
+    },
+    "user-invite-form": {
+      "back": "Back",
+      "label-email-or-username": "Email or username",
+      "label-name": "Name",
+      "label-send-invite-email": "Send invite email",
+      "placeholder-optional": "(optional)",
+      "role": "Role",
+      "submit": "Submit"
+    }
+  },
   "panel": {
     "header-menu": {
       "copy": "Copy",
@@ -3315,6 +3379,19 @@
   },
   "panel-type-filter": {
     "clear-button": "Clear types"
+  },
+  "playlist": {
+    "start-modal": {
+      "description-customize-dashboard-elements-visibility": "Customize dashboard elements visibility",
+      "description-panel-heights-adjusted-screen": "Panel heights will be adjusted to fit screen size",
+      "label-autofit": "Autofit",
+      "label-dashboard-links": "Dashboard links",
+      "label-display-dashboard-controls": "Display dashboard controls",
+      "label-mode": "Mode",
+      "label-time-and-refresh": "Time and refresh",
+      "label-variables": "Variables",
+      "title-start-playlist": "Start playlist"
+    }
   },
   "playlist-edit": {
     "error-prefix": "Error loading playlist:",
@@ -4137,11 +4214,37 @@
     "placeholder": "Filter by tag"
   },
   "teams": {
+    "create-team": {
+      "create": "Create",
+      "label-name": "Name",
+      "label-role": "Role"
+    },
     "empty-state": {
       "button-title": "New team",
       "message": "No teams found",
       "pro-tip": "Assign folder and dashboard permissions to teams instead of users to ease administration. <2>Learn more</2>",
       "title": "You haven't created any teams yet"
+    },
+    "team-group-sync": {
+      "add-group": "Add group",
+      "external-group-id": "External Group ID",
+      "external-group-sync": "External group sync",
+      "title-there-external-groups": "There are no external groups to sync with"
+    },
+    "team-list": {
+      "columns": {
+        "title-edit-team": "Edit team"
+      },
+      "new-team": "New Team",
+      "placeholder-search-teams": "Search teams"
+    },
+    "team-settings": {
+      "label-email": "Email",
+      "label-name": "Name",
+      "label-numerical-identifier": "Numerical identifier",
+      "label-role": "Role",
+      "label-team-details": "Team details",
+      "save": "Save"
     }
   },
   "theme-preview": {
