@@ -178,7 +178,7 @@
           "url": "https://grafana.com/docs/grafana/latest/datasources/azuremonitor/"
         },
         {
-          "name": "Apache License",
+          "name": "License",
           "url": "https://github.com/grafana/grafana/blob/HEAD/LICENSE"
         },
         {
@@ -1405,6 +1405,10 @@
         {
           "name": "Raise issue",
           "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/mssql/"
         }
       ],
       "logos": {
@@ -2264,6 +2268,10 @@
         {
           "name": "Raise issue",
           "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/"
         }
       ],
       "logos": {
