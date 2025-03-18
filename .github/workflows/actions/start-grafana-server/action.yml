@@ -11,4 +11,4 @@ runs:
   steps:
     - shell: bash
       run: |
-        tar -xvf ${{ inputs.package }} -c /tmp/grafana
+        tar -xvf ${{ inputs.package }} -C /tmp/grafana
