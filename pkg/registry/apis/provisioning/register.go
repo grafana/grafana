@@ -35,6 +35,7 @@ import (
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -88,6 +89,7 @@ type APIBuilder struct {
 	storageStatus     dualwrite.Service
 	unified           resource.ResourceClient
 	secrets           secrets.Service
+	usageStatsService usagestats.Service
 }
 
 // NewAPIBuilder creates an API builder.
@@ -144,6 +146,7 @@ func RegisterAPIService(
 	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
+	usageStatsService usagestats.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
 ) (*APIBuilder, error) {
@@ -165,8 +168,10 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
-		secrets.NewSingleTenant(secretsSvc))
+		secrets.NewSingleTenant(secretsSvc),
+	)
 	apiregistration.RegisterAPI(builder)
+	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
 	return builder, nil
 }
 
