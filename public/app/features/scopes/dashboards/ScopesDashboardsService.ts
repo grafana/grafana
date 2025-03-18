@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 
-import { ScopeDashboardBinding } from '@grafana/data';
+import { ScopeDashboardBinding, ScopeNavigation } from '@grafana/data';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -12,6 +12,7 @@ interface ScopesDashboardsServiceState {
   drawerOpened: boolean;
   // by keeping a track of the raw response, it's much easier to check if we got any dashboards for the currently selected scopes
   dashboards: ScopeDashboardBinding[];
+  scopeNavigations: ScopeNavigation[];
   // a filtered version of the `folders` property. this prevents a lot of unnecessary parsings in React renders
   filteredFolders: SuggestedDashboardsFoldersMap;
   // this is a grouping in folders of the `dashboards` property. it is used for filtering the dashboards and folders when the search query changes
@@ -26,6 +27,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     super({
       drawerOpened: false,
       dashboards: [],
+      scopeNavigations: [],
       filteredFolders: {},
       folders: {},
       forScopeNames: [],
@@ -94,6 +96,16 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
       this.updateState({ dashboards, filteredFolders, folders, loading: false, drawerOpened: dashboards.length > 0 });
     }
+  };
+
+  public fetchScopeNavigations = async (forScopeNames: string[]) => {
+    if (isEqual(this.state.forScopeNames, forScopeNames)) {
+      return;
+    }
+
+    const scopeNavigations = await this.apiClient.fetchScopeNavigations(forScopeNames);
+
+    this.updateState({ scopeNavigations });
   };
 
   public groupDashboards = (dashboards: ScopeDashboardBinding[]): SuggestedDashboardsFoldersMap => {

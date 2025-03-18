@@ -83,3 +83,20 @@ export interface ScopeNode {
   };
   spec: ScopeNodeSpec;
 }
+
+export interface ScopeNavigationSpec {
+  URL: string;
+  Scope: string;
+}
+
+export interface ScopeNavigationStatus {
+  title: string;
+  groups?: string[];
+}
+
+export interface ScopeNavigation {
+  metadata: {
+    name: string;
+  };
+  spec: ScopeNavigationSpec;
+}

@@ -143,6 +143,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       path,
     }));
     this.updateState({ selectedScopes, treeScopes, loading: true });
+    this.dashboardsService.fetchScopeNavigations(selectedScopes.map(({ scope }) => scope.metadata.name));
+
     this.dashboardsService.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
 
     selectedScopes = await this.apiClient.fetchMultipleScopes(treeScopes);

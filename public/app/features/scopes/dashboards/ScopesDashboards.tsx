@@ -27,7 +27,8 @@ export function ScopesDashboards() {
   }
 
   const { scopesDashboardsService } = scopeServices;
-  const { loading, forScopeNames, dashboards, searchQuery, filteredFolders } = scopesDashboardsService.state;
+  const { loading, forScopeNames, dashboards, scopeNavigations, searchQuery, filteredFolders } =
+    scopesDashboardsService.state;
   const { changeSearchQuery, updateFolder, clearSearchQuery } = scopesDashboardsService;
 
   if (!loading) {
@@ -55,6 +56,13 @@ export function ScopesDashboards() {
   return (
     <div className={styles.container} data-testid="scopes-dashboards-container">
       <ScopesDashboardsTreeSearch disabled={loading} query={searchQuery} onChange={changeSearchQuery} />
+
+      {scopeNavigations.map((scopeNavigation) => (
+        <div key={scopeNavigation.metadata.name}>
+          <h3>{scopeNavigation.metadata.name}</h3>
+          <p>{scopeNavigation.spec.URL}</p>
+        </div>
+      ))}
 
       {loading ? (
         <LoadingPlaceholder
