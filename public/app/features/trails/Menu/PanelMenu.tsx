@@ -1,5 +1,5 @@
 import { DataFrame, PanelMenuItem } from '@grafana/data';
-import { getPluginLinkExtensions } from '@grafana/runtime';
+import { isPluginExtensionLink } from '@grafana/runtime';
 import {
   SceneComponentProps,
   sceneGraph,
@@ -11,6 +11,8 @@ import {
 } from '@grafana/scenes';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { GetPluginExtensions, createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
+import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 
 import { AddToExplorationButton, extensionPointId } from '../MetricSelect/AddToExplorationsButton';
 import { getDataSource, getTrailFor } from '../utils';
@@ -26,6 +28,18 @@ interface PanelMenuState extends SceneObjectState {
   fieldName?: string;
   addExplorationsLink?: boolean;
   explorationsButton?: AddToExplorationButton;
+}
+
+let getPluginExtensions: GetPluginExtensions;
+
+function setupGetPluginExtensions() {
+  if (getPluginExtensions) {
+    return getPluginExtensions;
+  }
+
+  getPluginExtensions = createPluginExtensionsGetter(pluginExtensionRegistries);
+
+  return getPluginExtensions;
 }
 
 /**
@@ -93,6 +107,8 @@ export class PanelMenu extends SceneObjectBase<PanelMenuState> implements VizPan
         this.state.explorationsButton?.activate();
       }
     });
+
+    setupGetPluginExtensions();
   }
 
   addItem(item: PanelMenuItem): void {
@@ -119,12 +135,12 @@ export class PanelMenu extends SceneObjectBase<PanelMenuState> implements VizPan
 }
 
 const getInvestigationLink = (addToExplorations: AddToExplorationButton) => {
-  const links = getPluginLinkExtensions({
-    extensionPointId: extensionPointId,
+  const links = getPluginExtensions({
+    extensionPointId,
     context: addToExplorations.state.context,
-  });
+  }).extensions.filter((ext) => isPluginExtensionLink(ext));
 
-  return links.extensions[0];
+  return links[0];
 };
 
 const onAddToInvestigationClick = (event: React.MouseEvent, addToExplorations: AddToExplorationButton) => {
