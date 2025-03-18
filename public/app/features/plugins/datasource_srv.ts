@@ -303,11 +303,6 @@ export class DatasourceSrv implements DataSourceService {
       return 0;
     });
 
-    if (!filters.pluginId) {
-      sorted = sorted.filter((x) => {
-        return x.meta.id !== 'grafana-amazonprometheus-datasource';
-      });
-    }
 
     if (!filters.pluginId && !filters.alerting) {
       if (filters.mixed) {
@@ -330,6 +325,12 @@ export class DatasourceSrv implements DataSourceService {
           base.push(grafanaInstanceSettings);
         }
       }
+    }
+    
+    if (!filters.pluginId) {
+      sorted = sorted.filter((x) => {
+        return x.meta.id !== 'grafana-amazonprometheus-datasource';
+      });
     }
 
     return sorted;
