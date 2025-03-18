@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
+// TODO: should we have merge migrate and sync connectors and have a single repository job connector?
 type migrateConnector struct {
 	dual       dualwrite.Service
 	repoGetter RepoGetter
