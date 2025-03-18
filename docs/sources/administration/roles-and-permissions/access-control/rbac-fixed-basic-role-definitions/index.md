@@ -50,7 +50,7 @@ refs:
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
-The following tables list permissions associated with basic and fixed roles.
+The following tables list permissions associated with basic and fixed roles. This does not include basic role assignments added by plugins or apps.
 
 ## Basic role assignments
 
