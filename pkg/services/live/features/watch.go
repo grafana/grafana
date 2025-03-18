@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -72,6 +74,12 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 	gvr, name, err := parseWatchRequest(e.Channel, userID)
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
+	}
+
+	// Test this with only provisiong support -- then we can evaluate a broader rollout
+	if gvr.Group != provisioning.GROUP {
+		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied,
+			fmt.Errorf("watching provisioned resources is OK allowed (for now)")
 	}
 
 	requester := types.WithAuthInfo(context.Background(), u)
