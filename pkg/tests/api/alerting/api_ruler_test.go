@@ -813,9 +813,10 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		require.NoError(t, err)
 		alertRule := apimodels.PostableExtendedRuleNode{
 			ApiRuleNode: &apimodels.ApiRuleNode{
-				For:         &interval,
-				Labels:      map[string]string{"label1": "val1"},
-				Annotations: map[string]string{"annotation1": "val1"},
+				For:           &interval,
+				KeepFiringFor: &interval,
+				Labels:        map[string]string{"label1": "val1"},
+				Annotations:   map[string]string{"annotation1": "val1"},
 			},
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     "AlwaysFiring",
@@ -1080,8 +1081,9 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:    &interval,
-						Labels: map[string]string{},
+						For:           &interval,
+						KeepFiringFor: &interval,
+						Labels:        map[string]string{},
 						Annotations: map[string]string{
 							"__dashboardUid__": dashboardUID,
 							"__panelId__":      "1",
@@ -1143,6 +1145,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		"rules": [{
 			"expr": "",
 			"for": "10s",
+            "keep_firing_for": "10s",
 			"annotations": {
 				"__dashboardUid__": "%s",
 				"__panelId__": "1"
@@ -1189,6 +1192,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		}, {
 			"expr": "",
 			"for":"0s",
+            "keep_firing_for": "0s",
 			"grafana_alert": {
 				"title": "AlwaysFiringButSilenced",
 				"condition": "A",
@@ -1239,6 +1243,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		"rules": [{
 			"expr": "",
 			"for": "10s",
+            "keep_firing_for": "10s",
 			"annotations": {
 				"__dashboardUid__": "%s",
 				"__panelId__": "1"
@@ -1548,7 +1553,8 @@ func TestIntegrationRuleCreate(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: util.Pointer(model.Duration(2 * time.Minute)),
+						For:           util.Pointer(model.Duration(2 * time.Minute)),
+						KeepFiringFor: util.Pointer(model.Duration(1 * time.Minute)),
 						Labels: map[string]string{
 							"foo🙂":  "bar",
 							"_bar1": "baz🙂",
@@ -1581,7 +1587,8 @@ func TestIntegrationRuleCreate(t *testing.T) {
 			Rules: []apimodels.GettableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: util.Pointer(model.Duration(2 * time.Minute)),
+						For:           util.Pointer(model.Duration(2 * time.Minute)),
+						KeepFiringFor: util.Pointer(model.Duration(1 * time.Minute)),
 						Labels: map[string]string{
 							"foo🙂":  "bar",
 							"_bar1": "baz🙂",
@@ -1725,6 +1732,27 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		require.Equal(t, http.StatusAccepted, status)
 		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
 	})
+
+	t.Run("should be able to reset 'keep_firing_for' to 0", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		keepFiringFor := model.Duration(10 * time.Second)
+		group.Rules[0].ApiRuleNode.KeepFiringFor = &keepFiringFor
+
+		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup, _ := client.GetRulesGroup(t, folderUID, group.Name)
+		require.Equal(t, keepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
+
+		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+		newKeepFiringFor := model.Duration(0)
+		group.Rules[0].ApiRuleNode.KeepFiringFor = &newKeepFiringFor
+		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+		getGroup, _ = client.GetRulesGroup(t, folderUID, group.Name)
+		require.Equal(t, newKeepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
+	})
+
 	t.Run("when data source missing", func(t *testing.T) {
 		var groupName string
 		{
@@ -2544,6 +2572,7 @@ func TestIntegrationQuota(t *testing.T) {
 					    {
 					       "expr":"",
 						   "for": "2m",
+						   "keep_firing_for": "0s",
 					       "grafana_alert":{
 						  "title":"Updated alert rule",
 						  "condition":"A",
@@ -2652,6 +2681,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 							{
 								"expr": "",
 								"for": "2m",
+								"keep_firing_for": "0s",
 								"labels": {
 									"label1": "val1"
 								},
@@ -3138,6 +3168,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					   },
 					   "expr":"",
 					   "for": "1m",
+					   "keep_firing_for": "0s",
 					   "labels": {
 							"label1": "val1"
 					   },
@@ -3186,6 +3217,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					{
 					   "expr":"",
 					   "for": "0s",
+					   "keep_firing_for": "0s",
 					   "grafana_alert":{
 						  "title":"AlwaysFiringButSilenced",
 						  "condition":"A",
@@ -3240,6 +3272,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 	// validate that a rulegroup with a new rule with a user specified UID can be created while others updated
 	{
 		interval, err := model.ParseDuration("30s")
+		require.NoError(t, err)
+
+		keepFiringFor, err := model.ParseDuration("10s")
 		require.NoError(t, err)
 
 		rules := apimodels.PostableRuleGroupConfig{
@@ -3298,7 +3333,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				},
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: &interval,
+						For:           &interval,
+						KeepFiringFor: &keepFiringFor,
 						Labels: map[string]string{
 							"label1": "val42",
 							"foo":    "bar",
@@ -3529,6 +3565,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					   },
 					   "expr":"",
 					   "for": "1m",
+					   "keep_firing_for": "0s",
 					   "labels": {
 							"label1": "val1"
 					   },
@@ -3577,6 +3614,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					{
 					   "expr":"",
 					   "for": "0s",
+					   "keep_firing_for": "0s",
 					   "grafana_alert":{
 						  "title":"AlwaysFiringButSilenced",
 						  "condition":"A",
@@ -3631,12 +3669,16 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		forValue, err := model.ParseDuration("30s")
 		require.NoError(t, err)
 
+		keepFiringForValue, err := model.ParseDuration("5s")
+		require.NoError(t, err)
+
 		rules := apimodels.PostableRuleGroupConfig{
 			Name: "arulegroup",
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: &forValue,
+						For:           &forValue,
+						KeepFiringFor: &keepFiringForValue,
 						Labels: map[string]string{
 							// delete foo label
 							"label1": "val1", // update label value
@@ -3711,6 +3753,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					   },
 		               "expr":"",
 					   "for": "30s",
+                       "keep_firing_for": "5s",
 					   "labels": {
 							"label1": "val1",
 							"label2": "val2"
@@ -3768,12 +3811,16 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		forValue, err := model.ParseDuration("30s")
 		require.NoError(t, err)
 
+		keepFiringForValue, err := model.ParseDuration("15s")
+		require.NoError(t, err)
+
 		rules := apimodels.PostableRuleGroupConfig{
 			Name: "arulegroup",
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: &forValue,
+						For:           &forValue,
+						KeepFiringFor: &keepFiringForValue,
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						UID:       ruleUID, // Including the UID in the payload makes the endpoint update the existing rule.
@@ -3833,6 +3880,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				    {
 				       "expr":"",
 				       "for": "30s",
+                       "keep_firing_for": "15s",
 				       "grafana_alert":{
 					  "title":"AlwaysNormal",
 					  "condition":"A",
@@ -3930,6 +3978,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				    {
 				       "expr":"",
                        "for": "30s",
+                       "keep_firing_for": "15s",
 				       "grafana_alert":{
 					  "title":"AlwaysNormal",
 					  "condition":"A",
