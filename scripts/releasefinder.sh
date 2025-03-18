@@ -72,20 +72,20 @@ for tag in $(git tag | sort -V); do
         # Check if there's a matching release branch in origin
         release_branch="release-${tag#v}"
         if git show-ref --verify --quiet "refs/remotes/origin/$release_branch" 2>/dev/null; then
-            release_branches+=("${tag#v}")
+            release_branches+=("$release_branch")
         fi
         
         # If this is the first tag containing the commit, it's the initial release tag
         if [ ${#direct_tags[@]} -eq 0 ]; then
-            direct_tags+=("${tag#v}")
+            direct_tags+=("$tag")
         else
-            included_tags+=("${tag#v}")
+            included_tags+=("$tag")
         fi
     fi
 done
 
 # Print release branches
-echo "Included in release branches:"
+echo "Present in the following release branches:"
 if [ ${#release_branches[@]} -eq 0 ]; then
     echo "  None"
 else
@@ -103,7 +103,7 @@ fi
 echo
 
 # Print included tags
-echo "Included in these release tags:"
+echo "Present also in the following release tags:"
 if [ ${#included_tags[@]} -eq 0 ]; then
     echo "  None"
 else
@@ -112,8 +112,8 @@ fi
 echo
 
 # Find first release
-if [ ${#release_branches[@]} -gt 0 ]; then
-    first_release=$(printf "%s\n" "${release_branches[@]}" | sort -V | head -n1)
+if [ ${#direct_tags[@]} -gt 0 ]; then
+    first_release=$(printf "%s\n" "${direct_tags[@]}" | sort -V | head -n1)
     echo "First included in release: $first_release"
 else
     echo "Not included in any releases"
