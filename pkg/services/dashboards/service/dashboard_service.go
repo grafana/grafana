@@ -605,10 +605,12 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 				}
 				deletedUids = append(deletedUids, foundDash.DashboardUID)
 			}
-			// wait for deleted dashboards to be removed from the index
-			err = dr.waitForSearchQuery(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: org.ID, DashboardUIDs: deletedUids}, 5, 0)
-			if err != nil {
-				return err
+			if len(deletedUids) > 0 {
+				// wait for deleted dashboards to be removed from the index
+				err = dr.waitForSearchQuery(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: org.ID, DashboardUIDs: deletedUids}, 5, 0)
+				if err != nil {
+					return err
+				}
 			}
 		}
 		return nil
