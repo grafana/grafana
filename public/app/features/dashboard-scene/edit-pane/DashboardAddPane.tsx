@@ -1,6 +1,10 @@
+import { useEffect, useState } from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { Box, Card, Icon } from '@grafana/ui';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { t, Trans } from 'app/core/internationalization';
+import store from 'app/core/store';
 
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -13,6 +17,15 @@ export interface Props {
 
 export function DashboardAddPane({ editPane }: Props) {
   const dashboard = getDashboardSceneFor(editPane);
+  const [hasCopiedPanel, setHasCopiedPanel] = useState(store.exists(LS_PANEL_COPY_KEY));
+
+  useEffect(() => {
+    const unsubscribe = store.subscribe(LS_PANEL_COPY_KEY, () => {
+      setHasCopiedPanel(store.exists(LS_PANEL_COPY_KEY));
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <Box display={'flex'} direction={'column'} gap={1} padding={2}>
@@ -70,6 +83,20 @@ export function DashboardAddPane({ editPane }: Props) {
           <Icon name="layer-group" size="xl" />
         </Card.Figure>
       </Card>
+      {hasCopiedPanel && (
+        <Card
+          onClick={() => dashboard.pastePanel()}
+          data-testid={selectors.components.PageToolbar.itemButton('paste_panel')}
+          title={t('dashboard.toolbar.paste-panel-description', 'Paste a panel from the clipboard')}
+        >
+          <Card.Heading>
+            <Trans i18nKey="dashboard.toolbar.paste-panel">Paste panel</Trans>
+          </Card.Heading>
+          <Card.Figure>
+            <Icon name="clipboard-alt" size="xl" />
+          </Card.Figure>
+        </Card>
+      )}
     </Box>
   );
 }
