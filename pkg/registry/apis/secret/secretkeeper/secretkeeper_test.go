@@ -53,10 +53,10 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (OSSKeeperService, error) 
 	testDB := db.InitTestDB(t)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 	require.NoError(t, err)
 
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, cfg, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
 	require.NoError(t, err)
 
 	encryptionManager, err := manager.ProvideEncryptionManager(tracing.InitializeTracerForTest(), dataKeyStore, cfg, &usagestats.UsageStatsMock{T: t}, nil)

@@ -90,19 +90,8 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := db.InitTestDB(t)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	defaultKey := "SdlklWklckeLS"
-	cfg := &setting.Cfg{
-		SecretsManagement: setting.SecretsManagerSettings{
-			SecretKey:          defaultKey,
-			EncryptionProvider: "secretKey.v1",
-			Encryption: setting.EncryptionSettings{
-				DataKeysCacheTTL:        5 * time.Minute,
-				DataKeysCleanupInterval: 1 * time.Nanosecond,
-				Algorithm:               "aes-cfb",
-			},
-		},
-	}
-	store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
+
+	store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -210,7 +199,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 		testDB := db.InitTestDB(t)
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, &setting.Cfg{}, features)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 		require.NoError(t, err)
 
 		encryptionManager, err := ProvideEncryptionManager(
@@ -497,7 +486,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 					},
 				},
 			}
-			store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
+			store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 			require.NoError(t, err)
 
 			usageStats := &usagestats.UsageStatsMock{T: t}

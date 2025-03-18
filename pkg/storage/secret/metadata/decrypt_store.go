@@ -14,13 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // TODO: this should be a "decrypt" service rather, so that other services can wire and call it.
 func ProvideDecryptStorage(
 	db db.DB,
-	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	keeperService secretkeeper.Service,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
