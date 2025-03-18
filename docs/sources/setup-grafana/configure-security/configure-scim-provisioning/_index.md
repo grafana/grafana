@@ -30,14 +30,14 @@ You can enable feature toggles through configuration file or environment variabl
 For more information, refer to the [feature toggles documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
 {{< /admonition >}}
 
-## Benefits of SCIM provisioning
+## Benefits
 
 {{< admonition type="note" >}}
 SCIM provisioning only works SAML authentication.
 Other authentication methods aren't supported.
 {{< /admonition >}}
 
-SCIM provisioning offers several advantages for managing users and teams in Grafana:
+SCIM offers several advantages for managing users and teams in Grafana:
 
 - **Automated user provisioning**: Automatically create, update, and disable users in Grafana when changes occur in your identity provider
 - **Automated team provisioning**: Automatically create, update, and delete teams in Grafana based on groups in your identity provider
@@ -46,20 +46,20 @@ SCIM provisioning offers several advantages for managing users and teams in Graf
 
 ## Supported identity providers
 
-SCIM provisioning in Grafana supports:
+The following identity providers are supported:
 
 - [Azure AD](../configure-authentication/azuread/)
 - [Okta](../configure-authentication/saml/)
 
-## How SCIM provisioning works
+## How it works
 
-SCIM provisioning establishes a connection between your identity provider and Grafana:
+The synchronization process works as follows:
 
 1. Configure SCIM in both your identity provider and Grafana
 2. Your identity provider sends SCIM requests to the Grafana SCIM API endpoint
 3. Grafana processes these requests to create, update, or deactivate users and teams, and synchronize team memberships
 
-## Comparison of SCIM with other user sync methods
+## Comparison with other sync methods
 
 Grafana offers several methods for synchronizing users, teams, and roles.
 The following table compares SCIM with other synchronization methods to help you understand its advantages:
@@ -73,17 +73,16 @@ The following table compares SCIM with other synchronization methods to help you
 | [Role Sync](../configure-authentication/saml#configure-role-sync)              | ❌    | ❌    | ✅    | Partial    | Maps basic roles to users                                                | Limited to basic roles only                                  | ✅      | ✅    |
 | [Org Mapping](../configure-authentication/saml#configure-organization-mapping) | ❌    | ❌    | ✅    | Partial    | Maps basic roles per organization                                        | Only available for on-premises deployments                   | ✅      | ❌    |
 
-### Key advantages of SCIM over other methods
+### Key advantages
 
-- **Complete automation**: SCIM is the only method that fully automates user and team provisioning.
-- **Dynamic team creation**: Teams are created automatically based on identity provider groups, eliminating manual setup.
-- **Near real-time synchronization**: Grafana reflects changes in your identity provider using your identity provider synchronization schedule.
-  Refer to your identity provider documentation for specific details.
-- **Enterprise-ready**: Designed for large organizations with complex user management needs.
+- **Complete automation**: SCIM is the only method that fully automates user and team provisioning
+- **Dynamic team creation**: Teams are created automatically based on identity provider groups
+- **Near real-time synchronization**: Changes in your identity provider are reflected based on the provider's synchronization schedule
+- **Enterprise-ready**: Designed for large organizations with complex user management needs
 
-## Important considerations when using SCIM
+## Important considerations
 
-When implementing SCIM provisioning, you need to understand how it interacts with other Grafana features and authentication methods. The following sections explain key integration points and potential conflicts to help you make informed decisions about your configuration.
+When implementing SCIM, you need to understand how it interacts with other Grafana features and authentication methods. The following sections explain key integration points and potential conflicts to help you make informed decisions about your configuration.
 
 ### SCIM and Team Sync
 
