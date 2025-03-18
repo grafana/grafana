@@ -11,7 +11,7 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
@@ -49,7 +49,6 @@ export const LogsPanel = ({
   const keepScrollPositionRef = useRef(false);
   // Loading ref to prevent firing multiple requests
   const loadingRef = useRef(false);
-  const { eventBus } = usePanelContext();
 
   const logs = useMemo(() => {
     const logsModel = panelData
@@ -114,7 +113,6 @@ export const LogsPanel = ({
           containerElement={logsContainer}
           dedupStrategy={dedupStrategy}
           displayedFields={[]}
-          eventBus={eventBus}
           initialScrollPosition={initialScrollPosition}
           logs={logs}
           loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}

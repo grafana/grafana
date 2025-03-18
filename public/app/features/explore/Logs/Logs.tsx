@@ -56,7 +56,6 @@ import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogList, LogListControlOptions } from 'app/features/logs/components/panel/LogList';
-import { ScrollToLogsEvent } from 'app/features/logs/components/panel/virtualization';
 import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
 import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
@@ -704,13 +703,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
 
   const scrollToTopLogs = useCallback(() => {
-    if (config.featureToggles.newLogsPanel) {
-      eventBus.publish(
-        new ScrollToLogsEvent({
-          scrollTo: 'top',
-        })
-      );
-    } else if (config.featureToggles.logsInfiniteScrolling) {
+    if (config.featureToggles.logsInfiniteScrolling) {
       if (logsContainerRef.current) {
         logsContainerRef.current.scroll({
           behavior: 'auto',
@@ -719,7 +712,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       }
     }
     topLogsRef.current?.scrollIntoView();
-  }, [eventBus]);
+  }, []);
 
   const onPinToContentOutlineClick = useCallback(
     (row: LogRowModel, allowUnPin = true) => {
@@ -1075,7 +1068,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   containerElement={logsContainerRef.current}
                   dedupStrategy={dedupStrategy}
                   displayedFields={displayedFields}
-                  eventBus={eventBus}
                   forceEscape={forceEscape}
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
