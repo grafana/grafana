@@ -558,11 +558,11 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 			user.email,
 			user.name,
 			user.login,
+			user.uid AS user_uid,
 			team_member.external,
 			team_member.permission,
 			user_auth.auth_module,
-			team.uid,
-			user.uid AS user_uid`,
+			team.uid`,
 		)
 		sess.Asc("user.login", "user.email")
 
