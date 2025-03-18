@@ -70,13 +70,15 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
     return dateTimeForTimeZone(zone.name, value, format);
   }
 
+  if (format === systemDateFormats.fullDate) {
+    // We use parsed here to handle case when `use_browser_locale` is true
+    // We need to pass the parsed value to handle case when value is an ISO 8601 date string
+    return dateTime(parsed, format);
+  }
+
   switch (lowerCase(timeZone)) {
     case 'utc':
       return toUtc(value, format);
-    // We used parsed here to handle case when `use_browser_locale` is true
-    // We need to pass the parsed value to handle case when value is an ISO 8601 date string
-    case 'browser':
-      return dateTime(parsed, format);
     default:
       return dateTime(value, format);
   }
