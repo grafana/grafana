@@ -252,6 +252,40 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 		treeRoot.AddSection(helpNode)
 
 		hasAccess := ac.HasAccess(s.accessControl, c)
+
+		// Add link to support tickets if cloudRBACRoles is enabled, the user has permission, and auth plugin is enabled
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagCloudRBACRoles) {
+			supportTicketAccess := ac.EvalPermission("cloud.support-tickets:read")
+			if hasAccess(supportTicketAccess) {
+				authPlugin, exists := s.pluginStore.Plugin(c.Req.Context(), "grafana-auth-app")
+				if exists {
+					isAuthPluginEnabled := authPlugin.AutoEnabled
+					if !isAuthPluginEnabled {
+						pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.SignedInUser.GetOrgID()})
+						if err == nil {
+							for _, ps := range pss {
+								if ps.PluginID == authPlugin.ID && ps.Enabled {
+									isAuthPluginEnabled = true
+									break
+								}
+							}
+						}
+					}
+
+					if isAuthPluginEnabled {
+						helpNode.Children = append(helpNode.Children, &navtree.NavLink{
+							Text:       "Support tickets",
+							Id:         "support-tickets",
+							Url:        "/api/plugins/grafana-auth-app/resources/gcom/profile/org#support",
+							Icon:       "question-circle",
+							SortWeight: navtree.WeightHelp,
+							Target:     "_self",
+						})
+					}
+				}
+			}
+		}
+
 		supportBundleAccess := ac.EvalAny(
 			ac.EvalPermission(supportbundlesimpl.ActionRead),
 			ac.EvalPermission(supportbundlesimpl.ActionCreate),
