@@ -29,6 +29,7 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		NoDataState:          models.NoDataState(a.NoDataState),          // TODO there must be a validation
 		ExecErrState:         models.ExecutionErrorState(a.ExecErrState), // TODO there must be a validation
 		For:                  time.Duration(a.For),
+		KeepFiringFor:        time.Duration(a.KeepFiringFor),
 		Annotations:          a.Annotations,
 		Labels:               a.Labels,
 		IsPaused:             a.IsPaused,
@@ -53,6 +54,7 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		RuleGroup:            rule.RuleGroup,
 		Title:                rule.Title,
 		For:                  model.Duration(rule.For),
+		KeepFiringFor:        model.Duration(rule.KeepFiringFor),
 		Condition:            rule.Condition,
 		Data:                 ApiAlertQueriesFromAlertQueries(rule.Data),
 		Updated:              rule.Updated,
@@ -206,6 +208,7 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		UID:                  rule.UID,
 		Title:                rule.Title,
 		For:                  model.Duration(rule.For),
+		KeepFiringFor:        model.Duration(rule.KeepFiringFor),
 		Condition:            cPtr,
 		Data:                 data,
 		DashboardUID:         rule.DashboardUID,
@@ -218,6 +221,9 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 	}
 	if rule.For.Seconds() > 0 {
 		result.ForString = util.Pointer(model.Duration(rule.For).String())
+	}
+	if rule.KeepFiringFor.Seconds() > 0 {
+		result.KeepFiringForString = util.Pointer(model.Duration(rule.KeepFiringFor).String())
 	}
 	if rule.Annotations != nil {
 		result.Annotations = &rule.Annotations

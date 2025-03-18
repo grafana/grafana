@@ -119,7 +119,7 @@ func PrepareAlertStatuses(manager state.AlertInstanceManager, opts AlertStatuses
 		startsAt := alertState.StartsAt
 		valString := ""
 
-		if alertState.State == eval.Alerting || alertState.State == eval.Pending {
+		if alertState.State == eval.Alerting || alertState.State == eval.Pending || alertState.State == eval.Recovering {
 			valString = FormatValues(alertState)
 		}
 
@@ -204,6 +204,8 @@ func getStatesFromQuery(v url.Values) ([]eval.State, error) {
 		// nolint:goconst
 		case "error":
 			states = append(states, eval.Error)
+		case "recovering":
+			states = append(states, eval.Recovering)
 		default:
 			return states, fmt.Errorf("unknown state '%s'", s)
 		}
@@ -499,6 +501,8 @@ func filterRules(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]s
 			state = util.Pointer(eval.Alerting)
 		case "pending":
 			state = util.Pointer(eval.Pending)
+		case "recovering":
+			state = util.Pointer(eval.Recovering)
 		}
 		if state != nil {
 			if _, ok := withStatesFast[*state]; ok {
@@ -541,11 +545,12 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 		}
 
 		alertingRule := apimodels.AlertingRule{
-			State:       "inactive",
-			Name:        rule.Title,
-			Query:       ruleToQuery(log, rule),
-			Duration:    rule.For.Seconds(),
-			Annotations: apimodels.LabelsFromMap(rule.Annotations),
+			State:         "inactive",
+			Name:          rule.Title,
+			Query:         ruleToQuery(log, rule),
+			Duration:      rule.For.Seconds(),
+			KeepFiringFor: rule.KeepFiringFor.Seconds(),
+			Annotations:   apimodels.LabelsFromMap(rule.Annotations),
 		}
 
 		newRule := apimodels.Rule{
@@ -566,7 +571,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 		for _, alertState := range states {
 			activeAt := alertState.StartsAt
 			valString := ""
-			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
+			if alertState.State == eval.Alerting || alertState.State == eval.Pending || alertState.State == eval.Recovering {
 				valString = FormatValues(alertState)
 			}
 			stateKey := strings.ToLower(alertState.State.String())
@@ -586,11 +591,18 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 				Value:    valString,
 			}
 
+			// Set the state of the rule based on the state of its alerts.
+			// Only update the rule state with 'pending' or 'recovering' if the current state is 'inactive'.
+			// This prevents overwriting a higher-severity 'firing' state in the case of a rule with multiple alerts.
 			switch alertState.State {
 			case eval.Normal:
 			case eval.Pending:
 				if alertingRule.State == "inactive" {
 					alertingRule.State = "pending"
+				}
+			case eval.Recovering:
+				if alertingRule.State == "inactive" {
+					alertingRule.State = "recovering"
 				}
 			case eval.Alerting:
 				if alertingRule.ActiveAt == nil || alertingRule.ActiveAt.After(activeAt) {

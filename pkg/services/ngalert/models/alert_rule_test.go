@@ -530,6 +530,13 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.For, diff[0].Right.Interface())
 			difCnt++
 		}
+		if rule1.KeepFiringFor != rule2.KeepFiringFor {
+			diff := diffs.GetDiffsForField("KeepFiringFor")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, rule1.KeepFiringFor, diff[0].Left.Interface())
+			assert.Equal(t, rule2.KeepFiringFor, diff[0].Right.Interface())
+			difCnt++
+		}
 		if rule1.RuleGroupIndex != rule2.RuleGroupIndex {
 			diff := diffs.GetDiffsForField("RuleGroupIndex")
 			assert.Len(t, diff, 1)
@@ -1042,6 +1049,48 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 	}
 
 	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+}
+
+func TestValidateAlertRule(t *testing.T) {
+	testCases := []struct {
+		name          string
+		keepFiringFor time.Duration
+		expectedErr   error
+	}{
+		{
+			name:          "should accept zero keep firing for",
+			keepFiringFor: 0,
+			expectedErr:   nil,
+		},
+		{
+			name:          "should accept positive keep firing for",
+			keepFiringFor: 1 * time.Minute,
+			expectedErr:   nil,
+		},
+		{
+			name:          "should reject negative keep firing for",
+			keepFiringFor: -1 * time.Minute,
+			expectedErr:   fmt.Errorf("%w: field `keep_firing_for` cannot be negative", ErrAlertRuleFailedValidation),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rule := RuleGen.With(
+				RuleGen.WithKeepFiringFor(tc.keepFiringFor),
+				RuleGen.WithIntervalSeconds(10),
+			).GenerateRef()
+
+			err := rule.ValidateAlertRule(setting.UnifiedAlertingSettings{BaseInterval: 10 * time.Second})
+
+			if tc.expectedErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Equal(t, tc.expectedErr.Error(), err.Error())
+			}
+		})
+	}
 }
 
 func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {

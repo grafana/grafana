@@ -196,6 +196,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			ExecErrState:    "test-err",
 			Record:          &models.Record{Metric: "my_metric", From: "A"},
 			For:             12,
+			KeepFiringFor:   456,
 			Annotations: map[string]string{
 				"key-annotation": "value-annotation",
 			},
@@ -242,6 +243,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			ExecErrState:    "test-err2",
 			Record:          &models.Record{Metric: "my_metric2", From: "B"},
 			For:             1141,
+			KeepFiringFor:   123,
 			Annotations: map[string]string{
 				"key-annotation2": "value-annotation",
 			},

@@ -340,6 +340,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 			gen.WithUniqueGroupIndex(), gen.WithUniqueID(),
 			gen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 			gen.WithEditorSettingsSimplifiedNotificationsSection(true),
+			gen.WithKeepFiringFor(30*time.Second),
 		).GenerateManyRef(3)
 		require.Len(t, createdRules, 3)
 		ruleStore.PutRule(context.Background(), createdRules...)
@@ -358,6 +359,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		require.Equal(t, expectedRule.UID, result.GrafanaManagedAlert.UID)
 		require.Equal(t, expectedRule.RuleGroup, result.GrafanaManagedAlert.RuleGroup)
 		require.Equal(t, expectedRule.Title, result.GrafanaManagedAlert.Title)
+		require.Equal(t, int64(expectedRule.KeepFiringFor), int64(*(result.KeepFiringFor)))
 		require.True(t, result.GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
 		require.True(t, result.GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection)
 
