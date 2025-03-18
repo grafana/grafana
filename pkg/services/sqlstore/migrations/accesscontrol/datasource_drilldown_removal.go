@@ -31,7 +31,7 @@ func (m *datasourceDrilldownRemovalMigrator) Exec(sess *xorm.Session, mg *migrat
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return err
+		mg.Logger.Error("Failed to get rows affected by the datasources:drilldown removal", "error", err)
 	}
 	mg.Logger.Info(fmt.Sprintf("Removed %d datasources:drilldown permissions", rowsAffected))
 
