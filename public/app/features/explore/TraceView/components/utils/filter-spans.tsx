@@ -201,10 +201,6 @@ const getStringValue = (value: string | number | boolean | undefined) => {
   return value ? value.toString() : '';
 };
 
-const getStringValue = (value: string | number | boolean | undefined) => {
-  return value ? value.toString() : '';
-};
-
 const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
   return spans.filter((span: TraceSpan) => {
     return searchProps.serviceNameOperator === '='
