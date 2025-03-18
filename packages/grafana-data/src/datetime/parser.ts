@@ -66,6 +66,11 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
   const zone = moment.tz.zone(timeZone);
   const format = options?.format ?? systemDateFormats.fullDate;
 
+  // Check if value is an ISO 8601 date string
+  if (moment(value, moment.ISO_8601, true).isValid()) {
+    return dateTime(value);
+  }
+
   if (zone && zone.name) {
     return dateTimeForTimeZone(zone.name, value, format);
   }
