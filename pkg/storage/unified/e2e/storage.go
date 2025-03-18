@@ -5,7 +5,21 @@ import (
 )
 
 const (
-	storageServerCmd = "grafana-server target"
+	storageINI = `
+app_mode = development
+target = storage-server
+
+[grafana-apiserver]
+storage_type = unified
+
+[database]
+type = postgres
+host = postgres:5432
+name = grafana
+user = admin
+password = admin
+ssl_mode = disable
+`
 )
 
 type StorageService struct {
@@ -13,22 +27,30 @@ type StorageService struct {
 }
 
 func NewStorageService(name string, flags, envVars map[string]string) *StorageService {
+	args := append([]string{"target"}, e2e.BuildArgs(flags)...)
 	svc := &StorageService{
 		ConcreteService: e2e.NewConcreteService(
 			name,
 			GetGrafanaImage(),
-			e2e.NewCommand(storageServerCmd,
-				e2e.BuildArgs(flags)...),
+			e2e.NewCommandWithoutEntrypoint(grafanaBinary, args...),
 			e2e.NewTCPReadinessProbe(10000),
 			10000,
 		),
 	}
 
 	svc.SetEnvVars(envVars)
+	svc.Endpoint(10000)
 
 	return svc
 }
 
-func (g *StorageService) GRPCEndpoint() string {
-	return g.NetworkEndpoint(grafanaGRPCPort)
+// TODO: remove this method when the storage-server module has a graceful shutdown
+// the following method is implemented because the storage-server module does not have a graceful shutdown
+func (s *StorageService) Stop() error {
+	s.ConcreteService.Stop()
+	return nil
+}
+
+func (s *StorageService) GRPCEndpoint() string {
+	return s.NetworkEndpoint(grafanaGRPCPort)
 }

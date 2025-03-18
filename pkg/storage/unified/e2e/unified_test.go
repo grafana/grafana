@@ -19,10 +19,12 @@ func TestUnifiedStorage(t *testing.T) {
 		postgres := s.NewPostgresService("postgres")
 		require.NoError(t, s.Scenario.StartAndWaitReady(postgres))
 
-		storage := s.NewUnifiedStorageService("storage")
+		storage, err := s.NewStorageService("storage")
+		require.NoError(t, err)
 		require.NoError(t, s.Scenario.StartAndWaitReady(storage))
 
-		grafana := s.NewGrafanaService("grafana", storage.GRPCEndpoint())
+		grafana, err := s.NewGrafanaService("grafana", storage.GRPCEndpoint())
+		require.NoError(t, err)
 		require.NoError(t, s.Scenario.StartAndWaitReady(grafana))
 
 		const org1 = 1
@@ -38,7 +40,10 @@ func TestUnifiedStorage(t *testing.T) {
 				"uid":   uid,
 				"title": "Test Dashboard 1",
 			},
-			FolderID: folderOrg1.ID,
+			FolderID:  folderOrg1.ID,
+			FolderUID: folderOrg1.UID,
+			Overwrite: false,
+			Message:   "Test Dashboard 1",
 		}
 
 		dashboardOrg1, err := gorg1.NewDashboard(dashboard)
@@ -52,6 +57,6 @@ func TestUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, folderOrg1.UID, newFolder.UID)
 
-		require.NoError(t, s.Scenario.Stop(postgres, storage, grafana))
+		require.NoError(t, s.Scenario.Stop(grafana, storage, postgres))
 	})
 }

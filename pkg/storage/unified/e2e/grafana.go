@@ -10,20 +10,25 @@ import (
 )
 
 const (
+	grafanaINI = `
+app_mode = development
+target = all
+
+[grafana-apiserver]
+address = 0.0.0.0:10000
+storage_type = unified-grpc
+
+[unified_storage.dashboards.dashboard.grafana.app]
+dualWriterMode = 5
+
+[unified_storage.folders.folder.grafana.app]
+dualWriterMode = 5
+`
 	defaultGrafanaImage = "grafana/grafana:main"
 	grafanaBinary       = "/run.sh"
 	grafanaHTTPPort     = 3000
 	grafanaGRPCPort     = 10000
 )
-
-// GetDefaultImage returns the Docker image to use to run the Grafana..
-func GetGrafanaImage() string {
-	if img := os.Getenv("GRAFANA_IMAGE"); img != "" {
-		return img
-	}
-
-	return defaultGrafanaImage
-}
 
 type GrafanaService struct {
 	*e2e.HTTPService
@@ -70,4 +75,13 @@ func NewGrafanaClient(host string, orgID int64) (*GrafanaClient, error) {
 	return &GrafanaClient{
 		Client: client,
 	}, nil
+}
+
+// GetDefaultImage returns the Docker image to use to run the Grafana..
+func GetGrafanaImage() string {
+	if img := os.Getenv("GRAFANA_IMAGE"); img != "" {
+		return img
+	}
+
+	return defaultGrafanaImage
 }
