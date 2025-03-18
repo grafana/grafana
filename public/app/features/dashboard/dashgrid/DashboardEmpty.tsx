@@ -52,6 +52,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     }
   };
 
+  const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManaged();
   return (
     <Stack alignItems="center" justifyContent="center">
       <div className={styles.wrapper}>
@@ -100,7 +101,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   fill="outline"
                   data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
                   onClick={onAddLibraryPanel}
-                  disabled={!canCreate}
+                  disabled={!canCreate || isProvisioned}
                 >
                   <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
                 </Button>
