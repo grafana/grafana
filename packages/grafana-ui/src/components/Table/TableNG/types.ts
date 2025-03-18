@@ -93,7 +93,7 @@ export interface TableSortByFieldState {
 
 export interface TableFooterCalc {
   show: boolean;
-  reducer: string[]; // actually 1 value
+  reducer?: string[]; // Make this optional
   fields?: string[];
   enablePagination?: boolean;
   countRows?: boolean;
@@ -126,6 +126,8 @@ export interface BaseTableProps {
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
   replaceVariables?: InterpolateFunction;
+  // Used solely for testing as RTL can't correctly render the table otherwise
+  enableVirtualization?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
