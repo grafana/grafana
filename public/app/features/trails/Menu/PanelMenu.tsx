@@ -11,8 +11,9 @@ import {
 } from '@grafana/scenes';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
-import { GetPluginExtensions, createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
+import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
 import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
+import { type GetPluginExtensions } from 'app/features/plugins/extensions/types';
 
 import { AddToExplorationButton, extensionPointId } from '../MetricSelect/AddToExplorationsButton';
 import { getDataSource, getTrailFor } from '../utils';

@@ -23,11 +23,9 @@ import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import {
-  createPluginExtensionsGetter,
-  type GetPluginExtensions,
-} from 'app/features/plugins/extensions/getPluginExtensions';
+import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
 import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
+import { GetPluginExtensions } from 'app/features/plugins/extensions/types';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { dispatch } from 'app/store/store';
