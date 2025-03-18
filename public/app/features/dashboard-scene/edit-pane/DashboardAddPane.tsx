@@ -80,19 +80,21 @@ export function DashboardAddPane({ editPane }: Props) {
       title: t('dashboard.edit-pane.add.paste-panel.title', 'Paste a panel from the clipboard'),
       testId: selectors.components.PageToolbar.itemButton('paste_panel'),
       onClick: () => dashboard.pastePanel(),
-    }
+    },
   ];
 
   return (
     <Box display="flex" direction="column" gap={1} padding={2}>
-      {cards.map(({ icon, heading, title, testId, onClick, hide }) => hide ? null : (
-        <Card onClick={onClick} data-testid={testId} title={title} key={title}>
-          <Card.Heading>{heading}</Card.Heading>
-          <Card.Figure className={styles.figure}>
-            <Icon name={icon} size="xl" />
-          </Card.Figure>
-        </Card>
-      ))}
+      {cards.map(({ icon, heading, title, testId, onClick, hide }) =>
+        hide ? null : (
+          <Card onClick={onClick} data-testid={testId} title={title} key={title}>
+            <Card.Heading>{heading}</Card.Heading>
+            <Card.Figure className={styles.figure}>
+              <Icon name={icon} size="xl" />
+            </Card.Figure>
+          </Card>
+        )
+      )}
     </Box>
   );
 }
