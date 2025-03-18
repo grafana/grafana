@@ -565,6 +565,7 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 func (dr *DashboardServiceImpl) waitForSearchQuery(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, maxRetries int, expectedHits int64) error {
 	return retryer.Retry(func() (retryer.RetrySignal, error) {
 		results, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
+		dr.log.Debug("waitForSearchQuery", "query", query, "total_hits", results.TotalHits, "err", err)
 		if err != nil {
 			return retryer.FuncError, err
 		}
