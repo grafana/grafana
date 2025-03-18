@@ -104,6 +104,26 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:      "recording rule with target datasource",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Rules: []PrometheusRule{
+					{
+						Record: "some_metric",
+						Expr:   "sum(rate(http_requests_total[5m]))",
+					},
+				},
+			},
+			config: Config{
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: datasources.DS_PROMETHEUS,
+			},
+			expectError: false,
+		},
+		{
 			name:      "rule group with query_offset is not supported",
 			orgID:     1,
 			namespace: "namespaceUID",
@@ -198,7 +218,12 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 					require.NotNil(t, grafanaRule.Record)
 					require.Equal(t, grafanaRule.Record.From, queryRefID)
 					require.Equal(t, promRule.Record, grafanaRule.Record.Metric)
-					require.Equal(t, tc.config.DatasourceUID, grafanaRule.Record.TargetDatasourceUID)
+
+					targetDatasourceUID := tc.config.TargetDatasourceUID
+					if targetDatasourceUID == "" {
+						targetDatasourceUID = tc.config.DatasourceUID
+					}
+					require.Equal(t, targetDatasourceUID, grafanaRule.Record.TargetDatasourceUID)
 				} else {
 					require.Equal(t, fmt.Sprintf("[%s] %s", tc.promGroup.Name, promRule.Alert), grafanaRule.Title)
 				}

@@ -381,6 +381,53 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			require.Nil(t, r.Metadata.PrometheusStyleRule)
 		}
 	})
+
+	t.Run("returns error when target datasource does not exist", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		rc.Req.Header.Set(targetDatasourceUIDHeader, "some-data-source")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusNotFound, response.Status())
+		require.Contains(t, string(response.Body()), "failed to get recording rules target datasource")
+	})
+
+	t.Run("uses target datasource for recording rules", func(t *testing.T) {
+		srv, dsCache, ruleStore, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		targetDSUID := util.GenerateShortUID()
+		ds := &datasources.DataSource{
+			UID:  targetDSUID,
+			Type: datasources.DS_PROMETHEUS,
+		}
+		dsCache.DataSources = append(dsCache.DataSources, ds)
+		rc.Req.Header.Set(targetDatasourceUIDHeader, targetDSUID)
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Record: "recorded-metric",
+					Expr:   "vector(1)",
+					Labels: map[string]string{
+						"severity": "warning",
+					},
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		remaining, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, remaining, 1)
+		require.NotNil(t, remaining[0].Record)
+		require.Equal(t, targetDSUID, remaining[0].Record.TargetDatasourceUID)
+	})
 }
 
 func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
@@ -976,7 +1023,7 @@ func withFeatureToggles(toggles featuremgmt.FeatureToggles) convertPrometheusSrv
 	}
 }
 
-func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, datasources.CacheService, *fakes.RuleStore, *foldertest.FakeService) {
+func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, *dsfakes.FakeCacheService, *fakes.RuleStore, *foldertest.FakeService) {
 	t.Helper()
 
 	// By default the quota checker will allow the operation
