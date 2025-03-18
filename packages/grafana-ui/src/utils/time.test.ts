@@ -122,7 +122,7 @@ describe('absoluteTimeRangeURL', () => {
       expect(console.error).toHaveBeenCalledWith(
         'Error in absoluteTimeRangeURL:',
         expect.objectContaining({
-          message: expect.stringContaining('Invalid URL')
+          message: expect.stringContaining('Invalid URL'),
         })
       );
     });

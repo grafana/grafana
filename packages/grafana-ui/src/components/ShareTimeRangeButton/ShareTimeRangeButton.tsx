@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useRef, useState } from 'react';
 
-import { GrafanaTheme2, rangeUtil, toUtc } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { copyText } from '../../utils/clipboard';
@@ -86,10 +86,8 @@ export function ShareTimeRangeButton({ collapsed, url: urlProp, fromParam, toPar
         </span>
       </ClipboardButton>
       <Dropdown overlay={menu} placement="bottom-start" onVisibleChange={() => setIsOpen(!isOpen)}>
-
         <Button variant="secondary" size="md" icon={isOpen ? 'angle-up' : 'angle-down'} />
       </Dropdown>
-
     </ButtonGroup>
   );
 }
