@@ -14,6 +14,7 @@ import {
 } from 'app/features/search/tempI18nPhrases';
 import { FolderDTO } from 'app/types';
 
+import { ManagerKind } from '../../apiserver/types';
 import { useNewFolderMutation } from '../api/browseDashboardsAPI';
 
 import { NewFolderForm } from './NewFolderForm';
@@ -105,7 +106,7 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
           onClose={() => setShowNewFolderDrawer(false)}
           size="sm"
         >
-          {parentFolder?.managedBy || isProvisionedInstance ? (
+          {parentFolder?.managedBy === ManagerKind.Repo || isProvisionedInstance ? (
             <NewProvisionedFolderForm
               onSubmit={() => setShowNewFolderDrawer(false)}
               onCancel={() => setShowNewFolderDrawer(false)}
