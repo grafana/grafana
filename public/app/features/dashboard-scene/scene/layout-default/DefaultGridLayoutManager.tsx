@@ -25,7 +25,7 @@ import {
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
-  getDashboardSceneFor,
+  useDashboard,
 } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -51,11 +51,12 @@ export class DefaultGridLayoutManager
       return t('dashboard.default-layout.name', 'Custom');
     },
     get description() {
-      return t('dashboard.default-layout.description', 'Manually size and position panels');
+      return t('dashboard.default-layout.description', 'Position and size each panel individually');
     },
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
     kind: 'GridLayout',
+    isGridLayout: true,
   };
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
@@ -442,7 +443,7 @@ export class DefaultGridLayoutManager
 
 function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<DefaultGridLayoutManager>) {
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
-  const dashboard = getDashboardSceneFor(model);
+  const dashboard = useDashboard(model);
 
   // If we are top level layout and have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {

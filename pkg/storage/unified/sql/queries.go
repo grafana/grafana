@@ -44,6 +44,7 @@ var (
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
 	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
 	sqlResourceHistoryDelete     = mustTemplate("resource_history_delete.sql")
+	sqlResourceHistoryPrune      = mustTemplate("resource_history_prune.sql")
 	sqlResourceInsertFromHistory = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
@@ -252,6 +253,32 @@ func (r sqlGetHistoryRequest) Validate() error {
 	return nil // TODO
 }
 
+// prune resource history
+type sqlPruneHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	Key          *resource.ResourceKey
+	HistoryLimit int64
+}
+
+func (r *sqlPruneHistoryRequest) Validate() error {
+	if r.HistoryLimit <= 0 {
+		return fmt.Errorf("history limit must be greater than zero")
+	}
+	if r.Key == nil {
+		return fmt.Errorf("missing key")
+	}
+	if r.Key.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Key.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Key.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	return nil
+}
+
 // update resource history
 
 type sqlResourceHistoryUpdateRequest struct {
@@ -295,8 +322,7 @@ func (r sqlResourceBlobQueryRequest) Validate() error {
 
 type sqlResourceUpdateRVRequest struct {
 	sqltemplate.SQLTemplate
-	GUID            string
-	ResourceVersion int64
+	GUIDToRV map[string]int64
 }
 
 func (r sqlResourceUpdateRVRequest) Validate() error {
