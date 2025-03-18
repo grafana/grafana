@@ -79,14 +79,12 @@ export const browseDashboardsAPI = createApi({
         url: '/folders',
         params: { parentUid, limit, page, permission },
       }),
-      // transformResponse: addRepositoryData,
     }),
 
     // get folder info (e.g. title, parents) but *not* children
     getFolder: builder.query<FolderDTO, string>({
       providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
       query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
-      // transformResponse: addRepositoryData,
     }),
 
     // create a new folder
@@ -446,47 +444,3 @@ export const {
 } = browseDashboardsAPI;
 
 export { skipToken } from '@reduxjs/toolkit/query/react';
-
-// export type FolderDataType = FolderListItemDTO | NestedFolderDTO | FolderDTO;
-//
-// // Overloaded function signatures to handle different input types
-// export async function addRepositoryData(data: FolderListItemDTO[]): Promise<FolderListItemDTO[]>;
-// export async function addRepositoryData(data: NestedFolderDTO[]): Promise<NestedFolderDTO[]>;
-// export async function addRepositoryData(data: NestedFolderDTO): Promise<NestedFolderDTO>;
-// export async function addRepositoryData(data: FolderDTO): Promise<FolderDTO>;
-// export async function addRepositoryData(
-//   data: FolderDataType | FolderDataType[]
-// ): Promise<FolderDataType | FolderDataType[]> {
-//   if (!config.featureToggles.provisioning) {
-//     return data;
-//   }
-//
-//   const settings: RepositoryViewList = await dispatch(
-//     provisioningAPI.endpoints.getFrontendSettings.initiate()
-//   ).unwrap();
-//
-//   if (!settings.items.length) {
-//     return data;
-//   }
-//
-//   const addRepositoryToItem = (item: FolderDataType) => {
-//     const instanceConfig = settings.items.find((repo) => repo.target === 'instance');
-//
-//     if (instanceConfig) {
-//       return { ...item, repository: instanceConfig };
-//     }
-//     const repository = settings.items.find((repo) => {
-//       if (typeof item.repository === 'string') {
-//         return repo.name === item.repository;
-//       }
-//       return repo.name === item.uid;
-//     });
-//     return repository ? { ...item, repository } : item;
-//   };
-//
-//   if (Array.isArray(data)) {
-//     return data.map(addRepositoryToItem);
-//   }
-//
-//   return addRepositoryToItem(data);
-// }
