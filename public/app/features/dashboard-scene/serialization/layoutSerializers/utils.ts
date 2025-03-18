@@ -180,7 +180,7 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   let datasource: DataSourceRef | undefined = undefined;
   let isMixedDatasource = false;
 
-  panel.spec.data.spec.queries.forEach(async (query) => {
+  panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
       if (!query.spec.datasource?.uid) {
         const defaultDatasource = config.bootData.settings.defaultDatasource;
