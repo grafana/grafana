@@ -153,4 +153,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddAlertRuleMissingSeriesEvalsToResolve(mg)
 
 	ualert.AddAlertRuleVersionUIDIndex(mg)
+
+	accesscontrol.AddDatasourceDrilldownRemovalMigration(mg)
 }
