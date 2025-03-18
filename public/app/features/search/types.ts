@@ -1,7 +1,8 @@
 import { Action } from 'redux';
 
 import { WithAccessControlMetadata } from '@grafana/data';
-import { RepositoryView } from 'app/api/clients/provisioning';
+
+import { ManagerKind } from '../apiserver/types';
 
 import { QueryResponse } from './service/types';
 
@@ -81,7 +82,7 @@ export interface DashboardViewItem {
   // For enterprise sort options
   sortMeta?: number | string; // value sorted by
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
-  repository?: RepositoryView;
+  managedBy?: ManagerKind;
 }
 
 export interface SearchAction extends Action {

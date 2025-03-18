@@ -153,7 +153,7 @@ export function useFoldersQuery(
               kind: 'folder' as const,
               title: item.title,
               uid: item.uid,
-              repository: item.repository,
+              managedBy: item.managedBy,
             },
           };
 

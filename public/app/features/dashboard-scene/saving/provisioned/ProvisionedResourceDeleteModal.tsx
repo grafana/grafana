@@ -1,8 +1,11 @@
 import { Button, Modal } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { FolderDataType } from '../../../browse-dashboards/api/browseDashboardsAPI';
+import { FolderDTO, FolderListItemDTO } from '../../../../types';
+import { NestedFolderDTO } from '../../../search/service/types';
 import { DashboardScene } from '../../scene/DashboardScene';
+
+type FolderDataType = FolderListItemDTO | NestedFolderDTO | FolderDTO;
 
 export interface Props {
   onDismiss: () => void;
@@ -49,8 +52,4 @@ export function ProvisionedResourceDeleteModal({ onDismiss, resource }: Props) {
 
 function isDashboard(resource: DashboardScene | FolderDataType): resource is DashboardScene {
   return resource instanceof DashboardScene;
-}
-
-export function isFolder(resource: DashboardScene | FolderDataType): resource is FolderDataType {
-  return !isDashboard(resource);
 }

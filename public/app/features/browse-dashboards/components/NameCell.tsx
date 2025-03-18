@@ -104,7 +104,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
           )}
         </Text>
 
-        <FolderRepo repo={item.repository} />
+        <FolderRepo folder={item} />
       </div>
     </>
   );

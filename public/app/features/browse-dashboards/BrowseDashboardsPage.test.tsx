@@ -23,10 +23,6 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     unifiedAlertingEnabled: true,
-    featureToggles: {
-      ...jest.requireActual('@grafana/runtime').config.featureToggles,
-      provisioning: false,
-    },
   },
 }));
 

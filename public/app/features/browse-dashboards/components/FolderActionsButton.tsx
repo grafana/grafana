@@ -5,10 +5,11 @@ import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
+import { ProvisionedResourceDeleteModal } from 'app/features/dashboard-scene/saving/provisioned/ProvisionedResourceDeleteModal';
 import { FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { ProvisionedResourceDeleteModal } from '../../dashboard-scene/saving/provisioned/ProvisionedResourceDeleteModal';
+import { ManagerKind } from '../../apiserver/types';
 import { useDeleteFolderMutation, useMoveFolderMutation } from '../api/browseDashboardsAPI';
 import { getFolderPermissions } from '../permissions';
 
@@ -25,8 +26,9 @@ export function FolderActionsButton({ folder }: Props) {
   const [moveFolder] = useMoveFolderMutation();
   const [deleteFolder] = useDeleteFolderMutation();
   const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
-  // Can only move folders when nestedFolders is enabled
-  const canMoveFolder = config.featureToggles.nestedFolders && canEditFolders && !folder.repository;
+  const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
+  // Can only move folders when nestedFolders is enabled and the folder is not provisioned
+  const canMoveFolder = config.featureToggles.nestedFolders && canEditFolders && !isProvisionedFolder;
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folder, destinationUID });
@@ -109,7 +111,7 @@ export function FolderActionsButton({ folder }: Props) {
       {canDeleteFolders && (
         <MenuItem
           destructive
-          onClick={folder.repository ? showDeleteProvisionedModal : showDeleteModal}
+          onClick={isProvisionedFolder ? showDeleteProvisionedModal : showDeleteModal}
           label={deleteLabel}
         />
       )}
