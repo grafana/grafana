@@ -3,6 +3,7 @@ package e2e
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/grafana/e2e"
@@ -113,7 +114,7 @@ func (s *UnifiedScenario) NewPostgresService(name string) *PostgresService {
 
 func (s *UnifiedScenario) loadCfg(svc, content string) error {
 	dst := fmt.Sprintf("%s/%s.ini", s.SharedDir(), svc)
-	destination, err := os.Create(dst)
+	destination, err := os.Create(filepath.Clean(dst))
 	if err != nil {
 		return err
 	}

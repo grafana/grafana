@@ -44,10 +44,11 @@ func NewStorageService(name string, flags, envVars map[string]string) *StorageSe
 	return svc
 }
 
-// TODO: remove this method when the storage-server module has a graceful shutdown
-// the following method is implemented because the storage-server module does not have a graceful shutdown
+// TODO: remove this method when the storage-server module has a graceful shutdown on docker stop
+// the following method is implemented because the storage-server module is not shutting down gracefully
+// https://github.com/grafana/search-and-storage-team/issues/228
 func (s *StorageService) Stop() error {
-	s.ConcreteService.Stop()
+	_ = s.ConcreteService.Stop()
 	return nil
 }
 
