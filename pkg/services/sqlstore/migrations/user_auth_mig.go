@@ -48,6 +48,6 @@ func addUserAuthMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Add user_unique_id to user_auth", NewAddColumnMigration(userAuthV1, &Column{
-		Name: "external_u_i_d", Type: DB_Text, Nullable: true,
+		Name: "external_uid", Type: DB_Text, Nullable: true,
 	}))
 }

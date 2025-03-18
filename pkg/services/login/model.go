@@ -23,7 +23,7 @@ type UserAuth struct {
 	OAuthIdToken      string
 	OAuthTokenType    string
 	OAuthExpiry       time.Time
-	ExternalUID       string
+	ExternalUID       string `xorm:"external_uid"`
 }
 
 type ExternalUserInfo struct {
