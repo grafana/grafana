@@ -7,7 +7,12 @@ import {
 } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
-import { ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
+import {
+  NewObjectAddedToCanvasEvent,
+  ObjectRemovedFromCanvasEvent,
+  ObjectsReorderedOnCanvasEvent,
+} from '../../edit-pane/shared';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -29,11 +34,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       return t('dashboard.tabs-layout.name', 'Tabs');
     },
     get description() {
-      return t('dashboard.tabs-layout.description', 'Tabs layout');
+      return t('dashboard.tabs-layout.description', 'Organize panels into horizontal tabs');
     },
     id: 'tabs-layout',
     createFromLayout: TabsLayoutManager.createFromLayout,
     kind: 'TabsLayout',
+    isGridLayout: false,
   };
 
   public readonly descriptor = TabsLayoutManager.descriptor;
@@ -132,6 +138,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab), 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
   }
 
   public addTabAfter(tab: TabItem) {
@@ -139,6 +146,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
   }
 
   public moveTabLeft(tab: TabItem) {
@@ -150,6 +158,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     tabs.splice(currentIndex, 1);
     tabs.splice(currentIndex - 1, 0, tab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex - 1 });
+    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
   public moveTabRight(tab: TabItem) {
@@ -161,6 +170,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     tabs.splice(currentIndex, 1);
     tabs.splice(currentIndex + 1, 0, tab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
+    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
   public isFirstTab(tab: TabItem): boolean {
@@ -177,7 +187,14 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
-    const tab = new TabItem({ layout: layout.clone() });
-    return new TabsLayoutManager({ tabs: [tab] });
+    let tabs: TabItem[] = [];
+
+    if (layout instanceof RowsLayoutManager) {
+      tabs = layout.state.rows.map((row) => new TabItem({ layout: row.state.layout.clone(), title: row.state.title }));
+    } else {
+      tabs.push(new TabItem({ layout: layout.clone() }));
+    }
+
+    return new TabsLayoutManager({ tabs });
   }
 }
