@@ -68,9 +68,15 @@ export function SaveProvisionedDashboardForm({
     watch,
     formState: { errors },
     control,
+    reset,
   } = useForm<FormData>({ defaultValues });
 
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
+
+  // Update the form if default values change
+  useEffect(() => {
+    reset(defaultValues);
+  }, [defaultValues, reset]);
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -201,7 +207,7 @@ export function SaveProvisionedDashboardForm({
                       onChange={async (uid?: string, title?: string) => {
                         onChange({ uid, title });
                         // Update folderUid URL param
-                        updateURLParams('folderUid', uid ?? '');
+                        updateURLParams('folderUid', uid);
                         const meta = await getProvisionedMeta(uid);
                         dashboard.setState({
                           meta: {
@@ -339,7 +345,10 @@ async function validateTitle(title: string, formValues: FormData) {
 }
 
 // Update the URL params without reloading the page
-function updateURLParams(param: string, value: string) {
+function updateURLParams(param: string, value?: string) {
+  if (!value) {
+    return;
+  }
   const url = new URL(window.location.href);
   url.searchParams.set(param, value);
   window.history.replaceState({}, '', url);
