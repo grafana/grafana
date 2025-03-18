@@ -7,7 +7,11 @@ import {
 } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
-import { ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
+import {
+  NewObjectAddedToCanvasEvent,
+  ObjectRemovedFromCanvasEvent,
+  ObjectsReorderedOnCanvasEvent,
+} from '../../edit-pane/shared';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -134,6 +138,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab), 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
   }
 
   public addTabAfter(tab: TabItem) {
@@ -141,6 +146,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
   }
 
   public moveTabLeft(tab: TabItem) {
@@ -152,6 +158,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     tabs.splice(currentIndex, 1);
     tabs.splice(currentIndex - 1, 0, tab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex - 1 });
+    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
   public moveTabRight(tab: TabItem) {
@@ -163,6 +170,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     tabs.splice(currentIndex, 1);
     tabs.splice(currentIndex + 1, 0, tab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
+    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
   public isFirstTab(tab: TabItem): boolean {

@@ -48,12 +48,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T> {
   getPanelIdForElement: (elementId: string) => number | undefined;
   getElementIdForPanel: (panelId: number) => string | undefined;
   getElementPanelMapping: () => Map<string, number>;
-  getDefaultDsReferencesForElement: (elementId: string) => ElementDsReferences | undefined;
-}
-
-interface ElementDsReferences {
-  queries: { [refId: string]: boolean };
-  variables: { [name: string]: boolean };
+  getDSReferencesMapping: () => DSReferencesMapping;
 }
 
 interface DashboardTrackingInfo {
@@ -63,6 +58,12 @@ interface DashboardTrackingInfo {
   panels_count: number;
   settings_nowdelay?: number;
   settings_livenow?: boolean;
+}
+
+interface DSReferencesMapping {
+  panels: Map<string, Set<{ refId: string }>>;
+  variables: Set<{ variableName: string }>;
+  annotations: Set<{ annotationName: string }>;
 }
 
 export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard, DashboardMeta> {
@@ -193,7 +194,11 @@ export class V2DashboardSerializer
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
   protected elementPanelMap = new Map<string, number>();
   // map of elementId that will contain all the queries, variables and annotations that dont have a ds defined
-  protected defaultDsReferencesMap = new Map<string, ElementDsReferences>();
+  protected defaultDsReferencesMap = {
+    panels: new Map<string, Set<{ refId: string }>>(),
+    variables: new Set<{ variableName: string }>(),
+    annotations: new Set<{ annotationName: string }>(),
+  };
 
   getElementPanelMapping() {
     return this.elementPanelMap;
@@ -216,7 +221,12 @@ export class V2DashboardSerializer
   }
 
   initializeDSReferencesMapping(saveModel: DashboardV2Spec | undefined) {
-    this.defaultDsReferencesMap.clear();
+    // initialize the object
+    this.defaultDsReferencesMap = {
+      panels: new Map<string, Set<{ refId: string }>>(),
+      variables: new Set<{ variableName: string }>(),
+      annotations: new Set<{ annotationName: string }>(),
+    };
 
     // get all the element keys
     const elementKeys = Object.keys(saveModel?.elements || {});
@@ -229,18 +239,13 @@ export class V2DashboardSerializer
         for (const query of panelQueries) {
           if (!query.spec.datasource) {
             const elementId = this.getElementIdForPanel(elementPanel.spec.id);
-            if (!this.defaultDsReferencesMap.has(elementId)) {
-              this.defaultDsReferencesMap.set(elementId, {
-                queries: {},
-                variables: {},
-              });
+            if (!this.defaultDsReferencesMap.panels.has(elementId)) {
+              this.defaultDsReferencesMap.panels.set(elementId, new Set());
             }
 
-            const elementRef = this.defaultDsReferencesMap.get(elementId)!;
+            const panelDsqueries = this.defaultDsReferencesMap.panels.get(elementId)!;
 
-            elementRef.queries[query.spec.refId] = true;
-
-            this.defaultDsReferencesMap.set(elementId, elementRef);
+            panelDsqueries.add({ refId: query.spec.refId });
           }
         }
       }
@@ -248,8 +253,8 @@ export class V2DashboardSerializer
     console.log('resolver map ds', this.defaultDsReferencesMap);
   }
 
-  getDefaultDsReferencesForElement(elementId: string) {
-    return this.defaultDsReferencesMap.get(elementId);
+  getDSReferencesMapping() {
+    return this.defaultDsReferencesMap;
   }
 
   getPanelIdForElement(elementId: string) {
