@@ -240,7 +240,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:          hs.Cfg.PublicDashboardsEnabled,
 		CloudMigrationIsTarget:           isCloudMigrationTarget,
-		CloudMigrationFeedbackURL:        hs.Cfg.CloudMigration.FeedbackURL,
 		CloudMigrationPollIntervalMs:     int(hs.Cfg.CloudMigration.FrontendPollInterval.Milliseconds()),
 		SharedWithMeFolderUID:            folder.SharedWithMeFolderUID,
 		RootFolderUID:                    accesscontrol.GeneralFolderUID,
