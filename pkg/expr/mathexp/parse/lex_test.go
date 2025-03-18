@@ -7,6 +7,7 @@ package parse
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 // Make the types prettyprint.
@@ -165,5 +166,59 @@ func TestLex(t *testing.T) {
 		if !equal(items, test.items, false) {
 			t.Errorf("%s: got\n\t%+v\nexpected\n\t%v", test.name, items, test.items)
 		}
+	}
+}
+
+// TestShutdown verifies that lexer goroutines are properly terminated
+func TestShutdown(t *testing.T) {
+	// Create a lexer with some input
+	lexer := lex("1 + 2")
+
+	// Read a couple of items to verify it's working
+	item1 := lexer.nextItem()
+	if item1.typ != itemNumber || item1.val != "1" {
+		t.Errorf("unexpected first item: %v", item1)
+	}
+
+	// Now close the lexer
+	lexer.Close()
+
+	// Try to read more items - we should get EOF or the channel should be closed
+	// We need to do this in a goroutine with a timeout to avoid blocking forever
+	done := make(chan bool)
+	go func() {
+		for {
+			item, ok := <-lexer.items
+			if !ok || item.typ == itemEOF {
+				done <- true
+				return
+			}
+		}
+	}()
+
+	// Wait for either completion or timeout
+	select {
+	case <-done:
+		// Success - lexer properly shut down
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("lexer goroutine did not shut down within timeout")
+	}
+}
+
+// TestParseErrorShutdown verifies that lexer goroutines are properly terminated when Parse encounters an error
+func TestParseErrorShutdown(t *testing.T) {
+	// Create a tree and try to parse an invalid expression that will cause an error
+	tree := New()
+	input := "invalid expression with $"
+	err := tree.Parse(input)
+
+	// Verify that Parse returned an error
+	if err == nil {
+		t.Fatal("expected error but got nil")
+	}
+
+	// Verify that lex was set to nil, indicating cleanup occurred
+	if tree.lex != nil {
+		t.Fatal("tree.lex was not set to nil after error, indicating possible goroutine leak")
 	}
 }
