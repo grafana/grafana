@@ -166,7 +166,7 @@ func (b *watcher) run(ctx context.Context) {
 		select {
 		// This is sent when there are no longer any subscriptions
 		case <-ctx.Done():
-			logger.Info("context done", b.channel)
+			logger.Info("context done", "channel", b.channel)
 			b.watch.Stop()
 			b.done = true
 			return
@@ -174,18 +174,25 @@ func (b *watcher) run(ctx context.Context) {
 		// Each watch event
 		case event, ok := <-ch:
 			if !ok {
-				continue
+				logger.Info("watch stream broken", "channel", b.channel)
+				b.watch.Stop()
+				b.done = true // will force reconnect from the frontend
+				return
 			}
 
 			jj, err := json.Marshal(event)
 			if err != nil {
-				logger.Error("unable to marshal event", "err", err)
+				logger.Error("unable to marshal event", "channel", b.channel, "err", err)
+				b.watch.Stop()
+				b.done = true // will force reconnect from the frontend
 				continue
 			}
 
 			err = b.publisher(b.orgId, b.channel, jj)
 			if err != nil {
-				logger.Error("publish error", "err", err)
+				logger.Error("publish error", "channel", b.channel, "err", err)
+				b.watch.Stop()
+				b.done = true // will force reconnect from the frontend
 				continue
 			}
 		}
