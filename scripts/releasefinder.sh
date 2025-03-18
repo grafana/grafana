@@ -8,6 +8,10 @@
 # 4. The first release that included the commit
 #
 # Usage: ./scripts/releasefinder.sh <commit-hash>
+# The commit hash can be either:
+# - Full hash (e.g., 1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t)
+# - Short hash (e.g., 1a2b3c4d)
+#
 # Example: ./scripts/releasefinder.sh a1b2c3d4e5f6
 #
 # If you get a "Permission denied" error, make the script executable with:
@@ -24,6 +28,9 @@ fi
 # Check if a commit hash was provided
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <commit-hash>"
+    echo "The commit hash can be either:"
+    echo "  - Full hash (e.g., 1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t)"
+    echo "  - Short hash (e.g., 1a2b3c4d)"
     echo "Example: $0 a1b2c3d4e5f6"
     exit 1
 fi
@@ -33,6 +40,7 @@ COMMIT_HASH=$1
 # Validate that the commit exists
 if ! git cat-file -t "$COMMIT_HASH" >/dev/null 2>&1; then
     echo "Error: Commit $COMMIT_HASH not found in repository"
+    echo "Make sure you've provided a valid commit hash (full or short)"
     exit 1
 fi
 
