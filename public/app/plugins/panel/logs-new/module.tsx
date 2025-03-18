@@ -20,6 +20,12 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         defaultValue: false,
       })
       .addBooleanSwitch({
+        path: 'syntaxHighlighting',
+        name: 'Enable syntax highlighting',
+        description: 'Use a predefined syntax coloring grammar to highlight relevant parts of the log lines',
+        defaultValue: true,
+      })
+      .addBooleanSwitch({
         path: 'enableLogDetails',
         name: 'Enable log details',
         description: '',
