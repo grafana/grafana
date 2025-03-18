@@ -182,8 +182,14 @@ func (l *lexer) Close() {
 
 // run runs the state machine for the lexer.
 func (l *lexer) run() {
+	defer close(l.items)
 	for l.state = lexItem; l.state != nil; {
-		l.state = l.state(l)
+		select {
+		case <-l.done:
+			return
+		default:
+			l.state = l.state(l)
+		}
 	}
 }
 

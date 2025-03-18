@@ -6,6 +6,7 @@ package parse
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -171,6 +172,9 @@ func TestLex(t *testing.T) {
 
 // TestShutdown verifies that lexer goroutines are properly terminated
 func TestShutdown(t *testing.T) {
+	// Count goroutines before creating lexer
+	beforeCount := runtime.NumGoroutine()
+
 	// Create a lexer with some input
 	lexer := lex("1 + 2")
 
@@ -183,13 +187,14 @@ func TestShutdown(t *testing.T) {
 	// Now close the lexer
 	lexer.Close()
 
-	// Try to read more items - we should get EOF or the channel should be closed
-	// We need to do this in a goroutine with a timeout to avoid blocking forever
+	// Try to read more items - the channel should eventually close
+	// We need to read in a goroutine with a timeout to avoid blocking forever
 	done := make(chan bool)
 	go func() {
 		for {
-			item, ok := <-lexer.items
-			if !ok || item.typ == itemEOF {
+			_, ok := <-lexer.items
+			if !ok {
+				// Channel closed, which is what we want
 				done <- true
 				return
 			}
@@ -202,6 +207,16 @@ func TestShutdown(t *testing.T) {
 		// Success - lexer properly shut down
 	case <-time.After(100 * time.Millisecond):
 		t.Fatal("lexer goroutine did not shut down within timeout")
+	}
+
+	// Allow a bit of time for the goroutine to exit
+	time.Sleep(10 * time.Millisecond)
+
+	// Check that goroutine count returns to what it was before
+	afterCount := runtime.NumGoroutine()
+	if afterCount > beforeCount {
+		t.Fatalf("Goroutine leak detected: %d goroutines before, %d after",
+			beforeCount, afterCount)
 	}
 }
 
@@ -220,5 +235,32 @@ func TestParseErrorShutdown(t *testing.T) {
 	// Verify that lex was set to nil, indicating cleanup occurred
 	if tree.lex != nil {
 		t.Fatal("tree.lex was not set to nil after error, indicating possible goroutine leak")
+	}
+}
+
+// TestGoroutineLeak verifies that lexer goroutines are properly cleaned up when Parse encounters an error
+func TestGoroutineLeak(t *testing.T) {
+	// Get the initial number of goroutines
+	initialGoroutines := runtime.NumGoroutine()
+
+	// Create several trees and parse invalid expressions to trigger errors
+	for i := 0; i < 50; i++ {
+		tree := New()
+		input := "invalid expression with $"
+		_ = tree.Parse(input) // Error expected, ignoring
+	}
+
+	// Allow some time for goroutines to clean up if they're going to
+	time.Sleep(100 * time.Millisecond)
+
+	// Get the final number of goroutines
+	finalGoroutines := runtime.NumGoroutine()
+
+	// Check if we've leaked goroutines - add a buffer of 5 to avoid flakiness
+	// If no leak, finalGoroutines should be very close to initialGoroutines
+	// If leaking, we expect finalGoroutines to be much higher (50+ more)
+	if finalGoroutines > initialGoroutines+10 {
+		t.Fatalf("Likely goroutine leak detected: started with %d goroutines, ended with %d (difference of %d)",
+			initialGoroutines, finalGoroutines, finalGoroutines-initialGoroutines)
 	}
 }
