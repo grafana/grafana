@@ -193,6 +193,18 @@ func TestQueryFramesDateTimeSelect(t *testing.T) {
 	}
 }
 
+func TestErrorsFromGoMySQLServerAreFlagged(t *testing.T) {
+	const GmsNotImplemented = "STDDEV" // not implemented in go-mysql-server as of 2025-03-18
+
+	db := DB{}
+
+	query := `SELECT ` + GmsNotImplemented + `(1);`
+
+	_, err := db.QueryFrames(context.Background(), "sqlExpressionRefId", query, nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "error in go-mysql-server")
+}
+
 // p is a utility for pointers from constants
 func p[T any](v T) *T {
 	return &v
