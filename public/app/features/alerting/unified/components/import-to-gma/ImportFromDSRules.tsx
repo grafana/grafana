@@ -51,37 +51,32 @@ const ImportFromDSRules = () => {
   const styles = useStyles2(getStyles);
 
   const targetFolder = watch('targetFolder');
-  const [convert, convertState] = convertToGMAApi.useConvertToGMAMutation();
+  const [convert] = convertToGMAApi.useConvertToGMAMutation();
   const selectedDatasourceName = watch('selectedDatasourceName');
 
   const onSubmit = async (data: ImportFormValues) => {
-    console.log(data);
-    // await response calling api to import rules ..if we get an error show and not redirect
-    // if success show success message and redirect to alerting page /list
-    convert({
-      datasourceUID: data.selectedDatasourceUID,
-      targetFolderUID: data.targetFolder!.uid,
-      pauseRecordingRules: data.pauseRecordingRules,
-      pauseAlerts: data.pauseAlertingRules,
-      ...(data.namespace ? { namespace: data.namespace } : {}),
-      ...(data.ruleGroup ? { group: data.ruleGroup } : {}),
-    })
-      .unwrap()
-      .then(() => {
-        const ruleListUrl = createListFilterLink([['namespace', data.targetFolder?.title ?? '']]);
-        locationService.push(ruleListUrl);
-      });
+    try {
+      await convert({
+        datasourceUID: data.selectedDatasourceUID,
+        targetFolderUID: data.targetFolder!.uid,
+        pauseRecordingRules: data.pauseRecordingRules,
+        pauseAlerts: data.pauseAlertingRules,
+        ...(data.namespace ? { namespace: data.namespace } : {}),
+        ...(data.ruleGroup ? { group: data.ruleGroup } : {}),
+      }).unwrap();
+
+      const ruleListUrl = createListFilterLink([['namespace', data.targetFolder?.title ?? '']]);
+      locationService.push(ruleListUrl);
+    } catch (error) {
+      notifyApp.error(
+        t('alerting.import-to-gma.error', 'Failed to export alert rules: {{error}}', {
+          error: stringifyErrorLike(error),
+        })
+      );
+    }
   };
 
   const notifyApp = useAppNotification();
-
-  if (convertState.error) {
-    notifyApp.error(
-      t('alerting.import-to-gma.error', 'Failed to export alert rules: {{error}}', {
-        error: stringifyErrorLike(convertState.error),
-      })
-    );
-  }
 
   return (
     <AlertingPageWrapper
