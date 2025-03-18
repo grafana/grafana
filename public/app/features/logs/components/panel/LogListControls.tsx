@@ -154,7 +154,7 @@ export const LogListControls = ({ app, eventBus }: Props) => {
         tooltip={t('logs.logs-controls.scroll-bottom', 'Scroll to bottom')}
         size="md"
       />
-      {!inDashboard && (
+      {!inDashboard ? (
         <>
           <IconButton
             name={sortOrder === LogsSortOrder.Descending ? 'sort-amount-up' : 'sort-amount-down'}
@@ -220,6 +220,15 @@ export const LogListControls = ({ app, eventBus }: Props) => {
             size="md"
           />
         </>
+      ) : (
+        <Dropdown overlay={filterLevelsMenu} placement="auto-end">
+          <IconButton
+            name={'gf-logs'}
+            className={filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton}
+            tooltip={t('logs.logs-controls.display-level', 'Display levels')}
+            size="md"
+          />
+        </Dropdown>
       )}
       <IconButton
         name="arrow-up"

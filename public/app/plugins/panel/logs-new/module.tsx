@@ -33,8 +33,8 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       })
       .addBooleanSwitch({
         path: 'showControls',
-        name: 'Show scroll buttons',
-        description: 'Display controls to jump to the last or first log line',
+        name: 'Show controls',
+        description: 'Display controls to jump to the last or first log line, and filters by log level',
         defaultValue: false,
       })
       .addBooleanSwitch({
