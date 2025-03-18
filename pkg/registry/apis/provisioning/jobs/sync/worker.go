@@ -140,7 +140,7 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.Reader, prog
 		return nil, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
 	}
 
-	folderClient, err := parser.Clients().Dashboard()
+	folderClient, err := parser.Clients().Folder()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get folder client: %w", err)
 	}
