@@ -1,0 +1,14 @@
+name: Start Grafana server
+description: Starts a Grafana server for use with e2e tests
+
+inputs:
+  package:
+    description: A Grafana tar.gz package
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        tar -xvf ${{ inputs.package }} -c /tmp/grafana

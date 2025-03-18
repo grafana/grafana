@@ -1,0 +1,26 @@
+name: suites / various
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        type: string
+        required: true
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact
+        with:
+          name: ${{ inputs.package }}
+      - uses: ./.github/workflows/actions/start-grafana-server
+        with:
+          package: ${{ inputs.package }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+          cache-dependency-path: 'yarn.lock'
+      - run: ./e2e/run-suite various-suite

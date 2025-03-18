@@ -1,0 +1,31 @@
+name: e2e
+
+on:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+    pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-grafana:
+    name: Build & Package Grafana
+    runs-on: ubuntu-latest-16-cores
+    steps:
+      - run: touch grafana.tar.gz
+      - run: actions/upload-artifact
+        with:
+          name: grafana-${{ github.workflow }}-${{ github.ref }}
+          path: grafana.tar.gz
+  misc-suite:
+    name: Miscellaneous e2e suites
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cypress-io/github-action@v6
+        with:
+          component: true
