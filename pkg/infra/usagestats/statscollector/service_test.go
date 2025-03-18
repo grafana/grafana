@@ -387,7 +387,6 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 		o.datasources,
 		httpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{}}),
 		sandbox.ProvideService(cfg),
-		nil, // skip search in tests
 	)
 }
 
