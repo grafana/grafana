@@ -113,7 +113,7 @@ type ExportJobOptions struct {
 
 type MigrateJobOptions struct {
 	// Target file prefix
-	// TODO: rename to path
+	// TODO: remove as we know have path in the repository
 	Prefix string `json:"prefix,omitempty"`
 
 	// Preserve history (if possible)
