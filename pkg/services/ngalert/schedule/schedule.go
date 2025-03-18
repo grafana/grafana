@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"slices"
-	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -390,21 +388,9 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.log.Warn("Unable to obtain folder titles for some rules", "missingFolderUIDToRuleUID", missingFolder)
 	}
 
-	var step int64 = 0
-	if len(readyToRun) > 0 {
-		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
-	}
+	sequences := sch.buildSequences(readyToRun, sch.runJobFn)
 
-	readyToRun = sch.buildSequences(readyToRun)
-
-	slices.SortFunc(readyToRun, func(a, b readyToRunItem) int {
-		return strings.Compare(a.rule.UID, b.rule.UID)
-	})
-	for i := range readyToRun {
-		item := readyToRun[i]
-
-		time.AfterFunc(time.Duration(int64(i)*step), sch.runJobFn(item))
-	}
+	sch.runSequences(sequences, int64(len(readyToRun)))
 
 	// Stop old routines for rules that got restarted.
 	for _, oldRoutine := range restartedRules {
@@ -417,21 +403,42 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		toDelete = append(toDelete, key)
 	}
 	sch.deleteAlertRule(ctx, toDelete...)
+
 	return readyToRun, registeredDefinitions, updatedRules
 }
 
-func (sch *schedule) runJobFn(item readyToRunItem) func() {
+func (sch *schedule) runJobFn(next readyToRunItem, prev ...readyToRunItem) func() {
 	return func() {
-		key := item.rule.GetKey()
-		success, dropped := item.ruleRoutine.Eval(&item.Evaluation)
+		if len(prev) > 0 {
+			sch.log.Debug("Rule evaluation triggered by previous rule", append(next.rule.GetKey().LogContext(), "previousRule", prev[0].rule.UID)...)
+		}
+		key := next.rule.GetKey()
+		success, dropped := next.ruleRoutine.Eval(&next.Evaluation)
 		if !success {
-			sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", item.scheduledAt)...)
+			sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", next.scheduledAt)...)
 			return
 		}
 		if dropped != nil {
-			sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", item.scheduledAt, "droppedTick", dropped.scheduledAt)...)
+			sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", next.scheduledAt, "droppedTick", dropped.scheduledAt)...)
 			orgID := fmt.Sprint(key.OrgID)
-			sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
+			sch.metrics.EvaluationMissed.WithLabelValues(orgID, next.rule.Title).Inc()
 		}
+	}
+}
+
+func (sch *schedule) runSequences(sequences []sequence, numItems int64) {
+	// jitter the start time based on the base interval and total scheduled items
+	if len(sequences) == 0 {
+		return // Nothing to do
+	}
+
+	var step int64
+	if numItems > 0 {
+		step = sch.baseInterval.Nanoseconds() / numItems
+	}
+
+	for i := range sequences {
+		sequence := sequences[i]
+		time.AfterFunc(time.Duration(int64(i)*step), sch.runJobFn(readyToRunItem(sequence)))
 	}
 }

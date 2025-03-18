@@ -4,8 +4,13 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+// sequence represents a chain of rules that should be evaluated in order.
+// It is a convience type that wraps readyToRunItem as an indicator of what
+// is being represented.
+type sequence readyToRunItem
 
 type groupKey struct {
 	folderTitle string
@@ -13,7 +18,7 @@ type groupKey struct {
 	groupName   string
 }
 
-func compare(a, b groupKey) int {
+func cmp(a, b groupKey) int {
 	if a.folderTitle < b.folderTitle {
 		return -1
 	}
@@ -35,9 +40,19 @@ func compare(a, b groupKey) int {
 	return 0
 }
 
-func (sch *schedule) buildSequences(items []readyToRunItem) []readyToRunItem {
-	result := make([]readyToRunItem, 0, len(items))
-	// group all rules that should be evaluated at the current tick.
+// buildSequences organizes rules into evaluation sequences where rules in the same group
+// are chained together. The first rule in each group will trigger the evaluation of subsequent
+// rules in that group through the afterEval callback.
+//
+// For example, if we have rules A, B, C in group G1 and rules D, E in group G2:
+// - A will have afterEval set to evaluate B
+// - B will have afterEval set to evaluate C
+// - D will have afterEval set to evaluate E
+//
+// The function returns a slice of sequences, where each sequence represents a chain of rules
+// that should be evaluated in order.
+func (sch *schedule) buildSequences(items []readyToRunItem, runJobFn func(next readyToRunItem, prev ...readyToRunItem) func()) []sequence {
+	// Step 1: Group rules by their folder and group name
 	groups := map[groupKey][]readyToRunItem{}
 	var keys []groupKey
 	for _, item := range items {
@@ -52,26 +67,43 @@ func (sch *schedule) buildSequences(items []readyToRunItem) []readyToRunItem {
 		}
 		groups[g] = append(i, item)
 	}
-	slices.SortFunc(keys, compare)
+
+	// Step 2: Sort group keys to ensure consistent ordering
+	slices.SortFunc(keys, cmp)
+
+	// Step 3: Build evaluation sequences for each group
+	result := make([]sequence, 0, len(items))
 	for _, key := range keys {
 		groupItems := groups[key]
+
+		// If there's only one rule in the group, no need to build a sequence
 		if len(groupItems) == 1 {
-			result = append(result, groupItems[0]) // leave only the first item in the chain
+			result = append(result, sequence(groupItems[0]))
 			continue
 		}
+
 		slices.SortFunc(groupItems, func(a, b readyToRunItem) int {
 			return models.RulesGroupComparer(a.rule, b.rule)
 		})
-		// going backwards because readyToRunItem is passed by value to runJobFn
+
+		// iterate over the group items backwards to set the afterEval callback
 		for i := len(groupItems) - 2; i >= 0; i-- {
-			groupItems[i].Evaluation.afterEval = sch.runJobFn(groupItems[i+1])
+			groupItems[i].Evaluation.afterEval = runJobFn(groupItems[i+1], groupItems[i])
 		}
+
 		uids := make([]string, 0, len(groupItems))
 		for _, item := range groupItems {
 			uids = append(uids, item.rule.UID)
 		}
-		result = append(result, groupItems[0]) // leave only the first item in the chain
 		sch.log.Debug("Sequence created", "folder", key.folderTitle, "group", key.groupName, "sequence", strings.Join(uids, "->"))
+
+		result = append(result, sequence(groupItems[0]))
 	}
+
+	// sort the sequences by UID
+	slices.SortFunc(result, func(a, b sequence) int {
+		return strings.Compare(a.rule.UID, b.rule.UID)
+	})
+
 	return result
 }
