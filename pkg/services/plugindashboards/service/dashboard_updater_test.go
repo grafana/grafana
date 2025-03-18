@@ -401,15 +401,15 @@ type pluginsSettingsServiceMock struct {
 func (s *pluginsSettingsServiceMock) GetPluginSettings(_ context.Context, args *pluginsettings.GetArgs) ([]*pluginsettings.InfoDTO, error) {
 	s.getPluginSettingsArgs = append(s.getPluginSettingsArgs, args.OrgID)
 
-	var res []*pluginsettings.InfoDTO
-	for _, ps := range s.storedPluginSettings {
-		res = append(res, &pluginsettings.InfoDTO{
+	res := make([]*pluginsettings.InfoDTO, len(s.storedPluginSettings))
+	for i, ps := range s.storedPluginSettings {
+		res[i] = &pluginsettings.InfoDTO{
 			PluginID:      ps.PluginID,
 			OrgID:         ps.OrgID,
 			Enabled:       ps.Enabled,
 			Pinned:        ps.Pinned,
 			PluginVersion: ps.PluginVersion,
-		})
+		}
 	}
 
 	return res, s.err
@@ -443,18 +443,21 @@ func (s *pluginsSettingsServiceMock) DecryptedValues(_ *pluginsettings.DTO) map[
 type dashboardServiceMock struct {
 	dashboards.DashboardService
 	deleteDashboardArgs []struct {
-		orgId       int64
-		dashboardId int64
+		orgId        int64
+		dashboardId  int64
+		dashboardUID string
 	}
 }
 
-func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId int64, orgId int64) error {
+func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId int64, dashboardUID string, orgId int64) error {
 	s.deleteDashboardArgs = append(s.deleteDashboardArgs, struct {
-		orgId       int64
-		dashboardId int64
+		orgId        int64
+		dashboardId  int64
+		dashboardUID string
 	}{
-		orgId:       orgId,
-		dashboardId: dashboardId,
+		orgId:        orgId,
+		dashboardId:  dashboardId,
+		dashboardUID: dashboardUID,
 	})
 	return nil
 }
@@ -532,8 +535,9 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 
 	sCtx.dashboardService = &dashboardServiceMock{
 		deleteDashboardArgs: []struct {
-			orgId       int64
-			dashboardId int64
+			orgId        int64
+			dashboardId  int64
+			dashboardUID string
 		}{},
 	}
 

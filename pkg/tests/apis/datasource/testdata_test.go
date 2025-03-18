@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -42,7 +43,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.GetGroupVersionInfoJSON("testdata.datasource.grafana.app")
-		// fmt.Printf("%s", string(disco))
+		fmt.Printf("%s", disco)
 
 		require.JSONEq(t, `[
 			{
@@ -103,7 +104,20 @@ func TestIntegrationTestDatasource(t *testing.T) {
 					"get",
 					"list"
 				  ]
-				}
+				},
+				{
+        			"resource": "queryconvert",
+        			"responseKind": {
+          				"group": "",
+          				"kind": "QueryDataRequest",
+          				"version": ""
+        			},
+        			"scope": "Namespaced",
+        			"singularResource": "queryconvert",
+        			"verbs": [
+          				"create"
+        			]
+   				}
 			  ],
 			  "version": "v0alpha1"
 			}

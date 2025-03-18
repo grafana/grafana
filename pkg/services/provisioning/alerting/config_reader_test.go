@@ -16,6 +16,7 @@ const (
 	testFileSupportedFiletypes          = "./testdata/common/supported-filetypes"
 	testFileCorrectProperties           = "./testdata/alert_rules/correct-properties"
 	testFileCorrectPropertiesWithOrg    = "./testdata/alert_rules/correct-properties-with-org"
+	testFileDasboardTypoSupport         = "./testdata/alert_rules/dasboard-typo-support"
 	testFileMultipleRules               = "./testdata/alert_rules/multiple-rules"
 	testFileMultipleFiles               = "./testdata/alert_rules/multiple-files"
 	testFileCorrectProperties_cp        = "./testdata/contact_points/correct-properties"
@@ -158,5 +159,33 @@ func TestConfigReader(t *testing.T) {
 		file, err := configReader.readConfig(ctx, testFileMultipleTs)
 		require.NoError(t, err)
 		require.Len(t, file[0].Templates, 2)
+	})
+	t.Run("a rule file with dasboard typo", func(t *testing.T) {
+		ruleFiles, err := configReader.readConfig(ctx, testFileDasboardTypoSupport)
+		require.NoError(t, err)
+		t.Run("only dasboard present", func(t *testing.T) {
+			for _, ruleFile := range ruleFiles {
+				group := ruleFile.Groups[0]
+				t.Run(group.Title, func(t *testing.T) {
+					require.Equal(t, "dasboardUid", *group.Rules[0].DashboardUID)
+				})
+			}
+		})
+		t.Run("only dashboard present", func(t *testing.T) {
+			for _, ruleFile := range ruleFiles {
+				group := ruleFile.Groups[0]
+				t.Run(group.Title, func(t *testing.T) {
+					require.Equal(t, "dashboardUid", *group.Rules[1].DashboardUID)
+				})
+			}
+		})
+		t.Run("both dasboard and dashboard present", func(t *testing.T) {
+			for _, ruleFile := range ruleFiles {
+				group := ruleFile.Groups[0]
+				t.Run(group.Title, func(t *testing.T) {
+					require.Equal(t, "dashboardUid", *group.Rules[2].DashboardUID)
+				})
+			}
+		})
 	})
 }

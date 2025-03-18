@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import React from 'react';
+import * as React from 'react';
 import { Provider } from 'react-redux';
 
 import { configureStore } from '../../../../../store/configureStore';
 import { DashboardInitPhase } from '../../../../../types';
-import { DashboardModel, PanelModel } from '../../../state';
+import { DashboardModel } from '../../../state/DashboardModel';
+import { PanelModel } from '../../../state/PanelModel';
 import { createDashboardModelFixture } from '../../../state/__fixtures__/dashboardFixtures';
 import { ShareModal } from '../ShareModal';
 

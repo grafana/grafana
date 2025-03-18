@@ -1,18 +1,20 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
-import { Redirect } from 'react-router-dom';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Button, Icon, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
+import { Trans } from 'app/core/internationalization';
 
 import { DataTrail } from './DataTrail';
-import { DataTrailCard } from './DataTrailCard';
+import { DataTrailsBookmarks } from './DataTrailBookmarks';
 import { DataTrailsApp } from './DataTrailsApp';
+import { DataTrailsRecentMetrics } from './DataTrailsRecentMetrics';
 import { getTrailStore } from './TrailStore/TrailStore';
+import { LightModeRocket, DarkModeRocket } from './assets/rockets';
 import { reportExploreMetrics } from './interactions';
-import { getDatasourceForNewTrail, getUrlForTrail, newMetricsTrail } from './utils';
+import { getDatasourceForNewTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {}
 
@@ -23,15 +25,22 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 
   public onNewMetricsTrail = () => {
     const app = getAppFor(this);
-    const trail = newMetricsTrail(getDatasourceForNewTrail());
+    const trail = newMetricsTrail(getDatasourceForNewTrail(), true);
     reportExploreMetrics('exploration_started', { cause: 'new_clicked' });
+    app.goToUrlForTrail(trail);
+  };
+
+  public onSelectRecentTrail = (trail: DataTrail) => {
+    const app = getAppFor(this);
+    reportExploreMetrics('exploration_started', { cause: 'recent_clicked' });
     getTrailStore().setRecentTrail(trail);
     app.goToUrlForTrail(trail);
   };
 
-  public onSelectTrail = (trail: DataTrail, isBookmark: boolean) => {
+  public onSelectBookmark = (bookmarkIndex: number) => {
     const app = getAppFor(this);
-    reportExploreMetrics('exploration_started', { cause: isBookmark ? 'bookmark_clicked' : 'recent_clicked' });
+    reportExploreMetrics('exploration_started', { cause: 'bookmark_clicked' });
+    const trail = getTrailStore().getTrailForBookmarkIndex(bookmarkIndex);
     getTrailStore().setRecentTrail(trail);
     app.goToUrlForTrail(trail);
   };
@@ -39,6 +48,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   static Component = ({ model }: SceneComponentProps<DataTrailsHome>) => {
     const [_, setLastDelete] = useState(Date.now());
     const styles = useStyles2(getStyles);
+    const theme = useTheme2();
 
     const onDelete = (index: number) => {
       getTrailStore().removeBookmark(index);
@@ -46,58 +56,41 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
       setLastDelete(Date.now()); // trigger re-render
     };
 
-    // If there are no recent trails, don't show home page and create a new trail
-    if (!getTrailStore().recent.length) {
-      const trail = newMetricsTrail(getDatasourceForNewTrail());
-      return <Redirect to={getUrlForTrail(trail)} />;
-    }
-
-    const onSelectRecent = (trail: DataTrail) => model.onSelectTrail(trail, false);
-    const onSelectBookmark = (trail: DataTrail) => model.onSelectTrail(trail, true);
-
     return (
-      <div className={styles.container}>
-        <Stack direction={'column'} gap={1} alignItems={'start'}>
-          <Button icon="plus" size="md" variant="primary" onClick={model.onNewMetricsTrail}>
-            New metric exploration
-          </Button>
-        </Stack>
-
-        <Stack gap={5}>
-          <div className={styles.column}>
-            <Text variant="h4">Recent metrics explorations</Text>
-            <div className={styles.trailList}>
-              {getTrailStore().recent.map((trail, index) => {
-                const resolvedTrail = trail.resolve();
-                return (
-                  <DataTrailCard
-                    key={(resolvedTrail.state.key || '') + index}
-                    trail={resolvedTrail}
-                    onSelect={onSelectRecent}
-                  />
-                );
-              })}
+      <article className={styles.container}>
+        <section className={styles.homepageBox}>
+          <Stack direction="column" alignItems="center">
+            <div>{theme.isDark ? <DarkModeRocket /> : <LightModeRocket />}</div>
+            <Text element="h1" textAlignment="center" weight="medium">
+              <Trans i18nKey="trails.home.start-your-metrics-exploration">Start your metrics exploration!</Trans>
+            </Text>
+            <Box>
+              <Text element="p" textAlignment="center" color="secondary">
+                <Trans i18nKey="trails.home.subtitle">
+                  Explore your Prometheus-compatible metrics without writing a query.
+                </Trans>
+                <TextLink
+                  href="https://grafana.com/docs/grafana/latest/explore/explore-metrics/"
+                  external
+                  style={{ marginLeft: '8px' }}
+                >
+                  <Trans i18nKey="trails.home.learn-more">Learn more</Trans>
+                </TextLink>
+              </Text>
+            </Box>
+            <div className={styles.gap24}>
+              <Button size="lg" variant="primary" onClick={model.onNewMetricsTrail}>
+                <div className={styles.startButton}>
+                  <Trans i18nKey="trails.home.lets-start">Let&apos;s start!</Trans>
+                </div>
+                <Icon name="arrow-right" size="lg" style={{ marginLeft: '8px' }} />
+              </Button>
             </div>
-          </div>
-          <div className={styles.verticalLine} />
-          <div className={styles.column}>
-            <Text variant="h4">Bookmarks</Text>
-            <div className={styles.trailList}>
-              {getTrailStore().bookmarks.map((trail, index) => {
-                const resolvedTrail = trail.resolve();
-                return (
-                  <DataTrailCard
-                    key={(resolvedTrail.state.key || '') + index}
-                    trail={resolvedTrail}
-                    onSelect={onSelectBookmark}
-                    onDelete={() => onDelete(index)}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        </Stack>
-      </div>
+          </Stack>
+        </section>
+        <DataTrailsRecentMetrics onSelect={model.onSelectRecentTrail} />
+        <DataTrailsBookmarks onSelect={model.onSelectBookmark} onDelete={onDelete} />
+      </article>
     );
   };
 }
@@ -109,30 +102,25 @@ function getAppFor(model: SceneObject) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
-      flexGrow: 1,
       display: 'flex',
+      alignItems: 'center',
+      marginTop: '84px',
       flexDirection: 'column',
-      gap: theme.spacing(3),
+      height: '100%',
+      boxSizing: 'border-box', // Ensure padding doesn't cause overflow
     }),
-    column: css({
-      display: 'flex',
-      flexGrow: 1,
-      flexDirection: 'column',
-      gap: theme.spacing(2),
+    homepageBox: css({
+      backgroundColor: theme.colors.background.secondary,
+      width: '904px',
+      padding: '80px 32px',
+      boxSizing: 'border-box', // Ensure padding doesn't cause overflow
+      flexShrink: 0,
     }),
-    newTrail: css({
-      height: 'auto',
-      justifyContent: 'center',
-      fontSize: theme.typography.h5.fontSize,
+    startButton: css({
+      fontWeight: theme.typography.fontWeightLight,
     }),
-    trailCard: css({}),
-    trailList: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(2),
-    }),
-    verticalLine: css({
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
+    gap24: css({
+      marginTop: theme.spacing(2), // Adds a 24px gap since there is already a 8px gap from the button
     }),
   };
 }

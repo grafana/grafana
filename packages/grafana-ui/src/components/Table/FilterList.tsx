@@ -1,11 +1,13 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo } from 'react';
-import { FixedSizeList as List } from 'react-window';
+import { useCallback, useMemo } from 'react';
+import * as React from 'react';
+import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 
 import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '..';
 import { useStyles2, useTheme2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
 
 interface Props {
   values: SelectableValue[];
@@ -183,45 +185,60 @@ export const FilterList = ({
           <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
         </Stack>
       )}
-      {!items.length && <Label>No values</Label>}
-      {items.length && (
-        <List
-          height={height}
-          itemCount={items.length}
-          itemSize={ITEM_HEIGHT}
-          width="100%"
-          className={styles.filterList}
-        >
-          {({ index, style }) => {
-            const option = items[index];
-            const { value, label } = option;
-            const isChecked = values.find((s) => s.value === value) !== undefined;
-
-            return (
-              <div className={styles.filterListRow} style={style} title={label}>
-                <Checkbox value={isChecked} label={label} onChange={onCheckedChanged(option)} />
-              </div>
-            );
-          }}
-        </List>
-      )}
-      {items.length && (
-        <Stack direction="column" gap={0.25}>
-          <div className={cx(styles.selectDivider)} />
-          <div className={cx(styles.filterListRow)}>
-            <Checkbox
-              value={selectCheckValue}
-              indeterminate={selectCheckIndeterminate}
-              label={selectCheckLabel}
-              description={selectCheckDescription}
-              onChange={onSelectChanged}
-            />
-          </div>
-        </Stack>
+      {items.length > 0 ? (
+        <>
+          <List
+            height={height}
+            itemCount={items.length}
+            itemSize={ITEM_HEIGHT}
+            itemData={{ items, values: selectedItems, onCheckedChanged, className: styles.filterListRow }}
+            width="100%"
+            className={styles.filterList}
+          >
+            {ItemRenderer}
+          </List>
+          <Stack direction="column" gap={0.25}>
+            <div className={cx(styles.selectDivider)} />
+            <div className={cx(styles.filterListRow)}>
+              <Checkbox
+                value={selectCheckValue}
+                indeterminate={selectCheckIndeterminate}
+                label={selectCheckLabel}
+                description={selectCheckDescription}
+                onChange={onSelectChanged}
+              />
+            </div>
+          </Stack>
+        </>
+      ) : (
+        <Label className={styles.noValuesLabel}>
+          <Trans i18nKey="grafana-ui.table.no-values-label">No values</Trans>
+        </Label>
       )}
     </Stack>
   );
 };
+
+interface ItemRendererProps extends ListChildComponentProps {
+  data: {
+    onCheckedChanged: (option: SelectableValue) => (event: React.FormEvent<HTMLInputElement>) => void;
+    items: SelectableValue[];
+    values: SelectableValue[];
+    className: string;
+  };
+}
+
+function ItemRenderer({ index, style, data: { onCheckedChanged, items, values, className } }: ItemRendererProps) {
+  const option = items[index];
+  const { value, label } = option;
+  const isChecked = values.find((s) => s.value === value) !== undefined;
+
+  return (
+    <div className={className} style={style} title={label}>
+      <Checkbox value={isChecked} label={label} onChange={onCheckedChanged(option)} />
+    </div>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   filterList: css({
@@ -244,5 +261,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(0.5, 2),
+  }),
+  noValuesLabel: css({
+    paddingTop: theme.spacing(1),
   }),
 });

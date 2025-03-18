@@ -1,5 +1,5 @@
 import { keyframes } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 const fadeIn = keyframes({
   '0%': {

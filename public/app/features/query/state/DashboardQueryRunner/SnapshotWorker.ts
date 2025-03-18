@@ -2,7 +2,7 @@ import { Observable, of } from 'rxjs';
 
 import { AnnotationEvent } from '@grafana/data';
 
-import { DashboardModel } from '../../../dashboard/state';
+import { DashboardModel } from '../../../dashboard/state/DashboardModel';
 
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult, getAnnotationsByPanelId, translateQueryResult } from './utils';

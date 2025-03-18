@@ -1,16 +1,13 @@
 import { AlignedData } from 'uplot';
 
-import { DataFrame, Field, FieldDTO, FieldType, Labels, parseLabels, QueryResultMeta } from '..';
 import { join } from '../transformations/transformers/joinDataFrames';
+import { Labels, QueryResultMeta } from '../types/data';
+import { FieldDTO, DataFrame, Field, FieldType } from '../types/dataFrame';
+import { parseLabels } from '../utils/labels';
 import { renderLegendFormat } from '../utils/legend';
 
-import {
-  DataFrameJSON,
-  decodeFieldValueEntities,
-  FieldSchema,
-  guessFieldTypeFromValue,
-  toFilteredDataFrameDTO,
-} from '.';
+import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
+import { guessFieldTypeFromValue, toFilteredDataFrameDTO } from './processDataFrame';
 
 /**
  * Indicate if the frame is appened or replace
@@ -271,8 +268,8 @@ export class StreamingDataFrame implements DataFrame {
             type: f.type ?? FieldType.other,
             // transfer old values by type & name, unless we relied on labels to match fields
             values: isWide
-              ? this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
-                Array(this.length).fill(undefined)
+              ? (this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
+                Array(this.length).fill(undefined))
               : [],
           };
         });
@@ -553,8 +550,11 @@ export function parseLabelsFromField(str: string): Labels {
  * @internal // not exported in yet
  */
 export function getLastStreamingDataFramePacket(frame: DataFrame) {
-  const pi = (frame as StreamingDataFrame).packetInfo;
-  return pi?.action ? pi : undefined;
+  if (frame instanceof StreamingDataFrame) {
+    const pi = frame.packetInfo;
+    return pi.action;
+  }
+  return undefined;
 }
 
 // mutable circular push

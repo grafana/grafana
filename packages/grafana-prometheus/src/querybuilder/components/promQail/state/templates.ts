@@ -76,6 +76,10 @@ export const generalTemplates: TemplateData[] = [
     template: 'count_values("aaaa",metric_a{})',
     description: 'Count number of label values for a label named "aaaa"',
   },
+  {
+    template: 'quantile by(l) (1,metric_a)',
+    description: 'Quantile of series in the metric "metric_a" grouped by the label "l"',
+  },
 ];
 
 export const counterTemplates: TemplateData[] = [

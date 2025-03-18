@@ -1,4 +1,4 @@
-import { Labels } from '../types';
+import { Labels } from '../types/data';
 
 /** replace labels in a string.  Used for loki+prometheus legend formats */
 export function renderLegendFormat(aliasPattern: string, aliasData: Labels): string {

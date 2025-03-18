@@ -4,20 +4,19 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type QuerierFactoryFunc func(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error)
+type QuerierFactoryFunc func(ctx context.Context, ri utils.ResourceInfo, pj plugins.JSONData) (Querier, error)
 
 type QuerierProvider interface {
-	Querier(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error)
+	Querier(ctx context.Context, ri utils.ResourceInfo, pj plugins.JSONData) (Querier, error)
 }
 
 type DefaultQuerierProvider struct {
@@ -26,7 +25,7 @@ type DefaultQuerierProvider struct {
 
 func ProvideDefaultQuerierProvider(pluginClient plugins.Client, dsService datasources.DataSourceService,
 	dsCache datasources.CacheService) *DefaultQuerierProvider {
-	return NewQuerierProvider(func(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
+	return NewQuerierProvider(func(ctx context.Context, ri utils.ResourceInfo, pj plugins.JSONData) (Querier, error) {
 		return NewDefaultQuerier(ri, pj, pluginClient, dsService, dsCache), nil
 	})
 }
@@ -37,7 +36,7 @@ func NewQuerierProvider(factory QuerierFactoryFunc) *DefaultQuerierProvider {
 	}
 }
 
-func (p *DefaultQuerierProvider) Querier(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
+func (p *DefaultQuerierProvider) Querier(ctx context.Context, ri utils.ResourceInfo, pj plugins.JSONData) (Querier, error) {
 	return p.factory(ctx, ri, pj)
 }
 
@@ -56,7 +55,7 @@ type Querier interface {
 }
 
 type DefaultQuerier struct {
-	connectionResourceInfo common.ResourceInfo
+	connectionResourceInfo utils.ResourceInfo
 	pluginJSON             plugins.JSONData
 	pluginClient           plugins.Client
 	dsService              datasources.DataSourceService
@@ -64,7 +63,7 @@ type DefaultQuerier struct {
 }
 
 func NewDefaultQuerier(
-	connectionResourceInfo common.ResourceInfo,
+	connectionResourceInfo utils.ResourceInfo,
 	pluginJSON plugins.JSONData,
 	pluginClient plugins.Client,
 	dsService datasources.DataSourceService,
@@ -108,7 +107,7 @@ func (q *DefaultQuerier) Datasource(ctx context.Context, name string) (*v0alpha1
 	if err != nil {
 		return nil, err
 	}
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}

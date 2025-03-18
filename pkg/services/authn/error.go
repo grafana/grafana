@@ -1,6 +1,6 @@
 package authn
 
-import "github.com/grafana/grafana/pkg/util/errutil"
+import "github.com/grafana/grafana/pkg/apimachinery/errutil"
 
 var (
 	ErrTokenNeedsRotation  = errutil.Unauthorized("session.token.rotate", errutil.WithLogLevel(errutil.LevelDebug))

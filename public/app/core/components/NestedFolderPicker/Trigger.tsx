@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { forwardRef, ReactNode, ButtonHTMLAttributes } from 'react';
+import { forwardRef, ReactNode, ButtonHTMLAttributes } from 'react';
+import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, getInputStyles, useTheme2, Text } from '@grafana/ui';
-import { focusCss, getFocusStyles, getMouseFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/src/themes/mixins';
 import { Trans, t } from 'app/core/internationalization';
 
 interface TriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -111,9 +112,7 @@ const getStyles = (theme: GrafanaTheme2, invalid = false) => {
           boxShadow: 'unset',
         },
 
-        '&:focus-visible': css`
-          ${focusCss(theme)}
-        `,
+        '&:focus-visible': getFocusStyles(theme),
         alignItems: 'center',
         display: 'flex',
         flexWrap: 'nowrap',

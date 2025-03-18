@@ -5,25 +5,22 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
 
-// NewClearAuthHeadersMiddleware creates a new plugins.ClientMiddleware
+// NewClearAuthHeadersMiddleware creates a new backend.HandlerMiddleware
 // that will clear any outgoing HTTP headers that was part of the incoming
 // HTTP request and used when authenticating to Grafana.
-func NewClearAuthHeadersMiddleware() plugins.ClientMiddleware {
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+func NewClearAuthHeadersMiddleware() backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &ClearAuthHeadersMiddleware{
-			baseMiddleware: baseMiddleware{
-				next: next,
-			},
+			BaseHandler: backend.NewBaseHandler(next),
 		}
 	})
 }
 
 type ClearAuthHeadersMiddleware struct {
-	baseMiddleware
+	backend.BaseHandler
 }
 
 func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend.ForwardHTTPHeaders) {
@@ -43,30 +40,30 @@ func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend
 
 func (m *ClearAuthHeadersMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
-		return m.next.QueryData(ctx, req)
+		return m.BaseHandler.QueryData(ctx, req)
 	}
 
 	m.clearHeaders(ctx, req)
 
-	return m.next.QueryData(ctx, req)
+	return m.BaseHandler.QueryData(ctx, req)
 }
 
 func (m *ClearAuthHeadersMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
-		return m.next.CallResource(ctx, req, sender)
+		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
 
 	m.clearHeaders(ctx, req)
 
-	return m.next.CallResource(ctx, req, sender)
+	return m.BaseHandler.CallResource(ctx, req, sender)
 }
 
 func (m *ClearAuthHeadersMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req == nil {
-		return m.next.CheckHealth(ctx, req)
+		return m.BaseHandler.CheckHealth(ctx, req)
 	}
 
 	m.clearHeaders(ctx, req)
 
-	return m.next.CheckHealth(ctx, req)
+	return m.BaseHandler.CheckHealth(ctx, req)
 }

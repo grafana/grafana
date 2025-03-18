@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -21,14 +21,14 @@ func TestForwardIDMiddleware(t *testing.T) {
 	}
 
 	t.Run("Should set forwarded id header if present", func(t *testing.T) {
-		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewForwardIDMiddleware()))
+		cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewForwardIDMiddleware()))
 
 		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
 			Context:      &web.Context{Req: &http.Request{}},
 			SignedInUser: &user.SignedInUser{IDToken: "some-token"},
 		})
 
-		err := cdt.Decorator.CallResource(ctx, &backend.CallResourceRequest{
+		err := cdt.MiddlewareHandler.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: pluginContext,
 		}, nopCallResourceSender)
 		require.NoError(t, err)
@@ -37,14 +37,14 @@ func TestForwardIDMiddleware(t *testing.T) {
 	})
 
 	t.Run("Should not set forwarded id header if not present", func(t *testing.T) {
-		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewForwardIDMiddleware()))
+		cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewForwardIDMiddleware()))
 
 		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
 			Context:      &web.Context{Req: &http.Request{}},
 			SignedInUser: &user.SignedInUser{},
 		})
 
-		err := cdt.Decorator.CallResource(ctx, &backend.CallResourceRequest{
+		err := cdt.MiddlewareHandler.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: pluginContext,
 		}, nopCallResourceSender)
 		require.NoError(t, err)
@@ -57,14 +57,14 @@ func TestForwardIDMiddleware(t *testing.T) {
 	}
 
 	t.Run("Should set forwarded id header to app plugin if present", func(t *testing.T) {
-		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewForwardIDMiddleware()))
+		cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewForwardIDMiddleware()))
 
 		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
 			Context:      &web.Context{Req: &http.Request{}},
 			SignedInUser: &user.SignedInUser{IDToken: "some-token"},
 		})
 
-		err := cdt.Decorator.CallResource(ctx, &backend.CallResourceRequest{
+		err := cdt.MiddlewareHandler.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: pluginContext,
 		}, nopCallResourceSender)
 		require.NoError(t, err)

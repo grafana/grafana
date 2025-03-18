@@ -1,20 +1,23 @@
+import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
 import { omit } from 'lodash';
-import React, { PureComponent, useState } from 'react';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { PureComponent, useState } from 'react';
 
 import {
   DataQuery,
   DataSourceInstanceSettings,
   LoadingState,
   PanelData,
-  rangeUtil,
   RelativeTimeRange,
+  getDataSourceRef,
+  rangeUtil,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+
+import { getInstantFromDataQuery } from '../../utils/rule-form';
 
 import { AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import { errorFromCurrentCondition, errorFromPreviewData, getThresholdsForQueries } from './util';
@@ -226,16 +229,14 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
     ...item,
     model: {
       ...omit(item.model, 'datasource'),
-      datasource: {
-        type: settings.type,
-        uid: settings.uid,
-      },
+      datasource: getDataSourceRef(settings),
     },
     datasourceUid: settings.uid,
   };
 }
 
 function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
+  const isInstant = getInstantFromDataQuery(item.model, settings.type);
   return {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
@@ -244,10 +245,8 @@ function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<
     model: {
       refId: item.refId,
       hide: false,
-      datasource: {
-        type: settings.type,
-        uid: settings.uid,
-      },
+      datasource: getDataSourceRef(settings),
+      instant: isInstant,
     },
   };
 }

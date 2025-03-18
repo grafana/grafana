@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { AriaRole, ReactNode } from 'react';
+import { AriaRole, ReactNode } from 'react';
+import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';

@@ -1,10 +1,9 @@
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { PanelModel } from '../../state/PanelModel';
 

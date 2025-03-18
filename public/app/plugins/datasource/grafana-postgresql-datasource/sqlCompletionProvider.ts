@@ -2,8 +2,10 @@ import {
   ColumnDefinition,
   getStandardSQLCompletionProvider,
   LanguageCompletionProvider,
+  LinkedToken,
   TableDefinition,
   TableIdentifier,
+  TokenType,
 } from '@grafana/experimental';
 import { DB, SQLQuery } from '@grafana/sql';
 
@@ -19,6 +21,23 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
     tables: {
       resolve: async () => {
         return await getTables.current();
+      },
+      // Default parser doesn't handle schema.table syntax
+      parseName: (token: LinkedToken | undefined | null) => {
+        if (!token) {
+          return { table: '' };
+        }
+
+        let processedToken = token;
+        let tablePath = processedToken.value;
+
+        // Parse schema.table syntax
+        while (processedToken.next && processedToken.next.type !== TokenType.Whitespace) {
+          tablePath += processedToken.next.value;
+          processedToken = processedToken.next;
+        }
+
+        return { table: tablePath };
       },
     },
     columns: {

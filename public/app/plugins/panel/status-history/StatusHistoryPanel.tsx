@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps } from '@grafana/data';
 import { EventBusPlugin, TooltipDisplayMode, TooltipPlugin2, usePanelContext, useTheme2 } from '@grafana/ui';
@@ -104,7 +104,10 @@ export const StatusHistoryPanel = ({
                 queryZoom={onChangeTimeRange}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
-                render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
+                getDataLinks={(seriesIdx: number, dataIdx: number) =>
+                  alignedFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                }
+                render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
                     dismiss();
@@ -130,6 +133,8 @@ export const StatusHistoryPanel = ({
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       withDuration={false}
                       maxHeight={options.tooltip.maxHeight}
+                      replaceVariables={replaceVariables}
+                      dataLinks={dataLinks}
                     />
                   );
                 }}

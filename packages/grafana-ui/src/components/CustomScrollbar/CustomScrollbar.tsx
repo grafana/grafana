@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { RefCallback, useCallback, useEffect, useRef } from 'react';
+import { RefCallback, useCallback, useEffect, useRef } from 'react';
+import * as React from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -31,6 +32,7 @@ interface Props {
 
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
+ * @deprecated Use `ScrollContainer` from `@grafana/ui` instead. It uses native scrollbars and has a simpler API.
  */
 export const CustomScrollbar = ({
   autoHide = false,

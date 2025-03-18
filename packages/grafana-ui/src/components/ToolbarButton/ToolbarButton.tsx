@@ -1,5 +1,6 @@
 import { cx, css } from '@emotion/css';
-import React, { forwardRef, ButtonHTMLAttributes } from 'react';
+import { forwardRef, ButtonHTMLAttributes } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -158,16 +159,16 @@ const getStyles = (theme: GrafanaTheme2) => {
         }),
       },
 
+      [theme.breakpoints.down('md')]: {
+        width: 'auto !important',
+      },
+
       '&:focus, &:focus-visible': {
         ...getFocusStyles(theme),
         zIndex: 1,
       },
 
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
-
-      '&:hover': {
-        boxShadow: theme.shadows.z1,
-      },
 
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
@@ -189,7 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         color: theme.colors.text.primary,
-        background: theme.colors.background.secondary,
+        background: theme.colors.action.hover,
       },
     }),
     canvas: defaultOld,
@@ -223,6 +224,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
     }),
     content: css({
+      display: 'flex',
       flexGrow: 1,
     }),
     contentWithIcon: css({

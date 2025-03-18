@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { PanelData, TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
@@ -17,7 +17,7 @@ import AdvancedResourcePicker from './AdvancedResourcePicker';
 import { LogsManagement } from './LogsManagement';
 import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
-import { setBasicLogsQuery, setFormatAs, setKustoQuery } from './setQueryValue';
+import { onLoad, setBasicLogsQuery, setFormatAs, setKustoQuery } from './setQueryValue';
 import useMigrations from './useMigrations';
 import { shouldShowBasicLogsToggle } from './utils';
 
@@ -226,6 +226,7 @@ const LogsQueryEditor = ({
                 defaultValue={ResultFormat.Logs}
                 setFormatAs={setFormatAs}
                 resultFormat={query.azureLogAnalytics?.resultFormat}
+                onLoad={onLoad}
               />
             )}
             {portalLinkButton}

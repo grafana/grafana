@@ -98,7 +98,7 @@ func TestTemplateDecorateFunc(t *testing.T) {
 func Test_configureAppChildPlugin(t *testing.T) {
 	t.Run("Child plugin will inherit parent version information when version is empty", func(t *testing.T) {
 		child := &plugins.Plugin{
-			FS: fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource"),
+			FS: fakes.NewFakePluginFS("c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource"),
 		}
 		parent := &plugins.Plugin{
 			JSONData: plugins.JSONData{
@@ -107,7 +107,7 @@ func Test_configureAppChildPlugin(t *testing.T) {
 				Info: plugins.Info{Version: "1.0.0"},
 			},
 			Class:   plugins.ClassCore,
-			FS:      fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
+			FS:      fakes.NewFakePluginFS("c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
 			BaseURL: "public/app/plugins/app/testdata-app",
 		}
 
@@ -119,7 +119,7 @@ func Test_configureAppChildPlugin(t *testing.T) {
 
 	t.Run("Child plugin will not inherit parent version information when version is non-empty", func(t *testing.T) {
 		child := &plugins.Plugin{
-			FS: fakes.NewFakePluginFiles("/plugins/parent-app/child-panel"),
+			FS: fakes.NewFakePluginFS("/plugins/parent-app/child-panel"),
 			JSONData: plugins.JSONData{
 				Info: plugins.Info{Version: "2.0.2"},
 			},
@@ -131,7 +131,7 @@ func Test_configureAppChildPlugin(t *testing.T) {
 				Info: plugins.Info{Version: "2.0.0"},
 			},
 			Class:   plugins.ClassExternal,
-			FS:      fakes.NewFakePluginFiles("/plugins/parent-app"),
+			FS:      fakes.NewFakePluginFS("/plugins/parent-app"),
 			BaseURL: "plugins/parent-app",
 		}
 

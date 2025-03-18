@@ -1,0 +1,143 @@
+{
+  "metadata": {},
+  "columnDefinitions": [
+    {
+      "name": "_id",
+      "type": "string",
+      "format": "",
+      "description": "Unique Identifier. {namespace}/{group}/{resource}/{name}",
+      "priority": 0
+    },
+    {
+      "name": "title",
+      "type": "string",
+      "format": "",
+      "description": "Display name for the resource",
+      "priority": 0
+    },
+    {
+      "name": "tags",
+      "type": "string",
+      "format": "",
+      "description": "Unique tags",
+      "priority": 0
+    },
+    {
+      "name": "folder",
+      "type": "string",
+      "format": "",
+      "description": "Kubernetes name for the folder",
+      "priority": 0
+    },
+    {
+      "name": "rv",
+      "type": "number",
+      "format": "int64",
+      "description": "resource version",
+      "priority": 0
+    },
+    {
+      "name": "created",
+      "type": "number",
+      "format": "int64",
+      "description": "created timestamp",
+      "priority": 0
+    },
+    {
+      "name": "schema_version",
+      "type": "number",
+      "format": "int32",
+      "description": "Numeric version saying when the schema was saved",
+      "priority": 0
+    },
+    {
+      "name": "link_count",
+      "type": "number",
+      "format": "int32",
+      "description": "How many links appear on the page",
+      "priority": 0
+    },
+    {
+      "name": "panel_types",
+      "type": "string",
+      "format": "",
+      "description": "How many links appear on the page",
+      "priority": 0
+    }
+  ],
+  "rows": [
+    {
+      "cells": [
+        "ns/dashboard.grafana.app/dashboards/ccc",
+        "ccc (dash)",
+        [
+          "aa"
+        ],
+        "zzz",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "object": {
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
+        "metadata": {
+          "name": "ccc",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "ns/dashboard.grafana.app/dashboards/bbb",
+        "bbb (dash)",
+        [
+          "aa"
+        ],
+        "xxx",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "object": {
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
+        "metadata": {
+          "name": "bbb",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "ns/dashboard.grafana.app/dashboards/aaa",
+        "aaa (dash)",
+        [
+          "aa",
+          "bb"
+        ],
+        "xxx",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "object": {
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
+        "metadata": {
+          "name": "aaa",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    }
+  ]
+}

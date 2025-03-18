@@ -34,7 +34,7 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 	if err != nil {
 		return nil, err
 	}
-	if query.Expr != nil {
+	if query.Expr == nil || *query.Expr == "" {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
 		}, fmt.Errorf("missing expr in channel (subscribe)")
@@ -69,7 +69,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	if err != nil {
 		return err
 	}
-	if query.Expr != nil {
+	if query.Expr == nil || *query.Expr == "" {
 		return fmt.Errorf("missing expr in cuannel")
 	}
 

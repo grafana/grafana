@@ -47,7 +47,7 @@ pyroscope.write "default" {
 
 pyroscope.scrape "default" {
   targets = [
-    {"__address__" = "host.docker.internal:6060", "service_name"="grafana"},
+    {"__address__" = "host.docker.internal:6000", "service_name"="grafana"},
   ]
   forward_to = [pyroscope.write.default.receiver]
 

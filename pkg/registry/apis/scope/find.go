@@ -13,7 +13,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+var logger = log.New("find-scopenode")
 
 type findREST struct {
 	scopeNodeStorage *storage
@@ -59,7 +62,7 @@ func (r *findREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	// See: /pkg/apiserver/builder/helper.go#L34
+	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
 		return nil, errors.NewNotFound(schema.GroupResource{}, name)
@@ -71,7 +74,7 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		results := &scope.FindScopeNodeChildrenResults{}
 
 		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
-			Limit: 1000,
+			Limit: 10000,
 		})
 
 		if err != nil {
@@ -80,6 +83,7 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		}
 
 		all, ok := raw.(*scope.ScopeNodeList)
+
 		if !ok {
 			responder.Error(fmt.Errorf("expected ScopeNodeList"))
 			return
@@ -88,6 +92,8 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		for _, item := range all.Items {
 			filterAndAppendItem(item, parent, query, results)
 		}
+
+		logger.FromContext(req.Context()).Debug("find scopenode", "raw", len(all.Items), "filtered", len(results.Items))
 
 		responder.Object(200, results)
 	}), nil

@@ -1,10 +1,11 @@
-# Testing Guidelines
+# Testing guidelines
 
 The goal of this document is to address the most frequently asked "How to" questions related to unit testing.
 
-## Best practices
+## Some recommended practices for testing
 
-- Default to the `*ByRole` queries when testing components as it encourages testing with accessibility concerns in mind. It's also possible to use `*ByLabelText` queries. However, the `*ByRole` queries are [more robust](https://testing-library.com/docs/queries/bylabeltext/#name) and are generally recommended over the former.
+- Default to the `*ByRole` queries when testing components because it encourages testing with accessibility concerns in mind.
+- Alternatively, you could use `*ByLabelText` queries for testing components. However, we recommend the `*ByRole` queries because they are [more robust](https://testing-library.com/docs/queries/bylabeltext/#name).
 
 ## Testing User Interactions
 
@@ -13,7 +14,7 @@ We use the [user-event](https://testing-library.com/docs/user-event/intro) libra
 There are two important considerations when working with `userEvent`:
 
 1. All methods in `userEvent` are asynchronous, and thus require the use of `await` when called.
-2. Directly calling methods from `userEvent` may not be supported in future versions. As such, it's necessary to first call `userEvent.setup()` prior to the tests. This method returns a `userEvent` instance, complete with all its methods. This setup process can be simplified using a utility function:
+1. Directly calling methods from `userEvent` may not be supported in future versions. As such, it's necessary to first call `userEvent.setup()` prior to the tests. This method returns a `userEvent` instance, complete with all its methods. This setup process can be simplified using a utility function:
 
 ```tsx
 import { render, screen } from '@testing-library/react';
@@ -32,15 +33,15 @@ it('should render', async () => {
 });
 ```
 
-## Debugging Tests
+## Debug tests
 
 There are a few utilities that can be useful for debugging tests:
 
-- [screen.debug()](https://testing-library.com/docs/queries/about/#screendebug) - This function prints a human-readable representation of the document's DOM tree when called without arguments, or the DOM tree of specific node(s) when provided with arguments. It is internally using `console.log` to log the output to terminal.
-- [Testing Playground](https://testing-playground.com/) - An interactive sandbox that allows testing which queries work with specific HTML elements.
-- [logRoles](https://testing-library.com/docs/dom-testing-library/api-debugging/#prettydom) - A utility function that prints out all the implicit ARIA roles for a given DOM tree.
+- [screen.debug()](https://testing-library.com/docs/queries/about/#screendebug) - This function prints a human-readable representation of the document's DOM tree when called without arguments, or the DOM tree of specific node or nodes when provided with arguments. It is internally using `console.log` to log the output to terminal.
+- [Testing Playground](https://testing-playground.com/) - An interactive sandbox that allows testing of which queries work with specific HTML elements.
+- [prettyDOM logRoles](https://testing-library.com/docs/dom-testing-library/api-debugging/#prettydom) - A utility function that prints out all the implicit ARIA roles for a given DOM tree.
 
-## Testing Select Components
+## Testing select components
 
 Here, the [OrgRolePicker](https://github.com/grafana/grafana/blob/38863844e7ac72c7756038a1097f89632f9985ff/public/app/features/admin/OrgRolePicker.tsx) component is used as an example. This component essentially serves as a wrapper for the `Select` component, complete with its own set of options.
 
@@ -78,7 +79,7 @@ export function OrgRolePicker({ value, onChange, 'aria-label': ariaLabel, inputI
 
 ### Querying the Select Component
 
-The recommended way to query `Select` components is by using a label. Add a `label` element and provide the `htmlFor` prop with a matching `inputId`. Alternatively, `aria-label` can be specified on the `Select`.
+It is a recommended practice to query `Select` components by using a label. Add a `label` element and provide the `htmlFor` prop with a matching `inputId`. Alternatively, you can specify `aria-label` on the `Select` statement.
 
 ```tsx
 describe('OrgRolePicker', () => {
@@ -94,7 +95,7 @@ describe('OrgRolePicker', () => {
 });
 ```
 
-### Testing the Display of Correct Options
+### Test the display of correct options
 
 At times, it might be necessary to verify that the `Select` component is displaying the correct options. In such instances, the best solution is to click the `Select` component and match the desired option using the `*ByText` query.
 
@@ -129,11 +130,11 @@ it('should select an option', async () => {
 });
 ```
 
-## Mocking Objects and Functions
+## Mock objects and functions
 
-### Mocking the `window` Object and Its Methods
+### Mock the `window` object and its methods
 
-The recommended approach for mocking the `window` object is to use Jest spies. Jest's spy functions provide a built-in mechanism for restoring mocks. This feature eliminates the need to manually save a reference to the `window` object.
+The recommended approach for mocking the `window` object is to use [Jest spies](https://jestjs.io/docs/jest-object). Jest's spy functions provide a built-in mechanism for restoring mocks. This feature eliminates the need to manually save a reference to the `window` object.
 
 ```tsx
 let windowSpy: jest.SpyInstance;
@@ -156,7 +157,7 @@ it('should test with window', function () {
 
 ### Mocking getBackendSrv()
 
-The `getBackendSrv()` function is used to make HTTP requests to the Grafana backend. It is possible to mock this function using the `jest.mock` method.
+Use the `getBackendSrv()` function to make HTTP requests to the Grafana backend. It is possible to mock this function using the `jest.mock` method.
 
 ```tsx
 jest.mock('@grafana/runtime', () => ({
@@ -169,14 +170,13 @@ jest.mock('@grafana/runtime', () => ({
 
 #### Mocking getBackendSrv for AsyncSelect
 
-The `AsyncSelect` component is used to asynchronously load options. As such, it often relies on the `getBackendSrv` for loading the options.
+Use the `AsyncSelect` component to asynchronously load options. This component often relies on the `getBackendSrv` for loading the options.
 
-Here's how the test would look like for this [OrgPicker](https://github.com/grafana/grafana/blob/38863844e7ac72c7756038a1097f89632f9985ff/public/app/core/components/Select/OrgPicker.tsx) component, which uses `AsyncSelect` under the hood.
+Here's what the test looks like for this [OrgPicker](https://github.com/grafana/grafana/blob/38863844e7ac72c7756038a1097f89632f9985ff/public/app/core/components/Select/OrgPicker.tsx) component, which uses `AsyncSelect` under the hood:
 
 ```tsx
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { OrgPicker } from './OrgPicker';
 

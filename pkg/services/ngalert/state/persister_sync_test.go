@@ -40,6 +40,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		create(eval.NoData, ""),
 		create(eval.Error, ""),
 	}
+	ruleKey := ngmodels.AlertRuleKeyWithGroup{}
 
 	transitionToKey := map[ngmodels.AlertInstanceKey]StateTransition{}
 	transitions := make([]StateTransition, 0)
@@ -69,7 +70,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			InstanceStore:           st,
 			MaxStateSaveConcurrency: 1,
 		})
-		syncStatePersister.Sync(context.Background(), span, transitions, nil)
+		syncStatePersister.Sync(context.Background(), span, ruleKey, transitions)
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
 		for _, op := range st.RecordedOps() {
 			saved := op.(ngmodels.AlertInstance)
@@ -90,7 +91,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			InstanceStore:           st,
 			MaxStateSaveConcurrency: 1,
 		})
-		syncStatePersister.Sync(context.Background(), span, transitions, nil)
+		syncStatePersister.Sync(context.Background(), span, ruleKey, transitions)
 
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
 		for _, op := range st.RecordedOps() {
@@ -117,16 +118,16 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		state := &State{
 			OrgID:             rand.Int63(),
 			AlertRuleUID:      util.GenerateShortUID(),
-			CacheID:           data.Fingerprint(rand.Int63()).String(),
+			CacheID:           data.Fingerprint(rand.Int63()),
 			State:             eval.Alerting,
 			StateReason:       "TEST",
 			ResultFingerprint: data.Fingerprint(rand.Int63()),
 			LatestResult: &Evaluation{
 				EvaluationTime:  time.Now().Add(1 * time.Minute),
 				EvaluationState: eval.Alerting,
-				Values: map[string]*float64{
-					"A": util.Pointer(1.0),
-					"B": util.Pointer(2.0),
+				Values: map[string]float64{
+					"A": 1.0,
+					"B": 2.0,
 				},
 				Condition: "A",
 			},
@@ -147,7 +148,8 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			},
 			StartsAt:             time.Now().Add(4 * time.Minute),
 			EndsAt:               time.Now().Add(5 * time.Minute),
-			LastSentAt:           time.Now().Add(7 * time.Minute),
+			ResolvedAt:           util.Pointer(time.Now().Add(6 * time.Minute)),
+			LastSentAt:           util.Pointer(time.Now().Add(7 * time.Minute)),
 			LastEvaluationString: util.GenerateShortUID(),
 			LastEvaluationTime:   time.Now().Add(8 * time.Minute),
 			EvaluationDuration:   time.Duration(rand.Intn(100)+1) * time.Second,
@@ -159,7 +161,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			PreviousStateReason: util.GenerateShortUID(),
 		}
 
-		syncStatePersister.Sync(context.Background(), span, []StateTransition{transition}, nil)
+		syncStatePersister.Sync(context.Background(), span, ruleKey, []StateTransition{transition})
 
 		require.Len(t, st.RecordedOps(), 1)
 		saved := st.RecordedOps()[0].(ngmodels.AlertInstance)
@@ -173,6 +175,8 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		assert.Equal(t, state.StartsAt, saved.CurrentStateSince)
 		assert.Equal(t, state.EndsAt, saved.CurrentStateEnd)
 		assert.Equal(t, state.LastEvaluationTime, saved.LastEvalTime)
+		assert.Equal(t, state.LastSentAt, saved.LastSentAt)
+		assert.EqualValues(t, state.ResolvedAt, saved.ResolvedAt)
 		assert.Equal(t, state.ResultFingerprint.String(), saved.ResultFingerprint)
 	})
 }

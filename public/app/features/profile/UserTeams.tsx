@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
 import { Team } from 'app/types';

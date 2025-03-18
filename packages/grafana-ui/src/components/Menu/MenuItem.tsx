@@ -1,13 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, {
-  ReactElement,
-  useCallback,
-  useState,
-  useRef,
-  useImperativeHandle,
-  CSSProperties,
-  AriaRole,
-} from 'react';
+import { ReactElement, useCallback, useState, useRef, useImperativeHandle, CSSProperties, AriaRole } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 
@@ -159,7 +152,13 @@ export const MenuItem = React.memo(
         className={itemStyle}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         href={url}
-        onClick={onClick}
+        onClick={(event) => {
+          if (hasSubMenu && !isSubMenuOpen) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          onClick?.(event);
+        }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
@@ -222,8 +221,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'stretch',
-      padding: theme.spacing(0.5, 2),
+      justifyContent: 'center',
+      padding: theme.spacing(0.5, 1.5),
       minHeight: theme.spacing(4),
+      borderRadius: theme.shape.radius.default,
       margin: 0,
       border: 'none',
       width: '100%',

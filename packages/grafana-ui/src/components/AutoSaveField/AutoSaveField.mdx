@@ -1,6 +1,6 @@
-import { Preview, ArgTypes } from '@storybook/blocks';
+import { Canvas, ArgTypes } from '@storybook/blocks';
 import { AutoSaveField } from './AutoSaveField';
-import { Basic } from './AutoSaveField.story.tsx';
+import * as AutoSaveFieldStories from './AutoSaveField.story';
 
 # AutoSaveField
 
@@ -217,9 +217,7 @@ The `AutoSaveField`component is comprised of:
 
 {' '}
 
-<Preview>
-  <Basic />
-</Preview>
+<Canvas of={AutoSaveFieldStories.Basic} />
 <br />
 
 ### Placement

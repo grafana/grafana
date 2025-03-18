@@ -12,7 +12,7 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
-import { FetchResponse, reportInteraction, getBackendSrv, setBackendSrv, BackendSrv } from '@grafana/runtime';
+import { FetchResponse, reportInteraction, getBackendSrv, setBackendSrv, BackendSrv, config } from '@grafana/runtime';
 
 import { ElasticDatasource } from './datasource';
 import { createElasticDatasource, createElasticQuery, mockResponseFrames } from './mocks';
@@ -721,6 +721,12 @@ describe('ElasticDatasource', () => {
           const query = ds.addAdHocFilters('', filters);
           expect(query).toBe('field\\:name:"field \\"value\\""');
         });
+
+        it('should not escape backslash in regex', () => {
+          const filters = [{ key: 'field:name', operator: '=~', value: 'field value\\/', condition: '' }];
+          const query = ds.addAdHocFilters('', filters);
+          expect(query).toBe('field\\:name:/field value\\//');
+        });
       });
     });
 
@@ -1236,6 +1242,193 @@ describe('ElasticDatasource', () => {
     });
 
     it('should return date fields', async () => {
+      ds.getResource = jest.fn().mockResolvedValue(getFieldsMockData);
+
+      await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+
+        const fieldObjects = received[0];
+        const fields = map(fieldObjects, 'text');
+        expect(fields).toEqual(['@timestamp_millis']);
+      });
+    });
+  });
+
+  describe('getFieldsFieldCap', () => {
+    const originalFeatureToggleValue = config.featureToggles.elasticsearchCrossClusterSearch;
+
+    afterEach(() => {
+      config.featureToggles.elasticsearchCrossClusterSearch = originalFeatureToggleValue;
+    });
+    const getFieldsMockData = {
+      fields: {
+        '@timestamp_millis': {
+          date: {
+            type: 'date',
+            metadata_field: false,
+          },
+        },
+        classification_terms: {
+          keyword: {
+            type: 'keyword',
+            metadata_field: false,
+          },
+        },
+        ip_address: {
+          ip: {
+            type: 'ip',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.criterion.keyword': {
+          keyword: {
+            type: 'keyword',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.criterion': {
+          text: {
+            type: 'text',
+            metadata_field: false,
+          },
+        },
+        justification_blob: {
+          object: {
+            type: 'object',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness': {
+          float: {
+            type: 'float',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score': {
+          float: {
+            type: 'float',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness': {
+          float: {
+            type: 'float',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score': {
+          float: {
+            type: 'float',
+            metadata_field: false,
+          },
+        },
+        overall_vote_score: {
+          float: {
+            type: 'float',
+            metadata_field: false,
+          },
+        },
+        _index: {
+          _index: {
+            type: '_index',
+            metadata_field: true,
+          },
+        },
+      },
+      indices: ['[test-]YYYY.MM.DD'],
+    };
+
+    it('should not retry when ES is down', async () => {
+      config.featureToggles.elasticsearchCrossClusterSearch = true;
+      const twoDaysBefore = toUtc().subtract(2, 'day').format('YYYY.MM.DD');
+      const ds = createElasticDatasource({
+        jsonData: { interval: 'Daily' },
+      });
+
+      ds.getResource = jest.fn().mockImplementation((options) => {
+        if (options.url === `test-${twoDaysBefore}/_field_caps`) {
+          return of({
+            data: {},
+          });
+        }
+        return throwError({ status: 500 });
+      });
+
+      const timeRange = { from: 1, to: 2 } as unknown as TimeRange;
+      await expect(ds.getFields(undefined, timeRange)).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+        expect(received[0]).toStrictEqual({ status: 500 });
+        expect(ds.getResource).toBeCalledTimes(1);
+      });
+    });
+
+    it('should not retry more than 7 indices', async () => {
+      config.featureToggles.elasticsearchCrossClusterSearch = true;
+      const ds = createElasticDatasource({
+        jsonData: { interval: 'Daily' },
+      });
+
+      ds.getResource = jest.fn().mockImplementation(() => {
+        return throwError({ status: 404 });
+      });
+
+      const timeRange = createTimeRange(dateTime().subtract(2, 'week'), dateTime());
+
+      await expect(ds.getFields(undefined, timeRange)).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+        expect(received[0]).toStrictEqual('Could not find an available index for this time range.');
+        expect(ds.getResource).toBeCalledTimes(7);
+      });
+    });
+
+    it('should return nested fields', async () => {
+      config.featureToggles.elasticsearchCrossClusterSearch = true;
+      const ds = createElasticDatasource({
+        jsonData: { interval: 'Daily' },
+      });
+
+      ds.getResource = jest.fn().mockResolvedValue(getFieldsMockData);
+
+      await expect(ds.getFields()).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+
+        const fieldObjects = received[0];
+        const fields = map(fieldObjects, 'text');
+        expect(fields).toEqual([
+          '@timestamp_millis',
+          'classification_terms',
+          'ip_address',
+          'justification_blob.criterion.keyword',
+          'justification_blob.criterion',
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+          'overall_vote_score',
+        ]);
+      });
+    });
+    it('should return number fields', async () => {
+      config.featureToggles.elasticsearchCrossClusterSearch = true;
+      ds.getResource = jest.fn().mockResolvedValue(getFieldsMockData);
+
+      await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+
+        const fieldObjects = received[0];
+        const fields = map(fieldObjects, 'text');
+        expect(fields).toEqual([
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+          'overall_vote_score',
+        ]);
+      });
+    });
+
+    it('should return date fields', async () => {
+      config.featureToggles.elasticsearchCrossClusterSearch = true;
       ds.getResource = jest.fn().mockResolvedValue(getFieldsMockData);
 
       await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {

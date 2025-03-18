@@ -4,20 +4,21 @@ import {
   DataQuery,
   DataSourceInstanceSettings,
   DataSourceRef,
-  getDefaultRelativeTimeRange,
-  getNextRefId,
   IntervalValues,
-  rangeUtil,
   RelativeTimeRange,
   ScopedVars,
   TimeRange,
+  getDefaultRelativeTimeRange,
+  getNextRefId,
+  rangeUtil,
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { VizPanel, sceneGraph } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   getDashboardSceneFor,
   getPanelIdForVizPanel,
@@ -41,18 +42,38 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
-import { AlertManagerManualRouting, ContactPoint, RuleFormType, RuleFormValues } from '../types/rule-form';
+import {
+  AlertManagerManualRouting,
+  ContactPoint,
+  KVObject,
+  RuleFormType,
+  RuleFormValues,
+  SimplifiedEditor,
+} from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
-import { getDefaultOrFirstCompatibleDataSource, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
+import {
+  DataSourceType,
+  GRAFANA_RULES_SOURCE_NAME,
+  getDefaultOrFirstCompatibleDataSource,
+  isGrafanaRulesSource,
+} from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
+import {
+  isAlertingRulerRule,
+  isGrafanaAlertingRuleByType,
+  isGrafanaRecordingRule,
+  isGrafanaRecordingRuleByType,
+  isGrafanaRulerRule,
+  isRecordingRulerRule,
+} from './rules';
 import { formatPrometheusDuration, parseInterval, safeParsePrometheusDuration } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
 
 export const MANUAL_ROUTING_KEY = 'grafana.alerting.manualRouting';
+export const SIMPLIFIED_QUERY_EDITOR_KEY = 'grafana.alerting.simplifiedQueryEditor';
 
 // even if the min interval is < 1m we should default to 1m, but allow arbitrary values for minInterval > 1m
 const GROUP_EVALUATION_MIN_INTERVAL_MS = safeParsePrometheusDuration(config.unifiedAlerting?.minInterval ?? '10s');
@@ -71,12 +92,12 @@ export const getDefaultFormValues = (): RuleFormValues => {
     uid: '',
     labels: [{ key: '', value: '' }],
     annotations: defaultAnnotations,
-    dataSourceName: null,
+    dataSourceName: GRAFANA_RULES_SOURCE_NAME, // let's use Grafana-managed alert rule by default
     type: canCreateGrafanaRules ? RuleFormType.grafana : canCreateCloudRules ? RuleFormType.cloudAlerting : undefined, // viewers can't create prom alerts
     group: '',
 
     // grafana
-    folder: null,
+    folder: undefined,
     queries: [],
     recordingRulesQueries: [],
     condition: '',
@@ -89,6 +110,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     overrideGrouping: false,
     overrideTimings: false,
     muteTimeIntervals: [],
+    editorSettings: getDefaultEditorSettings(),
 
     // cortex / loki
     namespace: '',
@@ -110,8 +132,26 @@ export const getDefautManualRouting = () => {
   return manualRouting !== 'false';
 };
 
+function getDefaultEditorSettings() {
+  const editorSettingsEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
+  if (!editorSettingsEnabled) {
+    return undefined;
+  }
+  //then, check in local storage if the user has saved last rule with sections simplified
+  const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
+  const notificationStepSettings = localStorage.getItem(MANUAL_ROUTING_KEY);
+  return {
+    simplifiedQueryEditor: queryEditorSettings !== 'false',
+    simplifiedNotificationEditor: notificationStepSettings !== 'false',
+  };
+}
+
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   const { name, expression, forTime, forTimeUnit, keepFiringForTime, keepFiringForTimeUnit, type } = values;
+
+  const annotations = arrayToRecord(cleanAnnotations(values.annotations));
+  const labels = arrayToRecord(cleanLabels(values.labels));
+
   if (type === RuleFormType.cloudAlerting) {
     let keepFiringFor: string | undefined;
     if (keepFiringForTime && keepFiringForTimeUnit) {
@@ -122,24 +162,21 @@ export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
       alert: name,
       for: `${forTime}${forTimeUnit}`,
       keep_firing_for: keepFiringFor,
-      annotations: arrayToRecord(values.annotations || []),
-      labels: arrayToRecord(values.labels || []),
+      annotations,
+      labels,
       expr: expression,
     };
   } else if (type === RuleFormType.cloudRecording) {
     return {
       record: name,
-      labels: arrayToRecord(values.labels || []),
+      labels,
       expr: expression,
     };
   }
   throw new Error(`unexpected rule type: ${type}`);
 }
 
-export function listifyLabelsOrAnnotations(
-  item: Labels | Annotations | undefined,
-  addEmpty: boolean
-): Array<{ key: string; value: string }> {
+export function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined, addEmpty: boolean): KVObject[] {
   const list = [...recordToArray(item || {})];
   if (addEmpty) {
     list.push({ key: '', value: '' });
@@ -148,7 +185,7 @@ export function listifyLabelsOrAnnotations(
 }
 
 //make sure default annotations are always shown in order even if empty
-export function normalizeDefaultAnnotations(annotations: Array<{ key: string; value: string }>) {
+export function normalizeDefaultAnnotations(annotations: KVObject[]) {
   const orderedAnnotations = [...annotations];
   const defaultAnnotationKeys = defaultAnnotations.map((annotation) => annotation.key);
 
@@ -192,33 +229,93 @@ export function getNotificationSettingsForDTO(
   }
   return undefined;
 }
-
+function getEditorSettingsForDTO(simplifiedEditor: SimplifiedEditor) {
+  return {
+    simplified_query_and_expressions_section: simplifiedEditor.simplifiedQueryEditor,
+    simplified_notifications_section: simplifiedEditor.simplifiedNotificationEditor,
+  };
+}
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
-  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused, contactPoints, manualRouting } =
-    values;
-  if (condition) {
-    const notificationSettings: GrafanaNotificationSettings | undefined = getNotificationSettingsForDTO(
-      manualRouting,
-      contactPoints
-    );
+  const {
+    name,
+    condition,
+    noDataState,
+    execErrState,
+    evaluateFor,
+    queries,
+    isPaused,
+    contactPoints,
+    manualRouting,
+    type,
+    metric,
+  } = values;
+  if (!condition) {
+    throw new Error('You cannot create an alert rule without specifying the alert condition');
+  }
 
+  const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints);
+  const metadata = values.editorSettings
+    ? { editor_settings: getEditorSettingsForDTO(values.editorSettings) }
+    : undefined;
+
+  const annotations = arrayToRecord(cleanAnnotations(values.annotations));
+  const labels = arrayToRecord(cleanLabels(values.labels));
+
+  const wantsAlertingRule = isGrafanaAlertingRuleByType(type);
+  const wantsRecordingRule = isGrafanaRecordingRuleByType(type!);
+
+  if (wantsAlertingRule) {
     return {
       grafana_alert: {
         title: name,
         condition,
-        no_data_state: noDataState,
-        exec_err_state: execErrState,
         data: queries.map(fixBothInstantAndRangeQuery),
         is_paused: Boolean(isPaused),
+
+        // Alerting rule specific
+        no_data_state: noDataState,
+        exec_err_state: execErrState,
         notification_settings: notificationSettings,
+        metadata,
       },
+      annotations,
+      labels,
+
+      // Alerting rule specific
       for: evaluateFor,
-      annotations: arrayToRecord(values.annotations || []),
-      labels: arrayToRecord(values.labels || []),
+    };
+  } else if (wantsRecordingRule) {
+    return {
+      grafana_alert: {
+        title: name,
+        condition,
+        data: queries.map(fixBothInstantAndRangeQuery),
+        is_paused: Boolean(isPaused),
+
+        // Recording rule specific
+        record: {
+          metric: metric ?? name,
+          from: condition,
+        },
+      },
+      annotations,
+      labels,
     };
   }
-  throw new Error('Cannot create rule without specifying alert condition');
+
+  throw new Error(`Failed to convert form values to Grafana rule: unknown type ${type}`);
 }
+
+export const cleanAnnotations = (kvs: KVObject[]) =>
+  kvs.map(trimKeyAndValue).filter(({ key, value }: KVObject): Boolean => Boolean(key) && Boolean(value));
+
+export const cleanLabels = (kvs: KVObject[]) =>
+  kvs.map(trimKeyAndValue).filter(({ key }: KVObject): Boolean => Boolean(key));
+
+const trimKeyAndValue = ({ key, value }: KVObject): KVObject => ({
+  key: key.trim(),
+  value: value.trim(),
+});
 
 export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
   const contactPoint: ContactPoint | undefined = ga.notification_settings
@@ -246,39 +343,82 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
   return routingSettings;
 }
 
+function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
+  // we need to check if the feature toggle is enabled as it might be disabled after the rule was created with the feature enabled
+  if (!config.featureToggles.alertingQueryAndExpressionsStepMode) {
+    return undefined;
+  }
+
+  if (ga.metadata?.editor_settings) {
+    return {
+      simplifiedQueryEditor: ga.metadata.editor_settings.simplified_query_and_expressions_section,
+      simplifiedNotificationEditor: ga.metadata.editor_settings.simplified_notifications_section,
+    };
+  }
+
+  return {
+    simplifiedQueryEditor: false,
+    simplifiedNotificationEditor: Boolean(ga.notification_settings), // in case this rule was created before the new field was added, we'll default to current routing settings
+  };
+}
+
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
 
   const defaultFormValues = getDefaultFormValues();
   if (isGrafanaRulesSource(ruleSourceName)) {
-    if (isGrafanaRulerRule(rule)) {
+    // GRAFANA-MANAGED RULES
+    if (isGrafanaRecordingRule(rule)) {
+      // grafana recording rule
       const ga = rule.grafana_alert;
-
-      const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
-
       return {
         ...defaultFormValues,
         name: ga.title,
-        type: RuleFormType.grafana,
+        type: RuleFormType.grafanaRecording,
         group: group.name,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
-        evaluateFor: rule.for || '0',
-        noDataState: ga.no_data_state,
-        execErrState: ga.exec_err_state,
         queries: ga.data,
         condition: ga.condition,
         annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
         labels: listifyLabelsOrAnnotations(rule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
-
-        contactPoints: routingSettings,
-        manualRouting: Boolean(routingSettings),
+        metric: ga.record?.metric,
       };
+    } else if (isGrafanaRulerRule(rule)) {
+      // grafana alerting rule
+      const ga = rule.grafana_alert;
+      const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
+      if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
+        return {
+          ...defaultFormValues,
+          name: ga.title,
+          type: RuleFormType.grafana,
+          group: group.name,
+          evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
+          evaluateFor: rule.for || '0',
+          noDataState: ga.no_data_state,
+          execErrState: ga.exec_err_state,
+          queries: ga.data,
+          condition: ga.condition,
+          annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
+          labels: listifyLabelsOrAnnotations(rule.labels, true),
+          folder: { title: namespace, uid: ga.namespace_uid },
+          isPaused: ga.is_paused,
+
+          contactPoints: routingSettings,
+          manualRouting: Boolean(routingSettings),
+
+          editorSettings: getEditorSettingsFromDTO(ga),
+        };
+      } else {
+        throw new Error('Unexpected type of rule for grafana rules source');
+      }
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');
     }
   } else {
+    // DATASOURCE-MANAGED RULES
     if (isAlertingRulerRule(rule)) {
       const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
 
@@ -367,14 +507,16 @@ export function recordingRulerRuleToRuleForm(
   };
 }
 
-export const getDefaultQueries = (): AlertQuery[] => {
+export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const dataSource = getDefaultOrFirstCompatibleDataSource();
-
   if (!dataSource) {
-    return [...getDefaultExpressions('A', 'B')];
+    const expressions = isRecordingRule ? getDefaultExpressionsForRecording('A') : getDefaultExpressions('A', 'B');
+    return [...expressions];
   }
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
+  const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
+  const isLokiOrPrometheus = dataSource?.type === DataSourceType.Prometheus || dataSource?.type === DataSourceType.Loki;
   return [
     {
       refId: 'A',
@@ -383,9 +525,10 @@ export const getDefaultQueries = (): AlertQuery[] => {
       relativeTimeRange,
       model: {
         refId: 'A',
+        instant: isLokiOrPrometheus ? true : undefined,
       },
     },
-    ...getDefaultExpressions('B', 'C'),
+    ...expressions,
   ];
 };
 
@@ -406,7 +549,6 @@ export const getDefaultRecordingRulesQueries = (
     },
   ];
 };
-
 const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
   const refOne = refIds[0];
   const refTwo = refIds[1];
@@ -482,6 +624,46 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
       datasourceUid: ExpressionDatasourceUID,
       queryType: '',
       model: thresholdExpression,
+    },
+  ];
+};
+const getDefaultExpressionsForRecording = (refOne: string): AlertQuery[] => {
+  const reduceExpression: ExpressionQuery = {
+    refId: refOne,
+    type: ExpressionQueryType.reduce,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: [refOne],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+    reducer: 'last',
+    expression: 'A',
+  };
+
+  return [
+    {
+      refId: refOne,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: '',
+      model: reduceExpression,
     },
   ];
 };
@@ -579,16 +761,18 @@ export const panelToRuleFormValues = async (
   }
 
   const { folderTitle, folderUid } = dashboard.meta;
+  const folder =
+    folderUid && folderTitle
+      ? {
+          kind: 'folder',
+          uid: folderUid,
+          title: folderTitle,
+        }
+      : undefined;
 
   const formValues = {
     type: RuleFormType.grafana,
-    folder:
-      folderUid && folderTitle
-        ? {
-            uid: folderUid,
-            title: folderTitle,
-          }
-        : undefined,
+    folder,
     queries,
     name: panel.title,
     condition: queries[queries.length - 1].refId,
@@ -650,15 +834,18 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
 
   const { folderTitle, folderUid } = dashboard.state.meta;
 
+  const folder =
+    folderUid && folderTitle
+      ? {
+          kind: 'folder',
+          uid: folderUid,
+          title: folderTitle,
+        }
+      : undefined;
+
   const formValues = {
     type: RuleFormType.grafana,
-    folder:
-      folderUid && folderTitle
-        ? {
-            uid: folderUid,
-            title: folderTitle,
-          }
-        : undefined,
+    folder,
     queries: grafanaQueries,
     name: vizPanel.state.title,
     condition: grafanaQueries[grafanaQueries.length - 1].refId,
@@ -674,6 +861,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
       },
     ],
   };
+
   return formValues;
 };
 
@@ -727,4 +915,25 @@ export const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormVal
 
 export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
   return ignoreHiddenQueries(rulerRuleToFormValues(rule));
+}
+
+export function getInstantFromDataQuery(model: AlertDataQuery, type: string): boolean | undefined {
+  // if the datasource is not prometheus or loki, instant is defined in the model or defaults to undefined
+  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
+    if ('instant' in model) {
+      return model.instant;
+    } else {
+      if ('queryType' in model) {
+        return model.queryType === 'instant';
+      } else {
+        return undefined;
+      }
+    }
+  }
+  // if the datasource is prometheus or loki, instant is defined in the model, or defaults to true
+  const isInstantForPrometheus = 'instant' in model && model.instant !== undefined ? model.instant : true;
+  const isInstantForLoki = 'queryType' in model && model.queryType !== undefined ? model.queryType === 'instant' : true;
+
+  const isInstant = type === DataSourceType.Prometheus ? isInstantForPrometheus : isInstantForLoki;
+  return isInstant;
 }

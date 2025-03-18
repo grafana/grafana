@@ -95,7 +95,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				result.Result.Meta.UpdatedBy.Name = userInDbName
 				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
-				result.Result.Meta.FolderUID = ""
+				result.Result.Meta.FolderUID = "general"
 				result.Result.FolderUID = "general"
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
@@ -362,7 +362,7 @@ func TestLibraryElementsGetPermissions(t *testing.T) {
 			permissions: map[string][]string{
 				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Other_folder")},
 			},
-			status: http.StatusNotFound,
+			status: http.StatusForbidden,
 		},
 	}
 	for _, testCase := range getCases {

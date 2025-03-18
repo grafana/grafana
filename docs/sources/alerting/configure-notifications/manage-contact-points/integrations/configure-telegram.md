@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Telegram
 title: Configure Telegram for Alerting
-weight: 0
+weight: 160
 ---
 
 # Configure Telegram for Alerting
@@ -21,6 +21,11 @@ weight: 0
 Use the Grafana Alerting - Telegram integration to send [Telegram](https://telegram.org/) notifications when your alerts are firing.
 
 ## Before you begin
+
+### Telegram limitation
+
+Telegram messages are limited to 4096 UTF-8 characters. If you use a `parse_mode` other than `None`, truncation may result in an invalid message, causing the notification to fail.
+For longer messages, we recommend using an alternative contact method.
 
 ### Telegram bot API token and chat ID
 
@@ -59,6 +64,9 @@ To create your Telegram integration in Grafana Alerting, complete the following 
 1. In the **BOT API Token** field, copy in the bot API token.
 1. In the **Chat ID** field, copy in the chat ID.
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
 1. Click **Save contact point**.
 
 ## Next steps

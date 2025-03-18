@@ -10,13 +10,15 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -30,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -40,7 +43,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -101,7 +103,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			service.On("GetPublicDashboardForView", mock.Anything, mock.AnythingOfType("string")).
 				Return(test.DashboardResult, test.Err).Maybe()
 
-			testServer := setupTestServer(t, nil, service, anonymousUser, true)
+			testServer := setupTestServer(t, nil, service, anonymousUser)
 
 			response := callAPI(testServer, http.MethodGet,
 				fmt.Sprintf("/api/public/dashboards/%s", test.AccessToken),
@@ -127,7 +129,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 				var errResp errutil.PublicError
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, "Public dashboard not found", errResp.Message)
+				assert.Equal(t, "Dashboard not found", errResp.Message)
 				assert.Equal(t, "publicdashboards.notFound", errResp.MessageID)
 			}
 		})
@@ -190,7 +192,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	setup := func(enabled bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
-		testServer := setupTestServer(t, nil, service, anonymousUser, true)
+		testServer := setupTestServer(t, nil, service, anonymousUser)
 
 		return testServer, service
 	}
@@ -296,7 +298,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	}
 
 	// create dashboard
-	dashboardStoreService, err := dashboardStore.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db), quotatest.New(false, nil))
+	dashboardStoreService, err := dashboardStore.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	dashboard, err := dashboardStoreService.SaveDashboard(context.Background(), saveDashboardCmd)
 	require.NoError(t, err)
@@ -323,7 +325,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	dashService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStoreService, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-		foldertest.NewFakeService(), nil,
+		foldertest.NewFakeService(), folder.NewFakeStore(), nil, nil, nil, nil, quotatest.New(false, nil), nil,
 	)
 	require.NoError(t, err)
 
@@ -334,7 +336,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	require.NoError(t, err)
 
 	// setup test server
-	server := setupTestServer(t, cfg, pds, anonymousUser, true)
+	server := setupTestServer(t, cfg, pds, anonymousUser)
 
 	resp := callAPI(server, http.MethodPost,
 		fmt.Sprintf("/api/public/dashboards/%s/panels/1/query", pubdash.AccessToken),
@@ -417,7 +419,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 					Return(test.Annotations, test.ServiceError).Once()
 			}
 
-			testServer := setupTestServer(t, nil, service, anonymousUser, true)
+			testServer := setupTestServer(t, nil, service, anonymousUser)
 
 			path := fmt.Sprintf("/api/public/dashboards/%s/annotations?from=%s&to=%s", test.AccessToken, test.From, test.To)
 			response := callAPI(testServer, http.MethodGet, path, nil, t)

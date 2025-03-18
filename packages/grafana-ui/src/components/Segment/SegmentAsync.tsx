@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import { isObject } from 'lodash';
-import React, { HTMLProps } from 'react';
+import { HTMLProps } from 'react';
+import * as React from 'react';
 import { useAsyncFn } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsync';
 

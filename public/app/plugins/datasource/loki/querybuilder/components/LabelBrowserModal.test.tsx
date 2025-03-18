@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 
 import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiDatasource } from '../../datasource';

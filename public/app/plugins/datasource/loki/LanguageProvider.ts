@@ -1,8 +1,8 @@
 import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
 
-import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange, ScopedVars } from '@grafana/data';
+import { BackendSrvRequest, config } from '@grafana/runtime';
 
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
 import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
@@ -17,6 +17,7 @@ import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType, LabelType } from '.
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';
+const HIDDEN_LABELS = ['__aggregrated_metric__', '__tenant_id__', '__stream_shard__'];
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
@@ -31,7 +32,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   private seriesCache = new LRUCache<string, Record<string, string[]>>({ max: 10 });
   private labelsCache = new LRUCache<string, string[]>({ max: 10 });
+  private detectedFieldValuesCache = new LRUCache<string, string[]>({ max: 10 });
   private labelsPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
+  private detectedLabelValuesPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
 
   constructor(datasource: LokiDatasource, initialValues?: any) {
     super();
@@ -42,11 +45,20 @@ export default class LokiLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  request = async (url: string, params?: Record<string, string | number>) => {
+  request = async (
+    url: string,
+    params?: Record<string, string | number>,
+    throwError?: boolean,
+    requestOptions?: Partial<BackendSrvRequest>
+  ) => {
     try {
-      return await this.datasource.metadataRequest(url, params);
+      return await this.datasource.metadataRequest(url, params, requestOptions);
     } catch (error) {
-      console.error(error);
+      if (throwError) {
+        throw error;
+      } else {
+        console.error(error);
+      }
     }
 
     return undefined;
@@ -57,11 +69,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   start = (timeRange?: TimeRange) => {
     const range = timeRange ?? this.getDefaultTimeRange();
+    const newRangeParams = this.datasource.getTimeRangeParams(range);
+    const prevRangeParams = this.startedTimeRange ? this.datasource.getTimeRangeParams(this.startedTimeRange) : null;
     // refetch labels if either there's not already a start task or the time range has changed
     if (
       !this.startTask ||
-      this.startedTimeRange?.from.isSame(range.from) === false ||
-      this.startedTimeRange?.to.isSame(range.to) === false
+      !prevRangeParams ||
+      newRangeParams.start !== prevRangeParams.start ||
+      newRangeParams.end !== prevRangeParams.end
     ) {
       this.startedTimeRange = range;
       this.startTask = this.fetchLabels({ timeRange: range }).then(() => {
@@ -133,8 +148,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @throws An error if the fetch operation fails.
    */
   async fetchLabels(options?: { streamSelector?: string; timeRange?: TimeRange }): Promise<string[]> {
-    // If there is no stream selector - use /labels endpoint (https://github.com/grafana/loki/pull/11982)
-    if (!options || !options.streamSelector) {
+    // We'll default to use `/labels`. If the flag is disabled, and there's a streamSelector, we'll use the series endpoint.
+    if (config.featureToggles.lokiLabelNamesQueryApi || !options?.streamSelector) {
       return this.fetchLabelsByLabelsEndpoint(options);
     } else {
       const data = await this.fetchSeriesLabels(options.streamSelector, { timeRange: options.timeRange });
@@ -152,17 +167,23 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @returns A promise containing an array of label keys.
    * @throws An error if the fetch operation fails.
    */
-  private async fetchLabelsByLabelsEndpoint(options?: { timeRange?: TimeRange }): Promise<string[]> {
+  private async fetchLabelsByLabelsEndpoint(options?: {
+    streamSelector?: string;
+    timeRange?: TimeRange;
+  }): Promise<string[]> {
     const url = 'labels';
     const range = options?.timeRange ?? this.getDefaultTimeRange();
-    const timeRange = this.datasource.getTimeRangeParams(range);
-
-    const res = await this.request(url, timeRange);
+    const { start, end } = this.datasource.getTimeRangeParams(range);
+    const params: Record<string, string | number> = { start, end };
+    if (options?.streamSelector && options?.streamSelector !== EMPTY_SELECTOR) {
+      params['query'] = options.streamSelector;
+    }
+    const res = await this.request(url, params);
     if (Array.isArray(res)) {
-      const labels = res
+      const labels = Array.from(new Set(res))
         .slice()
         .sort()
-        .filter((label) => label !== '__name__');
+        .filter((label: string) => HIDDEN_LABELS.includes(label) === false);
       this.labelKeys = labels;
       return this.labelKeys;
     }
@@ -233,6 +254,73 @@ export default class LokiLanguageProvider extends LanguageProvider {
   // Round nanoseconds epoch to nearest 5 minute interval
   private roundTime(nanoseconds: number): number {
     return nanoseconds ? Math.floor(nanoseconds / NS_IN_MS / 1000 / 60 / 5) : 0;
+  }
+
+  async fetchDetectedLabelValues(
+    labelName: string,
+    queryOptions?: {
+      expr?: string;
+      timeRange?: TimeRange;
+      limit?: number;
+      scopedVars?: ScopedVars;
+      throwError?: boolean;
+    },
+    requestOptions?: Partial<BackendSrvRequest>
+  ): Promise<string[] | Error> {
+    const label = encodeURIComponent(this.datasource.interpolateString(labelName));
+
+    const interpolatedExpr =
+      queryOptions?.expr && queryOptions.expr !== EMPTY_SELECTOR
+        ? this.datasource.interpolateString(queryOptions.expr, queryOptions.scopedVars)
+        : undefined;
+
+    const url = `detected_field/${label}/values`;
+    const range = queryOptions?.timeRange ?? this.getDefaultTimeRange();
+    const rangeParams = this.datasource.getTimeRangeParams(range);
+    const { start, end } = rangeParams;
+    const params: KeyValue<string | number> = { start, end, limit: queryOptions?.limit ?? 1000 };
+    let paramCacheKey = label;
+
+    if (interpolatedExpr) {
+      params.query = interpolatedExpr;
+      paramCacheKey += interpolatedExpr;
+    }
+
+    const cacheKey = this.generateCacheKey(url, start, end, paramCacheKey);
+
+    // Values in cache, return
+    const labelValues = this.detectedFieldValuesCache.get(cacheKey);
+    if (labelValues) {
+      return labelValues;
+    }
+
+    // Promise in cache, return
+    let labelValuesPromise = this.detectedLabelValuesPromisesCache.get(cacheKey);
+    if (labelValuesPromise) {
+      return labelValuesPromise;
+    }
+
+    labelValuesPromise = new Promise(async (resolve, reject) => {
+      try {
+        const data = await this.request(url, params, queryOptions?.throwError, requestOptions);
+        if (Array.isArray(data)) {
+          const labelValues = data.slice().sort();
+          this.detectedFieldValuesCache.set(cacheKey, labelValues);
+          this.detectedLabelValuesPromisesCache.delete(cacheKey);
+          resolve(labelValues);
+        }
+      } catch (error) {
+        if (queryOptions?.throwError) {
+          reject(error);
+        } else {
+          console.error(error);
+          resolve([]);
+        }
+      }
+    });
+    this.detectedLabelValuesPromisesCache.set(cacheKey, labelValuesPromise);
+
+    return labelValuesPromise;
   }
 
   /**

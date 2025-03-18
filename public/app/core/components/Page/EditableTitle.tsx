@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
@@ -117,6 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       display: 'flex',
       gap: theme.spacing(1),
+      height: theme.spacing(theme.components.height.md),
     }),
   };
 };

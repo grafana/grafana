@@ -1,5 +1,5 @@
-import React, { AnchorHTMLAttributes, forwardRef } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { AnchorHTMLAttributes, forwardRef } from 'react';
+import { Link as RouterLink } from 'react-router-dom-v5-compat';
 
 import { locationUtil, textUtil } from '@grafana/data';
 

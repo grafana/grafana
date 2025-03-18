@@ -1,45 +1,36 @@
-# Guidelines for code comments in grafana-\* packages
+# Guidelines for code comments in Grafana packages
 
-This document aims to give you some recommendation on how to add code comments to the exported code in the grafana packages.
-
-## Table of Contents
-
-1. [Add package description](#add-package-description)
-1. [Set stability of an API](#set-stability-of-an-api)
-1. [Deprecate an API](#deprecate-an-api)
-1. [Specify parameters](#specify-parameters)
-1. [Set return values](#set-return-values)
-
----
+This guide provides recommendations for adding code comments in `grafana-\*` packages.
 
 ## Add package description
 
 Each package has an overview explaining the overall responsibility and usage of the package.
 
-You can document this description with [`@packageDocumentation`](https://api-extractor.com/pages/tsdoc/tag_packagedocumentation/) tag.
+Use the [`@packageDocumentation`](https://api-extractor.com/pages/tsdoc/tag_packagedocumentation/) tag to document the package.
 
-Add this tag to the `<packageRoot>/src/index.ts` entry file to have one place for the package description.
+Add the `@packageDocumentation` tag to the `<packageRoot>/src/index.ts` entry file to have one place for the package description.
 
 ## Set stability of an API
 
-All `exported` apis from the package should have a release tag to indicate its stability.
+Add a release tag to all exported APIs from the package to indicate its stability.
 
-- [`@alpha`](https://api-extractor.com/pages/tsdoc/tag_alpha/) - early draft of api and will probably change.
-- [`@beta`](https://api-extractor.com/pages/tsdoc/tag_beta/) - close to being stable but might change.
-- [`@public`](https://api-extractor.com/pages/tsdoc/tag_public/) - ready for usage in production.
-- [`@internal`](https://api-extractor.com/pages/tsdoc/tag_internal/) - for internal use only.
+- [`@alpha`](https://api-extractor.com/pages/tsdoc/tag_alpha/) - denotes an early draft of API that will probably change.
+- [`@beta`](https://api-extractor.com/pages/tsdoc/tag_beta/) - denotes that the API is close to being stable but might change.
+- [`@public`](https://api-extractor.com/pages/tsdoc/tag_public/) - denotes that the API is ready for usage in production.
+- [`@internal`](https://api-extractor.com/pages/tsdoc/tag_internal/) - denotes that the API is for internal use only.
 
-### Main stability of APIs
+### Indicate main stability of APIs
 
-Add a tag to mark the stability of the whole exported `class/interface/function/type` etc.
+To indicate the main stability of APIs:
 
-Please place the `release tag` at the bottom of the comment to make it consistent among files and easier to read.
+- Add a tag to mark the stability of the whole exported `class/interface/function/type`, and other interfaces.
+- Place the release tag at the bottom of the comment to make it consistent among files and easier to read.
 
 **Do:**
 
 ````typescript
 /**
- * Will help to create DataFrame objects and handle
+ * Helps to create DataFrame objects and handle
  * the heavy lifting of creating a complex object.
  *
  * @example
@@ -54,11 +45,11 @@ export class DataFrameFactory {
 }
 ````
 
-**Don't**
+**Don't:**
 
 ````typescript
 /**
- * Will help to create DataFrame objects and handle
+ * Helps to create DataFrame objects and handle
  * the heavy lifting of creating a complex object.
  *
  * @public
@@ -72,17 +63,18 @@ export class DataFrameFactory {
 }
 ````
 
-### Partial stability of APIs
+### Indicate partial stability of APIs
 
-Add the main stability of the API at the top according to [Main stability of API](#main-stability-of-api).
+To indicate the partial stability of APIs:
 
-Then override the non-stable parts of the API with the proper [release tag](#release-tags). This should also be place at the bottom of the comment block.
+1. Add the main stability of the API at the top according to [Main stability of API](#indicate-main-stability-of-apis).
+1. Override the non-stable parts of the API with the proper release tag. This tag should also be placed at the bottom of the comment block.
 
 **Do:**
 
 ````typescript
 /**
- * Will help to create DataFrame objects and handle
+ * Helps to create DataFrame objects and handle
  * the heavy lifting of creating a complex object.
  *
  * @example
@@ -102,11 +94,11 @@ export class DataFrameFactory {
 }
 ````
 
-**Don't**
+**Don't:**
 
 ````typescript
 /**
- * Will help to create DataFrame objects and handle
+ * Helps to create DataFrame objects and handle
  * the heavy lifting of creating a complex object.
  *
  * @example
@@ -131,7 +123,7 @@ export class DataFrameFactory {
 
 If you want to mark an API as deprecated to signal that this API will be removed in the future, then add the [`@deprecated`](https://api-extractor.com/pages/tsdoc/tag_deprecated/) tag.
 
-If applicable add a reason why the API is deprecated directly after the `@deprecated tag`.
+If applicable, add a reason why the API is deprecated directly after the `@deprecated tag`.
 
 ## Specify parameters
 
@@ -143,7 +135,7 @@ This attribute can be skipped if the type provided by `typescript` and the funct
 
 ```typescript
 /**
- * Will help to create a resource resolver depending
+ * Helps to create a resource resolver depending
  * on the current execution context.
  *
  * @param context - The current execution context.
@@ -162,7 +154,7 @@ export const factory = (context: Context): IResolver => {
 
 ```typescript
 /**
- * Will compare two numbers to see if they are equal to each others.
+ * Compares two numbers to see if they are equal to each other.
  *
  * @param x - The first number
  * @param y - The second number
@@ -175,15 +167,15 @@ export const isEqual = (x: number, y: number): boolean => {
 
 ## Set return values
 
-If you want to specify the return value from a function you can use the [`@returns`](https://api-extractor.com/pages/tsdoc/tag_returns/) tag.
+To specify the return value from a function, you can use the [`@returns`](https://api-extractor.com/pages/tsdoc/tag_returns/) tag.
 
-This attribute can be skipped if the type provided by `typescript` and the function comment or the function name is enough to explain what the function returns.
+You can skip this attribute if the type provided by `typescript` and the function comment or the function name is enough to explain what the function returns.
 
 **Do:**
 
 ```typescript
 /**
- * Will help to create a resource resolver depending
+ * Helps to create a resource resolver depending
  * on the current execution context.
  *
  * @param context - The current execution context.
@@ -198,11 +190,11 @@ export const factory = (context: Context): IResolver => {
 };
 ```
 
-**Don't**
+**Don't:**
 
 ```typescript
 /**
- * Will compare two numbers to see if they are equal to each others.
+ * Compares two numbers to see if they are equal to each other.
  *
  * @returns true if values are equal
  * @public

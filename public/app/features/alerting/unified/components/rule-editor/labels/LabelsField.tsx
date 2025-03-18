@@ -1,21 +1,21 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Space, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { Trans, t } from 'app/core/internationalization';
 
 import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
-import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
-import { fetchRulerRulesIfNotFetchedYet } from '../../../state/actions';
 import { SupportedPlugin } from '../../../types/pluginBridges';
-import { RuleFormValues } from '../../../types/rule-form';
+import { KBObjectArray, RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { isPrivateLabelKey } from '../../../utils/labels';
+import { isRecordingRuleByType } from '../../../utils/rules';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
 import { AlertLabels } from '../../AlertLabels';
 import { NeedHelpInfo } from '../NeedHelpInfo';
+import { useAlertRuleSuggestions } from '../useAlertRuleSuggestions';
 
 import { AddButton, RemoveButton } from './LabelsButtons';
 
@@ -24,52 +24,6 @@ const useGetOpsLabelsKeys = (skip: boolean) => {
     skip,
   });
   return { loading: isloadingLabels, labelsOpsKeys: currentData };
-};
-const useGetAlertRulesLabels = (
-  dataSourceName: string
-): { loading: boolean; labelsByKey: Record<string, Set<string>> } => {
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(fetchRulerRulesIfNotFetchedYet(dataSourceName));
-  }, [dispatch, dataSourceName]);
-
-  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const rulerRequest = rulerRuleRequests[dataSourceName];
-
-  const labelsByKeyResult = useMemo<Record<string, Set<string>>>(() => {
-    const labelsByKey: Record<string, Set<string>> = {};
-
-    const rulerRulesConfig = rulerRequest?.result;
-    if (!rulerRulesConfig) {
-      return labelsByKey;
-    }
-
-    const allRules = Object.values(rulerRulesConfig)
-      .flatMap((groups) => groups)
-      .flatMap((group) => group.rules);
-
-    allRules.forEach((rule) => {
-      if (rule.labels) {
-        Object.entries(rule.labels).forEach(([key, value]) => {
-          if (!value) {
-            return;
-          }
-
-          const labelEntry = labelsByKey[key];
-          if (labelEntry) {
-            labelEntry.add(value);
-          } else {
-            labelsByKey[key] = new Set([value]);
-          }
-        });
-      }
-    });
-
-    return labelsByKey;
-  }, [rulerRequest]);
-
-  return { loading: rulerRequest?.loading, labelsByKey: labelsByKeyResult };
 };
 
 function mapLabelsToOptions(
@@ -102,16 +56,13 @@ export type LabelsSubformValues = {
 export interface LabelsSubFormProps {
   dataSourceName: string;
   initialLabels: Array<{ key: string; value: string }>;
-  onClose: (
-    labelsToUodate?: Array<{
-      key: string;
-      value: string;
-    }>
-  ) => void;
+  onClose: (labelsToUodate?: KBObjectArray) => void;
 }
 
 export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: LabelsSubFormProps) {
   const styles = useStyles2(getStyles);
+  const { watch } = useFormContext<RuleFormValues>();
+  const type = watch('type') ?? RuleFormType.grafana;
 
   const onSave = (labels: LabelsSubformValues) => {
     onClose(labels.labelsInSubform);
@@ -129,7 +80,7 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
     <FormProvider {...formAPI}>
       <form onSubmit={formAPI.handleSubmit(onSave)}>
         <Stack direction="column" gap={4}>
-          <Text>Add labels to your rule for searching, silencing, or routing to a notification policy.</Text>
+          <Text>{getLabelText(type)}</Text>
           <Stack direction="column" gap={1}>
             <LabelsWithSuggestions dataSourceName={dataSourceName} />
             <Space v={2} />
@@ -137,7 +88,7 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
             <Space v={1} />
             <div className={styles.confirmButton}>
               <Button type="button" variant="secondary" onClick={onCancel}>
-                Cancel
+                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
               </Button>
               <Button type="submit">Save</Button>
             </div>
@@ -158,7 +109,7 @@ export function useCombinedLabels(
   selectedKey: string
 ) {
   // ------- Get labels keys and their values from existing alerts
-  const { loading, labelsByKey: labelsByKeyFromExisingAlerts } = useGetAlertRulesLabels(dataSourceName);
+  const { isLoading, labels: labelsByKeyFromExisingAlerts } = useAlertRuleSuggestions(dataSourceName);
   // ------- Get only the keys from the ops labels, as we will fetch the values for the keys once the key is selected.
   const { loading: isLoadingLabels, labelsOpsKeys = [] } = useGetOpsLabelsKeys(
     !labelsPluginInstalled || loadingLabelsPlugin
@@ -178,7 +129,7 @@ export function useCombinedLabels(
 
   //------- Convert the keys from the existing alerts to options for the dropdown
   const keysFromExistingAlerts = useMemo(() => {
-    return mapLabelsToOptions(Object.keys(labelsByKeyFromExisingAlerts).filter(isKeyAllowed), labelsInSubform);
+    return mapLabelsToOptions(Array.from(labelsByKeyFromExisingAlerts.keys()).filter(isKeyAllowed), labelsInSubform);
   }, [labelsByKeyFromExisingAlerts, labelsInSubform]);
 
   // create two groups of labels, one for ops and one for custom
@@ -195,8 +146,7 @@ export function useCombinedLabels(
     },
   ];
 
-  const selectedKeyIsFromAlerts =
-    labelsByKeyFromExisingAlerts[selectedKey] !== undefined && labelsByKeyFromExisingAlerts[selectedKey]?.size > 0;
+  const selectedKeyIsFromAlerts = labelsByKeyFromExisingAlerts.has(selectedKey);
   const selectedKeyIsFromOps = labelsByKeyOps[selectedKey] !== undefined && labelsByKeyOps[selectedKey]?.size > 0;
   const selectedKeyDoesNotExist = !selectedKeyIsFromAlerts && !selectedKeyIsFromOps;
 
@@ -248,7 +198,7 @@ export function useCombinedLabels(
 
       // values from existing alerts will take precedence over values from ops
       if (selectedKeyIsFromAlerts || !labelsPluginInstalled) {
-        return mapLabelsToOptions(labelsByKeyFromExisingAlerts[key]);
+        return mapLabelsToOptions(labelsByKeyFromExisingAlerts.get(key));
       }
       return valuesFromSelectedGopsKey;
     },
@@ -256,7 +206,7 @@ export function useCombinedLabels(
   );
 
   return {
-    loading: loading || isLoadingLabels,
+    loading: isLoading || isLoadingLabels,
     keysFromExistingAlerts,
     groupedOptions,
     getValuesForLabel,
@@ -442,13 +392,16 @@ export const LabelsWithoutSuggestions: FC = () => {
 };
 
 function LabelsField() {
+  const { watch } = useFormContext<RuleFormValues>();
+  const type = watch('type') ?? RuleFormType.grafana;
+
   return (
     <div>
       <Stack direction="column" gap={1}>
         <Text element="h5">Labels</Text>
         <Stack direction={'row'} gap={1}>
           <Text variant="bodySmall" color="secondary">
-            Add labels to your rule for searching, silencing, or routing to a notification policy.
+            {getLabelText(type)}
           </Text>
           <NeedHelpInfo
             contentText="The dropdown only displays labels that you have previously used for alerts.
@@ -460,6 +413,17 @@ function LabelsField() {
       <LabelsWithoutSuggestions />
     </div>
   );
+}
+
+function getLabelText(type: RuleFormType) {
+  const isRecordingRule = type ? isRecordingRuleByType(type) : false;
+  const text = isRecordingRule
+    ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
+    : t(
+        'alerting.alertform.labels.alerting',
+        'Add labels to your rule for searching, silencing, or routing to a notification policy.'
+      );
+  return text;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

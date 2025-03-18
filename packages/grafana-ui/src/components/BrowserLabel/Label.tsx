@@ -1,5 +1,6 @@
 import { cx, css } from '@emotion/css';
-import React, { forwardRef, HTMLAttributes, useCallback } from 'react';
+import { forwardRef, HTMLAttributes, useCallback } from 'react';
+import * as React from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';

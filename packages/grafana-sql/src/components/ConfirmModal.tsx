@@ -1,6 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import { css } from '@emotion/css';
+import { useRef, useEffect } from 'react';
 
-import { Button, Icon, Modal } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 type ConfirmModalProps = {
   isOpen: boolean;
@@ -10,6 +12,7 @@ type ConfirmModalProps = {
 };
 export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmModalProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const styles = useStyles2(getStyles);
 
   // Moved from grafana/ui
   useEffect(() => {
@@ -22,9 +25,9 @@ export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmMod
   return (
     <Modal
       title={
-        <div className="modal-header-title">
+        <div className={styles.modalHeaderTitle}>
           <Icon name="exclamation-triangle" size="lg" />
-          <span className="p-l-1">Warning</span>
+          <span className={styles.titleText}>Warning</span>
         </div>
       }
       onDismiss={onCancel}
@@ -49,3 +52,15 @@ export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmMod
     </Modal>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  titleText: css({
+    paddingLeft: theme.spacing(2),
+  }),
+  modalHeaderTitle: css({
+    fontSize: theme.typography.size.lg,
+    float: 'left',
+    paddingTop: theme.spacing(1),
+    margin: theme.spacing(0, 2),
+  }),
+});

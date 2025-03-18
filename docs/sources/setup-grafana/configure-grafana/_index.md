@@ -93,10 +93,6 @@ export GF_FEATURE_TOGGLES_ENABLE=newNavigation
 
 ## Variable expansion
 
-{{% admonition type="note" %}}
-Only available in Grafana 7.1+.
-{{% /admonition %}}
-
 If any of your options contains the expression `$__<provider>{<argument>}`
 or `${<environment variable>}`, then they will be processed by Grafana's
 variable expander. The expander runs the provider with the provided argument
@@ -299,10 +295,6 @@ Mode where the socket should be set when `protocol=socket`. Make sure that Grafa
 Path where the socket should be created when `protocol=socket`. Make sure Grafana has appropriate permissions for that path before you change this setting.
 
 ### cdn_url
-
-{{% admonition type="note" %}}
-Available in Grafana v7.4 and later versions.
-{{% /admonition %}}
 
 Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
 
@@ -547,10 +539,6 @@ Set to false, disables checking for new versions of Grafana from Grafana's GitHu
 
 ### check_for_plugin_updates
 
-{{% admonition type="note" %}}
-Available in Grafana v8.5.0 and later versions.
-{{% /admonition %}}
-
 Set to false disables checking for new versions of installed plugins from https://grafana.com. When enabled, the check for a new plugin runs every 10 minutes. It will notify, via the UI, when a new plugin update exists. The check itself will not prompt any auto-updates of the plugin, nor will it send any sensitive information.
 
 ### google_analytics_ua_id
@@ -611,8 +599,6 @@ Set to `false` to remove all feedback links from the UI. Default is `true`.
 
 ### disable_initial_admin_creation
 
-> Only available in Grafana v6.5+.
-
 Disable creation of admin user on first start of Grafana. Default is `false`.
 
 ### admin_user
@@ -644,7 +630,11 @@ Define a whitelist of allowed IP addresses or domains, with ports, to be used in
 
 ### disable_brute_force_login_protection
 
-Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. An existing user's account will be locked after 5 attempts in 5 minutes.
+Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. An existing user's account will be unable to login for 5 minutes if all login attempts are spent within a 5 minute window.
+
+### brute_force_login_protection_max_attempts
+
+Configure how many login attempts a user have within a 5 minute window before the account will be locked. Default is `5`.
 
 ### cookie_secure
 
@@ -701,6 +691,20 @@ You can enable both policies simultaneously.
 
 Set the policy template that will be used when adding the `Content-Security-Policy-Report-Only` header to your requests. `$NONCE` in the template includes a random nonce.
 
+### actions_allow_post_url
+
+Sets API paths to be accessible between plugins using the POST verb. If the value is empty, you can only pass remote requests through the proxy. If the value is set, you can also send authenticated POST requests to the local server. You typically use this to enable backend communication between plugins.
+
+This is a comma-separated list which uses glob matching.
+
+This will allow access to all plugins that have a backend:
+
+`actions_allow_post_url=/api/plugins/*`
+
+This will limit access to the backend of a single plugin:
+
+`actions_allow_post_url=/api/plugins/grafana-special-app`
+
 <hr />
 
 ### angular_support_enabled
@@ -727,10 +731,9 @@ List of allowed headers to be set by the user. Suggested to use for if authentic
 
 Set to `true` to execute the CSRF check even if the login cookie is not in a request (default `false`).
 
-### disable_frontend_sandbox_for_plugins
+### enable_frontend_sandbox_for_plugins
 
-Comma-separated list of plugins ids that won't be loaded inside the frontend sandbox. It is recommended to only use this
-option for plugins that are known to have problems running inside the frontend sandbox.
+Comma-separated list of plugins ids that will be loaded inside the frontend sandbox.
 
 ## [snapshots]
 
@@ -754,10 +757,6 @@ Set name for external snapshot button. Defaults to `Publish to snapshots.raintan
 
 Set to true to enable this Grafana instance to act as an external snapshot server and allow unauthenticated requests for creating and deleting snapshots. Default is `false`.
 
-### snapshot_remove_expired
-
-Enable this to automatically remove expired snapshots. Default is `true`.
-
 <hr />
 
 ## [dashboards]
@@ -768,12 +767,10 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 ### min_refresh_interval
 
-> Only available in Grafana v6.7+.
-
 This feature prevents users from setting the dashboard refresh interval to a lower value than a given interval value. The default interval value is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
-As of Grafana v7.3, this also limits the refresh interval options in Explore.
+This also limits the refresh interval options in Explore.
 
 ### default_home_dashboard_path
 
@@ -784,6 +781,12 @@ On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the d
 {{% /admonition %}}
 
 <hr />
+
+## [datasources]
+
+### default_manage_alerts_ui_toggle
+
+Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source. It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
 
 ## [sql_datasources]
 
@@ -829,9 +832,8 @@ that this organization already exists. Default is 1.
 
 ### auto_assign_org_role
 
-The `auto_assign_org_role` setting determines the default role assigned to new users
-in the main organization (if `auto_assign_org` setting is set to true).
-The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For example:
+The `auto_assign_org_role` setting determines the default role assigned to new users in the main organization if `auto_assign_org` setting is set to `true`.
+You can set this to one of the following roles: (`Viewer` (default), `Admin`, `Editor`, and `None`). For example:
 
 `auto_assign_org_role = Viewer`
 
@@ -892,6 +894,12 @@ The duration in time a verification email, used to update the email address of a
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is 1h (1 hour).
 
+### last_seen_update_interval
+
+The frequency of updating a user's last seen time.
+This setting should be expressed as a duration. Examples: 1h (hour), 15m (minutes)
+Default is `15m` (15 minutes). The minimum supported duration is `5m` (5 minutes). The maximum supported duration is `1h` (1 hour).
+
 ### hidden_users
 
 This is a comma-separated list of usernames. Users specified here are hidden in the Grafana UI. They are still visible to Grafana administrators and to themselves.
@@ -949,6 +957,18 @@ This setting is ignored if multiple OAuth providers are configured. Default is `
 
 How many seconds the OAuth state cookie lives before being deleted. Default is `600` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
+
+### oauth_login_error_message
+
+A custom error message for when users are unauthorized. Default is a key for an internationalized phrase in the frontend, `Login provider denied login request`.
+
+### oauth_refresh_token_server_lock_min_wait_ms
+
+Minimum wait time in milliseconds for the server lock retry mechanism. Default is `1000` (milliseconds). The server lock retry mechanism is used to prevent multiple Grafana instances from simultaneously refreshing OAuth tokens. This mechanism waits at least this amount of time before retrying to acquire the server lock.
+
+There are five retries in total, so with the default value, the total wait time (for acquiring the lock) is at least 5 seconds (the wait time between retries is calculated as random(n, n + 500)), which means that the maximum token refresh duration must be less than 5-6 seconds.
+
+If you experience issues with the OAuth token refresh mechanism, you can increase this value to allow more time for the token refresh to complete.
 
 ### oauth_skip_org_role_update_sync
 
@@ -1056,17 +1076,23 @@ Limit of API key seconds to live before expiration. Default is -1 (unlimited).
 
 ### sigv4_auth_enabled
 
-> Only available in Grafana 7.3+.
-
 Set to `true` to enable the AWS Signature Version 4 Authentication option for HTTP-based datasources. Default is `false`.
 
 ### sigv4_verbose_logging
 
-> Only available in Grafana 8.4+.
-
 Set to `true` to enable verbose request signature logging when AWS Signature Version 4 Authentication is enabled. Default is `false`.
 
 <hr />
+
+### managed_service_accounts_enabled
+
+> Only available in Grafana 11.3+.
+
+Set to `true` to enable the use of managed service accounts for plugin authentication. Default is `false`.
+
+> **Limitations:**
+> This feature currently **only supports single-organization deployments**.
+> The plugin's service account is automatically created in the default organization. This means the plugin can only access data and resources within that specific organization.
 
 ## [auth.anonymous]
 
@@ -1269,6 +1295,12 @@ Set plugins that will receive Azure settings via plugin context.
 
 By default, this will include all Grafana Labs owned Azure plugins or those that use Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
 
+### azure_entra_password_credentials_enabled
+
+Specifies whether Entra password auth can be used for the MSSQL data source. This authentication is not recommended and consideration should be taken before enabling this.
+
+Disabled by default, needs to be explicitly enabled.
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt" >}}) for more information.
@@ -1452,8 +1484,6 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 ## [log.frontend]
 
-**Note:** This feature is available in Grafana 7.4+.
-
 ### enabled
 
 Faro javascript agent is initialized. Default is `false`.
@@ -1470,6 +1500,10 @@ Requests per second limit enforced per an extended period, for Grafana backend l
 
 Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `15`.
 
+### instrumentations_all_enabled
+
+Enables all Faro default instrumentation by using `getWebInstrumentations`. Overrides other instrumentation flags.
+
 ### instrumentations_errors_enabled
 
 Turn on error instrumentation. Only affects Grafana Javascript Agent.
@@ -1482,9 +1516,13 @@ Turn on console instrumentation. Only affects Grafana Javascript Agent
 
 Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
 
+### instrumentations_tracing_enabled
+
+Turns on tracing instrumentation. Only affects Grafana Javascript Agent.
+
 ### api_key
 
-If `custom_endpoint` required authentication, you can set the api key here. Only relevant for Grafana Javascript Agent provider.
+If `custom_endpoint` required authentication, you can set the API key here. Only relevant for Grafana Javascript Agent provider.
 
 <hr>
 
@@ -1547,6 +1585,10 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 ### global_correlations
 
 Sets a global limit on number of correlations that can be created. Default is -1 (unlimited).
+
+### alerting_rule_evaluation_results
+
+Limit the number of query evaluation results per alert rule. If the condition query of an alert rule produces more results than this limit, the evaluation results in an error. Default is -1 (unlimited).
 
 <hr>
 
@@ -1639,6 +1681,12 @@ across cluster more quickly at the expense of increased bandwidth usage. The def
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
+### ha_reconnect_timeout
+
+Length of time to attempt to reconnect to a lost peer. When running Grafana in a Kubernetes cluster, set this duration to less than `15m`.
+
+The string is a possibly signed sequence of decimal numbers followed by a unit suffix (ms, s, m, h, d), such as `30s` or `1m`.
+
 ### ha_push_pull_interval
 
 The interval between gossip full state syncs. Setting this interval lower (more frequent) will increase convergence speeds
@@ -1727,7 +1775,7 @@ Configures the batch size for the annotation clean-up job. This setting is used 
 
 ### tags_length
 
-Enforces the maximum allowed length of the tags for any newly introduced annotations. It can be between 500 and 4096 (inclusive). Default value is 500. Setting it to a higher value would impact performance therefore is not recommended.
+Enforces the maximum allowed amount of tags for any newly introduced annotations. This value can be between 500 and 4096 (inclusive). The default value is 500. Setting it to a higher value would impact performance and is therefore not recommended.
 
 ## [annotations.dashboard]
 
@@ -1764,6 +1812,11 @@ For more information about this feature, refer to [Explore]({{< relref "../../ex
 ### enabled
 
 Enable or disable the Explore section. Default is `enabled`.
+
+### defaultTimeOffset
+
+Set a default time offset from now on the time picker. Default is 1 hour.
+This setting should be expressed as a duration. Examples: 1h (hour), 1d (day), 1w (week), 1M (month).
 
 ## [help]
 
@@ -1811,7 +1864,11 @@ Configures settings around the short link feature.
 
 ### expire_time
 
-Short links which are never accessed are considered expired or stale, and will be deleted as cleanup. Set the expiration time in days. Default is `7` days. Maximum is `365` days, and setting above the maximum will have `365` set instead. Setting `0` means the short links will be cleaned up approximately every 10 minutes.
+Short links that are never accessed are considered expired or stale and will be deleted as cleanup. Set the expiration time in days. The default is `7` days. The maximum is `365` days, and setting above the maximum will have `365` set instead. Setting `0` means the short links will be cleaned up approximately every 10 minutes. A negative value such as `-1` will disable expiry.
+
+{{< admonition type="caution" >}}
+Short links without an expiration increase the size of the database and can’t be deleted.
+{{< /admonition >}}
 
 <hr>
 
@@ -1866,9 +1923,8 @@ Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 
 ## [grafana_net]
 
-### url
-
-Default is https://grafana.com.
+Refer to [grafana_com] config as that is the new and preferred config name.
+The grafana_net config is still accepted and parsed to grafana_com config.
 
 <hr>
 
@@ -1877,6 +1933,7 @@ Default is https://grafana.com.
 ### url
 
 Default is https://grafana.com.
+The default authentication identity provider for Grafana Cloud.
 
 <hr>
 
@@ -2154,10 +2211,6 @@ Options to configure a remote HTTP image rendering service, e.g. using https://g
 
 #### renderer_token
 
-{{% admonition type="note" %}}
-Available in Grafana v9.1.2 and Image Renderer v3.6.1 or later.
-{{% /admonition %}}
-
 An auth token will be sent to and verified by the renderer. The renderer will deny any request without an auth token matching the one configured on the renderer.
 
 ### server_url
@@ -2241,15 +2294,29 @@ Force download of the public key for verifying plugin signature on startup. The 
 
 Enter a comma-separated list of plugin identifiers to avoid loading (including core plugins). These plugins will be hidden in the catalog.
 
+### preinstall
+
+Enter a comma-separated list of plugin identifiers to preinstall. These plugins will be installed on startup, using the Grafana catalog as the source. Preinstalled plugins cannot be uninstalled from the Grafana user interface; they need to be removed from this list first.
+
+To pin plugins to a specific version, use the format `plugin_id@version`, for example,`grafana-piechart-panel@1.6.0`. If no version is specified, the latest version is installed. _The plugin is automatically updated_ to the latest version when a new version is available in the Grafana plugin catalog on startup (except for new major versions).
+
+To use a custom URL to download a plugin, use the format `plugin_id@version@url`, for example, `grafana-piechart-panel@1.6.0@https://example.com/grafana-piechart-panel-1.6.0.zip`.
+
+By default, Grafana preinstalls some suggested plugins. Check the default configuration file for the list of plugins.
+
+### preinstall_async
+
+By default, plugins are preinstalled asynchronously, as a background process. This means that Grafana will start up faster, but the plugins may not be available immediately. If you need a plugin to be installed for provisioning, set this option to `false`. This causes Grafana to wait for the plugins to be installed before starting up (and fail if a plugin can't be installed).
+
+### preinstall_disabled
+
+This option disables all preinstalled plugins. The default is `false`. To disable a specific plugin from being preinstalled, use the `disable_plugins` option.
+
 <hr>
 
 ## [live]
 
 ### max_connections
-
-{{% admonition type="note" %}}
-Available in Grafana v8.0 and later versions.
-{{% /admonition %}}
 
 The `max_connections` option specifies the maximum number of connections to the Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
 
@@ -2258,10 +2325,6 @@ Refer to [Grafana Live configuration documentation]({{< relref "../set-up-grafan
 0 disables Grafana Live, -1 means unlimited connections.
 
 ### allowed_origins
-
-{{% admonition type="note" %}}
-Available in Grafana v8.0.4 and later versions.
-{{% /admonition %}}
 
 The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that will be accepted by Grafana Live.
 
@@ -2278,10 +2341,6 @@ allowed_origins = "https://*.example.com"
 
 ### ha_engine
 
-{{% admonition type="note" %}}
-Available in Grafana v8.1 and later versions.
-{{% /admonition %}}
-
 **Experimental**
 
 The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is "redis".
@@ -2289,10 +2348,6 @@ The high availability (HA) engine name for Grafana Live. By default, it's not se
 For more information, refer to the [Configure Grafana Live HA setup]({{< relref "../set-up-grafana-live#configure-grafana-live-ha-setup" >}}).
 
 ### ha_engine_address
-
-{{% admonition type="note" %}}
-Available in Grafana v8.1 and later versions.
-{{% /admonition %}}
 
 **Experimental**
 
@@ -2315,7 +2370,7 @@ Properties described in this section are available for all plugins, but you must
 ### tracing
 
 {{% admonition type="note" %}}
-Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as well](#tracingopentelemetry).
+[OpenTelemetry must be configured as well](#tracingopentelemetry).
 {{% /admonition %}}
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
@@ -2478,10 +2533,6 @@ Use to disable updates for additional specific feature toggles in the feature ma
 
 ## [date_formats]
 
-{{% admonition type="note" %}}
-The date format options below are only available in Grafana v7.2+.
-{{% /admonition %}}
-
 This section controls system-wide defaults for date formats used in time ranges, graphs, and date input boxes.
 
 The format patterns use [Moment.js](https://momentjs.com/docs/#/displaying/) formatting tokens.
@@ -2519,10 +2570,6 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
 
 ## [expressions]
-
-{{% admonition type="note" %}}
-This feature is available in Grafana v7.4 and later versions.
-{{% /admonition %}}
 
 ### enabled
 
@@ -2566,8 +2613,8 @@ Format: `<pageUrl> = <sectionId> <sortWeight>`
 
 ## [public_dashboards]
 
-This section configures the [public dashboards]({{< relref "../../dashboards/dashboard-public" >}}) feature.
+This section configures the [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/) feature.
 
 ### enabled
 
-Set this to `false` to disable the public dashboards feature. This prevents users from creating new public dashboards and disables existing ones.
+Set this to `false` to disable the shared dashboards feature. This prevents users from creating new shared dashboards and disables existing ones.

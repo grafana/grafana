@@ -264,9 +264,9 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric_a',
         labels: [],
-        operations: [{ id: 'holt_winters', params: ['5m', 0.5, 0.5] }],
+        operations: [{ id: 'double_exponential_smoothing', params: ['5m', 0.5, 0.5] }],
       })
-    ).toBe('holt_winters(metric_a[5m], 0.5, 0.5)');
+    ).toBe('double_exponential_smoothing(metric_a[5m], 0.5, 0.5)');
   });
   it('Can render functions that require parameters left of a range', () => {
     expect(

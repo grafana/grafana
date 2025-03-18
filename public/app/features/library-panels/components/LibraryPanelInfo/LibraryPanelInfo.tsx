@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { DateTimeInput, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -44,20 +43,20 @@ export const LibraryPanelInformation = ({ panel, formatDate }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    info: css`
-      line-height: 1;
-    `,
-    libraryPanelInfo: css`
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
-    userAvatar: css`
-      border-radius: ${theme.shape.radius.circle};
-      box-sizing: content-box;
-      width: 22px;
-      height: 22px;
-      padding-left: ${theme.spacing(1)};
-      padding-right: ${theme.spacing(1)};
-    `,
+    info: css({
+      lineHeight: 1,
+    }),
+    libraryPanelInfo: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    userAvatar: css({
+      borderRadius: theme.shape.radius.circle,
+      boxSizing: 'content-box',
+      width: '22px',
+      height: '22px',
+      paddingLeft: theme.spacing(1),
+      paddingRight: theme.spacing(1),
+    }),
   };
 };

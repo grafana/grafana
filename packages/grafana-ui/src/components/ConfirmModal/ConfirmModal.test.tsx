@@ -1,8 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import { useState } from 'react';
 
 import { ConfirmModal } from './ConfirmModal';
+
+jest.useFakeTimers();
 
 describe('ConfirmModal', () => {
   const mockOnConfirm = jest.fn();
@@ -169,6 +171,58 @@ describe('ConfirmModal', () => {
     jest.runAllTimers();
     await waitFor(() => {
       return expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeEnabled();
+    });
+  });
+
+  it('should disable the confirm button when disabled prop changes from false to true', async () => {
+    const TestComponent = () => {
+      const [disabled, setDisabled] = useState(false);
+
+      const handleConfirm = async () => {
+        act(() => {
+          setDisabled(true);
+          setTimeout(() => {
+            setDisabled(false);
+          }, 4000);
+        });
+      };
+
+      return (
+        <ConfirmModal
+          title="Some Title"
+          body="Some Body"
+          confirmText="Please Confirm"
+          isOpen={true}
+          onConfirm={handleConfirm}
+          onDismiss={() => {}}
+          onAlternative={() => {}}
+          disabled={disabled}
+        />
+      );
+    };
+
+    render(<TestComponent />);
+
+    const confirmButton = screen.getByRole('button', { name: 'Please Confirm' });
+
+    expect(confirmButton).toBeEnabled();
+
+    fireEvent.click(confirmButton);
+
+    // Ensure React processes the state update and calls useEffect in ConfirmModal
+    await act(() => {
+      jest.advanceTimersByTime(0);
+    });
+
+    expect(confirmButton).toBeDisabled();
+
+    // Fast-forward time by 4 seconds
+    await act(() => {
+      jest.advanceTimersByTime(4000);
+    });
+
+    await waitFor(() => {
+      expect(confirmButton).toBeEnabled();
     });
   });
 });

@@ -1,5 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querycache/QueryCache.ts
 import {
+  amendTable,
   DataFrame,
   DataQueryRequest,
   dateTime,
@@ -8,56 +9,38 @@ import {
   incrRoundDn,
   isValidDuration,
   parseDuration,
+  rangeUtil,
+  ScopedVars,
+  Table,
+  trimTable,
 } from '@grafana/data';
-import { faro } from '@grafana/faro-web-sdk';
-import { config, reportInteraction } from '@grafana/runtime';
 
-import { amendTable, Table, trimTable } from '../gcopypaste/app/features/live/data/amendTimeSeries';
 import { PromQuery } from '../types';
 
 // dashboardUID + panelId + refId
 // (must be stable across query changes, time range changes / interval changes / panel resizes / template variable changes)
 type TargetIdent = string;
 
-type RequestID = string;
-
 // query + template variables + interval + raw time range
 // used for full target cache busting -> full range re-query
-type TargetSig = string;
-
+type TargetSignature = string;
 type TimestampMs = number;
-
 type SupportedQueryTypes = PromQuery;
+type ApplyInterpolation = (str: string, scopedVars?: ScopedVars) => string;
 
 // string matching requirements defined in durationutil.ts
 export const defaultPrometheusQueryOverlapWindow = '10m';
 
 interface TargetCache {
-  sig: TargetSig;
+  signature: TargetSignature;
   prevTo: TimestampMs;
   frames: DataFrame[];
 }
 
 export interface CacheRequestInfo<T extends SupportedQueryTypes> {
   requests: Array<DataQueryRequest<T>>;
-  targSigs: Map<TargetIdent, TargetSig>;
+  targetSignatures: Map<TargetIdent, TargetSignature>;
   shouldCache: boolean;
-}
-
-export interface DatasourceProfileData {
-  interval?: string;
-  expr: string;
-  datasource: string;
-}
-
-interface ProfileData extends DatasourceProfileData {
-  identity: string;
-  bytes: number | null;
-  dashboardUID: string;
-  panelId?: number;
-  from: string;
-  queryRangeSeconds: number;
-  refreshIntervalMs: number;
 }
 
 /**
@@ -65,51 +48,25 @@ interface ProfileData extends DatasourceProfileData {
  * This is the string used to uniquely identify a field within a "target"
  * @param field
  */
-export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
+export const getFieldIdentity = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
 
 /**
  * NOMENCLATURE
  * Target: The request target (DataQueryRequest), i.e. a specific query reference within a panel
- * Ident: Identity: the string that is not expected to change
- * Sig: Signature: the string that is expected to change, upon which we wipe the cache fields
+ * Identity: the string that is not expected to change
+ * Signature: the string that is expected to change, upon which we wipe the cache fields
  */
 export class QueryCache<T extends SupportedQueryTypes> {
   private overlapWindowMs: number;
   private getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
-  private getProfileData?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData;
-
-  private perfObeserver?: PerformanceObserver;
-  private shouldProfile: boolean;
-
-  // send profile events every 10 minutes
-  sendEventsInterval = 60000 * 10;
-
-  pendingRequestIdsToTargSigs = new Map<RequestID, ProfileData>();
-
-  pendingAccumulatedEvents = new Map<
-    string,
-    {
-      requestCount: number;
-      savedBytesTotal: number;
-      initialRequestSize: number;
-      lastRequestSize: number;
-      panelId: string;
-      dashId: string;
-      expr: string;
-      refreshIntervalMs: number;
-      sent: boolean;
-      datasource: string;
-      from: string;
-      queryRangeSeconds: number;
-    }
-  >();
+  private applyInterpolation = (str: string, scopedVars?: ScopedVars) => str;
 
   cache = new Map<TargetIdent, TargetCache>();
 
   constructor(options: {
     getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
     overlapString: string;
-    profileFunction?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData;
+    applyInterpolation?: ApplyInterpolation;
   }) {
     const unverifiedOverlap = options.overlapString;
     if (isValidDuration(unverifiedOverlap)) {
@@ -120,131 +77,11 @@ export class QueryCache<T extends SupportedQueryTypes> {
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
 
-    if (
-      (config.grafanaJavascriptAgent.enabled || config.featureToggles?.prometheusIncrementalQueryInstrumentation) &&
-      options.profileFunction !== undefined
-    ) {
-      this.profile();
-      this.shouldProfile = true;
-    } else {
-      this.shouldProfile = false;
-    }
-    this.getProfileData = options.profileFunction;
     this.getTargetSignature = options.getTargetSignature;
-  }
-
-  private profile() {
-    // Check if PerformanceObserver is supported, and if we have Faro enabled for internal profiling
-    if (typeof PerformanceObserver === 'function') {
-      this.perfObeserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
-        list.getEntries().forEach((entry) => {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const entryTypeCast: PerformanceResourceTiming = entry as PerformanceResourceTiming;
-
-          // Safari support for this is coming in 16.4:
-          // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
-          // Gating that this exists to prevent runtime errors
-          const isSupported = typeof entryTypeCast?.transferSize === 'number';
-
-          if (entryTypeCast?.initiatorType === 'fetch' && isSupported) {
-            let fetchUrl = entryTypeCast.name;
-
-            if (fetchUrl.includes('/api/ds/query')) {
-              let match = fetchUrl.match(/requestId=([a-z\d]+)/i);
-
-              if (match) {
-                let requestId = match[1];
-
-                const requestTransferSize = Math.round(entryTypeCast.transferSize);
-                const currentRequest = this.pendingRequestIdsToTargSigs.get(requestId);
-
-                if (currentRequest) {
-                  const entries = this.pendingRequestIdsToTargSigs.entries();
-
-                  for (let [, value] of entries) {
-                    if (value.identity === currentRequest.identity && value.bytes !== null) {
-                      const previous = this.pendingAccumulatedEvents.get(value.identity);
-
-                      const savedBytes = value.bytes - requestTransferSize;
-
-                      this.pendingAccumulatedEvents.set(value.identity, {
-                        datasource: value.datasource ?? 'N/A',
-                        requestCount: (previous?.requestCount ?? 0) + 1,
-                        savedBytesTotal: (previous?.savedBytesTotal ?? 0) + savedBytes,
-                        initialRequestSize: value.bytes,
-                        lastRequestSize: requestTransferSize,
-                        panelId: currentRequest.panelId?.toString() ?? '',
-                        dashId: currentRequest.dashboardUID ?? '',
-                        expr: currentRequest.expr ?? '',
-                        refreshIntervalMs: currentRequest.refreshIntervalMs ?? 0,
-                        sent: false,
-                        from: currentRequest.from ?? '',
-                        queryRangeSeconds: currentRequest.queryRangeSeconds ?? 0,
-                      });
-
-                      // We don't need to save each subsequent request, only the first one
-                      this.pendingRequestIdsToTargSigs.delete(requestId);
-
-                      return;
-                    }
-                  }
-
-                  // If we didn't return above, this should be the first request, let's save the observed size
-                  this.pendingRequestIdsToTargSigs.set(requestId, { ...currentRequest, bytes: requestTransferSize });
-                }
-              }
-            }
-          }
-        });
-      });
-
-      this.perfObeserver.observe({ type: 'resource', buffered: false });
-
-      setInterval(this.sendPendingTrackingEvents, this.sendEventsInterval);
-
-      // Send any pending profile information when the user navigates away
-      window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
+    if (options.applyInterpolation) {
+      this.applyInterpolation = options.applyInterpolation;
     }
   }
-
-  sendPendingTrackingEvents = () => {
-    const entries = this.pendingAccumulatedEvents.entries();
-
-    for (let [key, value] of entries) {
-      if (!value.sent) {
-        const event = {
-          datasource: value.datasource.toString(),
-          requestCount: value.requestCount.toString(),
-          savedBytesTotal: value.savedBytesTotal.toString(),
-          initialRequestSize: value.initialRequestSize.toString(),
-          lastRequestSize: value.lastRequestSize.toString(),
-          panelId: value.panelId.toString(),
-          dashId: value.dashId.toString(),
-          expr: value.expr.toString(),
-          refreshIntervalMs: value.refreshIntervalMs.toString(),
-          from: value.from.toString(),
-          queryRangeSeconds: value.queryRangeSeconds.toString(),
-        };
-
-        if (config.featureToggles.prometheusIncrementalQueryInstrumentation) {
-          reportInteraction('grafana_incremental_queries_profile', event);
-        } else if (faro.api.pushEvent) {
-          faro.api.pushEvent('incremental query response size', event, 'no-interaction', {
-            skipDedupe: true,
-          });
-        }
-
-        this.pendingAccumulatedEvents.set(key, {
-          ...value,
-          sent: true,
-          requestCount: 0,
-          savedBytesTotal: 0,
-          initialRequestSize: 0,
-          lastRequestSize: 0,
-        });
-      }
-    }
-  };
 
   // can be used to change full range request to partial, split into multiple requests
   requestInfo(request: DataQueryRequest<T>): CacheRequestInfo<T> {
@@ -260,36 +97,20 @@ export class QueryCache<T extends SupportedQueryTypes> {
     let doPartialQuery = shouldCache;
     let prevTo: TimestampMs | undefined = undefined;
 
-    const refreshIntervalMs = request.intervalMs;
-
-    // pre-compute reqTargSigs
-    const reqTargSigs = new Map<TargetIdent, TargetSig>();
-    request.targets.forEach((targ) => {
-      let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
-      let targSig = this.getTargetSignature(request, targ); // ${request.maxDataPoints} ?
-
-      if (this.shouldProfile && this.getProfileData) {
-        this.pendingRequestIdsToTargSigs.set(request.requestId, {
-          ...this.getProfileData(request, targ),
-          identity: targIdent + '|' + targSig,
-          bytes: null,
-          panelId: request.panelId,
-          dashboardUID: request.dashboardUID ?? '',
-          from: request.rangeRaw?.from.toString() ?? '',
-          queryRangeSeconds: request.range.to.diff(request.range.from, 'seconds') ?? '',
-          refreshIntervalMs: refreshIntervalMs ?? 0,
-        });
-      }
-
-      reqTargSigs.set(targIdent, targSig);
+    // pre-compute reqTargetSignatures
+    const reqTargetSignatures = new Map<TargetIdent, TargetSignature>();
+    request.targets.forEach((target) => {
+      let targetIdentity = `${request.dashboardUID}|${request.panelId}|${target.refId}`;
+      let targetSignature = this.getTargetSignature(request, target); // ${request.maxDataPoints} ?
+      reqTargetSignatures.set(targetIdentity, targetSignature);
     });
 
     // figure out if new query range or new target props trigger full cache invalidation & re-query
-    for (const [targIdent, targSig] of reqTargSigs) {
-      let cached = this.cache.get(targIdent);
-      let cachedSig = cached?.sig;
+    for (const [targetIdentity, targetSignature] of reqTargetSignatures) {
+      let cached = this.cache.get(targetIdentity);
+      let cachedSig = cached?.signature;
 
-      if (cachedSig !== targSig) {
+      if (cachedSig !== targetSignature) {
         doPartialQuery = false;
       } else {
         // only do partial queries when new request range follows prior request range (possibly with overlap)
@@ -321,14 +142,14 @@ export class QueryCache<T extends SupportedQueryTypes> {
         },
       };
     } else {
-      reqTargSigs.forEach((targSig, targIdent) => {
+      reqTargetSignatures.forEach((targSig, targIdent) => {
         this.cache.delete(targIdent);
       });
     }
 
     return {
       requests: [request],
-      targSigs: reqTargSigs,
+      targetSignatures: reqTargetSignatures,
       shouldCache,
     };
   }
@@ -347,13 +168,13 @@ export class QueryCache<T extends SupportedQueryTypes> {
       const respByTarget = new Map<TargetIdent, DataFrame[]>();
 
       respFrames.forEach((frame: DataFrame) => {
-        let targIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
+        let targetIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
 
-        let frames = respByTarget.get(targIdent);
+        let frames = respByTarget.get(targetIdent);
 
         if (!frames) {
           frames = [];
-          respByTarget.set(targIdent, frames);
+          respByTarget.set(targetIdent, frames);
         }
 
         frames.push(frame);
@@ -361,8 +182,8 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
       let outFrames: DataFrame[] = [];
 
-      respByTarget.forEach((respFrames, targIdent) => {
-        let cachedFrames = (targIdent ? this.cache.get(targIdent)?.frames : null) ?? [];
+      respByTarget.forEach((respFrames, targetIdentity) => {
+        let cachedFrames = (targetIdentity ? this.cache.get(targetIdentity)?.frames : null) ?? [];
 
         respFrames.forEach((respFrame: DataFrame) => {
           // skip empty frames
@@ -372,9 +193,9 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
           // frames are identified by their second (non-time) field's name + labels
           // TODO: maybe also frame.meta.type?
-          let respFrameIdent = getFieldIdent(respFrame.fields[1]);
+          let respFrameIdentity = getFieldIdentity(respFrame.fields[1]);
 
-          let cachedFrame = cachedFrames.find((cached) => getFieldIdent(cached.fields[1]) === respFrameIdent);
+          let cachedFrame = cachedFrames.find((cached) => getFieldIdentity(cached.fields[1]) === respFrameIdentity);
 
           if (!cachedFrame) {
             // append new unknown frames
@@ -392,6 +213,9 @@ export class QueryCache<T extends SupportedQueryTypes> {
             if (amendedTable) {
               for (let i = 0; i < amendedTable.length; i++) {
                 cachedFrame.fields[i].values = amendedTable[i];
+                if (cachedFrame.fields[i].config.displayNameFromDS !== respFrame.fields[i].config.displayNameFromDS) {
+                  cachedFrame.fields[i].config.displayNameFromDS = respFrame.fields[i].config.displayNameFromDS;
+                }
               }
               cachedFrame.length = cachedFrame.fields[0].values.length;
             }
@@ -405,7 +229,10 @@ export class QueryCache<T extends SupportedQueryTypes> {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           let table: Table = frame.fields.map((field) => field.values) as Table;
 
-          let trimmed = trimTable(table, newFrom, newTo);
+          const dataPointStep = findDatapointStep(request, respFrames, this.applyInterpolation);
+
+          // query interval is greater than request.intervalMs, use query interval to make sure we've always got one datapoint outside the panel viewport
+          let trimmed = trimTable(table, newFrom - dataPointStep, newTo);
 
           if (trimmed[0].length > 0) {
             for (let i = 0; i < trimmed.length; i++) {
@@ -415,8 +242,8 @@ export class QueryCache<T extends SupportedQueryTypes> {
           }
         });
 
-        this.cache.set(targIdent, {
-          sig: requestInfo.targSigs.get(targIdent)!,
+        this.cache.set(targetIdentity, {
+          signature: requestInfo.targetSignatures.get(targetIdentity)!,
           frames: nonEmptyCachedFrames,
           prevTo: newTo,
         });
@@ -439,4 +266,26 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
     return respFrames;
   }
+}
+
+export function findDatapointStep(
+  request: DataQueryRequest<PromQuery>,
+  respFrames: DataFrame[],
+  applyInterpolation: ApplyInterpolation
+): number {
+  // Prometheus specific logic below
+  if (request.targets[0].datasource?.type !== 'prometheus') {
+    return 0;
+  }
+
+  const target = request.targets.find((t) => t.refId === respFrames[0].refId);
+
+  let dataPointStep = request.intervalMs;
+  if (target?.interval) {
+    const minStepMs = rangeUtil.intervalToMs(applyInterpolation(target.interval));
+    if (minStepMs > request.intervalMs) {
+      dataPointStep = minStepMs;
+    }
+  }
+  return dataPointStep;
 }

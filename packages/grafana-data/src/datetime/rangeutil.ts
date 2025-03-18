@@ -207,11 +207,14 @@ export const convertRawToRange = (
   const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth, format });
   const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth, format });
 
-  if (dateMath.isMathString(raw.from) || dateMath.isMathString(raw.to)) {
-    return { from, to, raw };
-  }
-
-  return { from, to, raw: { from, to } };
+  return {
+    from,
+    to,
+    raw: {
+      from: dateMath.isMathString(raw.from) ? raw.from : from,
+      to: dateMath.isMathString(raw.to) ? raw.to : to,
+    },
+  };
 };
 
 export function isRelativeTime(v: DateTime | string) {

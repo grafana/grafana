@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { AuthDrawerUnconnected, Props } from './AuthDrawer';

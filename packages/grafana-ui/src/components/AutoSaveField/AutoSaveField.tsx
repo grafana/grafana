@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
+import * as React from 'react';
 
 import { useStyles2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
 import { Field, FieldProps } from '../Forms/Field';
 import { InlineToast } from '../InlineToast/InlineToast';
 
@@ -105,12 +107,14 @@ export function AutoSaveField<T = string>(props: Props<T>) {
       </Field>
       {fieldState.isLoading && (
         <InlineToast referenceElement={fieldRef.current} placement="right">
-          Saving <EllipsisAnimated />
+          <Trans i18nKey="grafana-ui.auto-save-field.saving">
+            Saving <EllipsisAnimated />
+          </Trans>
         </InlineToast>
       )}
       {fieldState.showSuccess && (
         <InlineToast suffixIcon={'check'} referenceElement={fieldRef.current} placement="right">
-          Saved!
+          <Trans i18nKey="grafana-ui.auto-save-field.saved">Saved!</Trans>
         </InlineToast>
       )}
     </>

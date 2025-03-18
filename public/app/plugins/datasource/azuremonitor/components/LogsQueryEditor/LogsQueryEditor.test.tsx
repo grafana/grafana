@@ -1,11 +1,11 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { dateTime, LoadingState } from '@grafana/data';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
+import { ResultFormat } from '../../dataquery.gen';
 import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
 
 import LogsQueryEditor from './LogsQueryEditor';
@@ -497,6 +497,59 @@ describe('LogsQueryEditor', () => {
       });
 
       expect(await screen.queryByLabelText(/This query is processing 0.50 GiB when run./)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('format as options', () => {
+    it('sets to time series if there is a query with empty result format', async () => {
+      const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resultFormat: undefined,
+        },
+      });
+      const onChange = jest.fn();
+
+      await act(async () => {
+        render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            setError={() => {}}
+            basicLogsEnabled={false}
+          />
+        );
+      });
+      const newQuery = {
+        ...query,
+        azureLogAnalytics: { ...query.azureLogAnalytics, resultFormat: ResultFormat.TimeSeries },
+      };
+      expect(onChange).toHaveBeenCalledWith(newQuery);
+    });
+    it('sets to logs if the query is new', async () => {
+      const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+      const query = { ...createMockQuery(), azureLogAnalytics: undefined };
+      const onChange = jest.fn();
+
+      await act(async () => {
+        render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            setError={() => {}}
+            basicLogsEnabled={false}
+          />
+        );
+      });
+      const newQuery = {
+        ...query,
+        azureLogAnalytics: { resultFormat: ResultFormat.Logs },
+      };
+      expect(onChange).toHaveBeenCalledWith(newQuery);
     });
   });
 });

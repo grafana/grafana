@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -694,7 +694,7 @@ func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name str
 		Version:     1,
 		Meta: model.LibraryElementDTOMeta{
 			FolderName:          "General",
-			FolderUID:           "",
+			FolderUID:           res.FolderUID,
 			ConnectedDashboards: 0,
 			Created:             res.Meta.Created,
 			Updated:             res.Meta.Updated,
@@ -724,7 +724,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
@@ -733,8 +733,8 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-		foldertest.NewFakeService(),
-		nil,
+		foldertest.NewFakeService(), folder.NewFakeStore(),
+		nil, nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(t, err)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
@@ -749,14 +749,15 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	features := featuremgmt.WithFeatures()
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	cfg := setting.NewCfg()
-	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore))
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	fStore := folderimpl.ProvideStore(sc.sqlStore)
+	s := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
+		features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
 
 	t.Logf("Creating folder with title and UID %q", title)
-	ctx := appcontext.WithUser(context.Background(), sc.user)
+	ctx := identity.WithRequester(context.Background(), sc.user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{OrgID: sc.user.OrgID, Title: title, UID: title, SignedInUser: sc.user})
 	require.NoError(t, err)
 
@@ -817,6 +818,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		role := org.RoleAdmin
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
+		features := featuremgmt.WithFeatures()
 
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		dashStore := &dashboards.FakeDashboardStore{}
@@ -824,20 +826,22 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 		dashPermissionService := acmock.NewMockedPermissionsService()
 		dashService, err := dashboardservice.ProvideDashboardServiceImpl(
-			setting.NewCfg(), dashStore, folderStore,
-			featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-			foldertest.NewFakeService(),
-			nil,
+			cfg, dashStore, folderStore,
+			features, acmock.NewMockedPermissionsService(), dashPermissionService, ac,
+			foldertest.NewFakeService(), folder.NewFakeStore(),
+			nil, nil, nil, nil, quotaService, nil,
 		)
 		require.NoError(t, err)
-		guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashService)
+		guardian.InitAccessControlGuardian(cfg, ac, dashService)
 
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
-		features := featuremgmt.WithFeatures()
-		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+		fStore := folderimpl.ProvideStore(sqlStore)
 
-		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, featuremgmt.WithFeatures(), ac)
+		folderService := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
+			features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+
+		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, features, ac)
 		service := LibraryPanelService{
 			Cfg:                   cfg,
 			SQLStore:              sqlStore,
@@ -869,7 +873,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Name:  "User In DB",
 			Login: userInDbName,
 		}
-		ctx := appcontext.WithUser(context.Background(), usr)
+		ctx := identity.WithRequester(context.Background(), usr)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
 		usrSvc, err := userimpl.ProvideService(

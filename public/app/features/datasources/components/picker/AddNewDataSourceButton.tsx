@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { locationUtil } from '@grafana/data';
 import { LinkButton, ButtonVariant } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';

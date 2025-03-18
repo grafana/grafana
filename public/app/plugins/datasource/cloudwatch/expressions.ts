@@ -5,14 +5,14 @@ import {
 } from './dataquery.gen';
 export {
   QueryEditorPropertyType,
-  QueryEditorProperty,
-  QueryEditorPropertyExpression,
-  QueryEditorGroupByExpression,
-  QueryEditorFunctionExpression,
-  QueryEditorFunctionParameterExpression,
-  QueryEditorArrayExpression,
+  type QueryEditorProperty,
+  type QueryEditorPropertyExpression,
+  type QueryEditorGroupByExpression,
+  type QueryEditorFunctionExpression,
+  type QueryEditorFunctionParameterExpression,
+  type QueryEditorArrayExpression,
   QueryEditorExpressionType,
-  QueryEditorExpression,
+  type QueryEditorExpression,
 } from './dataquery.gen';
 
 export interface QueryEditorOperator<T extends QueryEditorOperatorValueType> extends QueryEditorOperatorBase {

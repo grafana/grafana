@@ -1,5 +1,4 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -16,7 +15,7 @@ import { getDataSourceWithInspector } from 'app/features/dashboard/components/In
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { getDashboardUrl } from '../utils/urlBuilders';
+import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { HelpWizard } from './HelpWizard/HelpWizard';
@@ -29,7 +28,7 @@ import { SceneInspectTab } from './types';
 
 interface PanelInspectDrawerState extends SceneObjectState {
   tabs?: SceneInspectTab[];
-  panelRef?: SceneObjectRef<VizPanel>;
+  panelRef: SceneObjectRef<VizPanel>;
   pluginNotLoaded?: boolean;
   canEdit?: boolean;
 }
@@ -52,7 +51,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
    */
   async buildTabs(retry: number) {
     const panelRef = this.state.panelRef;
-    const plugin = panelRef?.resolve()?.getPlugin();
+    const plugin = panelRef.resolve()?.getPlugin();
     const tabs: SceneInspectTab[] = [];
 
     if (!plugin) {
@@ -93,6 +92,8 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
 
   onClose = () => {
     const dashboard = getDashboardSceneFor(this);
+    const meta = dashboard.state.meta;
+
     locationService.push(
       getDashboardUrl({
         uid: dashboard.state.uid,
@@ -102,6 +103,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
           inspect: null,
           inspectTab: null,
         },
+        isHomeDashboard: !meta.url && !meta.slug && !meta.isNew,
       })
     );
   };

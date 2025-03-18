@@ -16,6 +16,13 @@ const (
 	CloudWatchQueryModeMetrics     CloudWatchQueryMode = "Metrics"
 )
 
+// Defines values for LogsQueryLanguage.
+const (
+	LogsQueryLanguageCWLI LogsQueryLanguage = "CWLI"
+	LogsQueryLanguagePPL  LogsQueryLanguage = "PPL"
+	LogsQueryLanguageSQL  LogsQueryLanguage = "SQL"
+)
+
 // Defines values for MetricEditorMode.
 const (
 	MetricEditorModeN0 MetricEditorMode = 0
@@ -194,8 +201,9 @@ type CloudWatchLogsQuery struct {
 	LogGroupNames []string `json:"logGroupNames,omitempty"`
 
 	// Log groups to query
-	LogGroups []LogGroup           `json:"logGroups,omitempty"`
-	QueryMode *CloudWatchQueryMode `json:"queryMode,omitempty"`
+	LogGroups     []LogGroup           `json:"logGroups,omitempty"`
+	QueryLanguage *LogsQueryLanguage   `json:"queryLanguage,omitempty"`
+	QueryMode     *CloudWatchQueryMode `json:"queryMode,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
@@ -271,7 +279,7 @@ type CloudWatchMetricsQuery struct {
 	Region *string        `json:"region,omitempty"`
 	Sql    *SQLExpression `json:"sql,omitempty"`
 
-	// When the metric query type is `metricQueryType` is set to `Query`, this field is used to specify the query string.
+	// When the metric query type is set to `Insights`, this field is used to specify the query string.
 	SqlExpression *string `json:"sqlExpression,omitempty"`
 
 	// Metric data aggregations over specified periods of time. For detailed definitions of the statistics supported by CloudWatch, see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Statistics-definitions.html.
@@ -324,6 +332,9 @@ type LogGroup struct {
 	// Name of the log group
 	Name string `json:"name"`
 }
+
+// LogsQueryLanguage defines model for LogsQueryLanguage.
+type LogsQueryLanguage string
 
 // MetricEditorMode defines model for MetricEditorMode.
 type MetricEditorMode int

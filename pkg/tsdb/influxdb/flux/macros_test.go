@@ -28,8 +28,13 @@ func TestInterpolate(t *testing.T) {
 	}{
 		{
 			name:   "interpolate flux variables",
-			before: `v.timeRangeStart, something.timeRangeStop, XYZ.bucket, uuUUu.defaultBucket, aBcDefG.organization, window.windowPeriod, a91{}.bucket, $__interval, $__interval_ms`,
+			before: `v.timeRangeStart, v.timeRangeStop, v.bucket, v.defaultBucket, v.organization, v.windowPeriod, a91{}.bucket, $__interval, $__interval_ms`,
 			after:  `2021-09-22T10:12:51.310985041Z, 2021-09-22T11:12:51.310985042Z, "grafana2", "grafana3", "grafana1", 1m1.258s, a91{}.bucket, 1m, 61258`,
+		},
+		{
+			name:   "don't interpolate bucket variable in join query",
+			before: `range(start: v.timeRangeStart, stop: v.timeRangeStop) join.left(left: left |> group(), right: right,on:((l,r) => v.bucket == r.id), as: ((l, r) => ({l with name: r.name})))`,
+			after:  `range(start: 2021-09-22T10:12:51.310985041Z, stop: 2021-09-22T11:12:51.310985042Z) join.left(left: left |> group(), right: right,on:((l,r) => v.bucket == r.id), as: ((l, r) => ({l with name: r.name})))`,
 		},
 	}
 	for _, tt := range tests {

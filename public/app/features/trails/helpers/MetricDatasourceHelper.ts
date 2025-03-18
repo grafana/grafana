@@ -1,5 +1,10 @@
-import { DataSourceApi } from '@grafana/data';
-import { PromMetricsMetadata, PromMetricsMetadataItem } from '@grafana/prometheus';
+import {
+  DataSourceApi,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+  MetricFindValue,
+} from '@grafana/data';
+import { PrometheusDatasource, PromMetricsMetadata, PromMetricsMetadataItem, PromQuery } from '@grafana/prometheus';
 import PromQlLanguageProvider from '@grafana/prometheus/src/language_provider';
 import { getDataSourceSrv } from '@grafana/runtime';
 
@@ -29,7 +34,7 @@ export class MetricDatasourceHelper {
     return ds;
   }
 
-  private _metricsMetadata?: Promise<PromMetricsMetadata | undefined>;
+  _metricsMetadata?: Promise<PromMetricsMetadata | undefined>;
 
   private async _getMetricsMetadata() {
     const ds = await this.getDatasource();
@@ -54,6 +59,38 @@ export class MetricDatasourceHelper {
 
     const metadata = await this._metricsMetadata;
     return metadata?.[metric];
+  }
+
+  /**
+   * Used for additional filtering for adhoc vars labels in Explore metrics.
+   * @param options
+   * @returns
+   */
+  public async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
+    const ds = await this.getDatasource();
+
+    if (ds instanceof PrometheusDatasource) {
+      const keys = await ds.getTagKeys(options);
+      return keys;
+    }
+
+    return [];
+  }
+
+  /**
+   * Used for additional filtering for adhoc vars label values in Explore metrics.
+   * @param options
+   * @returns
+   */
+  public async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
+    const ds = await this.getDatasource();
+
+    if (ds instanceof PrometheusDatasource) {
+      const keys = await ds.getTagValues(options);
+      return keys;
+    }
+
+    return [];
   }
 }
 

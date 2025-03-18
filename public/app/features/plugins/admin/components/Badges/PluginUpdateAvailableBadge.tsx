@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -17,10 +17,10 @@ export function PluginUpdateAvailableBadge({ plugin }: Props): React.ReactElemen
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    hasUpdate: css`
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      margin-bottom: 0;
-    `,
+    hasUpdate: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      marginBottom: 0,
+    }),
   };
 };

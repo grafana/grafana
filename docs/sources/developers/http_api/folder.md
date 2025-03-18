@@ -143,11 +143,11 @@ Creates a new folder.
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
-`folders:create` allows creating folders in the root level. To create a subfolder, `folders:write` scoped to the parent folder is required in addition to `folders:create`.
+`folders:create` allows creating folders and subfolders. If granted with scope `folders:uid:general`, allows creating root level folders. Otherwise, allows creating subfolders under the specified folders.
 
 | Action           | Scope       |
 | ---------------- | ----------- |
-| `folders:create` | n/a         |
+| `folders:create` | `folders:*` |
 | `folders:write`  | `folders:*` |
 
 **Example Request**:
@@ -342,61 +342,6 @@ Status Codes:
 - **403** – Access Denied
 - **404** – Folder not found
 
-## Get folder by id
-
-`GET /api/folders/id/:id`
-
-Will return the folder identified by id.
-
-This is deprecated. Use [get folder by UID]({{< ref "#get-folder-by-uid" >}}) instead.
-
-**Required permissions**
-
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
-
-| Action         | Scope       |
-| -------------- | ----------- |
-| `folders:read` | `folders:*` |
-
-**Example Request**:
-
-```http
-GET /api/folders/id/1 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "id":1,
-  "uid": "nErXDvCkzz",
-  "title": "Department ABC",
-  "url": "/dashboards/f/nErXDvCkzz/department-abc",
-  "hasAcl": false,
-  "canSave": true,
-  "canEdit": true,
-  "canAdmin": true,
-  "createdBy": "admin",
-  "created": "2018-01-31T17:43:12+01:00",
-  "updatedBy": "admin",
-  "updated": "2018-01-31T17:43:12+01:00",
-  "version": 1
-}
-```
-
-Status Codes:
-
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access Denied
-- **404** – Folder not found
-
 ## Move folder
 
 `POST /api/folders/:uid/move`
@@ -411,14 +356,14 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
 If moving the folder under another folder:
 
-| Action          | Scope                                  |
-| --------------- | -------------------------------------- |
-| `folders:write` | `folders:uid:<destination folder UID>` |
+| Action           | Scope                                                 |
+| ---------------- | ----------------------------------------------------- |
+| `folders:create` | `folders:uid:<destination folder UID>`<br>`folders:*` |
 
 If moving the folder under root:
 | Action | Scope |
 | -------------- | ------------- |
-| `folders:create` | `folders:*` |
+| `folders:create` | `folders:uid:general`<br>`folders:*` |
 
 JSON body schema:
 

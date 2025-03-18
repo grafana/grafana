@@ -202,7 +202,7 @@ export const install = createAsyncThunk<
     ? { isInstalled: true, installedVersion: version, hasUpdate: false }
     : { isInstalled: true, installedVersion: version };
   try {
-    await installPlugin(id);
+    await installPlugin(id, version);
     await updatePanels();
 
     if (isUpdating) {
@@ -213,6 +213,8 @@ export const install = createAsyncThunk<
   } catch (e) {
     console.error(e);
     if (isFetchError(e)) {
+      // add id to identify errors in multiple requests
+      e.data.id = id;
       return thunkApi.rejectWithValue(e.data);
     }
 
@@ -233,7 +235,7 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
 
       return {
         id,
-        changes: { isInstalled: false, installedVersion: undefined },
+        changes: { isInstalled: false, installedVersion: undefined, isFullyInstalled: false },
       };
     } catch (e) {
       console.error(e);

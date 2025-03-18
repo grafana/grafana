@@ -1,5 +1,5 @@
 import pluralize from 'pluralize';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { OrgRole } from '@grafana/data';
@@ -112,7 +112,7 @@ export const ServiceAccountsListPageUnconnected = ({
 
   const onServiceAccountRemove = async () => {
     if (currentServiceAccount) {
-      deleteServiceAccount(currentServiceAccount.id);
+      deleteServiceAccount(currentServiceAccount.uid);
     }
     onRemoveModalClose();
   };
@@ -140,7 +140,7 @@ export const ServiceAccountsListPageUnconnected = ({
 
   const onTokenCreate = async (token: ServiceAccountToken) => {
     if (currentServiceAccount) {
-      createServiceAccountToken(currentServiceAccount.id, token, setNewToken);
+      createServiceAccountToken(currentServiceAccount.uid, token, setNewToken);
     }
   };
 

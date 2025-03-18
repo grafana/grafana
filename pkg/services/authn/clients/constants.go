@@ -1,6 +1,6 @@
 package clients
 
-import "github.com/grafana/grafana/pkg/util/errutil"
+import "github.com/grafana/grafana/pkg/apimachinery/errutil"
 
 const (
 	basicPrefix             = "Basic "

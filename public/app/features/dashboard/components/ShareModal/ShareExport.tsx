@@ -1,5 +1,5 @@
 import { saveAs } from 'file-saver';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
@@ -101,7 +101,7 @@ export class ShareExport extends PureComponent<Props, State> {
 
     return (
       <>
-        <p className="share-modal-info-text">
+        <p>
           <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
         </p>
         <Field label={exportExternallyTranslation}>

@@ -1,7 +1,7 @@
 package guardian
 
 import (
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -11,6 +11,7 @@ type DatasourceGuardianProvider interface {
 
 type DatasourceGuardian interface {
 	CanQuery(datasourceID int64) (bool, error)
+	FilterDatasourcesByReadPermissions([]*datasources.DataSource) ([]*datasources.DataSource, error)
 	FilterDatasourcesByQueryPermissions([]*datasources.DataSource) ([]*datasources.DataSource, error)
 }
 

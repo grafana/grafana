@@ -4,7 +4,7 @@ import { SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 
 export interface BuildParamsArgs {
   useCurrentTimeRange: boolean;
@@ -180,4 +180,5 @@ export const shareDashboardType: {
   pdf: 'pdf',
   report: 'report',
   publicDashboard: 'public_dashboard',
+  inviteUser: 'invite_user',
 };

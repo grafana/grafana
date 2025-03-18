@@ -20,19 +20,19 @@ export function getLayersExtent(
       } else if (l instanceof VectorLayer || l instanceof VectorImage) {
         if (allLayers) {
           // Return everything from all layers
-          return [l.getSource().getExtent()] ?? [];
+          return [l.getSource().getExtent()];
         } else if (lastOnly && layer === ll.options.name) {
           // Return last only for selected layer
           const feat = l.getSource().getFeatures();
           const featOfInterest = feat[feat.length - 1];
           const geo = featOfInterest?.getGeometry();
           if (geo) {
-            return [geo.getExtent()] ?? [];
+            return [geo.getExtent()];
           }
           return [];
         } else if (!lastOnly && layer === ll.options.name) {
           // Return all points for selected layer
-          return [l.getSource().getExtent()] ?? [];
+          return [l.getSource().getExtent()];
         }
         return [];
       } else {

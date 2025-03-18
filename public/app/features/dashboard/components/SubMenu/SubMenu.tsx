@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 
 import { AnnotationQuery, DataQuery, TypedVariableModel, GrafanaTheme2 } from '@grafana/data';
@@ -8,7 +9,7 @@ import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 
 import { Annotations } from './Annotations';
 import { DashboardLinks } from './DashboardLinks';

@@ -9,7 +9,8 @@ import {
   useHover,
   useInteractions,
 } from '@floating-ui/react';
-import React, { CSSProperties, useCallback, useEffect, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { DataFrame, DataFrameFieldIndex, Field, formattedValueToString, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

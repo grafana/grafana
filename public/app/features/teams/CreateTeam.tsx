@@ -1,4 +1,4 @@
-import React, { JSX, useState } from 'react';
+import { JSX, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { NavModelItem } from '@grafana/data';
@@ -42,7 +42,7 @@ export const CreateTeam = (): JSX.Element => {
       } catch (e) {
         console.error(e);
       }
-      locationService.push(`/org/teams/edit/${newTeam.teamId}`);
+      locationService.push(`/org/teams/edit/${newTeam.uid}`);
     }
   };
 

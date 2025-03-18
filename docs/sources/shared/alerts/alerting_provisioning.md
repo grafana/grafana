@@ -287,6 +287,46 @@ policies:
             - weekends
 ```
 
+### Notification template groups
+
+Template groups enable you to define multiple notification templates (`{{ define "" }}`) within a single group. They can be managed from the Grafana Alerting UI.
+
+| Method | URI                                  | Name                                            | Summary                                         |
+| ------ | ------------------------------------ | ----------------------------------------------- | ----------------------------------------------- |
+| DELETE | /api/v1/provisioning/templates/:name | [route delete template](#route-delete-template) | Delete a notification template group.           |
+| GET    | /api/v1/provisioning/templates/:name | [route get template](#route-get-template)       | Get a notification template group.              |
+| GET    | /api/v1/provisioning/templates       | [route get template](#route-get-templates)      | Get all notification template groups.           |
+| PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Create or update a notification template group. |
+
+**Example Request for all notification template groups:**
+
+```http
+GET /api/v1/provisioning/templates
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+  {
+    "name": "custom_email.message",
+    "template": "{{ define \"custom_email.message\" }}\n  Custom alert!\n{{ end }}",
+    "provenance": "file"
+  },
+  {
+    "name": "custom_email.subject",
+    "template": "{{ define \"custom_email.subject\" }}\n{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)\n{{ end }}",
+    "provenance": "file"
+  }
+]
+```
+
 ### Mute timings
 
 | Method | URI                                            | Name                                                            | Summary                                              |
@@ -331,44 +371,6 @@ Content-Type: application/json
 ]
 ```
 
-### Templates
-
-| Method | URI                                  | Name                                            | Summary                                   |
-| ------ | ------------------------------------ | ----------------------------------------------- | ----------------------------------------- |
-| DELETE | /api/v1/provisioning/templates/:name | [route delete template](#route-delete-template) | Delete a template.                        |
-| GET    | /api/v1/provisioning/templates/:name | [route get template](#route-get-template)       | Get a notification template.              |
-| GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.           |
-| PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Create or update a notification template. |
-
-**Example Request for all notification templates:**
-
-```http
-GET /api/v1/provisioning/templates
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response:**
-
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-[
-  {
-    "name": "custom_email.message",
-    "template": "{{ define \"custom_email.message\" }}\n  Custom alert!\n{{ end }}",
-    "provenance": "file"
-  },
-  {
-    "name": "custom_email.subject",
-    "template": "{{ define \"custom_email.subject\" }}\n{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)\n{{ end }}",
-    "provenance": "file"
-  }
-]
-```
-
 ### Edit resources in the Grafana UI
 
 By default, you cannot edit API-provisioned alerting resources in Grafana. To enable editing these resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
@@ -384,7 +386,7 @@ To reset the notification policy tree to the default and unlock it for editing i
 
 ## Data source-managed resources
 
-The Alerting Provisioning HTTP API can only be used to manage Grafana-managed alert resources. To manage resources related to [data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-rule/), consider the following tools:
+The Alerting Provisioning HTTP API can only be used to manage Grafana-managed alert resources. To manage resources related to [data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/), consider the following tools:
 
 - [mimirtool](https://grafana.com/docs/mimir/<GRAFANA_VERSION>/manage/tools/mimirtool/): to interact with the Mimir alertmanager and ruler configuration.
 - [cortex-tools](https://github.com/grafana/cortex-tools#cortextool): to interact with the Cortex alertmanager and ruler configuration.
@@ -461,15 +463,17 @@ DELETE /api/v1/provisioning/mute-timings/:name
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description      |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ---------------- |
-| name | `path` | string | `string` |           |    ✓     |         | Mute timing name |
+| Name    | Source  | Type   | Go type  | Separator | Required | Default | Description                                                                                                   |
+| ------- | ------- | ------ | -------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------- |
+| name    | `path`  | string | `string` |           |    ✓     |         | Mute timing name                                                                                              |
+| version | `query` | string | `string` |           |          |         | Current version of the resource. Used for optimistic concurrency validation. Keep empty to bypass validation. |
 
 #### All responses
 
 | Code                                 | Status     | Description                               | Has headers | Schema                                         |
 | ------------------------------------ | ---------- | ----------------------------------------- | :---------: | ---------------------------------------------- |
 | [204](#route-delete-mute-timing-204) | No Content | The mute timing was deleted successfully. |             | [schema](#route-delete-mute-timing-204-schema) |
+| [409](#route-delete-mute-timing-409) | Conflict   | GenericPublicError                        |             | [schema](#route-delete-mute-timing-409-schema) |
 
 #### Responses
 
@@ -479,7 +483,15 @@ Status: No Content
 
 ###### <span id="route-delete-mute-timing-204-schema"></span> Schema
 
-### <span id="route-delete-template"></span> Delete a template. (_RouteDeleteTemplate_)
+##### <span id="route-delete-mute-timing-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-delete-mute-timing-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
+
+### <span id="route-delete-template"></span> Delete a notification template group. (_RouteDeleteTemplate_)
 
 ```
 DELETE /api/v1/provisioning/templates/:name
@@ -487,15 +499,17 @@ DELETE /api/v1/provisioning/templates/:name
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description   |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ------------- |
-| name | `path` | string | `string` |           |    ✓     |         | Template Name |
+| Name    | Source  | Type   | Go type  | Separator | Required | Default | Description                                                                                                   |
+| ------- | ------- | ------ | -------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------- |
+| name    | `path`  | string | `string` |           |    ✓     |         | Name of the template group                                                                                    |
+| version | `query` | string | `string` |           |          |         | Current version of the resource. Used for optimistic concurrency validation. Keep empty to bypass validation. |
 
 #### All responses
 
 | Code                              | Status     | Description                            | Has headers | Schema                                      |
 | --------------------------------- | ---------- | -------------------------------------- | :---------: | ------------------------------------------- |
 | [204](#route-delete-template-204) | No Content | The template was deleted successfully. |             | [schema](#route-delete-template-204-schema) |
+| [409](#route-delete-template-409) | Conflict   | GenericPublicError                     |             | [schema](#route-delete-template-409-schema) |
 
 #### Responses
 
@@ -504,6 +518,14 @@ DELETE /api/v1/provisioning/templates/:name
 Status: No Content
 
 ###### <span id="route-delete-template-204-schema"></span> Schema
+
+##### <span id="route-delete-template-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-delete-template-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
 
 ### <span id="route-get-alert-rule"></span> Get a specific alert rule by UID. (_RouteGetAlertRule_)
 
@@ -1027,7 +1049,7 @@ Status: Not Found
 
 [NotFound](#not-found)
 
-### <span id="route-get-template"></span> Get a notification template. (_RouteGetTemplate_)
+### <span id="route-get-template"></span> Get a notification template group. (_RouteGetTemplate_)
 
 ```
 GET /api/v1/provisioning/templates/:name
@@ -1035,16 +1057,16 @@ GET /api/v1/provisioning/templates/:name
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description   |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ------------- |
-| name | `path` | string | `string` |           |    ✓     |         | Template Name |
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description                |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | -------------------------- |
+| name | `path` | string | `string` |           |    ✓     |         | Name of the template group |
 
 #### All responses
 
 | Code                           | Status    | Description          | Has headers | Schema                                   |
 | ------------------------------ | --------- | -------------------- | :---------: | ---------------------------------------- |
 | [200](#route-get-template-200) | OK        | NotificationTemplate |             | [schema](#route-get-template-200-schema) |
-| [404](#route-get-template-404) | Not Found | Not found.           |             | [schema](#route-get-template-404-schema) |
+| [404](#route-get-template-404) | Not Found | GenericPublicError   |             | [schema](#route-get-template-404-schema) |
 
 #### Responses
 
@@ -1058,11 +1080,11 @@ Status: OK
 
 ##### <span id="route-get-template-404"></span> 404 - Not found.
 
-Status: Not Found
+[GenericPublicError](#generic-public-error)
 
 ###### <span id="route-get-template-404-schema"></span> Schema
 
-### <span id="route-get-templates"></span> Get all notification templates. (_RouteGetTemplates_)
+### <span id="route-get-templates"></span> Get all notification template groups. (_RouteGetTemplates_)
 
 ```
 GET /api/v1/provisioning/templates
@@ -1070,10 +1092,9 @@ GET /api/v1/provisioning/templates
 
 #### All responses
 
-| Code                            | Status    | Description           | Has headers | Schema                                    |
-| ------------------------------- | --------- | --------------------- | :---------: | ----------------------------------------- |
-| [200](#route-get-templates-200) | OK        | NotificationTemplates |             | [schema](#route-get-templates-200-schema) |
-| [404](#route-get-templates-404) | Not Found | Not found.            |             | [schema](#route-get-templates-404-schema) |
+| Code                            | Status | Description           | Has headers | Schema                                    |
+| ------------------------------- | ------ | --------------------- | :---------: | ----------------------------------------- |
+| [200](#route-get-templates-200) | OK     | NotificationTemplates |             | [schema](#route-get-templates-200-schema) |
 
 #### Responses
 
@@ -1084,12 +1105,6 @@ Status: OK
 ###### <span id="route-get-templates-200-schema"></span> Schema
 
 [NotificationTemplates](#notification-templates)
-
-##### <span id="route-get-templates-404"></span> 404 - Not found.
-
-Status: Not Found
-
-###### <span id="route-get-templates-404-schema"></span> Schema
 
 ### <span id="route-post-alert-rule"></span> Create a new alert rule. (_RoutePostAlertRule_)
 
@@ -1138,6 +1153,8 @@ Status: Bad Request
 ```
 POST /api/v1/provisioning/contact-points
 ```
+
+When creating a contact point, the `EmbeddedContactPoint.name` property determines if the new contact point is added to an existing one. In the UI, contact points with the same name are grouped together under a single contact point.
 
 #### Parameters
 
@@ -1367,10 +1384,11 @@ PUT /api/v1/provisioning/mute-timings/:name
 
 #### All responses
 
-| Code                              | Status      | Description      | Has headers | Schema                                      |
-| --------------------------------- | ----------- | ---------------- | :---------: | ------------------------------------------- |
-| [200](#route-put-mute-timing-200) | OK          | MuteTimeInterval |             | [schema](#route-put-mute-timing-200-schema) |
-| [400](#route-put-mute-timing-400) | Bad Request | ValidationError  |             | [schema](#route-put-mute-timing-400-schema) |
+| Code                              | Status      | Description        | Has headers | Schema                                      |
+| --------------------------------- | ----------- | ------------------ | :---------: | ------------------------------------------- |
+| [200](#route-put-mute-timing-200) | OK          | MuteTimeInterval   |             | [schema](#route-put-mute-timing-200-schema) |
+| [400](#route-put-mute-timing-400) | Bad Request | ValidationError    |             | [schema](#route-put-mute-timing-400-schema) |
+| [409](#route-put-mute-timing-409) | Conflict    | GenericPublicError |             | [schema](#route-put-mute-timing-409-schema) |
 
 #### Responses
 
@@ -1389,6 +1407,14 @@ Status: Bad Request
 ###### <span id="route-put-mute-timing-400-schema"></span> Schema
 
 [ValidationError](#validation-error)
+
+##### <span id="route-put-mute-timing-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-put-mute-timing-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
 
 ### <span id="route-put-policy-tree"></span> Sets the notification policy tree. (_RoutePutPolicyTree_)
 
@@ -1432,7 +1458,7 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
-### <span id="route-put-template"></span> Create or update a notification template. (_RoutePutTemplate_)
+### <span id="route-put-template"></span> Create or update a notification template group. (_RoutePutTemplate_)
 
 ```
 PUT /api/v1/provisioning/templates/:name
@@ -1444,7 +1470,7 @@ PUT /api/v1/provisioning/templates/:name
 
 | Name                       | Source   | Type                                                          | Go type                              | Separator | Required | Default | Description                                               |
 | -------------------------- | -------- | ------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | --------------------------------------------------------- |
-| name                       | `path`   | string                                                        | `string`                             |           |    ✓     |         | Template Name                                             |
+| name                       | `path`   | string                                                        | `string`                             |           |    ✓     |         | Name of the template group                                |
 | X-Disable-Provenance: true | `header` | string                                                        | `string`                             |           |          |         | Allows editing of provisioned resources in the Grafana UI |
 | Body                       | `body`   | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |           |          |         |                                                           |
 
@@ -1455,7 +1481,8 @@ PUT /api/v1/provisioning/templates/:name
 | Code                           | Status      | Description          | Has headers | Schema                                   |
 | ------------------------------ | ----------- | -------------------- | :---------: | ---------------------------------------- |
 | [202](#route-put-template-202) | Accepted    | NotificationTemplate |             | [schema](#route-put-template-202-schema) |
-| [400](#route-put-template-400) | Bad Request | ValidationError      |             | [schema](#route-put-template-400-schema) |
+| [400](#route-put-template-400) | Bad Request | GenericPublicError   |             | [schema](#route-put-template-400-schema) |
+| [409](#route-put-template-409) | Conflict    | GenericPublicError   |             | [schema](#route-put-template-409-schema) |
 
 #### Responses
 
@@ -1473,7 +1500,15 @@ Status: Bad Request
 
 ###### <span id="route-put-template-400-schema"></span> Schema
 
-[ValidationError](#validation-error)
+[GenericPublicError](#generic-public-error)
+
+##### <span id="route-put-template-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-put-template-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
 
 ### <span id="route-reset-policy-tree"></span> Clears the notification policy tree. (_RouteResetPolicyTree_)
 
@@ -1627,23 +1662,22 @@ Status: Accepted
 
 ### <span id="embedded-contact-point"></span> EmbeddedContactPoint
 
-> EmbeddedContactPoint is the contact point type that is used
-> by grafanas embedded alertmanager implementation.
+EmbeddedContactPoint is the contact point type used by Grafana-managed alerts.
+
+When creating a contact point, the `EmbeddedContactPoint.name` property determines if the new contact point is added to an existing one. In the UI, contact points with the same name are grouped together under a single contact point.
 
 **Properties**
 
 {{% responsive-table %}}
 
-| Name                                 | Type                    | Go type  | Required | Default | Description                                                       | Example   |
-| ------------------------------------ | ----------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------- |
-| disableResolveMessage                | boolean                 | `bool`   |          |         |                                                                   | `false`   |
-| name                                 | string                  | `string` |          |         | Name is used as grouping key in the UI. Contact points with the   |
-| same name will be grouped in the UI. | `webhook_1`             |
-| provenance                           | string                  | `string` |          |         |                                                                   |           |
-| settings                             | [JSON](#json)           | `JSON`   |    ✓     |         |                                                                   |           |
-| type                                 | string                  | `string` |    ✓     |         |                                                                   | `webhook` |
-| uid                                  | string                  | `string` |          |         | UID is the unique identifier of the contact point. The UID can be |
-| set by the user.                     | `my_external_reference` |
+| Name                  | Type          | Go type  | Required | Default | Description                                                                        | Example                 |
+| --------------------- | ------------- | -------- | :------: | ------- | ---------------------------------------------------------------------------------- | ----------------------- |
+| disableResolveMessage | boolean       | `bool`   |          |         |                                                                                    | `false`                 |
+| name                  | string        | `string` |          |         | `name` groups multiple contact points with the same name in the UI.                | `webhook_1`             |
+| provenance            | string        | `string` |          |         |                                                                                    |                         |
+| settings              | [JSON](#json) | `JSON`   |    ✓     |         |                                                                                    |                         |
+| type                  | string        | `string` |    ✓     |         |                                                                                    | `webhook`               |
+| uid                   | string        | `string` |          |         | UID is the unique identifier of the contact point. The UID can be set by the user. | `my_external_reference` |
 
 {{% /responsive-table %}}
 
@@ -1689,10 +1723,11 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name           | Type                             | Go type           | Required | Default | Description | Example |
-| -------------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| name           | string                           | `string`          |          |         |             |         |
-| time_intervals | [][TimeInterval](#time-interval) | `[]*TimeInterval` |          |         |             |         |
+| Name           | Type                             | Go type           | Required | Default | Description         | Example |
+| -------------- | -------------------------------- | ----------------- | :------: | ------- | ------------------- | ------- |
+| name           | string                           | `string`          |          |         |                     |         |
+| time_intervals | [][TimeInterval](#time-interval) | `[]*TimeInterval` |          |         |                     |         |
+| version        | string                           | `string`          |          |         | Version of resource |         |
 
 {{% /responsive-table %}}
 
@@ -1727,11 +1762,12 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name       | Type                      | Go type      | Required | Default | Description | Example |
-| ---------- | ------------------------- | ------------ | :------: | ------- | ----------- | ------- |
-| name       | string                    | `string`     |          |         |             |         |
-| provenance | [Provenance](#provenance) | `Provenance` |          |         |             |         |
-| template   | string                    | `string`     |          |         |             |         |
+| Name       | Type                      | Go type      | Required | Default | Description         | Example |
+| ---------- | ------------------------- | ------------ | :------: | ------- | ------------------- | ------- |
+| name       | string                    | `string`     |          |         |                     |         |
+| provenance | [Provenance](#provenance) | `Provenance` |          |         |                     |         |
+| template   | string                    | `string`     |          |         |                     |         |
+| version    | string                    | `string`     |          |         | Version of resource |         |
 
 {{% /responsive-table %}}
 
@@ -1741,9 +1777,10 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name     | Type   | Go type  | Required | Default | Description | Example |
-| -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| template | string | `string` |          |         |             |         |
+| Name     | Type   | Go type  | Required | Default | Description                                             | Example |
+| -------- | ------ | -------- | :------: | ------- | ------------------------------------------------------- | ------- |
+| template | string | `string` |          |         |                                                         |         |
+| version  | string | `string` |          |         | Version of resource. Should be empty for new templates. |         |
 
 {{% /responsive-table %}}
 
@@ -1773,24 +1810,24 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name         | Type                         | Go type             | Required | Default | Description | Example                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| annotations  | map of string                | `map[string]string` |          |         |             | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
-| condition    | string                       | `string`            |    ✓     |         |             | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| data         | [][AlertQuery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |             | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
-| execErrState | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| folderUID    | string                       | `string`            |    ✓     |         |             | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| for          | [Duration](#duration)        | `Duration`          |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| id           | int64 (formatted integer)    | `int64`             |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| isPaused     | boolean                      | `bool`              |          |         |             | `false`                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| labels       | map of string                | `map[string]string` |          |         |             | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
-| noDataState  | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| orgID        | int64 (formatted integer)    | `int64`             |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| provenance   | [Provenance](#provenance)    | `Provenance`        |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ruleGroup    | string                       | `string`            |    ✓     |         |             | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| title        | string                       | `string`            |    ✓     |         |             | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| uid          | string                       | `string`            |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| updated      | date-time (formatted string) | `strfmt.DateTime`   |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Name         | Type                         | Go type             | Required | Default | Description                                                                                                       | Example                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| annotations  | map of string                | `map[string]string` |          |         | Optional key-value pairs. `dashboardUId` and `panelId` must be set together; one cannot be set without the other. | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
+| condition    | string                       | `string`            |    ✓     |         |                                                                                                                   | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| data         | [][AlertQuery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |                                                                                                                   | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
+| execErrState | string                       | `string`            |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| folderUID    | string                       | `string`            |    ✓     |         |                                                                                                                   | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| for          | [Duration](#duration)        | `Duration`          |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| id           | int64 (formatted integer)    | `int64`             |          |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| isPaused     | boolean                      | `bool`              |          |         |                                                                                                                   | `false`                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| labels       | map of string                | `map[string]string` |          |         |                                                                                                                   | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
+| noDataState  | string                       | `string`            |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| orgID        | int64 (formatted integer)    | `int64`             |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| provenance   | [Provenance](#provenance)    | `Provenance`        |          |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ruleGroup    | string                       | `string`            |    ✓     |         |                                                                                                                   | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| title        | string                       | `string`            |    ✓     |         |                                                                                                                   | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| uid          | string                       | `string`            |          |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| updated      | date-time (formatted string) | `strfmt.DateTime`   |          |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 {{% /responsive-table %}}
 
@@ -1929,5 +1966,20 @@ Status: Accepted
 | Name | Type   | Go type  | Required | Default | Description | Example         |
 | ---- | ------ | -------- | :------: | ------- | ----------- | --------------- |
 | msg  | string | `string` |          |         |             | `error message` |
+
+{{% /responsive-table %}}
+
+### <span id="generic-public-error"></span> GenericPublicError
+
+**Properties**
+
+{{% responsive-table %}}
+
+| Name       | Type       | Go type          | Required | Default | Description                                                              | Example |
+| ---------- | ---------- | ---------------- | :------: | ------- | ------------------------------------------------------------------------ | ------- |
+| statusCode | string     | `string`         |    ✓     |         | HTTP Status Code                                                         |         |
+| messageId  | string     | `string`         |    ✓     |         | Unique code of the error                                                 |         |
+| message    | string     | `string`         |          |         | Error message                                                            |         |
+| extra      | map of any | `map[string]any` |          |         | Extra information about the error. Format is specific to the error code. |         |
 
 {{% /responsive-table %}}

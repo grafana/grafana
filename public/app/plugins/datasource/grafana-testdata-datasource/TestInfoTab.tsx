@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { PluginConfigPageProps, DataSourcePluginMeta, DataSourceJsonData } from '@grafana/data';
 import { LinkButton } from '@grafana/ui';

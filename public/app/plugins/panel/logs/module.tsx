@@ -43,6 +43,12 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         description: '',
         defaultValue: true,
       })
+      .addBooleanSwitch({
+        path: 'enableInfiniteScrolling',
+        name: 'Enable infinite scrolling',
+        description: 'Experimental. Request more results by scrolling to the bottom of the logs list.',
+        defaultValue: false,
+      })
       .addRadio({
         path: 'dedupStrategy',
         name: 'Deduplication',

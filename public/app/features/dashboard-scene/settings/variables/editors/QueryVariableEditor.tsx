@@ -1,8 +1,9 @@
-import React, { FormEvent } from 'react';
+import { FormEvent } from 'react';
+import * as React from 'react';
 
-import { SelectableValue, DataSourceInstanceSettings } from '@grafana/data';
+import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { QueryVariable, sceneGraph } from '@grafana/scenes';
-import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
+import { VariableRefresh, VariableSort } from '@grafana/schema';
 
 import { QueryVariableEditorForm } from '../components/QueryVariableForm';
 
@@ -13,7 +14,8 @@ interface QueryVariableEditorProps {
 type VariableQueryType = QueryVariable['state']['query'];
 
 export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEditorProps) {
-  const { datasource, regex, sort, refresh, isMulti, includeAll, allValue, query } = variable.useState();
+  const { datasource, regex, sort, refresh, isMulti, includeAll, allValue, query, allowCustomValue } =
+    variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
 
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
@@ -34,8 +36,11 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
   const onAllValueChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ allValue: event.currentTarget.value });
   };
+  const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({ allowCustomValue: event.currentTarget.checked });
+  };
   const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
-    const datasource: DataSourceRef = { uid: dsInstanceSettings.uid, type: dsInstanceSettings.type };
+    const datasource = getDataSourceRef(dsInstanceSettings);
 
     if (variable.state.datasource && variable.state.datasource.type !== datasource.type) {
       variable.setState({ datasource, query: '', definition: '' });
@@ -77,6 +82,8 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       onIncludeAllChange={onIncludeAllChange}
       allValue={allValue ?? ''}
       onAllValueChange={onAllValueChange}
+      allowCustomValue={allowCustomValue}
+      onAllowCustomValueChange={onAllowCustomValueChange}
     />
   );
 }

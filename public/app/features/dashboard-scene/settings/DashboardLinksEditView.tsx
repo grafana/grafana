@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { NavModel, NavModelItem, PageLayoutType, arrayUtils } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
@@ -121,12 +119,9 @@ interface EditLinkViewProps {
 }
 
 function EditLinkView({ pageNav, link, navModel, dashboard, onChange, onGoBack }: EditLinkViewProps) {
-  const parentTab = pageNav.children!.find((p) => p.active)!;
-  parentTab.parentItem = pageNav;
-
   const editLinkPageNav = {
     text: 'Edit link',
-    parentItem: parentTab,
+    parentItem: pageNav,
   };
 
   return (

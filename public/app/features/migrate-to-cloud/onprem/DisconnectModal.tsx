@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Alert, ConfirmModal, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 

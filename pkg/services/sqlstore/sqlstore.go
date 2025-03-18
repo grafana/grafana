@@ -61,11 +61,10 @@ func ProvideService(cfg *setting.Cfg,
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, nil, migrations, bus, tracer)
+	s, err := newSQLStore(cfg, nil, features, migrations, bus, tracer)
 	if err != nil {
 		return nil, err
 	}
-	s.features = features
 
 	if err := s.Migrate(s.dbCfg.MigrationLock); err != nil {
 		return nil, err
@@ -75,18 +74,6 @@ func ProvideService(cfg *setting.Cfg,
 		return nil, err
 	}
 	s.tracer = tracer
-
-	// initialize and register metrics wrapper around the *sql.DB
-	db := s.engine.DB().DB
-
-	// register the go_sql_stats_connections_* metrics
-	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
-		s.log.Warn("Failed to register sqlstore stats collector", "error", err)
-	}
-	// TODO: deprecate/remove these metrics
-	if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
-		s.log.Warn("Failed to register sqlstore metrics", "error", err)
-	}
 
 	return s, nil
 }
@@ -100,18 +87,10 @@ func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featur
 func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
-	s, err := newSQLStore(cfg, nil, nil, bus, tracer)
-	if err != nil {
-		return nil, err
-	}
-
-	s.features = features
-	s.tracer = tracer
-
-	return s, nil
+	return newSQLStore(cfg, nil, features, nil, bus, tracer)
 }
 
-func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
+func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
 	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		cfg:                         cfg,
@@ -120,6 +99,7 @@ func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
 		migrations:                  migrations,
 		bus:                         bus,
 		tracer:                      tracer,
+		features:                    features,
 	}
 	for _, opt := range opts {
 		if !opt.EnsureDefaultOrgAndUser {
@@ -158,7 +138,14 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 	migrator := migrator.NewMigrator(ss.engine, ss.cfg)
 	ss.migrations.AddMigration(migrator)
 
-	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
+	if err := prometheus.Register(migrator); err != nil {
+		ss.log.Warn("Failed to register migrator metrics", "error", err)
+	}
+
+	ctx, span := ss.tracer.Start(context.Background(), "SQLStore.Migrate")
+	defer span.End()
+
+	return migrator.RunMigrations(ctx, isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
 }
 
 // Reset resets database state.
@@ -296,6 +283,15 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		}
 	}
 	if engine == nil {
+		// Ensure that parseTime is enabled for MySQL
+		if strings.Contains(ss.dbCfg.Type, migrator.MySQL) && !strings.Contains(ss.dbCfg.ConnectionString, "parseTime=") {
+			if strings.Contains(ss.dbCfg.ConnectionString, "?") {
+				ss.dbCfg.ConnectionString += "&parseTime=true"
+			} else {
+				ss.dbCfg.ConnectionString += "?parseTime=true"
+			}
+		}
+
 		var err error
 		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString)
 		if err != nil {
@@ -324,6 +320,19 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
 		engine.ShowSQL(true)
 		engine.ShowExecTime(true)
+	}
+
+	// initialize and register metrics wrapper around the *sql.DB
+	db := engine.DB().DB
+
+	// register the go_sql_stats_connections_* metrics
+	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
+		ss.log.Warn("Failed to register sqlstore stats collector", "error", err)
+	}
+
+	// TODO: deprecate/remove these metrics
+	if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
+		ss.log.Warn("Failed to register sqlstore metrics", "error", err)
 	}
 
 	ss.engine = engine
@@ -481,7 +490,6 @@ func getCfgForTesting(opts ...InitTestDBOpt) *setting.Cfg {
 func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 	featureKeys := []any{
 		featuremgmt.FlagPanelTitleSearch,
-		featuremgmt.FlagUnifiedStorage,
 	}
 	for _, opt := range opts {
 		if len(opt.FeatureFlags) > 0 {
@@ -594,7 +602,7 @@ func TestMain(m *testing.M) {
 
 		tracer := tracing.InitializeTracerForTest()
 		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newSQLStore(cfg, engine, migration, bus, tracer, opts...)
+		testSQLStore, err = newSQLStore(cfg, engine, features, migration, bus, tracer, opts...)
 		if err != nil {
 			return nil, err
 		}

@@ -1,4 +1,10 @@
+import { randomBytes } from 'crypto';
+
 import { Team, TeamGroup, TeamMember, TeamPermissionLevel } from 'app/types';
+
+function generateShortUid(): string {
+  return randomBytes(3).toString('hex'); // Generate a short UID
+}
 
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   const teams: Team[] = [];
@@ -9,14 +15,15 @@ export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   return teams;
 };
 
-export const getMockTeam = (i = 1, overrides = {}): Team => {
+export const getMockTeam = (i = 1, uid = 'aaaaaa', overrides = {}): Team => {
+  uid = uid || generateShortUid();
   return {
     id: i,
-    name: `test-${i}`,
+    uid: uid,
+    name: `test-${uid}`,
     avatarUrl: 'some/url/',
-    email: `test-${i}@test.com`,
+    email: `test-${uid}@test.com`,
     memberCount: i,
-    permission: TeamPermissionLevel.Member,
     accessControl: { isEditor: false },
     orgId: 0,
     ...overrides,

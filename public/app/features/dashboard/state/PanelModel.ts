@@ -380,6 +380,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
+      panelName: this.title,
       panelPluginId: this.type,
       dashboardUID: dashboardUID,
       timezone: dashboardTimezone,
@@ -544,10 +545,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   updateQueries(options: QueryGroupOptions) {
     const { dataSource } = options;
-    this.datasource = {
-      uid: dataSource.uid,
-      type: dataSource.type,
-    };
+    this.datasource = dataSource;
 
     this.cacheTimeout = options.cacheTimeout;
     this.queryCachingTTL = options.queryCachingTTL;

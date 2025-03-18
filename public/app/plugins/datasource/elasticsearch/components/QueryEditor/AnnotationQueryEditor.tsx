@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { AnnotationQuery } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
 import { Input, Stack } from '@grafana/ui';

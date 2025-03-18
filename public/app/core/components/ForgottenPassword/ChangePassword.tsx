@@ -1,9 +1,10 @@
-import React, { SyntheticEvent, useState } from 'react';
+import { SyntheticEvent, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Tooltip, Field, Button, Alert, useStyles2, Stack } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { getStyles } from '../Login/LoginForm';
 import { PasswordField } from '../PasswordField/PasswordField';
@@ -83,7 +84,7 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
       </Field>
       <Stack direction="column">
         <Button type="submit" className={styles.submitButton}>
-          Submit
+          <Trans i18nKey="forgot-password.change-password.submit-button">Submit</Trans>
         </Button>
 
         {!config.auth.basicAuthStrongPasswordPolicy && onSkip && (
@@ -91,8 +92,14 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
             content="If you skip you will be prompted to change password next time you log in."
             placement="bottom"
           >
-            <Button fill="text" onClick={onSkip} type="button" data-testid={selectors.pages.Login.skip}>
-              Skip
+            <Button
+              className={styles.skipButton}
+              fill="text"
+              onClick={onSkip}
+              type="button"
+              data-testid={selectors.pages.Login.skip}
+            >
+              <Trans i18nKey="forgot-password.change-password.skip-button">Skip</Trans>
             </Button>
           </Tooltip>
         )}

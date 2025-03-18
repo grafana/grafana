@@ -3,6 +3,7 @@ import UFuzzy from '@leeoniya/ufuzzy';
 
 import { config } from '@grafana/runtime';
 
+import { prometheusRegularEscape } from '../../../datasource';
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
 
@@ -22,7 +23,31 @@ type Completion = {
   triggerOnInsert?: boolean;
 };
 
-const metricNamesSearchClient = new UFuzzy({ intraMode: 1 });
+const metricNamesSearch = {
+  // see https://github.com/leeoniya/uFuzzy?tab=readme-ov-file#how-it-works for details
+  multiInsert: new UFuzzy({ intraMode: 0 }),
+  singleError: new UFuzzy({ intraMode: 1 }),
+};
+
+interface MetricFilterOptions {
+  metricNames: string[];
+  inputText: string;
+  limit: number;
+}
+
+export function filterMetricNames({ metricNames, inputText, limit }: MetricFilterOptions): string[] {
+  if (!inputText?.trim()) {
+    return metricNames.slice(0, limit);
+  }
+
+  const terms = metricNamesSearch.multiInsert.split(inputText); // e.g. 'some_metric_name or-another' -> ['some', 'metric', 'name', 'or', 'another']
+  const isComplexSearch = terms.length > 4;
+  const fuzzyResults = isComplexSearch
+    ? metricNamesSearch.multiInsert.filter(metricNames, inputText) // for complex searches, prioritize performance by using MultiInsert fuzzy search
+    : metricNamesSearch.singleError.filter(metricNames, inputText); // for simple searches, prioritize flexibility by using SingleError fuzzy search
+
+  return fuzzyResults ? fuzzyResults.slice(0, limit).map((idx) => metricNames[idx]) : [];
+}
 
 // we order items like: history, functions, metrics
 function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] {
@@ -36,11 +61,11 @@ function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] 
     monacoSettings.enableAutocompleteSuggestionsUpdate();
 
     if (monacoSettings.inputInRange) {
-      metricNames =
-        metricNamesSearchClient
-          .filter(metricNames, monacoSettings.inputInRange)
-          ?.slice(0, dataProvider.metricNamesSuggestionLimit)
-          .map((idx) => metricNames[idx]) ?? [];
+      metricNames = filterMetricNames({
+        metricNames,
+        inputText: monacoSettings.inputInRange,
+        limit: dataProvider.metricNamesSuggestionLimit,
+      });
     } else {
       metricNames = metricNames.slice(0, dataProvider.metricNamesSuggestionLimit);
     }
@@ -184,8 +209,13 @@ async function getLabelValuesForMetricCompletions(
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
-    insertText: betweenQuotes ? text : `"${text}"`, // FIXME: escaping strange characters?
+    insertText: formatLabelValueForCompletion(text, betweenQuotes),
   }));
+}
+
+function formatLabelValueForCompletion(value: string, betweenQuotes: boolean): string {
+  const text = config.featureToggles.prometheusSpecialCharsInLabelValues ? prometheusRegularEscape(value) : value;
+  return betweenQuotes ? text : `"${text}"`;
 }
 
 export function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {

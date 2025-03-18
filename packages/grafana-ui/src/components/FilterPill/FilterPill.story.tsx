@@ -1,5 +1,5 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { getAvailableIcons } from '../../types';
 import { Stack } from '../Layout/Stack/Stack';

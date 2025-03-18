@@ -2,7 +2,7 @@ import { auto } from '@popperjs/core';
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import Chance from 'chance';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
@@ -31,6 +31,7 @@ const manyGroupedOptions = [
       return { label: person, value: person };
     }),
   },
+  { label: 'Bar', value: '3' },
 ];
 
 const meta: Meta = {
@@ -250,6 +251,7 @@ export const MultiSelectWithOptionGroups: StoryFn = (args) => {
               { label: 'Eagle', value: '13' },
             ],
           },
+          { label: 'Bar', value: '3' },
         ]}
         value={value}
         onChange={(v) => {
@@ -303,6 +305,33 @@ export const MultiSelectBasic: StoryFn = (args) => {
 };
 
 MultiSelectBasic.args = {
+  isClearable: false,
+  closeMenuOnSelect: false,
+  maxVisibleValues: 5,
+  noMultiValueWrap: false,
+};
+
+export const MultiSelectBasicWithSelectAll: StoryFn = (args) => {
+  const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
+
+  return (
+    <div style={{ maxWidth: '450px' }}>
+      <MultiSelect
+        options={generateOptions()}
+        value={value}
+        toggleAllOptions={{ enabled: true }}
+        onChange={(v) => {
+          setValue(v);
+          action('onChange')(v);
+        }}
+        prefix={getPrefix(args.icon)}
+        {...args}
+      />
+    </div>
+  );
+};
+
+MultiSelectBasicWithSelectAll.args = {
   isClearable: false,
   closeMenuOnSelect: false,
   maxVisibleValues: 5,

@@ -1,26 +1,25 @@
 import * as React from 'react';
 import { useMemo } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
-import { GrafanaRouteComponentProps } from '../../../../../core/navigation/types';
 import { RuleIdentifier } from '../../../../../types/unified-alerting';
 import { useRuleWithLocation } from '../../hooks/useCombinedRule';
 import { stringifyErrorLike } from '../../utils/misc';
 import { formValuesFromExistingRule } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 import { isGrafanaRulerRule } from '../../utils/rules';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ModifyExportRuleForm } from '../rule-editor/alert-rule-form/ModifyExportRuleForm';
 
-interface GrafanaModifyExportProps extends GrafanaRouteComponentProps<{ id?: string }> {}
-
-export default function GrafanaModifyExport({ match }: GrafanaModifyExportProps) {
+export default function GrafanaModifyExport() {
+  const { id } = useParams();
   const ruleIdentifier = useMemo<RuleIdentifier | undefined>(() => {
-    return ruleId.tryParse(match.params.id, true);
-  }, [match.params.id]);
+    return ruleId.tryParse(id, true);
+  }, [id]);
 
   if (!ruleIdentifier) {
     return (
@@ -79,7 +78,7 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
       <Alert
         title="Cannot load the rule. The rule does not exist"
         buttonContent="Go back to alert list"
-        onRemove={() => locationService.replace(createUrl('/alerting/list'))}
+        onRemove={() => locationService.replace(createRelativeUrl('/alerting/list'))}
       />
     );
   }
@@ -90,7 +89,7 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
       <Alert
         title="This rule is not a Grafana-managed alert rule"
         buttonContent="Go back to alert list"
-        onRemove={() => locationService.replace(createUrl('/alerting/list'))}
+        onRemove={() => locationService.replace(createRelativeUrl('/alerting/list'))}
       />
     );
   }

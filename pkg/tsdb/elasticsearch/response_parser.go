@@ -12,15 +12,14 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/instrumentation"
 )
@@ -46,21 +45,22 @@ const (
 )
 
 var searchWordsRegex = regexp.MustCompile(regexp.QuoteMeta(es.HighlightPreTagsString) + `(.*?)` + regexp.QuoteMeta(es.HighlightPostTagsString))
+var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
-func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields, keepLabelsInResponse bool, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields, keepLabelsInResponse bool, logger log.Logger) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
 	if responses == nil {
 		return &result, nil
 	}
-	ctx, span := tracer.Start(ctx, "datasource.elastic.parseResponse", trace.WithAttributes(
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.elastic.parseResponse", trace.WithAttributes(
 		attribute.Int("responseLength", len(responses)),
 	))
 	defer span.End()
 
 	for i, res := range responses {
-		_, resSpan := tracer.Start(ctx, "datasource.elastic.parseResponse.response", trace.WithAttributes(
+		_, resSpan := tracing.DefaultTracer().Start(ctx, "datasource.elastic.parseResponse.response", trace.WithAttributes(
 			attribute.String("queryMetricType", targets[i].Metrics[0].Type),
 		))
 		start := time.Now()
@@ -74,7 +74,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 			resSpan.End()
 			logger.Error("Processing error response from Elasticsearch", "error", string(me), "query", string(mt))
 			errResult := getErrorFromElasticResponse(res)
-			result.Responses[target.RefID] = errorsource.Response(errorsource.PluginError(errors.New(errResult), false))
+			result.Responses[target.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(errors.New(errResult)))
 			continue
 		}
 
@@ -873,16 +873,16 @@ func trimDatapoints(queryResult backend.DataResponse, target *Query) {
 // we sort the label's pairs by the label-key,
 // and return the label-values
 func getSortedLabelValues(labels data.Labels) []string {
-	var keys []string
+	keys := make([]string, 0, len(labels))
 	for key := range labels {
 		keys = append(keys, key)
 	}
 
 	sort.Strings(keys)
 
-	var values []string
-	for _, key := range keys {
-		values = append(values, labels[key])
+	values := make([]string, len(keys))
+	for i, key := range keys {
+		values[i] = labels[key]
 	}
 
 	return values
@@ -922,8 +922,6 @@ func nameFields(queryResult backend.DataResponse, target *Query, keepLabelsInRes
 		}
 	}
 }
-
-var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
 func getFieldName(dataField data.Field, target *Query, metricTypeCount int) string {
 	metricType := dataField.Labels["metric"]

@@ -10,7 +10,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -308,10 +307,45 @@ func TestCheckContactPoints(t *testing.T) {
 				}(),
 			},
 		},
+		{
+			name:      "editing name of a provisioned receiver should fail",
+			shouldErr: true,
+			currentConfig: []*definitions.GettableApiReceiver{
+				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+			},
+			newConfig: []*definitions.PostableApiReceiver{
+				func() *definitions.PostableApiReceiver {
+					receiver := defaultPostableReceiver(t, "test-1")
+					receiver.Name = "updated name"
+					return receiver
+				}(),
+			},
+		},
+		{
+			name:      "Moving provisioned integration to different receiver should fail",
+			shouldErr: true,
+			currentConfig: []*definitions.GettableApiReceiver{
+				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-2", models.ProvenanceAPI),
+			},
+			newConfig: []*definitions.PostableApiReceiver{
+				func() *definitions.PostableApiReceiver { // Move integration from test-1 to test-2
+					receiver := defaultPostableReceiver(t, "test-1")
+					receiver.GrafanaManagedReceivers = []*definitions.PostableGrafanaReceiver{}
+					return receiver
+				}(),
+				func() *definitions.PostableApiReceiver {
+					receiver2 := defaultPostableReceiver(t, "test-2")
+					integration1 := defaultPostableReceiver(t, "test-1").GrafanaManagedReceivers[0]
+					receiver2.GrafanaManagedReceivers = append(receiver2.GrafanaManagedReceivers, integration1)
+					return receiver2
+				}(),
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := checkContactPoints(&logtest.Fake{}, test.currentConfig, test.newConfig)
+			err := checkContactPoints(test.currentConfig, test.newConfig)
 			if test.shouldErr {
 				require.Error(t, err)
 			} else {
@@ -321,14 +355,131 @@ func TestCheckContactPoints(t *testing.T) {
 	}
 }
 
+func TestReceiversDelta(t *testing.T) {
+	tests := []struct {
+		name          string
+		currentConfig []*definitions.GettableApiReceiver
+		newConfig     []*definitions.PostableApiReceiver
+		expectedDelta ReceiversDelta
+	}{
+		{
+			name: "no changes",
+			currentConfig: []*definitions.GettableApiReceiver{
+				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-2", models.ProvenanceAPI),
+			},
+			newConfig: []*definitions.PostableApiReceiver{
+				defaultPostableReceiver(t, "test-1"),
+				defaultPostableReceiver(t, "test-2"),
+			},
+			expectedDelta: ReceiversDelta{},
+		},
+		{
+			name: "create one",
+			currentConfig: []*definitions.GettableApiReceiver{
+				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+			},
+			newConfig: []*definitions.PostableApiReceiver{
+				defaultPostableReceiver(t, "test-1"),
+				defaultPostableReceiver(t, "test-2"),
+			},
+			expectedDelta: ReceiversDelta{
+				Created: []*definitions.PostableApiReceiver{
+					defaultPostableReceiver(t, "test-2"),
+				},
+			},
+		},
+		{
+			name: "delete one",
+			currentConfig: []*definitions.GettableApiReceiver{
+				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-2", models.ProvenanceAPI),
+			},
+			newConfig: []*definitions.PostableApiReceiver{
+				defaultPostableReceiver(t, "test-1"),
+			},
+			expectedDelta: ReceiversDelta{
+				Deleted: []*definitions.GettableApiReceiver{
+					defaultGettableReceiver(t, "test-2", models.ProvenanceAPI),
+				},
+			},
+		},
+		{
+			name: "update some",
+			currentConfig: []*definitions.GettableApiReceiver{
+				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-2", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-3", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-4", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-5", models.ProvenanceAPI),
+			},
+			newConfig: []*definitions.PostableApiReceiver{
+				func() *definitions.PostableApiReceiver {
+					receiver := defaultPostableReceiver(t, "test-1")
+					receiver.GrafanaManagedReceivers[0].Settings = definitions.RawMessage(`{ "hello": "data", "data": { "test": "test"}}`)
+					return receiver
+				}(),
+				func() *definitions.PostableApiReceiver {
+					receiver := defaultPostableReceiver(t, "test-2")
+					receiver.Name = "updated name"
+					return receiver
+				}(),
+				func() *definitions.PostableApiReceiver {
+					receiver := defaultPostableReceiver(t, "test-3")
+					receiver.GrafanaManagedReceivers[0].DisableResolveMessage = !receiver.GrafanaManagedReceivers[0].DisableResolveMessage
+					return receiver
+				}(),
+				func() *definitions.PostableApiReceiver {
+					receiver := defaultPostableReceiver(t, "test-4")
+					receiver.GrafanaManagedReceivers[0].Name = "updated name"
+					return receiver
+				}(),
+				func() *definitions.PostableApiReceiver {
+					receiver := defaultPostableReceiver(t, "test-5")
+					receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers, defaultPostableReceiver(t, "test-1").GrafanaManagedReceivers[0])
+					return receiver
+				}(),
+			},
+			expectedDelta: ReceiversDelta{
+				Updated: []*definitions.GettableApiReceiver{
+					defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+					defaultGettableReceiver(t, "test-3", models.ProvenanceAPI),
+					defaultGettableReceiver(t, "test-4", models.ProvenanceAPI),
+					defaultGettableReceiver(t, "test-5", models.ProvenanceAPI),
+				},
+				Created: []*definitions.PostableApiReceiver{
+					func() *definitions.PostableApiReceiver {
+						receiver := defaultPostableReceiver(t, "test-2")
+						receiver.Name = "updated name"
+						return receiver
+					}(),
+				},
+				Deleted: []*definitions.GettableApiReceiver{
+					defaultGettableReceiver(t, "test-2", models.ProvenanceAPI),
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			delta, err := calculateReceiversDelta(test.currentConfig, test.newConfig)
+			require.NoError(t, err)
+			require.Equalf(t, test.expectedDelta, delta, "unexpected delta: %q, expected: %q", delta.String(), test.expectedDelta.String())
+		})
+	}
+}
+
 func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provenance) *definitions.GettableApiReceiver {
 	t.Helper()
 	return &definitions.GettableApiReceiver{
+		Receiver: amConfig.Receiver{
+			Name: uid,
+		},
 		GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
 			GrafanaManagedReceivers: []*definitions.GettableGrafanaReceiver{
 				{
-					UID:                   "123",
-					Name:                  "yeah",
+					UID:                   uid,
+					Name:                  uid,
 					Type:                  "slack",
 					DisableResolveMessage: true,
 					Provenance:            definitions.Provenance(provenance),
@@ -348,11 +499,14 @@ func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provena
 func defaultPostableReceiver(t *testing.T, uid string) *definitions.PostableApiReceiver {
 	t.Helper()
 	return &definitions.PostableApiReceiver{
+		Receiver: amConfig.Receiver{
+			Name: uid,
+		},
 		PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
 			GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 				{
-					UID:                   "123",
-					Name:                  "yeah",
+					UID:                   uid,
+					Name:                  uid,
 					Type:                  "slack",
 					DisableResolveMessage: true,
 					Settings: definitions.RawMessage(`{
@@ -539,6 +693,7 @@ func TestCheckMuteTimes(t *testing.T) {
 }
 
 func gettableMuteIntervals(t *testing.T, muteTimeIntervals []amConfig.MuteTimeInterval, provenances map[string]definitions.Provenance) definitions.GettableUserConfig {
+	t.Helper()
 	return definitions.GettableUserConfig{
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
 			MuteTimeProvenances: provenances,

@@ -1,17 +1,40 @@
-import { Registry, RegistryItem } from '@grafana/data';
+import { escapeStringForRegex, Registry, RegistryItem, stringStartsAsRegEx, stringToJsRegex } from '@grafana/data';
 
-import { FieldExtractorID } from './types';
+import { ExtractFieldsOptions, FieldExtractorID } from './types';
+
+type Parser = (v: string) => Record<string, any> | undefined;
 
 export interface FieldExtractor extends RegistryItem {
-  parse: (v: string) => Record<string, any> | undefined;
+  getParser: (opts: ExtractFieldsOptions) => Parser;
 }
 
 const extJSON: FieldExtractor = {
   id: FieldExtractorID.JSON,
   name: 'JSON',
   description: 'Parse JSON string',
-  parse: (v: string) => {
+  getParser: (options) => (v: string) => {
     return JSON.parse(v);
+  },
+};
+
+const extRegExp: FieldExtractor = {
+  id: FieldExtractorID.RegExp,
+  name: 'RegExp',
+  description: 'Parse with RegExp',
+  getParser: (options) => {
+    let regex: RegExp | null = /(?<NewField>.*)/;
+
+    if (stringStartsAsRegEx(options.regExp!)) {
+      try {
+        regex = stringToJsRegex(options.regExp!);
+      } catch (error) {
+        if (error instanceof Error) {
+          console.warn(error.message);
+        }
+      }
+    }
+
+    return (v: string) => v.match(regex)?.groups;
   },
 };
 
@@ -59,7 +82,6 @@ function parseKeyValuePairs(raw: string): Record<string, string> {
       case `'`:
       // whitespace
       case ` `:
-      case `\n`:
       case `\t`:
       case `\r`:
       case `\n`:
@@ -107,25 +129,49 @@ const extLabels: FieldExtractor = {
   id: FieldExtractorID.KeyValues,
   name: 'Key+value pairs',
   description: 'Look for a=b, c: d values in the line',
-  parse: parseKeyValuePairs,
+  getParser: (options) => parseKeyValuePairs,
 };
 
-const fmts = [extJSON, extLabels];
+const extDelimiter: FieldExtractor = {
+  id: FieldExtractorID.Delimiter,
+  name: 'Split by delimiter',
+  description: 'Splits at delimited values, such as commas',
+  getParser: ({ delimiter = ',' }) => {
+    // Match for delimiter with surrounding whitesapce (\s)
+    const splitRegExp = new RegExp(`\\s*${escapeStringForRegex(delimiter)}\\s*`, 'g');
+
+    return (raw: string) => {
+      // Try to split delimited values
+      const parts = raw.trim().split(splitRegExp);
+      const acc: Record<string, number> = {};
+      for (const part of parts) {
+        acc[part] = 1;
+      }
+      return acc;
+    };
+  },
+};
+
+const fmts = [extJSON, extLabels, extDelimiter, extRegExp];
 
 const extAuto: FieldExtractor = {
   id: FieldExtractorID.Auto,
   name: 'Auto',
   description: 'parse new fields automatically',
-  parse: (v: string) => {
-    for (const f of fmts) {
-      try {
-        const r = f.parse(v);
-        if (r != null) {
-          return r;
-        }
-      } catch {} // ignore errors
-    }
-    return undefined;
+  getParser: (options) => {
+    const parsers = fmts.map((fmt) => fmt.getParser(options));
+
+    return (v: string) => {
+      for (const parse of parsers) {
+        try {
+          const r = parse(v);
+          if (r != null) {
+            return r;
+          }
+        } catch {} // ignore errors
+      }
+      return undefined;
+    };
   },
 };
 

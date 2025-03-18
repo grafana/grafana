@@ -1,6 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ConfigEditor.tsx
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
 import { ConfigSection, DataSourceDescription, AdvancedHttpSettings } from '@grafana/experimental';
@@ -63,7 +62,7 @@ export const ConfigEditor = (props: PrometheusConfigProps) => {
  * @returns
  */
 export function docsTip(url?: string) {
-  const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source';
+  const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/';
 
   return (
     <a href={url ? url : docsUrl} target="_blank" rel="noopener noreferrer">

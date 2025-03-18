@@ -72,6 +72,15 @@ const mockTimeRange = {
   },
 };
 
+const otherTimeRange = {
+  from: dateTime(1234567800000),
+  to: dateTime(1234567801000),
+  raw: {
+    from: dateTime(1234567800000),
+    to: dateTime(1234567801000),
+  },
+};
+
 describe('CompletionDataProvider', () => {
   let completionProvider: CompletionDataProvider, languageProvider: LokiLanguageProvider, datasource: LokiDatasource;
   let historyRef: { current: Array<HistoryItem<LokiQuery>> } = { current: [] };
@@ -137,21 +146,21 @@ describe('CompletionDataProvider', () => {
   });
 
   test('Returns the expected parser and label keys', async () => {
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
     expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(1);
   });
 
   test('Returns the expected parser and label keys, cache duplicate query', async () => {
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
 
     expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(1);
   });
 
   test('Returns the expected parser and label keys, unique query is not cached', async () => {
     //1
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
 
     //2
     expect(await completionProvider.getParserAndLabelKeys('unique')).toEqual(parserAndLabelKeys);
@@ -161,23 +170,32 @@ describe('CompletionDataProvider', () => {
     expect(await completionProvider.getParserAndLabelKeys('uffdah')).toEqual(parserAndLabelKeys);
 
     // 4
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
 
     expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(4);
   });
 
+  test('Clears the cache when the time range changes', async () => {
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
+    completionProvider.setTimeRange(otherTimeRange);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
+
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(2);
+  });
+
   test('Returns the expected parser and label keys, cache size is 2', async () => {
     //1
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
 
     //2
     expect(await completionProvider.getParserAndLabelKeys('unique')).toEqual(parserAndLabelKeys);
     expect(await completionProvider.getParserAndLabelKeys('unique')).toEqual(parserAndLabelKeys);
 
     // 2
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
     expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(2);
 
     // 3
@@ -186,13 +204,21 @@ describe('CompletionDataProvider', () => {
     expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(3);
 
     // 4
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
-    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
     expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(4);
   });
 
   test('Uses time range from CompletionProvider', async () => {
-    completionProvider.getParserAndLabelKeys('');
-    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledWith('', { timeRange: mockTimeRange });
+    completionProvider.getParserAndLabelKeys('{a="b"}');
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledWith('{a="b"}', { timeRange: mockTimeRange });
+  });
+
+  test('Updates the time range from CompletionProvider', async () => {
+    completionProvider.getParserAndLabelKeys('{a="b"}');
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledWith('{a="b"}', { timeRange: mockTimeRange });
+    completionProvider.setTimeRange(otherTimeRange);
+    completionProvider.getParserAndLabelKeys('{a="b"}');
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledWith('{a="b"}', { timeRange: otherTimeRange });
   });
 });

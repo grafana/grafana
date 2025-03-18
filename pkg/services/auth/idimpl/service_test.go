@@ -9,20 +9,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func Test_ProvideService(t *testing.T) {
-	t.Run("should register post auth hook when feature flag is enabled", func(t *testing.T) {
-		features := featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding)
-
+	t.Run("should register post auth hook", func(t *testing.T) {
 		var hookRegistered bool
 		authnService := &authntest.MockService{
 			RegisterPostAuthHookFunc: func(_ authn.PostAuthHookFn, _ uint) {
@@ -30,22 +28,8 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
+		_ = ProvideService(setting.NewCfg(), nil, nil, authnService, nil)
 		assert.True(t, hookRegistered)
-	})
-
-	t.Run("should not register post auth hook when feature flag is disabled", func(t *testing.T) {
-		features := featuremgmt.WithFeatures()
-
-		var hookRegistered bool
-		authnService := &authntest.MockService{
-			RegisterPostAuthHookFunc: func(_ authn.PostAuthHookFn, _ uint) {
-				hookRegistered = true
-			},
-		}
-
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
-		assert.False(t, hookRegistered)
 	})
 }
 
@@ -63,31 +47,58 @@ func TestService_SignIdentity(t *testing.T) {
 		},
 	}
 
-	t.Run("should sing identity", func(t *testing.T) {
+	t.Run("should sign identity", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
-		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: authn.MustParseNamespaceID("user:1")})
+		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
 		require.NoError(t, err)
 		require.NotEmpty(t, token)
 	})
 
-	t.Run("should sing identity with authenticated by if user is externally authenticated", func(t *testing.T) {
+	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
-		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), AuthenticatedBy: login.AzureADAuthModule})
+		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{
+			ID:              "1",
+			Type:            claims.TypeUser,
+			AuthenticatedBy: login.AzureADAuthModule,
+			Login:           "U1",
+			UID:             "edpu3nnt61se8e",
+		})
 		require.NoError(t, err)
 
 		parsed, err := jwt.ParseSigned(token)
 		require.NoError(t, err)
 
-		claims := &auth.IDClaims{}
-		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims.Claims, &claims.Rest))
-		assert.Equal(t, login.AzureADAuthModule, claims.Rest.AuthenticatedBy)
+		gotClaims := &auth.IDClaims{}
+		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&gotClaims.Claims, &gotClaims.Rest))
+		assert.Equal(t, login.AzureADAuthModule, gotClaims.Rest.AuthenticatedBy)
+		assert.Equal(t, "U1", gotClaims.Rest.Username)
+		assert.Equal(t, claims.TypeUser, gotClaims.Rest.Type)
+		assert.Equal(t, "edpu3nnt61se8e", gotClaims.Rest.Identifier)
+	})
+
+	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
+		s := ProvideService(
+			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil,
+		)
+		_, gotClaims, err := s.SignIdentity(context.Background(), &authn.Identity{
+			ID:              "1",
+			Type:            claims.TypeUser,
+			AuthenticatedBy: login.AzureADAuthModule,
+			Login:           "U1",
+			UID:             "edpu3nnt61se8e",
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, login.AzureADAuthModule, gotClaims.Rest.AuthenticatedBy)
+		assert.Equal(t, "U1", gotClaims.Rest.Username)
+		assert.Equal(t, claims.TypeUser, gotClaims.Rest.Type)
+		assert.Equal(t, "edpu3nnt61se8e", gotClaims.Rest.Identifier)
 	})
 }

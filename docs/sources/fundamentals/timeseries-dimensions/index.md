@@ -113,4 +113,4 @@ For more information, see the documentation on [creating alerts with multiple se
 
 In the case of SQL-like data sources, more than one numeric column can be selected, with or without additional string columns to be used as dimensions. For example, `AVG(Temperature) AS AvgTemp, MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions, can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
 
-Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series](/developers/plugin-tools/introduction/data-frames#data-frames-as-time-series).
+Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series](https://grafana.com/developers/plugin-tools/key-concepts/data-frames#data-frames-as-time-series).

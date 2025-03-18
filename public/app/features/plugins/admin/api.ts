@@ -17,11 +17,11 @@ import {
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
   const remote = await getRemotePlugin(id);
   const isPublished = Boolean(remote);
-
-  const [localPlugins, versions, localReadme] = await Promise.all([
+  const [localPlugins, versions, localReadme, localChangelog] = await Promise.all([
     getLocalPlugins(),
     getPluginVersions(id, isPublished),
     getLocalPluginReadme(id),
+    getLocalPluginChangelog(id),
   ]);
 
   const local = localPlugins.find((p) => p.id === id);
@@ -35,6 +35,8 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     versions,
     statusContext: remote?.statusContext ?? '',
     iam: remote?.json?.iam,
+    lastCommitDate: remote?.lastCommitDate,
+    changelog: remote?.changelog || localChangelog,
   };
 }
 
@@ -92,6 +94,7 @@ async function getPluginVersions(id: string, isPublished: boolean): Promise<Vers
       createdAt: v.createdAt,
       isCompatible: v.isCompatible,
       grafanaDependency: v.grafanaDependency,
+      angularDetected: v.angularDetected,
     }));
   } catch (error) {
     if (isFetchError(error)) {
@@ -107,6 +110,19 @@ async function getLocalPluginReadme(id: string): Promise<string> {
     const markdown: string = await getBackendSrv().get(`${API_ROOT}/${id}/markdown/README`);
     const markdownAsHtml = markdown ? renderMarkdown(markdown) : '';
 
+    return markdownAsHtml;
+  } catch (error) {
+    if (isFetchError(error)) {
+      error.isHandled = true;
+    }
+    return '';
+  }
+}
+
+async function getLocalPluginChangelog(id: string): Promise<string> {
+  try {
+    const markdown: string = await getBackendSrv().get(`${API_ROOT}/${id}/markdown/CHANGELOG`);
+    const markdownAsHtml = markdown ? renderMarkdown(markdown) : '';
     return markdownAsHtml;
   } catch (error) {
     if (isFetchError(error)) {
@@ -141,13 +157,19 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
   return provisionedPlugins.map((plugin) => ({ slug: plugin.type }));
 }
 
-export async function installPlugin(id: string) {
+export async function installPlugin(id: string, version?: string) {
   // This will install the latest compatible version based on the logic
   // on the backend.
-  return await getBackendSrv().post(`${API_ROOT}/${id}/install`, undefined, {
-    // Error is displayed in the page
-    showErrorAlert: false,
-  });
+  return await getBackendSrv().post(
+    `${API_ROOT}/${id}/install`,
+    {
+      version,
+    },
+    {
+      // Error is displayed in the page
+      showErrorAlert: false,
+    }
+  );
 }
 
 export async function uninstallPlugin(id: string) {

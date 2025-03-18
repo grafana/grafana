@@ -1,5 +1,5 @@
 import { Meta } from '@storybook/react';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import ReactSelect, { createFilter } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';

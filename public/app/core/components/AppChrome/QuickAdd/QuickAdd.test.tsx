@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { NavModelItem } from '@grafana/data';
@@ -42,6 +41,17 @@ const setup = () => {
 };
 
 describe('QuickAdd', () => {
+  beforeAll(() => {
+    jest.spyOn(window, 'matchMedia').mockImplementation(
+      () =>
+        ({
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+          matches: true,
+        }) as unknown as MediaQueryList
+    );
+  });
+
   it('renders a `New` button', () => {
     setup();
     expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();

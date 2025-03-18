@@ -118,6 +118,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           step: 0.01,
         },
         defaultValue: defaultOptions.rowHeight,
+      })
+      .addNumberInput({
+        path: 'perPage',
+        name: 'Page size (enable pagination)',
+        settings: {
+          min: 1,
+          step: 1,
+          integer: true,
+        },
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);

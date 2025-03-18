@@ -1,6 +1,5 @@
-import React from 'react';
-
 import { TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { ShareEmbed } from 'app/features/dashboard/components/ShareModal/ShareEmbed';
@@ -8,8 +7,8 @@ import { buildParams, shareDashboardType } from 'app/features/dashboard/componen
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { getDashboardUrl } from '../utils/urlBuilders';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardUrl } from '../utils/getDashboardUrl';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
 
@@ -26,15 +25,17 @@ export class SharePanelEmbedTab extends SceneObjectBase<SharePanelEmbedTabState>
   }
 
   public getTabLabel() {
-    return t('share-modal.tab-title.panel-embed', 'Embed');
+    return config.featureToggles.newDashboardSharingComponent
+      ? t('share-panel.drawer.share-embed-title', 'Share embed')
+      : t('share-modal.tab-title.panel-embed', 'Embed');
   }
 }
 
 function SharePanelEmbedTabRenderer({ model }: SceneComponentProps<SharePanelEmbedTab>) {
-  const { panelRef, dashboardRef } = model.useState();
+  const { panelRef } = model.useState();
   const p = panelRef.resolve();
 
-  const dash = dashboardRef.resolve();
+  const dash = getDashboardSceneFor(model);
   const { uid: dashUid } = dash.useState();
   const id = getPanelIdForVizPanel(p);
   const timeRangeState = sceneGraph.getTimeRange(p);
@@ -50,6 +51,7 @@ function SharePanelEmbedTabRenderer({ model }: SceneComponentProps<SharePanelEmb
       range={timeRangeState.state.value}
       dashboard={{ uid: dashUid ?? '', time: timeRangeState.state.value }}
       buildIframe={getIframeBuilder(dash)}
+      onCancelClick={() => dash.closeModal()}
     />
   );
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { Modal, ModalTabsHeader, TabContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -6,9 +6,11 @@ import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { SharePublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
+import { AccessControlAction } from 'app/types';
 
 import { ShareEmbed } from './ShareEmbed';
 import { ShareExport } from './ShareExport';
@@ -33,7 +35,11 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
   const linkLabel = t('share-modal.tab-title.link', 'Link');
   const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: shareDashboardType.link, component: ShareLink }];
 
-  if (contextSrv.isSignedIn && config.snapshotEnabled && canEditDashboard) {
+  if (
+    contextSrv.isSignedIn &&
+    config.snapshotEnabled &&
+    contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
+  ) {
     const snapshotLabel = t('share-modal.tab-title.snapshot', 'Snapshot');
     tabs.push({ label: snapshotLabel, value: shareDashboardType.snapshot, component: ShareSnapshot });
   }
@@ -102,7 +108,7 @@ class UnthemedShareModal extends React.Component<Props, State> {
 
   onSelectTab: React.ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (t) => {
     this.setState((prevState) => ({ ...prevState, activeTab: t.value }));
-    DashboardInteractions.sharingTabChanged({
+    DashboardInteractions.sharingCategoryClicked({
       item: t.value,
       shareResource: getTrackingSource(this.props.panel),
     });

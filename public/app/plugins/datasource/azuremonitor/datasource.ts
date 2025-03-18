@@ -2,6 +2,7 @@ import { cloneDeep } from 'lodash';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+import { AadCurrentUserCredentials, instanceOfAzureCredential, isCredentialsComplete } from '@grafana/azure-sdk';
 import {
   DataFrame,
   DataQueryRequest,
@@ -16,14 +17,13 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
-import { instanceOfAzureCredential, isCredentialsComplete } from './credentials';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
-import { AadCurrentUserCredentials, AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
+import { AzureMonitorDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
 import migrateQuery from './utils/migrateQuery';
 import { VariableSupport } from './variables';
 
-export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
+export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery, AzureMonitorDataSourceJsonData> {
   annotations = {
     prepareAnnotation: migrateAnnotation,
   };
@@ -42,7 +42,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   declare optionsKey: Record<AzureQueryType, string>;
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    instanceSettings: DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);

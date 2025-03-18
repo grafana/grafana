@@ -1,4 +1,4 @@
-import { IMarkdownString } from 'monaco-editor';
+import { IMarkdownString, languages } from 'monaco-editor';
 
 import { SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
@@ -7,12 +7,7 @@ import type { Monaco, monacoTypes } from '@grafana/ui';
 import TempoLanguageProvider from '../language_provider';
 
 import { getSituation, Situation } from './situation';
-import { intrinsics, scopes } from './traceql';
-
-interface Props {
-  languageProvider: TempoLanguageProvider;
-  setAlertText: (text?: string) => void;
-}
+import { scopes } from './traceql';
 
 type MinimalCompletionItem = {
   label: string;
@@ -20,6 +15,17 @@ type MinimalCompletionItem = {
   detail?: string;
   documentation?: string | IMarkdownString;
 };
+
+export type CompletionItemType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR' | 'SCOPE' | 'FUNCTION';
+type CompletionItem = MinimalCompletionItem & {
+  type: CompletionItemType;
+  insertTextRules?: monacoTypes.languages.CompletionItemInsertTextRule; // we used it to position the cursor
+};
+
+interface Props {
+  languageProvider: TempoLanguageProvider;
+  setAlertText: (text?: string) => void;
+}
 
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
@@ -270,29 +276,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     const completionItems = situation != null ? this.getCompletions(situation, this.setAlertText) : Promise.resolve([]);
 
     return completionItems.then((items) => {
-      // monaco by-default alphabetically orders the items.
-      // to stop it, we use a number-as-string sortkey,
-      // so that monaco keeps the order we use
-      const maxIndexDigits = items.length.toString().length;
-      const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => {
-        const suggestion: monacoTypes.languages.CompletionItem = {
-          kind: getMonacoCompletionItemKind(item.type, this.monaco!),
-          label: item.label,
-          insertText: item.insertText,
-          insertTextRules: item.insertTextRules,
-          detail: item.detail,
-          documentation: item.documentation,
-          sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
-          range,
-          command: {
-            id: this.registerInteractionCommandId || 'noOp',
-            title: 'Report Interaction',
-            arguments: [item.label, item.type],
-          },
-        };
-        fixSuggestion(suggestion, item.type, model, offset);
-        return suggestion;
-      });
+      const suggestions = completionItemsToSuggestions(
+        items,
+        range,
+        this.registerInteractionCommandId ?? undefined,
+        model.getValue(),
+        offset
+      );
       return { suggestions };
     });
   }
@@ -322,7 +312,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @param situation
    * @private
    */
-  private async getCompletions(situation: Situation, setAlertText: (text?: string) => void): Promise<Completion[]> {
+  private async getCompletions(situation: Situation, setAlertText: (text?: string) => void): Promise<CompletionItem[]> {
     switch (situation.type) {
       // This should only happen for cases that we do not support yet
       case 'UNKNOWN': {
@@ -339,46 +329,30 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return this.getTagsCompletions();
       }
       case 'SPANSET_IN_THE_MIDDLE':
-        return [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
       case 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE':
-        return [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        return this.getOperatorsCompletions([...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps]);
       case 'SPANSET_IN_NAME':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions());
       case 'SPANSET_IN_NAME_SCOPE':
         return this.getTagsCompletions(undefined, situation.scope);
       case 'SPANSET_EXPRESSION_OPERATORS':
-        return [
+        return this.getOperatorsCompletions([
           ...CompletionProvider.comparisonOps,
           ...CompletionProvider.logicalOps,
           ...CompletionProvider.arithmeticOps,
-        ].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        ]);
       case 'SPANFIELD_COMBINING_OPERATORS':
-        return [
+        return this.getOperatorsCompletions([
           ...CompletionProvider.logicalOps,
           ...CompletionProvider.arithmeticOps,
           ...CompletionProvider.comparisonOps,
-        ].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        ]);
       case 'SPANSET_COMBINING_OPERATORS':
-        return CompletionProvider.spansetOps.map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        return this.getOperatorsCompletions(CompletionProvider.spansetOps);
       case 'SPANSET_PIPELINE_AFTER_OPERATOR':
         const functions = CompletionProvider.functions.map((key) => ({
           ...key,
-          insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
+          insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
           type: 'FUNCTION' as const,
         }));
         const tags = this.getScopesCompletions()
@@ -386,10 +360,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           .concat(this.getTagsCompletions('.'));
         return [...functions, ...tags];
       case 'SPANSET_COMPARISON_OPERATORS':
-        return CompletionProvider.comparisonOps.map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        return this.getOperatorsCompletions(CompletionProvider.comparisonOps);
       case 'SPANSET_IN_VALUE':
         let tagValues;
         try {
@@ -403,8 +374,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           }
         }
 
-        const items: Completion[] = [];
-
         const getInsertionText = (val: SelectableValue<string>): string => {
           if (situation.betweenQuotes) {
             return val.label!;
@@ -412,6 +381,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           return val.type === 'string' ? `"${val.label}"` : val.label!;
         };
 
+        const items: CompletionItem[] = [];
         tagValues?.forEach((val) => {
           if (val?.label) {
             items.push({
@@ -439,32 +409,33 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
   }
 
-  private getTagsCompletions(prepend?: string, scope?: string): Completion[] {
+  private getTagsCompletions(prepend?: string, scope?: string): CompletionItem[] {
     const tags = this.languageProvider.getTraceqlAutocompleteTags(scope);
-    return tags
-      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
-      .map((key) => ({
-        label: key,
-        insertText: (prepend || '') + key,
-        type: 'TAG_NAME',
-      }));
+    return tagsToCompletionItems(tags, prepend);
   }
 
-  private getIntrinsicsCompletions(prepend?: string, append?: string): Completion[] {
-    return intrinsics.map((key) => ({
+  private getIntrinsicsCompletions(prepend?: string, append?: string): CompletionItem[] {
+    return this.languageProvider.getIntrinsics().map((key) => ({
       label: key,
       insertText: (prepend || '') + key + (append || ''),
       type: 'KEYWORD',
-      insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
+      insertTextRules: languages.CompletionItemInsertTextRule?.InsertAsSnippet,
     }));
   }
 
-  private getScopesCompletions(prepend?: string, append?: string): Completion[] {
+  private getScopesCompletions(prepend?: string, append?: string): CompletionItem[] {
     return scopes.map((key) => ({
       label: key,
       insertText: (prepend || '') + key + (append || ''),
       type: 'SCOPE',
-      insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
+      insertTextRules: languages.CompletionItemInsertTextRule?.InsertAsSnippet,
+    }));
+  }
+
+  private getOperatorsCompletions(ops: MinimalCompletionItem[]): CompletionItem[] {
+    return ops.map((key) => ({
+      ...key,
+      type: 'OPERATOR',
     }));
   }
 }
@@ -474,39 +445,24 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
  * @param type
  * @param monaco
  */
-function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): monacoTypes.languages.CompletionItemKind {
+function getMonacoCompletionItemKind(type: CompletionItemType): languages.CompletionItemKind {
   switch (type) {
     case 'TAG_NAME':
-      return monaco.languages.CompletionItemKind.Enum;
+      return languages.CompletionItemKind.Enum;
     case 'KEYWORD':
-      return monaco.languages.CompletionItemKind.Keyword;
+      return languages.CompletionItemKind.Keyword;
     case 'OPERATOR':
-      return monaco.languages.CompletionItemKind.Operator;
+      return languages.CompletionItemKind.Operator;
     case 'TAG_VALUE':
-      return monaco.languages.CompletionItemKind.EnumMember;
+      return languages.CompletionItemKind.EnumMember;
     case 'SCOPE':
-      return monaco.languages.CompletionItemKind.Class;
+      return languages.CompletionItemKind.Class;
     case 'FUNCTION':
-      return monaco.languages.CompletionItemKind.Function;
+      return languages.CompletionItemKind.Function;
     default:
-      throw new Error(`Unexpected CompletionType: ${type}`);
+      throw new Error(`Unexpected CompletionItemType: ${type}`);
   }
 }
-
-export type CompletionType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR' | 'SCOPE' | 'FUNCTION';
-type Completion = {
-  type: CompletionType;
-  label: string;
-  insertText: string;
-  insertTextRules?: monacoTypes.languages.CompletionItemInsertTextRule; // we used it to position the cursor
-  documentation?: string | IMarkdownString;
-  detail?: string;
-};
-
-export type Tag = {
-  name: string;
-  value: string;
-};
 
 function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel, position: monacoTypes.Position) {
   const word = model.getWordAtPosition(position);
@@ -530,6 +486,47 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
   return { offset, range };
 }
 
+const SUGGEST_REGEXP = /(event\.|instrumentation\.|link\.|resource\.|span\.|\.)?([\w./-]*)$/;
+
+function completionItemsToSuggestions(
+  items: CompletionItem[],
+  range: monacoTypes.IRange | languages.CompletionItemRanges,
+  registerInteractionCommandId = 'noOp',
+  modelValue: string,
+  offset: number
+) {
+  // monaco by-default alphabetically orders the items.
+  // to stop it, we use a number-as-string sortkey,
+  // so that monaco keeps the order we use
+  const [_, scope, tag] = modelValue.substring(0, offset).match(SUGGEST_REGEXP) ?? [];
+  const maxIndexDigits = items.length.toString().length;
+  const suggestions: languages.CompletionItem[] = items.map((item, index) => {
+    const suggestion: languages.CompletionItem = {
+      kind: getMonacoCompletionItemKind(item.type),
+      label: item.label,
+      insertText: item.insertText,
+      insertTextRules: item.insertTextRules,
+      detail: item.detail,
+      documentation: item.documentation,
+      sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
+      range,
+      command: {
+        id: registerInteractionCommandId,
+        title: 'Report Interaction',
+        arguments: [item.label, item.type],
+      },
+    };
+
+    if (tag && item.type === 'TAG_NAME') {
+      fixSuggestion(suggestion, offset, tag, scope);
+    }
+
+    return suggestion;
+  });
+
+  return suggestions;
+}
+
 /**
  * Fix the suggestions range and insert text. For the range we have to adjust because monaco by default replaces just
  * the last word which stops at dot while traceQL tags contain dots themselves and we want to replace the whole tag
@@ -537,34 +534,25 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
  * This may be doable also when creating the suggestions but for a particular situation this seems to be easier to do
  * here.
  */
-function fixSuggestion(
-  suggestion: monacoTypes.languages.CompletionItem,
-  itemType: CompletionType,
-  model: monacoTypes.editor.ITextModel,
-  offset: number
-) {
-  if (itemType === 'TAG_NAME') {
-    const match = model
-      .getValue()
-      .substring(0, offset)
-      .match(/(span\.|resource\.|\.)?([\w./-]*)$/);
-
-    if (match) {
-      const scope = match[1];
-      const tag = match[2];
-
-      if (tag) {
-        // Add the default scope if needed.
-        if (!scope && suggestion.insertText[0] !== '.') {
-          suggestion.insertText = '.' + suggestion.insertText;
-        }
-
-        // Adjust the range, so that we will replace the whole tag.
-        suggestion.range = {
-          ...suggestion.range,
-          startColumn: offset - tag.length + 1,
-        };
-      }
-    }
+function fixSuggestion(suggestion: monacoTypes.languages.CompletionItem, offset: number, tag: string, scope?: string) {
+  // Add the default scope if needed.
+  if (scope == null && suggestion.insertText[0] !== '.') {
+    suggestion.insertText = '.' + suggestion.insertText;
   }
+
+  // Adjust the range, so that we will replace the whole tag.
+  suggestion.range = {
+    ...suggestion.range,
+    startColumn: offset - tag.length + 1,
+  };
+}
+
+const collator = new Intl.Collator('en', { sensitivity: 'accent' });
+
+function tagsToCompletionItems(tags: string[], prepend = ''): CompletionItem[] {
+  return tags.sort(collator.compare).map((key) => ({
+    label: key,
+    insertText: `${prepend}${key}`,
+    type: 'TAG_NAME',
+  }));
 }

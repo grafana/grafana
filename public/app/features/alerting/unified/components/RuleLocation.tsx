@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Icon, Text } from '@grafana/ui';
 
 interface Props {

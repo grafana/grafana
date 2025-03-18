@@ -1,5 +1,6 @@
 import { clamp } from 'lodash';
-import React, { PureComponent, CSSProperties } from 'react';
+import { PureComponent, CSSProperties } from 'react';
+import * as React from 'react';
 
 import { VizOrientation } from '@grafana/data';
 
@@ -179,6 +180,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D
         const defaultVizHeight = (height + itemSpacing) / values.length - itemSpacing;
         repeaterStyle.flexDirection = 'column';
         repeaterStyle.height = `${height}px`;
+        repeaterStyle.overflowX = 'hidden';
         itemStyles.marginBottom = `${itemSpacing}px`;
         vizWidth = width;
         vizHeight = clamp(defaultVizHeight, minVizHeight ?? 0, maxVizHeight ?? defaultVizHeight);
@@ -186,6 +188,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D
       case VizOrientation.Vertical:
         repeaterStyle.flexDirection = 'row';
         repeaterStyle.justifyContent = 'space-between';
+        repeaterStyle.overflowY = 'hidden';
         itemStyles.marginRight = `${itemSpacing}px`;
         vizHeight = height;
         vizWidth = Math.max(width / values.length - itemSpacing + itemSpacing / values.length, minVizWidth ?? 0);

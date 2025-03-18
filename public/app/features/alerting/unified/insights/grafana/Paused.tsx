@@ -1,11 +1,9 @@
-import React from 'react';
-
 import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
-import { InsightsRatingModal } from '../RatingModal';
+import { InsightsMenuButton } from '../InsightsMenuButton';
 
 export function getPausedGrafanaAlertsScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
@@ -43,7 +41,7 @@ export function getPausedGrafanaAlertsScene(datasource: DataSourceRef, panelTitl
         ],
       })
       .setNoValue('0')
-      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .build(),
   });
 }

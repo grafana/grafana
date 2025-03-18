@@ -3,8 +3,8 @@ package actest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 var _ accesscontrol.Service = new(FakeService)
@@ -73,6 +73,10 @@ func (f FakeAccessControl) Evaluate(ctx context.Context, user identity.Requester
 }
 
 func (f FakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
+}
+
+func (f FakeAccessControl) WithoutResolvers() accesscontrol.AccessControl {
+	return f
 }
 
 type FakeStore struct {

@@ -2,11 +2,12 @@ import { Graph } from 'app/core/utils/dag';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
-  _getOriginsOfRefId,
-  parseRefsFromMathExpression,
   _createDagFromQueries,
-  fingerprintGraph,
+  _getDescendants,
+  _getOriginsOfRefId,
   fingerPrintQueries,
+  fingerprintGraph,
+  parseRefsFromMathExpression,
 } from './dag';
 
 describe('working with dag', () => {
@@ -34,30 +35,64 @@ describe('working with dag', () => {
           type: 'math',
         },
       },
+      {
+        refId: 'D',
+        model: {
+          refId: 'D',
+          expression: 'B',
+          type: 'threshold',
+        },
+      },
     ] as AlertQuery[];
 
     const dag = _createDagFromQueries(queries);
 
-    expect(Object.keys(dag.nodes)).toHaveLength(3);
+    expect(Object.keys(dag.nodes)).toHaveLength(4);
 
     expect(() => {
       dag.getNode('A');
       dag.getNode('B');
       dag.getNode('C');
+      dag.getNode('D');
     }).not.toThrow();
 
-    expect(dag.getNode('A').inputEdges).toHaveLength(0);
-    expect(dag.getNode('A').outputEdges).toHaveLength(1);
-    expect(dag.getNode('A').outputEdges[0].outputNode).toHaveProperty('name', 'B');
+    expect(dag.getNode('A')!.inputEdges).toHaveLength(0);
+    expect(dag.getNode('A')!.outputEdges).toHaveLength(0);
 
-    expect(dag.getNode('B').inputEdges).toHaveLength(1);
-    expect(dag.getNode('B').outputEdges).toHaveLength(1);
-    expect(dag.getNode('B').inputEdges[0].inputNode).toHaveProperty('name', 'A');
-    expect(dag.getNode('B').outputEdges[0].outputNode).toHaveProperty('name', 'C');
+    expect(dag.getNode('B')!.inputEdges).toHaveLength(0);
+    expect(dag.getNode('B')!.outputEdges).toHaveLength(2);
+    expect(dag.getNode('B')!.outputEdges[0].outputNode).toHaveProperty('name', 'C');
+    expect(dag.getNode('B')!.outputEdges[1].outputNode).toHaveProperty('name', 'D');
 
-    expect(dag.getNode('C').inputEdges).toHaveLength(1);
-    expect(dag.getNode('C').outputEdges).toHaveLength(0);
-    expect(dag.getNode('C').inputEdges[0].inputNode).toHaveProperty('name', 'B');
+    expect(dag.getNode('C')!.inputEdges).toHaveLength(1);
+    expect(dag.getNode('C')!.inputEdges[0].inputNode).toHaveProperty('name', 'B');
+    expect(dag.getNode('C')!.outputEdges).toHaveLength(0);
+
+    expect(dag.getNode('D')!.inputEdges).toHaveLength(1);
+    expect(dag.getNode('D')!.inputEdges[0].inputNode).toHaveProperty('name', 'B');
+    expect(dag.getNode('D')!.outputEdges).toHaveLength(0);
+  });
+
+  test('data queries cannot have references', () => {
+    const queries = [
+      {
+        refId: 'A',
+        model: {
+          refId: 'A',
+          expression: 'vector(1)',
+        },
+      },
+    ] as AlertQuery[];
+
+    expect(() => _createDagFromQueries(queries)).not.toThrow();
+
+    const dag = _createDagFromQueries(queries);
+
+    expect(Object.keys(dag.nodes)).toHaveLength(1);
+
+    expect(() => {
+      dag.getNode('A');
+    }).not.toThrow();
   });
 });
 
@@ -81,6 +116,20 @@ describe('getOriginsOfRefId', () => {
 
     expect(_getOriginsOfRefId('C', graph)).toEqual(['A']);
     expect(_getOriginsOfRefId('D', graph)).toEqual(['A']);
+  });
+});
+
+describe('getDescendants', () => {
+  test('with multiple generations', () => {
+    const graph = new Graph();
+    graph.createNodes(['A', 'B', 'C', 'D', 'E', 'F', 'G']);
+    graph.link('A', 'B');
+    graph.link('B', 'G');
+    graph.link('A', 'C');
+    graph.link('C', 'D');
+    graph.link('E', 'F');
+
+    expect(_getDescendants('A', graph)).toEqual(['B', 'G', 'C', 'D']);
   });
 });
 

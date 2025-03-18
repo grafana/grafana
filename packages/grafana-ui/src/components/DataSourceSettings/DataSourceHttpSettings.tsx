@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, useCallback, useId } from 'react';
+import { useState, useCallback, useId } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
+import { Alert } from '../Alert/Alert';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { InlineField } from '../Forms/InlineField';
@@ -13,6 +15,7 @@ import { Icon } from '../Icon/Icon';
 import { Select } from '../Select/Select';
 import { InlineSwitch } from '../Switch/Switch';
 import { TagsInput } from '../TagsInput/TagsInput';
+import { Text } from '../Text/Text';
 
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
@@ -37,28 +40,41 @@ const DEFAULT_ACCESS_OPTION = {
   value: 'proxy',
 };
 
-const HttpAccessHelp = () => (
-  <div className="grafana-info-box m-t-2">
-    <p>
-      Access mode controls how requests to the data source will be handled.
-      <strong>
-        &nbsp;<i>Server</i>
-      </strong>{' '}
-      should be the preferred way if nothing else is stated.
-    </p>
-    <div className="alert-title">Server access mode (Default):</div>
-    <p>
-      All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to
-      the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs
-      to be accessible from the grafana backend/server if you select this access mode.
-    </p>
-    <div className="alert-title">Browser access mode:</div>
-    <p>
-      All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource
-      Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
-    </p>
-  </div>
-);
+const HttpAccessHelp = () => {
+  return (
+    <Alert severity="info" title="" topSpacing={3}>
+      <p>
+        <Trans i18nKey="grafana-ui.data-source-http-settings.access-help-details">
+          Access mode controls how requests to the data source will be handled.
+          <strong>
+            &nbsp;<i>Server</i>
+          </strong>{' '}
+          should be the preferred way if nothing else is stated.
+        </Trans>
+      </p>
+      <Trans i18nKey="grafana-ui.data-source-http-settings.server-mode-title">
+        <Text weight="medium">Server access mode (Default):</Text>
+      </Trans>
+      <p>
+        <Trans i18nKey="grafana-ui.data-source-http-settings.server-mode-description">
+          All requests will be made from the browser to Grafana backend/server which in turn will forward the requests
+          to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL
+          needs to be accessible from the grafana backend/server if you select this access mode.
+        </Trans>
+      </p>
+      <Trans i18nKey="grafana-ui.data-source-http-settings.browser-mode-title">
+        <Text weight="medium">Browser access mode:</Text>
+      </Trans>
+      <p>
+        <Trans i18nKey="grafana-ui.data-source-http-settings.browser-mode-description">
+          All requests will be made from the browser directly to the data source and may be subject to Cross-Origin
+          Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this
+          access mode.
+        </Trans>
+      </p>
+    </Alert>
+  );
+};
 
 const LABEL_WIDTH = 26;
 
@@ -114,7 +130,9 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     case 'direct':
       urlTooltip = (
         <>
-          Your access method is <em>Browser</em>, this means the URL needs to be accessible from the browser.
+          <Trans i18nKey="grafana-ui.data-source-http-settings.direct-url-tooltip">
+            Your access method is <em>Browser</em>, this means the URL needs to be accessible from the browser.
+          </Trans>
           {urlDocs}
         </>
       );
@@ -122,14 +140,23 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     case 'proxy':
       urlTooltip = (
         <>
-          Your access method is <em>Server</em>, this means the URL needs to be accessible from the grafana
-          backend/server.
+          <Trans i18nKey="grafana-ui.data-source-http-settings.proxy-url-tooltip">
+            Your access method is <em>Server</em>, this means the URL needs to be accessible from the grafana
+            backend/server.
+          </Trans>
           {urlDocs}
         </>
       );
       break;
     default:
-      urlTooltip = <>Specify a complete HTTP URL (for example http://your_server:8080) {urlDocs}</>;
+      urlTooltip = (
+        <>
+          <Trans i18nKey="grafana-ui.data-source-http-settings.default-url-tooltip">
+            Specify a complete HTTP URL (for example http://your_server:8080)
+          </Trans>
+          {urlDocs}
+        </>
+      );
   }
 
   const accessSelect = (
@@ -170,7 +197,9 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
   return (
     <div className="gf-form-group">
       <>
-        <h3 className="page-heading">HTTP</h3>
+        <h3 className="page-heading">
+          <Trans i18nKey="grafana-ui.data-source-http-settings.heading">HTTP</Trans>
+        </h3>
         <div className="gf-form-group">
           <div className="gf-form">
             <FormField
@@ -194,8 +223,10 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
                     className="gf-form-label query-keyword pointer"
                     onClick={() => setIsAccessHelpVisible((isVisible) => !isVisible)}
                   >
-                    Help&nbsp;
-                    <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} style={{ marginBottom: 0 }} />
+                    <Trans i18nKey="grafana-ui.data-source-http-settings.access-help">
+                      Help&nbsp;
+                      <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} style={{ marginBottom: 0 }} />
+                    </Trans>
                   </button>
                 </div>
               </div>
@@ -209,7 +240,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
                   width={13}
                   tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
                 >
-                  Allowed cookies
+                  <Trans i18nKey="grafana-ui.data-source-http-settings.allowed-cookies">Allowed cookies</Trans>
                 </InlineFormLabel>
                 <TagsInput
                   tags={dataSourceConfig.jsonData.keepCookies}
@@ -244,7 +275,9 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
       </>
 
       <>
-        <h3 className="page-heading">Auth</h3>
+        <h3 className="page-heading">
+          <Trans i18nKey="grafana-ui.data-source-http-settings.auth">Auth</Trans>
+        </h3>
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <InlineField label="Basic auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
@@ -320,7 +353,9 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
         </div>
         {dataSourceConfig.basicAuth && (
           <>
-            <h6>Basic Auth Details</h6>
+            <h6>
+              <Trans i18nKey="grafana-ui.data-source-http-settings.basic-auth">Basic Auth Details</Trans>
+            </h6>
             <div className="gf-form-group">
               <BasicAuthSettings {...props} />
             </div>

@@ -321,7 +321,11 @@ export function getConfig(opts: TimelineCoreOptions) {
                     continue;
                   }
 
-                  let maxChars = Math.floor(boxRect?.w / pxPerChar);
+                  // if x placement is negative, rect is left truncated, remove it from width for calculating how many chars will display
+                  // right truncation happens automatically
+                  const displayedBoxWidth = boxRect.x < 0 ? boxRect?.w + boxRect.x : boxRect?.w;
+
+                  let maxChars = Math.floor(displayedBoxWidth / pxPerChar);
 
                   if (showValue === VisibilityMode.Auto && maxChars < 2) {
                     continue;
@@ -333,7 +337,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                   let x = round(boxRect.x + xOff + boxRect.w / 2);
                   if (mode === TimelineMode.Changes) {
                     if (alignValue === 'left') {
-                      x = round(boxRect.x + xOff + strokeWidth + textPadding);
+                      x = round(Math.max(boxRect.x, 0) + xOff + strokeWidth + textPadding);
                     } else if (alignValue === 'right') {
                       x = round(boxRect.x + xOff + boxRect.w - strokeWidth - textPadding);
                     }

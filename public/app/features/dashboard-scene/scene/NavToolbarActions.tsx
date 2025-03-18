@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import {
@@ -11,6 +12,7 @@ import {
   Dropdown,
   Icon,
   Menu,
+  Stack,
   ToolbarButton,
   ToolbarButtonRow,
   useStyles2,
@@ -23,16 +25,18 @@ import { Trans, t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { ScopesSelector } from 'app/features/scopes';
 
+import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
+import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
-import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
-import { LibraryVizPanel } from './LibraryVizPanel';
 
 interface Props {
   dashboard: DashboardScene;
@@ -57,15 +61,23 @@ export function ToolbarActions({ dashboard }: Props) {
 
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
+  const leftActions: ToolbarAction[] = [];
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
-  const isEditedPanelDirty = useVizManagerDirty(editPanel);
-  const isEditingLibraryPanel = useEditingLibraryPanel(editPanel);
+  const isEditedPanelDirty = usePanelEditDirty(editPanel);
+  const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
+  const isNotFound = Boolean(meta.dashboardNotFound);
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
+  const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
+  const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
+
+  if (isNotFound) {
+    return null;
+  }
 
   if (!isEditingPanel) {
     // This adds the precence indicators in enterprise
@@ -133,12 +145,9 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: meta.isSnapshot && !isEditing,
+    condition: meta.isSnapshot && !meta.dashboardNotFound && !isEditing,
     render: () => (
-      <GoToSnapshotOriginButton
-        key="go-to-snapshot-origin"
-        originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''}
-      />
+      <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl() ?? ''} />
     ),
   });
 
@@ -147,74 +156,135 @@ export function ToolbarActions({ dashboard }: Props) {
     addDynamicActions(toolbarActions, dynamicDashNavActions.right, 'icon-actions');
   }
 
-  toolbarActions.push({
-    group: 'add-panel',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <Dropdown
-        key="add-panel-dropdown"
-        onVisibleChange={(isOpen) => {
-          setIsAddPanelMenuOpen(isOpen);
-          DashboardInteractions.toolbarAddClick();
-        }}
-        overlay={() => (
-          <Menu>
-            <Menu.Item
-              key="add-visualization"
-              testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
-              label={t('dashboard.add-menu.visualization', 'Visualization')}
-              onClick={() => {
-                const vizPanel = dashboard.onCreateNewPanel();
-                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-                dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
-              }}
-            />
-            <Menu.Item
-              key="add-panel-lib"
-              testId={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
-              label={t('dashboard.add-menu.import', 'Import from library')}
-              onClick={() => {
-                dashboard.onShowAddLibraryPanelDrawer();
-                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
-              }}
-            />
-            <Menu.Item
-              key="add-row"
-              testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}
-              label={t('dashboard.add-menu.row', 'Row')}
-              onClick={() => {
-                dashboard.onCreateNewRow();
-                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
-              }}
-            />
-            <Menu.Item
-              key="paste-panel"
-              disabled={!hasCopiedPanel}
-              testId={selectors.pages.AddDashboard.itemButton('Add new panel from clipboard menu item')}
-              label={t('dashboard.add-menu.paste-panel', 'Paste panel')}
-              onClick={() => {
-                dashboard.pastePanel();
-                DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
-              }}
-            />
-          </Menu>
-        )}
-        placement="bottom"
-        offset={[0, 6]}
-      >
+  if (dashboardNewLayouts) {
+    leftActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
         <Button
           key="add-panel-button"
-          variant="primary"
+          variant="secondary"
           size="sm"
-          fill="outline"
-          data-testid={selectors.components.PageToolbar.itemButton('Add button')}
+          icon="plus"
+          fill="text"
+          onClick={() => {
+            dashboard.onCreateNewPanel();
+          }}
+          data-testid={selectors.components.PageToolbar.itemButton('add_visualization')}
         >
-          <Trans i18nKey="dashboard.toolbar.add">Add</Trans>
-          <Icon name={isAddPanelMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
+          Panel
         </Button>
-      </Dropdown>
-    ),
-  });
+      ),
+    });
+    leftActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <Button
+          key="add-panel-button"
+          variant="secondary"
+          size="sm"
+          icon="plus"
+          fill="text"
+          onClick={() => {
+            dashboard.onCreateNewRow();
+          }}
+          data-testid={selectors.components.PageToolbar.itemButton('add_row')}
+        >
+          Row
+        </Button>
+      ),
+    });
+    leftActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <Button
+          key="add-panel-lib"
+          variant="secondary"
+          size="sm"
+          icon="plus"
+          fill="text"
+          data-testid={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
+          onClick={() => {
+            dashboard.onShowAddLibraryPanelDrawer();
+            DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+          }}
+        >
+          Import
+        </Button>
+      ),
+    });
+  } else {
+    toolbarActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <Dropdown
+          key="add-panel-dropdown"
+          onVisibleChange={(isOpen) => {
+            setIsAddPanelMenuOpen(isOpen);
+            DashboardInteractions.toolbarAddClick();
+          }}
+          overlay={() => (
+            <Menu>
+              <Menu.Item
+                key="add-visualization"
+                testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
+                label={t('dashboard.add-menu.visualization', 'Visualization')}
+                onClick={() => {
+                  const vizPanel = dashboard.onCreateNewPanel();
+                  DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+                  dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
+                }}
+              />
+              <Menu.Item
+                key="add-panel-lib"
+                testId={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
+                label={t('dashboard.add-menu.import', 'Import from library')}
+                onClick={() => {
+                  dashboard.onShowAddLibraryPanelDrawer();
+                  DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+                }}
+              />
+              <Menu.Item
+                key="add-row"
+                testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}
+                label={t('dashboard.add-menu.row', 'Row')}
+                onClick={() => {
+                  dashboard.onCreateNewRow();
+                  DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+                }}
+              />
+              <Menu.Item
+                key="paste-panel"
+                disabled={!hasCopiedPanel}
+                testId={selectors.pages.AddDashboard.itemButton('Add new panel from clipboard menu item')}
+                label={t('dashboard.add-menu.paste-panel', 'Paste panel')}
+                onClick={() => {
+                  dashboard.pastePanel();
+                  DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
+                }}
+              />
+            </Menu>
+          )}
+          placement="bottom"
+          offset={[0, 6]}
+        >
+          <Button
+            key="add-panel-button"
+            variant="primary"
+            size="sm"
+            fill="outline"
+            data-testid={selectors.components.PageToolbar.itemButton('Add button')}
+          >
+            <Trans i18nKey="dashboard.toolbar.add">Add</Trans>
+            <Icon name={isAddPanelMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
+          </Button>
+        </Dropdown>
+      ),
+    });
+  }
 
   toolbarActions.push({
     group: 'playlist-actions',
@@ -313,7 +383,7 @@ export function ToolbarActions({ dashboard }: Props) {
         fill="outline"
         onClick={() => {
           DashboardInteractions.toolbarShareClick();
-          dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
+          locationService.partial({ shareView: shareDashboardType.link });
         }}
         data-testid={selectors.components.NavToolbar.shareDashboard}
       >
@@ -364,7 +434,13 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   toolbarActions.push({
-    group: 'new-share-dashboard-button',
+    group: 'new-share-dashboard-buttons',
+    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
+  });
+
+  toolbarActions.push({
+    group: 'new-share-dashboard-buttons',
     condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
@@ -415,7 +491,7 @@ export function ToolbarActions({ dashboard }: Props) {
         onClick={editPanel?.onDiscard}
         tooltip={editPanel?.state.isNewPanel ? 'Discard panel' : 'Discard panel changes'}
         size="sm"
-        disabled={!isEditedPanelDirty || !isDirty}
+        disabled={!isEditedPanelDirty}
         key="discard"
         fill="outline"
         variant="destructive"
@@ -489,7 +565,6 @@ export function ToolbarActions({ dashboard }: Props) {
         return (
           <Button
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
             className={styles.buttonWithExtraMargin}
@@ -509,7 +584,6 @@ export function ToolbarActions({ dashboard }: Props) {
         return (
           <Button
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
             className={styles.buttonWithExtraMargin}
@@ -530,7 +604,6 @@ export function ToolbarActions({ dashboard }: Props) {
             label="Save"
             icon="save"
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
           />
@@ -538,7 +611,6 @@ export function ToolbarActions({ dashboard }: Props) {
             label="Save as copy"
             icon="copy"
             onClick={() => {
-              DashboardInteractions.toolbarSaveAsClick();
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
           />
@@ -549,7 +621,6 @@ export function ToolbarActions({ dashboard }: Props) {
         <ButtonGroup className={styles.buttonWithExtraMargin} key="save">
           <Button
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
             tooltip="Save changes"
@@ -560,13 +631,50 @@ export function ToolbarActions({ dashboard }: Props) {
             Save dashboard
           </Button>
           <Dropdown overlay={menu}>
-            <Button icon="angle-down" variant={isDirty ? 'primary' : 'secondary'} size="sm" />
+            <Button
+              aria-label="More save options"
+              icon="angle-down"
+              variant={isDirty ? 'primary' : 'secondary'}
+              size="sm"
+            />
           </Dropdown>
         </ButtonGroup>
       );
     },
   });
 
+  // Will open a schema v2 editor drawer. Only available with useV2DashboardsAPI feature toggle on.
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: uid && config.featureToggles.useV2DashboardsAPI,
+    render: () => {
+      return (
+        <ToolbarButton
+          tooltip={'Edit dashboard v2 schema'}
+          icon={<Icon name="brackets-curly" size="lg" type="default" />}
+          key="schema-v2-button"
+          onClick={() => {
+            dashboard.openV2SchemaEditor();
+          }}
+        />
+      );
+    },
+  });
+
+  const rigthActionsElements: React.ReactNode[] = renderActionElements(toolbarActions);
+  const leftActionsElements: React.ReactNode[] = renderActionElements(leftActions);
+  const hasActionsToLeftAndRight = showScopesSelector || leftActionsElements.length > 0;
+
+  return (
+    <Stack flex={1} minWidth={0} justifyContent={hasActionsToLeftAndRight ? 'space-between' : 'flex-end'}>
+      {showScopesSelector && <ScopesSelector />}
+      {leftActionsElements.length > 0 && <ToolbarButtonRow alignment="left">{leftActionsElements}</ToolbarButtonRow>}
+      <ToolbarButtonRow alignment="right">{rigthActionsElements}</ToolbarButtonRow>
+    </Stack>
+  );
+}
+
+function renderActionElements(toolbarActions: ToolbarAction[]) {
   const actionElements: React.ReactNode[] = [];
   let lastGroup = '';
 
@@ -582,8 +690,7 @@ export function ToolbarActions({ dashboard }: Props) {
     actionElements.push(action.render());
     lastGroup = action.group;
   }
-
-  return <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>;
+  return actionElements;
 }
 
 function addDynamicActions(
@@ -606,41 +713,22 @@ function addDynamicActions(
   }
 }
 
-function useEditingLibraryPanel(panelEditor?: PanelEditor) {
-  const [isEditingLibraryPanel, setEditingLibraryPanel] = useState<Boolean>(false);
-
-  useEffect(() => {
-    if (panelEditor) {
-      const unsub = panelEditor.state.vizManager.subscribeToState((vizManagerState) =>
-        setEditingLibraryPanel(vizManagerState.sourcePanel.resolve().parent instanceof LibraryVizPanel)
-      );
-      return () => {
-        unsub.unsubscribe();
-      };
-    }
-    setEditingLibraryPanel(false);
-    return;
-  }, [panelEditor]);
-
-  return isEditingLibraryPanel;
-}
-
 // This hook handles when panelEditor is not defined to avoid conditionally hook usage
-function useVizManagerDirty(panelEditor?: PanelEditor) {
-  const [isDirty, setIsDirty] = useState<Boolean>(false);
+function usePanelEditDirty(panelEditor?: PanelEditor) {
+  const [isDirty, setIsDirty] = useState<Boolean | undefined>();
 
   useEffect(() => {
     if (panelEditor) {
-      const unsub = panelEditor.state.vizManager.subscribeToState((vizManagerState) =>
-        setIsDirty(vizManagerState.isDirty || false)
-      );
-      return () => {
-        unsub.unsubscribe();
-      };
+      const unsub = panelEditor.subscribeToState((state) => {
+        if (state.isDirty !== isDirty) {
+          setIsDirty(state.isDirty);
+        }
+      });
+
+      return () => unsub.unsubscribe();
     }
-    setIsDirty(false);
     return;
-  }, [panelEditor]);
+  }, [panelEditor, isDirty]);
 
   return isDirty;
 }

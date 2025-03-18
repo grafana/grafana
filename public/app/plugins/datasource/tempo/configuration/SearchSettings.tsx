@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';

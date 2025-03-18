@@ -82,7 +82,7 @@ func (s *targetInfo) addTarget(iter *jsoniter.Iterator) {
 	}
 }
 
-func (s *targetInfo) addPanel(panel panelInfo) {
+func (s *targetInfo) addPanel(panel PanelSummaryInfo) {
 	for idx, v := range panel.Datasource {
 		if v.UID != "" {
 			s.uids[v.UID] = &panel.Datasource[idx]

@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
@@ -8,7 +8,8 @@ import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { StoreState } from 'app/types';
 
-import { PanelModel, DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
 
 import { getSectionOpenState, saveSectionOpenState } from './state/utils';
 

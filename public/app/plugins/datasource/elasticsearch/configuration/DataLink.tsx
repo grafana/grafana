@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import * as React from 'react';
 import { usePrevious } from 'react-use';
 
 import { DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
@@ -153,24 +154,24 @@ function useInternalLink(datasourceUid?: string): [boolean, Dispatch<SetStateAct
 }
 
 const getStyles = () => ({
-  firstRow: css`
-    display: flex;
-  `,
-  nameField: css`
-    flex: 2;
-  `,
-  regexField: css`
-    flex: 3;
-  `,
-  row: css`
-    display: flex;
-    align-items: baseline;
-  `,
-  urlField: css`
-    display: flex;
-    flex: 1;
-  `,
-  urlDisplayLabelField: css`
-    flex: 1;
-  `,
+  firstRow: css({
+    display: 'flex',
+  }),
+  nameField: css({
+    flex: 2,
+  }),
+  regexField: css({
+    flex: 3,
+  }),
+  row: css({
+    display: 'flex',
+    alignItems: 'baseline',
+  }),
+  urlField: css({
+    display: 'flex',
+    flex: 1,
+  }),
+  urlDisplayLabelField: css({
+    flex: 1,
+  }),
 });

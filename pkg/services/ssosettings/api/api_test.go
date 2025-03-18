@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -550,7 +551,7 @@ func TestSSOSettingsAPI_List(t *testing.T) {
 
 func getPermissionsForActionAndScope(action, scope string) map[int64]map[string][]string {
 	return map[int64]map[string][]string{
-		1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{{
+		1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{{
 			Action: action, Scope: scope,
 		}}),
 	}

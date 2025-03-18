@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, QueryEditorProps, textUtil } from '@grafana/data';
 import { useStyles2, Stack } from '@grafana/ui';
@@ -154,12 +154,12 @@ export function OpenTsdbQueryEditor({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      display: flex;
-    `,
-    toggleButton: css`
-      margin-left: ${theme.spacing(0.5)};
-    `,
+    container: css({
+      display: 'flex',
+    }),
+    toggleButton: css({
+      marginLeft: theme.spacing(0.5),
+    }),
   };
 }
 

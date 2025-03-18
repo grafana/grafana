@@ -1,9 +1,6 @@
 import { screen } from '@testing-library/react';
-import React from 'react';
-import { Route, Router } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
-
-import { locationService } from '@grafana/runtime';
 
 import TeamPages from './TeamPages';
 import { getMockTeam } from './__mocks__/teamMocks';
@@ -33,7 +30,6 @@ jest.mock('@grafana/runtime', () => ({
       licenseUrl: '',
     },
     featureToggles: { accesscontrol: true },
-    bootData: { navTree: [], user: {} },
     buildInfo: {
       edition: 'Open Source',
       version: '7.5.0',
@@ -59,18 +55,16 @@ jest.mock('./TeamGroupSync', () => {
   return () => <div>Team group sync</div>;
 });
 
-const setup = (propOverrides: { teamId?: number; pageName?: string } = {}) => {
-  const pageName = propOverrides.pageName ?? 'members';
-  const teamId = propOverrides.teamId ?? 1;
-  locationService.push({ pathname: `/org/teams/edit/${teamId}/${pageName}` });
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: jest.fn(),
+}));
 
-  render(
-    <Router history={locationService.getHistory()}>
-      <Route path="/org/teams/edit/:id/:page?">
-        <TeamPages />
-      </Route>
-    </Router>
-  );
+const setup = (propOverrides: { teamUid?: string; pageName?: string } = {}) => {
+  const pageName = propOverrides.pageName ?? 'members';
+  const teamUid = propOverrides.teamUid ?? 'aaaaaa';
+  (useParams as jest.Mock).mockReturnValue({ uid: `${teamUid}`, page: pageName });
+  render(<TeamPages />);
 };
 
 describe('TeamPages', () => {

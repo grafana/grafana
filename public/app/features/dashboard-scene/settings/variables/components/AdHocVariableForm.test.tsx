@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -61,6 +61,22 @@ describe('AdHocVariableForm', () => {
 
     expect(onDataSourceChange).toHaveBeenCalledTimes(1);
     expect(onDataSourceChange).toHaveBeenCalledWith(promDatasource, undefined);
+  });
+
+  it('should render the form with allow custom value true', async () => {
+    const mockOnAllowCustomValueChange = jest.fn();
+    const { renderer } = await setup({
+      ...defaultProps,
+      allowCustomValue: true,
+      onAllowCustomValueChange: mockOnAllowCustomValueChange,
+    });
+
+    const allowCustomValueCheckbox = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
+
+    expect(allowCustomValueCheckbox).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).toBeChecked();
   });
 
   it('should not render code editor when no default keys provided', async () => {

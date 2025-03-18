@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties } from 'react';
+import { CSSProperties } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, fieldColorModeRegistry } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';

@@ -162,7 +162,7 @@ async function doImportPluginModuleInSandbox(meta: SandboxPluginMeta): Promise<S
           }
 
           try {
-            const resolvedDeps = resolvePluginDependencies(dependencies, meta.id);
+            const resolvedDeps = await resolvePluginDependencies(dependencies, meta);
             // execute the plugin's code
             const pluginExportsRaw = factory.apply(null, resolvedDeps);
             // only after the plugin has been executed
@@ -213,19 +213,45 @@ async function doImportPluginModuleInSandbox(meta: SandboxPluginMeta): Promise<S
   });
 }
 
-function resolvePluginDependencies(deps: string[], pluginId: string) {
+/**
+ *
+ * This function resolves the dependencies using the array of AMD deps.
+ * Additionally it supports the RequireJS magic modules `module` and `exports`.
+ * https://github.com/requirejs/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#magic
+ *
+ */
+async function resolvePluginDependencies(deps: string[], pluginMeta: SandboxPluginMeta) {
+  const pluginExports = {};
+  const pluginModuleDep: ModuleMeta = {
+    id: pluginMeta.id,
+    uri: pluginMeta.module,
+    exports: pluginExports,
+  };
+
   // resolve dependencies
   const resolvedDeps: CompartmentDependencyModule[] = [];
   for (const dep of deps) {
     let resolvedDep = sandboxPluginDependencies.get(dep);
+
+    if (typeof resolvedDep === 'function') {
+      resolvedDep = await resolvedDep();
+    }
     if (resolvedDep?.__useDefault) {
       resolvedDep = resolvedDep.default;
+    }
+
+    if (dep === 'module') {
+      resolvedDep = pluginModuleDep;
+    }
+
+    if (dep === 'exports') {
+      resolvedDep = pluginExports;
     }
 
     if (!resolvedDep) {
       const error = new Error(`[sandbox] Could not resolve dependency ${dep}`);
       logError(error, {
-        pluginId,
+        pluginId: pluginMeta.id,
         dependency: dep,
         error: String(error),
       });
@@ -234,4 +260,10 @@ function resolvePluginDependencies(deps: string[], pluginId: string) {
     resolvedDeps.push(resolvedDep);
   }
   return resolvedDeps;
+}
+
+interface ModuleMeta {
+  id: string;
+  uri: string;
+  exports: System.Module;
 }

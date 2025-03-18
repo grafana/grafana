@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps, FieldNamePickerBaseNameMode } from '@grafana/data';
 import { ColorDimensionConfig } from '@grafana/schema';
@@ -86,13 +86,13 @@ export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionCo
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: flex-end;
-    align-items: center;
-  `,
-  picker: css`
-    padding-left: 8px;
-  `,
+  container: css({
+    display: 'flex',
+    flexWrap: 'nowrap',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  }),
+  picker: css({
+    paddingLeft: theme.spacing(1),
+  }),
 });

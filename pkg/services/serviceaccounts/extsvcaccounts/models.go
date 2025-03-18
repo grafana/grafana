@@ -1,12 +1,11 @@
 package extsvcaccounts
 
 import (
-	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -28,14 +27,16 @@ var (
 	ErrCredentialsGenFailed = errutil.Internal("extsvcaccounts.ErrCredentialsGenFailed")
 	ErrCredentialsNotFound  = errutil.NotFound("extsvcaccounts.ErrCredentialsNotFound")
 	ErrInvalidName          = errutil.BadRequest("extsvcaccounts.ErrInvalidName", errutil.WithPublicMessage("only external service account names can be prefixed with 'extsvc-'"))
+)
 
-	extsvcuser = &user.SignedInUser{
-		OrgID: extsvcauth.TmpOrgID,
+func extsvcuser(orgID int64) *user.SignedInUser {
+	return &user.SignedInUser{
+		OrgID: orgID,
 		Permissions: map[int64]map[string][]string{
-			extsvcauth.TmpOrgID: {serviceaccounts.ActionRead: {"serviceaccounts:id:*"}},
+			orgID: {serviceaccounts.ActionRead: {"serviceaccounts:id:*"}},
 		},
 	}
-)
+}
 
 // Credentials represents the credentials associated to an external service
 type Credentials struct {
@@ -56,7 +57,7 @@ type saveCmd struct {
 	SaID        int64
 }
 
-func newRole(r roletype.RoleType) *roletype.RoleType {
+func newRole(r identity.RoleType) *identity.RoleType {
 	return &r
 }
 

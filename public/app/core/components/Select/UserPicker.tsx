@@ -1,5 +1,5 @@
 import { debounce, DebouncedFuncLeading, isNil } from 'lodash';
-import React, { Component } from 'react';
+import { Component } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -7,7 +7,7 @@ import { AsyncSelect } from '@grafana/ui';
 import { OrgUser } from 'app/types';
 
 export interface Props {
-  onSelected: (user: SelectableValue<OrgUser['userId']>) => void;
+  onSelected: (user: SelectableValue<OrgUser>) => void;
   className?: string;
   inputId?: string;
 }
@@ -42,7 +42,8 @@ export class UserPicker extends Component<Props, State> {
       .then((result: OrgUser[]) => {
         return result.map((user) => ({
           id: user.userId,
-          value: user.userId,
+          uid: user.uid,
+          value: user,
           label: user.login,
           imgUrl: user.avatarUrl,
           login: user.login,

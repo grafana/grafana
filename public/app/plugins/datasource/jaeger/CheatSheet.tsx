@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -49,10 +48,10 @@ export default function CheatSheet() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  anchorTag: css`
-    color: ${theme.colors.text.link};
-  `,
-  unorderedList: css`
-    list-style-type: none;
-  `,
+  anchorTag: css({
+    color: theme.colors.text.link,
+  }),
+  unorderedList: css({
+    listStyleType: 'none',
+  }),
 });

@@ -1,5 +1,5 @@
 import { toLonLat } from 'ol/proj';
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';

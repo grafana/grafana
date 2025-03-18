@@ -1,8 +1,17 @@
 import { LanguageProvider, SelectableValue } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { VariableFormatID } from '@grafana/schema';
 
-import { getAllTags, getTagsByScope, getUnscopedTags } from './SearchTraceQLEditor/utils';
-import { TraceqlSearchScope } from './dataquery.gen';
+import {
+  filterToQuerySection,
+  getAllTags,
+  getIntrinsicTags,
+  getTagsByScope,
+  getUnscopedTags,
+} from './SearchTraceQLEditor/utils';
+import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
+import { intrinsicsV1 } from './traceql/traceql';
 import { Scope } from './types';
 
 export default class TempoLanguageProvider extends LanguageProvider {
@@ -52,6 +61,13 @@ export default class TempoLanguageProvider extends LanguageProvider {
 
   setV2Tags = (tags: Scope[]) => {
     this.tagsV2 = tags;
+  };
+
+  getIntrinsics = () => {
+    if (this.tagsV2) {
+      return getIntrinsicTags(this.tagsV2);
+    }
+    return intrinsicsV1;
   };
 
   getTags = (scope?: TraceqlSearchScope) => {
@@ -132,7 +148,10 @@ export default class TempoLanguageProvider extends LanguageProvider {
 
   async getOptionsV2(tag: string, query?: string): Promise<Array<SelectableValue<string>>> {
     const encodedTag = this.encodeTag(tag);
-    const response = await this.request(`/api/v2/search/tag/${encodedTag}/values`, query ? { q: query } : {});
+    const response = await this.request(
+      `/api/v2/search/tag/${encodedTag}/values`,
+      query ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe) } : {}
+    );
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
       response.tagValues.forEach((v: { type: string; value?: string }) => {
@@ -159,4 +178,15 @@ export default class TempoLanguageProvider extends LanguageProvider {
     // Reference: https://stackoverflow.com/a/37456192
     return encodeURIComponent(encodeURIComponent(tag));
   };
+
+  generateQueryFromFilters(filters: TraceqlFilter[]) {
+    if (!filters) {
+      return '';
+    }
+
+    return `{${filters
+      .filter((f) => f.tag && f.operator && f.value?.length)
+      .map((f) => filterToQuerySection(f, filters, this))
+      .join(' && ')}}`;
+  }
 }

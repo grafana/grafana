@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { LinkModel, PanelData, PanelPlugin, renderMarkdown } from '@grafana/data';
 import { config, getTemplateSrv, locationService } from '@grafana/runtime';
@@ -9,7 +9,8 @@ import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSupplie
 import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 
 import { PanelHeaderTitleItems } from '../dashgrid/PanelHeader/PanelHeaderTitleItems';
-import { DashboardModel, PanelModel } from '../state';
+import { DashboardModel } from '../state/DashboardModel';
+import { PanelModel } from '../state/PanelModel';
 
 interface CommonProps {
   panel: PanelModel;
@@ -113,10 +114,6 @@ export function getPanelChromeProps(props: CommonProps) {
 
   const title = props.panel.getDisplayTitle();
 
-  const onOpenMenu = () => {
-    DashboardInteractions.panelMenuShown();
-  };
-
   return {
     hasOverlayHeader,
     onShowPanelDescription,
@@ -129,6 +126,5 @@ export function getPanelChromeProps(props: CommonProps) {
     dragClass,
     title,
     titleItems,
-    onOpenMenu,
   };
 }

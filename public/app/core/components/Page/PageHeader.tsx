@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -58,8 +58,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'row',
       maxWidth: '100%',
+      flex: 1,
       h1: {
-        display: 'flex',
         marginBottom: 0,
       },
     }),

@@ -1,10 +1,11 @@
 import { ByRoleMatcher, waitFor, within } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import { KBarProvider } from 'kbar';
 import { fromPairs } from 'lodash';
 import { stringify } from 'querystring';
-import React from 'react';
 import { Provider } from 'react-redux';
+// eslint-disable-next-line no-restricted-imports
 import { Route, Router } from 'react-router-dom';
 import { of } from 'rxjs';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -22,19 +23,20 @@ import {
   locationService,
   HistoryWrapper,
   LocationService,
-  setPluginExtensionsHook,
   setBackendSrv,
   getBackendSrv,
   getDataSourceSrv,
   getEchoSrv,
   setLocationService,
+  setPluginLinksHook,
 } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
-import { QueryLibraryMocks } from 'app/features/query-library';
+import { IdentityServiceMocks, QueryLibraryMocks } from 'app/features/query-library';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
 
@@ -44,6 +46,7 @@ import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { ExploreQueryParams } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
+import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerContext';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 
@@ -54,6 +57,8 @@ type SetupOptions = {
   urlParams?: ExploreQueryParams;
   prevUsedDatasource?: { orgId: number; datasource: string };
   failAddToLibrary?: boolean;
+  // Use AppChrome wrapper around ExplorePage - needed to test query library/history
+  withAppChrome?: boolean;
 };
 
 type TearDownOptions = {
@@ -78,19 +83,19 @@ export function setupExplore(options?: SetupOptions): {
         data.totalCount = 0;
       } else if (req.url.startsWith('/api/query-history') && req.method === 'GET') {
         data.result = options?.queryHistory || {};
-      } else if (req.url.startsWith(QueryLibraryMocks.data.all.url)) {
-        data = QueryLibraryMocks.data.all.response;
+      } else if (req.url.startsWith(QueryLibraryMocks.data.url)) {
+        data = QueryLibraryMocks.data.response;
       }
       return of({ data });
     }),
-    get: jest.fn(),
+    get: jest.fn().mockResolvedValue(IdentityServiceMocks.data.response),
     patch: jest.fn().mockRejectedValue(undefined),
     post: jest.fn(),
     put: jest.fn().mockRejectedValue(undefined),
     request: jest.fn().mockRejectedValue(undefined),
   });
 
-  setPluginExtensionsHook(() => ({ extensions: [], isLoading: false }));
+  setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too
@@ -114,6 +119,7 @@ export function setupExplore(options?: SetupOptions): {
   const previousDataSourceSrv = getDataSourceSrv();
 
   setDataSourceSrv({
+    registerRuntimeDataSource: jest.fn(),
     getList(): DataSourceInstanceSettings[] {
       return dsSettings.map((d) => d.settings);
     },
@@ -175,11 +181,25 @@ export function setupExplore(options?: SetupOptions): {
     <Provider store={storeState}>
       <GrafanaContext.Provider value={contextMock}>
         <Router history={history}>
-          <Route
-            path="/explore"
-            exact
-            render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
-          />
+          <QueriesDrawerContextProvider>
+            {options?.withAppChrome ? (
+              <KBarProvider>
+                <AppChrome>
+                  <Route
+                    path="/explore"
+                    exact
+                    render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
+                  />
+                </AppChrome>
+              </KBarProvider>
+            ) : (
+              <Route
+                path="/explore"
+                exact
+                render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
+              />
+            )}
+          </QueriesDrawerContextProvider>
         </Router>
       </GrafanaContext.Provider>
     </Provider>

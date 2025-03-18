@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 
 import {
   DataTransformerID,

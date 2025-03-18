@@ -1,8 +1,7 @@
-import React from 'react';
-
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 
 import { InlineSwitch } from '../../components/Switch/Switch';
+import { Trans } from '../../utils/i18n';
 import { InlineField } from '../Forms/InlineField';
 
 export interface Props<T extends DataSourceJsonData>
@@ -15,7 +14,9 @@ export interface AlertingConfig extends DataSourceJsonData {
 export function AlertingSettings<T extends AlertingConfig>({ options, onOptionsChange }: Props<T>): JSX.Element {
   return (
     <>
-      <h3 className="page-heading">Alerting</h3>
+      <h3 className="page-heading">
+        <Trans i18nKey="grafana-ui.data-source-settings.alerting-settings-heading">Alerting</Trans>
+      </h3>
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">

@@ -19,7 +19,7 @@ If you are using `systemd` and want to start Grafana on a port that is lower tha
 
    To learn more about capabilities, refer to [capabilities(7) — Linux manual page](https://man7.org/linux/man-pages/man7/capabilities.7.html).
 
-   ```
+   ```ini
    [Service]
    # Give the CAP_NET_BIND_SERVICE capability
    CapabilityBoundingSet=CAP_NET_BIND_SERVICE

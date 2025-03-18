@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { DataLink, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { Dropdown, Icon, Menu, ToolbarButton, useStyles2, PanelChrome } from '@grafana/ui';

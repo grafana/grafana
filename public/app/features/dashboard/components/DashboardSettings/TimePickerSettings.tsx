@@ -1,5 +1,6 @@
 import { isEmpty } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
 import { rangeUtil, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

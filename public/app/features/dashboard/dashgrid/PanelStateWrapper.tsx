@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
 import {
@@ -46,7 +46,8 @@ import { RenderEvent } from 'app/types/events';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { DashboardModel, PanelModel } from '../state';
+import { DashboardModel } from '../state/DashboardModel';
+import { PanelModel } from '../state/PanelModel';
 import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
@@ -379,7 +380,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.setState(stateUpdate);
   };
 
-  onOptionsChange = (options: any) => {
+  onOptionsChange = (options: object) => {
     this.props.panel.updateOptions(options);
   };
 
@@ -587,8 +588,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         hoverHeader={panelChromeProps.hasOverlayHeader()}
         displayMode={transparent ? 'transparent' : 'default'}
         onCancelQuery={panelChromeProps.onCancelQuery}
-        onOpenMenu={panelChromeProps.onOpenMenu}
         onFocus={() => this.setPanelAttention()}
+        onMouseEnter={() => this.setPanelAttention()}
         onMouseMove={() => this.debouncedSetPanelAttention()}
       >
         {(innerWidth, innerHeight) => (

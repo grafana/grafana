@@ -1,12 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
-import { DashboardGridItem } from '../../scene/DashboardGridItem';
 import { DashboardScene } from '../../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 
 import ShareButton from './ShareButton';
 
@@ -24,16 +23,6 @@ describe('ShareButton', () => {
     expect(await screen.findByTestId(selector.shareLink)).toBeInTheDocument();
     expect(await screen.findByTestId(selector.arrowMenu)).toBeInTheDocument();
   });
-
-  it('should call createAndCopyDashboardShortLink when share link clicked', async () => {
-    setup();
-
-    const shareLink = await screen.findByTestId(selector.shareLink);
-
-    await userEvent.click(shareLink);
-    expect(createAndCopyDashboardShortLinkMock).toHaveBeenCalled();
-  });
-
   it('should render menu when arrow button clicked', async () => {
     setup();
 
@@ -55,18 +44,7 @@ function setup() {
     title: 'hello',
     uid: 'dash-1',
     $timeRange: new SceneTimeRange({}),
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: panel,
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
 
   render(<ShareButton dashboard={dashboard} />);

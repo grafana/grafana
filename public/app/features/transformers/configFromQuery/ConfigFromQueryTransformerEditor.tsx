@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import {
   FieldMatcherID,
@@ -100,7 +99,7 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  matcherOptions: css`
-    min-width: 404px;
-  `,
+  matcherOptions: css({
+    minWidth: '404px',
+  }),
 });

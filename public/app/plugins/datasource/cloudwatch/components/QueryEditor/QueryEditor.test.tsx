@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { QueryEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -14,7 +14,8 @@ import {
   validMetricSearchCodeQuery,
 } from '../../__mocks__/queries';
 import { CloudWatchDatasource } from '../../datasource';
-import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../../types';
+import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../defaultQueries';
+import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType, LogsQueryLanguage } from '../../types';
 
 import { QueryEditor } from './QueryEditor';
 
@@ -22,13 +23,13 @@ import { QueryEditor } from './QueryEditor';
 const migratedFields = {
   statistic: 'Average',
   metricEditorMode: MetricEditorMode.Builder,
-  metricQueryType: MetricQueryType.Query,
+  metricQueryType: MetricQueryType.Insights,
 };
-
+const mockOnChange = jest.fn();
 const props: QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> = {
   datasource: setupMockedDataSource().datasource,
   onRunQuery: jest.fn(),
-  onChange: jest.fn(),
+  onChange: mockOnChange,
   query: {} as CloudWatchQuery,
 };
 
@@ -53,6 +54,13 @@ jest.mock('@grafana/runtime', () => ({
       cloudWatchCrossAccountQuerying: true,
     },
   },
+}));
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: jest.fn().mockImplementation(() => {
+    return <input id="cloudwatch-fake-editor"></input>;
+  }),
 }));
 
 export { SQLCodeEditor } from './MetricsQueryEditor/SQLCodeEditor';
@@ -202,12 +210,7 @@ describe('QueryEditor should render right editor', () => {
     describe('should not be displayed when a monitoring account is returned and', () => {
       const cases: MonitoringBadgeScenario[] = [
         {
-          name: 'it is metric query builder query and toggle is enabled',
-          query: validMetricQueryBuilderQuery,
-          toggle: true,
-        },
-        {
-          name: 'it is metric query code query and toggle is not enabled',
+          name: 'it is metric insights code query and toggle is not enabled',
           query: validMetricQueryCodeQuery,
           toggle: false,
         },
@@ -233,24 +236,24 @@ describe('QueryEditor should render right editor', () => {
   });
 
   describe('QueryHeader', () => {
-    it('should display metric actions in header when metric query is used', async () => {
+    it('should display metric actions in header when metric insights is used', async () => {
       render(<QueryEditor {...props} query={validMetricQueryCodeQuery} />);
 
       expect(await screen.findByText('CloudWatch Metrics')).toBeInTheDocument();
       expect(screen.getByLabelText(/Region.*/)).toBeInTheDocument();
       expect(screen.getByLabelText('Builder')).toBeInTheDocument();
       expect(screen.getByLabelText('Code')).toBeInTheDocument();
-      expect(screen.getByText('Metric Query')).toBeInTheDocument();
+      expect(screen.getByText('Metric Insights')).toBeInTheDocument();
     });
 
-    it('should display metric actions in header when metric query is used', async () => {
+    it('should display metric actions in header when metric insights is used', async () => {
       render(<QueryEditor {...props} query={validLogsQuery} />);
 
       expect(await screen.findByText('CloudWatch Logs')).toBeInTheDocument();
       expect(screen.getByLabelText(/Region.*/)).toBeInTheDocument();
       expect(screen.queryByLabelText('Builder')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Code')).not.toBeInTheDocument();
-      expect(screen.queryByText('Metric Query')).not.toBeInTheDocument();
+      expect(screen.queryByText('Metric Insights')).not.toBeInTheDocument();
     });
   });
 
@@ -271,18 +274,18 @@ describe('QueryEditor should render right editor', () => {
       expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
     });
 
-    it('when metric query type is metric query and editor mode is builder', async () => {
+    it('when metric query type is metric insights and editor mode is builder', async () => {
       render(<QueryEditor {...props} query={validMetricQueryBuilderQuery} />);
 
-      expect(await screen.findByText('Metric Query')).toBeInTheDocument();
+      expect(await screen.findByText('Metric Insights')).toBeInTheDocument();
       const radio = screen.getByLabelText('Builder');
       expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
     });
 
-    it('when metric query type is metric query and editor mode is raw', async () => {
+    it('when metric query type is metric Insights and editor mode is raw', async () => {
       render(<QueryEditor {...props} query={validMetricQueryCodeQuery} />);
 
-      expect(await screen.findByText('Metric Query')).toBeInTheDocument();
+      expect(await screen.findByText('Metric Insights')).toBeInTheDocument();
       const radio = screen.getByLabelText('Code');
       expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
     });
@@ -329,6 +332,62 @@ describe('QueryEditor should render right editor', () => {
       expect(builderElement).toBeInTheDocument();
       await userEvent.click(builderElement);
       expect(screen.queryByText('Are you sure?')).toBeNull();
+    });
+  });
+
+  describe('metric insights in builder mode', () => {
+    let originalValueCloudWatchCrossAccountQuerying: boolean | undefined;
+    beforeEach(() => {
+      originalValueCloudWatchCrossAccountQuerying = config.featureToggles.cloudWatchCrossAccountQuerying;
+    });
+    afterEach(() => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = originalValueCloudWatchCrossAccountQuerying;
+    });
+    it('should have an account selector when the feature is enabled', async () => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = true;
+      props.datasource.resources.getAccounts = jest.fn().mockResolvedValue(['account123']);
+      render(<QueryEditor {...props} query={validMetricQueryBuilderQuery} />);
+      await screen.findByText('Metric Insights');
+      expect(await screen.findByText('Account')).toBeInTheDocument();
+    });
+  });
+});
+describe('LogsQueryEditor', () => {
+  const logsProps = {
+    ...props,
+    datasource: setupMockedDataSource().datasource,
+    query: validLogsQuery,
+  };
+  describe('setting default query', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+    it('should set default query expression if query is empty', async () => {
+      const emptyQuery = { ...logsProps.query, expression: '' };
+      render(<QueryEditor {...logsProps} query={emptyQuery} />);
+      await waitFor(() => {
+        expect(mockOnChange).toHaveBeenLastCalledWith({
+          ...logsProps.query,
+          expression: DEFAULT_CWLI_QUERY_STRING,
+        });
+      });
+    });
+    it('should not change the query expression if not empty', async () => {
+      const nonEmptyQuery = { ...logsProps.query, expression: 'some expression' };
+      render(<QueryEditor {...logsProps} query={nonEmptyQuery} />);
+      await waitFor(() => {
+        expect(mockOnChange).not.toHaveBeenCalled();
+      });
+    });
+    it('should set the correct default expression if query is new', async () => {
+      const emptyQuery = { ...logsProps.query, expression: '' };
+      render(<QueryEditor {...logsProps} query={emptyQuery} />);
+      await selectOptionInTest(screen.getByLabelText(/Query language/), 'OpenSearch SQL');
+      expect(mockOnChange).toHaveBeenCalledWith({
+        ...logsProps.query,
+        queryLanguage: LogsQueryLanguage.SQL,
+        expression: DEFAULT_SQL_QUERY_STRING,
+      });
     });
   });
 });

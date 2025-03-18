@@ -4,6 +4,7 @@
 export type TraceKeyValuePair<T = any> = {
   key: string;
   value: T;
+  type?: string;
 };
 
 /**
@@ -13,6 +14,7 @@ export type TraceLog = {
   // Millisecond epoch time
   timestamp: number;
   fields: TraceKeyValuePair[];
+  name?: string;
 };
 
 export type TraceSpanReference = {

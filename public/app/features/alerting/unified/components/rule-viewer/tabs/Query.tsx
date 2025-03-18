@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useObservable } from 'react-use';
 
 import { LoadingState, PanelData } from '@grafana/data';
@@ -74,7 +74,6 @@ const QueryResults = ({ rule }: Props) => {
                     dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
                     queryData={data[query.refId]}
                     relativeTimeRange={query.relativeTimeRange}
-                    isAlertCondition={false}
                   />
                 );
               })}

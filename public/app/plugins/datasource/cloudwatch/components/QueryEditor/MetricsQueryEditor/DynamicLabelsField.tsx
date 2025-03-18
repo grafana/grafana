@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-import React, { useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { CodeEditor, getInputStyles, Monaco, useTheme2 } from '@grafana/ui';
 
@@ -38,12 +38,12 @@ export function DynamicLabelsField({ label, width, onChange }: Props) {
   return (
     <div ref={containerRef} className={cx(styles.wrapper)}>
       <CodeEditor
-        containerStyles={css`
-          border: 1px solid ${theme.colors.action.disabledBackground};
-          &:hover {
-            border-color: ${theme.components.input.borderColor};
-          }
-        `}
+        containerStyles={css({
+          border: `1px solid ${theme.colors.action.disabledBackground}`,
+          '&:hover': {
+            borderColor: theme.components.input.borderColor,
+          },
+        })}
         monacoOptions={{
           // without this setting, the auto-resize functionality causes an infinite loop, don't remove it!
           scrollBeyondLastLine: false,

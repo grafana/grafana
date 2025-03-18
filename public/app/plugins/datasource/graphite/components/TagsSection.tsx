@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, SegmentAsync, useStyles2 } from '@grafana/ui';
@@ -66,8 +66,8 @@ export function TagsSection({ tags, state }: Props) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    button: css`
-      margin-right: ${theme.spacing(0.5)};
-    `,
+    button: css({
+      marginRight: theme.spacing(0.5),
+    }),
   };
 }

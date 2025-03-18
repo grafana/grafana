@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -16,13 +16,29 @@ type ReturnType = {
   activePageId: PluginTabIds | string;
 };
 
-export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabIds): ReturnType => {
+function getCurrentPageId(
+  pageId: PluginTabIds | undefined,
+  isNarrowScreen: boolean | undefined,
+  defaultTab: string
+): PluginTabIds | string {
+  if (!isNarrowScreen && pageId === PluginTabIds.PLUGINDETAILS) {
+    return defaultTab;
+  }
+  return pageId || defaultTab;
+}
+
+export const usePluginDetailsTabs = (
+  plugin?: CatalogPlugin,
+  pageId?: PluginTabIds,
+  isNarrowScreen?: boolean
+): ReturnType => {
   const { loading, error, value: pluginConfig } = usePluginConfig(plugin);
   const { pathname } = useLocation();
   const defaultTab = useDefaultPage(plugin, pluginConfig);
   const isPublished = Boolean(plugin?.isPublished);
 
-  const currentPageId = pageId || defaultTab;
+  const currentPageId = getCurrentPageId(pageId, isNarrowScreen, defaultTab);
+
   const navModelChildren = useMemo(() => {
     const canConfigurePlugins = plugin && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
     const navModelChildren: NavModelItem[] = [];
@@ -33,6 +49,25 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
         icon: 'history',
         url: `${pathname}?page=${PluginTabIds.VERSIONS}`,
         active: PluginTabIds.VERSIONS === currentPageId,
+      });
+    }
+    if (isPublished && plugin?.details?.changelog) {
+      navModelChildren.push({
+        text: PluginTabLabels.CHANGELOG,
+        id: PluginTabIds.CHANGELOG,
+        icon: 'rocket',
+        url: `${pathname}?page=${PluginTabIds.CHANGELOG}`,
+        active: PluginTabIds.CHANGELOG === currentPageId,
+      });
+    }
+
+    if (isPublished && isNarrowScreen && config.featureToggles.pluginsDetailsRightPanel) {
+      navModelChildren.push({
+        text: PluginTabLabels.PLUGINDETAILS,
+        id: PluginTabIds.PLUGINDETAILS,
+        icon: 'info-circle',
+        url: `${pathname}?page=${PluginTabIds.PLUGINDETAILS}`,
+        active: PluginTabIds.PLUGINDETAILS === currentPageId,
       });
     }
 
@@ -103,7 +138,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
     }
 
     return navModelChildren;
-  }, [plugin, pluginConfig, pathname, isPublished, currentPageId]);
+  }, [plugin, pluginConfig, pathname, isPublished, currentPageId, isNarrowScreen]);
 
   const navModel: NavModelItem = {
     text: plugin?.name ?? '',

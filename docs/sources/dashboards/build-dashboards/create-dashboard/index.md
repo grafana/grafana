@@ -19,22 +19,22 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#special-data-sources
   visualization-specific-options:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
   configure-standard-options:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/
   configure-value-mappings:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-value-mappings/
   generative-ai-features:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
@@ -44,17 +44,17 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-thresholds/
   data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   add-a-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
   about-users-and-permissions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
@@ -69,17 +69,12 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options/#configure-repeating-panels
   override-field-values:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
-  dashboard:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#special-data-sources
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
 ---
 
 ## Create a dashboard
@@ -95,7 +90,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 **To create a dashboard**:
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
 1. On the empty dashboard, click **+ Add visualization**.
 
@@ -104,7 +99,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. In the dialog box that opens, do one of the following:
 
    - Select one of your existing data sources.
-   - Select one of the Grafana's [built-in special data sources](ref:built-in-special-data-sources).
+   - Select one of the Grafana [built-in special data sources](ref:built-in-special-data-sources).
    - Click **Configure a new data source** to set up a new one (Admins only).
 
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
@@ -115,14 +110,10 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    For more information about data sources, refer to [Data sources](ref:data-sources) for specific guidelines.
 
 1. Write or construct a query in the query language of your data source.
-
-1. Click the Refresh dashboard icon to query the data source.
-
-   ![Refresh dashboard icon](/media/docs/grafana/dashboards/screenshot-refresh-dashboard-9.5.png)
-
+1. Click **Refresh** to query the data source.
 1. In the visualization list, select a visualization type.
 
-   ![Visualization selector](/media/docs/grafana/dashboards/screenshot-select-visualization-9-5.png)
+   ![Visualization selector](/media/docs/grafana/dashboards/screenshot-select-visualization-11-2.png)
 
    Grafana displays a preview of your query results with the visualization applied.
 
@@ -139,30 +130,35 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    - [Configure thresholds](ref:configure-thresholds)
    - [Configure standard options](ref:configure-standard-options)
 
-1. When you've finished editing your panel, click **Save** to save the dashboard.
+1. When you've finished editing your panel, click **Save dashboard**.
 
-   Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
+   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save dashboard** when you're ready.
 
 1. Enter a title and description for your dashboard or have Grafana create them using [generative AI features](ref:generative-ai-features).
 1. Select a folder, if applicable.
 1. Click **Save**.
-1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the drop-down.
+1. To add more panels to the dashboard, click **Back to dashboard**.
+   Then click **Add** in the dashboard header and select **Visualization** in the drop-down.
 
-   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-11.2.png)
 
    When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
 
-## Copy an existing dashboard
+1. When you've saved all the changes you want to make to the dashboard, click **Exit edit**.
 
-To copy an existing dashboard, follow these steps:
+   Now, when you want to make more changes to the saved dashboard, click **Edit** in the top-right corner.
 
-1. Click **Dashboards** in the primary menu.
-1. Open the dashboard to be copied.
-1. Click **Settings** (gear icon) in the top right of the dashboard.
-1. Click **Save as** in the top-right corner of the dashboard.
+## Copy a dashboard
+
+To copy a dashboard, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Open the dashboard you want to copy.
+1. Click **Edit** in top-right corner.
+1. Click the **Save dashboard** drop-down and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
 
-   By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is located in the same folder.
+   By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
 
 1. Click **Save**.
 
@@ -178,7 +174,7 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 
 **To configure repeating rows:**
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to work on.
 1. At the top of the dashboard, click **Add** and select **Row** in the drop-down.
 
@@ -192,7 +188,7 @@ To provide context to dashboard users, add the variable to the row title.
 
 ### Repeating rows and the Dashboard special data source
 
-If a row includes panels using the special [Dashboard](ref:dashboard) data source&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
+If a row includes panels using the special [Dashboard data source](ref:built-in-special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
 
 For example, in a dashboard:
 
@@ -205,14 +201,24 @@ For example, in a dashboard:
 
 You can place a panel on a dashboard in any location.
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to work on.
+1. Click **Edit** in the top-right corner.
 1. Click the panel title and drag the panel to the new location.
+1. Click **Save dashboard**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 ## Resize a panel
 
 You can size a dashboard panel to suits your needs.
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to work on.
+1. Click **Edit** in the top-right corner.
 1. To adjust the size of the panel, click and drag the lower-right corner of the panel.
+1. Click **Save dashboard**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.

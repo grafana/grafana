@@ -6,6 +6,7 @@ package server
 
 import (
 	"github.com/google/wire"
+	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
+	"github.com/grafana/grafana/pkg/services/anonymous/validator"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
@@ -35,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -53,6 +56,8 @@ var wireExtsBasicSet = wire.NewSet(
 	authimpl.ProvideUserAuthTokenService,
 	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
 	wire.Bind(new(auth.UserTokenBackgroundService), new(*authimpl.UserAuthTokenService)),
+	validator.ProvideAnonUserLimitValidator,
+	wire.Bind(new(validator.AnonUserLimitValidator), new(*validator.AnonUserLimitValidatorImpl)),
 	anonimpl.ProvideAnonymousDeviceService,
 	wire.Bind(new(anonymous.Service), new(*anonimpl.AnonDeviceService)),
 	licensing.ProvideService,
@@ -61,7 +66,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	acimpl.ProvideService,
 	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),
-	wire.Bind(new(plugins.RoleRegistry), new(*acimpl.Service)),
+	wire.Bind(new(pluginaccesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
 	validations.ProvideValidator,
 	wire.Bind(new(validations.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
@@ -102,6 +107,9 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
+	search2.ProvideDashboardStats,
+	wire.Bind(new(search2.DashboardStats), new(*search2.OssDashboardStats)),
+	search2.ProvideDocumentBuilders,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -140,5 +148,5 @@ var wireExtsModuleServerSet = wire.NewSet(
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(
-	standalone.GetDummyAPIFactory,
+	standalone.ProvideAPIServerFactory,
 )

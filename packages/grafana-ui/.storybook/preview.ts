@@ -17,9 +17,9 @@ import { withTimeZone } from '../src/utils/storybook/withTimeZone';
 import { ThemedDocsContainer } from '../src/utils/storybook/ThemedDocsContainer';
 
 // @ts-ignore
-import lightTheme from './grafana.light.scss';
+import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore
-import darkTheme from './grafana.dark.scss';
+import darkTheme from '../../../public/sass/grafana.dark.scss';
 import { GrafanaDark, GrafanaLight } from './storybookTheme';
 
 const handleThemeChange = (theme: any) => {
@@ -46,7 +46,6 @@ const preview: Preview = {
     knobs: {
       disable: true,
     },
-    layout: 'fullscreen',
     options: {
       // Sort stories first by Docs Overview, then alphabetically
       // We should be able to use the builtin alphabetical sort, but is broken in SB 7.0
@@ -83,6 +82,7 @@ const preview: Preview = {
       },
     },
   },
+  tags: ['autodocs'],
 };
 
 export default preview;

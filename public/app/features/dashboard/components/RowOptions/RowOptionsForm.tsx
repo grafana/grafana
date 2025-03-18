@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Field, Modal, Input, Alert } from '@grafana/ui';

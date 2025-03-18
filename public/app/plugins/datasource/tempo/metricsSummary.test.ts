@@ -58,7 +58,7 @@ describe('MetricsSummary', () => {
                         "datasourceName": "tempo",
                         "datasourceUid": "gdev-tempo",
                         "query": {
-                          "query": "{name="HTTP POST - post" && span.http.status_code=\${__data.fields["span.http.status_code"]} && temperature=\${__data.fields["temperature"]} && kind=server} | by(resource.service.name)",
+                          "query": "{name="HTTP POST - post" && span.http.status_code=\${__data.fields["span.http.status_code"]} && temperature=\${__data.fields["temperature"]}} | by(resource.service.name)",
                           "queryType": "traceql",
                         },
                       },
@@ -83,7 +83,7 @@ describe('MetricsSummary', () => {
                         "datasourceName": "tempo",
                         "datasourceUid": "gdev-tempo",
                         "query": {
-                          "query": "{name="HTTP POST - post" && span.http.status_code=\${__data.fields["span.http.status_code"]} && temperature=\${__data.fields["temperature"]} && kind=server} | by(resource.service.name)",
+                          "query": "{name="HTTP POST - post" && span.http.status_code=\${__data.fields["span.http.status_code"]} && temperature=\${__data.fields["temperature"]}} | by(resource.service.name)",
                           "queryType": "traceql",
                         },
                       },
@@ -97,19 +97,6 @@ describe('MetricsSummary', () => {
                 "type": "string",
                 "values": [
                   38.1,
-                ],
-              },
-              {
-                "config": {
-                  "custom": {
-                    "width": 150,
-                  },
-                  "displayNameFromDS": "Kind",
-                },
-                "name": "kind",
-                "type": "string",
-                "values": [
-                  "server",
                 ],
               },
               {
@@ -222,7 +209,6 @@ describe('MetricsSummary', () => {
         {
           "contains_sink": "true",
           "errorPercentage": 10,
-          "kind": "server",
           "p50": 1,
           "p90": 2,
           "p95": 3,
@@ -241,21 +227,21 @@ describe('MetricsSummary', () => {
     it('getConfigQuery should return correctly for empty target query', () => {
       const result = getConfigQuery(series, '{}');
       expect(result).toEqual(
-        '{span.http.status_code=${__data.fields["span.http.status_code"]} && temperature=${__data.fields["temperature"]} && room="${__data.fields["room"]}" && contains_sink="${__data.fields["contains_sink"]}" && window_open="${__data.fields["window_open"]}" && spanStatus=${__data.fields["spanStatus"]} && spanKind=${__data.fields["spanKind"]} && kind=server}'
+        '{span.http.status_code=${__data.fields["span.http.status_code"]} && temperature=${__data.fields["temperature"]} && room="${__data.fields["room"]}" && contains_sink="${__data.fields["contains_sink"]}" && window_open="${__data.fields["window_open"]}" && spanStatus=${__data.fields["spanStatus"]} && spanKind=${__data.fields["spanKind"]}}'
       );
     });
 
     it('getConfigQuery should return correctly for target query', () => {
       const result = getConfigQuery(series, '{name="HTTP POST - post"} | by(resource.service.name)');
       expect(result).toEqual(
-        '{name="HTTP POST - post" && span.http.status_code=${__data.fields["span.http.status_code"]} && temperature=${__data.fields["temperature"]} && room="${__data.fields["room"]}" && contains_sink="${__data.fields["contains_sink"]}" && window_open="${__data.fields["window_open"]}" && spanStatus=${__data.fields["spanStatus"]} && spanKind=${__data.fields["spanKind"]} && kind=server} | by(resource.service.name)'
+        '{name="HTTP POST - post" && span.http.status_code=${__data.fields["span.http.status_code"]} && temperature=${__data.fields["temperature"]} && room="${__data.fields["room"]}" && contains_sink="${__data.fields["contains_sink"]}" && window_open="${__data.fields["window_open"]}" && spanStatus=${__data.fields["spanStatus"]} && spanKind=${__data.fields["spanKind"]}} | by(resource.service.name)'
       );
     });
 
     it('getConfigQuery should return correctly for target query without brackets', () => {
       const result = getConfigQuery(series, 'by(resource.service.name)');
       expect(result).toEqual(
-        '{span.http.status_code=${__data.fields["span.http.status_code"]} && temperature=${__data.fields["temperature"]} && room="${__data.fields["room"]}" && contains_sink="${__data.fields["contains_sink"]}" && window_open="${__data.fields["window_open"]}" && spanStatus=${__data.fields["spanStatus"]} && spanKind=${__data.fields["spanKind"]} && kind=server} | by(resource.service.name)'
+        '{span.http.status_code=${__data.fields["span.http.status_code"]} && temperature=${__data.fields["temperature"]} && room="${__data.fields["room"]}" && contains_sink="${__data.fields["contains_sink"]}" && window_open="${__data.fields["window_open"]}" && spanStatus=${__data.fields["spanStatus"]} && spanKind=${__data.fields["spanKind"]}} | by(resource.service.name)'
       );
     });
   });

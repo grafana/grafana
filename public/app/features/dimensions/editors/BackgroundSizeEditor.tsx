@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui/src';

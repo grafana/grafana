@@ -1,7 +1,7 @@
 import { PromAlertingRuleState, PromRuleType } from '../../../../types/unified-alerting-dto';
 import { getFilter } from '../utils/search';
 
-import { applySearchFilterToQuery, getSearchFilterFromQuery, RuleHealth } from './rulesSearchParser';
+import { RuleHealth, applySearchFilterToQuery, getSearchFilterFromQuery } from './rulesSearchParser';
 
 describe('Alert rules searchParser', () => {
   describe('getSearchFilterFromQuery', () => {
@@ -58,6 +58,14 @@ describe('Alert rules searchParser', () => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.ruleHealth).toBe(expectedFilter);
     });
+
+    it.each([{ query: 'contactPoint:slack', expectedFilter: 'slack' }])(
+      `should parse contactPoint $expectedFilter filter from "$query" query`,
+      ({ query, expectedFilter }) => {
+        const filter = getSearchFilterFromQuery(query);
+        expect(filter.contactPoint).toBe(expectedFilter);
+      }
+    );
 
     it('should parse non-filtering words as free form query', () => {
       const filter = getSearchFilterFromQuery('cpu usage rule');
@@ -138,12 +146,13 @@ describe('Alert rules searchParser', () => {
         ruleType: PromRuleType.Alerting,
         ruleState: PromAlertingRuleState.Firing,
         ruleHealth: RuleHealth.Ok,
+        contactPoint: 'slack',
       });
 
       const query = applySearchFilterToQuery('', filter);
 
       expect(query).toBe(
-        'datasource:"Mimir Dev" namespace:/etc/prometheus group:cpu-usage rule:"cpu > 80%" state:firing type:alerting health:ok label:team label:region=apac cpu eighty'
+        'datasource:"Mimir Dev" namespace:/etc/prometheus group:cpu-usage rule:"cpu > 80%" state:firing type:alerting health:ok label:team label:region=apac cpu eighty contactPoint:slack'
       );
     });
 
@@ -154,13 +163,14 @@ describe('Alert rules searchParser', () => {
         labels: ['team', 'region=apac'],
         groupName: 'cpu-usage',
         ruleName: 'cpu > 80%',
+        contactPoint: 'slack',
       });
 
       const baseQuery = 'datasource:prometheus namespace:mimir-global group:memory rule:"mem > 90% label:severity"';
       const query = applySearchFilterToQuery(baseQuery, filter);
 
       expect(query).toBe(
-        'datasource:"Mimir Dev" namespace:/etc/prometheus group:cpu-usage rule:"cpu > 80%" label:team label:region=apac'
+        'datasource:"Mimir Dev" namespace:/etc/prometheus group:cpu-usage rule:"cpu > 80%" label:team label:region=apac contactPoint:slack'
       );
     });
 
@@ -170,14 +180,16 @@ describe('Alert rules searchParser', () => {
         namespace: '/etc/prometheus',
         labels: ['region=emea'],
         groupName: 'cpu-usage',
+        contactPoint: 'cp3',
         ruleName: 'cpu > 80%',
       });
 
-      const baseQuery = 'label:region=apac rule:"mem > 90%" group:memory namespace:mimir-global datasource:prometheus';
+      const baseQuery =
+        'label:region=apac rule:"mem > 90%" group:memory contactPoint:cp4 namespace:mimir-global datasource:prometheus';
       const query = applySearchFilterToQuery(baseQuery, filter);
 
       expect(query).toBe(
-        'label:region=emea rule:"cpu > 80%" group:cpu-usage namespace:/etc/prometheus datasource:"Mimir Dev"'
+        'label:region=emea rule:"cpu > 80%" group:cpu-usage contactPoint:cp3 namespace:/etc/prometheus datasource:"Mimir Dev"'
       );
     });
   });

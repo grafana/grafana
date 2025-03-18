@@ -1,43 +1,25 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Text, useStyles2 } from '@grafana/ui';
 
 import { MinimalisticPagination } from './MinimalisticPagination';
-import { StreamStatus } from './hooks';
 
 export interface GenerationHistoryCarouselProps {
   history: string[];
   index: number;
-  reply: string;
-  streamStatus: StreamStatus;
   onNavigate: (index: number) => void;
 }
 
-export const GenerationHistoryCarousel = ({
-  history,
-  index,
-  reply,
-  streamStatus,
-  onNavigate,
-}: GenerationHistoryCarouselProps) => {
+export const GenerationHistoryCarousel = ({ history, index, onNavigate }: GenerationHistoryCarouselProps) => {
   const styles = useStyles2(getStyles);
   const historySize = history.length;
-
-  const getHistoryText = () => {
-    if (reply && streamStatus !== StreamStatus.IDLE) {
-      return reply;
-    }
-
-    return history[index - 1];
-  };
 
   return (
     <>
       <div className={styles.contentWrapper}>
         <Text element="p" color="secondary">
-          {getHistoryText()}
+          {history[index - 1]}
         </Text>
       </div>
       <MinimalisticPagination

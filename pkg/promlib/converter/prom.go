@@ -3,6 +3,7 @@ package converter
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -10,8 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	sdkjsoniter "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	jsoniter "github.com/json-iterator/go"
-
-	"golang.org/x/exp/slices"
 )
 
 // helpful while debugging all the options that may appear
@@ -35,6 +34,7 @@ func ReadPrometheusStyleResult(jIter *jsoniter.Iterator, opt Options) backend.Da
 	errorType := ""
 	promErrString := ""
 	warnings := []data.Notice{}
+	infos := []data.Notice{}
 
 l1Fields:
 	for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
@@ -68,6 +68,11 @@ l1Fields:
 				return rspErr(err)
 			}
 
+		case "infos":
+			if infos, err = readInfos(iter); err != nil {
+				return rspErr(err)
+			}
+
 		case "":
 			if err != nil {
 				return rspErr(err)
@@ -90,7 +95,15 @@ l1Fields:
 		}
 	}
 
+	if len(infos) > 0 {
+		warnings = append(warnings, infos...)
+	}
+
 	if len(warnings) > 0 {
+		if len(rsp.Frames) == 0 {
+			rsp.Frames = append(rsp.Frames, data.NewFrame("Warnings"))
+		}
+
 		for _, frame := range rsp.Frames {
 			if frame.Meta == nil {
 				frame.Meta = &data.FrameMeta{}
@@ -102,7 +115,7 @@ l1Fields:
 	return rsp
 }
 
-func readWarnings(iter *sdkjsoniter.Iterator) ([]data.Notice, error) {
+func readAnnotations(iter *sdkjsoniter.Iterator, sevLevel data.NoticeSeverity) ([]data.Notice, error) {
 	warnings := []data.Notice{}
 	next, err := iter.WhatIsNext()
 	if err != nil {
@@ -127,7 +140,7 @@ func readWarnings(iter *sdkjsoniter.Iterator) ([]data.Notice, error) {
 				return nil, err
 			}
 			notice := data.Notice{
-				Severity: data.NoticeSeverityWarning,
+				Severity: sevLevel,
 				Text:     s,
 			}
 			warnings = append(warnings, notice)
@@ -135,6 +148,14 @@ func readWarnings(iter *sdkjsoniter.Iterator) ([]data.Notice, error) {
 	}
 
 	return warnings, nil
+}
+
+func readWarnings(iter *sdkjsoniter.Iterator) ([]data.Notice, error) {
+	return readAnnotations(iter, data.NoticeSeverityWarning)
+}
+
+func readInfos(iter *sdkjsoniter.Iterator) ([]data.Notice, error) {
+	return readAnnotations(iter, data.NoticeSeverityInfo)
 }
 
 func readPrometheusData(iter *sdkjsoniter.Iterator, opt Options) backend.DataResponse {

@@ -20,6 +20,7 @@ const esModules = [
   '@msagl',
   'lodash-es',
   'vscode-languageserver-types',
+  '@bsull/augurs',
 ].join('|');
 
 module.exports = {
@@ -54,6 +55,7 @@ module.exports = {
     '^@grafana/schema/dist/esm/(.*)$': '<rootDir>/packages/grafana-schema/src/$1',
     // prevent systemjs amd extra from breaking tests.
     'systemjs/dist/extras/amd': '<rootDir>/public/test/mocks/systemjsAMDExtra.ts',
+    '@bsull/augurs': '<rootDir>/public/test/mocks/augurs.ts',
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],

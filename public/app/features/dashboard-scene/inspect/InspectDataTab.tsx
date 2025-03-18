@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { LoadingState } from '@grafana/data';
 import {
   SceneComponentProps,
@@ -27,7 +25,7 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
     super({
       ...state,
       options: {
-        withTransforms: true,
+        withTransforms: false,
         withFieldConfig: true,
       },
     });
@@ -64,7 +62,7 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
         hasTransformations={hasTransformations(dataProvider)}
         timeZone={timeRange.getTimeZone()}
         panelPluginId={panel.state.pluginId}
-        dataName={panel.state.title}
+        dataName={sceneGraph.interpolate(panel, panel.state.title)}
         fieldConfig={panel.state.fieldConfig}
         onOptionsChange={model.onOptionsChange}
       />

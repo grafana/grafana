@@ -1,4 +1,4 @@
-import { createTheme } from '../themes';
+import { createTheme } from '../themes/createTheme';
 
 describe('colors', () => {
   const theme = createTheme();

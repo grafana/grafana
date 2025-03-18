@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -32,7 +33,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   bodyContentWrapper: css({
     label: 'bodyContentWrapper',
     flex: 1,
-    overflow: 'hidden',
   }),
   loader: css({
     label: 'collapse__loader',

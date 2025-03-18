@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useInterval } from 'react-use';
 
 import { Time, TimeProps } from './Time';

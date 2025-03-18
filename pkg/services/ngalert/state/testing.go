@@ -2,6 +2,8 @@ package state
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"slices"
 	"sync"
 
@@ -56,11 +58,15 @@ func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...model
 	return nil
 }
 
-func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
+func (f *FakeInstanceStore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error {
 	return nil
 }
 
-func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance) error {
+func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error {
+	return nil
+}
+
+func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = []any{}
@@ -99,4 +105,37 @@ type NoopImageService struct{}
 
 func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
 	return &models.Image{}, nil
+}
+
+// NoopSender is a no-op sender. Used when you want state manager to update LastSentAt without sending any alerts.
+var NoopSender = func(_ context.Context, _ StateTransitions) {}
+
+type CountingImageService struct {
+	mtx    sync.Mutex
+	Called int
+	Image  *models.Image
+	Err    error
+}
+
+func (c *CountingImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	c.Called += 1
+	return c.Image, c.Err
+}
+
+func newSuccessfulCountingImageService() *CountingImageService {
+	return &CountingImageService{
+		Called: 0,
+		Image: &models.Image{
+			Token: fmt.Sprint(rand.Int()),
+		},
+	}
+}
+
+func NewFailingCountingImageService(err error) *CountingImageService {
+	return &CountingImageService{
+		Called: 0,
+		Err:    err,
+	}
 }

@@ -252,8 +252,8 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			cmd.UID = uid
 		} else if err := util.ValidateUID(cmd.UID); err != nil {
 			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "create", err)
-			if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagAutofixDSUID) {
-				return fmt.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
+			if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagFailWrongDSUID) {
+				return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 			}
 		}
 
@@ -329,8 +329,8 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		if cmd.UID != "" {
 			if err := util.ValidateUID(cmd.UID); err != nil {
 				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
-				if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagAutofixDSUID) {
-					cmd.UID = util.AutofixUID(cmd.UID)
+				if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagFailWrongDSUID) {
+					return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 				}
 			}
 		}

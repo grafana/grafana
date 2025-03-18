@@ -272,6 +272,10 @@ func TestRequestParser(t *testing.T) {
 				QueryType:     "timeSeriesQuery",
 				Interval:      0,
 				RefID:         "A",
+				TimeRange: backend.TimeRange{
+					From: time.Now(),
+					To:   time.Now(),
+				},
 				JSON: json.RawMessage(`{
 				   "region":"us-east-1",
 				   "namespace":"ec2",
@@ -280,6 +284,41 @@ func TestRequestParser(t *testing.T) {
 						"InstanceId": ["test"]
 					},
 				   "statistics":["Average", "Sum"],
+				   "period":"600",
+				   "hide":false
+				}`),
+			},
+		}
+
+		migratedQueries, err := ParseMetricDataQueries(oldQuery, time.Now(), time.Now(), "us-east-2", logger, false)
+		assert.NoError(t, err)
+		require.Len(t, migratedQueries, 1)
+		require.NotNil(t, migratedQueries[0])
+
+		migratedQuery := migratedQueries[0]
+		assert.Equal(t, "A", migratedQuery.RefId)
+		assert.Equal(t, "Average", migratedQuery.Statistic)
+	})
+
+	t.Run("legacy statistics field is migrated: if no stat, uses Average", func(t *testing.T) {
+		oldQuery := []backend.DataQuery{
+			{
+				MaxDataPoints: 0,
+				QueryType:     "timeSeriesQuery",
+				Interval:      0,
+				RefID:         "A",
+				TimeRange: backend.TimeRange{
+					From: time.Now(),
+					To:   time.Now(),
+				},
+				JSON: json.RawMessage(`{
+				   "region":"us-east-1",
+				   "namespace":"ec2",
+				   "metricName":"CPUUtilization",
+				   "dimensions":{
+						"InstanceId": ["test"]
+					},
+				   "statistics":[],
 				   "period":"600",
 				   "hide":false
 				}`),

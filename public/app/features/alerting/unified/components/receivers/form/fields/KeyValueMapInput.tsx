@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Input, useStyles2 } from '@grafana/ui';
@@ -47,7 +47,7 @@ export const KeyValueMapInput = ({ value, onChange, readOnly = false }: Props) =
             <tr>
               <th>Name</th>
               <th>Value</th>
-              {!readOnly && <th></th>}
+              {!readOnly && <th />}
             </tr>
           </thead>
           <tbody>

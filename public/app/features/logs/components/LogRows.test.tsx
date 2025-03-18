@@ -1,12 +1,19 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { range } from 'lodash';
-import React from 'react';
 
-import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
-import { LogRows, PREVIEW_LIMIT } from './LogRows';
+import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../utils';
+
+import { LogRows, Props } from './LogRows';
 import { createLogRow } from './__mocks__/logRow';
+
+jest.mock('../utils', () => ({
+  ...jest.requireActual('../utils'),
+  isPopoverMenuDisabled: jest.fn(),
+  disablePopoverMenu: jest.fn(),
+  enablePopoverMenu: jest.fn(),
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -35,6 +42,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        scrollElement={null}
       />
     );
 
@@ -42,57 +50,6 @@ describe('LogRows', () => {
     expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 1');
     expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 2');
     expect(screen.queryAllByRole('row').at(2)).toHaveTextContent('log message 3');
-  });
-
-  it('renders rows only limited number of rows first', () => {
-    const rows: LogRowModel[] = [createLogRow({ uid: '1' }), createLogRow({ uid: '2' }), createLogRow({ uid: '3' })];
-    jest.useFakeTimers();
-    const { rerender } = render(
-      <LogRows
-        logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
-        showLabels={false}
-        showTime={false}
-        wrapLogMessage={true}
-        prettifyLogMessage={true}
-        timeZone={'utc'}
-        previewLimit={1}
-        enableLogDetails={true}
-      />
-    );
-
-    // There is an extra row with the rows that are rendering
-    expect(screen.queryAllByRole('row')).toHaveLength(2);
-    expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 1');
-
-    act(() => {
-      jest.runAllTimers();
-    });
-    rerender(
-      <LogRows
-        logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
-        showLabels={false}
-        showTime={false}
-        wrapLogMessage={true}
-        prettifyLogMessage={true}
-        timeZone={'utc'}
-        previewLimit={1}
-        enableLogDetails={true}
-        displayedFields={[]}
-        onClickFilterLabel={() => {}}
-        onClickFilterOutLabel={() => {}}
-        onClickHideField={() => {}}
-        onClickShowField={() => {}}
-      />
-    );
-
-    expect(screen.queryAllByRole('row')).toHaveLength(3);
-    expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 1');
-    expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 2');
-    expect(screen.queryAllByRole('row').at(2)).toHaveTextContent('log message 3');
-
-    jest.useRealTimers();
   });
 
   it('renders deduped rows if supplied', () => {
@@ -114,36 +71,12 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        scrollElement={null}
       />
     );
     expect(screen.queryAllByRole('row')).toHaveLength(2);
     expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 4');
     expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 5');
-  });
-
-  it('renders with default preview limit', () => {
-    // PREVIEW_LIMIT * 2 is there because otherwise we just render all rows
-    const rows: LogRowModel[] = range(PREVIEW_LIMIT * 2 + 1).map((num) => createLogRow({ uid: num.toString() }));
-    render(
-      <LogRows
-        logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
-        showLabels={false}
-        showTime={false}
-        wrapLogMessage={true}
-        prettifyLogMessage={true}
-        timeZone={'utc'}
-        enableLogDetails={true}
-        displayedFields={[]}
-        onClickFilterLabel={() => {}}
-        onClickFilterOutLabel={() => {}}
-        onClickHideField={() => {}}
-        onClickShowField={() => {}}
-      />
-    );
-
-    // There is an extra row with the rows that are rendering
-    expect(screen.queryAllByRole('row')).toHaveLength(101);
   });
 
   it('renders asc ordered rows if order and function supplied', () => {
@@ -168,6 +101,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        scrollElement={null}
       />
     );
 
@@ -197,6 +131,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        scrollElement={null}
       />
     );
 
@@ -207,7 +142,7 @@ describe('LogRows', () => {
 });
 
 describe('Popover menu', () => {
-  function setup(app = CoreApp.Explore) {
+  function setup(overrides: Partial<Props> = {}) {
     const rows: LogRowModel[] = [createLogRow({ uid: '1' })];
     return render(
       <LogRows
@@ -221,17 +156,23 @@ describe('Popover menu', () => {
         logsSortOrder={LogsSortOrder.Descending}
         enableLogDetails={true}
         displayedFields={[]}
-        onClickFilterOutValue={() => {}}
-        onClickFilterValue={() => {}}
-        app={app}
+        onClickFilterOutString={() => {}}
+        onClickFilterString={() => {}}
+        scrollElement={null}
+        {...overrides}
       />
     );
   }
   let orgGetSelection: () => Selection | null;
+  beforeEach(() => {
+    jest.mocked(isPopoverMenuDisabled).mockReturnValue(false);
+  });
   beforeAll(() => {
     orgGetSelection = document.getSelection;
     jest.spyOn(document, 'getSelection').mockReturnValue({
       toString: () => 'selected log line',
+      removeAllRanges: () => {},
+      addRange: (range: Range) => {},
     } as Selection);
   });
   afterAll(() => {
@@ -248,9 +189,73 @@ describe('Popover menu', () => {
     expect(screen.getByText('Add as line contains filter')).toBeInTheDocument();
     expect(screen.getByText('Add as line does not contain filter')).toBeInTheDocument();
   });
-  it('Does not appear outside Explore', async () => {
-    setup(CoreApp.Unknown);
+  it('Can be disabled', async () => {
+    setup();
+    await userEvent.click(screen.getByText('log message 1'));
+    await userEvent.click(screen.getByText('Disable menu'));
+    await userEvent.click(screen.getByText('Confirm'));
+    expect(disablePopoverMenu).toHaveBeenCalledTimes(1);
+  });
+  it('Does not appear when disabled', async () => {
+    jest.mocked(isPopoverMenuDisabled).mockReturnValue(true);
+    setup();
     await userEvent.click(screen.getByText('log message 1'));
     expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+  });
+  it('Can be re-enabled', async () => {
+    jest.mocked(isPopoverMenuDisabled).mockReturnValue(true);
+    const user = userEvent.setup();
+    setup();
+    await user.keyboard('[AltLeft>]'); // Press Alt (without releasing it)
+    await user.click(screen.getByText('log message 1'));
+    expect(enablePopoverMenu).toHaveBeenCalledTimes(1);
+  });
+  it('Does not appear when the props are not defined', async () => {
+    setup({
+      onClickFilterOutString: undefined,
+      onClickFilterString: undefined,
+    });
+    await userEvent.click(screen.getByText('log message 1'));
+    expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+  });
+  it('Appears after selecting test', async () => {
+    const onClickFilterOutString = jest.fn();
+    const onClickFilterString = jest.fn();
+    setup({
+      onClickFilterOutString,
+      onClickFilterString,
+    });
+    await userEvent.click(screen.getByText('log message 1'));
+    expect(screen.getByText('Copy selection')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Add as line contains filter'));
+
+    await userEvent.click(screen.getByText('log message 1'));
+    expect(screen.getByText('Copy selection')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Add as line does not contain filter'));
+
+    expect(onClickFilterOutString).toHaveBeenCalledTimes(1);
+    expect(onClickFilterString).toHaveBeenCalledTimes(1);
+  });
+  describe('Interacting with log details', () => {
+    it('Allows text selection even if the popover menu is not available', async () => {
+      setup({
+        onClickFilterOutString: undefined,
+        onClickFilterString: undefined,
+      });
+      await userEvent.click(screen.getByText('log message 1'));
+      expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+      expect(screen.queryByText(/details/)).not.toBeInTheDocument();
+    });
+
+    it('Displays Log Details if there is no text selection', async () => {
+      jest.spyOn(document, 'getSelection').mockReturnValue(null);
+      setup({
+        onClickFilterOutString: undefined,
+        onClickFilterString: undefined,
+      });
+      await userEvent.click(screen.getByText('log message 1'));
+      expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+      expect(screen.getByText(/details/)).toBeInTheDocument();
+    });
   });
 });

@@ -8,7 +8,7 @@ on:
         type: string
       latest:
         required: false
-        default: false
+        default: "0"
         description: Mark this release as latest (`1`) or not (`0`, default)
         type: string
       dry_run:
@@ -23,6 +23,7 @@ on:
         type: string
       latest:
         required: false
+        default: "0"
         description: Mark this release as latest (`1`) or not (`0`, default)
         type: string
       dry_run:

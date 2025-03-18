@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -22,7 +23,8 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 
 	instance, err := e.getInstance(ctx, req.PluginContext)
 	if err != nil {
-		return nil, err
+		resp.Responses[req.Queries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
+		return resp, nil
 	}
 
 	for _, q := range req.Queries {
@@ -47,7 +49,17 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 			return nil, err
 		}
 
+		refId := "A"
+		if q.RefID != "" {
+			refId = q.RefID
+		}
+
 		getQueryResultsOutput, err := e.syncQuery(ctx, logsClient, q, logsQuery, instance.Settings.LogsTimeout.Duration)
+		var sourceError backend.ErrorWithSource
+		if errors.As(err, &sourceError) {
+			resp.Responses[refId] = backend.ErrorResponseWithErrorSource(sourceError)
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -65,11 +77,6 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 			}
 		} else {
 			frames = data.Frames{dataframe}
-		}
-
-		refId := "A"
-		if q.RefID != "" {
-			refId = q.RefID
 		}
 
 		respD := resp.Responses[refId]
@@ -109,7 +116,7 @@ func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatc
 	for range ticker.C {
 		res, err := e.executeGetQueryResults(ctx, logsClient, requestParams)
 		if err != nil {
-			return nil, fmt.Errorf("CloudWatch Error: %w", err)
+			return nil, err
 		}
 		if isTerminated(*res.Status) {
 			return res, err

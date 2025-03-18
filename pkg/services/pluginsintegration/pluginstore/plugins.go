@@ -10,12 +10,13 @@ import (
 type Plugin struct {
 	plugins.JSONData
 
-	fs                plugins.FS
+	FS                plugins.FS
 	supportsStreaming bool
 
 	Class plugins.Class
 
 	// App fields
+	Parent          *ParentPlugin
 	IncludedInAppID string
 	DefaultNavURL   string
 	Pinned          bool
@@ -41,7 +42,7 @@ func (p Plugin) SupportsStreaming() bool {
 }
 
 func (p Plugin) Base() string {
-	return p.fs.Base()
+	return p.FS.Base()
 }
 
 func (p Plugin) IsApp() bool {
@@ -59,8 +60,8 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		supportsStreaming = true
 	}
 
-	return Plugin{
-		fs:                p.FS,
+	dto := Plugin{
+		FS:                p.FS,
 		supportsStreaming: supportsStreaming,
 		Class:             p.Class,
 		JSONData:          p.JSONData,
@@ -74,7 +75,16 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
 		ExternalService:   p.ExternalService,
-
-		Angular: p.Angular,
+		Angular:           p.Angular,
 	}
+
+	if p.Parent != nil {
+		dto.Parent = &ParentPlugin{ID: p.Parent.ID}
+	}
+
+	return dto
+}
+
+type ParentPlugin struct {
+	ID string
 }

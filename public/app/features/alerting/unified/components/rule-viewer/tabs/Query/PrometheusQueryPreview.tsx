@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { RawQuery } from '@grafana/experimental';
 import { promqlGrammar } from '@grafana/prometheus';
 

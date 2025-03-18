@@ -1,4 +1,4 @@
-import React, { FormEvent, PureComponent } from 'react';
+import { FormEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 
 import { CustomVariableModel, VariableWithMultiSupport } from '@grafana/data';

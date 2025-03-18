@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -22,6 +22,7 @@ export const QuickAdd = ({}: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(!window.matchMedia(`(min-width: ${breakpoint}px)`).matches);
   const createActions = useMemo(() => findCreateActions(navBarTree), [navBarTree]);
+  const showQuickAdd = createActions.length > 0 && !isSmallScreen;
 
   useMediaQueryChange({
     breakpoint,
@@ -45,7 +46,7 @@ export const QuickAdd = ({}: Props) => {
     );
   };
 
-  return createActions.length > 0 ? (
+  return showQuickAdd ? (
     <>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
         <ToolbarButton

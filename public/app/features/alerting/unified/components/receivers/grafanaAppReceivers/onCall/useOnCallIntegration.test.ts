@@ -1,37 +1,46 @@
-import { renderHook, waitFor } from '@testing-library/react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { onCallPluginMetaMock } from 'app/features/alerting/unified/mocks';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
+import {
+  setOnCallFeatures,
+  setOnCallIntegrations,
+} from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { option } from 'app/features/alerting/unified/utils/notifier-types';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
-
-import { ONCALL_INTEGRATION_V2_FEATURE } from '../../../../api/onCallApi';
 
 import { ReceiverTypes } from './onCall';
 import { OnCallIntegrationSetting, OnCallIntegrationType, useOnCallIntegration } from './useOnCallIntegration';
 
-const server = setupMswServer();
+setupMswServer();
+
+const wrapper = () => getWrapper({ renderWithRouter: true });
 
 describe('useOnCallIntegration', () => {
+  beforeEach(() => {
+    setOnCallIntegrations([
+      {
+        display_name: 'grafana-integration',
+        value: 'ABC123',
+        integration_url: 'https://oncall.com/grafana-integration',
+      },
+    ]);
+  });
   afterEach(() => {
     clearPluginSettingsCache();
   });
 
   describe('When OnCall Alerting V2 integration enabled', () => {
-    it('extendOnCalReceivers should add new settings to the oncall receiver', async () => {
-      mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-      mockApi(server).oncall.features([ONCALL_INTEGRATION_V2_FEATURE]);
-      mockApi(server).oncall.getOnCallIntegrations([]);
-
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+    it('extendOnCallReceivers should add new settings to the oncall receiver', async () => {
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
       const { extendOnCallReceivers } = result.current;
 
       const receiver = extendOnCallReceivers({
-        name: 'OnCall Conctact point',
+        name: 'OnCall Contact point',
         grafana_managed_receiver_configs: [
           {
             name: 'Oncall-integration',
@@ -50,23 +59,11 @@ describe('useOnCallIntegration', () => {
         OnCallIntegrationType.ExistingIntegration
       );
       expect(receiverConfig.settings[OnCallIntegrationSetting.IntegrationName]).toBeUndefined();
-      expect(receiverConfig.settings['url']).toBe('https://oncall-endpoint.example.com');
+      expect(receiverConfig.settings.url).toBe('https://oncall-endpoint.example.com');
     });
 
     it('createOnCallIntegrations should provide integration name and url validators', async () => {
-      mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-      mockApi(server).oncall.features([ONCALL_INTEGRATION_V2_FEATURE]);
-      mockApi(server).oncall.getOnCallIntegrations([
-        {
-          display_name: 'grafana-integration',
-          value: 'ABC123',
-          integration_url: 'https://oncall.com/grafana-integration',
-        },
-      ]);
-      mockApi(server).oncall.validateIntegrationName(['grafana-integration', 'alertmanager-integration']);
-      mockApi(server).oncall.createIntegraion();
-
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
@@ -87,17 +84,7 @@ describe('useOnCallIntegration', () => {
     });
 
     it('extendOnCallNotifierFeatures should add integration type and name options and swap url to a select option', async () => {
-      mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-      mockApi(server).oncall.features([ONCALL_INTEGRATION_V2_FEATURE]);
-      mockApi(server).oncall.getOnCallIntegrations([
-        {
-          display_name: 'grafana-integration',
-          value: 'ABC123',
-          integration_url: 'https://oncall.com/grafana-integration',
-        },
-      ]);
-
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
@@ -128,12 +115,13 @@ describe('useOnCallIntegration', () => {
   });
 
   describe('When OnCall Alerting V2 integration disabled', () => {
-    it('extendOnCalReceivers should not add new settings to the oncall receiver', async () => {
-      mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-      mockApi(server).oncall.features([]);
-      mockApi(server).oncall.getOnCallIntegrations([]);
+    beforeEach(() => {
+      setOnCallFeatures([]);
+      setOnCallIntegrations([]);
+    });
 
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+    it('extendOnCalReceivers should not add new settings to the oncall receiver', async () => {
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
@@ -160,11 +148,7 @@ describe('useOnCallIntegration', () => {
     });
 
     it('extendConCallNotifierFeatures should not extend notifier', async () => {
-      mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-      mockApi(server).oncall.features([]);
-      mockApi(server).oncall.getOnCallIntegrations([]);
-
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
@@ -184,10 +168,12 @@ describe('useOnCallIntegration', () => {
   });
 
   describe('When OnCall plugin disabled', () => {
-    it('extendOnCalReceivers should not add new settings to the oncall receiver', async () => {
-      mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: false });
+    beforeEach(() => {
+      disablePlugin(SupportedPlugin.OnCall);
+    });
 
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+    it('extendOnCalReceivers should not add new settings to the oncall receiver', async () => {
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
@@ -214,9 +200,7 @@ describe('useOnCallIntegration', () => {
     });
 
     it('extendConCallNotifierFeatures should not extend notifier', async () => {
-      mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: false });
-
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 

@@ -11,6 +11,10 @@
 import * as common from '@grafana/schema';
 
 export interface TempoQuery extends common.DataQuery {
+  /**
+   * For metric queries, how many exemplars to request, 0 means no exemplars
+   */
+  exemplars?: number;
   filters: Array<TraceqlFilter>;
   /**
    * Filters that are used to query the metrics summary
@@ -57,6 +61,10 @@ export interface TempoQuery extends common.DataQuery {
    */
   spss?: number;
   /**
+   * For metric queries, the step size to use
+   */
+  step?: string;
+  /**
    * The type of the table that is used to display the search results
    */
   tableType?: SearchTableType;
@@ -92,7 +100,10 @@ export enum SearchTableType {
  * static fields are pre-set in the UI, dynamic fields are added by the user
  */
 export enum TraceqlSearchScope {
+  Event = 'event',
+  Instrumentation = 'instrumentation',
   Intrinsic = 'intrinsic',
+  Link = 'link',
   Resource = 'resource',
   Span = 'span',
   Unscoped = 'unscoped',

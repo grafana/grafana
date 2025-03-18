@@ -1,6 +1,6 @@
-import React from 'react';
+import { forwardRef } from 'react';
 
-export const AngularRoot = React.forwardRef<HTMLDivElement, {}>((props, ref) => {
+export const AngularRoot = forwardRef<HTMLDivElement, {}>((props, ref) => {
   return (
     <div
       id="ngRoot"

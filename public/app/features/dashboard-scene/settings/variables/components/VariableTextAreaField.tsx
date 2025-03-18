@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useId } from '@react-aria/utils';
-import React, { FormEvent, PropsWithChildren, ReactElement } from 'react';
+import { FormEvent, PropsWithChildren, ReactElement } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Field, TextArea, useStyles2 } from '@grafana/ui';

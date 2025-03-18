@@ -12,6 +12,7 @@ type FakeUserService struct {
 	ExpectedError            error
 	ExpectedSetUsingOrgError error
 	ExpectedSearchUsers      user.SearchUserQueryResult
+	ExpectedListUsers        user.ListUserResult
 	ExpectedUserProfileDTO   *user.UserProfileDTO
 	ExpectedUserProfileDTOs  []*user.UserProfileDTO
 	ExpectedUsageStats       map[string]any
@@ -50,6 +51,10 @@ func (f *FakeUserService) Delete(ctx context.Context, cmd *user.DeleteUserComman
 }
 
 func (f *FakeUserService) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserService) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
 

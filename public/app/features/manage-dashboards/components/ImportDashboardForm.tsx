@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';

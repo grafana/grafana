@@ -1,4 +1,5 @@
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 

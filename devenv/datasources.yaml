@@ -238,6 +238,7 @@ datasources:
       database: grafanadstest
 
   - name: gdev-cloudwatch
+    uid: gdev-cloudwatch
     type: cloudwatch
     editable: true
     jsonData:
@@ -318,6 +319,14 @@ datasources:
   - name: gdev-pyroscope
     type: grafana-pyroscope-datasource
     uid: gdev-pyroscope
+    access: proxy
+    url: http://localhost:4040
+    editable: false
+
+
+  - name: gdev-e2etestdatasource
+    type: grafana-e2etest-datasource
+    uid: gdev-e2etest-datasource
     access: proxy
     url: http://localhost:4040
     editable: false

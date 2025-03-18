@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { debounce, uniqueId } from 'lodash';
-import React, { FormEvent, useState } from 'react';
+import { FormEvent, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Icon, Input, Label, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans } from 'app/core/internationalization';
 
-import { parseMatchers } from '../../utils/alertmanager';
+import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams } from '../../utils/misc';
 
 const getQueryStringKey = () => uniqueId('query-string-');
@@ -30,7 +31,16 @@ export const SilencesFilter = () => {
     setTimeout(() => setQueryStringKey(getQueryStringKey()));
   };
 
-  const inputInvalid = queryString && queryString.length > 3 ? parseMatchers(queryString).length === 0 : false;
+  let inputValid = queryString && queryString.length > 3;
+  try {
+    if (!queryString) {
+      inputValid = true;
+    } else {
+      parsePromQLStyleMatcherLoose(queryString);
+    }
+  } catch (err) {
+    inputValid = false;
+  }
 
   return (
     <div className={styles.flexRow}>
@@ -39,7 +49,7 @@ export const SilencesFilter = () => {
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Search by matchers</span>
+              <Trans i18nKey="alerting.common.search-by-matchers">Search by matchers</Trans>
               <Tooltip
                 content={
                   <div>
@@ -53,8 +63,8 @@ export const SilencesFilter = () => {
             </Stack>
           </Label>
         }
-        invalid={inputInvalid}
-        error={inputInvalid ? 'Query must use valid matcher syntax' : null}
+        invalid={!inputValid}
+        error={!inputValid ? 'Query must use valid matcher syntax' : null}
       >
         <Input
           key={queryStringKey}
@@ -70,7 +80,7 @@ export const SilencesFilter = () => {
       {queryString && (
         <div className={styles.rowChild}>
           <Button variant="secondary" icon="times" onClick={clearFilters}>
-            Clear filters
+            <Trans i18nKey="alerting.common.clear-filters">Clear filters</Trans>
           </Button>
         </div>
       )}

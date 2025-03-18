@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Menu, MenuItem, useStyles2 } from '@grafana/ui';

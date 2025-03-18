@@ -95,7 +95,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   border = {
     weak: `rgba(${this.whiteBase}, 0.12)`,
-    medium: `rgba(${this.whiteBase}, 0.20)`,
+    medium: `rgba(${this.whiteBase}, 0.2)`,
     strong: `rgba(${this.whiteBase}, 0.30)`,
   };
 
@@ -187,8 +187,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   border = {
     weak: `rgba(${this.blackBase}, 0.12)`,
-    medium: `rgba(${this.blackBase}, 0.30)`,
-    strong: `rgba(${this.blackBase}, 0.40)`,
+    medium: `rgba(${this.blackBase}, 0.3)`,
+    strong: `rgba(${this.blackBase}, 0.4)`,
   };
 
   secondary = {
@@ -277,7 +277,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   const getRichColor = ({ color, name }: GetRichColorProps): ThemeRichColor => {
     color = { ...color, name };
     if (!color.main) {
-      throw new Error(`Missing main color for ${name}`);
+      color.main = base[name].main;
     }
     if (!color.text) {
       color.text = color.main;
@@ -318,7 +318,9 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   );
 }
 
+type RichColorNames = 'primary' | 'secondary' | 'info' | 'error' | 'success' | 'warning';
+
 interface GetRichColorProps {
   color: Partial<ThemeRichColor>;
-  name: string;
+  name: RichColorNames;
 }

@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 
 import { config } from '@grafana/runtime';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';

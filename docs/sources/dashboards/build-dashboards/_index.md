@@ -14,7 +14,7 @@ labels:
 menuTitle: Build dashboards
 title: Build dashboards
 description: Build dashboards including managing settings, links, and version history
-weight: 2
+weight: 200
 refs:
   variables:
     - pattern: /docs/grafana/

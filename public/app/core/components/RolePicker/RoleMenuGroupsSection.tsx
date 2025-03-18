@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 
 import { useStyles2, getSelectStyles, useTheme2 } from '@grafana/ui';
 import { Role } from 'app/types';
@@ -29,7 +29,7 @@ interface RoleMenuGroupsSectionProps {
   showOnLeftSubMenu?: boolean;
 }
 
-export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGroupsSectionProps>(
+export const RoleMenuGroupsSection = forwardRef<HTMLDivElement, RoleMenuGroupsSectionProps>(
   (
     {
       roles,
@@ -78,7 +78,10 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
                     value={groupOption.value}
                     isSelected={groupSelected(groupOption.value) || groupPartiallySelected(groupOption.value)}
                     partiallySelected={groupPartiallySelected(groupOption.value)}
-                    disabled={groupOption.options?.every(isNotDelegatable)}
+                    disabled={groupOption.options?.every(
+                      (option) =>
+                        isNotDelegatable(option) || selectedOptions.find((opt) => opt.uid === option.uid && opt.mapped)
+                    )}
                     onChange={onGroupChange}
                     onOpenSubMenu={onOpenSubMenu}
                     onCloseSubMenu={onCloseSubMenu}
@@ -102,6 +105,7 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
                     key={option.uid}
                     isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                     disabled={isNotDelegatable(option)}
+                    mapped={!!(option.uid && selectedOptions.find((opt) => opt.uid === option.uid && opt.mapped))}
                     onChange={onRoleChange}
                     hideDescription
                   />

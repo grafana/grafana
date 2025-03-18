@@ -9,9 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -32,7 +34,15 @@ const (
 )
 
 func TestSocialGrafanaCom_UserInfo(t *testing.T) {
-	provider := NewGrafanaComProvider(social.NewOAuthInfo(), &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+	cfg := &setting.Cfg{
+		AutoAssignOrgRole: "Viewer",
+		AutoAssignOrgId:   2,
+	}
+	provider := NewGrafanaComProvider(social.NewOAuthInfo(),
+		cfg,
+		ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{}),
+		&ssosettingstests.MockService{},
+		featuremgmt.WithFeatures())
 
 	type conf struct {
 		skipOrgRoleSync bool
@@ -46,27 +56,27 @@ func TestSocialGrafanaCom_UserInfo(t *testing.T) {
 		ExpectedError error
 	}{
 		{
-			Name:         "should return empty role as userInfo when Skip Org Role Sync Enabled",
+			Name:         "should return empty OrgRoles when skip org role sync is enabled",
 			userInfoResp: userResponse,
 			Cfg:          conf{skipOrgRoleSync: true},
 			want: &social.BasicUserInfo{
-				Id:    "1",
-				Name:  "Eric Leijonmarck",
-				Email: "octocat@github.com",
-				Login: "octocat",
-				Role:  "",
+				Id:       "1",
+				Name:     "Eric Leijonmarck",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: map[int64]org.RoleType{},
 			},
 		},
 		{
-			Name:         "should return role as userInfo when Skip Org Role Sync Enabled",
+			Name:         "should return OrgRoles when skip org role sync is disabled",
 			userInfoResp: userResponse,
 			Cfg:          conf{skipOrgRoleSync: false},
 			want: &social.BasicUserInfo{
-				Id:    "1",
-				Name:  "Eric Leijonmarck",
-				Email: "octocat@github.com",
-				Login: "octocat",
-				Role:  "Admin",
+				Id:       "1",
+				Name:     "Eric Leijonmarck",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: map[int64]org.RoleType{2: org.RoleAdmin},
 			},
 		},
 	}

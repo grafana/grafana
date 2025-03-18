@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
 import { useLocation } from 'react-use';
 
 import { Page } from 'app/core/components/Page/Page';

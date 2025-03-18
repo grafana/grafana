@@ -121,10 +121,6 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 
 ### AWS Signature Version 4 authentication
 
-{{% admonition type="note" %}}
-Available in Grafana v7.3 and higher.
-{{% /admonition %}}
-
 To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration](ref:configuration).
 
 Once AWS SigV4 is enabled, you can configure it on the Elasticsearch data source configuration page.

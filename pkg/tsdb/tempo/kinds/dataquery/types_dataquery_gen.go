@@ -37,10 +37,13 @@ const (
 
 // Defines values for TraceqlSearchScope.
 const (
-	TraceqlSearchScopeIntrinsic TraceqlSearchScope = "intrinsic"
-	TraceqlSearchScopeResource  TraceqlSearchScope = "resource"
-	TraceqlSearchScopeSpan      TraceqlSearchScope = "span"
-	TraceqlSearchScopeUnscoped  TraceqlSearchScope = "unscoped"
+	TraceqlSearchScopeEvent           TraceqlSearchScope = "event"
+	TraceqlSearchScopeInstrumentation TraceqlSearchScope = "instrumentation"
+	TraceqlSearchScopeIntrinsic       TraceqlSearchScope = "intrinsic"
+	TraceqlSearchScopeLink            TraceqlSearchScope = "link"
+	TraceqlSearchScopeResource        TraceqlSearchScope = "resource"
+	TraceqlSearchScopeSpan            TraceqlSearchScope = "span"
+	TraceqlSearchScopeUnscoped        TraceqlSearchScope = "unscoped"
 )
 
 // These are the common properties available to all queries in all datasources.
@@ -81,8 +84,11 @@ type TempoQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any            `json:"datasource,omitempty"`
-	Filters    []TraceqlFilter `json:"filters,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
+
+	// For metric queries, how many exemplars to request, 0 means no exemplars
+	Exemplars *int64          `json:"exemplars,omitempty"`
+	Filters   []TraceqlFilter `json:"filters,omitempty"`
 
 	// Filters that are used to query the metrics summary
 	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
@@ -128,6 +134,9 @@ type TempoQuery struct {
 
 	// Defines the maximum number of spans per spanset that are returned from Tempo
 	Spss *int64 `json:"spss,omitempty"`
+
+	// For metric queries, the step size to use
+	Step *string `json:"step,omitempty"`
 
 	// The type of the table that is used to display the search results
 	TableType *SearchTableType `json:"tableType,omitempty"`

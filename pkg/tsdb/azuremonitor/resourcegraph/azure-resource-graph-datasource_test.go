@@ -25,11 +25,11 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
 	tests := []struct {
-		name                      string
-		queryModel                []backend.DataQuery
-		timeRange                 backend.TimeRange
-		azureResourceGraphQueries []*AzureResourceGraphQuery
-		Err                       require.ErrorAssertionFunc
+		name                    string
+		queryModel              []backend.DataQuery
+		timeRange               backend.TimeRange
+		azureResourceGraphQuery AzureResourceGraphQuery
+		Err                     require.ErrorAssertionFunc
 	}{
 		{
 			name: "Query with macros should be interpolated",
@@ -49,20 +49,18 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 					RefID: "A",
 				},
 			},
-			azureResourceGraphQueries: []*AzureResourceGraphQuery{
-				{
-					RefID:        "A",
-					ResultFormat: "table",
-					URL:          "",
-					JSON: []byte(`{
+			azureResourceGraphQuery: AzureResourceGraphQuery{
+				RefID:        "A",
+				ResultFormat: "table",
+				URL:          "",
+				JSON: []byte(`{
 						"queryType": "Azure Resource Graph",
 						"azureResourceGraph": {
 							"query":        "resources | where $__contains(name,'res1','res2')",
 							"resultFormat": "table"
 						}
 					}`),
-					InterpolatedQuery: "resources | where ['name'] in ('res1','res2')",
-				},
+				InterpolatedQuery: "resources | where ['name'] in ('res1','res2')",
 			},
 			Err: require.NoError,
 		},
@@ -70,9 +68,9 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(tt.queryModel, types.DatasourceInfo{})
+			query, err := datasource.buildQuery(tt.queryModel[0], types.DatasourceInfo{})
 			tt.Err(t, err)
-			if diff := cmp.Diff(tt.azureResourceGraphQueries, queries, cmpopts.IgnoreUnexported(struct{}{})); diff != "" {
+			if diff := cmp.Diff(&tt.azureResourceGraphQuery, query, cmpopts.IgnoreUnexported(struct{}{})); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})

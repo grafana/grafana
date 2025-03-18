@@ -1,16 +1,13 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo } from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
+import { useMemo } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, useStyles2, VirtualizedSelect } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { fetchRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 
-import { checkForPathSeparator } from './util';
+import { useAlertRuleSuggestions } from './useAlertRuleSuggestions';
 
 interface Props {
   rulesSourceName: string;
@@ -25,27 +22,22 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
   } = useFormContext<RuleFormValues>();
 
   const style = useStyles2(getStyle);
-
-  const rulerRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const dispatch = useDispatch();
-  useEffect(() => {
-    dispatch(fetchRulerRulesAction({ rulesSourceName }));
-  }, [rulesSourceName, dispatch]);
-
-  const rulesConfig = rulerRequests[rulesSourceName]?.result;
+  const { namespaceGroups, isLoading } = useAlertRuleSuggestions(rulesSourceName);
 
   const namespace = watch('namespace');
 
-  const namespaceOptions = useMemo(
-    (): Array<SelectableValue<string>> =>
-      rulesConfig ? Object.keys(rulesConfig).map((namespace) => ({ label: namespace, value: namespace })) : [],
-    [rulesConfig]
+  const namespaceOptions: Array<SelectableValue<string>> = useMemo(
+    () =>
+      Array.from(namespaceGroups.keys()).map((namespace) => ({
+        label: namespace,
+        value: namespace,
+      })),
+    [namespaceGroups]
   );
 
-  const groupOptions = useMemo(
-    (): Array<SelectableValue<string>> =>
-      (namespace && rulesConfig?.[namespace]?.map((group) => ({ label: group.name, value: group.name }))) || [],
-    [namespace, rulesConfig]
+  const groupOptions: Array<SelectableValue<string>> = useMemo(
+    () => (namespace && namespaceGroups.get(namespace)?.map((group) => ({ label: group, value: group }))) || [],
+    [namespace, namespaceGroups]
   );
 
   return (
@@ -68,15 +60,14 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
               }}
               options={namespaceOptions}
               width={42}
+              isLoading={isLoading}
+              disabled={isLoading}
             />
           )}
           name="namespace"
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },
-            validate: {
-              pathSeparator: checkForPathSeparator,
-            },
           }}
         />
       </Field>
@@ -92,15 +83,14 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
                 setValue('group', value.value ?? '');
               }}
               className={style.input}
+              isLoading={isLoading}
+              disabled={isLoading}
             />
           )}
           name="group"
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },
-            validate: {
-              pathSeparator: checkForPathSeparator,
-            },
           }}
         />
       </Field>

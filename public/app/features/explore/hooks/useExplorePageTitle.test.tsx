@@ -1,5 +1,4 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -19,6 +18,7 @@ describe('useExplorePageTitle', () => {
     ];
 
     setDataSourceSrv({
+      registerRuntimeDataSource: jest.fn(),
       get(datasource?: string | DataSourceRef | null) {
         let ds;
         if (!datasource) {
@@ -73,6 +73,7 @@ describe('useExplorePageTitle', () => {
     ];
 
     setDataSourceSrv({
+      registerRuntimeDataSource: jest.fn(),
       get(datasource?: string | DataSourceRef | null) {
         let ds;
         if (!datasource) {

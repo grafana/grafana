@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactElement, ReactNode, useId } from 'react';
+import { CSSProperties, ReactElement, ReactNode, useId } from 'react';
+import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -8,6 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
+import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Text } from '../Text/Text';
@@ -32,6 +34,8 @@ interface BaseProps {
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
   dragClassCancel?: string;
+  onDragStart?: (e: React.PointerEvent) => void;
+  selectionId?: string;
   /**
    * Use only to indicate loading or streaming data in the panel.
    * Any other values of loadingState are ignored.
@@ -64,6 +68,7 @@ interface BaseProps {
    * Debounce the event handler, if possible
    */
   onMouseMove?: () => void;
+  onMouseEnter?: () => void;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -82,6 +87,10 @@ interface Collapsible {
   collapsible: boolean;
   collapsed?: boolean;
   /**
+   * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
+   */
+  showMenuAlways?: boolean;
+  /**
    * callback when collapsing or expanding the panel
    */
   onToggleCollapse?: (collapsed: boolean) => void;
@@ -92,6 +101,7 @@ interface Collapsible {
 interface HoverHeader {
   collapsible?: never;
   collapsed?: never;
+  showMenuAlways?: never;
   onToggleCollapse?: never;
   hoverHeader?: boolean;
   hoverHeaderOffset?: number;
@@ -124,6 +134,7 @@ export function PanelChrome({
   statusMessageOnClick,
   leftItems,
   actions,
+  selectionId,
   onCancelQuery,
   onOpenMenu,
   collapsible = false,
@@ -131,10 +142,15 @@ export function PanelChrome({
   onToggleCollapse,
   onFocus,
   onMouseMove,
+  onMouseEnter,
+  onDragStart,
+  showMenuAlways = false,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
+  const panelTitleId = useId().replace(/:/g, '_');
+  const { isSelected, onSelect } = useElementSelection(selectionId);
 
   const hasHeader = !hoverHeader;
 
@@ -146,7 +162,7 @@ export function PanelChrome({
   }
 
   // hover menu is only shown on hover when not on touch devices
-  const showOnHoverClass = 'show-on-hover';
+  const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
@@ -179,7 +195,13 @@ export function PanelChrome({
       {/* Non collapsible title */}
       {!collapsible && title && (
         <div className={styles.title}>
-          <Text element="h2" variant="h6" truncate title={typeof title === 'string' ? title : undefined}>
+          <Text
+            element="h2"
+            variant="h6"
+            truncate
+            title={typeof title === 'string' ? title : undefined}
+            id={panelTitleId}
+          >
             {title}
           </Text>
         </div>
@@ -206,7 +228,7 @@ export function PanelChrome({
                 aria-hidden={!!title}
                 aria-label={!title ? 'toggle collapse panel' : undefined}
               />
-              <Text variant="h6" truncate>
+              <Text variant="h6" truncate id={panelTitleId}>
                 {title}
               </Text>
             </button>
@@ -247,12 +269,18 @@ export function PanelChrome({
   return (
     // tabIndex={0} is needed for keyboard accessibility in the plot area
     <section
-      className={cx(styles.container, { [styles.transparentContainer]: isPanelTransparent })}
+      className={cx(
+        styles.container,
+        isPanelTransparent && styles.transparentContainer,
+        isSelected && 'dashboard-selected-element'
+      )}
       style={containerStyles}
+      aria-labelledby={!!title ? panelTitleId : undefined}
       data-testid={testid}
       tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
       onFocus={onFocus}
       onMouseMove={onMouseMove}
+      onMouseEnter={onMouseEnter}
       ref={ref}
     >
       <div className={styles.loadingBarContainer}>
@@ -282,7 +310,13 @@ export function PanelChrome({
       )}
 
       {hasHeader && (
-        <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
+        <div
+          className={cx(styles.headerContainer, dragClass)}
+          style={headerStyles}
+          data-testid="header-container"
+          onPointerDown={onDragStart}
+          onPointerUp={onSelect}
+        >
           {statusMessage && (
             <div className={dragClassCancel}>
               <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
@@ -378,6 +412,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
 
+      '.always-show': {
+        background: 'none',
+        '&:focus-visible, &:hover': {
+          background: theme.colors.secondary.shade,
+        },
+      },
+
       '.show-on-hover': {
         opacity: '0',
         visibility: 'hidden',
@@ -415,6 +456,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       top: 0,
       width: '100%',
+      // this is to force the loading bar container to create a new stacking context
+      // otherwise, in webkit browsers on windows/linux, the aliasing of panel text changes when the loading bar is shown
+      // see https://github.com/grafana/grafana/issues/88104
+      zIndex: 1,
     }),
     containNone: css({
       contain: 'none',

@@ -1,6 +1,7 @@
 // Library
 import { cx } from '@emotion/css';
-import React, { CSSProperties, PureComponent, ReactNode } from 'react';
+import { CSSProperties, PureComponent, ReactNode } from 'react';
+import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import {
@@ -228,7 +229,7 @@ interface CellColors {
 
 interface TitleDimensions {
   fontSize: number;
-  placement: 'above' | 'left' | 'below';
+  placement: 'above' | 'left' | 'below' | 'hidden';
   width: number;
   height: number;
 }
@@ -243,6 +244,15 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
 
   if (!title) {
     return { fontSize: 0, width: 0, height: 0, placement: 'above' };
+  }
+
+  if (namePlacement === BarGaugeNamePlacement.Hidden) {
+    return {
+      fontSize: 0,
+      width: 0,
+      height: 0,
+      placement: BarGaugeNamePlacement.Hidden,
+    };
   }
 
   if (isVertical(orientation)) {
@@ -315,18 +325,22 @@ export function getTitleStyles(props: Props): { wrapper: CSSProperties; title: C
     alignSelf: 'center',
   };
 
-  if (isVertical(props.orientation)) {
-    wrapperStyles.flexDirection = 'column-reverse';
-    titleStyles.textAlign = 'center';
+  if (titleDim.placement === 'hidden') {
+    titleStyles.display = 'none';
   } else {
-    if (titleDim.placement === 'above') {
-      wrapperStyles.flexDirection = 'column';
+    if (isVertical(props.orientation)) {
+      wrapperStyles.flexDirection = 'column-reverse';
+      titleStyles.textAlign = 'center';
     } else {
-      wrapperStyles.flexDirection = 'row';
+      if (titleDim.placement === 'above') {
+        wrapperStyles.flexDirection = 'column';
+      } else {
+        wrapperStyles.flexDirection = 'row';
 
-      titleStyles.width = `${titleDim.width}px`;
-      titleStyles.textAlign = 'right';
-      titleStyles.paddingRight = '10px';
+        titleStyles.width = `${titleDim.width}px`;
+        titleStyles.textAlign = 'right';
+        titleStyles.paddingRight = '10px';
+      }
     }
   }
 
@@ -657,6 +671,7 @@ function getValueStyles(
     width: `${width}px`,
     display: 'flex',
     alignItems: 'center',
+    textWrap: 'nowrap',
     lineHeight: VALUE_LINE_HEIGHT,
   };
 

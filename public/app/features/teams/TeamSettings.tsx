@@ -1,4 +1,3 @@
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -49,6 +48,9 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
     <Stack direction={'column'} gap={3}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
         <FieldSet label="Team details">
+          <Field label="Numerical identifier" disabled={true}>
+            <Input value={team.id} id="id-input" />
+          </Field>
           <Field
             label="Name"
             disabled={!canWriteTeamSettings}

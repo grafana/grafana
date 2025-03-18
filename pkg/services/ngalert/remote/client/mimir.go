@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,7 +12,9 @@ import (
 	"path"
 	"strings"
 
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -27,7 +30,13 @@ type MimirClient interface {
 	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
 
+	TestTemplate(ctx context.Context, c alertingNotify.TestTemplatesConfigBodyParams) (*alertingNotify.TestTemplatesResults, error)
+	TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
+
 	ShouldPromoteConfig() bool
+
+	// Mimir implements an extended version of the receivers API under a different path.
+	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
 }
 
 type Mimir struct {
@@ -36,6 +45,8 @@ type Mimir struct {
 	logger        log.Logger
 	metrics       *metrics.RemoteAlertmanager
 	promoteConfig bool
+	externalURL   string
+	staticHeaders map[string]string
 }
 
 type Config struct {
@@ -45,6 +56,8 @@ type Config struct {
 
 	Logger        log.Logger
 	PromoteConfig bool
+	ExternalURL   string
+	StaticHeaders map[string]string
 }
 
 // successResponse represents a successful response from the Mimir API.
@@ -68,7 +81,7 @@ func (e *errorResponse) Error() string {
 	return e.Error2
 }
 
-func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
+func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Mimir, error) {
 	rt := &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
@@ -78,13 +91,17 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
 	c := &http.Client{
 		Transport: rt,
 	}
+	tc := client.NewTimedClient(c, metrics.RequestLatency)
+	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 
 	return &Mimir{
 		endpoint:      cfg.URL,
-		client:        client.NewTimedClient(c, metrics.RequestLatency),
+		client:        trc,
 		logger:        cfg.Logger,
 		metrics:       metrics,
 		promoteConfig: cfg.PromoteConfig,
+		externalURL:   cfg.ExternalURL,
+		staticHeaders: cfg.StaticHeaders,
 	}, nil
 }
 
@@ -181,4 +198,40 @@ func (mc *Mimir) doOK(ctx context.Context, p, method string, payload io.Reader) 
 	default:
 		return fmt.Errorf("received an unknown status from the request body: %s", sr.Status)
 	}
+}
+
+func (mc *Mimir) TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
+	payload, err := json.Marshal(c)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	trResult := &alertingNotify.TestReceiversResult{}
+
+	// nolint:bodyclose
+	// closed within `do`
+	_, err = mc.do(ctx, "api/v1/grafana/receivers/test", http.MethodPost, bytes.NewBuffer(payload), &trResult)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return trResult, http.StatusOK, nil
+}
+
+func (mc *Mimir) TestTemplate(ctx context.Context, c alertingNotify.TestTemplatesConfigBodyParams) (*alertingNotify.TestTemplatesResults, error) {
+	payload, err := json.Marshal(c)
+	if err != nil {
+		return nil, err
+	}
+
+	ttResult := &alertingNotify.TestTemplatesResults{}
+
+	// nolint:bodyclose
+	// closed within `do`
+	_, err = mc.do(ctx, "api/v1/grafana/templates/test", http.MethodPost, bytes.NewBuffer(payload), &ttResult)
+	if err != nil {
+		return nil, err
+	}
+
+	return ttResult, nil
 }

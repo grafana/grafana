@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	googlev1 "github.com/grafana/pyroscope/api/gen/proto/go/google/v1"
 	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
@@ -18,7 +18,8 @@ func Test_PyroscopeClient(t *testing.T) {
 	}
 
 	t.Run("GetSeries", func(t *testing.T) {
-		resp, err := client.GetSeries(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, 15)
+		limit := int64(42)
+		resp, err := client.GetSeries(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, &limit, 15)
 		require.Nil(t, err)
 
 		series := &SeriesResponse{
@@ -131,5 +132,13 @@ func (f *FakePyroscopeConnectClient) SelectMergeProfile(ctx context.Context, c *
 }
 
 func (f *FakePyroscopeConnectClient) SelectMergeSpanProfile(ctx context.Context, c *connect.Request[querierv1.SelectMergeSpanProfileRequest]) (*connect.Response[querierv1.SelectMergeSpanProfileResponse], error) {
+	panic("implement me")
+}
+
+func (f *FakePyroscopeConnectClient) AnalyzeQuery(ctx context.Context, c *connect.Request[querierv1.AnalyzeQueryRequest]) (*connect.Response[querierv1.AnalyzeQueryResponse], error) {
+	panic("implement me")
+}
+
+func (f *FakePyroscopeConnectClient) GetProfileStats(ctx context.Context, c *connect.Request[typesv1.GetProfileStatsRequest]) (*connect.Response[typesv1.GetProfileStatsResponse], error) {
 	panic("implement me")
 }

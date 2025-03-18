@@ -5,6 +5,37 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "gomod"
-    directory: "/"
+    directories:
+      - "/"
+      - "/apps/playlist"
+      - "/apps/investigation"
+      - "/pkg/aggregator"
+      - "/pkg/apimachinery"
+      - "/pkg/apiserver"
+      - "/pkg/build"
+      - "/pkg/build/wire"
+      - "/pkg/promlib"
+      - "/pkg/semconv"
+      - "/pkg/storage/unified/apistore"
+      - "/pkg/storage/unified/resource"
+      - "/pkg/util/xorm"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+      time: "02:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 10
+  - package-ecosystem: "docker"
+    directories:
+      - "/"
+      - "/packaging/docker/custom"
+      - "/scripts/verify-repo-update"
+      - "/scripts/build/ci-deploy"
+      - "/scripts/build/ci-windows-test"
+      - "/scripts/build/ci-e2e"
+      - "/scripts/build/ci-wix"
+      - "/scripts/build/ci-msi-build"
+    schedule:
+      interval: "daily"
+      time: "02:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 10

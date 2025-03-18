@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEventHandler, KeyboardEventHandler, ReactNode } from 'react';
+import { FormEventHandler, KeyboardEventHandler, ReactNode } from 'react';
 
 import { DocsId, GrafanaTheme2, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -17,8 +17,7 @@ interface TransformationPickerProps {
   onSearchKeyDown: KeyboardEventHandler<HTMLInputElement>;
   onTransformationAdd: Function;
   suffix: ReactNode;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  xforms: Array<TransformerRegistryItem<any>>;
+  xforms: TransformerRegistryItem[];
 }
 
 export function TransformationPicker(props: TransformationPickerProps) {
@@ -88,8 +87,7 @@ export function TransformationPicker(props: TransformationPickerProps) {
 }
 
 interface TransformationCardProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transform: TransformerRegistryItem<any>;
+  transform: TransformerRegistryItem;
   onClick: () => void;
 }
 

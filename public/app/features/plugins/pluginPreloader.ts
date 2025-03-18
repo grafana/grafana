@@ -1,54 +1,40 @@
-import type { PluginExtensionConfig } from '@grafana/data';
+import type { PluginExtensionAddedLinkConfig, PluginExtensionExposedComponentConfig } from '@grafana/data';
+import { PluginExtensionAddedComponentConfig } from '@grafana/data/src/types/pluginExtensions';
 import type { AppPluginConfig } from '@grafana/runtime';
-import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { ReactivePluginExtensionsRegistry } from './extensions/reactivePluginExtensionRegistry';
-import * as pluginLoader from './plugin_loader';
+import { importAppPlugin } from './plugin_loader';
 
 export type PluginPreloadResult = {
   pluginId: string;
   error?: unknown;
-  extensionConfigs: PluginExtensionConfig[];
+  exposedComponentConfigs: PluginExtensionExposedComponentConfig[];
+  addedComponentConfigs?: PluginExtensionAddedComponentConfig[];
+  addedLinkConfigs?: PluginExtensionAddedLinkConfig[];
 };
 
-export async function preloadPlugins(
-  apps: AppPluginConfig[] = [],
-  registry: ReactivePluginExtensionsRegistry,
-  eventName = 'frontend_plugins_preload'
-) {
-  startMeasure(eventName);
-  const promises = apps.filter((config) => config.preload).map((config) => preload(config));
-  const preloadedPlugins = await Promise.all(promises);
+const preloadedAppPlugins = new Set<string>();
+const isNotYetPreloaded = ({ id }: AppPluginConfig) => !preloadedAppPlugins.has(id);
+const markAsPreloaded = (apps: AppPluginConfig[]) => apps.forEach(({ id }) => preloadedAppPlugins.add(id));
 
-  for (const preloadedPlugin of preloadedPlugins) {
-    registry.register(preloadedPlugin);
+export async function preloadPlugins(apps: AppPluginConfig[] = []) {
+  const appPluginsToPreload = apps.filter(isNotYetPreloaded);
+
+  if (appPluginsToPreload.length === 0) {
+    return;
   }
 
-  stopMeasure(eventName);
+  markAsPreloaded(apps);
+
+  await Promise.all(appPluginsToPreload.map(preload));
 }
 
-async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
-  const { path, version, id: pluginId } = config;
+async function preload(config: AppPluginConfig) {
   try {
-    startMeasure(`frontend_plugin_preload_${pluginId}`);
-    const { plugin } = await pluginLoader.importPluginModule({
-      path,
-      version,
-      isAngular: config.angular.detected,
-      pluginId,
-    });
-    const { extensionConfigs = [] } = plugin;
+    const meta = await getPluginSettings(config.id);
 
-    // Fetching meta-information for the preloaded app plugin and caching it for later.
-    // (The function below returns a promise, but it's not awaited for a reason: we don't want to block the preload process, we would only like to cache the result for later.)
-    getPluginSettings(pluginId);
-
-    return { pluginId, extensionConfigs };
+    await importAppPlugin(meta);
   } catch (error) {
-    console.error(`[Plugins] Failed to preload plugin: ${path} (version: ${version})`, error);
-    return { pluginId, extensionConfigs: [], error };
-  } finally {
-    stopMeasure(`frontend_plugin_preload_${pluginId}`);
+    console.error(`[Plugins] Failed to preload plugin: ${config.path} (version: ${config.version})`, error);
   }
 }

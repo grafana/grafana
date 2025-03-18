@@ -1,5 +1,6 @@
-import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+import { Meta, Canvas, ArgTypes } from '@storybook/blocks';
 import { LoadingBar } from './LoadingBar';
+import * as LoadingBarStories from './LoadingBar.story';
 
 <Meta title="MDX|LoadingBar" component={LoadingBar} />
 
@@ -7,16 +8,6 @@ import { LoadingBar } from './LoadingBar';
 
 The LoadingBar is used as a simple loading slider animation in the top of its container.
 
-<Preview>
-  <div style={{ height: '200px', width: '400px' }}>
-    <LoadingBar containerWidth={400} height={2} width={128} />
-  </div>
-</Preview>
-
-```jsx
-<div style={{ height: '200px', width: '400px' }}>
-  <LoadingBar containerWidth={400} height={2} width={128} />
-</div>
-```
+<Canvas of={LoadingBarStories.Basic} />
 
 <ArgTypes of={LoadingBar} />

@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { BootData, getDefaultTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -11,7 +10,7 @@ import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { Echo } from '../../../../core/services/echo/Echo';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { Props, ShareLink } from './ShareLink';

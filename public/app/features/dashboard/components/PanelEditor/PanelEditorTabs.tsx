@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import { Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,7 +9,8 @@ import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
 import { PanelAlertTabContent } from 'app/features/alerting/unified/PanelAlertTabContent';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 
 import { PanelEditorQueries } from './PanelEditorQueries';
@@ -22,7 +23,7 @@ interface PanelEditorTabsProps {
   onChangeTab: (tab: PanelEditorTab) => void;
 }
 
-export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab }: PanelEditorTabsProps) => {
+export const PanelEditorTabs = memo(({ panel, dashboard, tabs, onChangeTab }: PanelEditorTabsProps) => {
   const forceUpdate = useForceUpdate();
   const styles = useStyles2(getStyles);
 

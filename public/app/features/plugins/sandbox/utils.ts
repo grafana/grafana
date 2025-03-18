@@ -1,12 +1,9 @@
 import { isNearMembraneProxy } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
-import React from 'react';
+import * as React from 'react';
 
-import { PluginSignatureType, PluginType } from '@grafana/data';
 import { LogContext } from '@grafana/faro-web-sdk';
 import { config, createMonitoringLogger } from '@grafana/runtime';
-
-import { getPluginSettings } from '../pluginSettings';
 
 import { SandboxedPluginObject } from './types';
 
@@ -36,49 +33,6 @@ export function logError(error: Error, context?: LogContext) {
 
 export function logInfo(message: string, context?: LogContext) {
   sandboxLogger.logInfo(message, context);
-}
-
-export async function isFrontendSandboxSupported({
-  isAngular,
-  pluginId,
-}: {
-  isAngular?: boolean;
-  pluginId: string;
-}): Promise<boolean> {
-  // Only if the feature is not enabled no support for sandbox
-  if (!Boolean(config.featureToggles.pluginsFrontendSandbox)) {
-    return false;
-  }
-
-  // no support for angular plugins
-  if (isAngular) {
-    return false;
-  }
-
-  // To fast test and debug the sandbox in the browser.
-  const sandboxDisableQueryParam = location.search.includes('nosandbox') && config.buildInfo.env === 'development';
-  if (sandboxDisableQueryParam) {
-    return false;
-  }
-
-  // if disabled by configuration
-  const isPluginExcepted = config.disableFrontendSandboxForPlugins.includes(pluginId);
-  if (isPluginExcepted) {
-    return false;
-  }
-
-  // no sandbox in test mode. it often breaks e2e tests
-  if (process.env.NODE_ENV === 'test') {
-    return false;
-  }
-
-  // we don't run grafana-own apps in the sandbox
-  const pluginMeta = await getPluginSettings(pluginId);
-  if (pluginMeta.type === PluginType.app && pluginMeta.signatureType === PluginSignatureType.grafana) {
-    return false;
-  }
-
-  return true;
 }
 
 function isRegex(value: unknown): value is RegExp {

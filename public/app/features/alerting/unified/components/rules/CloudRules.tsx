@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { LinkButton, LoadingPlaceholder, Pagination, Spinner, useStyles2, Text } from '@grafana/ui';
+import { LinkButton, LoadingPlaceholder, Pagination, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -26,17 +27,13 @@ interface Props {
 export const CloudRules = ({ namespaces, expandAll }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const dsConfigs = useUnifiedAlertingSelector((state) => state.dataSources);
   const promRules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
   const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
 
   const dataSourcesLoading = useMemo(
-    () =>
-      rulesDataSources.filter(
-        (ds) => isAsyncRequestStatePending(promRules[ds.name]) || isAsyncRequestStatePending(dsConfigs[ds.name])
-      ),
-    [promRules, dsConfigs, rulesDataSources]
+    () => rulesDataSources.filter((ds) => isAsyncRequestStatePending(promRules[ds.name])),
+    [promRules, rulesDataSources]
   );
 
   const hasSomeResults = rulesDataSources.some((ds) => Boolean(promRules[ds.name]?.result?.length));
@@ -56,7 +53,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
       <div className={styles.sectionHeader}>
         <div className={styles.headerRow}>
           <Text element="h2" variant="h5">
-            Mimir / Cortex / Loki
+            <Trans i18nKey="alerting.list-view.section.dataSourceManaged.title">Data source-managed</Trans>
           </Text>
           {dataSourcesLoading.length ? (
             <LoadingPlaceholder
@@ -136,6 +133,7 @@ export function CreateRecordingRuleButton() {
         href={urlUtil.renderUrl(`alerting/new/recording`, {
           returnTo: location.pathname + location.search,
         })}
+        tooltip="Create new Data source-managed recording rule"
         icon="plus"
         variant="secondary"
       >

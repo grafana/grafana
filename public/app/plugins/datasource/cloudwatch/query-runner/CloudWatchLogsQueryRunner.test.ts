@@ -9,6 +9,7 @@ import {
   MutableDataFrame,
 } from '@grafana/data';
 
+import { regionVariable } from '../__mocks__/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
 import { LogsRequestMock } from '../__mocks__/Request';
 import { validLogsQuery } from '../__mocks__/queries';
@@ -23,7 +24,7 @@ describe('CloudWatchLogsQueryRunner', () => {
 
   describe('getLogRowContext', () => {
     it('replaces parameters correctly in the query', async () => {
-      const { runner, queryMock } = setupMockedLogsQueryRunner();
+      const { runner, queryMock } = setupMockedLogsQueryRunner({ variables: [regionVariable] });
       const row: LogRowModel = {
         entryFieldIndex: 0,
         rowIndex: 0,
@@ -50,14 +51,15 @@ describe('CloudWatchLogsQueryRunner', () => {
       };
       await runner.getLogRowContext(row, undefined, queryMock);
       expect(queryMock.mock.calls[0][0].targets[0].endTime).toBe(4);
-      expect(queryMock.mock.calls[0][0].targets[0].region).toBe('');
+      // sets the default region if region is empty
+      expect(queryMock.mock.calls[0][0].targets[0].region).toBe('us-west-1');
 
       await runner.getLogRowContext(row, { direction: LogRowContextQueryDirection.Forward }, queryMock, {
         ...validLogsQuery,
-        region: 'eu-east',
+        region: '$region',
       });
       expect(queryMock.mock.calls[1][0].targets[0].startTime).toBe(4);
-      expect(queryMock.mock.calls[1][0].targets[0].region).toBe('eu-east');
+      expect(queryMock.mock.calls[1][0].targets[0].region).toBe('templatedRegion');
     });
   });
 
@@ -172,6 +174,53 @@ describe('CloudWatchLogsQueryRunner', () => {
       const queryFn = jest
         .fn()
         .mockReturnValueOnce(of(startQueryErrorWhenRateLimitedResponseStub))
+        .mockReturnValueOnce(of(startQuerySuccessResponseStub))
+        .mockReturnValueOnce(of(getQuerySuccessResponseStub));
+
+      const response = runner.handleLogQueries(rawLogQueriesStub, options, queryFn);
+      const results = await lastValueFrom(response);
+      expect(queryFn).toHaveBeenCalledTimes(3);
+
+      // first call
+      expect(queryFn).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          targets: expect.arrayContaining([expect.objectContaining({ subtype: 'StartQuery' })]),
+        })
+      );
+      // we retry because the first call failed with the rate limiting error
+      expect(queryFn).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          targets: expect.arrayContaining([expect.objectContaining({ subtype: 'StartQuery' })]),
+        })
+      );
+      // we get results because second call was successful
+      expect(queryFn).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          targets: expect.arrayContaining([expect.objectContaining({ subtype: 'GetQueryResults' })]),
+        })
+      );
+
+      expect(results).toEqual({
+        ...getQuerySuccessResponseStub,
+        errors: [],
+        key: 'test-key',
+      });
+    });
+
+    it('should call getQueryResults until the query returns even if it the startQuery gets a throttling error from aws', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: rawLogQueriesStub,
+      };
+
+      const queryFn = jest
+        .fn()
+        .mockReturnValueOnce(of(startQueryErrorWhenThrottlingResponseStub))
         .mockReturnValueOnce(of(startQuerySuccessResponseStub))
         .mockReturnValueOnce(of(getQuerySuccessResponseStub));
 
@@ -464,6 +513,18 @@ const startQueryErrorWhenRateLimitedResponseStub = {
       refId: 'A',
       message:
         'failed to execute log action with subtype: StartQuery: LimitExceededException: LimitExceededException: Account maximum query concurrency limit of [30] reached.',
+      status: 500,
+    },
+  ],
+};
+
+const startQueryErrorWhenThrottlingResponseStub = {
+  data: [],
+  errors: [
+    {
+      refId: 'A',
+      message:
+        'failed to execute log action with subtype: StartQuery: ThrottlingException: ThrottlingException: Rate exceeded',
       status: 500,
     },
   ],

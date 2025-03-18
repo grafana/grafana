@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { reportInteraction } from '@grafana/runtime/src';
 import { Trans } from 'app/core/internationalization';
@@ -22,7 +22,7 @@ export const ShareLibraryPanel = ({ panel, initialFolderUid, onCreateLibraryPane
 
   return (
     <>
-      <p className="share-modal-info-text">
+      <p>
         <Trans i18nKey="share-modal.library.info">Create library panel.</Trans>
       </p>
       <AddLibraryPanelContents

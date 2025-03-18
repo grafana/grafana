@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { useStyles2 } from '@grafana/ui';
 
 import { getServerStyles, ServerData } from '../server';

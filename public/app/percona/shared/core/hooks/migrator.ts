@@ -2,15 +2,16 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router';
 
 import { AppEvents } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { migrateAll } from 'app/features/api-keys/state/actions';
+import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
-import { config } from '@grafana/runtime';
 
 import { snoozeApiKeyMigrationSummary } from '../reducers/user/user';
 import { getPerconaUser } from '../selectors';
-import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
+
 
 export const useMigrator = () => {
   const migrationResult = useSelector((state) => state.apiKeys.migrationResult);

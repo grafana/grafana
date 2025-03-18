@@ -3,7 +3,7 @@ package user
 import (
 	"errors"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 var (

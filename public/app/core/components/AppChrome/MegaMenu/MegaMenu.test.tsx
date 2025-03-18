@@ -1,13 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
-import { Router } from 'react-router-dom';
-import { TestProvider } from 'test/helpers/TestProvider';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 
 import { NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
 
 import { MegaMenu } from './MegaMenu';
 
@@ -34,16 +31,8 @@ const setup = () => {
     },
   ];
 
-  const grafanaContext = getGrafanaContextMock();
-  grafanaContext.chrome.setMegaMenuOpen(true);
-
-  return render(
-    <TestProvider storeState={{ navBarTree }} grafanaContext={grafanaContext}>
-      <Router history={locationService.getHistory()}>
-        <MegaMenu onClose={() => {}} />
-      </Router>
-    </TestProvider>
-  );
+  const store = configureStore({ navBarTree });
+  return render(<MegaMenu onClose={() => {}} />, { store });
 };
 
 describe('MegaMenu', () => {

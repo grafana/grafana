@@ -649,7 +649,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 			TimeColumn:       "timestamp",
 		})
 		require.NoError(t, err)
-		expectedBody := fmt.Sprintf(`{"applications":["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],"query":"","query_datetimescope_column":"timestamp","query_datetimescope_from":"%s","query_datetimescope_to":"%s","timespan":"%s/%s"}`, from.Format(time.RFC3339), to.Format(time.RFC3339), from.Format(time.RFC3339), to.Format(time.RFC3339))
+		expectedBody := fmt.Sprintf(`{"applications":["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],"query":"","query_datetimescope_column":"timestamp","query_datetimescope_from":"%s","query_datetimescope_to":"%s","timespan":"%s/%s"}`, from.Format(time.RFC3339), to.Format(time.RFC3339), from.Format(time.RFC3339), to.Format(time.RFC3339))
 		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		if !cmp.Equal(string(body), expectedBody) {
@@ -686,6 +686,24 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		})
 		require.NoError(t, err)
 		expectedBody := `{"query":"Perf","resources":["/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r2"]}`
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		if !cmp.Equal(string(body), expectedBody) {
+			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
+		}
+	})
+
+	t.Run("correctly passes multiple application insights resources in a logs query", func(t *testing.T) {
+		ds := AzureLogAnalyticsDatasource{}
+		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
+			Resources:        []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r2"},
+			Query:            "Perf",
+			QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+			AppInsightsQuery: true,
+			DashboardTime:    false,
+		})
+		require.NoError(t, err)
+		expectedBody := `{"applications":["/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r2"],"query":"Perf"}`
 		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		if !cmp.Equal(string(body), expectedBody) {
@@ -770,7 +788,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 			QueryType: string(dataquery.AzureQueryTypeTraceql),
 		}
 
-		_, err := ds.buildQueries(ctx, []backend.DataQuery{query}, dsInfo, false)
+		_, err := ds.buildQuery(ctx, query, dsInfo, false)
 
 		require.NoError(t, err)
 	})
@@ -790,7 +808,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 			QueryType: string(dataquery.AzureQueryTypeTraceql),
 		}
 
-		_, err := ds.buildQueries(ctx, []backend.DataQuery{query}, dsInfo, false)
+		_, err := ds.buildQuery(ctx, query, dsInfo, false)
 
 		require.Error(t, err, "query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled")
 	})

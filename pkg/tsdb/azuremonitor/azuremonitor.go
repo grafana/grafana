@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -54,7 +55,30 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	return s
 }
 
+func handleDeprecatedQueryTypes(req *backend.QueryDataRequest) *backend.QueryDataResponse {
+	// Logic to handle deprecated query types that haven't been migrated
+	responses := backend.Responses{}
+	for _, q := range req.Queries {
+		if q.QueryType == "Application Insights" || q.QueryType == "Insights Analytics" {
+			responses[q.RefID] = backend.DataResponse{
+				Error:       fmt.Errorf("query type: '%s' is no longer supported. Please migrate this query (see https://grafana.com/docs/grafana/v9.0/datasources/azuremonitor/deprecated-application-insights/ for details)", q.QueryType),
+				ErrorSource: backend.ErrorSourceDownstream,
+			}
+		}
+	}
+
+	return &backend.QueryDataResponse{
+		Responses: responses,
+	}
+}
+
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	responses := handleDeprecatedQueryTypes(req)
+
+	if len(responses.Responses) > 0 {
+		return responses, nil
+	}
+
 	return s.queryMux.QueryData(azusercontext.WithUserFromQueryReq(ctx, req), req)
 }
 
@@ -114,6 +138,10 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 		routesForModel, err := getAzureMonitorRoutes(azureSettings, credentials, settings.JSONData)
 		if err != nil {
 			return nil, err
+		}
+
+		if credentials.AzureAuthType() == azcredentials.AzureAuthCurrentUserIdentity && !backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorEnableUserAuth") {
+			return nil, backend.DownstreamError(errors.New("current user authentication is not enabled for azure monitor"))
 		}
 
 		model := types.DatasourceInfo{

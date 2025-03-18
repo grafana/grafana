@@ -1,11 +1,10 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { PanelPluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
-import { getGrafanaSearcher } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
 import * as panelUtils from '../../../panel/state/util';
@@ -31,7 +30,7 @@ jest.mock('debounce-promise', () => {
   const debounce = () => {
     const debounced = () =>
       Promise.resolve([
-        { label: 'General', value: { uid: '', title: 'General' } },
+        { label: 'Dashboards', value: { uid: '', title: 'Dashboards' } },
         { label: 'Folder1', value: { id: 'xMsQdBfWz', title: 'Folder1' } },
         { label: 'Folder2', value: { id: 'wfTJJL5Wz', title: 'Folder2' } },
       ]);
@@ -207,7 +206,7 @@ describe('LibraryPanelsSearch', () => {
                 type: 'timeseries',
                 version: 1,
                 meta: {
-                  folderName: 'General',
+                  folderName: 'Dashboards',
                   folderUid: '',
                   connectedDashboards: 0,
                   created: '2021-01-01 12:00:00',
@@ -259,7 +258,7 @@ describe('LibraryPanelsSearch', () => {
               type: 'timeseries',
               version: 1,
               meta: {
-                folderName: 'General',
+                folderName: 'Dashboards',
                 folderUid: '',
                 connectedDashboards: 0,
                 created: '2021-01-01 12:00:00',
@@ -300,7 +299,7 @@ describe('LibraryPanelsSearch', () => {
               type: 'timeseries',
               version: 1,
               meta: {
-                folderName: 'General',
+                folderName: 'Dashboards',
                 folderUid: '',
                 connectedDashboards: 0,
                 created: '2021-01-01 12:00:00',
@@ -339,7 +338,7 @@ describe('LibraryPanelsSearch', () => {
                 type: 'timeseries',
                 version: 1,
                 meta: {
-                  folderName: 'General',
+                  folderName: 'Dashboards',
                   folderUid: '',
                   connectedDashboards: 0,
                   created: '2021-01-01 12:00:00',

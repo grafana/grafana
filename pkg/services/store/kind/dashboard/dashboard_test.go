@@ -70,6 +70,8 @@ func TestReadDashboard(t *testing.T) {
 		"mixed-datasource-with-variable",
 		"special-datasource-types",
 		"panels-without-datasources",
+		"panel-with-library-panel-field",
+		"k8s-wrapper",
 	}
 
 	devdash := "../../../../../devenv/dev-dashboards/"
@@ -88,7 +90,7 @@ func TestReadDashboard(t *testing.T) {
 		}
 		require.NoError(t, err)
 
-		dash, err := readDashboard(f, dsLookupForTests())
+		dash, err := ReadDashboard(f, dsLookupForTests())
 		sortDatasources(dash)
 
 		require.NoError(t, err)
@@ -113,7 +115,7 @@ func TestReadDashboard(t *testing.T) {
 }
 
 // assure consistent ordering of datasources to prevent random failures of `assert.JSONEq`
-func sortDatasources(dash *dashboardInfo) {
+func sortDatasources(dash *DashboardSummaryInfo) {
 	sort.Slice(dash.Datasource, func(i, j int) bool {
 		return strings.Compare(dash.Datasource[i].UID, dash.Datasource[j].UID) > 0
 	})

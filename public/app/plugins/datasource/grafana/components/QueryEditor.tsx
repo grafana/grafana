@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import { DropEvent, FileRejection } from 'react-dropzone';
 
 import {
@@ -33,7 +34,7 @@ import {
 import { hasAlphaPanels } from 'app/core/config';
 import * as DFImport from 'app/features/dataframe-import';
 import { getManagedChannelInfo } from 'app/features/live/info';
-import { SearchQuery } from 'app/features/search/service';
+import { SearchQuery } from 'app/features/search/service/types';
 
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
@@ -78,6 +79,13 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
       this.queryTypes.push({
         label: 'Search',
         value: GrafanaQueryType.Search,
+        description: 'Search for grafana resources',
+      });
+    }
+    if (config.featureToggles.unifiedStorageSearch) {
+      this.queryTypes.push({
+        label: 'Search (experimental)',
+        value: GrafanaQueryType.SearchNext,
         description: 'Search for grafana resources',
       });
     }
@@ -216,7 +224,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
     }
 
     const distinctFields = new Set<string>();
-    const fields: Array<SelectableValue<string>> = channel ? channelFields[channel] ?? [] : [];
+    const fields: Array<SelectableValue<string>> = channel ? (channelFields[channel] ?? []) : [];
     // if (data && data.series?.length) {
     //   for (const frame of data.series) {
     //     for (const field of frame.fields) {
@@ -431,6 +439,16 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
+  onSearchNextChange = (search: SearchQuery) => {
+    const { query, onChange, onRunQuery } = this.props;
+
+    onChange({
+      ...query,
+      searchNext: search,
+    });
+    onRunQuery();
+  };
+
   render() {
     const query = {
       ...defaultQuery,
@@ -474,6 +492,9 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
         {queryType === GrafanaQueryType.Search && (
           <SearchEditor value={query.search ?? {}} onChange={this.onSearchChange} />
         )}
+        {queryType === GrafanaQueryType.SearchNext && (
+          <SearchEditor value={query.searchNext ?? {}} onChange={this.onSearchNextChange} />
+        )}
       </>
     );
   }
@@ -483,16 +504,16 @@ export const QueryEditor = withTheme2(UnthemedQueryEditor);
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    file: css`
-      width: 100%;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      padding: ${theme.spacing(2)};
-      border: 1px dashed ${theme.colors.border.medium};
-      background-color: ${theme.colors.background.secondary};
-      margin-top: ${theme.spacing(1)};
-    `,
+    file: css({
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing(2),
+      border: `1px dashed ${theme.colors.border.medium}`,
+      backgroundColor: theme.colors.background.secondary,
+      marginTop: theme.spacing(1),
+    }),
   };
 }

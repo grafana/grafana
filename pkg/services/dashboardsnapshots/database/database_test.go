@@ -164,7 +164,7 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlstore := db.InitTestDB(t)
-	dashStore := NewStore(sqlstore, false)
+	dashStore := NewStore(sqlstore)
 
 	t.Run("Testing dashboard snapshots clean up", func(t *testing.T) {
 		nonExpiredSnapshot := createTestSnapshot(t, dashStore, "key1", 48000)

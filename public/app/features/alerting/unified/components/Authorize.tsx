@@ -1,5 +1,5 @@
 import { chain, filter } from 'lodash';
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
 
 import {
   Abilities,

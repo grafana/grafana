@@ -134,7 +134,18 @@ export interface DB {
   lookup?: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getEditorLanguageDefinition: () => LanguageDefinition;
   toRawSql: (query: SQLQuery) => string;
-  functions?: () => string[];
+  functions: () => Func[];
+}
+
+export interface FuncParameter {
+  name: string;
+  required?: boolean;
+  options?: (query: SQLQuery) => Promise<SelectableValue[]>;
+}
+export interface Func {
+  name: string;
+  parameters?: FuncParameter[];
+  description?: string;
 }
 
 export interface QueryEditorProps {

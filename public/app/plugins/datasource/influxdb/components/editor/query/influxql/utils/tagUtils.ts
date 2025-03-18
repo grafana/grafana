@@ -13,7 +13,7 @@ export function getOperator(tag: InfluxQueryTag): string {
 // FIXME: sync these to the query-string-generation-code
 // probably it's in influx_query_model.ts
 export function getCondition(tag: InfluxQueryTag, isFirst: boolean): string | undefined {
-  return isFirst ? undefined : tag.condition ?? 'AND';
+  return isFirst ? undefined : (tag.condition ?? 'AND');
 }
 
 export function adjustOperatorIfNeeded(currentOperator: string, newTagValue: string): string {

@@ -1,13 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import config from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 
 import { TransformationsEditor } from './TransformationsEditor';
 

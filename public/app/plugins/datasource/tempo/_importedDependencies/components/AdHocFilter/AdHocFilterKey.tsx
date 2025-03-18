@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 
 import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';

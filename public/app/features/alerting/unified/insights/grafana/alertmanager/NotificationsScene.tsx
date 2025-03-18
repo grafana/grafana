@@ -1,10 +1,8 @@
-import React from 'react';
-
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
-import { InsightsRatingModal } from '../../RatingModal';
+import { PANEL_STYLES, overrideToFixedColor } from '../../../home/Insights';
+import { InsightsMenuButton } from '../../InsightsMenuButton';
 
 export function getGrafanaAlertmanagerNotificationsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -40,7 +38,7 @@ export function getGrafanaAlertmanagerNotificationsScene(datasource: DataSourceR
           .matchFieldsWithName('failed')
           .overrideColor(overrideToFixedColor('failed'))
       )
-      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .build(),
   });
 }

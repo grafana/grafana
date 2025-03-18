@@ -1,11 +1,12 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Input, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans } from 'app/core/internationalization';
 
 interface UserDTO {
   name: string;
@@ -24,7 +25,7 @@ const pageNav: NavModelItem = {
 };
 
 const UserCreatePage = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const {
     handleSubmit,
     register,
@@ -33,11 +34,11 @@ const UserCreatePage = () => {
 
   const onSubmit = useCallback(
     async (data: UserDTO) => {
-      const { id } = await createUser(data);
+      const { uid } = await createUser(data);
 
-      history.push(`/admin/users/edit/${id}`);
+      navigate(`/admin/users/edit/${uid}`);
     },
-    [history]
+    [navigate]
   );
 
   return (
@@ -69,7 +70,9 @@ const UserCreatePage = () => {
               type="password"
             />
           </Field>
-          <Button type="submit">Create user</Button>
+          <Button type="submit">
+            <Trans i18nKey="admin.users-create.create-button">Create user</Trans>
+          </Button>
         </form>
       </Page.Contents>
     </Page>

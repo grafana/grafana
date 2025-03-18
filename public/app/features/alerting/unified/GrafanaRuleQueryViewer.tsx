@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { keyBy, startCase } from 'lodash';
-import React from 'react';
+import * as React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
@@ -12,10 +12,10 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
 import { isExpressionQuery } from '../../expressions/guards';
 import {
-  downsamplingTypes,
   ExpressionQuery,
   ExpressionQueryType,
   ReducerMode,
+  downsamplingTypes,
   reducerModes,
   reducerTypes,
   thresholdFunctions,
@@ -26,7 +26,7 @@ import alertDef, { EvalFunction } from '../state/alertDef';
 import { Spacer } from './components/Spacer';
 import { WithReturnButton } from './components/WithReturnButton';
 import { ExpressionResult } from './components/expressions/Expression';
-import { getThresholdsForQueries, ThresholdDefinition } from './components/rule-editor/util';
+import { ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
 import { AlertRuleAction, useAlertRuleAbility } from './hooks/useAbilities';
@@ -58,7 +58,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
                 rule={rule}
                 key={index}
                 refId={refId}
-                isAlertCondition={condition === refId}
                 model={model}
                 relativeTimeRange={relativeTimeRange}
                 dataSource={dataSource}
@@ -72,8 +71,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
       <div className={styles.maxWidthContainer}>
         <Stack gap={1} wrap="wrap" data-testid="expressions-container">
           {expressions.map(({ model, refId, datasourceUid }, index) => {
-            const dataSource = dsByUid[datasourceUid];
-
             return (
               isExpressionQuery(model) && (
                 <ExpressionPreview
@@ -81,7 +78,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
                   refId={refId}
                   isAlertCondition={condition === refId}
                   model={model}
-                  dataSource={dataSource}
                   evalData={evalDataByQuery[refId]}
                 />
               )
@@ -95,7 +91,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
 
 interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRange' | 'model'> {
   rule: CombinedRule;
-  isAlertCondition: boolean;
   dataSource?: DataSourceInstanceSettings;
   queryData?: PanelData;
   thresholds?: ThresholdDefinition;
@@ -209,7 +204,6 @@ const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
 interface ExpressionPreviewProps extends Pick<AlertQuery, 'refId'> {
   isAlertCondition: boolean;
   model: ExpressionQuery;
-  dataSource: DataSourceInstanceSettings;
   evalData?: PanelData;
 }
 

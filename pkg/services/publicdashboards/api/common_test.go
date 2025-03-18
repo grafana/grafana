@@ -7,9 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -48,7 +49,6 @@ func setupTestServer(
 	cfg *setting.Cfg,
 	service publicdashboards.Service,
 	user *user.SignedInUser,
-	ffEnabled bool,
 ) *web.Mux {
 	t.Helper()
 
@@ -64,9 +64,6 @@ func setupTestServer(
 	m.Use(contextProvider(&testContext{user}))
 
 	features := featuremgmt.WithFeatures()
-	if ffEnabled {
-		features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
-	}
 
 	if cfg == nil {
 		cfg = setting.NewCfg()

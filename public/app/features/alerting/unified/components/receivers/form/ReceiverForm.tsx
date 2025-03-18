@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
-import { FieldErrors, FormProvider, SubmitErrorHandler, useForm, Validate } from 'react-hook-form';
+import * as React from 'react';
+import { FieldErrors, FormProvider, SubmitErrorHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { Trans } from 'app/core/internationalization';
+import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { ManagePermissions } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 
 import { getMessageFromError } from '../../../../../../core/utils/errors';
 import { logError } from '../../../Analytics';
@@ -23,36 +25,43 @@ import { Notifier } from './notifiers';
 import { normalizeFormValues } from './util';
 
 interface Props<R extends ChannelValues> {
-  config: AlertManagerCortexConfig;
   notifiers: Notifier[];
   defaultItem: R;
   alertManagerSourceName: string;
   onTestChannel?: (channel: R) => void;
   onSubmit: (values: ReceiverFormValues<R>) => Promise<void>;
-  takenReceiverNames: string[]; // will validate that user entered receiver name is not one of these
   commonSettingsComponent: CommonSettingsComponentType;
   initialValues?: ReceiverFormValues<R>;
   isEditable: boolean;
   isTestable?: boolean;
   customValidators?: Record<string, React.ComponentProps<typeof ChannelSubForm>['customValidators']>;
+  /**
+   * Should we show a warning that there is no default policy set,
+   * and that contact point being created will be set as the default?
+   */
+  showDefaultRouteWarning?: boolean;
+  contactPointId?: string;
+  canManagePermissions?: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
-  config,
   initialValues,
   defaultItem,
   notifiers,
   alertManagerSourceName,
   onSubmit,
   onTestChannel,
-  takenReceiverNames,
   commonSettingsComponent,
   isEditable,
   isTestable,
   customValidators,
-}: Props<R>): JSX.Element {
+  showDefaultRouteWarning,
+  contactPointId,
+  canManagePermissions,
+}: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
+  const validateContactPointName = useValidateContactPoint({ alertmanager: alertManagerSourceName });
 
   // normalize deprecated and new config values
   const normalizedConfig = normalizeFormValues(initialValues);
@@ -83,15 +92,18 @@ export function ReceiverForm<R extends ChannelValues>({
 
   const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
-  const validateNameIsAvailable: Validate<string, ReceiverFormValues<R>> = useCallback(
-    (name: string) =>
-      takenReceiverNames.map((name) => name.trim().toLowerCase()).includes(name.trim().toLowerCase())
-        ? 'Another receiver with this name already exists.'
-        : true,
-    [takenReceiverNames]
-  );
-
   const submitCallback = async (values: ReceiverFormValues<R>) => {
+    values.items.forEach((item) => {
+      if (item.secureFields) {
+        // omit secure fields with boolean value as BE expects not touched fields to be omitted: https://github.com/grafana/grafana/pull/71307
+        Object.keys(item.secureFields).forEach((key) => {
+          if (item.secureFields[key] === true || item.secureFields[key] === false) {
+            delete item.secureFields[key];
+          }
+        });
+      }
+    });
+
     try {
       await onSubmit({
         ...values,
@@ -115,22 +127,36 @@ export function ReceiverForm<R extends ChannelValues>({
 
   return (
     <FormProvider {...formAPI}>
-      {!config.alertmanager_config.route && (
+      {showDefaultRouteWarning && (
         <Alert severity="warning" title="Attention">
           Because there is no default policy configured yet, this contact point will automatically be set as default.
         </Alert>
       )}
-      <form onSubmit={handleSubmit(submitCallback, onInvalid)}>
-        <h4 className={styles.heading}>
-          {!isEditable ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
-        </h4>
+
+      <form onSubmit={handleSubmit(submitCallback, onInvalid)} className={styles.wrapper}>
+        <Stack justifyContent="space-between" alignItems="center">
+          <h2 className={styles.heading}>
+            {!isEditable ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
+          </h2>
+          {canManagePermissions && contactPointId && (
+            <ManagePermissions
+              resource="receivers"
+              resourceId={contactPointId}
+              resourceName={initialValues?.name}
+              title="Manage contact point permissions"
+            />
+          )}
+        </Stack>
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message} required>
           <Input
             readOnly={!isEditable}
             id="name"
             {...register('name', {
               required: 'Name is required',
-              validate: { nameIsAvailable: validateNameIsAvailable },
+              validate: async (value) => {
+                const existingValue = initialValues?.name;
+                return validateContactPointName(value, existingValue);
+              },
             })}
             width={39}
             placeholder="Name"
@@ -197,9 +223,9 @@ export function ReceiverForm<R extends ChannelValues>({
               disabled={isSubmitting}
               variant="secondary"
               data-testid="cancel-button"
-              href={makeAMLink('alerting/notifications', alertManagerSourceName)}
+              href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
             >
-              Cancel
+              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
             </LinkButton>
           </div>
         </>
@@ -210,7 +236,7 @@ export function ReceiverForm<R extends ChannelValues>({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   heading: css({
-    margin: theme.spacing(4, 0),
+    margin: theme.spacing(2, 0, 3, 0),
   }),
   buttons: css({
     marginTop: theme.spacing(4),
@@ -218,6 +244,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '& > * + *': {
       marginLeft: theme.spacing(1),
     },
+  }),
+  wrapper: css({
+    maxWidth: `${theme.breakpoints.values.xl}px`,
   }),
 });
 

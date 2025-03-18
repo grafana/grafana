@@ -1,6 +1,7 @@
 import hoistNonReactStatics from 'hoist-non-react-statics';
 import memoize from 'micro-memoize';
-import React, { useContext } from 'react';
+import { useContext } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme, GrafanaTheme2, ThemeContext } from '@grafana/data';
 

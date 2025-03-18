@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 
 import { setInitialDatasource } from '../state/reducers';
 
-export default function NewDashboardWithDS(props: GrafanaRouteComponentProps<{ datasourceUid: string }>) {
+export default function NewDashboardWithDS() {
   const [error, setError] = useState<string | null>(null);
-  const { datasourceUid } = props.match.params;
+  const { datasourceUid } = useParams();
   const dispatch = useDispatch();
 
   useEffect(() => {

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { Select, HorizontalGroup, Input, useStyles2 } from '@grafana/ui';
 

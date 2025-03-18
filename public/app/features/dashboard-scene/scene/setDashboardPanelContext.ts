@@ -1,4 +1,5 @@
 import { AnnotationChangeEvent, AnnotationEventUIModel, CoreApp, DataFrame } from '@grafana/data';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, VizPanel } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { AdHocFilterItem, PanelContext } from '@grafana/ui';
@@ -17,7 +18,12 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     const builtInLayer = getBuiltInAnnotationsLayer(dashboard);
 
     // When there is no builtin annotations query we disable the ability to add annotations
-    if (!builtInLayer || !dashboard.canEditDashboard()) {
+    if (!builtInLayer) {
+      return false;
+    }
+
+    // If feature flag is enabled we pass the info of whether annotation can be added through the dashboard permissions
+    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
       return false;
     }
 
@@ -28,7 +34,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.canEditAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
-    if (!dashboard.canEditDashboard()) {
+    // If feature flag is enabled we pass the info of whether annotation can be edited through the dashboard permissions
+    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
       return false;
     }
 
@@ -42,7 +49,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.canDeleteAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
-    if (!dashboard.canEditDashboard()) {
+    // If feature flag is enabled we pass the info of whether annotation can be deleted through the dashboard permissions
+    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
       return false;
     }
 
@@ -160,7 +168,9 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   const newVariable = new AdHocFiltersVariable({
     name: 'Filters',
     datasource: ds,
+    supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
     useQueriesAsFilterForOptions: true,
+    layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
   });
 
   // Add it to the scene

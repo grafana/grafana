@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import React from 'react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
+import { render } from 'test/test-utils';
 
 import {
   FieldConfigSource,
@@ -17,7 +17,7 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { OptionsPaneOptions } from './OptionsPaneOptions';
@@ -28,12 +28,6 @@ standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 const mockStore = configureMockStore();
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useLocation: () => ({
-    pathname: 'localhost:3000/example/path',
-  }),
-}));
 
 class OptionsPaneOptionsTestScenario {
   onFieldConfigsChange = jest.fn();

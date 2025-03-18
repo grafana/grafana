@@ -65,7 +65,7 @@ export const assertQueryHistoryComment = async (expectedQueryComments: string[])
 };
 
 export const assertQueryHistoryTabIsSelected = (tabName: 'Query history' | 'Starred' | 'Settings') => {
-  expect(withinQueryHistory().getByRole('tab', { name: `Tab ${tabName}`, selected: true })).toBeInTheDocument();
+  expect(withinQueryHistory().getByRole('tab', { name: tabName, selected: true })).toBeInTheDocument();
 };
 
 export const assertDataSourceFilterVisibility = (visible: boolean) => {

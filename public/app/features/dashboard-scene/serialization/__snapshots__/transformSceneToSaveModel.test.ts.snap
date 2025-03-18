@@ -278,8 +278,9 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
       "type": "row",
     },
   ],
+  "preload": false,
   "refresh": "",
-  "schemaVersion": 39,
+  "schemaVersion": 40,
   "tags": [
     "templating",
     "gdev",
@@ -545,8 +546,9 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
       "type": "text",
     },
   ],
+  "preload": false,
   "refresh": "5m",
-  "schemaVersion": 39,
+  "schemaVersion": 40,
   "tags": [
     "tag1",
     "tag2",
@@ -902,8 +904,9 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
       "type": "text",
     },
   ],
+  "preload": false,
   "refresh": "",
-  "schemaVersion": 39,
+  "schemaVersion": 40,
   "tags": [
     "gdev",
     "graph-ng",

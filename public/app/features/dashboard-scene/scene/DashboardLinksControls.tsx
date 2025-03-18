@@ -1,7 +1,6 @@
-import React from 'react';
-
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
+import { sceneGraph } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 import { Tooltip } from '@grafana/ui';
 import {
@@ -12,12 +11,17 @@ import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
 import { LINK_ICON_MAP } from '../settings/links/utils';
 
+import { DashboardScene } from './DashboardScene';
+
 export interface Props {
   links: DashboardLink[];
-  uid?: string;
+  dashboard: DashboardScene;
 }
 
-export function DashboardLinksControls({ links, uid }: Props) {
+export function DashboardLinksControls({ links, dashboard }: Props) {
+  sceneGraph.getTimeRange(dashboard).useState();
+  const uid = dashboard.state.uid;
+
   if (!links || !uid) {
     return null;
   }

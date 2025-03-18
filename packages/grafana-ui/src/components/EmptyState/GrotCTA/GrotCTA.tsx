@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { SVGProps } from 'react';
+import { SVGProps } from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';

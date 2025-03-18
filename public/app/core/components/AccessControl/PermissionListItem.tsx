@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Box, Button, Icon, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { ResourcePermission } from './types';
 
@@ -21,7 +21,13 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
     <tr>
       <td>{getAvatar(item)}</td>
       <td>{getDescription(item)}</td>
-      <td>{item.isInherited && <em className="muted no-wrap">Inherited from folder</em>}</td>
+      <td>
+        {item.isInherited && (
+          <em className={styles.inherited}>
+            <Trans i18nKey="access-control.permission-list-item.inherited">Inherited from folder</Trans>
+          </em>
+        )}
+      </td>
       <td>
         <Select
           disabled={!canSet || !item.isManaged}
@@ -60,7 +66,7 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
           />
         ) : (
           <Tooltip content={item.isInherited ? 'Inherited Permission' : 'Provisioned Permission'}>
-            <Button size="sm" icon="lock" />
+            <Button size="sm" icon="lock" aria-label="Locked permission indicator" />
           </Tooltip>
         )}
       </td>
@@ -103,5 +109,9 @@ const getPermissionInfo = (p: ResourcePermission) => `Actions: ${[...new Set(p.a
 const getStyles = (theme: GrafanaTheme2) => ({
   warning: css({
     color: theme.colors.warning.main,
+  }),
+  inherited: css({
+    color: theme.colors.text.secondary,
+    flexWrap: 'nowrap',
   }),
 });

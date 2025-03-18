@@ -29,7 +29,7 @@ describe(sortStateHistory, () => {
   describe('should stably sort', () => {
     describe('when timeEnd is different', () => {
       it('should not sort by rule id', () => {
-        let data: StateHistoryItem[] = [
+        const data: StateHistoryItem[] = [
           { timeEnd: 23, time: 22, id: 1 } as StateHistoryItem,
           { timeEnd: 22, time: 21, id: 3 } as StateHistoryItem,
           { timeEnd: 22, time: 22, id: 2 } as StateHistoryItem,
@@ -46,7 +46,7 @@ describe(sortStateHistory, () => {
 
     describe('when only the rule id is different', () => {
       it('should sort by rule id', () => {
-        let data: StateHistoryItem[] = [
+        const data: StateHistoryItem[] = [
           { timeEnd: 23, time: 22, id: 1 } as StateHistoryItem,
           { timeEnd: 23, time: 22, id: 3 } as StateHistoryItem,
           { timeEnd: 23, time: 22, id: 2 } as StateHistoryItem,

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -15,7 +16,7 @@ import (
 
 // AlertRuleFromProvisionedAlertRule converts definitions.ProvisionedAlertRule to models.AlertRule
 func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (models.AlertRule, error) {
-	return models.AlertRule{
+	rule := models.AlertRule{
 		ID:                   a.ID,
 		UID:                  a.UID,
 		OrgID:                a.OrgID,
@@ -33,7 +34,13 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		IsPaused:             a.IsPaused,
 		NotificationSettings: NotificationSettingsFromAlertRuleNotificationSettings(a.NotificationSettings),
 		Record:               ModelRecordFromApiRecord(a.Record),
-	}, nil
+	}
+
+	if rule.Type() == models.RuleTypeRecording {
+		models.ClearRecordingRuleIgnoredFields(&rule)
+	}
+
+	return rule, nil
 }
 
 // ProvisionedAlertRuleFromAlertRule converts models.AlertRule to definitions.ProvisionedAlertRule and sets provided provenance status
@@ -179,16 +186,32 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		data = append(data, query)
 	}
 
+	cPtr := &rule.Condition
+	if rule.Condition == "" {
+		cPtr = nil
+	}
+
+	noDataState := definitions.NoDataState(rule.NoDataState)
+	ndsPtr := &noDataState
+	if noDataState == "" {
+		ndsPtr = nil
+	}
+	execErrorState := definitions.ExecutionErrorState(rule.ExecErrState)
+	eesPtr := &execErrorState
+	if execErrorState == "" {
+		eesPtr = nil
+	}
+
 	result := definitions.AlertRuleExport{
 		UID:                  rule.UID,
 		Title:                rule.Title,
 		For:                  model.Duration(rule.For),
-		Condition:            rule.Condition,
+		Condition:            cPtr,
 		Data:                 data,
 		DashboardUID:         rule.DashboardUID,
 		PanelID:              rule.PanelID,
-		NoDataState:          definitions.NoDataState(rule.NoDataState),
-		ExecErrState:         definitions.ExecutionErrorState(rule.ExecErrState),
+		NoDataState:          ndsPtr,
+		ExecErrState:         eesPtr,
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
 		Record:               AlertRuleRecordExportFromRecord(rule.Record),
@@ -398,6 +421,21 @@ func MuteTimingIntervalToMuteTimeIntervalHclExport(m definitions.MuteTimeInterva
 	return result, err
 }
 
+// AlertRuleEditorSettingsFromEditorSettings converts models.EditorSettings to definitions.AlertRuleEditorSettings
+func AlertRuleEditorSettingsFromModelEditorSettings(es models.EditorSettings) *definitions.AlertRuleEditorSettings {
+	return &definitions.AlertRuleEditorSettings{
+		SimplifiedQueryAndExpressionsSection: es.SimplifiedQueryAndExpressionsSection,
+		SimplifiedNotificationsSection:       es.SimplifiedNotificationsSection,
+	}
+}
+
+// AlertRuleMetadataFromMetadata converts models.AlertRuleMetadata to definitions.AlertRuleMetadata
+func AlertRuleMetadataFromModelMetadata(es models.AlertRuleMetadata) *definitions.AlertRuleMetadata {
+	return &definitions.AlertRuleMetadata{
+		EditorSettings: *AlertRuleEditorSettingsFromModelEditorSettings(es.EditorSettings),
+	}
+}
+
 // AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettings
 func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
 	if len(ns) == 0 {
@@ -484,4 +522,57 @@ func ApiRecordFromModelRecord(r *models.Record) *definitions.Record {
 		Metric: r.Metric,
 		From:   r.From,
 	}
+}
+
+func GettableGrafanaReceiverFromReceiver(r *models.Integration, provenance models.Provenance) (definitions.GettableGrafanaReceiver, error) {
+	out := definitions.GettableGrafanaReceiver{
+		UID:                   r.UID,
+		Name:                  r.Name,
+		Type:                  r.Config.Type,
+		Provenance:            definitions.Provenance(provenance),
+		DisableResolveMessage: r.DisableResolveMessage,
+		SecureFields:          r.SecureFields(),
+	}
+
+	if len(r.Settings) > 0 {
+		jsonBytes, err := json.Marshal(r.Settings)
+		if err != nil {
+			return definitions.GettableGrafanaReceiver{}, err
+		}
+		out.Settings = jsonBytes
+	}
+
+	return out, nil
+}
+
+func GettableApiReceiverFromReceiver(r *models.Receiver) (*definitions.GettableApiReceiver, error) {
+	out := definitions.GettableApiReceiver{
+		Receiver: amConfig.Receiver{
+			Name: r.Name,
+		},
+		GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
+			GrafanaManagedReceivers: make([]*definitions.GettableGrafanaReceiver, 0, len(r.Integrations)),
+		},
+	}
+
+	for _, integration := range r.Integrations {
+		gettable, err := GettableGrafanaReceiverFromReceiver(integration, r.Provenance)
+		if err != nil {
+			return nil, err
+		}
+		out.GrafanaManagedReceivers = append(out.GrafanaManagedReceivers, &gettable)
+	}
+	return &out, nil
+}
+
+func GettableApiReceiversFromReceivers(recvs []*models.Receiver) ([]*definitions.GettableApiReceiver, error) {
+	out := make([]*definitions.GettableApiReceiver, 0, len(recvs))
+	for _, r := range recvs {
+		gettables, err := GettableApiReceiverFromReceiver(r)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, gettables)
+	}
+	return out, nil
 }

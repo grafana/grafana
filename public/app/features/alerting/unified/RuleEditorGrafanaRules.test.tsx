@@ -1,58 +1,24 @@
-import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
+import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types';
-import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
-import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
-
-import { discoverFeatures } from './api/buildInfo';
-import * as ruler from './api/ruler';
-import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { grantUserPermissions, mockDataSource } from './mocks';
-import { grafanaRulerGroup, grafanaRulerRule } from './mocks/alertRuleApi';
+import { grafanaRulerGroup } from './mocks/grafanaRulerApi';
+import { captureRequests, serializeRequests } from './mocks/server/events';
 import { setupDataSources } from './testSetup/datasources';
-import * as config from './utils/config';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { getDefaultQueries } from './utils/rule-form';
-
-jest.mock('./components/rule-editor/ExpressionEditor', () => ({
-  ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
-    <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
-  ),
-}));
-
-jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
-// there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
-// lets just skip it
-jest.mock('app/features/query/components/QueryEditorRow', () => ({
-  QueryEditorRow: () => <p>hi</p>,
-}));
-
-jest.spyOn(config, 'getAllDataSources');
-
 jest.setTimeout(60 * 1000);
-
-const mocks = {
-  getAllDataSources: jest.mocked(config.getAllDataSources),
-  searchFolders: jest.mocked(searchFolders),
-  api: {
-    discoverFeatures: jest.mocked(discoverFeatures),
-    setRulerRuleGroup: jest.spyOn(ruler, 'setRulerRuleGroup'),
-  },
-};
 
 setupMswServer();
 
@@ -77,82 +43,36 @@ describe('RuleEditor grafana managed rules', () => {
   });
 
   it('can create new grafana managed alert', async () => {
+    const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
     const dataSources = {
       default: mockDataSource(
         {
           type: 'prometheus',
           name: 'Prom',
+          uid: PROMETHEUS_DATASOURCE_UID,
           isDefault: true,
         },
-        { alerting: false }
+        { alerting: true, module: 'core:plugin/prometheus' }
       ),
     };
 
     setupDataSources(dataSources.default);
-    mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
-    mocks.searchFolders.mockResolvedValue([
-      {
-        title: 'Folder A',
-        uid: grafanaRulerRule.grafana_alert.namespace_uid,
-        id: 1,
-        type: DashboardSearchItemType.DashDB,
-      },
-      {
-        title: 'Folder B',
-        id: 2,
-        uid: 'b',
-        type: DashboardSearchItemType.DashDB,
-      },
-      {
-        title: 'Folder / with slash',
-        uid: 'c',
-        id: 2,
-        type: DashboardSearchItemType.DashDB,
-      },
-    ] as DashboardSearchHit[]);
 
-    renderRuleEditor();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    const { user } = renderRuleEditor();
 
-    await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
-
-    const folderInput = await ui.inputs.folder.find();
-    await clickSelectOption(folderInput, 'Folder A');
+    await user.type(await ui.inputs.name.find(), 'my great new rule');
+    await user.click(await screen.findByRole('button', { name: /select folder/i }));
+    await user.click(await screen.findByLabelText(/folder a/i));
     const groupInput = await ui.inputs.group.find();
-    await userEvent.click(byRole('combobox').get(groupInput));
+    await user.click(await byRole('combobox').find(groupInput));
     await clickSelectOption(groupInput, grafanaRulerGroup.name);
-    await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
+    await user.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    // save and check what was sent to backend
-    await userEvent.click(ui.buttons.saveAndExit.get());
-    // 9seg
-    await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
-    // 9seg
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      grafanaRulerRule.grafana_alert.namespace_uid,
-      {
-        interval: '1m',
-        name: grafanaRulerGroup.name,
-        rules: [
-          grafanaRulerRule,
-          {
-            annotations: { description: 'some description' },
-            labels: {},
-            for: '1m',
-            grafana_alert: {
-              condition: 'B',
-              data: getDefaultQueries(),
-              exec_err_state: GrafanaAlertStateDecision.Error,
-              is_paused: false,
-              no_data_state: 'NoData',
-              title: 'my great new rule',
-              notification_settings: undefined,
-            },
-          },
-        ],
-      }
-    );
+    await user.click(ui.buttons.saveAndExit.get());
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
   });
 });

@@ -1,9 +1,9 @@
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import * as api from 'app/features/manage-dashboards/state/actions';
+import { SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardAsForm, SaveDashboardAsFormProps } from './SaveDashboardAsForm';
 
@@ -17,7 +17,7 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
 
 jest.spyOn(api, 'searchFolders').mockResolvedValue([]);
 
-const prepareDashboardMock = (panel: any) => {
+const prepareDashboardMock = (panel: object) => {
   const json = {
     title: 'name',
     panels: [panel],
@@ -44,7 +44,7 @@ const renderAndSubmitForm = async (
       onSuccess={() => {}}
       onSubmit={async (jsonModel) => {
         submitSpy(jsonModel);
-        return {};
+        return {} as SaveDashboardResponseDTO;
       }}
       {...otherProps}
     />

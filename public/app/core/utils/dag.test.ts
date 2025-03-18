@@ -116,5 +116,15 @@ describe('Directed acyclic graph', () => {
         dag.link('A', 'non-existing');
       }).toThrowError("cannot link output node named non-existing since it doesn't exist in graph");
     });
+
+    it('when linking would create a cycle should throw error', () => {
+      expect(() => dag.link('C', 'C')).toThrow('cannot link C to C since it would create a cycle');
+      expect(() => dag.link('A', 'B')).toThrow('cannot link A to B since it would create a cycle');
+      expect(() => dag.link('A', 'E')).toThrow('cannot link A to E since it would create a cycle');
+    });
+
+    it('should return undefined for unknown node id', () => {
+      expect(dag.getNode('404')).toBeUndefined();
+    });
   });
 });

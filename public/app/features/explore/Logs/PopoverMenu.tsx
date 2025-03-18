@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Menu, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { copyText } from '../../logs/utils';
 
@@ -11,8 +12,9 @@ interface PopoverMenuProps {
   selection: string;
   x: number;
   y: number;
-  onClickFilterValue?: (value: string, refId?: string) => void;
-  onClickFilterOutValue?: (value: string, refId?: string) => void;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
+  onDisable: () => void;
   row: LogRowModel;
   close: () => void;
 }
@@ -20,11 +22,12 @@ interface PopoverMenuProps {
 export const PopoverMenu = ({
   x,
   y,
-  onClickFilterValue,
-  onClickFilterOutValue,
+  onClickFilterString,
+  onClickFilterOutString,
   selection,
   row,
   close,
+  ...props
 }: PopoverMenuProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const styles = useStyles2(getStyles);
@@ -42,45 +45,54 @@ export const PopoverMenu = ({
     };
   }, [close]);
 
-  const supported = onClickFilterValue || onClickFilterOutValue;
+  const onDisable = useCallback(() => {
+    track('popover_menu_disabled', selection.length, row.datasourceType);
+    props.onDisable();
+  }, [props, row.datasourceType, selection.length]);
+
+  const supported = onClickFilterString || onClickFilterOutString;
 
   if (!supported) {
     return null;
   }
 
   return (
-    <div className={styles.menu} style={{ top: y, left: x }}>
-      <Menu ref={containerRef}>
-        <Menu.Item
-          label="Copy selection"
-          onClick={() => {
-            copyText(selection, containerRef);
-            close();
-            track('copy', selection.length, row.datasourceType);
-          }}
-        />
-        {onClickFilterValue && (
+    <>
+      <div className={styles.menu} style={{ top: y, left: x }}>
+        <Menu ref={containerRef}>
           <Menu.Item
-            label="Add as line contains filter"
+            label={t('logs.popover-menu.copy', 'Copy selection')}
             onClick={() => {
-              onClickFilterValue(selection, row.dataFrame.refId);
+              copyText(selection, containerRef);
               close();
-              track('line_contains', selection.length, row.datasourceType);
+              track('copy', selection.length, row.datasourceType);
             }}
           />
-        )}
-        {onClickFilterOutValue && (
-          <Menu.Item
-            label="Add as line does not contain filter"
-            onClick={() => {
-              onClickFilterOutValue(selection, row.dataFrame.refId);
-              close();
-              track('line_does_not_contain', selection.length, row.datasourceType);
-            }}
-          />
-        )}
-      </Menu>
-    </div>
+          {onClickFilterString && (
+            <Menu.Item
+              label={t('logs.popover-menu.line-contains', 'Add as line contains filter')}
+              onClick={() => {
+                onClickFilterString(selection, row.dataFrame.refId);
+                close();
+                track('line_contains', selection.length, row.datasourceType);
+              }}
+            />
+          )}
+          {onClickFilterOutString && (
+            <Menu.Item
+              label={t('logs.popover-menu.line-contains-not', 'Add as line does not contain filter')}
+              onClick={() => {
+                onClickFilterOutString(selection, row.dataFrame.refId);
+                close();
+                track('line_does_not_contain', selection.length, row.datasourceType);
+              }}
+            />
+          )}
+          <Menu.Divider />
+          <Menu.Item label={t('logs.popover-menu.disable-menu', 'Disable menu')} onClick={onDisable} />
+        </Menu>
+      </div>
+    </>
   );
 };
 

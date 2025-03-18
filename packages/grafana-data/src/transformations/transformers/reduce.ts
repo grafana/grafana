@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
-import { getFieldDisplayName } from '../../field';
+import { getFieldDisplayName } from '../../field/fieldState';
 import { KeyValue } from '../../types/data';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo, FieldMatcher, MatcherConfig } from '../../types/transformations';
@@ -56,7 +56,9 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 
         // Add a row for each series
         const res = reduceSeriesToRows(data, matcher, options.reducers, options.labelsToFields);
-        return res ? [res] : [];
+        return res
+          ? [{ ...res, refId: `${DataTransformerID.reduce}-${data.map((frame) => frame.refId).join('-')}` }]
+          : [];
       })
     ),
 };
@@ -88,7 +90,7 @@ function reduceSeriesToRows(
       config: {},
     });
 
-    const labels: KeyValue<any[]> = {};
+    const labels: KeyValue<unknown[]> = {};
     if (labelsToFields) {
       for (const key of distinctLabels) {
         labels[key] = new Array(size);
@@ -101,7 +103,7 @@ function reduceSeriesToRows(
       }
     }
 
-    const calcs: KeyValue<any[]> = {};
+    const calcs: KeyValue<unknown[]> = {};
     for (const info of calculators) {
       calcs[info.id] = new Array(size);
       fields.push({
@@ -132,7 +134,12 @@ function reduceSeriesToRows(
 
       for (const info of calculators) {
         const v = results[info.id];
-        calcs[info.id][i] = v;
+        if (v === null) {
+          // NaN ensures proper row index, null results in shift
+          calcs[info.id][i] = NaN;
+        } else {
+          calcs[info.id][i] = v;
+        }
       }
     }
 

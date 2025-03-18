@@ -27,6 +27,7 @@ type UserAuth struct {
 
 type ExternalUserInfo struct {
 	OAuthToken     *oauth2.Token
+	SAMLSession    *SAMLSession
 	AuthModule     string
 	AuthId         string
 	UserId         int64
@@ -38,6 +39,11 @@ type ExternalUserInfo struct {
 	IsGrafanaAdmin *bool // This is a pointer to know if we should sync this or not (nil = ignore sync)
 	IsDisabled     bool
 	SkipTeamSync   bool
+}
+
+type SAMLSession struct {
+	NameID       string
+	SessionIndex string
 }
 
 func (e *ExternalUserInfo) String() string {

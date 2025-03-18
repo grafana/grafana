@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { identity } from 'lodash';
-import React from 'react';
+import * as React from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -10,6 +10,7 @@ import {
   EventBus,
   GrafanaTheme2,
   DataFrame,
+  TimeRange,
 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Icon, SeriesVisibilityChangeMode, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
@@ -20,7 +21,7 @@ import { ExploreGraph } from '../Graph/ExploreGraph';
 type Props = {
   logsVolumeData: DataQueryResponse;
   allLogsVolumeMaximum: number;
-  absoluteRange: AbsoluteTimeRange;
+  timeRange: TimeRange;
   timeZone: TimeZone;
   splitOpen: SplitOpen;
   width: number;
@@ -86,7 +87,7 @@ export function LogsVolumePanel(props: Props) {
         data={logsVolumeData.data}
         height={height}
         width={width - spacing * 2}
-        absoluteRange={props.absoluteRange}
+        timeRange={props.timeRange}
         onChangeTime={onUpdateTimeRange}
         timeZone={timeZone}
         splitOpenFn={splitOpen}
@@ -104,23 +105,23 @@ export function LogsVolumePanel(props: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    extraInfoContainer: css`
-      display: flex;
-      justify-content: end;
-      position: absolute;
-      right: 5px;
-      top: -10px;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-    `,
-    contentContainer: css`
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    `,
-    streaming: css`
-      color: ${theme.colors.success.text};
-    `,
+    extraInfoContainer: css({
+      display: 'flex',
+      justifyContent: 'end',
+      position: 'absolute',
+      right: '5px',
+      top: '-10px',
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    contentContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    }),
+    streaming: css({
+      color: theme.colors.success.text,
+    }),
   };
 };

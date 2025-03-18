@@ -1,9 +1,9 @@
-import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
+import { SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
 import { ignoreChanges } from './DashboardPrompt';
@@ -24,14 +24,14 @@ describe('DashboardPrompt', () => {
     describe('when called without original dashboard', () => {
       it('then it should return true', () => {
         const scene = buildTestScene();
-        expect(ignoreChanges(scene, undefined)).toBe(true);
+        scene.setInitialSaveModel(undefined);
+        expect(ignoreChanges(scene)).toBe(true);
       });
     });
 
     describe('when called without current dashboard', () => {
       it('then it should return true', () => {
-        const scene = buildTestScene();
-        expect(ignoreChanges(null, scene.getInitialSaveModel())).toBe(true);
+        expect(ignoreChanges(null)).toBe(true);
       });
     });
 
@@ -45,7 +45,7 @@ describe('DashboardPrompt', () => {
         });
         contextSrv.isEditor = false;
 
-        expect(ignoreChanges(scene, scene.getInitialSaveModel())).toBe(true);
+        expect(ignoreChanges(scene)).toBe(true);
       });
     });
 
@@ -59,10 +59,11 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
+        scene.setInitialSaveModel(initialSaveModel);
 
         contextSrv.isEditor = false;
 
-        expect(ignoreChanges(scene, initialSaveModel)).toBe(undefined);
+        expect(ignoreChanges(scene)).toBe(undefined);
       });
     });
 
@@ -75,9 +76,10 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
+        scene.setInitialSaveModel(initialSaveModel);
 
         contextSrv.isSignedIn = false;
-        expect(ignoreChanges(scene, initialSaveModel)).toBe(true);
+        expect(ignoreChanges(scene)).toBe(true);
       });
     });
 
@@ -90,7 +92,9 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
-        expect(ignoreChanges(scene, initialSaveModel)).toBe(true);
+        scene.setInitialSaveModel(initialSaveModel);
+
+        expect(ignoreChanges(scene)).toBe(true);
       });
     });
 
@@ -104,7 +108,9 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
-        expect(ignoreChanges(scene, initialSaveModel)).toBe(true);
+        scene.setInitialSaveModel(initialSaveModel);
+
+        expect(ignoreChanges(scene)).toBe(true);
       });
     });
 
@@ -118,7 +124,9 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
-        expect(ignoreChanges(scene, initialSaveModel)).toBe(undefined);
+        scene.setInitialSaveModel(initialSaveModel);
+
+        expect(ignoreChanges(scene)).toBe(undefined);
       });
     });
   });
@@ -136,20 +144,14 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     }),
     controls: new DashboardControls({}),
     $behaviors: [new behaviors.CursorSync({})],
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          body: new VizPanel({
-            title: 'Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-            $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-          }),
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([
+      new VizPanel({
+        title: 'Panel A',
+        key: 'panel-1',
+        pluginId: 'table',
+        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+      }),
+    ]),
     ...overrides,
   });
 

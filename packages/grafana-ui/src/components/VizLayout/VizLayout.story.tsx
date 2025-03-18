@@ -1,5 +1,5 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { VizLayout } from './VizLayout';
 

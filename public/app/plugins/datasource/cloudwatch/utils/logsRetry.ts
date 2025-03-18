@@ -94,7 +94,10 @@ function splitErrorsData(errors: DataQueryError[]) {
   const refIdsForRequestsToRetry: string[] = [];
   const errorsNotToRetry: DataQueryError[] = [];
   errors.map((err) => {
-    if (err?.message?.includes('LimitExceededException') && err.refId) {
+    if (
+      err?.refId &&
+      (err.message?.includes('LimitExceededException') || err.message?.includes('ThrottlingException'))
+    ) {
       refIdsForRequestsToRetry.push(err.refId);
     } else {
       errorsNotToRetry.push(err);

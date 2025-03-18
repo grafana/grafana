@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 import { Props } from 'react-virtualized-auto-sizer';
 
 import { DataFrame, FieldType } from '@grafana/data';

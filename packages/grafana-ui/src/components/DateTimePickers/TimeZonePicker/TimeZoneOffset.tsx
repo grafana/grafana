@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import React from 'react';
 
 import { GrafanaTheme2, TimeZone, dateTimeFormat } from '@grafana/data';
 

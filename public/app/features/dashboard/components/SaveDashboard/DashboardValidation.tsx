@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,7 +7,7 @@ import { FetchError } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 
 interface DashboardValidationProps {
   dashboard: DashboardModel;

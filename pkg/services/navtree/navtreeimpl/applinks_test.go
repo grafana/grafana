@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -120,14 +120,14 @@ func TestAddAppLinks(t *testing.T) {
 		},
 	}
 
-	t.Run("Should move apps to Apps category", func(t *testing.T) {
+	t.Run("Should move apps to 'More apps' category", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
 
 		appsNode := treeRoot.FindById(navtree.NavIDApps)
 		require.NotNil(t, appsNode)
-		require.Equal(t, "Apps", appsNode.Text)
+		require.Equal(t, "More apps", appsNode.Text)
 		require.Len(t, appsNode.Children, 3)
 		require.Equal(t, testApp1.Name, appsNode.Children[0].Text)
 	})
@@ -168,7 +168,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.Len(t, treeRoot.Children, 2)
 		require.Equal(t, "plugin-page-test-app1", treeRoot.Children[0].Id)
 
-		// Check if it is not under the "Apps" section anymore
+		// Check if it is not under the "More apps" section anymore
 		appsNode := treeRoot.FindById(navtree.NavIDApps)
 		require.NotNil(t, appsNode)
 		require.Len(t, appsNode.Children, 2)
@@ -196,7 +196,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.Len(t, adminNode.Children, 1)
 		require.Equal(t, "plugin-page-test-app1", adminNode.Children[0].Id)
 
-		// Check if it is not under the "Apps" section anymore
+		// Check if it is not under the "More apps" section anymore
 		appsNode := treeRoot.FindById(navtree.NavIDApps)
 		require.NotNil(t, appsNode)
 		require.Len(t, appsNode.Children, 2)
@@ -411,14 +411,14 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 					Type:       "page",
 					AddToNav:   true,
 					DefaultNav: true,
-					Role:       roletype.RoleViewer,
+					Role:       identity.RoleViewer,
 				},
 				{
 					Name:     "Catalog",
 					Path:     "/a/test-app1/catalog",
 					Type:     "page",
 					AddToNav: true,
-					Role:     roletype.RoleEditor,
+					Role:     identity.RoleEditor,
 					Action:   catalogReadAction,
 				},
 				{
@@ -426,7 +426,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 					Path:     "/a/test-app1/announcements",
 					Type:     "page",
 					AddToNav: true,
-					Role:     roletype.RoleViewer,
+					Role:     identity.RoleViewer,
 					Action:   pluginaccesscontrol.ActionAppAccess,
 				},
 			},
@@ -454,7 +454,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		t.Run("Should not add app links when the user cannot access app plugins", func(t *testing.T) {
 			treeRoot := navtree.NavTreeRoot{}
 			user.Permissions = map[int64]map[string][]string{}
-			user.OrgRole = roletype.RoleAdmin
+			user.OrgRole = identity.RoleAdmin
 
 			err := service.addAppLinks(&treeRoot, reqCtx)
 			require.NoError(t, err)
@@ -465,7 +465,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 			user.Permissions = map[int64]map[string][]string{
 				1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 			}
-			user.OrgRole = roletype.RoleEditor
+			user.OrgRole = identity.RoleEditor
 
 			err := service.addAppLinks(&treeRoot, reqCtx)
 			require.NoError(t, err)
@@ -482,7 +482,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 			user.Permissions = map[int64]map[string][]string{
 				1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 			}
-			user.OrgRole = roletype.RoleViewer
+			user.OrgRole = identity.RoleViewer
 
 			err := service.addAppLinks(&treeRoot, reqCtx)
 			require.NoError(t, err)
@@ -501,7 +501,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 			user.Permissions = map[int64]map[string][]string{
 				1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:not-the-test-app1"}},
 			}
-			user.OrgRole = roletype.RoleNone
+			user.OrgRole = identity.RoleNone
 			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 
 			err := service.addAppLinks(&treeRoot, reqCtx)
@@ -513,7 +513,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 			user.Permissions = map[int64]map[string][]string{
 				1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:test-app1"}},
 			}
-			user.OrgRole = roletype.RoleNone
+			user.OrgRole = identity.RoleNone
 			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 
 			err := service.addAppLinks(&treeRoot, reqCtx)
@@ -529,7 +529,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 			user.Permissions = map[int64]map[string][]string{
 				1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:test-app1"}, catalogReadAction: []string{}},
 			}
-			user.OrgRole = roletype.RoleViewer
+			user.OrgRole = identity.RoleViewer
 			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 
 			err := service.addAppLinks(&treeRoot, reqCtx)
@@ -547,7 +547,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 			user.Permissions = map[int64]map[string][]string{
 				1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 			}
-			user.OrgRole = roletype.RoleEditor
+			user.OrgRole = identity.RoleEditor
 			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 
 			err := service.addAppLinks(&treeRoot, reqCtx)

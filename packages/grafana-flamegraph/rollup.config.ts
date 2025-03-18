@@ -1,20 +1,35 @@
 import resolve from '@rollup/plugin-node-resolve';
+import { createRequire } from 'node:module';
 import path from 'path';
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
-import { externals } from 'rollup-plugin-node-externals';
+import { nodeExternals } from 'rollup-plugin-node-externals';
 
-const pkg = require('./package.json');
+const rq = createRequire(import.meta.url);
+const pkg = rq('./package.json');
+
+const legacyOutputDefaults = {
+  esModule: true,
+  interop: 'compat',
+};
 
 export default [
   {
     input: 'src/index.ts',
-    plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild()],
+    plugins: [
+      nodeExternals({ deps: true, packagePath: './package.json' }),
+      resolve(),
+      esbuild({
+        target: 'es2018',
+        tsconfig: 'tsconfig.build.json',
+      }),
+    ],
     output: [
       {
         format: 'cjs',
         sourcemap: true,
         dir: path.dirname(pkg.publishConfig.main),
+        ...legacyOutputDefaults,
       },
       {
         format: 'esm',
@@ -23,6 +38,7 @@ export default [
         preserveModules: true,
         // @ts-expect-error (TS cannot assure that `process.env.PROJECT_CWD` is a string)
         preserveModulesRoot: path.join(process.env.PROJECT_CWD, `packages/grafana-ui/src`),
+        ...legacyOutputDefaults,
       },
     ],
   },

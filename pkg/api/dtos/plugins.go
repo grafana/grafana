@@ -2,7 +2,7 @@ package dtos
 
 import (
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -12,11 +12,13 @@ type PluginSetting struct {
 	Id               string               `json:"id"`
 	Enabled          bool                 `json:"enabled"`
 	Pinned           bool                 `json:"pinned"`
+	AutoEnabled      bool                 `json:"autoEnabled"`
 	Module           string               `json:"module"`
 	BaseUrl          string               `json:"baseUrl"`
 	Info             plugins.Info         `json:"info"`
 	Includes         []*plugins.Includes  `json:"includes"`
 	Dependencies     plugins.Dependencies `json:"dependencies"`
+	Extensions       plugins.Extensions   `json:"extensions"`
 	JsonData         map[string]any       `json:"jsonData"`
 	SecureJsonFields map[string]bool      `json:"secureJsonFields"`
 	DefaultNavUrl    string               `json:"defaultNavUrl"`
@@ -28,7 +30,8 @@ type PluginSetting struct {
 	SignatureType   plugins.SignatureType   `json:"signatureType"`
 	SignatureOrg    string                  `json:"signatureOrg"`
 	AngularDetected bool                    `json:"angularDetected"`
-	APIVersion      string                  `json:"apiVersion"`
+	LoadingStrategy plugins.LoadingStrategy `json:"loadingStrategy"`
+	ModuleHash      string                  `json:"moduleHash,omitempty"`
 }
 
 type PluginListItem struct {
@@ -49,8 +52,7 @@ type PluginListItem struct {
 	SignatureOrg    string                  `json:"signatureOrg"`
 	AccessControl   accesscontrol.Metadata  `json:"accessControl,omitempty"`
 	AngularDetected bool                    `json:"angularDetected"`
-	IAM             *pfs.IAM                `json:"iam,omitempty"`
-	APIVersion      string                  `json:"apiVersion"`
+	IAM             *auth.IAM               `json:"iam,omitempty"`
 }
 
 type PluginList []PluginListItem

@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 import { components, ContainerProps as BaseContainerProps, GroupBase } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -51,7 +50,7 @@ const getSelectContainerStyles = (theme: GrafanaTheme2, focused: boolean, disabl
         flexWrap: 'wrap',
         alignItems: 'stretch',
         justifyContent: 'space-between',
-        minHeight: '32px',
+        minHeight: theme.spacing(theme.components.height.md),
         height: 'auto',
         maxWidth: '100%',
 

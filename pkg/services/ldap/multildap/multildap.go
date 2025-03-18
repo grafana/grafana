@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // GetConfig gets LDAP config
@@ -54,12 +53,12 @@ type IMultiLDAP interface {
 // MultiLDAP is basic struct of LDAP authorization
 type MultiLDAP struct {
 	configs []*ldap.ServerConfig
-	cfg     *setting.Cfg
+	cfg     *ldap.Config
 	log     log.Logger
 }
 
 // New creates the new LDAP auth
-func New(configs []*ldap.ServerConfig, cfg *setting.Cfg) IMultiLDAP {
+func New(configs []*ldap.ServerConfig, cfg *ldap.Config) IMultiLDAP {
 	return &MultiLDAP{
 		configs: configs,
 		cfg:     cfg,

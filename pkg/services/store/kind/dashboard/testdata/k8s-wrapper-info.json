@@ -1,0 +1,74 @@
+{
+  "id": 141,
+  "title": "pppp",
+  "tags": null,
+  "datasource": [
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "green pie",
+      "libraryPanel": "a7975b7a-fb53-4ab7-951d-15810953b54f",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "green pie",
+      "libraryPanel": "e1d5f519-dabd-47c6-9ad7-83d181ce1cee",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "",
+      "type": "barchart",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "",
+      "type": "graph",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "collapsed row",
+      "type": "row",
+      "collapsed": [
+        {
+          "id": 42,
+          "title": "blue pie",
+          "libraryPanel": "l3d2s634-fdgf-75u4-3fg3-67j966ii7jur"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "linkCount": 0,
+  "timeFrom": "now-6h",
+  "timeTo": "now",
+  "timezone": ""
+}

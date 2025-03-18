@@ -22,19 +22,22 @@ import {
   Json,
   OrFilter,
   FilterOp,
+  RangeOp,
+  VectorOp,
+  BinOpExpr,
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
-import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
+import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
-import { LokiQuery, LokiQueryType } from './types';
+import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 /**
  * Returns search terms from a LogQL query.
- * E.g., `{} |= foo |=bar != baz` returns `['foo', 'bar']`.
+ * E.g., `{} |= "foo" |= "bar" != "baz"` returns `['foo', 'bar']`.
  */
 export function getHighlighterExpressionsFromQuery(input = ''): string[] {
-  const results = [];
+  const results: string[] = [];
 
   const filters = getNodesFromQuery(input, [LineFilter]);
 
@@ -76,6 +79,10 @@ export function getHighlighterExpressionsFromQuery(input = ''): string[] {
   return results;
 }
 
+export function getExpressionFromExecutedQuery(executedQueryString: string) {
+  return executedQueryString.replace('Expr: ', '');
+}
+
 export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
   const nodes: SyntaxNode[] = [];
   let node: SyntaxNode | null = filter;
@@ -91,9 +98,16 @@ export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
 }
 
 export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
-  const queryType = getLokiQueryType(query);
+  let queryType = getLokiQueryType(query);
   // instant and range are deprecated, we want to remove them
   const { instant, range, ...rest } = query;
+
+  // if `query.expr` is not parsable this might throw an error
+  try {
+    if (isLogsQuery(query.expr) && queryType === LokiQueryType.Instant) {
+      queryType = LokiQueryType.Range;
+    }
+  } catch (e) {}
   return { ...rest, queryType };
 }
 
@@ -200,7 +214,8 @@ export function isQueryWithError(query: string): boolean {
 }
 
 export function isLogsQuery(query: string): boolean {
-  return !isQueryWithNode(query, MetricExpr);
+  // As a safeguard we are checking for a length of 2, because at least the query should be `{}`
+  return query.trim().length > 2 && !isQueryWithNode(query, MetricExpr);
 }
 
 export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
@@ -301,6 +316,62 @@ export function requestSupportsSplitting(allQueries: LokiQuery[]) {
   return queries.length > 0;
 }
 
+export function requestSupportsSharding(allQueries: LokiQuery[]) {
+  const queries = allQueries
+    .filter((query) => !query.hide)
+    .filter((query) => query.queryType !== LokiQueryType.Instant)
+    .filter((query) => !query.refId.includes('do-not-shard'))
+    .filter((query) => query.expr)
+    .filter(
+      (query) =>
+        (query.direction === LokiQueryDirection.Scan && isLogsQuery(query.expr)) || metricSupportsSharding(query.expr)
+    );
+
+  return queries.length > 0;
+}
+
+function metricSupportsSharding(query: string) {
+  if (isLogsQuery(query)) {
+    return false;
+  }
+  query = query.trim().toLowerCase();
+
+  const disallowed = getNodesFromQuery(query, [BinOpExpr]);
+  if (disallowed.length > 0) {
+    return false;
+  }
+
+  /**
+   * If there are VectorAggregationExpr, we want to make sure that the leftmost VectorOp is sum, meaning that
+   * it's wrapped in a sum. E.g.
+   * Disallowed: avg(sum by (level) (avg_over_time({place="luna"}[1m])))
+   * Allowed: sum(sum by (level) (avg_over_time({place="luna"}[1m])))
+   */
+  const vectorOps = getNodesFromQuery(query, [VectorOp]);
+  const supportedVectorOps = vectorOps.filter((node) => getNodeString(query, node) === 'sum');
+  const unsupportedVectorOps = vectorOps.filter((node) => getNodeString(query, node) !== 'sum');
+  const supportedWrappingVectorOpps = supportedVectorOps.filter((supportedOp) =>
+    unsupportedVectorOps.every((unsupportedOp) => supportedOp.from < unsupportedOp.from)
+  );
+  if (unsupportedVectorOps.length > 0) {
+    return supportedWrappingVectorOpps.length > 0;
+  }
+
+  const rangeOps = getNodesFromQuery(query, [RangeOp]);
+  const supportedRangeOps = ['count_over_time', 'sum_over_time', 'bytes_over_time'];
+  for (const node of rangeOps) {
+    if (!supportedRangeOps.includes(getNodeString(query, node))) {
+      return supportedWrappingVectorOpps.length > 0;
+    }
+  }
+
+  return true;
+}
+
+function getNodeString(query: string, node: SyntaxNode) {
+  return query.substring(node.from, node.to);
+}
+
 export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
   if (!query) {
     return false;
@@ -315,4 +386,42 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
   }
 
   return query;
+};
+
+export const interpolateShardingSelector = (queries: LokiQuery[], shards: number[]) => {
+  if (shards.length === 0) {
+    return queries;
+  }
+
+  let shardValue = shards.join('|');
+
+  // -1 means empty shard value
+  if (shardValue === '-1' || shards.length === 1) {
+    shardValue = shardValue === '-1' ? '' : shardValue;
+    return queries.map((query) => ({
+      ...query,
+      expr: addStreamShardLabelsToQuery(query.expr, '=', shardValue),
+    }));
+  }
+
+  return queries.map((query) => ({
+    ...query,
+    expr: addStreamShardLabelsToQuery(query.expr, '=~', shardValue),
+  }));
+};
+
+function addStreamShardLabelsToQuery(query: string, operator: string, shardValue: string) {
+  const shardedQuery = addLabelToQuery(query, '__stream_shard__', operator, shardValue, LabelType.Indexed);
+  if (!isLogsQuery(query)) {
+    return addDropToQuery(shardedQuery, ['__stream_shard__']);
+  }
+  return shardedQuery;
+}
+
+export const getSelectorForShardValues = (query: string) => {
+  const selector = getNodesFromQuery(query, [Selector]);
+  if (selector.length > 0) {
+    return query.substring(selector[0].from, selector[0].to);
+  }
+  return '';
 };

@@ -7,16 +7,20 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-
 GO = go
-GO_VERSION = 1.22.7
-GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
+GO_VERSION = 1.23.5
+GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
+GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
+GIT_BASE = remotes/origin/main
+
+# GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
+XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
 
 targets := $(shell echo '$(sources)' | tr "," " ")
 
@@ -61,6 +65,7 @@ swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
 	rm -f $(SPEC_TARGET)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
@@ -78,6 +83,7 @@ swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
 	rm -f $(ENTERPRISE_SPEC_TARGET)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
@@ -140,6 +146,11 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
 
+.PHONY: gen-cuev2
+gen-cuev2: ## Do all CUE code generation
+	@echo "generate code from .cue files (v2)"
+	go generate ./kindsv2/gen.go
+
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
@@ -167,8 +178,17 @@ fix-cue: $(CUE)
 gen-jsonnet:
 	go generate ./devenv/jsonnet
 
+.PHONY: update-workspace
+update-workspace: gen-go
+	@echo "updating workspace"
+	bash scripts/go-workspace/update-workspace.sh
+
 .PHONY: build-go
-build-go: gen-go ## Build all Go binaries.
+build-go: gen-go update-workspace ## Build all Go binaries.
+	@echo "build go files with updated workspace"
+	$(GO) run build.go $(GO_BUILD_FLAGS) build
+
+build-go-fast: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
@@ -209,13 +229,13 @@ build-plugin-go: ## Build decoupled plugins
 build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
-run: $(BRA) ## Build and run web server on filesystem changes.
+run: $(BRA) ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
 	$(BRA) run
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
 	$(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
-		./pkg/cmd/grafana -- server -packaging=dev cfg:app_mode=development
+		./pkg/cmd/grafana -- server -profile -profile-addr=127.0.0.1 -profile-port=6000 -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
@@ -233,8 +253,16 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	go list -f '{{.Dir}}/...' -m | xargs \
+	printf '$(GO_TEST_FILES)' | xargs \
 	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -timeout=30m
+
+.PHONY: test-go-unit-pretty
+test-go-unit-pretty: check-tparse
+	@if [ -z "$(FILES)" ]; then \
+		echo "Notice: FILES variable is not set. Try \"make test-go-unit-pretty FILES=./pkg/services/mysvc\""; \
+		exit 1; \
+	fi
+	$(GO) test $(GO_RACE_FLAG) -timeout=10s $(FILES) -json | tparse -all
 
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
@@ -286,11 +314,20 @@ test: test-go test-js ## Run all tests.
 golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
-		--config .golangci.toml \
-		$(GO_FILES)
+		--config .golangci.yml \
+		$(GO_LINT_FILES)
 
 .PHONY: lint-go
-lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
+lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_FILES to specify exact files to check
+
+.PHONY: lint-go-diff
+lint-go-diff: $(GOLANGCI_LINT)
+	git diff --name-only $(GIT_BASE) | \
+		grep '\.go$$' | \
+		$(XARGSR) dirname | \
+		sort -u | \
+		sed 's,^,./,' | \
+		$(XARGSR) $(GOLANGCI_LINT) run --config .golangci.toml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
@@ -335,27 +372,32 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 
 ##@ Services
 
-# create docker-compose file with provided sources and start them
-# example: make devenv sources=postgres,auth/openldap
+COMPOSE := $(shell if docker compose --help >/dev/null 2>&1; then echo docker compose; else echo docker-compose; fi)
+ifeq ($(COMPOSE),docker-compose)
+$(warning From July 2023 Compose V1 (docker-compose) stopped receiving updates. Migrate to Compose V2 (docker compose). https://docs.docker.com/compose/migrate/)
+endif
+
+# Create a Docker Compose file with provided sources and start them.
+# For example, `make devenv sources=postgres,auth/openldap`
 .PHONY: devenv
 ifeq ($(sources),)
 devenv:
-	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
+	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,auth/openldap\n'
 else
-devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
+devenv: devenv-down ## Start optional services like Postgresql, Prometheus, or Elasticsearch.
 	@cd devenv; \
 	./create_docker_compose.sh $(targets) || \
 	(rm -rf {docker-compose.yaml,conf.tmp,.env}; exit 1)
 
 	@cd devenv; \
-	docker-compose up -d --build
+	$(COMPOSE) up -d --build
 endif
 
 .PHONY: devenv-down
 devenv-down: ## Stop optional services.
 	@cd devenv; \
 	test -f docker-compose.yaml && \
-	docker-compose down || exit 0;
+	$(COMPOSE) down || exit 0;
 
 .PHONY: devenv-postgres
 devenv-postgres:
@@ -379,10 +421,11 @@ devenv-mysql:
 protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
 	go install google.golang.org/protobuf/cmd/protoc-gen-go
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
-	buf generate pkg/services/store/entity --template pkg/services/store/entity/buf.gen.yaml
+	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
+	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.
@@ -427,6 +470,12 @@ go-race-is-enabled:
 .PHONY: enable-go-race
 enable-go-race:
 	@touch .go-race-enabled-locally
+
+check-tparse:
+	@command -v tparse >/dev/null 2>&1 || { \
+		echo >&2 "Error: tparse is not installed. Refer to https://github.com/mfridman/tparse"; \
+		exit 1; \
+	}
 
 .PHONY: help
 help: ## Display this help.

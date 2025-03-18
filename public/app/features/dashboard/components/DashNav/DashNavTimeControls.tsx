@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
@@ -11,7 +11,7 @@ import { AutoRefreshInterval } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -100,6 +100,7 @@ export class DashNavTimeControls extends Component<Props> {
     const timeZone = dashboard.getTimezone();
     const fiscalYearStartMonth = dashboard.fiscalYearStartMonth;
     const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
+    const weekStart = dashboard.weekStart;
 
     let text: string | undefined = undefined;
     if (dashboard.refresh === AutoRefreshInterval) {
@@ -120,6 +121,7 @@ export class DashNavTimeControls extends Component<Props> {
           onChangeFiscalYearStartMonth={this.onChangeFiscalYearStartMonth}
           isOnCanvas={isOnCanvas}
           onToolbarTimePickerClick={this.props.onToolbarTimePickerClick}
+          weekStart={weekStart}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}

@@ -1,20 +1,25 @@
-import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Field, Input, Text } from '@grafana/ui';
+import { Field, Input, Stack, Text } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { isCloudRecordingRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
 
 import { RuleEditorSection } from './RuleEditorSection';
 
-const recordingRuleNameValidationPattern = {
-  message:
-    'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
+const recordingRuleNameValidationPattern = (type: RuleFormType) => ({
+  message: isGrafanaRecordingRuleByType(type)
+    ? 'Recording rule metric must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
+    : 'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
   value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
-};
+});
 
-export const AlertRuleNameInput = () => {
+/**
+ *  This component renders the input for the alert rule name.
+ *  In case of recording rule, it also renders the input for the recording rule metric, and it validates this value.
+ */
+export const AlertRuleNameAndMetric = () => {
   const {
     register,
     watch,
@@ -22,8 +27,15 @@ export const AlertRuleNameInput = () => {
   } = useFormContext<RuleFormValues>();
 
   const ruleFormType = watch('type');
-  const entityName = ruleFormType === RuleFormType.cloudRecording ? 'recording rule' : 'alert rule';
-
+  if (!ruleFormType) {
+    return null;
+  }
+  const isRecording = isRecordingRuleByType(ruleFormType);
+  const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(ruleFormType);
+  const isCloudRecordingRule = isCloudRecordingRuleByType(ruleFormType);
+  const recordingLabel = isGrafanaRecordingRule ? 'recording rule and metric' : 'recording rule';
+  const namePlaceholder = isRecording ? 'recording rule' : 'alert rule';
+  const entityName = isRecording ? recordingLabel : 'alert rule';
   return (
     <RuleEditorSection
       stepNo={1}
@@ -34,19 +46,37 @@ export const AlertRuleNameInput = () => {
         </Text>
       }
     >
-      <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
-        <Input
-          data-testid={selectors.components.AlertRules.ruleNameField}
-          id="name"
-          width={35}
-          {...register('name', {
-            required: { value: true, message: 'Must enter a name' },
-            pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
-          })}
-          aria-label="name"
-          placeholder={`Give your ${entityName} a name`}
-        />
-      </Field>
+      <Stack direction="column">
+        <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
+          <Input
+            data-testid={selectors.components.AlertRules.ruleNameField}
+            id="name"
+            width={38}
+            {...register('name', {
+              required: { value: true, message: 'Must enter a name' },
+              pattern: isCloudRecordingRule
+                ? recordingRuleNameValidationPattern(RuleFormType.cloudRecording)
+                : undefined,
+            })}
+            aria-label="name"
+            placeholder={`Give your ${namePlaceholder} a name`}
+          />
+        </Field>
+        {isGrafanaRecordingRule && (
+          <Field label="Metric" error={errors?.metric?.message} invalid={!!errors.metric?.message}>
+            <Input
+              id="metric"
+              width={38}
+              {...register('metric', {
+                required: { value: true, message: 'Must enter a metric name' },
+                pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
+              })}
+              aria-label="metric"
+              placeholder={`Give the name of the new recorded metric`}
+            />
+          </Field>
+        )}
+      </Stack>
     </RuleEditorSection>
   );
 };

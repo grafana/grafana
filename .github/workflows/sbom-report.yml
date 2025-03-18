@@ -1,20 +1,15 @@
 name: syft-sbom-ci
-
 on:
   release:
-    types: [created]
-
+    types: [ published ]
+  workflow_dispatch:
 jobs:
   syft-sbom:
-
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-        
     - name: Anchore SBOM Action
-      uses: anchore/sbom-action@v0.14.2
+      uses: grafana/shared-workflows/actions@syft-sbom-v0.0.1
       with:
-         artifact-name: ${{ github.event.repository.name }}-spdx.json
-
+        artifact-name: ${{ github.event.repository.name }}-spdx.json

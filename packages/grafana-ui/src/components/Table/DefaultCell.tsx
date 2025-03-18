@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
-import React, { ReactElement, useState } from 'react';
+import { ReactElement, useState } from 'react';
+import * as React from 'react';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
@@ -10,13 +11,14 @@ import { clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
+import { TableCellInspectorMode } from './TableCellInspector';
 import { TableStyles } from './styles';
 import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
 import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, textWrapped, height } = props;
-
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height, actions } =
+    props;
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
 
@@ -24,6 +26,7 @@ export const DefaultCell = (props: TableCellProps) => {
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const hasActions = Boolean(actions?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
   const [hover, setHover] = useState(false);
   let value: string | ReactElement;
@@ -60,7 +63,8 @@ export const DefaultCell = (props: TableCellProps) => {
     isStringValue,
     textShouldWrap,
     textWrapped,
-    rowStyled
+    rowStyled,
+    rowExpanded
   );
 
   if (isStringValue) {
@@ -81,17 +85,18 @@ export const DefaultCell = (props: TableCellProps) => {
     cellProps.style = { ...cellProps.style, textWrap: 'wrap' };
   }
 
+  const { key, ...rest } = cellProps;
+
   return (
     <div
-      {...cellProps}
+      key={key}
+      {...rest}
       onMouseEnter={showActions ? onMouseEnter : undefined}
       onMouseLeave={showActions ? onMouseLeave : undefined}
       className={cellStyle}
     >
-      {!hasLinks && (isStringValue ? `${value}` : <div className={tableStyles.cellText}>{value}</div>)}
-
-      {hasLinks && (
-        <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+      {hasLinks || hasActions ? (
+        <DataLinksContextMenu links={() => getCellLinks(field, row) || []} actions={actions}>
           {(api) => {
             if (api.openMenu) {
               return (
@@ -107,9 +112,15 @@ export const DefaultCell = (props: TableCellProps) => {
             }
           }}
         </DataLinksContextMenu>
+      ) : isStringValue ? (
+        `${value}`
+      ) : (
+        <div className={tableStyles.cellText}>{value}</div>
       )}
 
-      {hover && showActions && <CellActions {...props} previewMode="text" showFilters={showFilters} />}
+      {hover && showActions && (
+        <CellActions {...props} previewMode={TableCellInspectorMode.text} showFilters={showFilters} />
+      )}
     </div>
   );
 };
@@ -122,7 +133,8 @@ function getCellStyle(
   isStringValue = false,
   shouldWrapText = false,
   textWrapped = false,
-  rowStyled = false
+  rowStyled = false,
+  rowExpanded = false
 ) {
   // Setup color variables
   let textColor: string | undefined = undefined;
@@ -145,7 +157,8 @@ function getCellStyle(
     isStringValue,
     shouldWrapText,
     textWrapped,
-    rowStyled
+    rowStyled,
+    rowExpanded
   );
 }
 

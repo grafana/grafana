@@ -1,4 +1,3 @@
-import React from 'react';
 import { components, NoticeProps, GroupBase } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';

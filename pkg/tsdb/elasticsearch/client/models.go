@@ -7,6 +7,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
+// DateFormatEpochMS represents a date format of epoch milliseconds (epoch_millis)
+const DateFormatEpochMS = "epoch_millis"
+
 // SearchRequest represents a search request
 type SearchRequest struct {
 	Index       string
@@ -118,9 +121,6 @@ type RangeFilter struct {
 	Lte    int64
 	Format string
 }
-
-// DateFormatEpochMS represents a date format of epoch milliseconds (epoch_millis)
-const DateFormatEpochMS = "epoch_millis"
 
 // MarshalJSON returns the JSON encoding of the query string filter.
 func (f *RangeFilter) MarshalJSON() ([]byte, error) {

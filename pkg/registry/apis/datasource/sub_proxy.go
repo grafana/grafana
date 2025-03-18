@@ -43,6 +43,6 @@ func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		responder.Error(fmt.Errorf("TODO, proxy: " + r.pluginJSON.ID))
+		responder.Error(fmt.Errorf("TODO, proxy: %s", r.pluginJSON.ID))
 	}), nil
 }

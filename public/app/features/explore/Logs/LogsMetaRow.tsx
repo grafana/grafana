@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import saveAs from 'file-saver';
-import React from 'react';
+import { memo } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -28,11 +28,11 @@ import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
 import { getLogsExtractFields } from './LogsTable';
 
 const getStyles = () => ({
-  metaContainer: css`
-    flex: 1;
-    display: flex;
-    flex-wrap: wrap;
-  `,
+  metaContainer: css({
+    flex: 1,
+    display: 'flex',
+    flexWrap: 'wrap',
+  }),
 });
 
 export type Props = {
@@ -53,7 +53,7 @@ enum DownloadFormat {
   CSV = 'csv',
 }
 
-export const LogsMetaRow = React.memo(
+export const LogsMetaRow = memo(
   ({
     meta,
     dedupStrategy,
@@ -139,7 +139,7 @@ export const LogsMetaRow = React.memo(
         {
           label: '',
           value: (
-            <Button variant="secondary" size="sm" onClick={clearDetectedFields}>
+            <Button variant="primary" fill="outline" size="sm" onClick={clearDetectedFields}>
               Show original line
             </Button>
           ),

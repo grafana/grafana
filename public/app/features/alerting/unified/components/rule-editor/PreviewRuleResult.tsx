@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { FieldConfigSource, FieldMatcherID, GrafanaTheme2, LoadingState } from '@grafana/data';

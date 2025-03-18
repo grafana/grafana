@@ -1,3 +1,4 @@
+import { IScope } from 'angular';
 import EventEmitter from 'eventemitter3';
 import { Unsubscribable, Observable, Subscriber } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -55,7 +56,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
   /**
    * Legacy functions
    */
-  emit<T>(event: AppEvent<T> | string, payload?: T | any): void {
+  emit<T>(event: AppEvent<T> | string, payload?: T): void {
     // console.log(`Deprecated emitter function used (emit), use $emit`);
 
     if (typeof event === 'string') {
@@ -65,7 +66,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     }
   }
 
-  on<T>(event: AppEvent<T> | string, handler: LegacyEventHandler<T>, scope?: any) {
+  on<T>(event: AppEvent<T> | string, handler: LegacyEventHandler<T>, scope?: IScope) {
     // console.log(`Deprecated emitter function used (on), use $on`);
 
     // need this wrapper to make old events compatible with old handlers

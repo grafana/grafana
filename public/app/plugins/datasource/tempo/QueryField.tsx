@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { PureComponent } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -35,7 +35,7 @@ interface State {
 // data link should open the traceql tab and run a search based on the configured query.
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceql';
 
-class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
+class TempoQueryFieldComponent extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -178,4 +178,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   }
 }
 
-export const TempoQueryField = withTheme2(TempoQueryFieldComponent);
+const TempoQueryField = withTheme2(TempoQueryFieldComponent);
+
+export default TempoQueryField;

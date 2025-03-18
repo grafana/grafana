@@ -12,8 +12,7 @@ import {
   SceneVariableSet,
 } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, VariableHide, VariableType } from '@grafana/schema';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
-import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
+import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';

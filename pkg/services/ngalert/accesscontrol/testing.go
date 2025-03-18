@@ -3,11 +3,14 @@ package accesscontrol
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
+var _ accesscontrol.AccessControl = &recordingAccessControlFake{}
+
 type recordingAccessControlFake struct {
+	accesscontrol.AccessControl
 	Disabled           bool
 	EvaluateRecordings []struct {
 		Permissions map[string][]string
@@ -26,14 +29,3 @@ func (a *recordingAccessControlFake) Evaluate(_ context.Context, ur identity.Req
 	}
 	return a.Callback(ur, evaluator)
 }
-
-func (a *recordingAccessControlFake) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (a *recordingAccessControlFake) IsDisabled() bool {
-	return a.Disabled
-}
-
-var _ accesscontrol.AccessControl = &recordingAccessControlFake{}

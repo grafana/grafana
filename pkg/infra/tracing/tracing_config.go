@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type TracingConfig struct {
@@ -21,6 +22,8 @@ type TracingConfig struct {
 
 	ServiceName    string
 	ServiceVersion string
+
+	ProfilingIntegration bool
 }
 
 func ProvideTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {

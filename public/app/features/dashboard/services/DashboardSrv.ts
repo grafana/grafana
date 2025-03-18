@@ -1,5 +1,3 @@
-import { lastValueFrom } from 'rxjs';
-
 import { AppEvents } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
@@ -20,21 +18,11 @@ export interface SaveDashboardOptions {
   message?: string;
   /** The UID of the folder to save the dashboard in. Overrides `folderId`. */
   folderUid?: string;
-  /** Set to `true` if you want to overwrite existing dashboard with newer version,
-   *  same dashboard title in folder or same dashboard uid. */
+  /** Set to `true` if you want to overwrite an existing dashboard with a given dashboard UID. */
   overwrite?: boolean;
   /** Set the dashboard refresh interval.
    *  If this is lower than the minimum refresh interval, Grafana will ignore it and will enforce the minimum refresh interval. */
   refresh?: string;
-}
-
-interface SaveDashboardResponse {
-  id: number;
-  slug: string;
-  status: string;
-  uid: string;
-  url: string;
-  version: number;
 }
 
 export class DashboardSrv {
@@ -75,17 +63,12 @@ export class DashboardSrv {
     data: SaveDashboardOptions,
     requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
   ) {
-    return lastValueFrom(
-      getBackendSrv().fetch<SaveDashboardResponse>({
-        url: '/api/dashboards/db/',
-        method: 'POST',
-        data: {
-          ...data,
-          dashboard: data.dashboard.getSaveModelClone(),
-        },
-        ...requestOptions,
-      })
-    );
+    return getDashboardAPI().saveDashboard({
+      message: data.message,
+      folderUid: data.folderUid,
+      dashboard: data.dashboard.getSaveModelClone(),
+      showErrorAlert: requestOptions?.showErrorAlert,
+    });
   }
 
   starDashboard(dashboardUid: string, isStarred: boolean) {

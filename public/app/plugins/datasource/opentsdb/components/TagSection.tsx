@@ -1,6 +1,6 @@
 import debounce from 'debounce-promise';
 import { has, size } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import {

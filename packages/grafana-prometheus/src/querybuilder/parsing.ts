@@ -11,15 +11,15 @@ import {
   FunctionIdentifier,
   GroupingLabels,
   Identifier,
-  LabelMatcher,
   LabelName,
   MatchingModifierClause,
   MatchOp,
-  NumberLiteral,
+  NumberDurationLiteral,
   On,
   ParenExpr,
   parser,
   StringLiteral,
+  UnquotedLabelMatcher,
   VectorSelector,
   Without,
 } from '@prometheus-io/lezer-promql';
@@ -145,7 +145,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
-    case LabelMatcher: {
+    case UnquotedLabelMatcher: {
       // Same as MetricIdentifier should be just one per query.
       visQuery.labels.push(getLabel(expr, node));
       const err = node.getChild(ErrorId);
@@ -205,7 +205,7 @@ function isIntervalVariableError(node: SyntaxNode) {
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
   const label = getString(expr, node.getChild(LabelName));
   const op = getString(expr, node.getChild(MatchOp));
-  const value = getString(expr, node.getChild(StringLiteral)).replace(/"/g, '');
+  const value = getString(expr, node.getChild(StringLiteral)).replace(/^["'`]|["'`]$/g, '');
   return {
     label,
     op,
@@ -334,7 +334,7 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       break;
     }
 
-    case NumberLiteral: {
+    case NumberDurationLiteral: {
       op.params.push(parseFloat(getString(expr, node)));
       break;
     }
@@ -369,8 +369,8 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   const opDef = binaryScalarOperatorToOperatorName[op];
 
-  const leftNumber = left.type.id === NumberLiteral;
-  const rightNumber = right.type.id === NumberLiteral;
+  const leftNumber = left.type.id === NumberDurationLiteral;
+  const rightNumber = right.type.id === NumberDurationLiteral;
 
   const rightBinary = right.type.id === BinaryExpr;
 
@@ -389,7 +389,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
-    if (leftMostChild?.type.id === NumberLiteral) {
+    if (leftMostChild?.type.id === NumberDurationLiteral) {
       visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 

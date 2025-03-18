@@ -1,3 +1,5 @@
+import { isEmpty } from 'lodash';
+
 import { Labels } from '../../../../types/unified-alerting-dto';
 import { Label } from '../components/rules/state-history/common';
 
@@ -8,7 +10,7 @@ export function labelsToTags(labels: Labels) {
 }
 
 export function objectLabelsToArray(labels: Labels): Label[] {
-  return Object.entries(labels).map(([label, value]) => [label, value]);
+  return Object.entries(labels);
 }
 
 export function arrayLabelsToObject(labels: Label[]): Labels {
@@ -35,7 +37,11 @@ export function arrayKeyValuesToObject(
 
 export const GRAFANA_ORIGIN_LABEL = '__grafana_origin';
 
-export function labelsSize(labels: Labels) {
+export function labelsSize(labels?: Labels) {
+  if (isEmpty(labels)) {
+    return 0;
+  }
+
   return Object.keys(labels).filter((key) => !isPrivateLabelKey(key)).length;
 }
 

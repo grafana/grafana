@@ -16,7 +16,7 @@ func TestIntegrationGetOrCreateOrg(t *testing.T) {
 	}
 	ss, _ := InitTestDB(t)
 
-	err := ss.WithNewDbSession(context.Background(), func(sess *DBSession) error {
+	err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 		// Create the org only:
 		ss.cfg.AutoAssignOrg = true
 		ss.cfg.DisableInitAdminCreation = true
@@ -28,7 +28,7 @@ func TestIntegrationGetOrCreateOrg(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = ss.WithNewDbSession(context.Background(), func(sess *DBSession) error {
+	err = ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 		// Run it a second time and verify that it finds the org that was
 		// created above.
 		gotOrgId, err := ss.getOrCreateOrg(sess, mainOrgName)

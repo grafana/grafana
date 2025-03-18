@@ -104,7 +104,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{
 				db:       db,
 				logger:   log.NewNopLogger(),
-				features: featuremgmt.WithFeatures(featuremgmt.FlagAutofixDSUID),
+				features: featuremgmt.WithFeatures(featuremgmt.FlagFailWrongDSUID),
 			}
 			cmd := defaultAddDatasourceCommand
 			cmd.UID = "test/uid"
@@ -232,28 +232,21 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		t.Run("updates UID with a valid one", func(t *testing.T) {
+		t.Run("fails to update a datasource with an invalid uid", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{
 				db:       db,
 				logger:   log.NewNopLogger(),
-				features: featuremgmt.WithFeatures(featuremgmt.FlagAutofixDSUID),
+				features: featuremgmt.WithFeatures(featuremgmt.FlagFailWrongDSUID),
 			}
 			require.NotEmpty(t, ds.UID)
 
 			cmd := defaultUpdateDatasourceCommand
 			cmd.ID = ds.ID
 			cmd.UID = "new/uid"
-			res, err := ss.UpdateDataSource(context.Background(), &cmd)
-			require.NoError(t, err)
-			require.Equal(t, "new-uid", res.UID)
-
-			// Return the datasource with the valid UID
-			query := datasources.GetDataSourceQuery{UID: "new-uid", OrgID: 10}
-			dataSource, err := ss.GetDataSource(context.Background(), &query)
-			require.NoError(t, err)
-			require.Equal(t, "new-uid", dataSource.UID)
+			_, err := ss.UpdateDataSource(context.Background(), &cmd)
+			require.ErrorContains(t, err, "invalid format of UID")
 		})
 	})
 

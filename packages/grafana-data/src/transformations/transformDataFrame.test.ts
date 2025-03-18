@@ -1,7 +1,8 @@
 import { map } from 'rxjs';
 
 import { toDataFrame } from '../dataframe/processDataFrame';
-import { CustomTransformOperator, FieldType } from '../types';
+import { FieldType } from '../types/dataFrame';
+import { CustomTransformOperator } from '../types/transformations';
 import { mockTransformationsRegistry } from '../utils/tests/mockTransformationsRegistry';
 
 import { ReducerID } from './fieldReducer';

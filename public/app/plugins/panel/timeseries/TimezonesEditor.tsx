@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, InternalTimeZones, StandardEditorProps } from '@grafana/data';
 import { OptionsWithTimezones } from '@grafana/schema';
@@ -35,36 +34,34 @@ export const TimezonesEditor = ({ value, onChange }: Props) => {
   };
 
   return (
-    <div>
+    <ul className={styles.list}>
       {value.map((tz, idx) => (
-        <div className={styles.wrapper} key={`${idx}.${tz}`}>
-          <span className={styles.first}>
-            <TimeZonePicker
-              onChange={(v) => setTimezone(idx, v)}
-              includeInternal={true}
-              value={tz ?? InternalTimeZones.default}
-            />
-          </span>
+        <li className={styles.listItem} key={`${idx}.${tz}`}>
+          <TimeZonePicker
+            onChange={(v) => setTimezone(idx, v)}
+            includeInternal={true}
+            value={tz ?? InternalTimeZones.default}
+          />
           {idx === value.length - 1 ? (
             <IconButton name="plus" onClick={addTimezone} tooltip="Add timezone" />
           ) : (
             <IconButton name="times" onClick={() => removeTimezone(idx)} tooltip="Remove timezone" />
           )}
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    width: 100%;
-    display: flex;
-    flex-direction: rows;
-    align-items: center;
-  `,
-  first: css`
-    margin-right: 8px;
-    flex-grow: 2;
-  `,
+  list: css({
+    listStyle: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+  }),
+  listItem: css({
+    display: 'flex',
+    gap: theme.spacing(1),
+  }),
 });

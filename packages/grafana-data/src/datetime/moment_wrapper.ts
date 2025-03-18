@@ -1,7 +1,7 @@
 import moment, { Moment, MomentInput, DurationInputArg1, DurationInputArg2 } from 'moment';
 
 import { TimeZone } from '../types/time';
-/* eslint-disable id-blacklist, no-restricted-imports, @typescript-eslint/ban-types */
+/* eslint-disable id-blacklist, no-restricted-imports */
 export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
 }
@@ -157,7 +157,7 @@ export const setWeekStart = (weekStart?: string) => {
   const language = getLocale().replace(suffix, '');
   const dow = weekStart ? getWeekdayIndexByEnglishName(weekStart) : -1;
   if (dow !== -1) {
-    moment.locale(language + suffix, {
+    moment.updateLocale(language + suffix, {
       parentLocale: language,
       week: {
         dow,

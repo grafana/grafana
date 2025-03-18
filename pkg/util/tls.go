@@ -30,22 +30,26 @@ func TlsCiphersToIDs(names []string) ([]uint16, error) {
 		// no ciphers specified, use defaults
 		return nil, nil
 	}
-	var ids []uint16
-	var missing []string
 
 	ciphers := tls.CipherSuites()
-	var cipherMap = make(map[string]uint16, len(ciphers))
+
+	cipherMap := make(map[string]uint16, len(ciphers))
 	for _, cipher := range ciphers {
 		cipherMap[cipher.Name] = cipher.ID
 	}
 
+	missing := []string{}
+	ids := make([]uint16, 0, len(names))
+
 	for _, name := range names {
 		name = strings.ToUpper(name)
+
 		id, ok := cipherMap[name]
 		if !ok {
 			missing = append(missing, name)
 			continue
 		}
+
 		ids = append(ids, id)
 	}
 

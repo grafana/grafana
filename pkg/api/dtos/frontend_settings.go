@@ -33,6 +33,7 @@ type FrontendSettingsAuthDTO struct {
 
 	DisableLogin                  bool `json:"disableLogin"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
+	PasswordlessEnabled           bool `json:"passwordlessEnabled"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
@@ -66,12 +67,13 @@ type FrontendSettingsLicenseInfoDTO struct {
 }
 
 type FrontendSettingsAzureDTO struct {
-	Cloud                                  string                      `json:"cloud"`
-	Clouds                                 []azsettings.AzureCloudInfo `json:"clouds"`
-	ManagedIdentityEnabled                 bool                        `json:"managedIdentityEnabled"`
-	WorkloadIdentityEnabled                bool                        `json:"workloadIdentityEnabled"`
-	UserIdentityEnabled                    bool                        `json:"userIdentityEnabled"`
-	UserIdentityFallbackCredentialsEnabled bool                        `json:"userIdentityFallbackCredentialsEnabled"`
+	Cloud                                  string                      `json:"cloud,omitempty"`
+	Clouds                                 []azsettings.AzureCloudInfo `json:"clouds,omitempty"`
+	ManagedIdentityEnabled                 bool                        `json:"managedIdentityEnabled,omitempty"`
+	WorkloadIdentityEnabled                bool                        `json:"workloadIdentityEnabled,omitempty"`
+	UserIdentityEnabled                    bool                        `json:"userIdentityEnabled,omitempty"`
+	UserIdentityFallbackCredentialsEnabled bool                        `json:"userIdentityFallbackCredentialsEnabled,omitempty"`
+	AzureEntraPasswordCredentialsEnabled   bool                        `json:"azureEntraPasswordCredentialsEnabled,omitempty"`
 }
 
 type FrontendSettingsCachingDTO struct {
@@ -186,6 +188,8 @@ type FrontendSettingsDTO struct {
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
 
+	AnalyticsConsoleReporting bool `json:"analyticsConsoleReporting"`
+
 	FeedbackLinksEnabled                bool     `json:"feedbackLinksEnabled"`
 	ApplicationInsightsConnectionString string   `json:"applicationInsightsConnectionString"`
 	ApplicationInsightsEndpointUrl      string   `json:"applicationInsightsEndpointUrl"`
@@ -202,7 +206,8 @@ type FrontendSettingsDTO struct {
 	DisableSanitizeHtml                 bool     `json:"disableSanitizeHtml"`
 	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
 	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
-	DisableFrontendSandboxForPlugins    []string `json:"disableFrontendSandboxForPlugins"`
+	EnableFrontendSandboxForPlugins     []string `json:"enableFrontendSandboxForPlugins"`
+	ExploreDefaultTimeOffset            string   `json:"exploreDefaultTimeOffset"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 
@@ -225,14 +230,19 @@ type FrontendSettingsDTO struct {
 	PluginAdminEnabled               bool                           `json:"pluginAdminEnabled"`
 	PluginAdminExternalManageEnabled bool                           `json:"pluginAdminExternalManageEnabled"`
 	PluginCatalogHiddenPlugins       []string                       `json:"pluginCatalogHiddenPlugins"`
+	PluginCatalogManagedPlugins      []string                       `json:"pluginCatalogManagedPlugins"`
+	PluginCatalogPreinstalledPlugins []setting.InstallPlugin        `json:"pluginCatalogPreinstalledPlugins"`
 	ExpressionsEnabled               bool                           `json:"expressionsEnabled"`
 	AwsAllowedAuthProviders          []string                       `json:"awsAllowedAuthProviders"`
 	AwsAssumeRoleEnabled             bool                           `json:"awsAssumeRoleEnabled"`
 	SupportBundlesEnabled            bool                           `json:"supportBundlesEnabled"`
 	SnapshotEnabled                  bool                           `json:"snapshotEnabled"`
 	SecureSocksDSProxyEnabled        bool                           `json:"secureSocksDSProxyEnabled"`
+	ReportingStaticContext           map[string]string              `json:"reportingStaticContext"`
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
+
+	DefaultDatasourceManageAlertsUIToggle bool `json:"defaultDatasourceManageAlertsUiToggle"`
 
 	Caching                 FrontendSettingsCachingDTO         `json:"caching"`
 	RecordedQueries         FrontendSettingsRecordedQueriesDTO `json:"recordedQueries"`
@@ -246,6 +256,7 @@ type FrontendSettingsDTO struct {
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
 	SharedWithMeFolderUID   string                             `json:"sharedWithMeFolderUID"`
 	RootFolderUID           string                             `json:"rootFolderUID"`
+	PasswordlessEnabled     string                             `json:"passwordlessEnabled"`
 
 	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`
@@ -253,7 +264,9 @@ type FrontendSettingsDTO struct {
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
 
-	CloudMigrationIsTarget bool `json:"cloudMigrationIsTarget"`
+	CloudMigrationIsTarget       bool   `json:"cloudMigrationIsTarget"`
+	CloudMigrationFeedbackURL    string `json:"cloudMigrationFeedbackURL"`
+	CloudMigrationPollIntervalMs int    `json:"cloudMigrationPollIntervalMs"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 

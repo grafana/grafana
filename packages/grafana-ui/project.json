@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "tags": ["scope:package", "type:ui"],
+  "targets": {
+    "build": {}
+  }
+}

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -47,26 +46,26 @@ export function LokiQueryCodeEditor({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      max-width: 100%;
-      .gf-form {
-        margin-bottom: 0.5;
-      }
-    `,
-    buttonGroup: css`
-      border: 1px solid ${theme.colors.border.medium};
-      border-top: none;
-      padding: ${theme.spacing(0.5, 0.5, 0.5, 0.5)};
-      margin-bottom: ${theme.spacing(0.5)};
-      display: flex;
-      flex-grow: 1;
-      justify-content: end;
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
-    hint: css`
-      color: ${theme.colors.text.disabled};
-      white-space: nowrap;
-      cursor: help;
-    `,
+    wrapper: css({
+      maxWidth: '100%',
+      '.gf-form': {
+        marginBottom: 0.5,
+      },
+    }),
+    buttonGroup: css({
+      border: `1px solid ${theme.colors.border.medium}`,
+      borderTop: 'none',
+      padding: theme.spacing(0.5, 0.5, 0.5, 0.5),
+      marginBottom: theme.spacing(0.5),
+      display: 'flex',
+      flexGrow: 1,
+      justifyContent: 'end',
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    hint: css({
+      color: theme.colors.text.disabled,
+      whiteSpace: 'nowrap',
+      cursor: 'help',
+    }),
   };
 };

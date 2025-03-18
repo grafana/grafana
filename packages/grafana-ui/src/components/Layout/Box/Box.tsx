@@ -1,5 +1,7 @@
 import { css, cx } from '@emotion/css';
-import React, { ElementType, forwardRef, PropsWithChildren } from 'react';
+import { Property } from 'csstype';
+import { ElementType, forwardRef, PropsWithChildren } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
@@ -15,7 +17,7 @@ export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 's
 export type BorderRadius = keyof ThemeShape['radius'];
 export type BoxShadow = keyof ThemeShadows;
 
-interface BoxProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
+export interface BoxProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   // Margin props
   /** Sets the property `margin` */
   margin?: ResponsiveProp<ThemeSpacingTokens>;
@@ -65,6 +67,7 @@ interface BoxProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLE
   boxShadow?: ResponsiveProp<BoxShadow>;
   /** Sets the HTML element that will be rendered as a Box. Defaults to 'div' */
   element?: ElementType;
+  position?: ResponsiveProp<Property.Position>;
 }
 
 export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, ref) => {
@@ -105,6 +108,7 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     height,
     minHeight,
     maxHeight,
+    position,
     ...rest
   } = props;
   const styles = useStyles2(
@@ -136,7 +140,8 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     justifyContent,
     alignItems,
     boxShadow,
-    gap
+    gap,
+    position
   );
   const sizeStyles = useStyles2(getSizeStyles, width, minWidth, maxWidth, height, minHeight, maxHeight);
   const Element = element ?? 'div';
@@ -203,7 +208,8 @@ const getStyles = (
   justifyContent: BoxProps['justifyContent'],
   alignItems: BoxProps['alignItems'],
   boxShadow: BoxProps['boxShadow'],
-  gap: BoxProps['gap']
+  gap: BoxProps['gap'],
+  position: BoxProps['position']
 ) => {
   return {
     root: css([
@@ -297,6 +303,9 @@ const getStyles = (
       })),
       getResponsiveStyle(theme, gap, (val) => ({
         gap: theme.spacing(val),
+      })),
+      getResponsiveStyle(theme, position, (val) => ({
+        position: val,
       })),
     ]),
   };

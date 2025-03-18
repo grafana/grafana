@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, useTheme2, Stack, Text, TextLink } from '@grafana/ui';
+import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 
 export default function GettingStarted() {
   const theme = useTheme2();
@@ -38,24 +38,28 @@ export default function GettingStarted() {
           <Text element="h3">Get started</Text>
           <ul className={styles.list}>
             <li>
-              <Text weight="bold">Create an alert rule</Text> by adding queries and expressions from multiple data
-              sources.
+              <Text weight="bold">Create an alert rule</Text> to query a data source and evaluate the condition defined
+              in the alert rule
             </li>
             <li>
-              <Text weight="bold">Add labels</Text> to your alert rules{' '}
-              <Text weight="bold">to connect them to notification policies</Text>
+              <Text weight="bold">Route alert notifications</Text> either directly to a contact point or through
+              notification policies for more flexibility
             </li>
             <li>
-              <Text weight="bold">Configure contact points</Text> to define where to send your notifications to.
-            </li>
-            <li>
-              <Text weight="bold">Configure notification policies</Text> to route your alert instances to contact
-              points.
+              <Text weight="bold">Monitor</Text> your alert rules using dashboards and visualizations
             </li>
           </ul>
-          <TextLink href="https://grafana.com/docs/grafana/latest/alerting/" icon="angle-right" inline={false} external>
-            Read more in the docs
-          </TextLink>
+          <p>
+            For a hands-on introduction, refer to our{' '}
+            <TextLink
+              href="https://grafana.com/tutorials/alerting-get-started/"
+              icon="angle-right"
+              inline={true}
+              external
+            >
+              tutorial to get started with Grafana Alerting
+            </TextLink>
+          </p>
         </Stack>
       </ContentBox>
     </div>

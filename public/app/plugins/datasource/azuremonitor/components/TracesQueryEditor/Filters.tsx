@@ -1,5 +1,5 @@
 import { uniq } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorList } from '@grafana/experimental';

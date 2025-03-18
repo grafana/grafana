@@ -15,7 +15,7 @@ labels:
     - enterprise
     - oss
 title: Performance considerations and limitations
-weight: 600
+weight: 800
 ---
 
 # Performance considerations and limitations
@@ -63,7 +63,9 @@ transition of an alert instance is saved in the database.
 
 This can be prevented by writing to the database periodically. For this the feature flag `alertingSaveStatePeriodic` needs
 to be enabled. By default, it saves the states every 5 minutes to the database and on each shutdown. The periodic interval
-can also be configured using the `state_periodic_save_interval` configuration flag.
+can also be configured using the `state_periodic_save_interval` configuration flag. During this process, Grafana deletes all existing alert instances from the
+database and then writes the entire current set of instances back in batches in a single transacton.
+Configure the size of each batch using the `state_periodic_save_batch_size` configuration option.
 
 The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric
 that is exposed by Grafana.

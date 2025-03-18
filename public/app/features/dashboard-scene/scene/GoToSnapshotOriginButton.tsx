@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { textUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';

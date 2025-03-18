@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
 import { config } from '@grafana/runtime';

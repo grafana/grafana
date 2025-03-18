@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { Button, DeleteButton, Icon, Stack, Tooltip, useTheme2 } from '@grafana/ui';
@@ -86,10 +85,11 @@ function formatDate(expiration: string | undefined, timeZone: TimeZone): string 
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tableRow: (isExpired: boolean) => css`
-    color: ${isExpired ? theme.colors.text.secondary : theme.colors.text.primary};
-  `,
-  tooltipContainer: css`
-    margin-left: ${theme.spacing(1)};
-  `,
+  tableRow: (isExpired: boolean) =>
+    css({
+      color: isExpired ? theme.colors.text.secondary : theme.colors.text.primary,
+    }),
+  tooltipContainer: css({
+    marginLeft: theme.spacing(1),
+  }),
 });

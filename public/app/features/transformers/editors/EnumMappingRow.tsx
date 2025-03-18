@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
-import { Draggable } from 'react-beautiful-dnd';
+import { Draggable } from '@hello-pangea/dnd';
+import { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Input, IconButton, HorizontalGroup, FieldValidationMessage, useStyles2 } from '@grafana/ui';
@@ -104,6 +104,8 @@ const EnumMappingRow = ({
               {validationError && <FieldValidationMessage>{validationError}</FieldValidationMessage>}
             </td>
           ) : (
+            // TODO fix accessibility issue here
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
             <td onClick={onEnumValueClick} className={styles.clickableTableCell}>
               {value && value !== '' ? value : 'Click to edit'}
             </td>

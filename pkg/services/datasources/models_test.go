@@ -95,7 +95,7 @@ func TestTeamHTTPHeaders(t *testing.T) {
 				UID:      "test",
 			}
 
-			actual, err := ds.TeamHTTPHeaders()
+			actual, err := GetTeamHTTPHeaders(ds.JsonData)
 			assert.NoError(t, err)
 			assert.Equal(t, test.want, actual)
 			assert.EqualValues(t, test.want, actual)

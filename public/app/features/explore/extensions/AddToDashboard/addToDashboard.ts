@@ -1,23 +1,14 @@
 import { DataFrame, ExplorePanelsState } from '@grafana/data';
-import { Dashboard, DataQuery, DataSourceRef } from '@grafana/schema';
+import { DataQuery, DataSourceRef, Panel } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { setDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
-import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
-import { DashboardDTO, ExplorePanelData } from 'app/types';
+import { ExplorePanelData } from 'app/types';
 
-export enum AddToDashboardError {
-  FETCH_DASHBOARD = 'fetch-dashboard',
-  SET_DASHBOARD_LS = 'set-dashboard-ls-error',
-}
-
-interface AddPanelToDashboardOptions {
+interface ExploreToDashboardPanelOptions {
   queries: DataQuery[];
   queryResponse: ExplorePanelData;
   datasource?: DataSourceRef;
   dashboardUid?: string;
   panelState?: ExplorePanelsState;
-  time: Dashboard['time'];
 }
 
 /**
@@ -27,7 +18,10 @@ interface AddPanelToDashboardOptions {
  * @param panelType
  * @param options
  */
-function getLogsTableTransformations(panelType: string, options: AddPanelToDashboardOptions): DataTransformerConfig[] {
+function getLogsTableTransformations(
+  panelType: string,
+  options: ExploreToDashboardPanelOptions
+): DataTransformerConfig[] {
   let transformations: DataTransformerConfig[] = [];
   if (panelType === 'table' && options.panelState?.logs?.columns) {
     // If we have a labels column, we need to extract the fields from it
@@ -64,10 +58,11 @@ function getLogsTableTransformations(panelType: string, options: AddPanelToDashb
   return transformations;
 }
 
-export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
+export function buildDashboardPanelFromExploreState(options: ExploreToDashboardPanelOptions): Panel {
   const panelType = getPanelType(options.queries, options.queryResponse, options?.panelState);
 
-  const panel = {
+  return {
+    //@ts-ignore
     targets: options.queries,
     type: panelType,
     title: 'New Panel',
@@ -75,28 +70,6 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
     datasource: options.datasource,
     transformations: getLogsTableTransformations(panelType, options),
   };
-
-  let dto: DashboardDTO;
-
-  if (options.dashboardUid) {
-    try {
-      dto = await getDashboardAPI().getDashboardDTO(options.dashboardUid);
-    } catch (e) {
-      throw AddToDashboardError.FETCH_DASHBOARD;
-    }
-  } else {
-    dto = await buildNewDashboardSaveModel();
-  }
-
-  dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];
-
-  dto.dashboard.time = options.time;
-
-  try {
-    setDashboardToFetchFromLocalStorage(dto);
-  } catch {
-    throw AddToDashboardError.SET_DASHBOARD_LS;
-  }
 }
 
 const isVisible = (query: DataQuery) => !query.hide;

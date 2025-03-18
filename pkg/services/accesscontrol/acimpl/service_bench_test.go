@@ -261,7 +261,7 @@ func benchSearchUserWithAction(b *testing.B, usersCount, resourceCount int) {
 
 	for n := 0; n < b.N; n++ {
 		usersPermissions, err := acService.SearchUsersPermissions(context.Background(), siu,
-			accesscontrol.SearchOptions{Action: "resources:action2", NamespacedID: "user:14"})
+			accesscontrol.SearchOptions{Action: "resources:action2", UserID: 14})
 		require.NoError(b, err)
 		require.Len(b, usersPermissions, 1)
 		for _, permissions := range usersPermissions {

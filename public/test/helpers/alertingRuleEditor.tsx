@@ -1,18 +1,20 @@
-import { render } from '@testing-library/react';
-import React from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom-v5-compat';
+import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import RuleEditor from 'app/features/alerting/unified/RuleEditor';
-
-import { TestProvider } from './TestProvider';
+export enum GrafanaRuleFormStep {
+  Query = 2,
+  Notification = 5,
+}
 
 export const ui = {
   loadingIndicator: byText('Loading rule...'),
   inputs: {
     name: byRole('textbox', { name: 'name' }),
+    metric: byRole('textbox', { name: 'metric' }),
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId(selectors.components.DataSourcePicker.inputV2),
     folder: byTestId('folder-picker'),
@@ -29,6 +31,8 @@ export const ui = {
       contactPoint: byTestId('contact-point-picker'),
       routingOptions: byText(/muting, grouping and timings \(optional\)/i),
     },
+    switchModeBasic: (stepNo: GrafanaRuleFormStep) => byTestId(`advanced-switch-${stepNo}-basic`),
+    switchModeAdvanced: (stepNo: GrafanaRuleFormStep) => byTestId(`advanced-switch-${stepNo}-advanced`),
   },
   buttons: {
     saveAndExit: byRole('button', { name: 'Save rule and exit' }),
@@ -37,17 +41,19 @@ export const ui = {
     addLabel: byRole('button', { name: /Add label/ }),
   },
 };
-
-export function renderRuleEditor(identifier?: string, recording = false) {
-  if (identifier) {
-    locationService.push(`/alerting/${identifier}/edit`);
-  } else {
-    locationService.push(`/alerting/new/${recording ? 'recording' : 'alerting'}`);
-  }
-
+export function renderRuleEditor(identifier?: string, recording?: 'recording' | 'grafana-recording') {
   return render(
-    <TestProvider>
-      <Route path={['/alerting/new/:type', '/alerting/:id/edit']} component={RuleEditor} />
-    </TestProvider>
+    <>
+      <AppNotificationList />
+      <Routes>
+        <Route path={'/alerting/new/:type'} element={<RuleEditor />} />
+        <Route path={'/alerting/:id/edit'} element={<RuleEditor />} />
+      </Routes>
+    </>,
+    {
+      historyOptions: {
+        initialEntries: [identifier ? `/alerting/${identifier}/edit` : `/alerting/new/${recording ?? 'alerting'}`],
+      },
+    }
   );
 }

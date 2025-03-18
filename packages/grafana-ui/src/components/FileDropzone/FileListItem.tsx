@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { trimFileName } from '../../utils/file';
+import { Trans } from '../../utils/i18n';
 import { Button } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
@@ -43,10 +43,13 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
       return (
         <>
           <progress className={styles.progressBar} max={file.size} value={progress} />
-          <span className={styles.paddingLeft}>{Math.round((progress / file.size) * 100)}%</span>
+          <span className={styles.paddingLeft}>
+            {Math.round((progress / file.size) * 100)}
+            {'%'}
+          </span>
           {abortUpload && (
             <Button variant="secondary" type="button" fill="text" onClick={abortUpload}>
-              Cancel upload
+              <Trans i18nKey="grafana-ui.file-dropzone.cancel-upload">Cancel upload</Trans>
             </Button>
           )}
         </>

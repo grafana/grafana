@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
-import React, { RefCallback, SyntheticEvent, useState } from 'react';
+import { RefCallback, SyntheticEvent, useState } from 'react';
+import * as React from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, DataFrame, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';

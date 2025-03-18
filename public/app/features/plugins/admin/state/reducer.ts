@@ -3,7 +3,7 @@ import { createSlice, createEntityAdapter, Reducer, AnyAction, PayloadAction } f
 import { PanelPlugin } from '@grafana/data';
 
 import { STATE_PREFIX } from '../constants';
-import { CatalogPlugin, PluginListDisplayMode, ReducerState, RequestStatus } from '../types';
+import { CatalogPlugin, ReducerState, RequestStatus } from '../types';
 
 import {
   fetchDetails,
@@ -33,9 +33,7 @@ const getOriginalActionType = (type: string) => {
 export const initialState: ReducerState = {
   items: pluginsAdapter.getInitialState(),
   requests: {},
-  settings: {
-    displayMode: PluginListDisplayMode.Grid,
-  },
+
   // Backwards compatibility
   // (we need to have the following fields in the store as well to be backwards compatible with other parts of Grafana)
   // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
@@ -51,11 +49,7 @@ export const initialState: ReducerState = {
 const slice = createSlice({
   name: 'plugins',
   initialState,
-  reducers: {
-    setDisplayMode(state, action: PayloadAction<PluginListDisplayMode>) {
-      state.settings.displayMode = action.payload;
-    },
-  },
+  reducers: {},
   extraReducers: (builder) =>
     builder
       .addCase(addPlugins, (state, action: PayloadAction<CatalogPlugin[]>) => {
@@ -113,5 +107,4 @@ const slice = createSlice({
       }),
 });
 
-export const { setDisplayMode } = slice.actions;
 export const reducer: Reducer<ReducerState, AnyAction> = slice.reducer;

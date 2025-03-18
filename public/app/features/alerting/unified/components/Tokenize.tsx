@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
 
-import { HoverCard } from './HoverCard';
-import { keywords as KEYWORDS, builtinFunctions as FUNCTIONS } from './receivers/editor/language';
+import { PopupCard } from './HoverCard';
+import { builtinFunctions as FUNCTIONS, keywords as KEYWORDS } from './receivers/editor/language';
 
 const VARIABLES = ['$', '.', '"'];
 
@@ -83,7 +83,7 @@ function Token({ content, description, type }: TokenProps) {
   const disableCard = Boolean(type) === false;
 
   return (
-    <HoverCard
+    <PopupCard
       placement="top-start"
       disabled={disableCard}
       content={
@@ -95,7 +95,7 @@ function Token({ content, description, type }: TokenProps) {
       <span>
         <Badge tabIndex={0} className={styles.token} text={content} color={'blue'} />
       </span>
-    </HoverCard>
+    </PopupCard>
   );
 }
 

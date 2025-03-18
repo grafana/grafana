@@ -1,5 +1,4 @@
-import React from 'react';
-import { FieldError, DeepMap, useFormContext } from 'react-hook-form';
+import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { Button, useStyles2 } from '@grafana/ui';
 import { useControlledFieldArray } from 'app/features/alerting/unified/hooks/useControlledFieldArray';

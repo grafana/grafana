@@ -1,7 +1,4 @@
-import React from 'react';
-
-import { Alert } from '@grafana/ui';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -10,41 +7,24 @@ import { CloudReceiverForm } from './form/CloudReceiverForm';
 import { GrafanaReceiverForm } from './form/GrafanaReceiverForm';
 
 interface Props {
-  receiverName: string;
-  config: AlertManagerCortexConfig;
-  alertManagerSourceName: string;
+  alertmanagerName: string;
+  contactPoint: GrafanaManagedContactPoint | Receiver;
 }
 
-export const EditReceiverView = ({ config, receiverName, alertManagerSourceName }: Props) => {
+export const EditReceiverView = ({ contactPoint, alertmanagerName }: Props) => {
   const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
-
-  const receiver = config.alertmanager_config.receivers?.find(({ name }) => name === receiverName);
-  if (!receiver) {
-    return (
-      <Alert severity="error" title="Receiver not found">
-        Sorry, this receiver does not seem to exist.
-      </Alert>
-    );
-  }
 
   const readOnly = !editSupported || !editAllowed;
 
-  if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return (
-      <GrafanaReceiverForm
-        config={config}
-        alertManagerSourceName={alertManagerSourceName}
-        existing={receiver}
-        readOnly={readOnly}
-      />
-    );
+  if (alertmanagerName === GRAFANA_RULES_SOURCE_NAME) {
+    return <GrafanaReceiverForm contactPoint={contactPoint} readOnly={readOnly} editMode />;
   } else {
     return (
       <CloudReceiverForm
-        config={config}
-        alertManagerSourceName={alertManagerSourceName}
-        existing={receiver}
+        alertManagerSourceName={alertmanagerName}
+        contactPoint={contactPoint}
         readOnly={readOnly}
+        editMode
       />
     );
   }

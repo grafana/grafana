@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';

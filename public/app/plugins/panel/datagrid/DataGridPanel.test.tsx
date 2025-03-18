@@ -59,15 +59,17 @@ describe('DataGrid', () => {
       jest.clearAllMocks();
     });
 
-    it('converts dataframe values to cell values properly', () => {
+    it('converts dataframe values to cell values properly', async () => {
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />);
       prep(false);
 
-      expect(screen.getByTestId('glide-cell-1-0')).toHaveTextContent('1');
-      expect(screen.getByTestId('glide-cell-2-1')).toHaveTextContent('b');
-      expect(screen.getByTestId('glide-cell-3-2')).toHaveTextContent('c');
-      expect(screen.getByTestId('glide-cell-3-3')).toHaveTextContent('d');
+      await waitFor(() => {
+        expect(screen.getByTestId('glide-cell-1-0')).toHaveTextContent('1');
+        expect(screen.getByTestId('glide-cell-2-1')).toHaveTextContent('b');
+        expect(screen.getByTestId('glide-cell-3-2')).toHaveTextContent('c');
+        expect(screen.getByTestId('glide-cell-3-3')).toHaveTextContent('d');
+      });
     });
 
     it('should open context menu on right click', async () => {

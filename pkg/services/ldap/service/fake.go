@@ -7,7 +7,7 @@ import (
 )
 
 type LDAPFakeService struct {
-	ExpectedConfig *ldap.Config
+	ExpectedConfig *ldap.ServersConfig
 	ExpectedClient multildap.IMultiLDAP
 	ExpectedError  error
 	ExpectedUser   *login.ExternalUserInfo
@@ -22,7 +22,7 @@ func (s *LDAPFakeService) ReloadConfig() error {
 	return s.ExpectedError
 }
 
-func (s *LDAPFakeService) Config() *ldap.Config {
+func (s *LDAPFakeService) Config() *ldap.ServersConfig {
 	return s.ExpectedConfig
 }
 

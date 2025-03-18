@@ -1,9 +1,10 @@
   mimir_backend:
-    image: us.gcr.io/kubernetes-dev/mimir:santihernandezc-validate_grafana_am_config-1e903e462-WIP
+    image: grafana/mimir-alpine:r316-55f47f8
     container_name: mimir_backend
     command:
       - -target=backend
       - -alertmanager.grafana-alertmanager-compatibility-enabled
+      - -alertmanager.utf8-strict-mode-enabled
   nginx:
     environment:
       - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx

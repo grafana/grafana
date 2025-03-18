@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 interface MarkerProps {
   /** x position relative to plotting area bounding box*/

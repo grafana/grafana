@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
+import { config, FetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
 
@@ -30,7 +31,7 @@ export const SaveDashboardErrorProxy = ({
   setErrorIsHandled,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
-
+  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore;
   return (
     <>
       {error.data && error.data.status === 'version-mismatch' && (
@@ -51,22 +52,44 @@ export const SaveDashboardErrorProxy = ({
         />
       )}
       {error.data && error.data.status === 'name-exists' && (
-        <ConfirmModal
-          isOpen={true}
-          title="Conflict"
-          body={
-            <div>
-              A dashboard with the same name in selected folder already exists. <br />
-              <small>Would you still like to save this dashboard?</small>
-            </div>
-          }
-          confirmText="Save and overwrite"
-          onConfirm={async () => {
-            await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
-            onDismiss();
-          }}
-          onDismiss={onDismiss}
-        />
+        <>
+          {isRestoreDashboardsEnabled ? (
+            <Modal
+              isOpen={true}
+              title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')}
+              onDismiss={onDismiss}
+            >
+              <p>
+                <Trans i18nKey="save-dashboards.name-exists.message-info">
+                  A dashboard with the same name in the selected folder already exists, including recently deleted
+                  dashboards.
+                </Trans>
+              </p>
+              <p>
+                <Trans i18nKey="save-dashboards.name-exists.message-suggestion">
+                  Please choose a different name or folder.
+                </Trans>
+              </p>
+            </Modal>
+          ) : (
+            <ConfirmModal
+              isOpen={true}
+              title="Conflict"
+              body={
+                <div>
+                  A dashboard with the same name in selected folder already exists. <br />
+                  <small>Would you still like to save this dashboard?</small>
+                </div>
+              }
+              confirmText="Save and overwrite"
+              onConfirm={async () => {
+                await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
+                onDismiss();
+              }}
+              onDismiss={onDismiss}
+            />
+          )}
+        </>
       )}
       {error.data && error.data.status === 'plugin-dashboard' && (
         <ConfirmPluginDashboardSaveModal

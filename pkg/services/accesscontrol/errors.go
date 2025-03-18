@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 const (
@@ -27,6 +27,8 @@ var (
 	ErrResolverNotFound       = errors.New("no resolver found")
 	ErrPluginIDRequired       = errors.New("plugin ID is required")
 	ErrRoleNotFound           = errors.New("role not found")
+
+	ErrActionSetValidationFailed = errutil.ValidationFailed("accesscontrol.actionSetInvalid")
 )
 
 func ErrInvalidBuiltinRoleData(builtInRole string) errutil.TemplateData {

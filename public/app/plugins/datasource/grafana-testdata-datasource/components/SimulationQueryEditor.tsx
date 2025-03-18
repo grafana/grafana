@@ -1,4 +1,4 @@
-import React, { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrameJSON, SelectableValue } from '@grafana/data';

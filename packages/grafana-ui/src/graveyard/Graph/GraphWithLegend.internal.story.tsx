@@ -1,5 +1,4 @@
 import { StoryFn } from '@storybook/react';
-import React from 'react';
 
 import { GraphSeriesXY, FieldType, dateTime, FieldColorModeId } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';

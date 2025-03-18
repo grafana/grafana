@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Text, useStyles2 } from '@grafana/ui';
@@ -17,9 +16,9 @@ export function ProgressBar({ stepsDone, totalStepsToDo }: { stepsDone: number; 
 }
 export function StepsStatus({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
   return (
-    <div>
+    <span>
       <Text color="success">{stepsDone}</Text> of {totalStepsToDo}
-    </div>
+    </span>
   );
 }
 

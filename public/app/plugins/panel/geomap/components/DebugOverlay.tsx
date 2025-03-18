@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Map } from 'ol';
 import { Coordinate } from 'ol/coordinate';
 import { transform } from 'ol/proj';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';

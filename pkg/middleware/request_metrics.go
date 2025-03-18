@@ -51,12 +51,19 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 	if features.IsEnabledGlobally(featuremgmt.FlagEnableNativeHTTPHistogram) {
 		// the recommended default value from the prom_client
 		// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
-		// Giving this variable an value means the client will expose the histograms as an
-		// native histogram instead of normal a normal histogram.
+		// Giving this variable a value means the client will expose a native
+		// histogram.
 		histogramOptions.NativeHistogramBucketFactor = 1.1
 		// The default value in OTel. It probably good enough for us as well.
 		histogramOptions.NativeHistogramMaxBucketNumber = 160
 		histogramOptions.NativeHistogramMinResetDuration = time.Hour
+
+		if features.IsEnabledGlobally(featuremgmt.FlagDisableClassicHTTPHistogram) {
+			// setting Buckets to nil with native options set means the classic
+			// histogram will no longer be exposed - this can be a good way to
+			// reduce cardinality in the exposed metrics
+			histogramOptions.Buckets = nil
+		}
 	}
 
 	httpRequestDurationHistogram := prometheus.NewHistogramVec(

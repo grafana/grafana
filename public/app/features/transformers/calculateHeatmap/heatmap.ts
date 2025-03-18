@@ -12,9 +12,8 @@ import {
   Field,
   getValueFormat,
   formattedValueToString,
-  durationToMilliseconds,
-  parseDuration,
   TransformationApplicabilityLevels,
+  TimeRange,
 } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config } from '@grafana/runtime';
@@ -25,7 +24,7 @@ import {
   HeatmapCalculationOptions,
 } from '@grafana/schema';
 
-import { niceLinearIncrs, niceTimeIncrs } from './utils';
+import { convertDurationToMilliseconds, niceLinearIncrs, niceTimeIncrs } from './utils';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
   /** the raw values will still exist in results after transformation */
@@ -58,8 +57,8 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
         if (config.featureToggles.transformationsVariableSupport) {
           const optionsCopy = {
             ...options,
-            xBuckets: { ...options.xBuckets } ?? undefined,
-            yBuckets: { ...options.yBuckets } ?? undefined,
+            xBuckets: { ...options.xBuckets },
+            yBuckets: { ...options.yBuckets },
           };
 
           if (optionsCopy.xBuckets?.value) {
@@ -292,7 +291,14 @@ export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
   }));
 }
 
-export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCalculationOptions): DataFrame {
+interface HeatmapCalculationOptionsWithTimeRange extends HeatmapCalculationOptions {
+  timeRange?: TimeRange;
+}
+
+export function calculateHeatmapFromData(
+  frames: DataFrame[],
+  options: HeatmapCalculationOptionsWithTimeRange
+): DataFrame {
   // Find fields in the heatmap
   const { xField, yField, xs, ys } = findHeatmapFields(frames);
 
@@ -321,7 +327,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     xMode: xBucketsCfg.mode,
     xSize:
       xBucketsCfg.mode === HeatmapCalculationMode.Size
-        ? durationToMilliseconds(parseDuration(xBucketsCfg.value ?? ''))
+        ? convertDurationToMilliseconds(xBucketsCfg.value ?? '')
         : xBucketsCfg.value
           ? +xBucketsCfg.value
           : undefined,
@@ -329,6 +335,9 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     ySize: yBucketsCfg.value ? +yBucketsCfg.value : undefined,
     yLog:
       scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as 2 | 10 | undefined) : undefined,
+
+    xMin: options.timeRange?.from.valueOf(),
+    xMax: options.timeRange?.to.valueOf(),
   });
 
   const frame = {
@@ -460,20 +469,23 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let ySorted = opts?.ySorted ?? false;
 
   // find x and y limits to pre-compute buckets struct
-  let minX = xSorted ? xs[0] : Infinity;
+  let minX = opts?.xMin ?? (xSorted ? xs[0] : Infinity);
   let minY = ySorted ? ys[0] : Infinity;
-  let maxX = xSorted ? xs[len - 1] : -Infinity;
+  let maxX = opts?.xMax ?? (xSorted ? xs[len - 1] : -Infinity);
   let maxY = ySorted ? ys[len - 1] : -Infinity;
 
   let yExp = opts?.yLog;
 
+  let withPredefX = opts?.xMin != null && opts?.xMax != null;
+  let withPredefY = opts?.yMin != null && opts?.yMax != null;
+
   for (let i = 0; i < len; i++) {
-    if (!xSorted) {
+    if (!xSorted && !withPredefX) {
       minX = Math.min(minX, xs[i]);
       maxX = Math.max(maxX, xs[i]);
     }
 
-    if (!ySorted) {
+    if (!ySorted && !withPredefY) {
       if (!yExp || ys[i] > 0) {
         minY = Math.min(minY, ys[i]);
         maxY = Math.max(maxY, ys[i]);
@@ -500,7 +512,6 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   }
 
   if (xMode === HeatmapCalculationMode.Count) {
-    // TODO: optionally use view range min/max instead of data range for bucket sizing
     let approx = (maxX - minX) / Math.max(xBinIncr - 1, 1);
     // nice-ify
     let xIncrs = opts?.xTime ? niceTimeIncrs : niceLinearIncrs;
@@ -509,7 +520,6 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   }
 
   if (yMode === HeatmapCalculationMode.Count) {
-    // TODO: optionally use view range min/max instead of data range for bucket sizing
     let approx = (maxY - minY) / Math.max(yBinIncr - 1, 1);
     // nice-ify
     let yIncrs = opts?.yTime ? niceTimeIncrs : niceLinearIncrs;

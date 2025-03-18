@@ -2413,6 +2413,21 @@ describe('when migrating table cell display mode to cell options', () => {
   });
 });
 
+describe('when migrating variable refresh to on dashboard load', () => {
+  let model: DashboardModel;
+
+  beforeEach(() => {
+    model = new DashboardModel({
+      //@ts-ignore
+      refresh: false,
+    });
+  });
+
+  it('should migrate to empty string', () => {
+    expect(model.refresh).toBe('');
+  });
+});
+
 function createRow(options: any, panelDescriptions: any[]) {
   const PANEL_HEIGHT_STEP = GRID_CELL_HEIGHT + GRID_CELL_VMARGIN;
   const { collapse, showTitle, title, repeat, repeatIteration } = options;

@@ -495,6 +495,177 @@ describe('combineResponses', () => {
       expect(combineResponses(responseA, responseB).data[0].meta.stats).toHaveLength(0);
     });
   });
+
+  it('does not combine frames with different refId', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    metricFrameA.refId = 'A';
+    metricFrameB.refId = 'B';
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [metricFrameA, metricFrameB],
+    });
+  });
+
+  it('does not combine frames with different refId', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    metricFrameA.name = 'A';
+    metricFrameB.name = 'B';
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [metricFrameA, metricFrameB],
+    });
+  });
+
+  it('when fields with the same name are present, uses labels to find the right field to combine', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+
+    metricFrameA.fields.push({
+      name: 'Value',
+      type: FieldType.number,
+      config: {},
+      values: [9, 8],
+      labels: {
+        test: 'true',
+      },
+    });
+    metricFrameB.fields.push({
+      name: 'Value',
+      type: FieldType.number,
+      config: {},
+      values: [11, 10],
+      labels: {
+        test: 'true',
+      },
+    });
+
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: [1000000, 2000000, 3000000, 4000000],
+            },
+            {
+              config: {},
+              name: 'Value',
+              type: 'number',
+              values: [6, 7, 5, 4],
+              labels: {
+                level: 'debug',
+              },
+            },
+            {
+              config: {},
+              name: 'Value',
+              type: 'number',
+              values: [11, 10, 9, 8],
+              labels: {
+                test: 'true',
+              },
+            },
+          ],
+          length: 4,
+          meta: {
+            type: 'timeseries-multi',
+            stats: [
+              {
+                displayName: 'Summary: total bytes processed',
+                unit: 'decbytes',
+                value: 33,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+      ],
+    });
+  });
+
+  it('when fields with the same name are present and labels are not present, falls back to indexes', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+
+    delete metricFrameA.fields[1].labels;
+    delete metricFrameB.fields[1].labels;
+
+    metricFrameA.fields.push({
+      name: 'Value',
+      type: FieldType.number,
+      config: {},
+      values: [9, 8],
+    });
+    metricFrameB.fields.push({
+      name: 'Value',
+      type: FieldType.number,
+      config: {},
+      values: [11, 10],
+    });
+
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: [1000000, 2000000, 3000000, 4000000],
+            },
+            {
+              config: {},
+              name: 'Value',
+              type: 'number',
+              values: [6, 7, 5, 4],
+            },
+            {
+              config: {},
+              name: 'Value',
+              type: 'number',
+              values: [11, 10, 9, 8],
+            },
+          ],
+          length: 4,
+          meta: {
+            type: 'timeseries-multi',
+            stats: [
+              {
+                displayName: 'Summary: total bytes processed',
+                unit: 'decbytes',
+                value: 33,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+      ],
+    });
+  });
 });
 
 describe('combinePanelData', () => {

@@ -3,8 +3,6 @@ package validation
 import (
 	"context"
 	"errors"
-	"fmt"
-	"regexp"
 	"slices"
 	"time"
 
@@ -115,38 +113,5 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 		}
 	}
 	p.Angular.HideDeprecation = slices.Contains(a.cfg.HideAngularDeprecation, p.ID)
-	return nil
-}
-
-// APIVersionValidation implements a ValidateFunc for validating plugin API versions.
-type APIVersionValidation struct {
-}
-
-// APIVersionValidationStep returns a new ValidateFunc for validating plugin signatures.
-func APIVersionValidationStep() ValidateFunc {
-	sv := &APIVersionValidation{}
-	return sv.Validate
-}
-
-// Validate validates the plugin signature. If a signature error is encountered, the error is recorded with the
-// pluginerrs.ErrorTracker.
-func (v *APIVersionValidation) Validate(ctx context.Context, p *plugins.Plugin) error {
-	if p.APIVersion != "" {
-		if !p.Backend {
-			return fmt.Errorf("plugin %s has an API version but is not a backend plugin", p.ID)
-		}
-		// Eventually, all backend plugins will be supported
-		if p.Type != plugins.TypeDataSource {
-			return fmt.Errorf("plugin %s has an API version but is not a datasource plugin", p.ID)
-		}
-		m, err := regexp.MatchString(`^v([\d]+)(?:(alpha|beta)([\d]+))?$`, p.APIVersion)
-		if err != nil {
-			return fmt.Errorf("failed to verify apiVersion %s: %v", p.APIVersion, err)
-		}
-		if !m {
-			return fmt.Errorf("plugin %s has an invalid API version %s", p.ID, p.APIVersion)
-		}
-	}
-
 	return nil
 }

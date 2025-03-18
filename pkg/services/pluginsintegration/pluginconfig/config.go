@@ -32,12 +32,14 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		config.Features{
 			ExternalCorePluginsEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins),
 			SkipHostEnvVarsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
+			SriChecksEnabled:           features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
 		},
 		cfg.AngularSupportEnabled,
 		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
 		cfg.HideAngularDeprecation,
 		cfg.ForwardHostEnvVars,
+		cfg.GrafanaComSSOAPIToken,
 	), nil
 }
 

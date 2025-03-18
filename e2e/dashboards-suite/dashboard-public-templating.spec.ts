@@ -7,13 +7,13 @@ describe('Create a public dashboard with template variables shows a template var
 
   it('Create a public dashboard with template variables shows a template variable warning', () => {
     // Opening a dashboard with template variables
-    e2e.flows.openDashboard({ uid: 'HYaGDGIMk' });
+    e2e.flows.openDashboard({ uid: 'HYaGDGIMk', queryParams: { '__feature.newDashboardSharingComponent': false } });
 
     // Open sharing modal
-    e2e.pages.Dashboard.DashNav.shareButton().click();
+    e2e.components.NavToolbar.shareDashboard().click();
 
     // Select public dashboards tab
-    e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
+    e2e.components.Tab.title('Public Dashboard').click();
 
     // Warning Alert dashboard cannot be made public because it has template variables
     e2e.pages.ShareDashboardModal.PublicDashboard.TemplateVariablesWarningAlert().should('be.visible');

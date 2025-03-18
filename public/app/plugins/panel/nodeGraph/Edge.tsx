@@ -1,4 +1,4 @@
-import React, { MouseEvent, memo } from 'react';
+import { MouseEvent, memo } from 'react';
 
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';

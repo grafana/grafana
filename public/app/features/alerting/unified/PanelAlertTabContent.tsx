@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { NewRuleFromPanelButton } from './components/panel-alerts-tab/NewRuleFromPanelButton';
 import { RulesTable } from './components/rules/RulesTable';
@@ -47,7 +47,7 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
 
   if (rules.length) {
     return (
-      <CustomScrollbar autoHeightMin="100%">
+      <ScrollContainer minHeight="100%">
         <div className={styles.innerWrapper}>
           {alert}
           <RulesTable rules={rules} />
@@ -55,7 +55,7 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
             <NewRuleFromPanelButton className={styles.newButton} panel={panel} dashboard={dashboard} />
           )}
         </div>
-      </CustomScrollbar>
+      </ScrollContainer>
     );
   }
 

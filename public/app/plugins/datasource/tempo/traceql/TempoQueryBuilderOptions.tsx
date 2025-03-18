@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { EditorField, EditorRow } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup } from '@grafana/ui';
@@ -11,6 +11,7 @@ import { TempoQuery } from '../types';
 interface Props {
   onChange: (value: TempoQuery) => void;
   query: Partial<TempoQuery> & TempoQuery;
+  isStreaming: boolean;
 }
 
 /**
@@ -26,7 +27,7 @@ const parseIntWithFallback = (val: string, fallback: number) => {
   return isNaN(parsed) ? fallback : parsed;
 };
 
-export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) => {
+export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, isStreaming }) => {
   if (!query.hasOwnProperty('limit')) {
     query.limit = DEFAULT_LIMIT;
   }
@@ -44,11 +45,30 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
   const onTableTypeChange = (val: SearchTableType) => {
     onChange({ ...query, tableType: val });
   };
+  const onStepChange = (e: React.FormEvent<HTMLInputElement>) => {
+    onChange({ ...query, step: e.currentTarget.value });
+  };
+
+  // There's a bug in Tempo which causes the exemplars param to be ignored. It's commented out for now.
+
+  // const onExemplarsChange = (e: React.FormEvent<HTMLInputElement>) => {
+  //   const exemplars = parseInt(e.currentTarget.value, 10);
+  //   if (!isNaN(exemplars) && exemplars >= 0) {
+  //     onChange({ ...query, exemplars });
+  //   } else {
+  //     onChange({ ...query, exemplars: undefined });
+  //   }
+  // };
 
   const collapsedInfoList = [
     `Limit: ${query.limit || DEFAULT_LIMIT}`,
     `Spans Limit: ${query.spss || DEFAULT_SPSS}`,
     `Table Format: ${query.tableType === SearchTableType.Traces ? 'Traces' : 'Spans'}`,
+    '|',
+    `Step: ${query.step || 'auto'}`,
+    // `Exemplars: ${query.exemplars !== undefined ? query.exemplars : 'auto'}`,
+    '|',
+    `Streaming: ${isStreaming ? 'Enabled' : 'Disabled'}`,
   ];
 
   return (
@@ -87,10 +107,59 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               onChange={onTableTypeChange}
             />
           </EditorField>
+          <EditorField
+            label="Step"
+            tooltip="Defines the step for metric queries. Use duration notation, for example 30s or 1m"
+          >
+            <AutoSizeInput
+              className="width-4"
+              placeholder="auto"
+              type="string"
+              defaultValue={query.step}
+              onCommitChange={onStepChange}
+              value={query.step}
+            />
+          </EditorField>
+          {/*<EditorField*/}
+          {/*  label="Exemplars"*/}
+          {/*  tooltip="Defines the amount of exemplars to request for metric queries. A value of 0 means no exemplars."*/}
+          {/*>*/}
+          {/*  <AutoSizeInput*/}
+          {/*    className="width-4"*/}
+          {/*    placeholder="auto"*/}
+          {/*    type="string"*/}
+          {/*    defaultValue={query.exemplars}*/}
+          {/*    onCommitChange={onExemplarsChange}*/}
+          {/*    value={query.exemplars}*/}
+          {/*  />*/}
+          {/*</EditorField>*/}
+          <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
+            <div>{isStreaming ? 'Enabled' : 'Disabled'}</div>
+          </EditorField>
         </QueryOptionGroup>
       </EditorRow>
     </>
   );
 });
+
+const StreamingTooltip = () => {
+  return (
+    <div style={{ display: 'flex', gap: '4px' }}>
+      <span>
+        Indicates if streaming is currently enabled. Streaming allows you to view partial query results before the
+        entire query completes.
+      </span>
+      <a
+        href={'https://grafana.com/docs/tempo/latest/traceql/#stream-query-results'}
+        aria-label={'Learn more about streaming query results'}
+        target={'_blank'}
+        rel="noreferrer"
+        style={{ textDecoration: 'underline' }}
+      >
+        Learn more
+      </a>
+    </div>
+  );
+};
 
 TempoQueryBuilderOptions.displayName = 'TempoQueryBuilderOptions';

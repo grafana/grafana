@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { Fragment, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { HorizontalGroup, InlineLabel, useStyles2 } from '@grafana/ui';
+import { Stack, InlineLabel, useStyles2 } from '@grafana/ui';
 
 import { FuncInstance } from '../gfunc';
 import { actions } from '../state/actions';
@@ -42,7 +42,7 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
       onMouseOver={() => setIsMouseOver(true)}
       onMouseOut={() => setIsMouseOver(false)}
     >
-      <HorizontalGroup spacing="none">
+      <Stack gap={0} alignItems={'baseline'}>
         <FunctionEditor
           func={func}
           onMoveLeft={() => {
@@ -55,10 +55,12 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
             dispatch(actions.removeFunction({ func }));
           }}
         />
-        <InlineLabel className={styles.label}>(</InlineLabel>
+        <InlineLabel className={styles.label} width={'auto'}>
+          (
+        </InlineLabel>
         {params.map((editableParam: EditableParam, index: number) => {
           return (
-            <React.Fragment key={index}>
+            <Fragment key={index}>
               <FunctionParamEditor
                 autofocus={index === 0 && func.added}
                 editableParam={editableParam}
@@ -72,11 +74,13 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
                 onExpandedChange={setIsExpanded}
               />
               {index !== params.length - 1 ? ',' : ''}
-            </React.Fragment>
+            </Fragment>
           );
         })}
-        <InlineLabel className={styles.label}>)</InlineLabel>
-      </HorizontalGroup>
+        <InlineLabel className={styles.label} width={'auto'}>
+          )
+        </InlineLabel>
+      </Stack>
     </div>
   );
 }
@@ -89,9 +93,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: `0 ${theme.spacing(1)}`,
     height: `${theme.v1.spacing.formInputHeight}px`,
   }),
-  error: css`
-    border: 1px solid ${theme.colors.error.main};
-  `,
+  error: css({
+    border: `1px solid ${theme.colors.error.main}`,
+  }),
   label: css({
     padding: 0,
     margin: 0,

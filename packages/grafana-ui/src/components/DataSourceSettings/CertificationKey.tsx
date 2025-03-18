@@ -1,5 +1,6 @@
-import React, { ChangeEvent, MouseEvent } from 'react';
+import { ChangeEvent, MouseEvent } from 'react';
 
+import { Trans } from '../../utils/i18n';
 import { Button } from '../Button';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
@@ -27,7 +28,7 @@ export const CertificationKey = ({ hasCert, label, onChange, onClick, placeholde
       </InlineField>
       {hasCert && (
         <Button variant="secondary" onClick={onClick} style={{ marginLeft: 4 }}>
-          Reset
+          <Trans i18nKey="grafana-ui.data-source-settings.cert-key-reset">Reset</Trans>
         </Button>
       )}
     </InlineFieldRow>

@@ -1,6 +1,7 @@
 import { DataFrame, FieldConfigSource, PanelData, PanelPlugin } from '@grafana/data';
 
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
 
 export interface PanelEditorTab {
   id: string;
@@ -72,5 +73,4 @@ export enum VisualizationSelectPaneTab {
   Visualizations,
   LibraryPanels,
   Suggestions,
-  Widgets,
 }

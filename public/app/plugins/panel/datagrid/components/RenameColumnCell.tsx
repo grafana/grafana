@@ -1,4 +1,5 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
+import * as React from 'react';
 
 import { Portal } from '@grafana/ui';
 

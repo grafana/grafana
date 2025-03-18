@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { Observable, map } from 'rxjs';
 
 import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
@@ -14,8 +13,8 @@ import { DataSourceRef } from '@grafana/schema';
 import { Link, useStyles2 } from '@grafana/ui';
 
 import { PANEL_STYLES } from '../../home/Insights';
-import { createUrl } from '../../utils/url';
-import { InsightsRatingModal } from '../RatingModal';
+import { createRelativeUrl } from '../../utils/url';
+import { InsightsMenuButton } from '../InsightsMenuButton';
 
 export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -102,7 +101,7 @@ export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle
       .setDescription('The alert rule instances that have fired the most')
       .setData(transformation)
       .setNoValue('No new alerts fired last week')
-      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .build(),
   });
 }
@@ -120,7 +119,7 @@ export function RuleLink({ value, ruleUID }: { value: string; ruleUID: string })
 
   return (
     <div className={styles.link}>
-      <Link target="_blank" href={createUrl(`/alerting/grafana/${ruleUID}/view`)}>
+      <Link target="_blank" href={createRelativeUrl(`/alerting/grafana/${ruleUID}/view`)}>
         {value}
       </Link>
     </div>

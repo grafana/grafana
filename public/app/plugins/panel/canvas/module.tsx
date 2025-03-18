@@ -58,6 +58,9 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
           icon: true,
         },
       },
+      [FieldConfigProperty.Links]: {
+        hideFromDefaults: true,
+      },
     },
   })
   .setMigrationHandler(canvasMigrationHandler)

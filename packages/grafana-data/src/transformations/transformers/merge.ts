@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 import { map } from 'rxjs/operators';
 
-import { MutableDataFrame } from '../../dataframe';
+import { MutableDataFrame } from '../../dataframe/MutableDataFrame';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 
@@ -43,7 +43,10 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         const fieldNames = new Set<string>();
         const fieldIndexByName: Record<string, Record<number, number>> = {};
         const fieldNamesForKey: string[] = [];
-        const dataFrame = new MutableDataFrame();
+        const dataFrame = new MutableDataFrame({
+          refId: `${DataTransformerID.merge}-${data.map((frame) => frame.refId).join('-')}`,
+          fields: [],
+        });
 
         for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
           const frame = data[frameIndex];

@@ -178,24 +178,24 @@ func (_m *MockServiceAccountService) MigrateApiKeysToServiceAccounts(ctx context
 }
 
 // RetrieveServiceAccount provides a mock function with given fields: ctx, orgID, serviceAccountID
-func (_m *MockServiceAccountService) RetrieveServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	ret := _m.Called(ctx, orgID, serviceAccountID)
+func (_m *MockServiceAccountService) RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	ret := _m.Called(ctx, query)
 
 	var r0 *serviceaccounts.ServiceAccountProfileDTO
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) (*serviceaccounts.ServiceAccountProfileDTO, error)); ok {
-		return rf(ctx, orgID, serviceAccountID)
+	if rf, ok := ret.Get(0).(func(context.Context, *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error)); ok {
+		return rf(ctx, query)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) *serviceaccounts.ServiceAccountProfileDTO); ok {
-		r0 = rf(ctx, orgID, serviceAccountID)
+	if rf, ok := ret.Get(0).(func(context.Context, *serviceaccounts.GetServiceAccountQuery) *serviceaccounts.ServiceAccountProfileDTO); ok {
+		r0 = rf(ctx, query)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*serviceaccounts.ServiceAccountProfileDTO)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
-		r1 = rf(ctx, orgID, serviceAccountID)
+	if rf, ok := ret.Get(1).(func(context.Context, *serviceaccounts.GetServiceAccountQuery) error); ok {
+		r1 = rf(ctx, query)
 	} else {
 		r1 = ret.Error(1)
 	}

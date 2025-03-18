@@ -4,11 +4,10 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"google.golang.org/grpc"
 )
 
-func LoggingUnaryInterceptor(cfg *setting.Cfg, logger log.Logger) grpc.UnaryServerInterceptor {
+func LoggingUnaryInterceptor(logger log.Logger, enabled bool) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req any,
@@ -16,7 +15,7 @@ func LoggingUnaryInterceptor(cfg *setting.Cfg, logger log.Logger) grpc.UnaryServ
 		handler grpc.UnaryHandler,
 	) (resp any, err error) {
 		resp, err = handler(ctx, req)
-		if cfg.GRPCServerEnableLogging {
+		if enabled {
 			ctxLogger := logger.FromContext(ctx)
 			if err != nil {
 				ctxLogger.Error("gRPC call", "method", info.FullMethod, "req", req, "err", err)

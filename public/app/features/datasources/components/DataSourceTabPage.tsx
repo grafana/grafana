@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Page } from 'app/core/components/Page/Page';
 import { useDataSourceSettingsNav } from 'app/features/connections/hooks/useDataSourceSettingsNav';
 

@@ -6,13 +6,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/influxdata/influxql"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type InfluxdbQueryParser struct{}
 
-func QueryParse(query backend.DataQuery) (*Query, error) {
+func QueryParse(query backend.DataQuery, logger log.Logger) (*Query, error) {
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't unmarshal query")
@@ -53,6 +55,14 @@ func QueryParse(query backend.DataQuery) (*Query, error) {
 		interval = minInterval
 	}
 
+	var statement influxql.Statement
+	if useRawQuery {
+		statement, err = influxql.ParseStatement(rawQuery)
+		if err != nil {
+			logger.Debug(fmt.Sprintf("Couldn't parse raw query: %v", err), "rawQuery", rawQuery)
+		}
+	}
+
 	return &Query{
 		Measurement:  measurement,
 		Policy:       policy,
@@ -68,6 +78,7 @@ func QueryParse(query backend.DataQuery) (*Query, error) {
 		Slimit:       slimit,
 		OrderByTime:  orderByTime,
 		ResultFormat: resultFormat,
+		Statement:    statement,
 	}, nil
 }
 

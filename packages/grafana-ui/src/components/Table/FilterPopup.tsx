@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import * as React from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '..';
 import { useStyles2, useTheme2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
 
 import { FilterList } from './FilterList';
 import { TableStyles } from './styles';
@@ -68,7 +70,9 @@ export const FilterPopup = ({
         <Stack direction="column" gap={3}>
           <Stack direction="column" gap={0.5}>
             <Stack justifyContent="space-between" alignItems="center">
-              <Label className={styles.label}>Filter by values:</Label>
+              <Label className={styles.label}>
+                <Trans i18nKey="grafana-ui.table.filter-popup-heading">Filter by values:</Trans>
+              </Label>
               <IconButton
                 name="text-fields"
                 tooltip="Match case"
@@ -94,16 +98,16 @@ export const FilterPopup = ({
           <Stack gap={3}>
             <Stack>
               <Button size="sm" onClick={onFilter}>
-                Ok
+                <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
               </Button>
               <Button size="sm" variant="secondary" onClick={onCancel}>
-                Cancel
+                <Trans i18nKey="grafana-ui.table.filter-popup-cancel">Cancel</Trans>
               </Button>
             </Stack>
             {clearFilterVisible && (
               <Stack>
                 <Button fill="text" size="sm" onClick={onClearFilter}>
-                  Clear filter
+                  <Trans i18nKey="grafana-ui.table.filter-popup-clear">Clear filter</Trans>
                 </Button>
               </Stack>
             )}

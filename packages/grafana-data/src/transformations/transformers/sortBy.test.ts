@@ -1,5 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { DataTransformerConfig, Field, FieldType } from '../../types';
+import { Field, FieldType } from '../../types/dataFrame';
+import { DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 

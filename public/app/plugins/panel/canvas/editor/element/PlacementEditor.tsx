@@ -1,4 +1,3 @@
-import React from 'react';
 import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
@@ -48,6 +47,10 @@ export function PlacementEditor({ item }: Props) {
   }
   const { options } = element;
   const { placement, constraint: layout } = options;
+
+  if (placement) {
+    placement.rotation = placement?.rotation ?? 0;
+  }
 
   const reselectElementAfterChange = () => {
     setTimeout(() => {

@@ -19,7 +19,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
@@ -30,8 +33,8 @@ import (
 	pluginfakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -115,6 +118,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			{
 				Path:      "api/rbac-restricted",
 				ReqAction: "test-app.settings:read",
+			},
+			{
+				Path: "encodedPath",
+				URL:  "http://encoded.com",
 			},
 		}
 
@@ -232,6 +239,16 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			assert.Equal(t, "https://example.com/api/v1/some-route/", req.URL.String())
 		})
 
+		t.Run("When matching proxy path is already encoded", func(t *testing.T) {
+			ctx, req := setUp()
+			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/our%20devices")
+			require.NoError(t, err)
+			proxy.matchedRoute = routes[9]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.cfg)
+
+			assert.Equal(t, "http://encoded.com/our%20devices", req.URL.String())
+		})
+
 		t.Run("Validating request", func(t *testing.T) {
 			t.Run("plugin route with valid role", func(t *testing.T) {
 				ctx, _ := setUp()
@@ -262,7 +279,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with RBAC protection user is allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.SignedInUser.OrgID = int64(1)
-			ctx.SignedInUser.OrgRole = org.RoleNone
+			ctx.SignedInUser.OrgRole = identity.RoleNone
 			ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"test-app.settings:read": nil}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
 			require.NoError(t, err)
@@ -273,7 +290,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with RBAC protection user is not allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.SignedInUser.OrgID = int64(1)
-			ctx.SignedInUser.OrgRole = org.RoleNone
+			ctx.SignedInUser.OrgRole = identity.RoleNone
 			ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"test-app:read": nil}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
 			require.NoError(t, err)
@@ -284,7 +301,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with dynamic RBAC protection user is allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.SignedInUser.OrgID = int64(1)
-			ctx.SignedInUser.OrgRole = org.RoleNone
+			ctx.SignedInUser.OrgRole = identity.RoleNone
 			ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:dsUID"}}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
 			require.NoError(t, err)
@@ -295,7 +312,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with dynamic RBAC protection user is not allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.SignedInUser.OrgID = int64(1)
-			ctx.SignedInUser.OrgRole = org.RoleNone
+			ctx.SignedInUser.OrgRole = identity.RoleNone
 			// Has access but to another app
 			ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:notTheDsUID"}}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
@@ -556,7 +573,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		var routes []*plugins.Route
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/path/to/folder/", func(proxy *DataSourceProxy) {
 			proxy.oAuthTokenService = &oauthtokentest.MockOauthTokenService{
-				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester) *oauth2.Token {
+				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester, _ *auth.UserToken) *oauth2.Token {
 					return (&oauth2.Token{
 						AccessToken:  "testtoken",
 						RefreshToken: "testrefreshtoken",
@@ -572,6 +589,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		require.NoError(t, err)
 
 		req, err = http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		req = req.WithContext(context.WithValue(req.Context(), ctxkey.Key{}, &contextmodel.ReqContext{UserToken: nil}))
 		require.NoError(t, err)
 
 		proxy.director(req)
@@ -586,7 +604,8 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login:        "test_user",
-					NamespacedID: authn.MustParseNamespaceID("user:1"),
+					FallbackType: claims.TypeUser,
+					UserID:       1,
 				},
 			},
 			&setting.Cfg{SendUserHeader: true},

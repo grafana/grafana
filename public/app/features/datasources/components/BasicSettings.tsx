@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -70,7 +70,7 @@ export function AlertingEnabled({ enabled }: { enabled: boolean }) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  badge: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  badge: css({
+    marginBottom: theme.spacing(2),
+  }),
 });

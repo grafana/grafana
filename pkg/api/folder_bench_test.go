@@ -25,11 +25,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -259,7 +260,7 @@ func setupDB(b testing.TB) benchScenario {
 				UserID:     userID,
 				TeamID:     teamID,
 				OrgID:      orgID,
-				Permission: dashboardaccess.PERMISSION_VIEW,
+				Permission: team.PermissionTypeMember,
 				Created:    now,
 				Updated:    now,
 			})
@@ -450,21 +451,25 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	quotaSrv := quotatest.New(false, nil)
 
-	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db), quotaSrv)
+	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db))
 	require.NoError(b, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil)
-
 	cfg := setting.NewCfg()
-	actionSets := resourcepermissions.NewActionSetService()
-	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(), features, tracing.InitializeTracerForTest())
-
+	actionSets := resourcepermissions.NewActionSetService(features)
+	fStore := folderimpl.ProvideStore(sc.db)
+	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
+		folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+	acSvc := acimpl.ProvideOSSService(
+		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
+		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db, permreg.ProvidePermissionRegistry(), nil, folderServiceWithFlagOn,
+	)
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
+
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
 		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
@@ -472,12 +477,12 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg, dashStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
-		folderServiceWithFlagOn, nil,
+		folderServiceWithFlagOn, fStore, nil, nil, nil, nil, quotaSrv, nil,
 	)
 	require.NoError(b, err)
 
 	starSvc := startest.NewStarServiceFake()
-	starSvc.ExpectedUserStars = &star.GetUserStarsResult{UserStars: make(map[int64]bool)}
+	starSvc.ExpectedUserStars = &star.GetUserStarsResult{UserStars: make(map[string]bool)}
 
 	hs := &HTTPServer{
 		CacheService:     localcache.New(5*time.Minute, 10*time.Minute),

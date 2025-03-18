@@ -1,10 +1,9 @@
-import React from 'react';
+import { FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data';
+import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
 
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
 
@@ -15,7 +14,7 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const { datasource: datasourceRef, defaultKeys } = variable.useState();
+  const { datasource: datasourceRef, defaultKeys, allowCustomValue } = variable.useState();
 
   const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -26,13 +25,11 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     : 'This data source does not support ad hoc filters yet.';
 
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
-    const dsRef: DataSourceRef = {
-      uid: ds.uid,
-      type: ds.type,
-    };
+    const dsRef = getDataSourceRef(ds);
 
     variable.setState({
       datasource: dsRef,
+      supportsMultiValueOperators: ds.meta.multiValueFilterOperators,
     });
   };
 
@@ -42,13 +39,19 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     });
   };
 
+  const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({ allowCustomValue: event.currentTarget.checked });
+  };
+
   return (
     <AdHocVariableForm
       datasource={datasourceRef ?? undefined}
       infoText={message}
+      allowCustomValue={allowCustomValue}
       onDataSourceChange={onDataSourceChange}
       defaultKeys={defaultKeys}
       onDefaultKeysChange={onDefaultKeysChange}
+      onAllowCustomValueChange={onAllowCustomValueChange}
     />
   );
 }

@@ -44,7 +44,7 @@ export const validMetricQueryBuilderQuery: CloudWatchMetricsQuery = {
   region: 'us-east-1',
   namespace: 'ec2',
   dimensions: { somekey: 'somevalue' },
-  metricQueryType: MetricQueryType.Query,
+  metricQueryType: MetricQueryType.Insights,
   metricEditorMode: MetricEditorMode.Builder,
   sql: {
     from: {
@@ -77,14 +77,17 @@ export const validMetricQueryCodeQuery: CloudWatchMetricsQuery = {
   statistic: 'Average',
   sqlExpression: 'SELECT * FROM "AWS/EC2" WHERE "InstanceId" = \'i-123\'',
   refId: 'A',
-  metricQueryType: MetricQueryType.Query,
+  metricQueryType: MetricQueryType.Insights,
   metricEditorMode: MetricEditorMode.Code,
   hide: false,
 };
 
 export const validLogsQuery: CloudWatchLogsQuery = {
   queryMode: 'Logs',
-  logGroupNames: ['group-A', 'group-B'],
+  logGroups: [
+    { arn: 'group-A', name: 'A' },
+    { arn: 'group-B', name: 'B' },
+  ],
   hide: false,
   id: '',
   region: 'us-east-2',

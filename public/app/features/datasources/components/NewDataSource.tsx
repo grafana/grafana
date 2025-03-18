@@ -1,5 +1,4 @@
-import React from 'react';
-import { AnyAction } from 'redux';
+import { Action } from 'redux';
 
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { LinkButton, FilterInput } from '@grafana/ui';
@@ -7,6 +6,7 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
 import { DataSourcePluginCategory, StoreState, useDispatch, useSelector } from 'app/types';
 
+import { ROUTES } from '../../connections/constants';
 import { DataSourceCategories } from '../components/DataSourceCategories';
 import { DataSourceTypeCardList } from '../components/DataSourceTypeCardList';
 import {
@@ -14,7 +14,6 @@ import {
   useLoadDataSourcePlugins,
   getFilteredDataSourcePlugins,
   setDataSourceTypeSearchQuery,
-  useDataSourcesRoutes,
 } from '../state';
 
 export function NewDataSource() {
@@ -46,7 +45,7 @@ export type ViewProps = {
   searchQuery: string;
   isLoading: boolean;
   onAddDataSource: (dataSource: DataSourcePluginMeta) => void;
-  onSetSearchQuery: (q: string) => AnyAction;
+  onSetSearchQuery: (q: string) => Action;
 };
 
 export function NewDataSourceView({
@@ -57,8 +56,6 @@ export function NewDataSourceView({
   onAddDataSource,
   onSetSearchQuery,
 }: ViewProps) {
-  const dataSourcesRoutes = useDataSourcesRoutes();
-
   if (isLoading) {
     return <PageLoader />;
   }
@@ -69,7 +66,7 @@ export function NewDataSourceView({
       <div className="page-action-bar">
         <FilterInput value={searchQuery} onChange={onSetSearchQuery} placeholder="Filter by name or type" />
         <div className="page-action-bar__spacer" />
-        <LinkButton href={dataSourcesRoutes.List} fill="outline" variant="secondary" icon="arrow-left">
+        <LinkButton href={ROUTES.DataSources} fill="outline" variant="secondary" icon="arrow-left">
           Cancel
         </LinkButton>
       </div>

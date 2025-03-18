@@ -62,7 +62,15 @@ You have the option to customize the display of logs and choose which columns to
 
 ### Download log lines
 
-Click **Download** to download log results in either `TXT` or `JSON` format. This feature allows you to save log data for further analysis or to share it with others in a convenient and accessible format.
+This feature lets you save log data for further analysis or to share it with others in a convenient and accessible format.
+
+In Explore there are three export options:
+
+- **TXT** - will export the data as visible on the screen, meaning it will take into account formatting, like `line_format`.
+- **JSON** - will export the raw data, regardless of the formatting, like `line_format`.
+- **CSV** - will export the raw data, regardless of the formatting, like `line_format`.
+
+Click **Download** and select `TXT`, `JSON` or `CSV` to download log results.
 
 ### Log result meta information
 

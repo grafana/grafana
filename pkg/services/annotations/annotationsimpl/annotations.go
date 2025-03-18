@@ -5,9 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl/loki"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -27,6 +30,9 @@ func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	tagService tag.Service,
+	tracer tracing.Tracer,
+	ruleStore *alertingStore.DBstore,
+	dashSvc dashboards.DashboardService,
 ) *RepositoryImpl {
 	l := log.New("annotations")
 	l.Debug("Initializing annotations service")
@@ -35,7 +41,7 @@ func ProvideService(
 	write := xormStore
 
 	var read readStore
-	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, log.New("annotations.loki"))
+	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, ruleStore, log.New("annotations.loki"), tracer)
 	if historianStore != nil {
 		l.Debug("Using composite read store")
 		read = NewCompositeStore(log.New("annotations.composite"), xormStore, historianStore)
@@ -47,7 +53,7 @@ func ProvideService(
 	return &RepositoryImpl{
 		db:       db,
 		features: features,
-		authZ:    accesscontrol.NewAuthService(db, features),
+		authZ:    accesscontrol.NewAuthService(db, features, dashSvc),
 		reader:   read,
 		writer:   write,
 	}

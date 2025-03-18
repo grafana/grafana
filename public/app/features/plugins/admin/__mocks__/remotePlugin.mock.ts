@@ -4,6 +4,7 @@ import { RemotePlugin } from '../types';
 
 // Copied from /api/gnet/plugins/alexanderzobnin-zabbix-app
 export default {
+  changelog: '',
   createdAt: '2016-04-06T20:23:41.000Z',
   description: 'Zabbix plugin for Grafana',
   downloads: 33645089,
@@ -42,6 +43,9 @@ export default {
       grafanaDependency: '>=7.3.0',
       grafanaVersion: '7.3',
       plugins: [],
+      extensions: {
+        exposedComponents: [],
+      },
     },
     info: {
       links: [],

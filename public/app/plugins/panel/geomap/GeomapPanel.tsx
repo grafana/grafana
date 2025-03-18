@@ -8,7 +8,8 @@ import { Coordinate } from 'ol/coordinate';
 import { isEmpty } from 'ol/extent';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import { fromLonLat } from 'ol/proj';
-import React, { Component, ReactNode } from 'react';
+import { Component, ReactNode } from 'react';
+import * as React from 'react';
 import { Subscription } from 'rxjs';
 
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';

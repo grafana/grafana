@@ -7,11 +7,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
@@ -83,7 +84,7 @@ func (q *scopedDatasourceProvider) Get(ctx context.Context, uid string) (*v0alph
 	if err != nil {
 		return nil, err
 	}
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +136,7 @@ func asConnection(ds *datasources.DataSource, ns string) (*v0alpha1.DataSourceCo
 		},
 		Title: ds.Name,
 	}
-	v.UID = utils.CalculateClusterWideUID(v) // indicates if the value changed on the server
+	v.UID = gapiutil.CalculateClusterWideUID(v) // indicates if the value changed on the server
 	meta, err := utils.MetaAccessor(v)
 	if err != nil {
 		meta.SetUpdatedTimestamp(&ds.Updated)

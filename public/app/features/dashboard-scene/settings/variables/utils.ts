@@ -36,7 +36,8 @@ interface EditableVariableConfig {
   editor: React.ComponentType<any>;
 }
 
-export type EditableVariableType = Exclude<VariableType, 'system'>;
+//exclude system variable type and snapshot variable type
+export type EditableVariableType = Exclude<VariableType, 'system' | 'snapshot'>;
 
 export function isEditableVariableType(type: VariableType): type is EditableVariableType {
   return type !== 'system';
@@ -133,7 +134,10 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'datasource':
       return new DataSourceVariable(initialState);
     case 'adhoc':
-      return new AdHocFiltersVariable(initialState);
+      return new AdHocFiltersVariable({
+        ...initialState,
+        layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+      });
     case 'groupby':
       return new GroupByVariable(initialState);
     case 'textbox':

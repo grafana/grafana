@@ -12,7 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/search")
 
 func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService) *SearchService {
 	s := &SearchService{
@@ -61,6 +64,9 @@ type SearchService struct {
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.HitList, error) {
+	ctx, span := tracer.Start(ctx, "search.SearchHandler")
+	defer span.End()
+
 	starredQuery := star.GetUserStarsQuery{
 		UserID: query.SignedInUser.UserID,
 	}
@@ -76,8 +82,8 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 
 	// filter by starred dashboard IDs when starred dashboards are requested and no UID or ID filters are specified to improve query performance
 	if query.IsStarred && len(query.DashboardIds) == 0 && len(query.DashboardUIDs) == 0 {
-		for id := range staredDashIDs.UserStars {
-			query.DashboardIds = append(query.DashboardIds, id)
+		for uid := range staredDashIDs.UserStars {
+			query.DashboardUIDs = append(query.DashboardUIDs, uid)
 		}
 	}
 
@@ -112,7 +118,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 
 	// set starred dashboards
 	for _, dashboard := range hits {
-		if _, ok := staredDashIDs.UserStars[dashboard.ID]; ok {
+		if _, ok := staredDashIDs.UserStars[dashboard.UID]; ok {
 			dashboard.IsStarred = true
 		}
 	}
