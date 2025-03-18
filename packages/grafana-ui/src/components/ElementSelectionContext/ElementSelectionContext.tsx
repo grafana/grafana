@@ -45,6 +45,12 @@ export function useElementSelection(id: string | undefined): UseElementSelection
       // To prevent this click form clearing the selection
       evt.stopPropagation();
 
+      // Prevent text selection caused by shift click
+      if (evt.shiftKey) {
+        evt.preventDefault();
+        window.getSelection()?.empty();
+      }
+
       context.onSelect({ id }, evt.shiftKey);
     },
     [context, id]

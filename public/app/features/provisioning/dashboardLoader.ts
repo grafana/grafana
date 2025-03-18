@@ -1,9 +1,8 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { BASE_URL } from 'app/api/clients/provisioning/baseAPI';
 import { DashboardDTO } from 'app/types';
 
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from '../apiserver/types';
-
-import { BASE_URL } from './api/baseAPI';
 
 /**
  *
@@ -11,7 +10,7 @@ import { BASE_URL } from './api/baseAPI';
  */
 export async function loadDashboardFromProvisioning(repo: string, path: string): Promise<DashboardDTO> {
   const params = new URLSearchParams(window.location.search);
-  const ref = params.get('ref'); // commit hash or branch
+  const ref = params.get('ref') ?? undefined; // commit hash or branch
 
   const url = `${BASE_URL}/repositories/${repo}/files/${path}`;
   return getBackendSrv()
