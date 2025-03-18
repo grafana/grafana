@@ -1001,28 +1001,20 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 	require.Equal(t, http.StatusAccepted, status)
 	require.Len(t, createdRuleGroup.Rules, 2)
 
-	t.Run("trying to create alert with same title under same folder should fail", func(t *testing.T) {
+	t.Run("trying to create alert with same title under same folder should not fail", func(t *testing.T) {
 		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup.GettableRuleGroupConfig)
 		rulesWithUID.Rules = append(rulesWithUID.Rules, rules.Rules[0]) // Create new copy of first rule.
 
 		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID, false)
-		assert.Equal(t, http.StatusConflict, status)
-
-		var res map[string]any
-		require.NoError(t, json.Unmarshal([]byte(body), &res))
-		require.Contains(t, res["message"], ngmodels.ErrAlertRuleUniqueConstraintViolation.Error())
+		requireStatusCode(t, http.StatusAccepted, status, body)
 	})
 
-	t.Run("trying to update an alert to the title of an existing alert in the same folder should fail", func(t *testing.T) {
+	t.Run("trying to update an alert to the title of an existing alert in the same folder should not fail", func(t *testing.T) {
 		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup.GettableRuleGroupConfig)
 		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = "AlwaysFiring"
 
 		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID, false)
-		assert.Equal(t, http.StatusConflict, status)
-
-		var res map[string]any
-		require.NoError(t, json.Unmarshal([]byte(body), &res))
-		require.Contains(t, res["message"], ngmodels.ErrAlertRuleUniqueConstraintViolation.Error())
+		requireStatusCode(t, http.StatusAccepted, status, body)
 	})
 
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {
