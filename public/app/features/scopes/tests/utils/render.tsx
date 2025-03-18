@@ -10,10 +10,7 @@ import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
-import { ScopesContextProvider } from '../../ScopesContextProvider';
-import { ScopesService } from '../../ScopesService';
-import { ScopesDashboardsService } from '../../dashboards/ScopesDashboardsService';
-import { ScopesSelectorService } from '../../selector/ScopesSelectorService';
+import { defaultScopesServices, ScopesContextProvider } from '../../ScopesContextProvider';
 
 import { getMock } from './mocks';
 
@@ -188,9 +185,11 @@ export async function renderDashboard(
   const dto: DashboardDTO = getDashboardDTO(overrideDashboard, overrideMeta);
   const scene = transformSaveModelToScene(dto);
 
+  const services = defaultScopesServices();
+
   render(
     <KBarProvider>
-      <ScopesContextProvider>
+      <ScopesContextProvider services={services}>
         <AppChrome>
           <scene.Component model={scene} />
         </AppChrome>
@@ -200,7 +199,10 @@ export async function renderDashboard(
 
   await waitFor(() => expect(sceneGraph.getScopesBridge(scene)).toBeDefined());
 
-  return scene;
+  return {
+    scene,
+    ...services,
+  };
 }
 
 export async function resetScenes(spies: jest.SpyInstance[] = []) {
@@ -208,8 +210,5 @@ export async function resetScenes(spies: jest.SpyInstance[] = []) {
   jest.useRealTimers();
   getMock.mockClear();
   spies.forEach((spy) => spy.mockClear());
-  ScopesService.instance?.reset();
-  ScopesSelectorService.instance?.reset();
-  ScopesDashboardsService.instance?.reset();
   cleanup();
 }

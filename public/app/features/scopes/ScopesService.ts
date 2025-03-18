@@ -1,39 +1,96 @@
-import { Scope } from '@grafana/data';
-import { config, ScopesContextValue, ScopesContextValueState } from '@grafana/runtime';
+import { isEqual } from 'lodash';
+import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
+import { map, distinctUntilChanged } from 'rxjs/operators';
 
-import { ScopesServiceBase } from './ScopesServiceBase';
+import { ScopesContextValue, ScopesContextValueState } from '@grafana/runtime';
+
+import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
 import { ScopesSelectorService } from './selector/ScopesSelectorService';
 
-export class ScopesService extends ScopesServiceBase<ScopesContextValueState> implements ScopesContextValue {
-  static #instance: ScopesService | undefined = undefined;
+export interface State {
+  enabled: boolean;
+  readOnly: boolean;
+}
 
-  private constructor() {
-    super({
-      drawerOpened: false,
+/**
+ * The ScopesService is mainly an aggregation of the ScopesSelectorService and ScopesDashboardsService which handle
+ * the scope selection mechanics and then loading and showing related dashboards. We aggregate the state of these
+ * here in single service to serve as a public facade we can later publish through the grafana/runtime to plugins.
+ */
+export class ScopesService implements ScopesContextValue {
+  // Only internal part of the state.
+  private readonly _state: BehaviorSubject<State>;
+
+  // This will contain the combined state that will be public.
+  private readonly _stateObservable: BehaviorSubject<ScopesContextValueState>;
+
+  constructor(
+    private selectorService: ScopesSelectorService,
+    private dashboardsService: ScopesDashboardsService
+  ) {
+    this._state = new BehaviorSubject<State>({
       enabled: false,
-      loading: false,
       readOnly: false,
-      value: [],
     });
+
+    this._stateObservable = new BehaviorSubject({
+      ...this._state.getValue(),
+      value: this.selectorService.state.selectedScopes.map(({ scope }) => scope),
+      loading: this.selectorService.state.loading,
+      drawerOpened: this.dashboardsService.state.drawerOpened,
+    });
+
+    // We combine the latest emissions from this state + selectorService + dashboardsService.
+    combineLatest([
+      this._state.asObservable(),
+      this.getSelectorServiceStateObservable(),
+      this.getDashboardsServiceStateObservable(),
+    ])
+      .pipe(
+        // Map the 3 states into single ScopesContextValueState object
+        map(
+          ([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
+            ...thisState,
+            value: selectorState.selectedScopes,
+            loading: selectorState.loading,
+            drawerOpened: dashboardsState.drawerOpened,
+          })
+        )
+      )
+      // We pass this into behaviourSubject so we get the 1 event buffer and we can access latest value.
+      .subscribe(this._stateObservable);
   }
 
-  public static get instance(): ScopesService | undefined {
-    if (!ScopesService.#instance && config.featureToggles.scopeFilters) {
-      ScopesService.#instance = new ScopesService();
-    }
+  /**
+   * This updates only the internal state of this service.
+   * @param newState
+   */
+  private updateState = (newState: Partial<State>) => {
+    this._state.next({ ...this._state.getValue(), ...newState });
+  };
 
-    return ScopesService.#instance;
+  /**
+   * The state of this service is a combination of the downstream services state plus the state of this service.
+   */
+  public get state(): ScopesContextValueState {
+    // As a side effect this also gives us memoizeOne on this so it should be safe to use in react without unnecessary
+    // rerenders.
+    return this._stateObservable.value;
   }
 
-  public changeScopes = (scopeNames: string[]) => ScopesSelectorService.instance?.changeScopes(scopeNames);
+  public get stateObservable(): Observable<ScopesContextValueState> {
+    return this._stateObservable;
+  }
+
+  public changeScopes = (scopeNames: string[]) => this.selectorService.changeScopes(scopeNames);
 
   public setReadOnly = (readOnly: boolean) => {
     if (this.state.readOnly !== readOnly) {
       this.updateState({ readOnly });
     }
 
-    if (readOnly && ScopesSelectorService.instance?.state.opened) {
-      ScopesSelectorService.instance?.closeAndReset();
+    if (readOnly && this.selectorService.state.opened) {
+      this.selectorService.closeAndReset();
     }
   };
 
@@ -43,21 +100,31 @@ export class ScopesService extends ScopesServiceBase<ScopesContextValueState> im
     }
   };
 
-  public setScopes = (scopes: Scope[]) => this.updateState({ value: scopes });
+  /**
+   * Returns observable that emits when relevant parts of the selectorService state change.
+   * @private
+   */
+  private getSelectorServiceStateObservable() {
+    return this.selectorService.stateObservable.pipe(
+      map((state) => ({
+        // We only need these 2 properties from the selectorService state.
+        // We do mapping here but mainly to make the distinctUntilChanged simpler
+        selectedScopes: state.selectedScopes.map(({ scope }) => scope),
+        loading: state.loading,
+      })),
+      distinctUntilChanged(
+        (prev, curr) => prev.loading === curr.loading && isEqual(prev.selectedScopes, curr.selectedScopes)
+      )
+    );
+  }
 
-  public setLoading = (loading: boolean) => {
-    if (this.state.loading !== loading) {
-      this.updateState({ loading });
-    }
-  };
-
-  public setDrawerOpened = (drawerOpened: boolean) => {
-    if (this.state.drawerOpened !== drawerOpened) {
-      this.updateState({ drawerOpened });
-    }
-  };
-
-  public reset = () => {
-    ScopesService.#instance = undefined;
-  };
+  /**
+   * Returns observable that emits when relevant parts of the dashboardService state change.
+   * @private
+   */
+  private getDashboardsServiceStateObservable() {
+    return this.dashboardsService.stateObservable.pipe(
+      distinctUntilChanged((prev, curr) => prev.drawerOpened === curr.drawerOpened)
+    );
+  }
 }
