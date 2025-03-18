@@ -13,6 +13,7 @@ import { useDispatch } from 'app/types';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
 import { contextSrv } from '../../core/services/context_srv';
+import { ManagerKind } from '../apiserver/types';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
@@ -91,9 +92,9 @@ const BrowseDashboardsPage = memo(() => {
 
   const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
-
-  const showEditTitle = canEditFolders && folderUID && !folder?.repository;
-  const canSelect = (canEditFolders || canEditDashboards) && !folder?.repository;
+  const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
+  const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
+  const canSelect = (canEditFolders || canEditDashboards) && !isProvisionedFolder;
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
       const result = await saveFolder({
