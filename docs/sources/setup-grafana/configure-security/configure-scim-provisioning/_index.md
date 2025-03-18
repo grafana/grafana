@@ -26,10 +26,12 @@ System for Cross-domain Identity Management (SCIM) is an open standard that allo
 Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
 {{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This feature is behind the `enableSCIM` feature toggle.
-You can enable feature toggles through configuration file or environment variables. See configuration [docs](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles) for details.
-{{% /admonition %}}
+You can enable feature toggles through configuration file or environment variables.
+
+For more information, refer to the [feature toggles documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
+{{< /admonition >}}
 
 ## Benefits of SCIM provisioning
 
