@@ -1,12 +1,10 @@
 import { WithAccessControlMetadata } from '@grafana/data';
-import { RepositoryView } from 'app/api/clients/provisioning';
 
 import { ManagerKind } from '../features/apiserver/types';
 
 export interface FolderListItemDTO {
   uid: string;
   title: string;
-  repository?: RepositoryView;
   managedBy?: ManagerKind;
 }
 
@@ -22,7 +20,6 @@ export interface FolderDTO extends WithAccessControlMetadata {
   hasAcl: boolean;
   id: number;
   parentUid?: string;
-  repository?: RepositoryView;
   managedBy?: ManagerKind;
 
   // The API does actually return a full FolderDTO here, but we want to restrict it to just a few properties
