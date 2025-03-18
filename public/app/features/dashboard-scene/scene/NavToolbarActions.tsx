@@ -219,6 +219,7 @@ export function ToolbarActions({ dashboard }: Props) {
                   dashboard.onShowAddLibraryPanelDrawer();
                   DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
                 }}
+                disabled={dashboard.isManaged()}
               />
               <Menu.Item
                 key="add-row"
