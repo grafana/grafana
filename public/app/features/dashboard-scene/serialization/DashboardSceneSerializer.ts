@@ -61,9 +61,9 @@ interface DashboardTrackingInfo {
 }
 
 interface DSReferencesMapping {
-  panels: Map<string, Set<{ refId: string }>>;
-  variables: Set<{ variableName: string }>;
-  annotations: Set<{ annotationName: string }>;
+  panels: Map<string, Set<string>>;
+  variables: Set<string>;
+  annotations: Set<string>;
 }
 
 export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard, DashboardMeta> {
@@ -195,9 +195,9 @@ export class V2DashboardSerializer
   protected elementPanelMap = new Map<string, number>();
   // map of elementId that will contain all the queries, variables and annotations that dont have a ds defined
   protected defaultDsReferencesMap = {
-    panels: new Map<string, Set<{ refId: string }>>(),
-    variables: new Set<{ variableName: string }>(),
-    annotations: new Set<{ annotationName: string }>(),
+    panels: new Map<string, Set<string>>(), // refIds as keys
+    variables: new Set<string>(), // variable names as keys
+    annotations: new Set<string>(), // annotation names as keys
   };
 
   getElementPanelMapping() {
@@ -223,9 +223,9 @@ export class V2DashboardSerializer
   initializeDSReferencesMapping(saveModel: DashboardV2Spec | undefined) {
     // initialize the object
     this.defaultDsReferencesMap = {
-      panels: new Map<string, Set<{ refId: string }>>(),
-      variables: new Set<{ variableName: string }>(),
-      annotations: new Set<{ annotationName: string }>(),
+      panels: new Map<string, Set<string>>(),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
     };
 
     // get all the element keys
@@ -245,7 +245,7 @@ export class V2DashboardSerializer
 
             const panelDsqueries = this.defaultDsReferencesMap.panels.get(elementId)!;
 
-            panelDsqueries.add({ refId: query.spec.refId });
+            panelDsqueries.add(query.spec.refId);
           }
         }
       }

@@ -244,10 +244,10 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
-
+  const panelDsReferences = getPanelDsReferences(vizPanel);
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
-      const queryDatasource = getDefaultDSForQuery(vizPanel, query, queryRunner);
+      const queryDatasource = getPersistedDSForQuery(query, queryRunner, panelDsReferences);
       const dataQuery: DataQueryKind = {
         kind: getDataQueryKind(query),
         spec: omit(query, 'datasource', 'refId', 'hide'),
@@ -594,20 +594,45 @@ function validateRowsLayout(layout: unknown) {
     throw new Error('Layout spec items is not an array');
   }
 }
-function getDefaultDSForQuery(vizPanel: VizPanel, query: SceneDataQuery, queryRunner: SceneQueryRunner) {
-  // from the serializer get the getDefaultDsReferencesForElement
 
-  let elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
+/**
+ * Get a collection of panel queries refIds
+ * the refIds are the ones which did not have a datasource set
+ * @returns a set of panel queries refIds
+ */
+function getPanelDsReferences(vizPanel: VizPanel) {
+  const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
   const scene = getDashboardSceneFor(vizPanel);
-  const elementReferences = scene.getDefaultDsReferencesForElement(elementKey!);
+  const elementMapReferences = scene.serializer.getDSReferencesMapping();
 
-  // check if query.refId exist in elementReferences.queries
-  // if yes, return undefined for the DS
-  // if no return the actual DS from the query or the panel DS
-  if (elementReferences?.queries.hasOwnProperty(query.refId)) {
+  const panelQueries = elementMapReferences.panels.get(elementKey);
+  return panelQueries;
+}
+
+/**
+ * Get the persisted datasource for a query
+ * @param query
+ * @param queryRunner
+ * @param panelDsReferences
+ * @returns
+ */
+function getPersistedDSForQuery(
+  query: SceneDataQuery,
+  queryRunner: SceneQueryRunner,
+  panelDsReferences: Set<string> | undefined
+) {
+  // if query.refId exist in elementReferences.queries
+  // it means this query did not have a datasource set by the user
+  // therefore return undefined
+  const hasMatchingRefId = panelDsReferences?.has(query.refId);
+  if (hasMatchingRefId) {
     console.log('query.refId exist in elementReferences.queries', query.refId);
     return undefined;
   }
+
+  // if query.refId does not exist in elementReferences.queries
+  // it means this query did have a datasource set by the user
+  // therefore return the datasource
 
   return query.datasource || queryRunner?.state?.datasource;
 }
