@@ -68,12 +68,12 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
 
    For assistance, consult the following table for additional guidance about certain fields:
 
-   | Field                                 | Description                                                                                                                                                                                                                                   |
-   | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | **Allow signup**                      | If enabled, you can create new users through the SAML login. If disabled, then only existing Grafana users can log in with SAML.                                                                                                              |
-   | **Auto login**                        | If enabled, Grafana will attempt to automatically log in with SAML skipping the login screen.                                                                                                                                                 |
-   | **Single logout**                     | The SAML single logout feature enables users to log out from all applications associated with the current IdP session established using SAML SSO. For more information, refer to [SAML single logout documentation]](../saml/#single-logout). |
-   | **Identity provider initiated login** | Enables users to log in to Grafana directly from the SAML IdP. For more information, refer to [IdP initiated login documentation](../saml/#idp-initiated-single-sign-on-sso).                                                                 |
+   | Field                                 | Description                                                                                                                                                                                                                                  |
+   | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | **Allow signup**                      | If enabled, you can create new users through the SAML login. If disabled, then only existing Grafana users can log in with SAML.                                                                                                             |
+   | **Auto login**                        | If enabled, Grafana will attempt to automatically log in with SAML skipping the login screen.                                                                                                                                                |
+   | **Single logout**                     | The SAML single logout feature enables users to log out from all applications associated with the current IdP session established using SAML SSO. For more information, refer to [SAML single logout documentation](../saml/#single-logout). |
+   | **Identity provider initiated login** | Enables users to log in to Grafana directly from the SAML IdP. For more information, refer to [IdP initiated login documentation](../saml/#idp-initiated-single-sign-on-sso).                                                                |
 
 1. Click **Next: Sign requests**.
 
