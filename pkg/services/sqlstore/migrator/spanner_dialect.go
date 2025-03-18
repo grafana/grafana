@@ -173,12 +173,15 @@ func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 
 	// Collect all DROP statements.
 	var statements []string
-	for _, table := range tables {
-		// Ignore these tables used by Unified storage.
-		if table.Name == "resource" || table.Name == "resource_blob" || table.Name == "resource_history" {
-			continue
-		}
+	changeStreams, err := s.findChangeStreams(engine)
+	if err != nil {
+		return err
+	}
+	for _, cs := range changeStreams {
+		statements = append(statements, fmt.Sprintf("DROP CHANGE STREAM `%s`", cs))
+	}
 
+	for _, table := range tables {
 		// Indexes must be dropped first, otherwise dropping tables fails.
 		for _, index := range table.Indexes {
 			if !index.IsRegular {
@@ -337,4 +340,25 @@ func SpannerConnectorConfigToClientOptions(connectorConfig spannerdriver.Connect
 
 func (s *SpannerDialect) UnionDistinct() string {
 	return "UNION DISTINCT"
+}
+
+func (s *SpannerDialect) findChangeStreams(engine *xorm.Engine) ([]string, error) {
+	var result []string
+	query := `SELECT c.CHANGE_STREAM_NAME
+	FROM INFORMATION_SCHEMA.CHANGE_STREAMS AS C
+	WHERE C.CHANGE_STREAM_CATALOG=''
+	AND C.CHANGE_STREAM_SCHEMA=''`
+	rows, err := engine.DB().Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		result = append(result, name)
+	}
+	return result, nil
 }
