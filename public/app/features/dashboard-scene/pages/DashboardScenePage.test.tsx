@@ -8,12 +8,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  LocationServiceProvider,
-  config,
-  locationService,
-  setPluginImportUtils,
-} from '@grafana/runtime';
+import { LocationServiceProvider, config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
@@ -56,7 +51,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 const getPluginExtensionsMock = jest.fn().mockReturnValue({ extensions: [] });
 jest.mock('app/features/plugins/extensions/getPluginExtensions', () => ({
   ...jest.requireActual('app/features/plugins/extensions/getPluginExtensions'),
-  createPluginExtensionsGetter: jest.fn().mockReturnValue(getPluginExtensionsMock),
+  createPluginExtensionsGetter: () => getPluginExtensionsMock,
 }));
 
 function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps> } = {}) {
@@ -162,7 +157,7 @@ describe('DashboardScenePage', () => {
     getPluginExtensionsMock.mockReturnValue({ extensions: [] });
     store.delete(DASHBOARD_FROM_LS_KEY);
   });
- 
+
   it('Can render dashboard', async () => {
     setup();
 
