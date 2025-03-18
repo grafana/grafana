@@ -45,6 +45,6 @@ var (
 	// ErrGrpcPluginConnectionIssueBase error returned when a plugin connection issue occurs.
 	// Exposed as a base error to wrap it with plugin connection issue errors.
 	ErrGrpcPluginConnectionIssueBase = errutil.Internal("plugin.connectionIssue",
-		errutil.WithPublicMessage("Unable to communicate with data source. Please try again."),
+		errutil.WithPublicMessage("Data source became unavailable during request. Please try again."),
 		errutil.WithDownstream())
 )
