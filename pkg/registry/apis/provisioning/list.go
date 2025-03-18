@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -46,21 +44,6 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 	ns, ok := request.NamespaceFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing namespace")
-	}
-
-	if s == nil {
-		return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusInternalServerError,
-			Message: "listConnector is null??",
-		}}
-	}
-	if s.lister == nil {
-		return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusInternalServerError,
-			Message: "lister is null??",
-		}}
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
