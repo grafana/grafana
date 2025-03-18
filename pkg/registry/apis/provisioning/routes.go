@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
+// TODO: Move the specific logic to the connector so that we don't have logic all over the place.
 // GetAPIRoutes implements the direct HTTP handlers that bypass k8s
 func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return &builder.APIRoutes{
@@ -26,7 +27,7 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							OperationId: "getResourceStats",                     // used for RTK client
-							Tags:        []string{"Provisioning", "Repository"}, //includes stats for repositores and provisiong in general
+							Tags:        []string{"Provisioning", "Repository"}, // includes stats for repositores and provisiong in general
 							Description: "Get resource stats for this namespace",
 							Parameters: []*spec3.Parameter{
 								{
@@ -72,7 +73,7 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							OperationId: "getFrontendSettings", // used for RTK client
-							//includes stats for repositores and provisiong in general
+							// includes stats for repositores and provisiong in general
 							// This must include "Repository" so that the RTK client will invalidate when things are deleted
 							Tags:        []string{"Provisioning", "Repository"},
 							Description: "Get the frontend settings for this namespace",
@@ -118,6 +119,7 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	}
 }
 
+// TODO: why didn't we create a connector as we did before or have a separate file?
 func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
 	u, ok := authlib.AuthInfoFrom(r.Context())
 	if !ok {
@@ -134,6 +136,8 @@ func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(stats)
 }
 
+// TODO: why didn't we create a connector as we did before or have a separate file?
+// TODO: is there a better way to provide a filtered view of the repositories to the frontend?
 func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	u, ok := authlib.AuthInfoFrom(ctx)
@@ -149,7 +153,8 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	settings := provisioning.RepositoryViewList{
-		Items:         make([]provisioning.RepositoryView, len(all)),
+		Items: make([]provisioning.RepositoryView, len(all)),
+		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
 		LegacyStorage: dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
 	}
 	for i, val := range all {

@@ -70,6 +70,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 					return
 				}
 
+				// TODO: remove this hack and it's not needed needed anymore as we validate OnCreate
 				if name != "new" {
 					repo, err = s.getter.AsRepository(ctx, &cfg)
 					if err != nil {
@@ -105,6 +106,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 	}), nil
 }
 
+// TODO: Move tester to a more suitable location out of the connector.
 type RepositoryTester struct {
 	// Across Grafana (currently used to get a folder client)
 	clientFactory *resources.ClientFactory

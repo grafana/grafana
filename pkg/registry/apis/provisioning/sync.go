@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
+// TODO: should we have merge migrate and sync connectors and have a single repository job connector?
 type syncConnector struct {
 	repoGetter RepoGetter
 	jobs       jobs.JobQueue
