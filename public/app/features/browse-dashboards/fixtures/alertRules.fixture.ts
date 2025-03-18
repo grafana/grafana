@@ -8,8 +8,8 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
-export function getRulerRulesResponse(folderName: string, folderUid: string, seed = 1): RulerRulesConfigDTO {
-  const random = Chance(seed);
+export function getRulerRulesResponse(folderName: string, folderUid: string, rule_uid: string): RulerRulesConfigDTO {
+  const random = Chance(1);
   return {
     [folderName]: [
       {
@@ -43,7 +43,7 @@ export function getRulerRulesResponse(folderName: string, folderUid: string, see
                   },
                 },
               ],
-              uid: random.guid(),
+              uid: rule_uid,
               namespace_uid: folderUid,
               rule_group: 'my-group',
               no_data_state: GrafanaAlertStateDecision.NoData,
@@ -57,8 +57,8 @@ export function getRulerRulesResponse(folderName: string, folderUid: string, see
   };
 }
 
-export function getPrometheusRulesResponse(folderName: string, seed = 1): PromRulesResponse {
-  const random = Chance(seed);
+export function getPrometheusRulesResponse(folderName: string, rule_uid: string): PromRulesResponse {
+  const random = Chance(1);
   return {
     status: 'success',
     data: {
@@ -79,6 +79,7 @@ export function getPrometheusRulesResponse(folderName: string, seed = 1): PromRu
               type: PromRuleType.Alerting,
               lastEvaluation: '0001-01-01T00:00:00Z',
               evaluationTime: 0,
+              uid: rule_uid,
             },
           ],
           interval: 60,

@@ -91,7 +91,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
         <Stack direction="column" gap={1}>
           {pageItems.map((currentRule) => (
             <Card
-              key={currentRule.name}
+              key={Boolean(currentRule.uid) ? currentRule.uid : currentRule.name}
               href={createViewLink('grafana', currentRule, '')}
               className={styles.card}
               data-testid="alert-card-row"
