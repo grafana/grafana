@@ -64,6 +64,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isUpdatingFromInstance?: boolean;
   iam?: IdentityAccessManagement;
   isProvisioned?: boolean;
+  url?: string;
 }
 
 export interface CatalogPluginDetails {
@@ -79,6 +80,11 @@ export interface CatalogPluginDetails {
   iam?: IdentityAccessManagement;
   changelog?: string;
   lastCommitDate?: string;
+  licenseUrl?: string;
+  documentationUrl?: string;
+  raiseAnIssueUrl?: string;
+  signatureType?: PluginSignatureType;
+  signature?: PluginSignatureStatus;
 }
 
 export interface CatalogPluginInfo {
@@ -141,6 +147,9 @@ export type RemotePlugin = {
   versionStatus: string;
   angularDetected?: boolean;
   lastCommitDate?: string;
+  licenseUrl?: string;
+  documentationUrl?: string;
+  raiseAnIssueUrl?: string;
 };
 
 // The available status codes on GCOM are available here:
@@ -214,6 +223,7 @@ export interface Build {
 export interface Version {
   version: string;
   createdAt: string;
+  updatedAt?: string;
   isCompatible: boolean;
   grafanaDependency: string | null;
   angularDetected?: boolean;
@@ -246,6 +256,7 @@ export enum PluginStatus {
   UNINSTALL = 'UNINSTALL',
   UPDATE = 'UPDATE',
   REINSTALL = 'REINSTALL',
+  DOWNGRADE = 'DOWNGRADE',
 }
 
 export enum PluginTabLabels {

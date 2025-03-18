@@ -27,7 +27,6 @@ import {
 } from '@grafana/scenes';
 import { Alert, Badge, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { getSelectedScopes } from 'app/features/scopes';
 
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
@@ -257,7 +256,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       const response = await getMetricNames(
         datasourceUid,
         timeRange,
-        getSelectedScopes(),
+        sceneGraph.getScopesBridge(this)?.getValue() ?? [],
         filters,
         jobsList,
         instancesList,
@@ -578,7 +577,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
                 },
                 ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
               ]}
-              className="explore-metrics-metric-prefix-select"
+              className="metrics-drilldown-metric-prefix-select"
             />
           </Field>
           {!metric && hasOtelResources && (

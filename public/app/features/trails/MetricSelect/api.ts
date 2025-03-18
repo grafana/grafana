@@ -57,7 +57,7 @@ export async function getMetricNamesWithoutScopes(
     ...(limit ? { limit } : {}),
   };
 
-  const response = await getBackendSrv().get<SuggestionsResponse>(url, params, 'explore-metrics-names');
+  const response = await getBackendSrv().get<SuggestionsResponse>(url, params, 'metrics-drilldown-names');
 
   if (limit && response.warnings?.includes(LIMIT_REACHED)) {
     return { ...response, limitReached: true, missingOtelTargets };
@@ -82,7 +82,7 @@ export async function getMetricNamesWithScopes(
     filters,
     '__name__',
     limit,
-    'explore-metrics-names'
+    'metrics-drilldown-names'
   );
 
   if (jobs.length > 0 && instances.length > 0) {

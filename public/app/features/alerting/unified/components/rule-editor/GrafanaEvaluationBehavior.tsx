@@ -10,7 +10,6 @@ import {
   Button,
   Field,
   Icon,
-  IconButton,
   Input,
   Label,
   Modal,
@@ -22,23 +21,22 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import {
   isGrafanaAlertingRuleByType,
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
-  isGrafanaRulerRule,
+  isProvisionedRuleGroup,
 } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { ProvisioningBadge } from '../Provisioning';
-import { EditRuleGroupModal, evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
+import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
@@ -69,7 +67,7 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
 
   return folderGroups
     .map<SelectableValue<string>>((group) => {
-      const isProvisioned = isProvisionedGroup(group);
+      const isProvisioned = isProvisionedRuleGroup(group);
       return {
         label: group.name,
         value: group.name,
@@ -81,10 +79,6 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
     })
 
     .sort(sortByLabel);
-};
-
-const isProvisionedGroup = (group: RulerRuleGroupDTO) => {
-  return group.rules.some((rule) => isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance) === true);
 };
 
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
@@ -160,7 +154,6 @@ export function GrafanaEvaluationBehaviorStep({
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(type);
   const { currentData: rulerNamespace, isLoading: loadingGroups } = useFetchGroupsForFolder(folder?.uid ?? '');
-  const [isEditingGroup, setIsEditingGroup] = useState(false);
 
   const groupOptions = useMemo(() => {
     return rulerNamespace ? namespaceToGroupOptions(rulerNamespace, enableProvisionedGroups) : [];
@@ -169,7 +162,6 @@ export function GrafanaEvaluationBehaviorStep({
   const existingGroup = Object.values(rulerNamespace ?? {})
     .flat()
     .find((ruleGroup) => ruleGroup.name === group);
-  const isNewGroup = !existingGroup && !loadingGroups;
 
   // synchronize the evaluation interval with the group name when it's an existing group
   useEffect(() => {
@@ -177,11 +169,6 @@ export function GrafanaEvaluationBehaviorStep({
       setValue('evaluateEvery', existingGroup.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
     }
   }, [existingGroup, setValue]);
-
-  const closeEditGroupModal = () => setIsEditingGroup(false);
-  const onOpenEditGroupModal = () => setIsEditingGroup(true);
-
-  const editGroupDisabled = loadingGroups || isNewGroup || !folder?.uid || !group;
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
 
@@ -287,38 +274,15 @@ export function GrafanaEvaluationBehaviorStep({
           )}
         </Stack>
 
-        {folder?.uid && isEditingGroup && (
-          <EditRuleGroupModal
-            ruleGroupIdentifier={{
-              dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-              groupName: existingGroup?.name ?? '',
-              namespaceName: folder?.uid ?? '',
-            }}
-            rulerConfig={GRAFANA_RULER_CONFIG}
-            onClose={() => closeEditGroupModal()}
-            intervalEditOnly
-            hideFolder={true}
-          />
-        )}
         {folder?.title && group && (
           <div className={styles.evaluationContainer}>
             <Stack direction="column" gap={0}>
               <div className={styles.marginTop}>
                 <Stack direction="column" gap={1}>
                   {getValues('group') && getValues('evaluateEvery') && (
-                    <Stack direction="row" gap={1} alignItems="center">
-                      <Trans i18nKey="alerting.rule-form.evaluation.group-text" values={{ evaluateEvery }}>
-                        All rules in the selected group are evaluated every {{ evaluateEvery }}.
-                      </Trans>
-                      {!isNewGroup && (
-                        <IconButton
-                          name="pen"
-                          aria-label="Edit"
-                          disabled={editGroupDisabled}
-                          onClick={onOpenEditGroupModal}
-                        />
-                      )}
-                    </Stack>
+                    <Trans i18nKey="alerting.rule-form.evaluation.group-text" values={{ evaluateEvery }}>
+                      All rules in the selected group are evaluated every {{ evaluateEvery }}.
+                    </Trans>
                   )}
                 </Stack>
               </div>

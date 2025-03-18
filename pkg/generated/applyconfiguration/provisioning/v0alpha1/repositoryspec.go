@@ -13,13 +13,10 @@ import (
 type RepositorySpecApplyConfiguration struct {
 	Title       *string                                   `json:"title,omitempty"`
 	Description *string                                   `json:"description,omitempty"`
-	Folder      *string                                   `json:"folder,omitempty"`
-	PreferYAML  *bool                                     `json:"preferYaml,omitempty"`
-	Editing     *EditingOptionsApplyConfiguration         `json:"editing,omitempty"`
+	Workflows   []provisioningv0alpha1.Workflow           `json:"workflows,omitempty"`
+	Sync        *SyncOptionsApplyConfiguration            `json:"sync,omitempty"`
 	Type        *provisioningv0alpha1.RepositoryType      `json:"type,omitempty"`
-	Linting     *bool                                     `json:"linting,omitempty"`
 	Local       *LocalRepositoryConfigApplyConfiguration  `json:"local,omitempty"`
-	S3          *S3RepositoryConfigApplyConfiguration     `json:"s3,omitempty"`
 	GitHub      *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
 }
 
@@ -45,27 +42,21 @@ func (b *RepositorySpecApplyConfiguration) WithDescription(value string) *Reposi
 	return b
 }
 
-// WithFolder sets the Folder field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Folder field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithFolder(value string) *RepositorySpecApplyConfiguration {
-	b.Folder = &value
+// WithWorkflows adds the given value to the Workflows field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Workflows field.
+func (b *RepositorySpecApplyConfiguration) WithWorkflows(values ...provisioningv0alpha1.Workflow) *RepositorySpecApplyConfiguration {
+	for i := range values {
+		b.Workflows = append(b.Workflows, values[i])
+	}
 	return b
 }
 
-// WithPreferYAML sets the PreferYAML field in the declarative configuration to the given value
+// WithSync sets the Sync field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the PreferYAML field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithPreferYAML(value bool) *RepositorySpecApplyConfiguration {
-	b.PreferYAML = &value
-	return b
-}
-
-// WithEditing sets the Editing field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Editing field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithEditing(value *EditingOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
-	b.Editing = value
+// If called multiple times, the Sync field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithSync(value *SyncOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Sync = value
 	return b
 }
 
@@ -77,27 +68,11 @@ func (b *RepositorySpecApplyConfiguration) WithType(value provisioningv0alpha1.R
 	return b
 }
 
-// WithLinting sets the Linting field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Linting field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithLinting(value bool) *RepositorySpecApplyConfiguration {
-	b.Linting = &value
-	return b
-}
-
 // WithLocal sets the Local field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Local field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithLocal(value *LocalRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Local = value
-	return b
-}
-
-// WithS3 sets the S3 field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the S3 field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithS3(value *S3RepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
-	b.S3 = value
 	return b
 }
 

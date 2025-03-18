@@ -24,10 +24,11 @@ export interface TabProps extends HTMLProps<HTMLElement> {
   counter?: number | null;
   /** Extra content, displayed after the tab label and counter */
   suffix?: NavModelItem['tabSuffix'];
+  truncate?: boolean;
 }
 
 export const Tab = React.forwardRef<HTMLElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
+  ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, truncate, ...otherProps }, ref) => {
     const tabsStyles = useStyles2(getStyles);
     const clearStyles = useStyles2(clearButtonStyles);
 
@@ -40,7 +41,12 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       </>
     );
 
-    const linkClass = cx(clearStyles, tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
+    const linkClass = cx(
+      clearStyles,
+      tabsStyles.link,
+      active ? tabsStyles.activeStyle : tabsStyles.notActive,
+      truncate && tabsStyles.linkTruncate
+    );
 
     const commonProps = {
       className: linkClass,
@@ -53,7 +59,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
 
     if (href) {
       return (
-        <div className={tabsStyles.item}>
+        <div className={cx(tabsStyles.item, truncate && tabsStyles.itemTruncate, className)}>
           <a
             {...commonProps}
             href={href}
@@ -68,7 +74,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
     }
 
     return (
-      <div className={tabsStyles.item}>
+      <div className={cx(tabsStyles.item, truncate && tabsStyles.itemTruncate, className)}>
         <button
           {...commonProps}
           type="button"
@@ -92,11 +98,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       whiteSpace: 'nowrap',
-      padding: theme.spacing(0.5),
+      padding: theme.spacing(0, 0.5),
+    }),
+    itemTruncate: css({
+      maxWidth: theme.spacing(40),
     }),
     link: css({
       color: theme.colors.text.secondary,
-      padding: theme.spacing(1, 1.5, 0.5),
+      padding: theme.spacing(1, 1.5, 1),
       borderRadius: theme.shape.radius.default,
 
       display: 'block',
@@ -114,10 +123,16 @@ const getStyles = (theme: GrafanaTheme2) => {
         position: 'absolute',
         left: 0,
         right: 0,
-        height: '4px',
+        height: '2px',
         borderRadius: theme.shape.radius.default,
         bottom: 0,
       },
+    }),
+    linkTruncate: css({
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      wordBreak: 'break-word',
+      overflow: 'hidden',
     }),
     notActive: css({
       'a:hover, &:hover, &:focus': {

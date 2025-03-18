@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { ComponentType } from 'react';
+import { ComponentType, ReactNode } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import {
+  config,
   locationService,
   LocationServiceProvider,
   useChromeHeaderHeight,
@@ -18,12 +19,18 @@ import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
-import { QueryLibraryContextProvider } from '../features/explore/QueryLibrary/QueryLibraryContext';
+
+function ExtraProviders(props: { children: ReactNode; providers: Array<ComponentType<{ children: ReactNode }>> }) {
+  return props.providers.reduce((tree, Provider): ReactNode => {
+    return <Provider>{tree}</Provider>;
+  }, props.children);
+}
 
 type RouterWrapperProps = {
   routes?: JSX.Element | false;
   bodyRenderHooks: ComponentType[];
   pageBanners: ComponentType[];
+  providers: Array<ComponentType<{ children: ReactNode }>>;
 };
 export function RouterWrapper(props: RouterWrapperProps) {
   return (
@@ -31,7 +38,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
           <QueriesDrawerContextProvider>
-            <QueryLibraryContextProvider>
+            <ExtraProviders providers={props.providers}>
               <ModalsContextProvider>
                 <AppChrome>
                   <AngularRoot />
@@ -48,7 +55,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
                 </AppChrome>
                 <ModalRoot />
               </ModalsContextProvider>
-            </QueryLibraryContextProvider>
+            </ExtraProviders>
           </QueriesDrawerContextProvider>
         </CompatRouter>
       </LocationServiceProvider>
@@ -108,7 +115,7 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
             <Router history={locationService.getHistory()}>
               <LocationServiceProvider service={locationService}>
                 <CompatRouter>
-                  <GlobalStyles />
+                  <GlobalStyles hackNoBackdropBlur={config.featureToggles.noBackdropBlur} />
                   <div className={styles.secondAppChrome}>
                     <div className={styles.secondAppToolbar}>
                       <IconButton

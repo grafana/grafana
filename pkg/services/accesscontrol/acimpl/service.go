@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -25,11 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -54,8 +53,8 @@ var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.E
 func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
-	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client, permRegistry permreg.PermissionRegistry,
-	lock *serverlock.ServerLockService, folderService folder.Service,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
+	lock *serverlock.ServerLockService,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -64,14 +63,12 @@ func ProvideService(
 		cache,
 		features,
 		tracer,
-		zclient,
 		db,
 		permRegistry,
 		lock,
-		folderService,
 	)
 
-	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features).RegisterAPIEndpoints()
+	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 		return nil, err
 	}
@@ -90,8 +87,7 @@ func ProvideService(
 func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-	zclient zanzana.Client, db db.DB, permRegistry permreg.PermissionRegistry,
-	lock *serverlock.ServerLockService, folderService folder.Service,
+	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
@@ -101,7 +97,6 @@ func ProvideOSSService(
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
-		reconciler:     dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock, folderService),
 		permRegistry:   permRegistry,
 	}
 
@@ -118,16 +113,7 @@ type Service struct {
 	registrations  accesscontrol.RegistrationList
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
-	reconciler     *dualwrite.ZanzanaReconciler
 	permRegistry   permreg.PermissionRegistry
-}
-
-// Run implements accesscontrol.Service.
-func (s *Service) Run(ctx context.Context) error {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		return s.reconciler.Reconcile(ctx)
-	}
-	return nil
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -180,10 +166,8 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	if err != nil {
 		return nil, err
 	}
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
-	}
 
+	dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
 	return append(permissions, dbPermissions...), nil
 }
 
@@ -202,10 +186,8 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 		OrgID:        orgID,
 		RolePrefixes: OSSRolesPrefixes,
 	})
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
-	}
 
+	dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
 	return append(permissions, dbPermissions...), err
 }
 
@@ -219,10 +201,8 @@ func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgI
 		RolePrefixes: OSSRolesPrefixes,
 	})
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		for teamID, permissions := range teamPermissions {
-			teamPermissions[teamID] = s.actionResolver.ExpandActionSets(permissions)
-		}
+	for teamID, permissions := range teamPermissions {
+		teamPermissions[teamID] = s.actionResolver.ExpandActionSets(permissions)
 	}
 
 	return teamPermissions, err
@@ -251,9 +231,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 		return nil, err
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		permissions = s.actionResolver.ExpandActionSets(permissions)
-	}
+	permissions = s.actionResolver.ExpandActionSets(permissions)
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
@@ -486,13 +464,8 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
-	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.DeclarePluginRoles")
+	_, span := tracer.Start(ctx, "accesscontrol.acimpl.DeclarePluginRoles")
 	defer span.End()
-
-	// Protect behind feature toggle
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
-		return nil
-	}
 
 	acRegs := pluginutils.ToRegistrations(ID, name, regs)
 	for _, r := range acRegs {
@@ -564,11 +537,9 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		return nil, err
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		options.ActionSets = s.actionResolver.ResolveAction(options.Action)
-		options.ActionSets = append(options.ActionSets,
-			s.actionResolver.ResolveActionPrefix(options.ActionPrefix)...)
-	}
+	options.ActionSets = s.actionResolver.ResolveAction(options.Action)
+	options.ActionSets = append(options.ActionSets,
+		s.actionResolver.ResolveActionPrefix(options.ActionPrefix)...)
 
 	// Get managed permissions (DB)
 	usersPermissions, err := s.store.SearchUsersPermissions(ctx, usr.GetOrgID(), options)
@@ -629,7 +600,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		}
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(options.ActionSets) > 0 {
+	if len(options.ActionSets) > 0 {
 		for id, perms := range res {
 			res[id] = s.actionResolver.ExpandActionSetsWithFilter(perms, GetActionFilter(options))
 		}
@@ -680,11 +651,9 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 		}
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		searchOptions.ActionSets = s.actionResolver.ResolveAction(searchOptions.Action)
-		searchOptions.ActionSets = append(searchOptions.ActionSets,
-			s.actionResolver.ResolveActionPrefix(searchOptions.ActionPrefix)...)
-	}
+	searchOptions.ActionSets = s.actionResolver.ResolveAction(searchOptions.Action)
+	searchOptions.ActionSets = append(searchOptions.ActionSets,
+		s.actionResolver.ResolveActionPrefix(searchOptions.ActionPrefix)...)
 
 	// Get permissions from the DB
 	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, searchOptions)
@@ -693,7 +662,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	}
 	permissions = append(permissions, dbPermissions[searchOptions.UserID]...)
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(searchOptions.ActionSets) != 0 {
+	if len(searchOptions.ActionSets) != 0 {
 		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, GetActionFilter(searchOptions))
 	}
 

@@ -66,7 +66,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqSignedInNoAnonymous := middleware.ReqSignedInNoAnonymous
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqOrgAdmin := middleware.ReqOrgAdmin
-	reqRoleForAppRoute := middleware.RoleAppPluginAuth(hs.AccessControl, hs.pluginStore, hs.Features, hs.log)
+	reqRoleForAppRoute := middleware.RoleAppPluginAuth(hs.AccessControl, hs.pluginStore, hs.log)
 	reqSnapshotPublicModeOrCreate := middleware.SnapshotPublicModeOrCreate(hs.Cfg, hs.AccessControl)
 	reqSnapshotPublicModeOrDelete := middleware.SnapshotPublicModeOrDelete(hs.Cfg, hs.AccessControl)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
@@ -116,6 +116,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/orgs/edit/:id", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
+	r.Get("/admin/provisioning", reqOrgAdmin, hs.Index)
 
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		r.Get("/admin/migrate-to-cloud", authorize(cloudmigration.MigrationAssistantAccess), hs.Index)
@@ -156,6 +157,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboard/script/*", reqSignedIn, hs.Index)
 	r.Get("/dashboard/new", reqSignedIn, hs.Index)
 	r.Get("/dashboard-solo/snapshot/*", hs.Index)
+	r.Get("/dashboard/provisioning/*", reqSignedIn, hs.Index)
 	r.Get("/d-solo/:uid/:slug", reqSignedIn, hs.Index)
 	r.Get("/d-solo/:uid", reqSignedIn, hs.Index)
 	r.Get("/dashboard-solo/script/*", reqSignedIn, hs.Index)
@@ -183,6 +185,7 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 
 	r.Get("/explore", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
+	r.Get("/drilldown", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
 	r.Get("/playlists/*", reqSignedIn, hs.Index)
@@ -424,7 +427,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/plugin-proxy/:pluginId/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.ProxyPluginRequest)
 		apiRoute.Any("/plugin-proxy/:pluginId", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.ProxyPluginRequest)
 
-		if hs.Cfg.PluginAdminEnabled && (hs.Features.IsEnabledGlobally(featuremgmt.FlagManagedPluginsInstall) || !hs.Cfg.PluginAdminExternalManageEnabled) {
+		if hs.Cfg.PluginAdminEnabled {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 				pluginRoute.Post("/:pluginId/install", authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(pluginaccesscontrol.ActionInstall)), routing.Wrap(hs.InstallPlugin))
 				pluginRoute.Post("/:pluginId/uninstall", authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(pluginaccesscontrol.ActionInstall)), routing.Wrap(hs.UninstallPlugin))

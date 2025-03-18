@@ -28,6 +28,7 @@ const aubergineTheme: NewThemeOptions = {
       canvas: '#2E1F2D',
       primary: '#3C2136',
       secondary: '#4A2D47',
+      elevated: '#4A2D47',
     },
     action: {
       hover: '#6A3C4B',

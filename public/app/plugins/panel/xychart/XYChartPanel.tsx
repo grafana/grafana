@@ -14,8 +14,9 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
-import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
+import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
+
+import { getDataLinks } from '../status-history/utils';
 
 import { XYChartTooltip } from './XYChartTooltip';
 import { Options } from './panelcfg.gen';
@@ -113,7 +114,11 @@ export const XYChartPanel2 = (props: Props2) => {
             <TooltipPlugin2
               config={builder!}
               hoverMode={TooltipHoverMode.xyOne}
-              render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
+              getDataLinks={(seriesIdx, dataIdx) => {
+                const xySeries = series[seriesIdx - 1];
+                return getDataLinks(xySeries.y.field, dataIdx);
+              }}
+              render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                 return (
                   <XYChartTooltip
                     data={props.data.series}
@@ -123,6 +128,7 @@ export const XYChartPanel2 = (props: Props2) => {
                     isPinned={isPinned}
                     seriesIdx={seriesIdx!}
                     replaceVariables={props.replaceVariables}
+                    dataLinks={dataLinks}
                   />
                 );
               }}

@@ -145,5 +145,7 @@ func ProvideRegistration(
 
 	nsSync := sync.ProvideNamespaceSync(cfg)
 	authnSvc.RegisterPostAuthHook(nsSync.SyncNamespace, 150)
+	authnSvc.RegisterPostAuthHook(sync.AccessClaimsHook, 160)
+
 	return Registration{}
 }

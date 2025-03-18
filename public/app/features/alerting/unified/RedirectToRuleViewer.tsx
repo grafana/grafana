@@ -5,7 +5,7 @@ import { useLocation } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, isFetchError } from '@grafana/runtime';
-import { Alert, Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, Card, Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { AlertLabels } from './components/AlertLabels';
 import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
@@ -13,6 +13,7 @@ import { useCloudCombinedRulesMatching } from './hooks/useCombinedRule';
 import { getRulesSourceByName } from './utils/datasource';
 import { createViewLink } from './utils/misc';
 import { unescapePathSeparators } from './utils/rule-id';
+import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 const pageTitle = 'Find rule';
 const subUrl = config.appSubUrl;
@@ -153,4 +154,4 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export default withErrorBoundary(RedirectToRuleViewer, { style: 'page' });
+export default withPageErrorBoundary(RedirectToRuleViewer);

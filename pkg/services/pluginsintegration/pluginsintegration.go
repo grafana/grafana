@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/renderer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -107,8 +108,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	licensing.ProvideLicensing,
 	wire.Bind(new(plugins.Licensing), new(*licensing.Service)),
-	wire.Bind(new(sources.Registry), new(*sources.Service)),
-	sources.ProvideService,
 	pluginSettings.ProvideService,
 	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
 	filestore.ProvideService,
@@ -146,6 +145,10 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.Client), new(*backend.MiddlewareHandler)),
 	managedplugins.NewNoop,
 	wire.Bind(new(managedplugins.Manager), new(*managedplugins.Noop)),
+	provisionedplugins.NewNoop,
+	wire.Bind(new(provisionedplugins.Manager), new(*provisionedplugins.Noop)),
+	sources.ProvideService,
+	wire.Bind(new(sources.Registry), new(*sources.Service)),
 )
 
 func ProvideClientWithMiddlewares(

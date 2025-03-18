@@ -131,17 +131,16 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     const mode = options.mode ?? CalculateFieldMode.ReduceRow;
 
     const asTimeSeries = options.timeSeries !== false;
-    const isBinaryFixed = mode === CalculateFieldMode.BinaryOperation && options.binary?.right.fixed != null;
+
+    const right = options.binary?.right;
+    const rightVal = typeof right === 'string' ? right : typeof right === 'object' ? right.fixed : undefined;
+    const isBinaryFixed = mode === CalculateFieldMode.BinaryOperation && !Number.isNaN(Number(rightVal));
 
     const needsSingleFrame = asTimeSeries && !isBinaryFixed;
 
     const operator = needsSingleFrame
       ? ensureColumnsTransformer.operator(null, ctx)
       : noopTransformer.operator({}, ctx);
-
-    if (options.alias != null) {
-      options.alias = ctx.interpolate(options.alias);
-    }
 
     return outerSource.pipe(
       operator,
@@ -186,7 +185,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                 }
                 // For each field of type match, apply operator
                 frame.fields.map((field, index) => {
-                  if (!options.replaceFields) {
+                  if (!options.replaceFields && !newFields.includes(field)) {
                     newFields.push(field);
                   }
                   if (field.type === fieldType) {
@@ -211,6 +210,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                       name: `${field.name} ${options.binary?.operator ?? ''} ${options.binary?.right.matcher?.options ?? options.binary?.right.fixed}`,
                       values: arr,
                     };
+                    delete newField.state;
                     newFields.push(newField);
                     didAddNewFields = true;
                   }
@@ -573,7 +573,8 @@ function findFieldValuesWithNameOrConstant(
   }
 
   if (value.matcher && value.matcher.id === FieldMatcherID.byName) {
-    const name = ctx.interpolate(value.matcher.options ?? '');
+    const name = value.matcher.options ?? '';
+
     for (const f of frame.fields) {
       if (name === getFieldDisplayName(f, frame, allFrames)) {
         if (f.type === FieldType.boolean) {
@@ -584,7 +585,7 @@ function findFieldValuesWithNameOrConstant(
     }
   }
 
-  const v = parseFloat(value.fixed ?? ctx.interpolate(value.matcher?.options ?? ''));
+  const v = parseFloat(value.fixed ?? value.matcher?.options ?? '');
   if (!isNaN(v)) {
     return new Array(frame.length).fill(v);
   }

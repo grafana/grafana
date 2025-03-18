@@ -32,8 +32,15 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   ) {
     return;
   }
-  // if there is no dep env, does not need to be migrated
-  if (!deploymentEnv) {
+
+  // check that there is a deployment environment variable value to migrate
+  // in some cases the deployment environment may not present
+  // but due to this change it is now always present and the value is undefined
+  // https://github.com/grafana/scenes/pull/1033
+  if (
+    !deploymentEnv ||
+    (Array.isArray(deploymentEnv) && deploymentEnv.length > 0 && deploymentEnv[0] === 'undefined')
+  ) {
     return;
   }
 

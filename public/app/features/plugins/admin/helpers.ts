@@ -2,7 +2,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 
 import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
-import configCore, { Settings } from 'app/core/config';
+import { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
@@ -63,7 +63,7 @@ export function mergeLocalsAndRemotes({
       const catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
 
       // for managed instances, check if plugin is installed, but not yet present in the current instance
-      if (configCore.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled) {
+      if (config.pluginAdminExternalManageEnabled) {
         catalogPlugin.isFullyInstalled = catalogPlugin.isCore
           ? true
           : (instancesMap.has(remotePlugin.slug) || provisionedSet.has(remotePlugin.slug)) && catalogPlugin.isInstalled;
@@ -121,6 +121,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     signatureType,
     versionSignatureType,
     versionSignedByOrgName,
+    url,
   } = plugin;
 
   const isDisabled = !!error || isDisabledSecretsPlugin(typeCode);
@@ -158,6 +159,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     angularDetected,
     isFullyInstalled: isDisabled,
     latestVersion: plugin.version,
+    url,
   };
 }
 
@@ -271,6 +273,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isFullyInstalled: Boolean(local) || isDisabled,
     iam: local?.iam,
     latestVersion: local?.latestVersion || remote?.version || '',
+    url: remote?.url || '',
   };
 }
 
@@ -476,4 +479,16 @@ export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
   }
 
   return false;
+}
+
+export function isNonAngularVersion(version?: Version) {
+  if (!version) {
+    return false;
+  }
+
+  return version.angularDetected === false;
+}
+
+export function isDisabledAngularPlugin(plugin: CatalogPlugin) {
+  return plugin.isDisabled && plugin.error === PluginErrorCode.angular;
 }

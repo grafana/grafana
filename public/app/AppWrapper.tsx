@@ -1,5 +1,5 @@
 import { Action, KBarProvider } from 'kbar';
-import { Component, ComponentType, Fragment } from 'react';
+import { Component, ComponentType, Fragment, ReactNode } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
 import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
@@ -24,6 +24,7 @@ import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
+import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
 import { ExperimentalSplitPaneRouterWrapper, RouterWrapper } from './routes/RoutesWrapper';
 
 interface AppWrapperProps {
@@ -37,6 +38,11 @@ interface AppWrapperState {
 /** Used by enterprise */
 let bodyRenderHooks: ComponentType[] = [];
 let pageBanners: ComponentType[] = [];
+const enterpriseProviders: Array<ComponentType<{ children: ReactNode }>> = [];
+
+export function addEnterpriseProviders(provider: ComponentType<{ children: ReactNode }>) {
+  enterpriseProviders.push(provider);
+}
 
 export function addBodyRenderHook(fn: ComponentType) {
   bodyRenderHooks.push(fn);
@@ -100,6 +106,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
       routes: ready && this.renderRoutes(),
       pageBanners,
       bodyRenderHooks,
+      providers: enterpriseProviders,
     };
 
     const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
@@ -114,20 +121,22 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   actions={[]}
                   options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
                 >
-                  <GlobalStyles />
+                  <GlobalStyles hackNoBackdropBlur={config.featureToggles.noBackdropBlur} />
                   <MaybeTimeRangeProvider>
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
-                      <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <div className="grafana-app">
-                          {config.featureToggles.appSidecar ? (
-                            <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                          ) : (
-                            <RouterWrapper {...routerWrapperProps} />
-                          )}
-                          <LiveConnectionWarning />
-                          <PortalContainer />
-                        </div>
-                      </ExtensionRegistriesProvider>
+                      <ScopesContextProvider>
+                        <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
+                          <div className="grafana-app">
+                            {config.featureToggles.appSidecar ? (
+                              <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                            ) : (
+                              <RouterWrapper {...routerWrapperProps} />
+                            )}
+                            <LiveConnectionWarning />
+                            <PortalContainer />
+                          </div>
+                        </ExtensionRegistriesProvider>
+                      </ScopesContextProvider>
                     </SidecarContext_EXPERIMENTAL.Provider>
                   </MaybeTimeRangeProvider>
                 </KBarProvider>

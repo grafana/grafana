@@ -1,6 +1,8 @@
 import { PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
 
+import { getPluginDetails } from '../admin/api';
 import { getPluginSettings } from '../pluginSettings';
 
 type SandboxEligibilityCheckParams = {
@@ -61,18 +63,28 @@ export async function isPluginFrontendSandboxEligible({
     return false;
   }
 
-  try {
-    // don't run grafana-signed plugins in sandbox
-    const pluginMeta = await getPluginSettings(pluginId, { showErrorAlert: false });
-    if (pluginMeta.signatureType === PluginSignatureType.grafana || pluginMeta.signature === 'internal') {
-      return false;
-    }
-  } catch (e) {
-    // this can fail if we are trying to fetch settings of a non-installed plugin
+  if (!contextSrv.isSignedIn) {
     return false;
   }
 
-  return true;
+  // grafana signature and internal plugins are not allowed in the sandbox
+  return isPluginSignatureEligibleForSandbox({ pluginId });
+}
+
+async function isPluginSignatureEligibleForSandbox({ pluginId }: SandboxEligibilityCheckParams): Promise<boolean> {
+  try {
+    // this can fail if we are trying to fetch settings of a non-installed plugin
+    const pluginMeta = await getPluginSettings(pluginId, { showErrorAlert: false });
+    return pluginMeta.signatureType !== PluginSignatureType.grafana && pluginMeta.signature !== 'internal';
+  } catch (e) {
+    try {
+      //this can fail if gcom is not accesible
+      const details = await getPluginDetails(pluginId);
+      return details.signatureType !== PluginSignatureType.grafana && details.signature !== 'internal';
+    } catch (e) {
+      return false;
+    }
+  }
 }
 
 /**

@@ -13,6 +13,7 @@ import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { HistoryEntry } from '../types';
 
 import { HistoryWrapper } from './HistoryWrapper';
+import { logUnifiedHistoryDrawerInteractionEvent } from './eventsTracking';
 
 export function HistoryContainer() {
   const [showHistoryDrawer, onToggleShowHistoryDrawer] = useToggle(false);
@@ -50,7 +51,10 @@ export function HistoryContainer() {
   return (
     <>
       <ToolbarButton
-        onClick={onToggleShowHistoryDrawer}
+        onClick={() => {
+          onToggleShowHistoryDrawer();
+          logUnifiedHistoryDrawerInteractionEvent({ type: 'open' });
+        }}
         iconOnly
         icon="history"
         aria-label={t('nav.history-container.drawer-tittle', 'History')}
@@ -59,8 +63,11 @@ export function HistoryContainer() {
       {showHistoryDrawer && (
         <Drawer
           title={t('nav.history-container.drawer-tittle', 'History')}
-          onClose={onToggleShowHistoryDrawer}
-          size="md"
+          onClose={() => {
+            onToggleShowHistoryDrawer();
+            logUnifiedHistoryDrawerInteractionEvent({ type: 'close' });
+          }}
+          size="sm"
         >
           <HistoryWrapper onClose={() => onToggleShowHistoryDrawer(false)} />
         </Drawer>

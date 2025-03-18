@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 func TestProvisioningServiceImpl(t *testing.T) {
@@ -159,7 +160,7 @@ func setup(t *testing.T) *serviceTestStruct {
 	searchStub := searchV2.NewStubSearchService()
 
 	service, err := newProvisioningServiceImpl(
-		func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service) (dashboards.DashboardProvisioner, error) {
+		func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service, dualwrite.Service) (dashboards.DashboardProvisioner, error) {
 			serviceTest.dashboardProvisionerInstantiations++
 			return serviceTest.mock, nil
 		},

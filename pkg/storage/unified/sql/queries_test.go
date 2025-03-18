@@ -136,6 +136,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "single path",
 					Data: &sqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
+						},
 					},
 				},
 			},
@@ -164,6 +168,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "single path",
 					Data: &sqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
+						},
 					},
 				},
 			},
@@ -243,6 +251,21 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						},
 						Trash:   true,
 						StartRV: 123456,
+					},
+				},
+			},
+
+			sqlResourceHistoryPrune: {
+				{
+					Name: "simple",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+						},
+						HistoryLimit: 100,
 					},
 				},
 			},
@@ -382,6 +405,19 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						Namespace:   "ns",
 						Group:       "ggg",
 						Resource:    "rrr",
+					},
+				},
+			},
+			sqlResourceInsertFromHistory: {
+				{
+					Name: "update",
+					Data: &sqlResourceInsertFromHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "default",
+							Group:     "dashboard.grafana.app",
+							Resource:  "dashboards",
+						},
 					},
 				},
 			},

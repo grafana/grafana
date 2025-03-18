@@ -20,6 +20,18 @@ import (
 //       403: ForbiddenError
 //       404: description: Not found.
 
+// swagger:route Delete /ruler/grafana/api/v1/trash/rule/guid/{RuleGUID} ruler RouteDeleteRuleFromTrashByGUID
+//
+// Permanently delete a rule from trash by GUID
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: Ack
+//       403: ForbiddenError
+//       404: description: Not found.
+
 // swagger:route Get /ruler/grafana/api/v1/rule/{RuleUID}/versions ruler RouteGetRuleVersionsByUID
 //
 // Get rule versions by UID
@@ -167,6 +179,7 @@ import (
 //     Responses:
 //       202: RuleGroupConfigResponse
 //       403: ForbiddenError
+//		 404: NotFound
 
 // swagger:route Get /ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
@@ -234,6 +247,12 @@ type PathGetRulesParams struct {
 type PathGetRuleByUIDParams struct {
 	// in: path
 	RuleUID string
+}
+
+// swagger:parameters RouteDeleteRuleFromTrashByGUID
+type PathDeleteRuleFromTrashByGUIDParams struct {
+	// in: path
+	RuleGUID string
 }
 
 // swagger:model
@@ -532,6 +551,10 @@ type Record struct {
 	// required: true
 	// example: A
 	From string `json:"from" yaml:"from"`
+	// Which data source should be used to write the output of the recording rule, specified by UID.
+	// required: false
+	// example: my-prom
+	TargetDatasourceUID string `json:"target_datasource_uid,omitempty" yaml:"target_datasource_uid,omitempty"`
 }
 
 // swagger:model
@@ -567,6 +590,7 @@ type GettableGrafanaRule struct {
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
 	Record               *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
 	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	GUID                 string                         `json:"guid" yaml:"guid"`
 }
 
 // UserInfo represents user-related information, including a unique identifier and a name.

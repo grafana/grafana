@@ -7,6 +7,7 @@ import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types/icon';
+import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -180,7 +181,7 @@ export const MenuItem = React.memo(
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (
               <div className={styles.shortcut}>
-                <Icon name="keyboard" title="keyboard shortcut" />
+                <Icon name="keyboard" title={t('grafana-ui.menu-item.keyboard-shortcut-label', 'Keyboard shortcut')} />
                 {shortcut}
               </div>
             )}

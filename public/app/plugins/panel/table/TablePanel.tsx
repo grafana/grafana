@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
-import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
+import { TableSortByFieldState } from '@grafana/ui/internal';
 
 import { getActions } from '../../../features/actions/utils';
 
@@ -152,10 +152,6 @@ const getCellActions = (
   rowIndex: number,
   replaceVariables: InterpolateFunction | undefined
 ) => {
-  if (!config.featureToggles?.vizActions) {
-    return [];
-  }
-
   const actions: Array<ActionModel<Field>> = [];
   const actionLookup = new Set<string>();
 
