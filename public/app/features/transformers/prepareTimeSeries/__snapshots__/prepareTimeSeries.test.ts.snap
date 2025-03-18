@@ -140,3 +140,87 @@ exports[`Prepare time series transformer should handle long to wide 1`] = `
   },
 ]
 `;
+
+exports[`Prepare time series transformer should transform to flat time series 1`] = `
+[
+  {
+    "fields": [
+      {
+        "config": {},
+        "labels": undefined,
+        "name": "time",
+        "type": "time",
+        "values": [
+          1,
+          1,
+          2,
+          2,
+          3,
+          3,
+        ],
+      },
+      {
+        "config": {},
+        "labels": undefined,
+        "name": "foo",
+        "type": "string",
+        "values": [
+          "bar",
+          "bar",
+          "bar",
+          "bar",
+          "bar",
+          "bar",
+        ],
+      },
+      {
+        "config": {},
+        "labels": undefined,
+        "name": "sensor",
+        "type": "string",
+        "values": [
+          "a",
+          "b",
+          "a",
+          "b",
+          "a",
+          "b",
+        ],
+      },
+      {
+        "config": {},
+        "labels": undefined,
+        "name": "Variable",
+        "type": "string",
+        "values": [
+          "speed",
+          "speed",
+          "speed",
+          "speed",
+          "speed",
+          "speed",
+        ],
+      },
+      {
+        "config": {},
+        "labels": undefined,
+        "name": "Value",
+        "type": "number",
+        "values": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+        ],
+      },
+    ],
+    "meta": {
+      "type": "timeseries-long",
+    },
+    "name": undefined,
+    "refId": "A",
+  },
+]
+`;

@@ -413,6 +413,26 @@ describe('Prepare time series transformer', () => {
       ])
     ).toMatchSnapshot(); // ???? expecting a single frame!!!!
   });
+
+  it('should transform to flat time series', () => {
+    expect(
+      prepareTimeSeriesTransformer.transformer(
+        {
+          format: timeSeriesFormat.TimeSeriesFlat,
+        },
+        ctx
+      )([
+        toDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 1, 2, 2, 3, 3] },
+            { name: 'speed', type: FieldType.number, labels: { foo: 'bar' }, values: [4, 5, 6, 7, 8, 9] },
+            { name: 'sensor', type: FieldType.string, values: ['a', 'b', 'a', 'b', 'a', 'b'] },
+          ],
+        }),
+      ])
+    ).toMatchSnapshot();
+  });
 });
 
 function toEquableDataFrame(source: DataFrame): DataFrame {

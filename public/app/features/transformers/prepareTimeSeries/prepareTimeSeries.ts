@@ -143,6 +143,9 @@ export function toTimeSeriesMulti(data: DataFrame[]): DataFrame[] {
   return result;
 }
 
+const VARIABLE_HEADER = 'Variable';
+const VALUE_HEADER = 'Value';
+
 export function toTimeSeriesLong(data: DataFrame[], flatten = false): DataFrame[] {
   if (!Array.isArray(data) || data.length === 0) {
     return data;
@@ -256,11 +259,10 @@ export function toTimeSeriesLong(data: DataFrame[], flatten = false): DataFrame[
         longFrame.addField({ name: name, type: FieldType.string });
       }
 
-      // repeat a row for each of these with columns of variable and value
       if (uniqueValueNames.length > 0) {
-        longFrame.addField({ name: 'Variable', type: FieldType.string });
+        longFrame.addField({ name: VARIABLE_HEADER, type: FieldType.string });
         longFrame.addField({
-          name: 'Value',
+          name: VALUE_HEADER,
           type: allSameType
             ? ((uniqueValueNamesToType[uniqueValueNames[0]] as FieldType) ?? FieldType.string)
             : FieldType.string,
@@ -275,8 +277,13 @@ export function toTimeSeriesLong(data: DataFrame[], flatten = false): DataFrame[
 
           for (const wideFieldIndex of labelKeyToWideIndices[labelKeys]) {
             const wideField = frame.fields[wideFieldIndex];
-            rowValues['Variable'] = wideField.name;
-            rowValues['Value'] = wideField.values[wideRowIndex];
+            rowValues[VARIABLE_HEADER] = wideField.name;
+            rowValues[VALUE_HEADER] = wideField.values[wideRowIndex];
+
+            for (const labelKey in wideField.labels) {
+              rowValues[labelKey] = wideField.labels[labelKey];
+            }
+
             for (const name of uniqueFactorNamesWithWideIndices) {
               rowValues[name] = frame.fields[uniqueFactorNamesToWideIndex[name]].values[wideRowIndex];
             }
