@@ -53,12 +53,12 @@ export const dateTimeParse: DateTimeParser<DateTimeOptionsWhenParsing> = (value,
 };
 
 const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateTime => {
+  const parsed = parse(value, options?.roundUp, options?.timeZone, options?.fiscalYearStartMonth);
   if (value.indexOf('now') !== -1) {
     if (!isValid(value)) {
       return dateTime();
     }
 
-    const parsed = parse(value, options?.roundUp, options?.timeZone, options?.fiscalYearStartMonth);
     return parsed || dateTime();
   }
 
@@ -68,6 +68,12 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
 
   if (zone && zone.name) {
     return dateTimeForTimeZone(zone.name, value, format);
+  }
+
+  if (format === systemDateFormats.fullDate) {
+    // We use parsed here to handle case when `use_browser_locale` is true
+    // We need to pass the parsed value to handle case when value is an ISO 8601 date string
+    return dateTime(parsed, format);
   }
 
   switch (lowerCase(timeZone)) {
