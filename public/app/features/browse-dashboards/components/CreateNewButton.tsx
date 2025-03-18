@@ -105,7 +105,7 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
           onClose={() => setShowNewFolderDrawer(false)}
           size="sm"
         >
-          {parentFolder?.repository || isProvisionedInstance ? (
+          {parentFolder?.managedBy || isProvisionedInstance ? (
             <NewProvisionedFolderForm
               onSubmit={() => setShowNewFolderDrawer(false)}
               onCancel={() => setShowNewFolderDrawer(false)}

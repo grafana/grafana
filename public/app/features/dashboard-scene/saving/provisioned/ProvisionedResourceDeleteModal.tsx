@@ -53,7 +53,3 @@ export function ProvisionedResourceDeleteModal({ onDismiss, resource }: Props) {
 function isDashboard(resource: DashboardScene | FolderDataType): resource is DashboardScene {
   return resource instanceof DashboardScene;
 }
-
-export function isFolder(resource: DashboardScene | FolderDataType): resource is FolderDataType {
-  return !isDashboard(resource);
-}
