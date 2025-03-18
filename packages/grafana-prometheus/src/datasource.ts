@@ -702,7 +702,7 @@ export class PrometheusDatasource
     }
 
     const requestId = `[${this.uid}][${options.key}]`;
-    if (config.featureToggles.promQLScope) {
+    if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
       return (
         await this.languageProvider.fetchSuggestions(
           options.timeRange,
