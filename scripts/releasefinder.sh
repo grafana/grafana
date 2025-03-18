@@ -15,6 +15,9 @@ if ! git cat-file -t "$COMMIT_HASH" >/dev/null 2>&1; then
     exit 1
 fi
 
+echo "Fetching latest remote information..."
+git fetch --all --tags --prune
+
 echo "Finding releases for commit $COMMIT_HASH..."
 echo
 
@@ -28,9 +31,9 @@ for tag in $(git tag); do
     
     # Check if the commit is in this tag
     if git merge-base --is-ancestor "$COMMIT_HASH" "$tag" 2>/dev/null; then
-        # Check if there's a matching release branch
+        # Check if there's a matching release branch in origin
         release_branch="release-${tag#v}"
-        if git show-ref --verify --quiet "refs/heads/$release_branch" 2>/dev/null; then
+        if git show-ref --verify --quiet "refs/remotes/origin/$release_branch" 2>/dev/null; then
             echo "Found in release:"
             echo "  Tag:   $tag"
             echo "  Branch: $release_branch"
