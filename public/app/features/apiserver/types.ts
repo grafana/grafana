@@ -37,11 +37,7 @@ export const AnnoKeyCreatedBy = 'grafana.app/createdBy';
 export const AnnoKeyUpdatedTimestamp = 'grafana.app/updatedTimestamp';
 export const AnnoKeyUpdatedBy = 'grafana.app/updatedBy';
 export const AnnoKeyFolder = 'grafana.app/folder';
-export const AnnoKeyFolderTitle = 'grafana.app/folderTitle';
-export const AnnoKeyFolderId = 'grafana.app/folderId';
-export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 export const AnnoKeyMessage = 'grafana.app/message';
-export const AnnoKeySlug = 'grafana.app/slug';
 
 export enum ManagerKind {
   Repo = 'repo',
@@ -56,11 +52,24 @@ export const AnnoKeySourcePath = 'grafana.app/sourcePath';
 export const AnnoKeySourceChecksum = 'grafana.app/sourceChecksum';
 export const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
 
+// for auditing... when saving from the UI, mark which version saved it from where
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
-export const AnnoKeyDashboardNotFound = 'grafana.app/dashboard-not-found';
+
+/** @deprecated NOT A REAL annotation -- this is just a shim */
+export const AnnoKeySlug = 'grafana.app/slug';
+/** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyDashboardIsSnapshot = 'grafana.app/dashboard-is-snapshot';
+/** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyDashboardSnapshotOriginalUrl = 'grafana.app/dashboard-snapshot-original-url';
+/** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
+
+/** @deprecated NOT A REAL annotation -- this is just a shim */
+export const AnnoKeyFolderTitle = 'grafana.app/folderTitle';
+/** @deprecated NOT A REAL annotation -- this is just a shim */
+export const AnnoKeyFolderId = 'grafana.app/folderId';
+/** @deprecated NOT A REAL annotation -- this is just a shim */
+export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
@@ -71,7 +80,6 @@ type GrafanaAnnotations = {
   [AnnoKeyUpdatedTimestamp]?: string;
   [AnnoKeyUpdatedBy]?: string;
   [AnnoKeyFolder]?: string;
-  [AnnoKeySlug]?: string;
 
   [AnnoKeyManagerKind]?: ManagerKind;
   [AnnoKeyManagerIdentity]?: string;
@@ -83,6 +91,8 @@ type GrafanaAnnotations = {
 // Annotations provided by the front-end client
 type GrafanaClientAnnotations = {
   [AnnoKeyMessage]?: string;
+
+  [AnnoKeySlug]?: string;
   [AnnoKeyFolderTitle]?: string;
   [AnnoKeyFolderUrl]?: string;
   [AnnoKeyFolderId]?: number;
