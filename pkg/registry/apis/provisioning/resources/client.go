@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -111,11 +111,20 @@ func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.
 			Group:    gvr.Group,
 			Resource: gvr.Resource,
 		})
+		if err != nil {
+			return nil, schema.GroupVersionKind{}, err
+		}
+
+		info, ok := c.byResource[gvr]
+		if ok && info.client != nil {
+			c.byResource[versionless] = info
+			return info.client, info.gvk, nil
+		}
 	} else {
 		gvk, err = c.discovery.GetKindForResource(gvr)
-	}
-	if err != nil {
-		return nil, schema.GroupVersionKind{}, err
+		if err != nil {
+			return nil, schema.GroupVersionKind{}, err
+		}
 	}
 	info = &clientInfo{
 		gvk:    gvk,

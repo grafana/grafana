@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
@@ -70,16 +71,20 @@ func (d *DiscoveryClientImpl) GetPreferredVesion(gr schema.GroupResource) (schem
 	if err != nil {
 		return schema.GroupVersionResource{}, schema.GroupVersionKind{}, err
 	}
-	for _, gv := range apiList {
-		for _, resource := range gv.APIResources {
-			if resource.Group == gr.Group && resource.Name == gr.Resource {
+	for _, apis := range apiList {
+		if !strings.HasPrefix(apis.GroupVersion, gr.Group) {
+			continue
+		}
+		gv := strings.Split(apis.GroupVersion, "/")
+		for _, resource := range apis.APIResources {
+			if resource.Name == gr.Resource {
 				return schema.GroupVersionResource{
-						Group:    resource.Group,
-						Version:  resource.Version,
+						Group:    gv[0],
+						Version:  gv[1],
 						Resource: resource.Name,
 					}, schema.GroupVersionKind{
-						Group:   resource.Group,
-						Version: resource.Version,
+						Group:   gv[0],
+						Version: gv[1],
 						Kind:    resource.Kind,
 					}, nil
 			}
