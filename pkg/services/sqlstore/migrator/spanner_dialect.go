@@ -15,6 +15,7 @@ import (
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
 	"github.com/grafana/dskit/concurrency"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -173,6 +174,14 @@ func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 
 	// Collect all DROP statements.
 	var statements []string
+	changeStreams, err := s.findChangeStreams(context.Background(), engine)
+	if err != nil {
+		return err
+	}
+	for _, cs := range changeStreams {
+		statements = append(statements, fmt.Sprintf("DROP CHANGE STREAM `%s`", cs))
+	}
+
 	for _, table := range tables {
 		// Indexes must be dropped first, otherwise dropping tables fails.
 		for _, index := range table.Indexes {
@@ -332,4 +341,42 @@ func SpannerConnectorConfigToClientOptions(connectorConfig spannerdriver.Connect
 
 func (s *SpannerDialect) UnionDistinct() string {
 	return "UNION DISTINCT"
+}
+
+func (s *SpannerDialect) findChangeStreams(ctx context.Context, engine *xorm.Engine) ([]string, error) {
+	dsn := engine.Dialect().DataSourceName()
+	cfg, err := spannerdriver.ExtractConnectorConfig(dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := SpannerConnectorConfigToClientOptions(cfg)
+	client, err := spanner.NewClient(ctx, dsn, opts...)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	var result []string
+	query := `SELECT c.CHANGE_STREAM_NAME
+	FROM INFORMATION_SCHEMA.CHANGE_STREAMS AS C
+	WHERE C.CHANGE_STREAM_CATALOG=''
+	AND C.CHANGE_STREAM_SCHEMA=''`
+
+	iter := client.ReadOnlyTransaction().Query(ctx, spanner.NewStatement(query))
+	for {
+		r, err := iter.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		name := ""
+		if err := r.Columns(&name); err != nil {
+			return nil, err
+		}
+		result = append(result, name)
+	}
+	return result, nil
 }
