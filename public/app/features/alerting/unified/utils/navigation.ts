@@ -9,7 +9,8 @@ export const createListFilterLink = (values: Array<[string, string]>) => {
   return createRelativeUrl(`/alerting/list`, params);
 };
 
-export const alertListPageLink = createRelativeUrl(`/alerting/list`);
+export const alertListPageLink = (queryParams: Record<string, string> = {}, options?: { skipSubPath?: boolean }) =>
+  createRelativeUrl(`/alerting/list`, queryParams, { skipSubPath: options?.skipSubPath });
 
 export const groups = {
   detailsPageLink: (dsUid: string, namespaceId: string, groupName: string, options?: { includeReturnTo: boolean }) => {
@@ -28,11 +29,17 @@ export const groups = {
       ? groups.detailsPageLink('grafana', namespace.uid, groupName)
       : groups.detailsPageLink(groupIdentifier.rulesSource.uid, namespace.name, groupName);
   },
-  editPageLink: (dsUid: string, namespaceId: string, groupName: string, options?: { includeReturnTo: boolean }) => {
+  editPageLink: (
+    dsUid: string,
+    namespaceId: string,
+    groupName: string,
+    options?: { includeReturnTo?: boolean; skipSubPath?: boolean }
+  ) => {
     const params: Record<string, string> = options?.includeReturnTo ? { returnTo: createReturnTo() } : {};
     return createRelativeUrl(
       `/alerting/${dsUid}/namespaces/${encodeURIComponent(namespaceId)}/groups/${encodeURIComponent(groupName)}/edit`,
-      params
+      params,
+      { skipSubPath: options?.skipSubPath }
     );
   },
 };

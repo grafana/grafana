@@ -350,13 +350,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function setMatchingGroupPageUrl(groupIdentifier: RuleGroupIdentifierV2) {
   if (groupIdentifier.groupOrigin === 'datasource') {
     const { rulesSource, namespace, groupName } = groupIdentifier;
-    locationService.replace(groups.editPageLink(rulesSource.uid, namespace.name, groupName));
+    locationService.replace(groups.editPageLink(rulesSource.uid, namespace.name, groupName, { skipSubPath: true }));
   } else {
     const { namespace, groupName } = groupIdentifier;
-    locationService.replace(groups.editPageLink('grafana', namespace.uid, groupName));
+    locationService.replace(groups.editPageLink('grafana', namespace.uid, groupName, { skipSubPath: true }));
   }
 }
 
 function redirectToListPage() {
-  locationService.replace(alertListPageLink);
+  locationService.replace(alertListPageLink(undefined, { skipSubPath: true }));
 }
