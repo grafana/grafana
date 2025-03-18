@@ -172,10 +172,11 @@ export const evaluateEveryValidationOptions = <T extends FieldValues>(rules: Rul
           const { forDuration } = getAlertInfo(rule, evaluateEvery);
           return forDuration ? safeParsePrometheusDuration(forDuration) : null;
         });
-        const largestPendingPeriod = Math.min(
-          ...rulePendingPeriods.filter((period): period is number => period !== null)
+        // 0 is a special case which disables the pending period at all
+        const smallestPendingPeriod = Math.min(
+          ...rulePendingPeriods.filter((period): period is number => period !== null && period !== 0)
         );
-        return `Evaluation interval should be smaller or equal to "pending period" values for existing rules in this rule group. Choose a value smaller than or equal to "${formatPrometheusDuration(largestPendingPeriod)}".`;
+        return `Evaluation interval should be smaller or equal to "pending period" values for existing rules in this rule group. Choose a value smaller than or equal to "${formatPrometheusDuration(smallestPendingPeriod)}".`;
       }
     } catch (error) {
       return error instanceof Error ? error.message : 'Failed to parse duration';
