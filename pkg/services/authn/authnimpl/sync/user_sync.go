@@ -312,7 +312,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 
 	// If the user is provisioned, we need to validate the authID
 	if usr.IsProvisioned {
-		s.log.Debug("User is provisioned", "id", id.ID)
+		s.log.Debug("User is provisioned", "id", id.Email)
 		needsConnectionCreation = false
 		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
 		if err != nil {
@@ -322,7 +322,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 
 		// Validate the authID matches the identity authId and the userUniqueID
 		if id.ExternalUID != authInfo.ExternalUID {
-			s.log.Error("provisioned authID mistmatches identity authID")
+			s.log.Error("provisioned authID mistmatches identity authID", "provisioned_authID", authInfo.ExternalUID, "identity_authID", id.ExternalUID)
 			return errors.New("authID mistmatch") // TODO: assign an error
 		}
 	}
