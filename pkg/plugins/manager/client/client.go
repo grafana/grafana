@@ -58,6 +58,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	resp, err := p.QueryData(ctx, req)
 	if err != nil {
+		// Check if the error is a managed grpc error
+		// and if it is, return the error as is
 		for _, e := range managedGrpcErrors {
 			if errors.Is(err, e) {
 				return nil, err
