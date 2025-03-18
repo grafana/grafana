@@ -60,7 +60,15 @@ declare -a release_branches=()
 declare -a direct_tags=()
 declare -a included_tags=()
 
-# Get all version tags that contain the commit
+# First check all release branches
+for branch in $(git branch -r | grep 'origin/release-' | sed 's/origin\///'); do
+    # Check if the commit is in this branch's history
+    if git merge-base --is-ancestor "$COMMIT_HASH" "origin/$branch" 2>/dev/null; then
+        release_branches+=("$branch")
+    fi
+done
+
+# Then check all version tags
 for tag in $(git tag | sort -V); do
     # Skip non-version tags
     if ! [[ $tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -69,12 +77,6 @@ for tag in $(git tag | sort -V); do
     
     # Check if the commit is in this tag
     if git merge-base --is-ancestor "$COMMIT_HASH" "$tag" 2>/dev/null; then
-        # Check if there's a matching release branch in origin
-        release_branch="release-${tag#v}"
-        if git show-ref --verify --quiet "refs/remotes/origin/$release_branch" 2>/dev/null; then
-            release_branches+=("$release_branch")
-        fi
-        
         # If this is the first tag containing the commit, it's the initial release tag
         if [ ${#direct_tags[@]} -eq 0 ]; then
             direct_tags+=("$tag")
@@ -85,7 +87,7 @@ for tag in $(git tag | sort -V); do
 done
 
 # Print release branches
-echo "Present in the following release branches:"
+echo "Included in release branches:"
 if [ ${#release_branches[@]} -eq 0 ]; then
     echo "  None"
 else
@@ -103,7 +105,7 @@ fi
 echo
 
 # Print included tags
-echo "Present also in the following release tags:"
+echo "Included in these release tags:"
 if [ ${#included_tags[@]} -eq 0 ]; then
     echo "  None"
 else
