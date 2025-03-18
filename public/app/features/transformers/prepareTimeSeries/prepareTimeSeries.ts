@@ -144,7 +144,7 @@ export function toTimeSeriesMulti(data: DataFrame[]): DataFrame[] {
 }
 
 const VARIABLE_HEADER = 'Variable';
-const VALUE_HEADER = 'Value';
+const VALUE_HEADER = 'Field';
 
 export function toTimeSeriesLong(data: DataFrame[], flatten = false): DataFrame[] {
   if (!Array.isArray(data) || data.length === 0) {

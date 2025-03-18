@@ -1259,7 +1259,7 @@ A flat series will combine data to one frame, with the first field being an asce
 
 **Transformed to:**
 
-| Timestamp           | Variable | Value |
+| Timestamp           | Field | Value |
 |---------------------|----------|-------|
 | 2023-01-01 00:00:00 | Value1   | 10    |
 | 2023-01-01 00:00:00 | Value2   | 20    |
