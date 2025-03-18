@@ -541,6 +541,54 @@ describe('TableNG utils', () => {
       };
       expect(getTextAlign(field)).toBe('flex-end');
     });
+
+    it('should default to flex-start for string types', () => {
+      const field = {
+        name: 'String',
+        type: FieldType.string,
+        values: [],
+        config: {
+          custom: {},
+        },
+      };
+      expect(getTextAlign(field)).toBe('flex-start');
+    });
+
+    it('should default to flex-start for enum types', () => {
+      const field = {
+        name: 'Enum',
+        type: FieldType.enum,
+        values: [],
+        config: {
+          custom: {},
+        },
+      };
+      expect(getTextAlign(field)).toBe('flex-start');
+    });
+
+    it('should default to flex-start for time types', () => {
+      const field = {
+        name: 'Time',
+        type: FieldType.time,
+        values: [],
+        config: {
+          custom: {},
+        },
+      };
+      expect(getTextAlign(field)).toBe('flex-start');
+    });
+
+    it('should default to flex-start for boolean types', () => {
+      const field = {
+        name: 'Active',
+        type: FieldType.boolean,
+        values: [],
+        config: {
+          custom: {},
+        },
+      };
+      expect(getTextAlign(field)).toBe('flex-start');
+    });
   });
 
   describe('cell display mode', () => {
@@ -1083,6 +1131,7 @@ describe('TableNG utils', () => {
       const height = getRowHeight(row, columnTypes, headerCellRefs, osContext, 20, 40, 8);
 
       expect(height).toBeGreaterThan(40);
+      expect(height).toBe(112);
     });
 
     it('should handle empty header cell refs', () => {
@@ -1417,6 +1466,7 @@ describe('TableNG utils', () => {
 
       // Should be greater than default height since text wraps
       expect(height).toBeGreaterThan(defaultRowHeight);
+      expect(height).toBe(180);
       // Height should be a multiple of line height plus padding
       expect(height % lineHeight).toBe(0);
       expect(mockContext.measureText).toHaveBeenCalled();
@@ -1509,7 +1559,7 @@ describe('TableNG utils', () => {
       const fieldConfig = createFieldConfig();
 
       // When width is not provided
-      const widthWithoutDefault = getColumnWidth(field, fieldConfig, undefined);
+      const widthWithoutDefault = getColumnWidth(field, fieldConfig, '');
       expect(widthWithoutDefault).toBe('auto');
     });
   });

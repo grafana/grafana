@@ -158,6 +158,96 @@ const createNestedDataFrame = (): DataFrame => {
   })[0];
 };
 
+// Create a data frame specifically for testing multi-column sorting
+const createSortingTestDataFrame = (): DataFrame => {
+  const frame = toDataFrame({
+    name: 'SortingTestData',
+    length: 5,
+    fields: [
+      {
+        name: 'Category',
+        type: FieldType.string,
+        values: ['A', 'B', 'A', 'B', 'A'],
+        config: {
+          custom: {
+            width: 150,
+            cellOptions: {
+              type: TableCellDisplayMode.Auto,
+              wrapText: false,
+            },
+          },
+        },
+        display: (value: any) => ({
+          text: String(value),
+          numeric: 0,
+          color: undefined,
+          prefix: undefined,
+          suffix: undefined,
+        }),
+        state: {},
+        getLinks: () => [],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        values: [5, 3, 1, 4, 2],
+        config: {
+          custom: {
+            width: 150,
+            cellOptions: {
+              type: TableCellDisplayMode.Auto,
+              wrapText: false,
+            },
+          },
+        },
+        display: (value: any) => ({
+          text: String(value),
+          numeric: Number(value),
+          color: undefined,
+          prefix: undefined,
+          suffix: undefined,
+        }),
+        state: {},
+        getLinks: () => [],
+      },
+      {
+        name: 'Name',
+        type: FieldType.string,
+        values: ['John', 'Jane', 'Bob', 'Alice', 'Charlie'],
+        config: {
+          custom: {
+            width: 150,
+            cellOptions: {
+              type: TableCellDisplayMode.Auto,
+              wrapText: false,
+            },
+          },
+        },
+        display: (value: any) => ({
+          text: String(value),
+          numeric: 0,
+          color: undefined,
+          prefix: undefined,
+          suffix: undefined,
+        }),
+        state: {},
+        getLinks: () => [],
+      },
+    ],
+  });
+
+  return applyFieldOverrides({
+    data: [frame],
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    replaceVariables: (value) => value,
+    timeZone: 'utc',
+    theme: createTheme(),
+  })[0];
+};
+
 describe('TableNG', () => {
   describe('Basic TableNG rendering', () => {
     it('renders a simple table with columns and rows', () => {
@@ -395,6 +485,92 @@ describe('TableNG', () => {
       const paginationText = container.textContent;
       expect(paginationText).toContain('of 100 rows');
     });
+
+    it('navigates between pages when pagination controls are clicked', async () => {
+      // Create a data frame with many rows
+      const fields = [
+        {
+          name: 'Index',
+          type: FieldType.number,
+          values: Array.from({ length: 100 }, (_, i) => i),
+          config: { custom: {} },
+          display: (v: number) => ({ text: String(v), numeric: Number(v) }),
+        },
+        {
+          name: 'Value',
+          type: FieldType.string,
+          values: Array.from({ length: 100 }, (_, i) => `Value ${i}`),
+          config: { custom: {} },
+          display: (v: string) => ({ text: String(v), numeric: 0 }),
+        },
+      ];
+
+      const largeFrame = toDataFrame({ name: 'LargeData', fields });
+      const processedFrame = applyFieldOverrides({
+        data: [largeFrame],
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        replaceVariables: (value) => value,
+        timeZone: 'utc',
+        theme: createTheme(),
+      })[0];
+
+      const { container } = render(
+        <TableNG
+          data={processedFrame}
+          width={800}
+          height={300} // Small height to force pagination
+          enablePagination={true}
+        />
+      );
+
+      // Get all cell content on the first page
+      const initialCells = container.querySelectorAll('[role="gridcell"]');
+      const initialCellTexts = Array.from(initialCells).map((cell) => cell.textContent);
+
+      // Store the first page's first visible row index
+      const firstPageFirstIndex = initialCellTexts[0];
+
+      // Store the first page content for comparison
+      const firstPageContent = container.textContent || '';
+
+      // Find and click next page button
+      const nextButton = container.querySelector('[aria-label="next page" i], [aria-label*="Next" i]');
+      expect(nextButton).toBeInTheDocument();
+
+      if (nextButton) {
+        // Click to go to the next page
+        fireEvent.click(nextButton);
+
+        // Get all cell content on the second page
+        const newCells = container.querySelectorAll('[role="gridcell"]');
+        const newCellTexts = Array.from(newCells).map((cell) => cell.textContent);
+
+        // The first cell on the second page should be different from the first page
+        const secondPageFirstIndex = newCellTexts[0];
+        expect(secondPageFirstIndex).not.toBe(firstPageFirstIndex);
+
+        // The content should have changed
+        const secondPageContent = container.textContent || '';
+        expect(secondPageContent).not.toBe(firstPageContent);
+
+        // Check that the pagination summary shows we're on a different page
+        // The format appears to be "X - Y of Z rows" where X and Y are the row range
+        expect(container.textContent).toMatch(/\d+ - \d+ of 100 rows/);
+
+        // Verify that the pagination summary has changed
+        const paginationSummary = container.querySelector('.paginationSummary, [class*="paginationSummary"]');
+        if (paginationSummary) {
+          const summaryText = paginationSummary.textContent || '';
+          expect(summaryText).toContain('of 100 rows');
+        } else {
+          // If we can't find the pagination summary by class, just check the container text
+          expect(container.textContent).toContain('of 100 rows');
+        }
+      }
+    });
   });
 
   describe('Sorting', () => {
@@ -483,39 +659,185 @@ describe('TableNG', () => {
       }
     });
 
-    // TODO: The react-data-grid library does not have aria-sort support for multi-column
-    // sorting with shift key. We should open an issue to add this feature.
-    it.skip('supports multi-column sorting with shift key', () => {
+    it('supports multi-column sorting with shift key', () => {
       // Mock scrollIntoView
       window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
       const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+        <TableNG enableVirtualization={false} data={createSortingTestDataFrame()} width={800} height={600} />
       );
 
       // Get all column headers
       const columnHeaders = container.querySelectorAll('[role="columnheader"]');
-      expect(columnHeaders.length).toBeGreaterThanOrEqual(2);
+      expect(columnHeaders.length).toBe(3); // Category, Value, Name
 
-      if (columnHeaders.length >= 2) {
-        const firstColumnButton = columnHeaders[0].querySelector('button') || columnHeaders[0];
-        const secondColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
+      // Extract text from all cells before sorting
+      const getCellTextContent = () => {
+        const cells = container.querySelectorAll('[role="gridcell"]');
+        const rows: string[][] = [];
+        let currentRow: string[] = [];
 
-        // Sort by first column
-        fireEvent.click(firstColumnButton);
-        expect(columnHeaders[0].getAttribute('aria-sort')).toBe('ascending');
+        // Group cells into rows (3 cells per row)
+        Array.from(cells).forEach((cell, index) => {
+          currentRow.push(cell.textContent || '');
+          if ((index + 1) % 3 === 0) {
+            rows.push([...currentRow]);
+            currentRow = [];
+          }
+        });
 
-        // Sort by second column with shift key
-        fireEvent.click(secondColumnButton, { shiftKey: true });
+        return rows;
+      };
 
-        // Both columns should now be sorted
-        expect(columnHeaders[0].getAttribute('aria-sort')).toBe('ascending');
-        expect(columnHeaders[1].getAttribute('aria-sort')).toBe('ascending');
+      // Initial unsorted data
+      const initialRows = getCellTextContent();
+      expect(initialRows.length).toBe(5);
 
-        // Verify that the table has multiple sort indicators
-        const sortIcons = container.querySelectorAll('[aria-label="arrow-up"], [aria-label="arrow-down"]');
-        expect(sortIcons.length).toBe(2);
-      }
+      // Log the initial unsorted data order for reference
+      // The data should be in the original order:
+      // ['A', '5', 'John'], ['B', '3', 'Jane'], ['A', '1', 'Bob'], ['B', '4', 'Alice'], ['A', '2', 'Charlie']
+      expect(initialRows[0][0]).toBe('A');
+      expect(initialRows[0][1]).toBe('5');
+      expect(initialRows[0][2]).toBe('John');
+
+      expect(initialRows[1][0]).toBe('B');
+      expect(initialRows[1][1]).toBe('3');
+      expect(initialRows[1][2]).toBe('Jane');
+
+      expect(initialRows[2][0]).toBe('A');
+      expect(initialRows[2][1]).toBe('1');
+      expect(initialRows[2][2]).toBe('Bob');
+
+      expect(initialRows[3][0]).toBe('B');
+      expect(initialRows[3][1]).toBe('4');
+      expect(initialRows[3][2]).toBe('Alice');
+
+      expect(initialRows[4][0]).toBe('A');
+      expect(initialRows[4][1]).toBe('2');
+      expect(initialRows[4][2]).toBe('Charlie');
+
+      // First column button (Category)
+      const categoryColumnButton = columnHeaders[0].querySelector('button') || columnHeaders[0];
+      // Second column button (Value)
+      const valueColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
+
+      // 1. First sort by Category (ascending)
+      fireEvent.click(categoryColumnButton);
+
+      // Check data is sorted by Category
+      const categoryOnlySortedRows = getCellTextContent();
+      expect(categoryOnlySortedRows.length).toBe(5);
+
+      // First 3 rows should be 'A' category, then 2 rows of 'B' category
+      // The expected order should be:
+      // A rows: (still unsorted within categories)
+      // ['A', '5', 'John'], ['A', '1', 'Bob'], ['A', '2', 'Charlie']
+      // B rows: (still unsorted within categories)
+      // ['B', '3', 'Jane'], ['B', '4', 'Alice']
+
+      // Check Category A rows
+      expect(categoryOnlySortedRows[0][0]).toBe('A');
+      expect(categoryOnlySortedRows[1][0]).toBe('A');
+      expect(categoryOnlySortedRows[2][0]).toBe('A');
+
+      // Check Category B rows
+      expect(categoryOnlySortedRows[3][0]).toBe('B');
+      expect(categoryOnlySortedRows[4][0]).toBe('B');
+
+      // Find all values in Category A to check if they contain the expected values
+      // (order within category may vary as we haven't sorted by Value yet)
+      const categoryAValues = categoryOnlySortedRows.slice(0, 3).map((row) => row[1]);
+      expect(categoryAValues).toContain('5');
+      expect(categoryAValues).toContain('1');
+      expect(categoryAValues).toContain('2');
+
+      // Find all values in Category B to check if they contain the expected values
+      const categoryBValues = categoryOnlySortedRows.slice(3, 5).map((row) => row[1]);
+      expect(categoryBValues).toContain('3');
+      expect(categoryBValues).toContain('4');
+
+      // 2. Now add second sort column (Value) with shift key
+      fireEvent.click(valueColumnButton, { shiftKey: true });
+
+      // Check data is sorted by Category and then by Value
+      const multiSortedRows = getCellTextContent();
+      expect(multiSortedRows.length).toBe(5);
+
+      // Now the rows should be perfectly ordered by Category, then by Value (ascending)
+      // Expected order:
+      // ['A', '1', 'Bob'], ['A', '2', 'Charlie'], ['A', '5', 'John']
+      // ['B', '3', 'Jane'], ['B', '4', 'Alice']
+
+      // Check Category A rows with ascending Value
+      expect(multiSortedRows[0][0]).toBe('A');
+      expect(multiSortedRows[0][1]).toBe('1');
+      expect(multiSortedRows[0][2]).toBe('Bob');
+
+      expect(multiSortedRows[1][0]).toBe('A');
+      expect(multiSortedRows[1][1]).toBe('2');
+      expect(multiSortedRows[1][2]).toBe('Charlie');
+
+      expect(multiSortedRows[2][0]).toBe('A');
+      expect(multiSortedRows[2][1]).toBe('5');
+      expect(multiSortedRows[2][2]).toBe('John');
+
+      // Check Category B rows with ascending Value
+      expect(multiSortedRows[3][0]).toBe('B');
+      expect(multiSortedRows[3][1]).toBe('3');
+      expect(multiSortedRows[3][2]).toBe('Jane');
+
+      expect(multiSortedRows[4][0]).toBe('B');
+      expect(multiSortedRows[4][1]).toBe('4');
+      expect(multiSortedRows[4][2]).toBe('Alice');
+
+      // 3. Change Value sort direction to descending
+      fireEvent.click(valueColumnButton, { shiftKey: true });
+
+      // Check data is sorted by Category (asc) and then by Value (desc)
+      const multiSortedRowsDesc = getCellTextContent();
+      expect(multiSortedRowsDesc.length).toBe(5);
+
+      // Now the rows should be ordered by Category, then by Value (descending)
+      // Expected order:
+      // ['A', '5', 'John'], ['A', '2', 'Charlie'], ['A', '1', 'Bob']
+      // ['B', '4', 'Alice'], ['B', '3', 'Jane']
+
+      // Check Category A rows with descending Value
+      expect(multiSortedRowsDesc[0][0]).toBe('A');
+      expect(multiSortedRowsDesc[0][1]).toBe('5');
+      expect(multiSortedRowsDesc[0][2]).toBe('John');
+
+      expect(multiSortedRowsDesc[1][0]).toBe('A');
+      expect(multiSortedRowsDesc[1][1]).toBe('2');
+      expect(multiSortedRowsDesc[1][2]).toBe('Charlie');
+
+      expect(multiSortedRowsDesc[2][0]).toBe('A');
+      expect(multiSortedRowsDesc[2][1]).toBe('1');
+      expect(multiSortedRowsDesc[2][2]).toBe('Bob');
+
+      // Check Category B rows with descending Value
+      expect(multiSortedRowsDesc[3][0]).toBe('B');
+      expect(multiSortedRowsDesc[3][1]).toBe('4');
+      expect(multiSortedRowsDesc[3][2]).toBe('Alice');
+
+      expect(multiSortedRowsDesc[4][0]).toBe('B');
+      expect(multiSortedRowsDesc[4][1]).toBe('3');
+      expect(multiSortedRowsDesc[4][2]).toBe('Jane');
+
+      // 4. Test removing the secondary sort by clicking a third time
+      fireEvent.click(valueColumnButton, { shiftKey: true });
+
+      // The data should still be sorted by Category only
+      const singleSortRows = getCellTextContent();
+
+      // First 3 rows should still be 'A' category, but values might be in original order
+      expect(singleSortRows[0][0]).toBe('A');
+      expect(singleSortRows[1][0]).toBe('A');
+      expect(singleSortRows[2][0]).toBe('A');
+
+      // Last 2 rows should still be 'B' category
+      expect(singleSortRows[3][0]).toBe('B');
+      expect(singleSortRows[4][0]).toBe('B');
     });
 
     it('correctly sorts different data types', () => {
@@ -840,94 +1162,6 @@ describe('TableNG', () => {
     });
   });
 
-  describe('Pagination navigation', () => {
-    it('navigates between pages when pagination controls are clicked', async () => {
-      // Create a data frame with many rows
-      const fields = [
-        {
-          name: 'Index',
-          type: FieldType.number,
-          values: Array.from({ length: 100 }, (_, i) => i),
-          config: { custom: {} },
-          display: (v: number) => ({ text: String(v), numeric: Number(v) }),
-        },
-        {
-          name: 'Value',
-          type: FieldType.string,
-          values: Array.from({ length: 100 }, (_, i) => `Value ${i}`),
-          config: { custom: {} },
-          display: (v: string) => ({ text: String(v), numeric: 0 }),
-        },
-      ];
-
-      const largeFrame = toDataFrame({ name: 'LargeData', fields });
-      const processedFrame = applyFieldOverrides({
-        data: [largeFrame],
-        fieldConfig: {
-          defaults: {},
-          overrides: [],
-        },
-        replaceVariables: (value) => value,
-        timeZone: 'utc',
-        theme: createTheme(),
-      })[0];
-
-      const { container } = render(
-        <TableNG
-          data={processedFrame}
-          width={800}
-          height={300} // Small height to force pagination
-          enablePagination={true}
-        />
-      );
-
-      // Get all cell content on the first page
-      const initialCells = container.querySelectorAll('[role="gridcell"]');
-      const initialCellTexts = Array.from(initialCells).map((cell) => cell.textContent);
-
-      // Store the first page's first visible row index
-      const firstPageFirstIndex = initialCellTexts[0];
-
-      // Store the first page content for comparison
-      const firstPageContent = container.textContent || '';
-
-      // Find and click next page button
-      const nextButton = container.querySelector('[aria-label="next page" i], [aria-label*="Next" i]');
-      expect(nextButton).toBeInTheDocument();
-
-      if (nextButton) {
-        // Click to go to the next page
-        fireEvent.click(nextButton);
-
-        // Get all cell content on the second page
-        const newCells = container.querySelectorAll('[role="gridcell"]');
-        const newCellTexts = Array.from(newCells).map((cell) => cell.textContent);
-
-        // The first cell on the second page should be different from the first page
-        const secondPageFirstIndex = newCellTexts[0];
-        expect(secondPageFirstIndex).not.toBe(firstPageFirstIndex);
-
-        // The content should have changed
-        const secondPageContent = container.textContent || '';
-        expect(secondPageContent).not.toBe(firstPageContent);
-
-        // Check that the pagination summary shows we're on a different page
-        // The format appears to be "X - Y of Z rows" where X and Y are the row range
-        expect(container.textContent).toMatch(/\d+ - \d+ of 100 rows/);
-
-        // Verify that the pagination summary has changed
-        const paginationSummary = container.querySelector('.paginationSummary, [class*="paginationSummary"]');
-        if (paginationSummary) {
-          const summaryText = paginationSummary.textContent || '';
-          expect(summaryText).toContain('of 100 rows');
-        } else {
-          // If we can't find the pagination summary by class, just check the container text
-          expect(container.textContent).toContain('of 100 rows');
-        }
-      }
-    });
-  });
-
   describe('Context menu', () => {
     beforeEach(() => {
       // Mock ResizeObserver
@@ -1052,16 +1286,19 @@ describe('TableNG', () => {
         cellOptions: {
           type: TableCellDisplayMode.ColorBackground,
           wrapText: false,
+          mode: TableCellDisplayMode.BasicGauge,
+          applyToRow: false,
         },
       };
 
       // Add color to the display values
       const originalDisplay = frame.fields[0].display;
+      const expectedColor = '#ff0000'; // Red color
       frame.fields[0].display = (value: any) => {
         const displayValue = originalDisplay ? originalDisplay(value) : { text: String(value), numeric: 0 };
         return {
           ...displayValue,
-          color: '#ff0000', // Red color
+          color: expectedColor,
         };
       };
 
@@ -1071,26 +1308,19 @@ describe('TableNG', () => {
       const cells = container.querySelectorAll('[role="gridcell"]');
       expect(cells.length).toBeGreaterThan(0);
 
-      // Look for elements with style attributes containing background color
-      let foundColoredBackground = false;
+      // Check the first div inside the cell for style attributes
+      const div = cells[0].querySelectorAll('div')[0];
+      const styleAttr = window.getComputedStyle(div);
 
-      cells.forEach((cell) => {
-        // Check all divs inside the cell for style attributes
-        const divs = cell.querySelectorAll('div');
-        divs.forEach((div) => {
-          const styleAttr = window.getComputedStyle(div);
-          if (styleAttr && styleAttr.background) {
-            foundColoredBackground = true;
-          }
-        });
-      });
-
-      expect(foundColoredBackground).toBe(true);
+      // Expected color is red
+      expect(styleAttr.background).toBe('rgb(255, 0, 0)');
     });
 
     it('renders color text cells correctly', () => {
       // Create a frame with color text cells
       const frame = createBasicDataFrame();
+      const expectedColor = '#ff0000'; // Red color
+
       frame.fields[0].config.custom = {
         ...frame.fields[0].config.custom,
         cellOptions: {
@@ -1105,7 +1335,7 @@ describe('TableNG', () => {
         const displayValue = originalDisplay ? originalDisplay(value) : { text: String(value), numeric: 0 };
         return {
           ...displayValue,
-          color: '#ff0000', // Red color
+          color: expectedColor,
         };
       };
 
@@ -1115,21 +1345,12 @@ describe('TableNG', () => {
       const cells = container.querySelectorAll('[role="gridcell"]');
       expect(cells.length).toBeGreaterThan(0);
 
-      // Look for elements with style attributes containing background color
-      let hasColoredText = false;
+      // Check the first div inside the cell for style attributes
+      const div = cells[0].querySelectorAll('div')[0];
+      const computedStyle = window.getComputedStyle(div);
 
-      cells.forEach((cell) => {
-        // Check all divs inside the cell for style attributes
-        const divs = cell.querySelectorAll('div');
-        divs.forEach((div) => {
-          const styleAttr = window.getComputedStyle(div);
-          if (styleAttr && styleAttr.color) {
-            hasColoredText = true;
-          }
-        });
-      });
-
-      expect(hasColoredText).toBe(true);
+      // Expected color is red
+      expect(computedStyle.color).toBe('rgb(255, 0, 0)');
     });
   });
 });
