@@ -80,7 +80,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
           try {
             return JSON.parse(line);
           } catch (e) {
-            console.warn('Invalid JSON in watch stream:', e);
+            console.warn('Invalid JSON in watch stream:', e, line);
             return null;
           }
         }),
