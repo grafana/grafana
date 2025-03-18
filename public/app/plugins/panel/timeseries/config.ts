@@ -204,6 +204,14 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
           },
           showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
         })
+        .addRadio({
+          path: 'tooltipSeriesComponent',
+          name: 'Custom tooltip series component',
+          category: categoryStyles,
+          defaultValue: undefined,
+          hideFromDefaults: true,
+          hideFromOverrides: true,
+        })
         .addSliderInput({
           path: 'pointSize',
           name: 'Point size',

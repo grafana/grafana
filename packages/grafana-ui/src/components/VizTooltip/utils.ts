@@ -88,13 +88,14 @@ export const getContentItems = (
 
   for (let i = 0; i < fields.length; i++) {
     const field = fields[i];
+    const graphFieldConfig = field.config.custom;
 
     if (
       field === xField ||
       field.type === FieldType.time ||
       !fieldFilter(field) ||
-      field.config.custom?.hideFrom?.tooltip ||
-      field.config.custom?.hideFrom?.viz
+      graphFieldConfig?.hideFrom?.tooltip ||
+      graphFieldConfig?.hideFrom?.viz
     ) {
       continue;
     }
@@ -140,15 +141,24 @@ export const getContentItems = (
       colorPlacement = ColorPlacement.trailing;
     }
 
+    const isActive = mode === TooltipDisplayMode.Multi && seriesIdx === i;
+
     rows.push({
       label: field.state?.displayName ?? field.name,
       value: formattedValueToString(display),
       color: display.color ?? FALLBACK_COLOR,
       colorIndicator,
       colorPlacement,
-      isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
+      isActive,
       numeric,
-      lineStyle: field.config.custom?.lineStyle,
+      lineStyle: graphFieldConfig?.lineStyle,
+      // Customizer needs access to other fields and dataIdx
+      customizer: graphFieldConfig?.tooltipSeriesComponent
+        ? {
+            props: { field, allFields: fields, dataIdx, isActive, defaultRow: null },
+            component: graphFieldConfig.tooltipSeriesComponent,
+          }
+        : undefined,
     });
   }
 
