@@ -3,7 +3,7 @@
 # This script finds which Grafana releases include a specific commit.
 # It checks both release branches and tags to determine:
 # 1. Which release branches contain the commit
-# 2. If the commit is directly tagged with a release version
+# 2. The first release tag that included the commit
 # 3. Which release tags include the commit
 # 4. The first release that included the commit
 #
@@ -61,7 +61,7 @@ declare -a direct_tags=()
 declare -a included_tags=()
 
 # Get all version tags that contain the commit
-for tag in $(git tag); do
+for tag in $(git tag | sort -V); do
     # Skip non-version tags
     if ! [[ $tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         continue
@@ -75,9 +75,8 @@ for tag in $(git tag); do
             release_branches+=("${tag#v}")
         fi
         
-        # Check if this is a direct tag on the commit
-        tag_commit=$(git rev-parse "$tag")
-        if [ "$tag_commit" = "$COMMIT_HASH" ]; then
+        # If this is the first tag containing the commit, it's the initial release tag
+        if [ ${#direct_tags[@]} -eq 0 ]; then
             direct_tags+=("${tag#v}")
         else
             included_tags+=("${tag#v}")
@@ -94,8 +93,8 @@ else
 fi
 echo
 
-# Print direct tags
-echo "Directly tagged with:"
+# Print initial release tag
+echo "Initial release tag:"
 if [ ${#direct_tags[@]} -eq 0 ]; then
     echo "  None"
 else
