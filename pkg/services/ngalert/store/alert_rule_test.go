@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1820,6 +1821,15 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
+	oldT := TimeNow
+	t.Cleanup(func() {
+		TimeNow = oldT
+	})
+	clk := clock.NewMock()
+	TimeNow = func() time.Time {
+		return clk.Now()
+	}
+
 	orgID := int64(1)
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID))
@@ -1829,6 +1839,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	rule, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
 	require.NoError(t, err)
 
+	clk.Add(1 * time.Hour)
 	rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
 	err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
 		{
@@ -1850,7 +1861,8 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 		require.Empty(t, list)
 	})
 
-	err = store.DeleteAlertRulesByUID(context.Background(), orgID, &models.AlertingUserUID, false, rule.UID)
+	clk.Add(1 * time.Hour)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule.UID)
 	require.NoError(t, err)
 
 	t.Run("should return the last deleted rule", func(t *testing.T) {
@@ -1858,7 +1870,9 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, list, 1)
 		assert.Empty(t, list[0].UID)
-		assert.Empty(t, rule2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID"))
+		assert.Empty(t, rule2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID", "Updated", "UpdatedBy")) // ignore updated because it's not
+		assert.Equal(t, list[0].Updated.UTC(), clk.Now().UTC())
+		assert.EqualValues(t, list[0].UpdatedBy, util.Pointer(models.UserUID("test")))
 	})
 }
 
