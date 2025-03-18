@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { capitalize, filter } from 'lodash';
+import { capitalize } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import {

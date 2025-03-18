@@ -157,7 +157,7 @@ const LogListComponent = ({
   timeRange,
   timeZone,
 }: LogListComponentProps) => {
-  const { app, displayedFields, showTime, sortOrder, wrapLogMessage } = useLogListContext();
+  const { app, displayedFields, filterLevels, showTime, sortOrder, wrapLogMessage } = useLogListContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(
     app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight
@@ -231,12 +231,18 @@ const LogListComponent = ({
     return null;
   }
 
+  const filteredLogs = useMemo(
+    () =>
+      filterLevels.length === 0 ? processedLogs : processedLogs.filter((log) => filterLevels.includes(log.logLevel)),
+    [filterLevels, processedLogs]
+  );
+
   return (
     <div className={styles.logListContainer}>
       <InfiniteScroll
         displayedFields={displayedFields}
         handleOverflow={handleOverflow}
-        logs={processedLogs}
+        logs={filteredLogs}
         loadMore={loadMore}
         scrollElement={scrollRef.current}
         showTime={showTime}
@@ -251,7 +257,7 @@ const LogListComponent = ({
             className={styles.logList}
             height={listHeight}
             itemCount={itemCount}
-            itemSize={getLogLineSize.bind(null, processedLogs, containerElement, displayedFields, {
+            itemSize={getLogLineSize.bind(null, filteredLogs, containerElement, displayedFields, {
               wrap: wrapLogMessage,
               showControls,
               showTime,
