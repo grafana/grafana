@@ -2,6 +2,8 @@ import { ReactNode } from 'react';
 
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { selectFolderRepository } from 'app/features/provisioning/utils/selectors';
+import { useSelector } from 'app/types';
 
 import { DynamicDashNavButtonModel } from '../../utils/registerDynamicDashNavAction';
 import { DashboardScene } from '../DashboardScene';
@@ -51,4 +53,10 @@ export function getDynamicActions(
 
     return acc;
   }, []);
+}
+
+export function useIsManaged(dashboard: DashboardScene): boolean {
+  const folderRepo = useSelector((state) => selectFolderRepository(state, dashboard.state.meta.folderUid));
+
+  return Boolean(dashboard.isManaged() || folderRepo);
 }
