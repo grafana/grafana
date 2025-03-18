@@ -66,6 +66,9 @@ const ImportFromDSRules = () => {
       }).unwrap();
 
       const ruleListUrl = createListFilterLink([['namespace', data.targetFolder?.title ?? '']]);
+      notifyApp.success(
+        t('alerting.import-to-gma.success', 'Successfully exported alert rules to Grafana-managed rules.')
+      );
       locationService.push(ruleListUrl);
     } catch (error) {
       notifyApp.error(
