@@ -38,7 +38,8 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
   }
 
   public watch(params?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
-    if (true) {
+    // For now, watch over live only supports provisioning
+    if (this.gvr.group === 'provisioning.grafana.app') {
       const query = params?.name ? `=${params.name}` : '';
       return getGrafanaLiveSrv()
         .getStream<ResourceEvent<T, S, K>>({
