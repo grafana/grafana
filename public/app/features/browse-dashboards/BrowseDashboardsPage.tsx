@@ -122,7 +122,7 @@ const BrowseDashboardsPage = memo(() => {
   const renderTitle = (title: string) => {
     return (
       <Stack alignItems={'center'} gap={2}>
-        <Text element={'h1'}>{title}</Text> <FolderRepo repo={folder?.repository} />
+        <Text element={'h1'}>{title}</Text> <FolderRepo folder={folder} />
       </Stack>
     );
   };

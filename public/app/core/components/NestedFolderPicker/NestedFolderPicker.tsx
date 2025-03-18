@@ -7,7 +7,6 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
-import { RepositoryView } from 'app/api/clients/provisioning';
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -40,7 +39,7 @@ export interface NestedFolderPickerProps {
   permission?: 'view' | 'edit';
 
   /* Callback for when the user selects a folder */
-  onChange?: (folderUID: string | undefined, folderName: string | undefined, repository?: RepositoryView) => void;
+  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
 
   /* Whether the picker should be clearable */
   clearable?: boolean;
@@ -168,12 +167,7 @@ export function NestedFolderPicker({
   const handleFolderSelect = useCallback(
     (item: DashboardViewItem) => {
       if (onChange) {
-        if (item?.repository) {
-          // Do not pass undefined repo so the tests do not break
-          onChange(item.uid, item.title, item.repository);
-        } else {
-          onChange(item.uid, item.title);
-        }
+        onChange(item.uid, item.title);
       }
       setOverlayOpen(false);
     },
@@ -268,24 +262,22 @@ export function NestedFolderPicker({
     visible: overlayOpen,
   });
 
-  let label: React.ReactNode = selectedFolder.data?.title;
+  let label = selectedFolder.data?.title;
   if (value === '') {
     label = 'Dashboards';
   }
-  const repo = selectedFolder.data?.repository;
-  if (repo && label && !overlayOpen) {
-    label = (
-      <Stack alignItems={'center'}>
-        <Text truncate>{label}</Text>
-        <FolderRepo repo={repo} />
-      </Stack>
-    );
-  }
+
+  const labelComponent = (
+    <Stack alignItems={'center'}>
+      <Text truncate>{label ?? ''}</Text>
+      <FolderRepo folder={selectedFolder.data} />
+    </Stack>
+  );
 
   if (!overlayOpen) {
     return (
       <Trigger
-        label={label}
+        label={labelComponent}
         handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
         isLoading={selectedFolder.isLoading}
@@ -309,11 +301,7 @@ export function NestedFolderPicker({
         ref={refs.setReference}
         autoFocus
         prefix={label ? <Icon name="folder" /> : null}
-        placeholder={
-          typeof label === 'string' && label
-            ? label
-            : t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')
-        }
+        placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
         invalid={invalid}
         className={styles.search}

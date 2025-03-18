@@ -9,8 +9,6 @@ import { contextSrv } from '../../../core/core';
 import { AccessControlAction } from '../../../types';
 import { getFolderURL, isSharedWithMe } from '../components/utils';
 
-import { addRepositoryData } from './browseDashboardsAPI';
-
 export const PAGE_SIZE = 50;
 
 export async function listFolders(
@@ -33,8 +31,6 @@ export async function listFolders(
       page,
       limit: pageSize,
     });
-
-    folders = await addRepositoryData(folders);
   }
 
   return folders.map((item) => ({
@@ -43,7 +39,7 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
-    repository: item.repository,
+    managedBy: item.managedBy,
 
     // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
     url: isSharedWithMe(item.uid) ? undefined : getFolderURL(item.uid),
