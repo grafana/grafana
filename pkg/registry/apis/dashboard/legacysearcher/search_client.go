@@ -240,9 +240,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				OrgID:    user.GetOrgID(),
 			})
 		} else if query.ManagerIdentity != "" {
-			dashes, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity)
+			dashes, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity, user.GetOrgID())
 		} else if len(query.ManagerIdentityNotIn) > 0 {
-			dashes, err = c.dashboardStore.GetOrphanedProvisionedDashboards(ctx, query.ManagerIdentityNotIn)
+			dashes, err = c.dashboardStore.GetOrphanedProvisionedDashboards(ctx, query.ManagerIdentityNotIn, user.GetOrgID())
 		}
 		if err != nil {
 			return nil, err
@@ -256,6 +256,8 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), []byte(strconv.FormatInt(dashboard.ID, 10)), {}, {}},
 			})
 		}
+
+		list.TotalHits = int64(len(list.Results.Rows))
 
 		return list, nil
 	}
