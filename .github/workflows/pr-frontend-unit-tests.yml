@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - main
-#      Commenting out to unblock backports to release branches 
-#      - release-*.*.*
+      - release-*.*.*
 
 jobs:
   frontend-unit-tests:
