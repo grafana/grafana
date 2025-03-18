@@ -31,6 +31,10 @@ func TestMain(m *testing.M) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
+	if infraDB.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
+
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			dbstore := infraDB.InitTestDB(t)
@@ -74,6 +78,10 @@ func TestClientServer(t *testing.T) {
 	if infraDB.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	}
+	if infraDB.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	dbstore := infraDB.InitTestDB(t)
 

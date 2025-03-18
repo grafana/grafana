@@ -2,12 +2,14 @@ package test
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -33,7 +35,13 @@ type NewBackendFunc func(ctx context.Context) resource.StorageBackend
 // TestOptions configures which tests to run
 type TestOptions struct {
 	SkipTests map[string]bool // tests to skip
+	NSPrefix  string          // namespace prefix for isolation
+}
 
+// GenerateRandomNSPrefix creates a random namespace prefix for test isolation
+func GenerateRandomNSPrefix() string {
+	uid := uuid.New().String()[:10]
+	return fmt.Sprintf("test-%s", uid)
 }
 
 // RunStorageBackendTest runs the storage backend test suite
@@ -46,9 +54,15 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		opts = &TestOptions{}
 	}
 
+	if opts.NSPrefix == "" {
+		opts.NSPrefix = GenerateRandomNSPrefix()
+	}
+
+	t.Logf("Running tests with namespace prefix: %s", opts.NSPrefix)
+
 	cases := []struct {
 		name string
-		fn   func(*testing.T, resource.StorageBackend)
+		fn   func(*testing.T, resource.StorageBackend, string)
 	}{
 		{TestHappyPath, runTestIntegrationBackendHappyPath},
 		{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEvents},
@@ -65,12 +79,12 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			tc.fn(t, newBackend(context.Background()))
+			tc.fn(t, newBackend(context.Background()), opts.NSPrefix)
 		})
 	}
 }
 
-func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBackend) {
+func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
 			Subject: "testuser",
@@ -79,39 +93,46 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 	}))
 
 	server := newServer(t, backend)
-
+	ns := nsPrefix + "-ns1"
 	stream, err := backend.WatchWriteEvents(context.Background()) // Using a different context to avoid canceling the stream after the DefaultContextTimeout
 	require.NoError(t, err)
 	var rv1, rv2, rv3, rv4, rv5 int64
 
 	t.Run("Add 3 resources", func(t *testing.T) {
-		rv1, err = writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+		rv1, err = writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
 		require.Greater(t, rv1, int64(0))
 
-		rv2, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
+		rv2, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
 		require.Greater(t, rv2, rv1)
 
-		rv3, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
+		rv3, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
 		require.Greater(t, rv3, rv2)
 	})
 
 	t.Run("Update item2", func(t *testing.T) {
-		rv4, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
+		rv4, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED, WithNamespace(ns))
 		require.NoError(t, err)
 		require.Greater(t, rv4, rv3)
 	})
 
 	t.Run("Delete item1", func(t *testing.T) {
-		rv5, err = writeEvent(ctx, backend, "item1", resource.WatchEvent_DELETED)
+		rv5, err = writeEvent(ctx, backend, "item1", resource.WatchEvent_DELETED, WithNamespace(ns))
 		require.NoError(t, err)
 		require.Greater(t, rv5, rv4)
 	})
 
 	t.Run("Read latest item 2", func(t *testing.T) {
-		resp := backend.ReadResource(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
+		resp := backend.ReadResource(ctx, &resource.ReadRequest{
+			Key: &resource.ResourceKey{
+				Name:      "item2",
+				Namespace: ns,
+				Group:     "group",
+				Resource:  "resource",
+			},
+		})
 		require.Nil(t, resp.Error)
 		require.Equal(t, rv4, resp.ResourceVersion)
 		require.Equal(t, "item2 MODIFIED", string(resp.Value))
@@ -120,7 +141,12 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 
 	t.Run("Read early version of item2", func(t *testing.T) {
 		resp := backend.ReadResource(ctx, &resource.ReadRequest{
-			Key:             resourceKey("item2"),
+			Key: &resource.ResourceKey{
+				Name:      "item2",
+				Namespace: ns,
+				Group:     "group",
+				Resource:  "resource",
+			},
 			ResourceVersion: rv3, // item2 was created at rv2 and updated at rv4
 		})
 		require.Nil(t, resp.Error)
@@ -132,7 +158,7 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 		resp, err := server.List(ctx, &resource.ListRequest{
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
-					Namespace: "namespace",
+					Namespace: ns,
 					Group:     "group",
 					Resource:  "resource",
 				},
@@ -176,7 +202,7 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 	})
 }
 
-func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.StorageBackend) {
+func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
 	sortFunc := func(a, b resource.ResourceStats) int {
@@ -190,37 +216,37 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	}
 	// Create resources across different namespaces/groups
 	_, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED,
-		WithNamespace("ns1"),
+		WithNamespace(nsPrefix+"-ns1"),
 		WithGroup("group"),
 		WithResource("resource1"))
 	require.NoError(t, err)
 
 	_, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED,
-		WithNamespace("ns1"),
+		WithNamespace(nsPrefix+"-ns1"),
 		WithGroup("group"),
 		WithResource("resource1"))
 	require.NoError(t, err)
 
 	_, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED,
-		WithNamespace("ns1"),
+		WithNamespace(nsPrefix+"-ns1"),
 		WithGroup("group"),
 		WithResource("resource2"))
 	require.NoError(t, err)
 
 	_, err = writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED,
-		WithNamespace("ns2"),
+		WithNamespace(nsPrefix+"-ns2"),
 		WithGroup("group"),
 		WithResource("resource1"))
 	require.NoError(t, err)
 
 	_, err = writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED,
-		WithNamespace("ns2"),
+		WithNamespace(nsPrefix+"-ns2"),
 		WithGroup("group"),
 		WithResource("resource1"))
 	require.NoError(t, err)
 
 	t.Run("Get stats for ns1", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, "ns1", 0)
+		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-ns1", 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 2)
 
@@ -228,14 +254,14 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 		slices.SortFunc(stats, sortFunc)
 
 		// Check first resource stats
-		require.Equal(t, "ns1", stats[0].Namespace)
+		require.Equal(t, nsPrefix+"-ns1", stats[0].Namespace)
 		require.Equal(t, "group", stats[0].Group)
 		require.Equal(t, "resource1", stats[0].Resource)
 		require.Equal(t, int64(2), stats[0].Count)
 		require.Greater(t, stats[0].ResourceVersion, int64(0))
 
 		// Check second resource stats
-		require.Equal(t, "ns1", stats[1].Namespace)
+		require.Equal(t, nsPrefix+"-ns1", stats[1].Namespace)
 		require.Equal(t, "group", stats[1].Group)
 		require.Equal(t, "resource2", stats[1].Resource)
 		require.Equal(t, int64(1), stats[1].Count)
@@ -243,11 +269,11 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 
 	t.Run("Get stats for ns2", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, "ns2", 0)
+		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-ns2", 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 1)
 
-		require.Equal(t, "ns2", stats[0].Namespace)
+		require.Equal(t, nsPrefix+"-ns2", stats[0].Namespace)
 		require.Equal(t, "group", stats[0].Group)
 		require.Equal(t, "resource1", stats[0].Resource)
 		require.Equal(t, int64(2), stats[0].Count)
@@ -255,11 +281,11 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 
 	t.Run("Get stats with minimum count", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, "ns1", 1)
+		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-ns1", 1)
 		require.NoError(t, err)
 		require.Len(t, stats, 1)
 
-		require.Equal(t, "ns1", stats[0].Namespace)
+		require.Equal(t, nsPrefix+"-ns1", stats[0].Namespace)
 		require.Equal(t, "group", stats[0].Group)
 		require.Equal(t, "resource1", stats[0].Resource)
 		require.Equal(t, int64(2), stats[0].Count)
@@ -272,11 +298,11 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 }
 
-func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.StorageBackend) {
+func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
 	// Create a few resources before initing the watch
-	_, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+	_, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED, WithNamespace(nsPrefix+"-ns1"))
 	require.NoError(t, err)
 
 	// Start the watch
@@ -284,7 +310,7 @@ func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.St
 	require.NoError(t, err)
 
 	// Create one more event
-	_, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
+	_, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED, WithNamespace(nsPrefix+"-ns1"))
 	require.NoError(t, err)
 	require.Equal(t, "item2", (<-stream).Key.Name)
 
@@ -295,33 +321,33 @@ func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.St
 	require.False(t, ok)
 }
 
-func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend) {
+func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	server := newServer(t, backend)
-
+	ns := nsPrefix + "-ns1"
 	// Create a few resources before starting the watch
-	rv1, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+	rv1, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv1, int64(0))
-	rv2, err := writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
+	rv2, err := writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv2, rv1)
-	rv3, err := writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
+	rv3, err := writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv3, rv2)
-	rv4, err := writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED)
+	rv4, err := writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv4, rv3)
-	rv5, err := writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED)
+	rv5, err := writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv5, rv4)
-	rv6, err := writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
+	rv6, err := writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv6, rv5)
-	rv7, err := writeEvent(ctx, backend, "item3", resource.WatchEvent_DELETED)
+	rv7, err := writeEvent(ctx, backend, "item3", resource.WatchEvent_DELETED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv7, rv6)
-	rv8, err := writeEvent(ctx, backend, "item6", resource.WatchEvent_ADDED)
+	rv8, err := writeEvent(ctx, backend, "item6", resource.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv8, rv7)
 
@@ -442,27 +468,27 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 	})
 }
 
-func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend) {
+func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	server := newServer(t, backend)
-
-	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+	ns := nsPrefix + "-ns1"
+	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED, WithNamespace(ns))
 	require.Greater(t, rv1, int64(0))
 
 	// add 5 events for item1 - should be saved to history
-	rvHistory1, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
+	rvHistory1, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory1, rv1)
-	rvHistory2, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
+	rvHistory2, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory2, rvHistory1)
-	rvHistory3, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
+	rvHistory3, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory3, rvHistory2)
-	rvHistory4, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
+	rvHistory4, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory4, rvHistory3)
-	rvHistory5, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
+	rvHistory5, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory5, rvHistory4)
 
@@ -472,7 +498,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 			Source: resource.ListRequest_HISTORY,
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
-					Namespace: "namespace",
+					Namespace: ns,
 					Group:     "group",
 					Resource:  "resource",
 					Name:      "item1",
@@ -509,7 +535,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 			Source:        resource.ListRequest_HISTORY,
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
-					Namespace: "namespace",
+					Namespace: ns,
 					Group:     "group",
 					Resource:  "resource",
 					Name:      "item1",
@@ -527,15 +553,16 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 	})
 }
 
-func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend) {
+func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	server := newServer(t, backend)
 	store, ok := backend.(resource.BlobSupport)
 	require.True(t, ok)
+	ns := nsPrefix + "-ns1"
 
 	t.Run("put and fetch blob", func(t *testing.T) {
 		key := &resource.ResourceKey{
-			Namespace: "ns",
+			Namespace: ns,
 			Group:     "g",
 			Resource:  "r",
 			Name:      "n",
@@ -685,15 +712,6 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 		},
 		Object: meta,
 	})
-}
-
-func resourceKey(name string) *resource.ResourceKey {
-	return &resource.ResourceKey{
-		Namespace: "namespace",
-		Group:     "group",
-		Resource:  "resource",
-		Name:      name,
-	}
 }
 
 func newServer(t *testing.T, b resource.StorageBackend) resource.ResourceServer {
