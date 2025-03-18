@@ -41,6 +41,7 @@ func UpdatePreferencesFor(ctx context.Context,
 		TeamID:            teamId,
 		Theme:             dtoCmd.Theme,
 		Language:          dtoCmd.Language,
+		Locale:            dtoCmd.Locale,
 		Timezone:          dtoCmd.Timezone,
 		WeekStart:         dtoCmd.WeekStart,
 		HomeDashboardID:   dtoCmd.HomeDashboardID,
@@ -95,6 +96,9 @@ func GetPreferencesFor(ctx context.Context,
 	if preference.JSONData != nil {
 		if preference.JSONData.Language != "" {
 			dto.Language = &preference.JSONData.Language
+		}
+		if preference.JSONData.Locale != "" {
+			dto.Locale = &preference.JSONData.Locale
 		}
 
 		if preference.JSONData.Navbar.BookmarkUrls != nil {

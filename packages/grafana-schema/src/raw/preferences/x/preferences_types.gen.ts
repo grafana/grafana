@@ -46,10 +46,10 @@ export interface Preferences {
    * Selected language (beta)
    */
   language?: string;
-    /**
-   * Selected region (beta)
+  /**
+   * Selected locale (beta)
    */
-    region?: string;
+  locale?: string;
   /**
    * Navigation preferences
    */

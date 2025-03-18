@@ -174,6 +174,13 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.JSONData.Language = *cmd.Language
 	}
 
+	if cmd.Locale != nil {
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferenceJSONData{}
+		}
+		preference.JSONData.Locale = *cmd.Locale
+	}
+
 	if cmd.Navbar != nil && cmd.Navbar.BookmarkUrls != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
@@ -267,7 +274,9 @@ func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, 
 	jsonData := &pref.PreferenceJSONData{
 		Language: cmd.Language,
 	}
-
+	if cmd.Locale != "" {
+		jsonData.Locale = cmd.Locale
+	}
 	if cmd.Navbar != nil {
 		jsonData.Navbar = *cmd.Navbar
 	}
