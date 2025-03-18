@@ -374,6 +374,23 @@
       "export": "",
       "reorder": ""
     },
+    "irm-integration": {
+      "connection-method": "",
+      "disabled-description": "",
+      "enabled-description": "",
+      "existing-integration": "",
+      "existing-integration-description": "",
+      "integration": "",
+      "integration-description": "",
+      "integration-name": "",
+      "integration-name-description": "",
+      "integration-name-exists": "",
+      "integration-required": "",
+      "new-integration": "",
+      "new-integration-description": "",
+      "recommended": "",
+      "validation-failed": ""
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "",
@@ -508,6 +525,11 @@
       "label-target-data-source": ""
     },
     "rule-form": {
+      "annotations": {
+        "description1": "",
+        "description2": "",
+        "description3": ""
+      },
       "evaluation": {
         "evaluation-group-and-interval": "",
         "group": {
@@ -1201,6 +1223,7 @@
         "copy-or-duplicate": "",
         "delete": "",
         "duplicate": "",
+        "grid": "",
         "layout": ""
       }
     },
@@ -1396,6 +1419,43 @@
       "button-title": "",
       "info-box-content": "",
       "title": ""
+    }
+  },
+  "dashboard-scene": {
+    "branch-validation-error": {
+      "cannot-contain-invalid-characters": "",
+      "cannot-start-with": "",
+      "invalid-branch-name": "",
+      "it-cannot-contain-or": "",
+      "least-valid-character": ""
+    },
+    "provisioned-resource-delete-modal": {
+      "file-path": "",
+      "managed-by-version-control": "",
+      "ok": "",
+      "title-cannot-delete-provisioned-resource": ""
+    },
+    "save-provisioned-dashboard-form": {
+      "api-error": "",
+      "api-success": "",
+      "cancel": "",
+      "copy-json-message": "",
+      "dashboard-comment-placeholder-describe-changes-optional": "",
+      "description-branch-name-in-git-hub": "",
+      "description-inside-repository": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-description": "",
+      "label-path": "",
+      "label-target-folder": "",
+      "label-title": "",
+      "label-workflow": "",
+      "save": "",
+      "saving": "",
+      "title-required": "",
+      "title-same-as-folder": "",
+      "title-this-repository-is-read-only": "",
+      "title-validation-failed": ""
     }
   },
   "dashboard-settings": {
@@ -1793,6 +1853,10 @@
       "saved": "",
       "saving": ""
     },
+    "axis-builder": {
+      "linear-threshold": "",
+      "log-base": ""
+    },
     "card": {
       "option": ""
     },
@@ -1919,15 +1983,37 @@
     "field-link-list": {
       "external-links-heading": ""
     },
+    "field-name-by-regex-matcher": {
+      "input-placeholder": ""
+    },
+    "field-value-matcher": {
+      "operator-label": "",
+      "select-field-placeholder": ""
+    },
     "file-dropzone": {
       "cancel-upload": "",
-      "file-too-large": ""
+      "error-title": "",
+      "file-too-large": "",
+      "item-retry": ""
+    },
+    "file-upload": {
+      "file-name": ""
     },
     "filter-input": {
       "clear": ""
     },
+    "interactive-table": {
+      "expand-row-tooltip": ""
+    },
+    "menu-item": {
+      "keyboard-shortcut-label": ""
+    },
     "modal": {
       "close-tooltip": "关闭"
+    },
+    "monaco": {
+      "error-label": "",
+      "loading-placeholder": ""
     },
     "named-colors-palette": {
       "text-color-swatch": "",
@@ -1943,6 +2029,10 @@
       "next-page": "",
       "previous-page": ""
     },
+    "panel-menu": {
+      "label": "",
+      "title": ""
+    },
     "secret-form-field": {
       "reset": ""
     },
@@ -1952,7 +2042,11 @@
       "no-options": "未找到选项"
     },
     "select": {
+      "clear-value": "",
       "default-create-label": "",
+      "empty-options": "",
+      "menu-label": "",
+      "multi-value-remove": "",
       "no-options-label": "未找到选项",
       "placeholder": "选择"
     },
@@ -1962,21 +2056,49 @@
     "spinner": {
       "aria-label": ""
     },
+    "stacking-builder": {
+      "group": "",
+      "group-tooltip": ""
+    },
     "table": {
+      "cell-filter-on": "",
+      "cell-filter-out": "",
+      "cell-inspect": "",
       "copy": "",
       "csv-counts": "",
+      "csv-placeholder": "",
+      "filter-placeholder": "",
       "filter-popup-apply": "",
       "filter-popup-cancel": "",
       "filter-popup-clear": "",
       "filter-popup-heading": "",
+      "filter-popup-match-case": "",
+      "inspect-drawer-title": "",
       "no-values-label": "",
       "pagination-summary": ""
     },
+    "tags": {
+      "list-label": ""
+    },
     "tags-input": {
-      "add": ""
+      "add": "",
+      "remove": ""
+    },
+    "toggletip": {
+      "close": ""
+    },
+    "toolbar-button-row": {
+      "show-more": ""
+    },
+    "unit-picker": {
+      "placeholder": ""
     },
     "user-icon": {
-      "active-text": ""
+      "active-text": "",
+      "label": ""
+    },
+    "users-indicator": {
+      "container-label": ""
     },
     "value-pill": {
       "remove-button": ""
@@ -1990,7 +2112,8 @@
       "actions-confirmation-message": "",
       "footer-add-annotation": "",
       "footer-click-to-action": "",
-      "footer-click-to-navigate": ""
+      "footer-click-to-navigate": "",
+      "timestamp": ""
     }
   },
   "graph": {
@@ -3091,6 +3214,19 @@
     "details": {
       "connections-tab": {
         "description": ""
+      },
+      "disabled-error": {
+        "angular-deprecation-link": "",
+        "angular-error-text": "",
+        "angular-error-text-no-non-angular-version": "",
+        "contact-server-admin": "",
+        "failed-backend-start-text": "",
+        "invalid-signature-text": "",
+        "manage-plugins-link": "",
+        "missing-signature-text": "",
+        "modified-signature-text": "",
+        "title": "",
+        "unknown-error-text": ""
       },
       "labels": {
         "contactGrafanaLabs": "",
