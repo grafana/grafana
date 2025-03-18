@@ -227,22 +227,3 @@ type Dashboard = {
   title: string;
   tags: string[];
 };
-
-// deprecated types
-
-/** @deprecated - use PluginAddedLinkConfig instead */
-export type PluginExtensionComponentConfig<Props = {}> = {
-  type: PluginExtensionTypes.component;
-  title: string;
-  description: string;
-
-  // The React component that will be rendered as the extension
-  // (This component receives contextual information as props when it is rendered. You can just return `null` from the component to hide it.)
-  component: React.ComponentType<Props>;
-
-  /**
-   * The unique identifier of the Extension Point
-   * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
-   */
-  extensionPointId: string;
-};

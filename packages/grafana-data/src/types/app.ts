@@ -140,17 +140,6 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
 
     return this;
   }
-
-  /** @deprecated Use .addComponent() instead */
-  configureExtensionComponent<Props = {}>(extension: Omit<PluginExtensionComponentConfig<Props>, 'type'>) {
-    this.addComponent({
-      targets: [extension.extensionPointId],
-      ...extension,
-      component: extension.component,
-    });
-
-    return this;
-  }
 }
 
 /**
