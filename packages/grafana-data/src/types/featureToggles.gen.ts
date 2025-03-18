@@ -57,9 +57,6 @@ export interface FeatureToggles {
   lokiLogsDataplane?: boolean;
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
-  alertStateHistoryLokiSecondary?: boolean;
-  alertStateHistoryLokiPrimary?: boolean;
-  alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
   refactorVariablesTimeRange?: boolean;
