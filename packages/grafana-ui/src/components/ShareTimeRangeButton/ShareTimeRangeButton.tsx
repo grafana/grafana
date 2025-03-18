@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, rangeUtil, toUtc } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { copyText } from '../../utils/clipboard';
@@ -51,6 +51,11 @@ export function ShareTimeRangeButton({ collapsed, url: urlProp, fromParam, toPar
     copyText(text, ref);
     setIsOpen(false);
   };
+
+  console.log('url', url);
+  console.log('absoluteTimeRangeURL', absoluteTimeRangeURL);
+  console.log('rangeUtil', rangeUtil.convertRawToRange);
+  console.log('toUTC', toUtc);
 
   const menu = (
     <Menu>

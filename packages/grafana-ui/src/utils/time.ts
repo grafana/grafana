@@ -11,6 +11,10 @@ const DEFAULT_TO_PARAM = 'to';
 const MINUTE_IN_MILLISECONDS = 60 * 1000;
 const DEFAULT_TIME_RANGE_MINUTES = 30;
 
+function constructURL(baseUrl: string, queryParams: URLSearchParams, hash?: string): string {
+  return `${baseUrl}?${decodeURIComponent(queryParams.toString())}${hash}`;
+}
+
 export function absoluteTimeRangeURL(opts?: AbsoluteTimeRangeURLOptions): string {
   const { url: urlProp, fromParam = DEFAULT_FROM_PARAM, toParam = DEFAULT_TO_PARAM } = opts ?? {};
 
@@ -23,7 +27,7 @@ export function absoluteTimeRangeURL(opts?: AbsoluteTimeRangeURLOptions): string
     const parsedUrl = new URL(url);
     baseUrl = parsedUrl.href.split('?')[0];
     queryParams = new URLSearchParams(parsedUrl.search);
-
+    const hash = parsedUrl.hash;
     const from = queryParams.get(fromParam);
     const to = queryParams.get(toParam);
 
@@ -37,7 +41,7 @@ export function absoluteTimeRangeURL(opts?: AbsoluteTimeRangeURLOptions): string
           .toString()
       );
 
-      return `${baseUrl}?${queryParams.toString()}`;
+      return constructURL(baseUrl, queryParams, hash);
     }
 
     if (rangeUtil.isRelativeTime(to) || rangeUtil.isRelativeTime(from)) {
@@ -51,14 +55,14 @@ export function absoluteTimeRangeURL(opts?: AbsoluteTimeRangeURLOptions): string
         queryParams.set(fromParam, toUtc(range.from).valueOf().toString());
         queryParams.set(toParam, toUtc(range.to).valueOf().toString());
 
-        return `${baseUrl}?${queryParams.toString()}`;
+        return constructURL(baseUrl, queryParams, hash);
       } catch (error) {
         console.error('Failed to convert relative time range:', error);
-        return `${baseUrl}?${queryParams.toString()}`;
+        return constructURL(baseUrl, queryParams, hash);
       }
     }
 
-    return `${baseUrl}?${queryParams.toString()}`;
+    return constructURL(baseUrl, queryParams, hash);
   } catch (error) {
     console.error('Error in absoluteTimeRangeURL:', error);
     return url;
