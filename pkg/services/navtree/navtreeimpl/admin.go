@@ -52,15 +52,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Icon:     "toggle-on",
 		})
 	}
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(ctx, featuremgmt.FlagStorage) {
-		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
-			Text:     "Storage",
-			Id:       "storage",
-			SubTitle: "Manage file storage",
-			Icon:     "cube",
-			Url:      s.cfg.AppSubURL + "/admin/storage",
-		})
-	}
 	if hasAccess(cloudmigration.MigrationAssistantAccess) && s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Migrate to Grafana Cloud",
@@ -69,9 +60,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
-
-	// TODO add permissions check
-	if s.features.IsEnabled(ctx, featuremgmt.FlagProvisioning) {
+	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(ctx, featuremgmt.FlagProvisioning) {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
