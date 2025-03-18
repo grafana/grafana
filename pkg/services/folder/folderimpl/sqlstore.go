@@ -498,7 +498,11 @@ func (ss *FolderStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFr
 			}
 
 			if len(q.AncestorUIDs) == 0 {
-				if q.OrderByTitle {
+				if q.Limit > 0 {
+					s.WriteString(` ORDER BY f0.title ASC`)
+					s.WriteString(` LIMIT ? OFFSET ?`)
+					args = append(args, q.Limit, (q.Page-1)*q.Limit)
+				} else if q.OrderByTitle {
 					s.WriteString(` ORDER BY f0.title ASC`)
 				}
 

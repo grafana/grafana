@@ -175,6 +175,10 @@ type GetFoldersQuery struct {
 	WithFullpathUIDs bool
 	BatchSize        uint64
 
+	// Pagination options
+	Limit int64
+	Page  int64
+
 	// OrderByTitle is used to sort the folders by title
 	// Set to true when ordering is meaningful (used for listing folders)
 	// otherwise better to keep it false since ordering can have a performance impact

@@ -878,7 +878,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 	for i := 0; i < foldersNum; i++ {
 		uid := util.GenerateShortUID()
 		f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-			Title:       folderTitle,
+			Title:       folderTitle + fmt.Sprintf("-%d", i),
 			Description: folderDsc,
 			OrgID:       orgID,
 			UID:         uid,
@@ -981,6 +981,23 @@ func TestIntegrationGetFolders(t *testing.T) {
 		assert.NotEmpty(t, actualFolder.Created)
 		assert.NotEmpty(t, actualFolder.Updated)
 		assert.NotEmpty(t, actualFolder.URL)
+	})
+
+	t.Run("get folders with limit and page should work as expected", func(t *testing.T) {
+		q := folder.NewGetFoldersQuery(folder.GetFoldersQuery{
+			OrgID: orgID,
+			UIDs:  uids,
+			Limit: 3,
+			Page:  2,
+		})
+
+		actualFolders, err := folderStore.GetFolders(context.Background(), q)
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(actualFolders))
+
+		for i, actualFolder := range actualFolders {
+			assert.Equal(t, fmt.Sprintf("folder1-%d", i+3), actualFolder.Title)
+		}
 	})
 }
 
