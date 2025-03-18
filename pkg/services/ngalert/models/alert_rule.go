@@ -289,6 +289,7 @@ type AlertRule struct {
 	// ideally this field should have been apimodels.ApiDuration
 	// but this is currently not possible because of circular dependencies
 	For                  time.Duration
+	KeepFiringFor        time.Duration
 	Annotations          map[string]string
 	Labels               map[string]string
 	IsPaused             bool
@@ -648,6 +649,10 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		return fmt.Errorf("%w: field `for` cannot be negative", ErrAlertRuleFailedValidation)
 	}
 
+	if alertRule.KeepFiringFor < 0 {
+		return fmt.Errorf("%w: field `keep_firing_for` cannot be negative", ErrAlertRuleFailedValidation)
+	}
+
 	if len(alertRule.Labels) > 0 {
 		for label := range alertRule.Labels {
 			if _, ok := LabelsUserCannotSpecify[label]; ok {
@@ -748,6 +753,7 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 		Record:                      alertRule.Record,
 		IsPaused:                    alertRule.IsPaused,
 		Metadata:                    alertRule.Metadata,
+		KeepFiringFor:               alertRule.KeepFiringFor,
 		MissingSeriesEvalsToResolve: alertRule.MissingSeriesEvalsToResolve,
 	}
 
@@ -810,6 +816,7 @@ func ClearRecordingRuleIgnoredFields(rule *AlertRule) {
 	rule.ExecErrState = ""
 	rule.Condition = ""
 	rule.For = 0
+	rule.KeepFiringFor = 0
 	rule.NotificationSettings = nil
 	rule.MissingSeriesEvalsToResolve = nil
 }
@@ -958,6 +965,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	}
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
+	}
+	if ruleToPatch.KeepFiringFor == -1 {
+		ruleToPatch.KeepFiringFor = existingRule.KeepFiringFor
 	}
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused

@@ -34,6 +34,10 @@ func TestInstanceStateType_IsValid(t *testing.T) {
 			expectedValidity: true,
 		},
 		{
+			instanceType:     InstanceStateRecovering,
+			expectedValidity: true,
+		},
+		{
 			instanceType:     InstanceStateType("notAValidInstanceStateType"),
 			expectedValidity: false,
 		},

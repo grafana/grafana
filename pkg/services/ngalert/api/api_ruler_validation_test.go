@@ -58,10 +58,12 @@ func allowRecording(lim RuleLimits) *RuleLimits {
 
 func validRule() apimodels.PostableExtendedRuleNode {
 	forDuration := model.Duration(rand.Int63n(1000))
+	keepFiringForDuration := model.Duration(rand.Int63n(1000))
 	uid := util.GenerateShortUID()
 	return apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
-			For: &forDuration,
+			For:           &forDuration,
+			KeepFiringFor: &keepFiringForDuration,
 			Labels: map[string]string{
 				"test-label": "data",
 			},
@@ -385,6 +387,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Equal(t, models.NoDataState(api.GrafanaManagedAlert.NoDataState), alert.NoDataState)
 				require.Equal(t, models.ExecutionErrorState(api.GrafanaManagedAlert.ExecErrState), alert.ExecErrState)
 				require.Equal(t, time.Duration(*api.ApiRuleNode.For), alert.For)
+				require.Equal(t, time.Duration(*api.ApiRuleNode.KeepFiringFor), alert.KeepFiringFor)
 				require.Equal(t, api.ApiRuleNode.Annotations, alert.Annotations)
 				require.Equal(t, api.ApiRuleNode.Labels, alert.Labels)
 				require.Nil(t, alert.Record)
@@ -399,6 +402,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 			},
 			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
 				require.Equal(t, time.Duration(0), alert.For)
+				require.Equal(t, time.Duration(0), alert.KeepFiringFor)
 				require.Nil(t, alert.Annotations)
 				require.Nil(t, alert.Labels)
 			},
@@ -453,6 +457,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				r.GrafanaManagedAlert.ExecErrState = ""
 				r.GrafanaManagedAlert.NotificationSettings = nil
 				r.ApiRuleNode.For = nil
+				r.ApiRuleNode.KeepFiringFor = nil
 				return &r
 			},
 			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
@@ -477,6 +482,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Empty(t, alert.ExecErrState)
 				require.Nil(t, alert.NotificationSettings)
 				require.Zero(t, alert.For)
+				require.Zero(t, alert.KeepFiringFor)
 				// Recording fields
 				require.Equal(t, api.GrafanaManagedAlert.Record.From, alert.Record.From)
 				require.Equal(t, api.GrafanaManagedAlert.Record.Metric, alert.Record.Metric)
@@ -493,6 +499,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				r.GrafanaManagedAlert.ExecErrState = apimodels.AlertingErrState
 				r.GrafanaManagedAlert.NotificationSettings = &apimodels.AlertRuleNotificationSettings{}
 				r.ApiRuleNode.For = func() *model.Duration { five := model.Duration(time.Second * 5); return &five }()
+				r.ApiRuleNode.KeepFiringFor = func() *model.Duration { five := model.Duration(time.Second * 5); return &five }()
 				return &r
 			},
 			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
@@ -501,6 +508,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Empty(t, alert.ExecErrState)
 				require.Nil(t, alert.NotificationSettings)
 				require.Zero(t, alert.For)
+				require.Zero(t, alert.KeepFiringFor)
 			},
 		},
 	}
@@ -722,6 +730,15 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 				return &r
 			},
 			expErr: "NOTEXIST does not exist",
+		},
+		{
+			name: "fail if keep_firing_for is negative",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				keepFiringFor := model.Duration(-1)
+				r.KeepFiringFor = &keepFiringFor
+				return &r
+			},
 		},
 	}
 
