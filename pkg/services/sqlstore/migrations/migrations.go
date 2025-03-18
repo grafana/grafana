@@ -149,4 +149,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddAlertRuleGuidMigration(mg)
 
 	ualert.AddAlertRuleMissingSeriesEvalsToResolve(mg)
+
+	ualert.AddAlertRuleVersionUIDIndex(mg)
 }
