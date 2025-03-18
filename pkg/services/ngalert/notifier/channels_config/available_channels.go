@@ -800,90 +800,88 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 			},
 		},
-		// LOGZ.IO GRAFANA CHANGE :: DEV-47388 Remove unsupported contact points
-		//{
-		//	Type:        "telegram",
-		//	Name:        "Telegram",
-		//	Description: "Sends notifications to Telegram",
-		//	Heading:     "Telegram API settings",
-		//	Options: []NotifierOption{
-		//		{
-		//			Label:        "BOT API Token",
-		//			Element:      ElementTypeInput,
-		//			InputType:    InputTypeText,
-		//			Placeholder:  "Telegram BOT API Token",
-		//			PropertyName: "bottoken",
-		//			Required:     true,
-		//			Secure:       true,
-		//		},
-		//		{
-		//			Label:        "Chat ID",
-		//			Element:      ElementTypeInput,
-		//			InputType:    InputTypeText,
-		//			Description:  "Integer Telegram Chat Identifier",
-		//			PropertyName: "chatid",
-		//			Required:     true,
-		//		},
-		//		{
-		//			Label:          "Message Thread ID",
-		//			Element:        ElementTypeInput,
-		//			InputType:      InputTypeText,
-		//			Description:    "Integer Telegram Message Thread Identifier",
-		//			PropertyName:   "message_thread_id",
-		//			Required:       false,
-		//			ValidationRule: "-?[0-9]{1,10}",
-		//		},
-		//		{ // New in 8.0.
-		//			Label:        "Message",
-		//			Element:      ElementTypeTextArea,
-		//			Placeholder:  alertingTemplates.DefaultMessageEmbed,
-		//			PropertyName: "message",
-		//		},
-		//		{
-		//			Label:   "Parse Mode",
-		//			Element: ElementTypeSelect,
-		//			SelectOptions: []SelectOption{
-		//				{
-		//					Value: "None",
-		//					Label: "None",
-		//				},
-		//				{
-		//					Value: "HTML",
-		//					Label: "HTML",
-		//				},
-		//				{
-		//					Value: "Markdown",
-		//					Label: "Markdown",
-		//				},
-		//				{
-		//					Value: "MarkdownV2",
-		//					Label: "Markdown V2",
-		//				},
-		//			},
-		//			Description:  `Mode for parsing entities in the message text. Default is 'HTML'`,
-		//			PropertyName: "parse_mode",
-		//		},
-		//		{
-		//			Label:        "Disable Web Page Preview",
-		//			Description:  "Disables link previews for links in this message",
-		//			Element:      ElementTypeCheckbox,
-		//			PropertyName: "disable_web_page_preview",
-		//		},
-		//		{
-		//			Label:        "Protect Content",
-		//			Description:  "Protects the contents of the sent message from forwarding and saving",
-		//			Element:      ElementTypeCheckbox,
-		//			PropertyName: "protect_content",
-		//		},
-		//		{
-		//			Label:        "Disable Notification",
-		//			Description:  "Sends the message silently. Users will receive a notification with no sound.",
-		//			Element:      ElementTypeCheckbox,
-		//			PropertyName: "disable_notification",
-		//		},
-		//	},
-		//},
-		// LOGZ.IO GRAFANA CHANGE :: End
+		{
+			Type:        "telegram",
+			Name:        "Telegram",
+			Description: "Sends notifications to Telegram",
+			Heading:     "Telegram API settings",
+			Options: []NotifierOption{
+				{
+					Label:        "BOT API Token",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "Telegram BOT API Token",
+					PropertyName: "bottoken",
+					Required:     true,
+					Secure:       true,
+				},
+				{
+					Label:        "Chat ID",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Integer Telegram Chat Identifier",
+					PropertyName: "chatid",
+					Required:     true,
+				},
+				{
+					Label:          "Message Thread ID",
+					Element:        ElementTypeInput,
+					InputType:      InputTypeText,
+					Description:    "Integer Telegram Message Thread Identifier",
+					PropertyName:   "message_thread_id",
+					Required:       false,
+					ValidationRule: "-?[0-9]{1,10}",
+				},
+				{ // New in 8.0.
+					Label:        "Message",
+					Element:      ElementTypeTextArea,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
+					PropertyName: "message",
+				},
+				{
+					Label:   "Parse Mode",
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
+						{
+							Value: "None",
+							Label: "None",
+						},
+						{
+							Value: "HTML",
+							Label: "HTML",
+						},
+						{
+							Value: "Markdown",
+							Label: "Markdown",
+						},
+						{
+							Value: "MarkdownV2",
+							Label: "Markdown V2",
+						},
+					},
+					Description:  `Mode for parsing entities in the message text. Default is 'HTML'`,
+					PropertyName: "parse_mode",
+				},
+				{
+					Label:        "Disable Web Page Preview",
+					Description:  "Disables link previews for links in this message",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "disable_web_page_preview",
+				},
+				{
+					Label:        "Protect Content",
+					Description:  "Protects the contents of the sent message from forwarding and saving",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "protect_content",
+				},
+				{
+					Label:        "Disable Notification",
+					Description:  "Sends the message silently. Users will receive a notification with no sound.",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "disable_notification",
+				},
+			},
+		},
 		{
 			Type:        "webhook",
 			Name:        "Webhook",
