@@ -60,18 +60,18 @@ declare -a release_branches=()
 declare -a direct_tags=()
 declare -a included_tags=()
 
-# First check all release branches
-for branch in $(git branch -r | grep 'origin/release-' | sed 's/origin\///'); do
+# First check all release branches (including security releases)
+for branch in $(git branch -r | grep -E 'origin/release-[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$' | sed 's/origin\///'); do
     # Check if the commit is in this branch's history
     if git merge-base --is-ancestor "$COMMIT_HASH" "origin/$branch" 2>/dev/null; then
         release_branches+=("$branch")
     fi
 done
 
-# Then check all version tags
+# Then check all version tags (including security releases)
 for tag in $(git tag | sort -V); do
     # Skip non-version tags
-    if ! [[ $tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    if ! [[ $tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$ ]]; then
         continue
     fi
     
