@@ -214,7 +214,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				grafanaRule := grafanaGroup.Rules[j]
 
 				if promRule.Record != "" {
-					require.Equal(t, fmt.Sprintf("[%s] %s", tc.promGroup.Name, promRule.Record), grafanaRule.Title)
+					require.Equal(t, promRule.Record, grafanaRule.Title)
 					require.NotNil(t, grafanaRule.Record)
 					require.Equal(t, grafanaRule.Record.From, queryRefID)
 					require.Equal(t, promRule.Record, grafanaRule.Record.Metric)
@@ -225,7 +225,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 					}
 					require.Equal(t, targetDatasourceUID, grafanaRule.Record.TargetDatasourceUID)
 				} else {
-					require.Equal(t, fmt.Sprintf("[%s] %s", tc.promGroup.Name, promRule.Alert), grafanaRule.Title)
+					require.Equal(t, promRule.Alert, grafanaRule.Title)
 				}
 
 				var expectedFor time.Duration
@@ -292,10 +292,10 @@ func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
 
 	require.Equal(t, "test-group-1", group.Title)
 	require.Len(t, group.Rules, 4)
-	require.Equal(t, "[test-group-1] alert", group.Rules[0].Title)
-	require.Equal(t, "[test-group-1] alert (2)", group.Rules[1].Title)
-	require.Equal(t, "[test-group-1] another alert", group.Rules[2].Title)
-	require.Equal(t, "[test-group-1] alert (3)", group.Rules[3].Title)
+	require.Equal(t, "alert", group.Rules[0].Title)
+	require.Equal(t, "alert", group.Rules[1].Title)
+	require.Equal(t, "another alert", group.Rules[2].Title)
+	require.Equal(t, "alert", group.Rules[3].Title)
 }
 
 func TestCreateMathNode(t *testing.T) {

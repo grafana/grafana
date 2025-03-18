@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -123,15 +122,13 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		expectedRules := make(map[string]string)
 		for _, rule := range simpleGroup.Rules {
 			if rule.Alert != "" {
-				title := fmt.Sprintf("[%s] %s", simpleGroup.Name, rule.Alert)
 				promRuleYAML, err := yaml.Marshal(rule)
 				require.NoError(t, err)
-				expectedRules[title] = string(promRuleYAML)
+				expectedRules[rule.Alert] = string(promRuleYAML)
 			} else if rule.Record != "" {
-				title := fmt.Sprintf("[%s] %s", simpleGroup.Name, rule.Record)
 				promRuleYAML, err := yaml.Marshal(rule)
 				require.NoError(t, err)
-				expectedRules[title] = string(promRuleYAML)
+				expectedRules[rule.Record] = string(promRuleYAML)
 			}
 		}
 
