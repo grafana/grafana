@@ -70,7 +70,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 					return
 				}
 
-				// TODO: remove this hack and it's not needed needed anymore as we validate OnCreate
+				// TODO: Explore how to better support synchronous validation for the UI (and likely remove this hack)
 				if name != "new" {
 					repo, err = s.getter.AsRepository(ctx, &cfg)
 					if err != nil {
