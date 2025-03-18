@@ -1189,6 +1189,28 @@
       }
     },
     "edit-pane": {
+      "add": {
+        "lib-panel": {
+          "heading": "Library panel",
+          "title": "Library panels allow you share and reuse panels between dashboards"
+        },
+        "panel": {
+          "heading": "Panel",
+          "title": "A container for visualizations and other content"
+        },
+        "paste-panel": {
+          "heading": "Paste panel",
+          "title": "Paste a panel from the clipboard"
+        },
+        "row": {
+          "heading": "Row",
+          "title": "A group of panels with an optional header"
+        },
+        "tab": {
+          "heading": "Tab",
+          "title": "Break up your dashboard into different horizontal tabs"
+        }
+      },
       "elements": {
         "dashboard": "Dashboard",
         "objects": "Objects",
@@ -1379,11 +1401,6 @@
     },
     "toolbar": {
       "add": "Add",
-      "add-panel": "Panel",
-      "add-panel-description": "A container for visualizations and other content",
-      "add-panel-lib": "Import library panel",
-      "add-row": "Row",
-      "add-tab": "Tab",
       "alert-rules": "Alert rules",
       "back-to-dashboard": "Back to dashboard",
       "dashboard-settings": {
@@ -1406,18 +1423,14 @@
         "label": "Exit edit",
         "tooltip": "Exits edit mode and discards unsaved changes"
       },
-      "libray-panel-description": "Libray panels allow you share and reuse panels between dashboards",
       "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "open-original": "Open original dashboard",
-      "paste-panel": "Paste panel",
-      "paste-panel-description": "Paste a panel from the clipboard",
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
       "public-dashboard": "Public",
       "refresh": "Refresh dashboard",
-      "row-description": "A group of panels with an optional header",
       "save": "Save dashboard",
       "save-dashboard": {
         "label": "Save dashboard",
@@ -1437,7 +1450,6 @@
       "share-button": "Share",
       "show-hidden-elements": "Show hidden",
       "switch-old-dashboard": "Switch to old dashboard page",
-      "tabs-description": "Break up your dashboard into different horizontal tabs",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
