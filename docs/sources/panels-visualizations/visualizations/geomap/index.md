@@ -211,7 +211,7 @@ You can add multiple layers of data to a single geomap in order to create rich, 
 
 #### Layer type
 
-There are seven map layer types to choose from in a geomap.
+There are eight map layer types to choose from in a geomap.
 
 - [Markers](#markers-layer) renders a marker at each data point.
 - [Heatmap](#heatmap-layer) visualizes a heatmap of the data.
@@ -224,6 +224,7 @@ There are seven map layer types to choose from in a geomap.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
+- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre / Mapbox style URL.
 
 {{< admonition type="note" >}}
 Beta is equivalent to the [public preview](/docs/release-life-cycle/) release stage.
@@ -533,6 +534,13 @@ The XYZ Tile layer is a map from a generic tile layer.
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [List of Open Street Map Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
+#### MapLibre Style Layer
+
+The MapLibre Style Layer is a map defined via a MapLibre / Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions and more. Most often, they are based on vector tiles as opposed to raster tiles.
+
+- **URL template** - Set a valid style url, for example: https://demotiles.maplibre.org/style.json
+- **Access Token** - An API token for mapbox maps. Only works for `mapbox://` URLs. In other cases, you might have to include the token in the URL, for example: https://example.com/map/style.json?key=XXX
+
 ### Basemap layer options
 
 A basemap layer provides the visual foundation for a mapping application. It typically contains data with global coverage. Several base layer options
@@ -540,12 +548,13 @@ are available each with specific configuration options to style the base map.
 
 Basemap layer types can also be added as layers. You can specify an opacity.
 
-There are four basemap layer types to choose from in a geomap.
+There are five basemap layer types to choose from in a geomap.
 
 - [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
+- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre / Mapbox style URL.
 
 The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
 
@@ -555,7 +564,7 @@ The default basemap layer uses the CARTO map. You can define custom default base
 
 You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page](ref:provisioning-docs-page).
 
-Use the JSON configuration option `default_baselayer_config` to define the default base map. There are currently four base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`. Here are some provisioning examples for each base map option.
+Use the JSON configuration option `default_baselayer_config` to define the default base map. There are currently five base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`, `maplibre`. Here are some provisioning examples for each base map option.
 
 - **carto** loads the CartoDB tile server. You can choose from `auto`, `dark`, and `light` theme for the base map and can be set as shown below. The `showLabels` tag determines whether or not Grafana shows the Country details on top of the map. Here is an example:
 
@@ -617,6 +626,17 @@ default_baselayer_config = `{
   "config": {
     "attribution": "Open street map",
     "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+  }
+}`
+```
+
+- **maplibre** loads a custom tile server defined by the user. Set a valid style `url` for this option in order to properly load a default base map. Here is an example:
+
+```ini
+default_baselayer_config = `{
+  "type": "maplibre",
+  "config": {
+    "url": "https://demotiles.maplibre.org/style.json"
   }
 }`
 ```
