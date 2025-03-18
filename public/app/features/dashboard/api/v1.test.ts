@@ -241,4 +241,42 @@ describe('v1 dashboard API', () => {
       });
     });
   });
+
+  describe('version error handling', () => {
+    it('should throw DashboardVersionError for v2alpha1 conversion error', async () => {
+      const mockDashboardWithError = {
+        ...mockDashboardDto,
+        status: {
+          conversion: {
+            failed: true,
+            error: 'v2alpha1',
+            storedVersion: 'v2alpha1',
+          },
+        },
+      };
+
+      jest.spyOn(backendSrv, 'get').mockResolvedValueOnce(mockDashboardWithError);
+
+      const api = new K8sDashboardAPI();
+      await expect(api.getDashboardDTO('test')).rejects.toThrow('Dashboard version error');
+    });
+
+    it('should not throw for other conversion errors', async () => {
+      const mockDashboardWithError = {
+        ...mockDashboardDto,
+        status: {
+          conversion: {
+            failed: true,
+            error: 'other-error',
+            storedVersion: 'other-version',
+          },
+        },
+      };
+
+      jest.spyOn(backendSrv, 'get').mockResolvedValueOnce(mockDashboardWithError);
+
+      const api = new K8sDashboardAPI();
+      await expect(api.getDashboardDTO('test')).resolves.toBeDefined();
+    });
+  });
 });

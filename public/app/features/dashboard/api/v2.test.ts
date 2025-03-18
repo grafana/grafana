@@ -195,3 +195,59 @@ describe('v2 dashboard API - Save', () => {
     );
   });
 });
+
+describe('version error handling', () => {
+  it('should throw DashboardVersionError for v0alpha1 conversion error', async () => {
+    const mockDashboardWithError = {
+      ...mockDashboardDto,
+      status: {
+        conversion: {
+          failed: true,
+          error: 'v0alpha1',
+          storedVersion: 'v0alpha1',
+        },
+      },
+    };
+
+    jest.spyOn(backendSrv, 'get').mockResolvedValueOnce(mockDashboardWithError);
+
+    const api = new K8sDashboardV2API();
+    await expect(api.getDashboardDTO('test')).rejects.toThrow('Dashboard version error');
+  });
+
+  it('should throw DashboardVersionError for v1alpha1 conversion error', async () => {
+    const mockDashboardWithError = {
+      ...mockDashboardDto,
+      status: {
+        conversion: {
+          failed: true,
+          error: 'v1alpha1',
+          storedVersion: 'v1alpha1',
+        },
+      },
+    };
+
+    jest.spyOn(backendSrv, 'get').mockResolvedValueOnce(mockDashboardWithError);
+
+    const api = new K8sDashboardV2API();
+    await expect(api.getDashboardDTO('test')).rejects.toThrow('Dashboard version error');
+  });
+
+  it('should not throw for other conversion errors', async () => {
+    const mockDashboardWithError = {
+      ...mockDashboardDto,
+      status: {
+        conversion: {
+          failed: true,
+          error: 'other-error',
+          storedVersion: 'other-version',
+        },
+      },
+    };
+
+    jest.spyOn(backendSrv, 'get').mockResolvedValueOnce(mockDashboardWithError);
+
+    const api = new K8sDashboardV2API();
+    await expect(api.getDashboardDTO('test')).resolves.toBeDefined();
+  });
+});
