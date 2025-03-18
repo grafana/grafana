@@ -52,11 +52,6 @@ export function ShareTimeRangeButton({ collapsed, url: urlProp, fromParam, toPar
     setIsOpen(false);
   };
 
-  console.log('url', url);
-  console.log('absoluteTimeRangeURL', absoluteTimeRangeURL);
-  console.log('rangeUtil', rangeUtil.convertRawToRange);
-  console.log('toUTC', toUtc);
-
   const menu = (
     <Menu>
       <Menu.Item

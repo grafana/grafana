@@ -86,14 +86,45 @@ describe('absoluteTimeRangeURL', () => {
     window.location = originalLocation;
   });
 
+  it('should preserve other query parameters', () => {
+    const url = 'http://localhost:3000/dashboard?from=now-6h&to=now&param1=value1&param2=value2';
+    const result = absoluteTimeRangeURL({ url });
+
+    const expectedTo = toUtc(fakeSystemTime).valueOf().toString();
+    const expectedFrom = toUtc(fakeSystemTime - 6 * 60 * 60 * 1000)
+      .valueOf()
+      .toString();
+
+    expect(result).toBe(
+      `http://localhost:3000/dashboard?from=${expectedFrom}&to=${expectedTo}&param1=value1&param2=value2`
+    );
+  });
+
+  it('should handle URLs with hash fragments', () => {
+    const url = 'http://localhost:3000/dashboard?from=now-6h&to=now#panel-1';
+    const result = absoluteTimeRangeURL({ url });
+
+    const expectedTo = toUtc(fakeSystemTime).valueOf().toString();
+    const expectedFrom = toUtc(fakeSystemTime - 6 * 60 * 60 * 1000)
+      .valueOf()
+      .toString();
+
+    expect(result).toBe(`http://localhost:3000/dashboard?from=${expectedFrom}&to=${expectedTo}#panel-1`);
+  });
+
   describe('error handling', () => {
     it('should handle invalid URLs gracefully', () => {
       const invalidUrl = 'not-a-valid-url';
       const result = absoluteTimeRangeURL({ url: invalidUrl });
 
       expect(result).toBe(invalidUrl);
-      // verify error was logged
-      expect(console.error).toHaveBeenCalledWith('Error in absoluteTimeRangeURL:', expect.any(Error));
+      // Update the test to match the actual error message
+      expect(console.error).toHaveBeenCalledWith(
+        'Error in absoluteTimeRangeURL:',
+        expect.objectContaining({
+          message: expect.stringContaining('Invalid URL')
+        })
+      );
     });
 
     it('should handle invalid relative time ranges', () => {
@@ -114,34 +145,6 @@ describe('absoluteTimeRangeURL', () => {
 
       expect(result).toBe('http://localhost:3000/dashboard?from=now-6h&to=now');
       expect(console.error).toHaveBeenCalledWith('Failed to convert relative time range:', expect.any(Error));
-    });
-  });
-
-  describe('URL handling', () => {
-    it('should preserve other query parameters', () => {
-      const url = 'http://localhost:3000/dashboard?from=now-6h&to=now&param1=value1&param2=value2';
-      const result = absoluteTimeRangeURL({ url });
-
-      const expectedTo = toUtc(fakeSystemTime).valueOf().toString();
-      const expectedFrom = toUtc(fakeSystemTime - 6 * 60 * 60 * 1000)
-        .valueOf()
-        .toString();
-
-      expect(result).toBe(
-        `http://localhost:3000/dashboard?from=${expectedFrom}&to=${expectedTo}&param1=value1&param2=value2`
-      );
-    });
-
-    it('should handle URLs with hash fragments', () => {
-      const url = 'http://localhost:3000/dashboard?from=now-6h&to=now#panel-1';
-      const result = absoluteTimeRangeURL({ url });
-
-      const expectedTo = toUtc(fakeSystemTime).valueOf().toString();
-      const expectedFrom = toUtc(fakeSystemTime - 6 * 60 * 60 * 1000)
-        .valueOf()
-        .toString();
-
-      expect(result).toBe(`http://localhost:3000/dashboard?from=${expectedFrom}&to=${expectedTo}#panel-1`);
     });
   });
 
