@@ -122,10 +122,6 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 			id.IsGrafanaAdmin = &grafanaAdmin
 		}
 
-		if s.cfg.JWTAuth.RoleAttributeStrict && !role.IsValid() {
-			return nil, errJWTInvalidRole.Errorf("invalid role claim in JWT: %s", role)
-		}
-
 		id.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, id.Groups, role)
 		if s.cfg.JWTAuth.RoleAttributeStrict && len(id.OrgRoles) == 0 {
 			return nil, errJWTInvalidRole.Errorf("could not evaluate any valid roles using IdP provided data")

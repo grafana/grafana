@@ -192,6 +192,59 @@ func TestAuthenticateJWT(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Invalid Use case with org_mapping and invalid roles",
+			wantID: &authn.Identity{
+				OrgID:           0,
+				OrgName:         "",
+				OrgRoles:        map[int64]identity.RoleType{4: identity.RoleEditor, 5: identity.RoleViewer},
+				Login:           "eai-doe",
+				Groups:          []string{"foo", "bar"},
+				Name:            "Eai Doe",
+				Email:           "eai.doe@cor.po",
+				IsGrafanaAdmin:  boolPtr(false),
+				AuthenticatedBy: login.JWTModule,
+				AuthID:          "1234567890",
+				IsDisabled:      false,
+				HelpFlags1:      0,
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					SyncPermissions: true,
+					SyncTeams:       true,
+					LookUpParams: login.UserLookupParams{
+						Email: stringPtr("eai.doe@cor.po"),
+						Login: stringPtr("eai-doe"),
+					},
+				},
+			},
+			verifyProvider: func(context.Context, string) (map[string]any, error) {
+				return map[string]any{
+					"sub":                "1234567890",
+					"email":              "eai.doe@cor.po",
+					"preferred_username": "eai-doe",
+					"name":               "Eai Doe",
+					"roles":              []string{"Invalid"},
+					"groups":             []string{"foo", "bar"},
+				}, nil
+			},
+			cfg: &setting.Cfg{
+				JWTAuth: setting.AuthJWTSettings{
+					Enabled:                 true,
+					HeaderName:              jwtHeaderName,
+					EmailClaim:              "email",
+					UsernameClaim:           "preferred_username",
+					AutoSignUp:              true,
+					AllowAssignGrafanaAdmin: true,
+					RoleAttributeStrict:     true,
+					RoleAttributePath:       "roles",
+					GroupsAttributePath:     "groups[]",
+					OrgMapping:              []string{"foo:Org4:Editor", "bar:Org5:Viewer"},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
