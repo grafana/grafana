@@ -9,14 +9,16 @@ import {
   useState,
 } from 'react';
 
-import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder, shallowCompare, store } from '@grafana/data';
+import { CoreApp, LogLevel, LogRowModel, LogsDedupStrategy, LogsSortOrder, shallowCompare, store } from '@grafana/data';
 import { PopoverContent } from '@grafana/ui';
 
 import { GetRowContextQueryFn } from './LogLineMenu';
 
 export interface LogListContextData extends Omit<Props, 'showControls'> {
+  filterLevels: LogLevel[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDisplayedFields: (displayedFields: string[]) => void;
+  setFilterLevels: (filterLevels: LogLevel[]) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
   setSyntaxHighlighting: (syntaxHighlighting: boolean) => void;
@@ -29,8 +31,10 @@ export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
+  filterLevels: [],
   setDedupStrategy: () => {},
   setDisplayedFields: () => {},
+  setFilterLevels: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setShowTime: () => {},
@@ -61,6 +65,7 @@ export type LogListState = Pick<
   LogListContextData,
   | 'dedupStrategy'
   | 'displayedFields'
+  | 'filterLevels'
   | 'pinnedLogs'
   | 'showTime'
   | 'sortOrder'
@@ -73,6 +78,7 @@ export interface Props {
   children?: ReactNode;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
+  filterLevels?: LogLevel[];
   getRowContextQuery?: GetRowContextQueryFn;
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
@@ -97,6 +103,7 @@ export const LogListContextProvider = ({
   displayedFields,
   getRowContextQuery,
   logOptionsStorageKey,
+  filterLevels = logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : [],
   logSupportsContext,
   onLogOptionsChange,
   onPermalinkClick,
@@ -114,6 +121,7 @@ export const LogListContextProvider = ({
   const [logListState, setLogListState] = useState<LogListState>({
     dedupStrategy,
     displayedFields,
+    filterLevels,
     pinnedLogs,
     showTime,
     sortOrder,
@@ -129,6 +137,7 @@ export const LogListContextProvider = ({
     const newState = {
       ...logListState,
       dedupStrategy,
+      filterLevels,
       showTime,
       sortOrder,
       syntaxHighlighting,
@@ -136,6 +145,9 @@ export const LogListContextProvider = ({
     };
     if (!shallowCompare(logListState.displayedFields, displayedFields)) {
       newState.displayedFields = displayedFields;
+    }
+    if (!shallowCompare(logListState.filterLevels, filterLevels)) {
+      newState.filterLevels = filterLevels;
     }
     if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
       newState.pinnedLogs = pinnedLogs;
@@ -147,6 +159,7 @@ export const LogListContextProvider = ({
     app,
     dedupStrategy,
     displayedFields,
+    filterLevels,
     logListState,
     pinnedLogs,
     showControls,
@@ -168,6 +181,14 @@ export const LogListContextProvider = ({
     (displayedFields: string[]) => {
       setLogListState({ ...logListState, displayedFields });
       onLogOptionsChange?.('displayedFields', displayedFields);
+    },
+    [logListState, onLogOptionsChange]
+  );
+
+  const setFilterLevels = useCallback(
+    (filterLevels: LogLevel[]) => {
+      setLogListState({ ...logListState, filterLevels });
+      onLogOptionsChange?.('filterLevels', filterLevels);
     },
     [logListState, onLogOptionsChange]
   );
@@ -230,6 +251,7 @@ export const LogListContextProvider = ({
         app,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields: logListState.displayedFields,
+        filterLevels: logListState.filterLevels,
         getRowContextQuery,
         logSupportsContext,
         onPermalinkClick,
@@ -240,6 +262,7 @@ export const LogListContextProvider = ({
         pinnedLogs: logListState.pinnedLogs,
         setDedupStrategy,
         setDisplayedFields,
+        setFilterLevels,
         setLogListState,
         setPinnedLogs,
         setShowTime,

@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { capitalize } from 'lodash';
+import { capitalize, filter } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import {
   CoreApp,
   EventBus,
   GrafanaTheme2,
+  LogLevel,
   LogsDedupDescription,
   LogsDedupStrategy,
   LogsSortOrder,
@@ -29,11 +30,22 @@ const DEDUP_OPTIONS = [
   LogsDedupStrategy.signature,
 ];
 
+const FILTER_LEVELS: LogLevel[] = [
+  LogLevel.info,
+  LogLevel.debug,
+  LogLevel.trace,
+  LogLevel.warning,
+  LogLevel.error,
+  LogLevel.critical,
+];
+
 export const LogListControls = ({ app, eventBus }: Props) => {
   const styles = useStyles2(getStyles);
   const {
     dedupStrategy,
+    filterLevels,
     setDedupStrategy,
+    setFilterLevels,
     setShowTime,
     setSortOrder,
     setSyntaxHighlighting,
@@ -61,6 +73,19 @@ export const LogListControls = ({ app, eventBus }: Props) => {
       })
     );
   }, [eventBus]);
+
+  const onFilterLevelClick = useCallback(
+    (level?: LogLevel) => {
+      if (level === undefined) {
+        setFilterLevels([]);
+      } else if (!filterLevels.includes(level)) {
+        setFilterLevels([...filterLevels, level]);
+      } else {
+        setFilterLevels(filterLevels.filter((filterLevel) => filterLevel !== level));
+      }
+    },
+    [filterLevels, setFilterLevels]
+  );
 
   const onShowTimestampsClick = useCallback(() => {
     setShowTime(!showTime);
@@ -95,6 +120,28 @@ export const LogListControls = ({ app, eventBus }: Props) => {
     [dedupStrategy, setDedupStrategy, styles.menuItemActive]
   );
 
+  const filterLevelsMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          key={'all'}
+          className={filterLevels.length === 0 ? styles.menuItemActive : undefined}
+          label={t('logs.logs-controls.display-level-all', 'All levels')}
+          onClick={() => onFilterLevelClick()}
+        />
+        {FILTER_LEVELS.map((level) => (
+          <Menu.Item
+            key={level}
+            className={filterLevels.includes(level) ? styles.menuItemActive : undefined}
+            label={capitalize(level)}
+            onClick={() => onFilterLevelClick(level)}
+          />
+        ))}
+      </Menu>
+    ),
+    [filterLevels, onFilterLevelClick, styles.menuItemActive]
+  );
+
   const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer;
 
   return (
@@ -124,8 +171,15 @@ export const LogListControls = ({ app, eventBus }: Props) => {
             <IconButton
               name={'filter'}
               className={dedupStrategy !== LogsDedupStrategy.none ? styles.controlButtonActive : styles.controlButton}
-              onClick={onSortOrderClick}
               tooltip={t('logs.logs-controls.deduplication', 'Deduplication')}
+              size="md"
+            />
+          </Dropdown>
+          <Dropdown overlay={filterLevelsMenu} placement="auto-end">
+            <IconButton
+              name={'gf-logs'}
+              className={filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton}
+              tooltip={t('logs.logs-controls.display-level', 'Display levels')}
               size="md"
             />
           </Dropdown>
