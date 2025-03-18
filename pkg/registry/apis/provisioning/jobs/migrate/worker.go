@@ -96,6 +96,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 
 	isFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus)
 	progress.SetTotal(ctx, 10) // will show a progress bar
+
+	// TODO: we should fail fast if migration is not possible and not always clone the repository.
 	if repo.Config().Spec.GitHub != nil {
 		progress.SetMessage(ctx, "clone "+repo.Config().Spec.GitHub.URL)
 		reader, writer := io.Pipe()
@@ -197,7 +199,6 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 			},
 		},
 	}, progress)
-
 	if err != nil { // this will have an error when too many errors exist
 		progress.SetMessage(ctx, "error importing resources, reverting")
 		if e2 := stopReadingUnifiedStorage(ctx, w.storageStatus); e2 != nil {
