@@ -174,6 +174,8 @@ func RegisterAPIService(
 	return builder, nil
 }
 
+// TODO: Move specific endpoint authorization together with the rest of the logic.
+// so that things are not spread out all over the place.
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
@@ -318,6 +320,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 
 	storage := map[string]rest.Storage{}
+
+	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
@@ -362,6 +366,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	return nil
 }
 
+// TODO: Move this to a more appropriate place. Probably controller/mutation.go
 func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
 
@@ -386,6 +391,7 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		r.Spec.Sync.IntervalSeconds = 60
 	}
 
+	// TODO: move this logic into github repository concrete implementation.
 	if r.Spec.Type == provisioning.GitHubRepositoryType {
 		if r.Spec.GitHub == nil {
 			return fmt.Errorf("github configuration is required")
@@ -408,6 +414,7 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	return nil
 }
 
+// TODO: move logic to a more appropriate place. Probably controller/validation.go
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	obj := a.GetObject()
 	if obj == nil || a.GetOperation() == admission.Connect || a.GetOperation() == admission.Delete {
@@ -478,6 +485,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	return nil
 }
 
+// TODO: move this to a more appropriate place. Probably controller/validation.go
 func (b *APIBuilder) verifySingleInstanceTarget(cfg *provisioning.Repository) *field.Error {
 	if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
 		all, err := b.repositoryLister.Repositories(cfg.Namespace).List(labels.Everything())
@@ -582,6 +590,7 @@ func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return provisioning.GetOpenAPIDefinitions
 }
 
+// TODO: move endpoint specific logic to the connector so that we don't have things spread out all over the place.
 func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Provisioning"
 
@@ -915,6 +924,7 @@ spec:
 	return oas, nil
 }
 
+// TODO: move this to a more appropriate place
 func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
 	var err error
 	if repo.Spec.GitHub != nil &&
@@ -996,6 +1006,7 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 }
 
 // Helpers for fetching valid Repository objects
+// TODO: where should the helpers live?
 
 func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
 	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
