@@ -144,6 +144,10 @@ func (r *recordingRule) Run() error {
 			// TODO: Either implement me or remove from alert rules once investigated.
 
 			r.doEvaluate(ctx, eval)
+			// Call afterEval callback if it exists
+			if eval.afterEval != nil {
+				eval.afterEval()
+			}
 		case <-ctx.Done():
 			r.logger.Debug("Stopping recording rule routine")
 			return nil
@@ -235,6 +239,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	span.AddEvent("rule evaluated")
 	r.lastError.Store(nil)
 	r.health.Store("ok")
+
 }
 
 func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logger log.Logger) error {

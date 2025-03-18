@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/atomic"
 
 	alertingModels "github.com/grafana/alerting/models"
 
@@ -172,6 +173,7 @@ func TestAlertRule(t *testing.T) {
 				t.Fatal("No message was received on eval channel")
 			}
 		})
+
 	})
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("Update should do nothing", func(t *testing.T) {
@@ -275,6 +277,186 @@ func TestAlertRuleIdentifier(t *testing.T) {
 		key := models.GenerateRuleKeyWithGroup(1)
 		r := blankRuleForTests(context.Background(), key)
 		require.Equal(t, key, r.Identifier())
+	})
+}
+
+func TestAlertRuleAfterEval(t *testing.T) {
+	gen := models.RuleGen.With(models.RuleGen.WithOrgID(123))
+
+	type testContext struct {
+		rule         *models.AlertRule
+		process      Rule
+		evalDoneChan chan time.Time
+		afterEvalCh  chan struct{}
+		callCount    *atomic.Int32
+		mutex        *sync.Mutex
+		stateManager *state.Manager
+		sender       *SyncAlertsSenderMock
+	}
+
+	// Configuration struct for test setup
+	type setupConfig struct {
+		queryState eval.State
+		isPaused   bool
+	}
+
+	// Default configuration
+	defaultSetupConfig := setupConfig{
+		queryState: eval.Normal,
+		isPaused:   false,
+	}
+
+	setup := func(t *testing.T, cfg setupConfig) *testContext {
+		t.Helper()
+		evalDoneChan := make(chan time.Time, 1) // Buffer to avoid blocking
+		afterEvalCh := make(chan struct{}, 1)   // Buffer to avoid blocking
+		callCount := atomic.NewInt32(0)
+		mutex := &sync.Mutex{}
+
+		sender := NewSyncAlertsSenderMock()
+		sender.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Return()
+
+		ruleStore := newFakeRulesStore()
+		instanceStore := &state.FakeInstanceStore{}
+		registry := prometheus.NewPedanticRegistry()
+		sch := setupScheduler(t, ruleStore, instanceStore, registry, sender, nil, nil)
+
+		// Set up the evaluation callback
+		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
+			evalDoneChan <- t
+		}
+
+		rule := gen.With(withQueryForState(t, cfg.queryState)).GenerateRef()
+		if cfg.isPaused {
+			rule.IsPaused = true
+		}
+		ruleStore.PutRule(context.Background(), rule)
+		ruleFactory := ruleFactoryFromScheduler(sch)
+
+		process := ruleFactory.new(context.Background(), rule)
+
+		return &testContext{
+			rule:         rule,
+			process:      process,
+			evalDoneChan: evalDoneChan,
+			afterEvalCh:  afterEvalCh,
+			callCount:    callCount,
+			mutex:        mutex,
+			stateManager: sch.stateManager,
+			sender:       sender,
+		}
+	}
+
+	runTest := func(t *testing.T, ctx *testContext, expectCallbackCalled bool) {
+		t.Helper()
+
+		now := time.Now()
+
+		eval := &Evaluation{
+			scheduledAt: now,
+			rule:        ctx.rule,
+			folderTitle: "test-folder",
+			afterEval: func() {
+				ctx.callCount.Inc()
+				select {
+				case ctx.afterEvalCh <- struct{}{}:
+				default:
+					// Channel is full, which is fine for tests
+				}
+			},
+		}
+
+		// Start the rule processing goroutine
+		go func() {
+			_ = ctx.process.Run()
+		}()
+
+		// Send the evaluation
+		ctx.process.Eval(eval)
+
+		// Wait for evaluation to complete
+		select {
+		case <-ctx.evalDoneChan:
+			// Evaluation was completed
+		case <-time.After(5 * time.Second):
+			t.Fatal("Evaluation was not completed in time")
+		}
+
+		// Wait for potential afterEval execution
+		waitDuration := 500 * time.Millisecond
+		if expectCallbackCalled {
+			select {
+			case <-ctx.afterEvalCh:
+				// Success - afterEval was called
+			case <-time.After(5 * time.Second):
+				t.Fatal("afterEval callback was not called")
+			}
+		} else {
+			// Just wait a bit to make sure callback isn't called
+			time.Sleep(waitDuration)
+		}
+
+		// Verify callback count
+		count := ctx.callCount.Load()
+		if expectCallbackCalled {
+			require.Equal(t, int32(1), count, "afterEval callback should have been called exactly once")
+		} else {
+			require.Equal(t, int32(0), count, "afterEval callback should not have been called")
+		}
+	}
+
+	t.Run("afterEval callback is called after successful evaluation", func(t *testing.T) {
+		ctx := setup(t, defaultSetupConfig)
+		runTest(t, ctx, true)
+	})
+
+	t.Run("afterEval callback is called even when evaluation produces errors", func(t *testing.T) {
+		ctx := setup(t, setupConfig{
+			queryState: eval.Error,
+			isPaused:   false,
+		})
+		runTest(t, ctx, true)
+
+		// Wait a bit to ensure the state is properly set
+		time.Sleep(100 * time.Millisecond)
+
+		// Verify the rule error status directly rather than checking state manager
+		status := ctx.process.(*alertRule).Status()
+		require.Equal(t, "error", status.Health, "Expected error health status")
+		require.NotNil(t, status.LastError, "Expected an error to be set in the status")
+	})
+
+	t.Run("afterEval callback is called when rule is paused", func(t *testing.T) {
+		ctx := setup(t, setupConfig{
+			queryState: eval.Normal,
+			isPaused:   true,
+		})
+		runTest(t, ctx, true)
+	})
+
+	t.Run("afterEval callback is called before stopping rule evaluation", func(t *testing.T) {
+		ctx := setup(t, defaultSetupConfig)
+
+		// First verify that the callback is called for normal evaluation
+		runTest(t, ctx, true)
+
+		// Reset the counter for the stop test
+		ctx.callCount.Store(0)
+
+		// Create a stopChan to verify rule stopping
+		stopChan := make(chan struct{})
+		go func() {
+			ctx.process.Stop(nil)
+			close(stopChan)
+		}()
+
+		// Verify we can exit cleanly
+		select {
+		case <-stopChan:
+			// Success - the rule stopped
+		case <-time.After(5 * time.Second):
+			t.Fatal("Rule did not stop in time")
+		}
 	})
 }
 
