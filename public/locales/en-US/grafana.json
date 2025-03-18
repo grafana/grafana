@@ -353,6 +353,12 @@
       "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
       "self-reference": "You can't link an expression to itself"
     },
+    "draggable-rules-table": {
+      "evals-to-start-alerting": "Evaluations to start alerting",
+      "pending-period": "Pending period",
+      "recording": "Recording",
+      "rule-name": "Rule name"
+    },
     "export": {
       "subtitle": {
         "formats": "Select the format and download the file or copy the contents to clipboard",
@@ -375,6 +381,45 @@
       "edit": "Edit",
       "export": "Export",
       "reorder": "Re-order rules"
+    },
+    "group-details": {
+      "ds-features-error": "Error loading data source details",
+      "edit": "Edit",
+      "evaluations-to-fire": "Evaluation cycles to fire",
+      "export": "Export",
+      "folder": "Folder",
+      "group-loading-error": "Error loading the group",
+      "interval": "Interval",
+      "namespace": "Namespace",
+      "pending-period": "Pending period",
+      "recording": "Recording",
+      "rule-name": "Rule name"
+    },
+    "group-edit": {
+      "ds-error": "Error loading data source details",
+      "form": {
+        "delete": "Delete",
+        "delete-body": "Are you sure you want to delete this rule group?",
+        "delete-confirm": "Delete",
+        "delete-title": "Delete rule group",
+        "folder-label": "Folder",
+        "group-name-label": "Evaluation group name",
+        "group-name-required": "Group name is required",
+        "interval-description": "How often is the group evaluated",
+        "interval-label": "Evaluation interval",
+        "namespace-label": "Namespace",
+        "namespace-required": "Namespace is required",
+        "rules-description": "Drag rules to reorder",
+        "rules-label": "Alerting and recording rules",
+        "save": "Save",
+        "update-error": "Failed to update rule group",
+        "update-success": "Successfully updated the rule group"
+      },
+      "group-not-editable": "Selected group cannot be edited",
+      "group-not-editable-description": "This group belongs to a data source that does not support editing.",
+      "page-title": "Edit rule group",
+      "rule-group-error": "Error loading rule group",
+      "title": "Edit evaluation group"
     },
     "irm-integration": {
       "connection-method": "How to connect to IRM",
@@ -599,6 +644,13 @@
           "title": "Custom recovery threshold"
         }
       }
+    },
+    "rule-group-action": {
+      "details": "rule group details",
+      "edit": "edit rule group",
+      "export-rules-folder": "Export rules folder",
+      "go-to-folder": "go to folder",
+      "manage-permissions": "manage permissions"
     },
     "rule-groups": {
       "delete": {

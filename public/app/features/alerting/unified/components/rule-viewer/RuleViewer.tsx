@@ -20,6 +20,7 @@ import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
+import { createListFilterLink } from '../../utils/navigation';
 import {
   RulePluginOrigin,
   getRulePluginOrigin,
@@ -28,7 +29,6 @@ import {
   prometheusRuleType,
   rulerRuleType,
 } from '../../utils/rules';
-import { createRelativeUrl } from '../../utils/url';
 import { AlertLabels } from '../AlertLabels';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -230,12 +230,6 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   }
 
   return metadata;
-};
-
-// TODO move somewhere else
-export const createListFilterLink = (values: Array<[string, string]>) => {
-  const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
-  return createRelativeUrl(`/alerting/list`, params);
 };
 
 interface TitleProps {
