@@ -47,6 +47,7 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: Add pagination to resource lister
 		rsp, err := s.lister.List(ctx, ns, name)
 		if err != nil {
 			responder.Error(err)
