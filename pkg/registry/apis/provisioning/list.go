@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// TODO: Rename to resources as it's not clear that we are returning here is repository resources
 type listConnector struct {
 	getter RepoGetter
 	lister resources.ResourceLister
