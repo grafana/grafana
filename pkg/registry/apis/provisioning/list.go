@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -15,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// TODO: Rename to resources as it's not clear that we are returning here is repository resources
 type listConnector struct {
 	getter RepoGetter
 	lister resources.ResourceLister
@@ -48,22 +47,8 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	if s == nil {
-		return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusInternalServerError,
-			Message: "listConnector is null??",
-		}}
-	}
-	if s.lister == nil {
-		return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusInternalServerError,
-			Message: "lister is null??",
-		}}
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: Add pagination to resource lister
 		rsp, err := s.lister.List(ctx, ns, name)
 		if err != nil {
 			responder.Error(err)

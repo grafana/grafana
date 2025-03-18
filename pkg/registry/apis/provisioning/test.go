@@ -69,6 +69,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 					return
 				}
 
+				// TODO: Explore how to better support synchronous validation for the UI (and likely remove this hack)
 				if name != "new" {
 					repo, err = s.getter.AsRepository(ctx, &cfg)
 					if err != nil {
@@ -104,6 +105,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 	}), nil
 }
 
+// TODO: Move tester to a more suitable location out of the connector.
 type RepositoryTester struct {
 	// Repository+Jobs
 	client client.ProvisioningV0alpha1Interface
