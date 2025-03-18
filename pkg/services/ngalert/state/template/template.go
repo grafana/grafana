@@ -8,14 +8,16 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/timestamp"
 	"github.com/prometheus/prometheus/promql"
-	"github.com/prometheus/prometheus/template"
+	promTemplate "github.com/prometheus/prometheus/template"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 )
 
 type Labels map[string]string
@@ -71,16 +73,53 @@ func NewValues(captures map[string]eval.NumberValueCapture) map[string]Value {
 }
 
 type Data struct {
-	Labels Labels
-	Values map[string]Value
-	Value  string
+	Labels           Labels
+	Values           map[string]Value
+	evaluationString string
+
+	prometheusMode       bool
+	prometheusQueryValue string
 }
 
 func NewData(labels map[string]string, res eval.Result) Data {
+	values := NewValues(res.Values)
+
+	value := res.EvaluationString
+	if v, ok := values[prom.QueryRefID]; ok {
+		value = fmt.Sprintf("%g", v.Value)
+	}
+
 	return Data{
-		Labels: labels,
-		Values: NewValues(res.Values),
-		Value:  res.EvaluationString,
+		Labels:               labels,
+		Values:               values,
+		evaluationString:     res.EvaluationString,
+		prometheusQueryValue: value,
+	}
+}
+
+// Value returns the value to be used in templates.
+// In standard mode, it returns the full evaluation string.
+// In Prometheus compatibility mode (when _prometheusMode function is called),
+// it returns only the numeric value of the query result.
+func (d Data) Value() string {
+	if d.prometheusMode {
+		return d.prometheusQueryValue
+	} else {
+		return d.evaluationString
+	}
+}
+
+// makePrometheusModeFunc returns a template function that when called, switches the template
+// rendering to Prometheus compatibility mode. In this mode, $value and .Value will return
+// the numeric value of the query result instead of the full evaluation string.
+//
+// This function is primarily used when converting Prometheus alert rules to Grafana
+// to maintain compatibility with existing Prometheus templates that expect
+// $value and .Value to behave like in Prometheus.
+func makePrometheusModeFunc(d *Data) func() string {
+	return func() string {
+		d.prometheusMode = true
+		return ""
 	}
 }
 
@@ -103,7 +142,14 @@ func Expand(ctx context.Context, name, tmpl string, data Data, externalURL *url.
 	// add __alert_ to avoid possible conflicts with other templates
 	name = "__alert_" + name
 	// add variables for the labels and values to the beginning of the template
-	tmpl = "{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}" + tmpl
+
+	// if the template starts with {{ _prometheusMode }}, we need to add the variables after that
+	// to override the $value.
+	if strings.HasPrefix(tmpl, prom.PrometheusModeTemplateCall) {
+		tmpl = prom.PrometheusModeTemplateCall + "{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}" + tmpl[len(prom.PrometheusModeTemplateCall):]
+	} else {
+		tmpl = "{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}" + tmpl
+	}
 	// ctx and queryFunc are no-ops as `query()` is not supported in Grafana
 	queryFunc := func(context.Context, string, time.Time) (promql.Vector, error) {
 		return nil, nil
@@ -112,8 +158,11 @@ func Expand(ctx context.Context, name, tmpl string, data Data, externalURL *url.
 	// Use missingkey=invalid so missing data shows <no value> instead of the type's default value
 	options := []string{"missingkey=invalid"}
 
-	expander := template.NewTemplateExpander(ctx, tmpl, name, data, tm, queryFunc, externalURL, options)
+	expander := promTemplate.NewTemplateExpander(ctx, tmpl, name, &data, tm, queryFunc, externalURL, options)
 	expander.Funcs(defaultFuncs)
+	expander.Funcs(template.FuncMap{
+		"_prometheusMode": makePrometheusModeFunc(&data),
+	})
 
 	result, err := expander.Expand()
 	if err != nil {
