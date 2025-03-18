@@ -4,13 +4,15 @@ import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ToolbarActionProps } from '../types';
+import { useIsManaged } from '../utils';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const { meta, isDirty, uid } = dashboard.state;
 
   const isNew = !Boolean(uid || dashboard.isManaged());
+  const isManaged = useIsManaged(dashboard);
 
-  // if we  only can save
+  // if we only can save
   if (isNew) {
     return (
       <Button
@@ -26,7 +28,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   }
 
   // If we only can save as copy
-  if (contextSrv.hasEditPermissionInFolders && !meta.canSave && !meta.canMakeEditable && !dashboard.isManaged()) {
+  if (contextSrv.hasEditPermissionInFolders && !meta.canSave && !meta.canMakeEditable && !isManaged) {
     return (
       <Button
         onClick={() => dashboard.openSaveDrawer({ saveAsCopy: true })}
