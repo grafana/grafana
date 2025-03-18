@@ -33,7 +33,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from '../../apiserver/types';
+import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -765,19 +765,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   getPath() {
     return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
-  }
-
-  setManager(kind: ManagerKind, id: string) {
-    this.setState({
-      meta: {
-        k8s: {
-          annotations: {
-            [AnnoKeyManagerKind]: kind,
-            [AnnoKeyManagerIdentity]: id,
-          },
-        },
-      },
-    });
   }
 }
 
