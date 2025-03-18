@@ -63,7 +63,7 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 			return nil, err
 		}
 
-		dataframe, err := logsResultsToDataframes(getQueryResultsOutput)
+		dataframe, err := logsResultsToDataframes(getQueryResultsOutput, logsQuery.StatsGroups)
 		if err != nil {
 			return nil, err
 		}
