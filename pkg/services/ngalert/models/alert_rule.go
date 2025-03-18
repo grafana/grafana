@@ -289,11 +289,17 @@ type AlertRule struct {
 	// ideally this field should have been apimodels.ApiDuration
 	// but this is currently not possible because of circular dependencies
 	For                  time.Duration
+	KeepFiringFor        time.Duration
 	Annotations          map[string]string
 	Labels               map[string]string
 	IsPaused             bool
 	NotificationSettings []NotificationSettings
 	Metadata             AlertRuleMetadata
+	// MissingSeriesEvalsToResolve specifies the number of consecutive evaluation intervals
+	// required before resolving an alert state (a dimension) when data is missing.
+	// If nil, alerts resolve after 2 missing evaluation intervals
+	// (i.e., resolution occurs during the second evaluation where data is absent).
+	MissingSeriesEvalsToResolve *int
 }
 
 type AlertRuleMetadata struct {
@@ -578,6 +584,18 @@ func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 	return AlertRuleGroupKey{OrgID: alertRule.OrgID, NamespaceUID: alertRule.NamespaceUID, RuleGroup: alertRule.RuleGroup}
 }
 
+// GetMissingSeriesEvalsToResolve returns the number of consecutive evaluation intervals
+// to wait before resolving an alert rule instance when its data is missing.
+// If not configured, it returns the default value (2), which means the alert
+// resolves after missing for two evaluation intervals.
+func (alertRule *AlertRule) GetMissingSeriesEvalsToResolve() int {
+	if alertRule.MissingSeriesEvalsToResolve == nil {
+		return 2 // default value
+	}
+
+	return *alertRule.MissingSeriesEvalsToResolve
+}
+
 // PreSave sets default values and loads the updated model for each alert query.
 func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) error {
 	for i, q := range alertRule.Data {
@@ -631,6 +649,10 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		return fmt.Errorf("%w: field `for` cannot be negative", ErrAlertRuleFailedValidation)
 	}
 
+	if alertRule.KeepFiringFor < 0 {
+		return fmt.Errorf("%w: field `keep_firing_for` cannot be negative", ErrAlertRuleFailedValidation)
+	}
+
 	if len(alertRule.Labels) > 0 {
 		for label := range alertRule.Labels {
 			if _, ok := LabelsUserCannotSpecify[label]; ok {
@@ -657,6 +679,10 @@ func validateAlertRuleFields(rule *AlertRule) error {
 
 	if _, err := NoDataStateFromString(string(rule.NoDataState)); err != nil {
 		return err
+	}
+
+	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve <= 0 {
+		return fmt.Errorf("%w: field `missing_series_evals_to_resolve` must be greater than 0", ErrAlertRuleFailedValidation)
 	}
 
 	return nil
@@ -708,25 +734,27 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 		return nil
 	}
 	result := AlertRule{
-		ID:              alertRule.ID,
-		GUID:            alertRule.GUID,
-		OrgID:           alertRule.OrgID,
-		Title:           alertRule.Title,
-		Condition:       alertRule.Condition,
-		Updated:         alertRule.Updated,
-		UpdatedBy:       alertRule.UpdatedBy,
-		IntervalSeconds: alertRule.IntervalSeconds,
-		Version:         alertRule.Version,
-		UID:             alertRule.UID,
-		NamespaceUID:    alertRule.NamespaceUID,
-		RuleGroup:       alertRule.RuleGroup,
-		RuleGroupIndex:  alertRule.RuleGroupIndex,
-		NoDataState:     alertRule.NoDataState,
-		ExecErrState:    alertRule.ExecErrState,
-		For:             alertRule.For,
-		Record:          alertRule.Record,
-		IsPaused:        alertRule.IsPaused,
-		Metadata:        alertRule.Metadata,
+		ID:                          alertRule.ID,
+		GUID:                        alertRule.GUID,
+		OrgID:                       alertRule.OrgID,
+		Title:                       alertRule.Title,
+		Condition:                   alertRule.Condition,
+		Updated:                     alertRule.Updated,
+		UpdatedBy:                   alertRule.UpdatedBy,
+		IntervalSeconds:             alertRule.IntervalSeconds,
+		Version:                     alertRule.Version,
+		UID:                         alertRule.UID,
+		NamespaceUID:                alertRule.NamespaceUID,
+		RuleGroup:                   alertRule.RuleGroup,
+		RuleGroupIndex:              alertRule.RuleGroupIndex,
+		NoDataState:                 alertRule.NoDataState,
+		ExecErrState:                alertRule.ExecErrState,
+		For:                         alertRule.For,
+		Record:                      alertRule.Record,
+		IsPaused:                    alertRule.IsPaused,
+		Metadata:                    alertRule.Metadata,
+		KeepFiringFor:               alertRule.KeepFiringFor,
+		MissingSeriesEvalsToResolve: alertRule.MissingSeriesEvalsToResolve,
 	}
 
 	if alertRule.DashboardUID != nil {
@@ -788,7 +816,9 @@ func ClearRecordingRuleIgnoredFields(rule *AlertRule) {
 	rule.ExecErrState = ""
 	rule.Condition = ""
 	rule.For = 0
+	rule.KeepFiringFor = 0
 	rule.NotificationSettings = nil
+	rule.MissingSeriesEvalsToResolve = nil
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
@@ -935,6 +965,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	}
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
+	}
+	if ruleToPatch.KeepFiringFor == -1 {
+		ruleToPatch.KeepFiringFor = existingRule.KeepFiringFor
 	}
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
