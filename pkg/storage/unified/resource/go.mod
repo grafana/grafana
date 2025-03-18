@@ -35,6 +35,7 @@ require (
 require (
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
+	github.com/spf13/pflag v1.0.6
 )
 
 require (
@@ -214,7 +215,6 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/spf13/cobra v1.9.1 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tjhop/slog-gokit v0.1.3 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect

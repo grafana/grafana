@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/pflag"
 )
 
 const (
@@ -190,17 +191,21 @@ func ReadGrpcClientConfig(cfg *setting.Cfg) *GrpcClientConfig {
 }
 
 // TODO: use authlib/grpcutils
-type GrpcAuthenticatorConfig struct {
+type GrpcServerConfig struct {
 	SigningKeysURL   string
 	LegacyFallback   bool
 	AllowedAudiences []string
 	AllowInsecure    bool
 }
 
-func ReadGrpcServerConfig(cfg *setting.Cfg) *GrpcAuthenticatorConfig {
+func (c *GrpcServerConfig) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&c.SigningKeysURL, "grpc-server-authentication.signing-keys-url", "", "gRPC server authentication signing keys URL")
+}
+
+func ReadGrpcServerConfig(cfg *setting.Cfg) *GrpcServerConfig {
 	section := cfg.SectionWithEnvOverrides("grpc_server_authentication")
 
-	return &GrpcAuthenticatorConfig{
+	return &GrpcServerConfig{
 		SigningKeysURL:   section.Key("signing_keys_url").MustString(""),
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
 		LegacyFallback:   section.Key("legacy_fallback").MustBool(true),
@@ -291,7 +296,7 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 }
 
 // TODO: use authlib/grpcutils
-func NewAuthenticator(cfg *GrpcAuthenticatorConfig, tracer tracing.Tracer) interceptors.Authenticator {
+func NewAuthenticator(cfg *GrpcServerConfig, tracer tracing.Tracer) interceptors.Authenticator {
 	client := http.DefaultClient
 	if cfg.AllowInsecure {
 		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
