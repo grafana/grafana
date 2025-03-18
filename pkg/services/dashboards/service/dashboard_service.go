@@ -565,6 +565,7 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 func (dr *DashboardServiceImpl) waitForSearchQuery(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, maxRetries int, expectedHits int64) error {
 	return retryer.Retry(func() (retryer.RetrySignal, error) {
 		results, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
+		dr.log.Debug("waitForSearchQuery", "dashboardUIDs", strings.Join(query.DashboardUIDs, ","), "total_hits", results.TotalHits, "err", err)
 		if err != nil {
 			return retryer.FuncError, err
 		}
@@ -594,6 +595,7 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 			if err != nil {
 				return err
 			}
+			dr.log.Debug("Found dashboards to be deleted", "orgId", org.ID, "count", len(foundDashs))
 
 			// delete them
 			var deletedUids []string
@@ -603,10 +605,12 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 				}
 				deletedUids = append(deletedUids, foundDash.DashboardUID)
 			}
-			// wait for deleted dashboards to be removed from the index
-			err = dr.waitForSearchQuery(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: org.ID, DashboardUIDs: deletedUids}, 5, 0)
-			if err != nil {
-				return err
+			if len(deletedUids) > 0 {
+				// wait for deleted dashboards to be removed from the index
+				err = dr.waitForSearchQuery(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: org.ID, DashboardUIDs: deletedUids}, 5, 0)
+				if err != nil {
+					return err
+				}
 			}
 		}
 		return nil
