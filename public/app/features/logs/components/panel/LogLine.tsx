@@ -112,7 +112,7 @@ const LogLineBody = ({ log }: { log: LogListModel }) => {
       log.searchWords && log.searchWords.length > 0 && log.searchWords[0] && log.searchWords[0].length > 0;
     const highlight = needsHighlighter ? { searchWords: log.searchWords ?? [], highlightClassName: '' } : undefined;
     return (
-      <span className="field">
+      <span className="field no-highlighting">
         <LogMessageAnsi value={log.body} highlight={highlight} />
       </span>
     );
