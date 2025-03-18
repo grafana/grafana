@@ -10,7 +10,6 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opencensus.io/trace"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -237,9 +236,20 @@ func (z *Zanzana) stopping(err error) error {
 	return nil
 }
 
+// TODO: deprecate authenticator when authlib/grpcutils is used
+type Authenticator interface {
+	Authenticate(ctx context.Context) (context.Context, error)
+}
+
+func (fn AuthenticatorFunc) Authenticate(ctx context.Context) (context.Context, error) {
+	return fn(ctx)
+}
+
+type AuthenticatorFunc func(context.Context) (context.Context, error)
+
 // TODO: use authlib/grpcutils
-func NewAuthenticatorInterceptor(auth authnlib.Authenticator, tracer trace.Tracer) Authenticator {
-	return func(ctx context.Context) (context.Context, error) {
+func NewAuthenticatorInterceptor(auth authnlib.Authenticator, tracer tracing.Tracer) Authenticator {
+	return AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
 		ctx, span := tracer.Start(ctx, "grpcutils.Authenticate")
 		defer span.End()
 
@@ -262,5 +272,5 @@ func NewAuthenticatorInterceptor(auth authnlib.Authenticator, tracer trace.Trace
 		span.SetAttributes(attribute.String("subject", info.GetUID()))
 		span.SetAttributes(attribute.Bool("service", types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy)))
 		return types.WithAuthInfo(ctx, info), nil
-	}
+	})
 }

@@ -11,7 +11,7 @@ import (
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	"github.com/golang-jwt/jwt"
+	"github.com/go-jose/go-jose/v3/jwt"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 
@@ -59,7 +59,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 
-	grpcAuthInt := NewInProcGrpcAuthenticator()
+	grpcAuthInt := grpcUtils.NewInProcGrpcAuthenticator()
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
