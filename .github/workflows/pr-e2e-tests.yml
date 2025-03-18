@@ -15,17 +15,19 @@ jobs:
   build-grafana:
     name: Build & Package Grafana
     runs-on: ubuntu-latest-16-cores
+    outputs:
+      artifact: ${{ steps.upload.outputs.artifact-id }}
     steps:
       - run: touch grafana.tar.gz
-      - run: actions/upload-artifact
+      - uses: actions/upload-artifact@v4
+        id: upload
         with:
           name: grafana-${{ github.workflow }}-${{ github.ref }}
           path: grafana.tar.gz
   misc-suite:
-    name: Miscellaneous e2e suites
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: cypress-io/github-action@v6
-        with:
-          component: true
+    needs:
+      - build-grafana
+    uses: ./.github/workflows/e2e-suite-various.yml
+    name: Various Suite
+    with:
+      package: ${{ needs.build-grafana.outputs.artifact }}
