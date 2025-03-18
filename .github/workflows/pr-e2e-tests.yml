@@ -22,7 +22,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         id: upload
         with:
-          name: grafana-${{ github.workflow }}-${{ github.ref }}
+          name: grafana-e2e-{{github.run_number}}
           path: grafana.tar.gz
   misc-suite:
     needs:
