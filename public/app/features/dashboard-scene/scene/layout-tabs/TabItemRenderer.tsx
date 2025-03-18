@@ -20,12 +20,14 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   return (
     <Tab
+      truncate
       className={cx(
         isSelected && 'dashboard-selected-element',
         isSelectable && !isSelected && 'dashboard-selectable-element'
       )}
       active={isActive}
       role="presentation"
+      title={titleInterpolated}
       href={href}
       aria-selected={isActive}
       onPointerDown={onSelect}
