@@ -53,23 +53,18 @@ export const dateTimeParse: DateTimeParser<DateTimeOptionsWhenParsing> = (value,
 };
 
 const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateTime => {
+  const parsed = parse(value, options?.roundUp, options?.timeZone, options?.fiscalYearStartMonth);
   if (value.indexOf('now') !== -1) {
     if (!isValid(value)) {
       return dateTime();
     }
 
-    const parsed = parse(value, options?.roundUp, options?.timeZone, options?.fiscalYearStartMonth);
     return parsed || dateTime();
   }
 
   const timeZone = getTimeZone(options);
   const zone = moment.tz.zone(timeZone);
   const format = options?.format ?? systemDateFormats.fullDate;
-
-  // Check if value is an ISO 8601 date string
-  if (moment(value, moment.ISO_8601, true).isValid()) {
-    return dateTime(value);
-  }
 
   if (zone && zone.name) {
     return dateTimeForTimeZone(zone.name, value, format);
@@ -78,6 +73,10 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
   switch (lowerCase(timeZone)) {
     case 'utc':
       return toUtc(value, format);
+    // We used parsed here to handle case when `use_browser_locale` is true
+    // We need to pass the parsed value to handle case when value is an ISO 8601 date string
+    case 'browser':
+      return dateTime(parsed, format);
     default:
       return dateTime(value, format);
   }
