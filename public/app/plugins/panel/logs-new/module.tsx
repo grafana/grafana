@@ -26,6 +26,12 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         defaultValue: true,
       })
       .addBooleanSwitch({
+        path: 'showControls',
+        name: 'Show scroll buttons',
+        description: 'Display controls to jump to the last or first log line',
+        defaultValue: false,
+      })
+      .addBooleanSwitch({
         path: 'enableInfiniteScrolling',
         name: 'Enable infinite scrolling',
         description: 'Experimental. Request more results by scrolling to the bottom of the logs list.',

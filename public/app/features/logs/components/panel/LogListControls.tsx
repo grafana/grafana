@@ -2,7 +2,14 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { EventBus, GrafanaTheme2, LogsDedupDescription, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import {
+  CoreApp,
+  EventBus,
+  GrafanaTheme2,
+  LogsDedupDescription,
+  LogsDedupStrategy,
+  LogsSortOrder,
+} from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -11,6 +18,7 @@ import { useLogListContext } from './LogListContext';
 import { ScrollToLogsEvent } from './virtualization';
 
 type Props = {
+  app: CoreApp;
   eventBus: EventBus;
 };
 
@@ -21,7 +29,7 @@ const DEDUP_OPTIONS = [
   LogsDedupStrategy.signature,
 ];
 
-export const LogListControls = ({ eventBus }: Props) => {
+export const LogListControls = ({ app, eventBus }: Props) => {
   const styles = useStyles2(getStyles);
   const {
     dedupStrategy,
@@ -87,6 +95,8 @@ export const LogListControls = ({ eventBus }: Props) => {
     [dedupStrategy, setDedupStrategy, styles.menuItemActive]
   );
 
+  const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor;
+
   return (
     <div className={styles.navContainer}>
       <IconButton
@@ -97,62 +107,66 @@ export const LogListControls = ({ eventBus }: Props) => {
         tooltip={t('logs.logs-controls.scroll-bottom', 'Scroll to bottom')}
         size="md"
       />
-      <IconButton
-        name={sortOrder === LogsSortOrder.Descending ? 'sort-amount-up' : 'sort-amount-down'}
-        className={styles.controlButton}
-        onClick={onSortOrderClick}
-        tooltip={
-          sortOrder === LogsSortOrder.Descending
-            ? t('logs.logs-controls.newest-first', 'Newest logs first')
-            : t('logs.logs-controls.oldest-first', 'Oldest logs first')
-        }
-        size="md"
-      />
-      <Dropdown overlay={deduplicationMenu} placement="auto-end">
-        <IconButton
-          name={'filter'}
-          className={dedupStrategy !== LogsDedupStrategy.none ? styles.controlButtonActive : styles.controlButton}
-          onClick={onSortOrderClick}
-          tooltip={t('logs.logs-controls.deduplication', 'Deduplication')}
-          size="md"
-        />
-      </Dropdown>
-      <IconButton
-        name="clock-nine"
-        aria-pressed={showTime}
-        className={showTime ? styles.controlButtonActive : styles.controlButton}
-        onClick={onShowTimestampsClick}
-        tooltip={
-          showTime
-            ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
-            : t('logs.logs-controls.show-timestamps', 'Show timestamps')
-        }
-        size="md"
-      />
-      <IconButton
-        name="wrap-text"
-        className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
-        aria-pressed={wrapLogMessage}
-        onClick={onWrapLogMessageClick}
-        tooltip={
-          wrapLogMessage
-            ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
-            : t('logs.logs-controls.wrap-lines', 'Wrap lines')
-        }
-        size="md"
-      />
-      <IconButton
-        name="brackets-curly"
-        className={syntaxHighlighting ? styles.controlButtonActive : styles.controlButton}
-        aria-pressed={syntaxHighlighting}
-        onClick={onSyntaxHightlightingClick}
-        tooltip={
-          syntaxHighlighting
-            ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
-            : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
-        }
-        size="md"
-      />
+      {!inDashboard && (
+        <>
+          <IconButton
+            name={sortOrder === LogsSortOrder.Descending ? 'sort-amount-up' : 'sort-amount-down'}
+            className={styles.controlButton}
+            onClick={onSortOrderClick}
+            tooltip={
+              sortOrder === LogsSortOrder.Descending
+                ? t('logs.logs-controls.newest-first', 'Newest logs first')
+                : t('logs.logs-controls.oldest-first', 'Oldest logs first')
+            }
+            size="md"
+          />
+          <Dropdown overlay={deduplicationMenu} placement="auto-end">
+            <IconButton
+              name={'filter'}
+              className={dedupStrategy !== LogsDedupStrategy.none ? styles.controlButtonActive : styles.controlButton}
+              onClick={onSortOrderClick}
+              tooltip={t('logs.logs-controls.deduplication', 'Deduplication')}
+              size="md"
+            />
+          </Dropdown>
+          <IconButton
+            name="clock-nine"
+            aria-pressed={showTime}
+            className={showTime ? styles.controlButtonActive : styles.controlButton}
+            onClick={onShowTimestampsClick}
+            tooltip={
+              showTime
+                ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
+                : t('logs.logs-controls.show-timestamps', 'Show timestamps')
+            }
+            size="md"
+          />
+          <IconButton
+            name="wrap-text"
+            className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
+            aria-pressed={wrapLogMessage}
+            onClick={onWrapLogMessageClick}
+            tooltip={
+              wrapLogMessage
+                ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
+                : t('logs.logs-controls.wrap-lines', 'Wrap lines')
+            }
+            size="md"
+          />
+          <IconButton
+            name="brackets-curly"
+            className={syntaxHighlighting ? styles.controlButtonActive : styles.controlButton}
+            aria-pressed={syntaxHighlighting}
+            onClick={onSyntaxHightlightingClick}
+            tooltip={
+              syntaxHighlighting
+                ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
+                : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
+            }
+            size="md"
+          />
+        </>
+      )}
       <IconButton
         name="arrow-up"
         data-testid="scrollToTop"
