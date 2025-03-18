@@ -50,6 +50,7 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, true, "" // true adds the {path} component
 }
 
+// TODO: document the synchronous write and delete on the API Spec
 func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
@@ -80,6 +81,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		filePath := strings.TrimPrefix(r.URL.Path[idx+len(prefix):], "/")
+		// TODO: limit the path length and how nested
 		isFolderPath := strings.HasSuffix(filePath, "/")
 
 		if r.Method == http.MethodGet && (filePath == "" || isFolderPath) {
@@ -88,6 +90,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				return
 			}
 
+			// TODO: Add pagination
 			rsp, err := reader.ReadTree(ctx, ref)
 			if err != nil {
 				responder.Error(err)
@@ -109,6 +112,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
+		// TODO: document in API specification
 		if !isFolderPath {
 			switch path.Ext(filePath) {
 			case ".json", ".yaml", ".yml":
@@ -124,16 +128,21 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
+			// TODO: limit file size
 			code, obj, err = s.doRead(ctx, reader, filePath, ref)
 		case http.MethodPost:
+			// TODO: limit file size
 			obj, err = s.doWrite(ctx, false, repo, filePath, ref, message, r)
 		case http.MethodPut:
+			// TODO: document in API specification
 			if isFolderPath {
 				err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 			} else {
+				// TODO: limit file size
 				obj, err = s.doWrite(ctx, true, repo, filePath, ref, message, r)
 			}
 		case http.MethodDelete:
+			// TODO: limit file size
 			obj, err = s.doDelete(ctx, repo, filePath, ref, message)
 		default:
 			err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
@@ -174,7 +183,8 @@ func (s *filesConnector) doRead(ctx context.Context, repo repository.Reader, pat
 		return 0, nil, err
 	}
 
-	// GVR will exist for anything we can actually save (dashboard/playlist for now)
+	// GVR will exist for anything we can actually save
+	// TODO: Add known error in parser for unsupported resource
 	if parsed.GVR == nil {
 		if parsed.GVK != nil {
 			//nolint:govet
@@ -230,7 +240,8 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return nil, err
 	}
 
-	// GVR will exist for anything we can actually save (dashboard/playlist for now)
+	// GVR will exist for anything we can actually save
+	// TODO: Add known error in parser for unsupported resource
 	if parsed.GVR == nil {
 		return nil, apierrors.NewBadRequest("The payload does not map to a known resource")
 	}
@@ -314,6 +325,9 @@ func (s *filesConnector) doCreateFolder(ctx context.Context, repo repository.Wri
 	return wrap, nil
 }
 
+// Deletes a file from the repository and the Grafana database.
+// If the path is a folder, it will return an error.
+// If the file is not parsable, it will return an error.
 func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
 	if err := repository.IsWriteAllowed(repo.Config(), ref); err != nil {
 		return nil, err
@@ -325,6 +339,7 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 		return nil, fmt.Errorf("repository is not read+writeable")
 	}
 
+	// TODO: Support deleting folders
 	if strings.HasSuffix(path, "/") {
 		return nil, fmt.Errorf("deleting folders (safely) is not yet supported")
 	}
@@ -339,6 +354,7 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 		return nil, err // unable to read value
 	}
 
+	// TODO: document in API specification
 	// We can only delete parsable things
 	parsed, err := parser.Parse(ctx, file, false)
 	if err != nil {
