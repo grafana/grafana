@@ -2,107 +2,166 @@ package resources
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
-
-var ErrNoNamespace = errors.New("no namespace was given")
 
 type ClientFactory struct {
 	configProvider apiserver.RestConfigProvider
-	clients        map[string]namespacedClients
-	clientsMu      sync.Mutex
 }
 
-type namespacedClients struct {
-	client *DynamicClient
-	kinds  KindsLookup
+func NewClientFactory(configProvider apiserver.RestConfigProvider) *ClientFactory {
+	return &ClientFactory{configProvider}
 }
 
-func NewFactory(configProvider apiserver.RestConfigProvider) *ClientFactory {
-	return &ClientFactory{
-		configProvider: configProvider,
-		clients:        make(map[string]namespacedClients),
-	}
-}
-
-// New creates a client (or fetches a cached one) to create interfaces into resources.
-// The KindsLookup returned can be used to get a resource from a group, version, and kind.
-//
-// An empty namespace returns ErrNoNamespace. A namespace is always required.
-func (c *ClientFactory) New(ns string) (*DynamicClient, KindsLookup, error) {
-	if ns == "" {
-		return nil, nil, ErrNoNamespace
-	}
-
-	c.clientsMu.Lock()
-	defer c.clientsMu.Unlock()
-
-	nsClients, ok := c.clients[ns]
-	if ok {
-		return nsClients.client, nsClients.kinds, nil
-	}
-
-	ctx, _, err := identity.WithProvisioningIdentitiy(context.Background(), ns)
+func (f *ClientFactory) Clients(ctx context.Context, namespace string) (*ResourceClients, error) {
+	restConfig, err := f.configProvider.GetRestConfig(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	config, err := c.configProvider.GetRestConfig(ctx)
+
+	if namespace == "" {
+		return nil, fmt.Errorf("missing namespace")
+	}
+
+	discovery, err := client.NewDiscoveryClient(restConfig)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	client, err := dynamic.NewForConfig(config)
+
+	client, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	nsClients = namespacedClients{
-		client: &DynamicClient{inner: client, namespace: ns},
-		kinds:  &StaticKindsLookup{},
-	}
-	c.clients[ns] = nsClients
-	return nsClients.client, nsClients.kinds, nil
+
+	return &ResourceClients{
+		namespace:  namespace,
+		discovery:  discovery,
+		dynamic:    client,
+		byKind:     make(map[schema.GroupVersionKind]*clientInfo),
+		byResource: make(map[schema.GroupVersionResource]*clientInfo),
+	}, nil
 }
 
-type DynamicClient struct {
-	inner     *dynamic.DynamicClient
+type ResourceClients struct {
 	namespace string
+
+	dynamic   dynamic.Interface
+	discovery client.DiscoveryClient
+
+	// ResourceInterface cache for this context + namespace
+	mutex      sync.Mutex
+	byKind     map[schema.GroupVersionKind]*clientInfo
+	byResource map[schema.GroupVersionResource]*clientInfo
 }
 
-// GetNamespace returns a copy of the namespace this client was configured with. It will never be mutable.
-func (c *DynamicClient) GetNamespace() string {
-	return c.namespace
+type clientInfo struct {
+	gvk    schema.GroupVersionKind
+	gvr    schema.GroupVersionResource
+	client dynamic.ResourceInterface
 }
 
-// Fetches an interface for the given resource, in the namespace used to create the client.
-// The client cannot ever use another namespace. This is done to ensure that no accidental resource leaks occur.
-func (c *DynamicClient) Resource(resource schema.GroupVersionResource) dynamic.ResourceInterface {
-	if c.inner == nil {
-		return nil // this can happen in tests
+func (c *ResourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	info, ok := c.byKind[gvk]
+	if ok && info.client != nil {
+		return info.client, info.gvr, nil
 	}
-	return c.inner.Resource(resource).Namespace(c.namespace)
-}
 
-type KindsLookup interface {
-	Resource(gvk schema.GroupVersionKind) (schema.GroupVersionResource, bool)
-}
-type StaticKindsLookup struct{}
-
-func (c *StaticKindsLookup) Resource(gvk schema.GroupVersionKind) (schema.GroupVersionResource, bool) {
-	switch gvk.Kind {
-	case "Dashboard":
-		return gvk.GroupVersion().WithResource("dashboards"), true
-	case "Playlist":
-		return gvk.GroupVersion().WithResource("playlists"), true
-	case "Folder":
-		return gvk.GroupVersion().WithResource(folder.RESOURCE), true
-	default:
+	gvr, err := c.discovery.GetResourceForKind(gvk)
+	if err != nil {
+		return nil, schema.GroupVersionResource{}, err
 	}
-	return gvk.GroupVersion().WithResource(""), false
+	info = &clientInfo{
+		gvk:    gvk,
+		gvr:    gvr,
+		client: c.dynamic.Resource(gvr).Namespace(c.namespace),
+	}
+	c.byKind[gvk] = info
+	c.byResource[gvr] = info
+	return info.client, info.gvr, nil
+}
+
+func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	info, ok := c.byResource[gvr]
+	if ok && info.client != nil {
+		return info.client, info.gvk, nil
+	}
+
+	var err error
+	var gvk schema.GroupVersionKind
+	var versionless schema.GroupVersionResource
+	if gvr.Version == "" {
+		versionless = gvr
+		gvr, gvk, err = c.discovery.GetPreferredVesion(schema.GroupResource{
+			Group:    gvr.Group,
+			Resource: gvr.Resource,
+		})
+		if err != nil {
+			return nil, schema.GroupVersionKind{}, err
+		}
+
+		info, ok := c.byResource[gvr]
+		if ok && info.client != nil {
+			c.byResource[versionless] = info
+			return info.client, info.gvk, nil
+		}
+	} else {
+		gvk, err = c.discovery.GetKindForResource(gvr)
+		if err != nil {
+			return nil, schema.GroupVersionKind{}, err
+		}
+	}
+	info = &clientInfo{
+		gvk:    gvk,
+		gvr:    gvr,
+		client: c.dynamic.Resource(gvr).Namespace(c.namespace),
+	}
+	c.byKind[gvk] = info
+	c.byResource[gvr] = info
+	if versionless.Group != "" {
+		c.byResource[versionless] = info
+	}
+	return info.client, info.gvk, nil
+}
+
+func (c *ResourceClients) Folder() (dynamic.ResourceInterface, error) {
+	v, _, err := c.ForResource(schema.GroupVersionResource{
+		Group:    folders.GROUP,
+		Version:  folders.VERSION,
+		Resource: folders.RESOURCE,
+	})
+	return v, err
+}
+
+func (c *ResourceClients) User() (dynamic.ResourceInterface, error) {
+	v, _, err := c.ForResource(schema.GroupVersionResource{
+		Group:    iam.GROUP,
+		Version:  iam.VERSION,
+		Resource: iam.UserResourceInfo.GroupResource().Resource,
+	})
+	return v, err
+}
+
+func (c *ResourceClients) Dashboard() (dynamic.ResourceInterface, error) {
+	v, _, err := c.ForResource(schema.GroupVersionResource{
+		Group:    dashboard.GROUP,
+		Version:  dashboard.VERSION,
+		Resource: dashboard.DASHBOARD_RESOURCE,
+	})
+	return v, err
 }

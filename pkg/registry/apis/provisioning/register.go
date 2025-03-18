@@ -77,7 +77,6 @@ type APIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
 	render            rendering.Service
-	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
 	ghFactory         *github.Factory
 	clonedir          string // where repo clones are managed
@@ -108,8 +107,6 @@ func NewAPIBuilder(
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 ) *APIBuilder {
-	clientFactory := resources.NewFactory(configProvider)
-
 	// HACK: Assume is only public if it is HTTPS
 	isPublic := strings.HasPrefix(urlProvider(""), "https://")
 
@@ -120,9 +117,8 @@ func NewAPIBuilder(
 		isPublic:          isPublic,
 		features:          features,
 		ghFactory:         ghFactory,
-		client:            clientFactory,
 		parsers: &resources.ParserFactory{
-			Client: clientFactory,
+			ClientFactory: resources.NewClientFactory(configProvider),
 		},
 		render:         render,
 		clonedir:       clonedir,
@@ -514,13 +510,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// We do not have a local client until *GetPostStartHooks*, so we can delay init for some
 			b.tester = &RepositoryTester{
-				clientFactory: b.client,
-				client:        c.ProvisioningV0alpha1(),
+				client: c.ProvisioningV0alpha1(),
 			}
 			b.repositoryLister = repoInformer.Lister()
 
 			exportWorker := export.NewExportWorker(
-				b.client,
+				b.parsers.ClientFactory,
 				b.storageStatus,
 				b.secrets,
 				b.clonedir,
@@ -534,7 +529,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.jobs.Register(exportWorker)
 			b.jobs.Register(syncWorker)
 			b.jobs.Register(migrate.NewMigrationWorker(
-				b.client,
 				b.legacyMigrator,
 				b.parsers,
 				b.storageStatus,

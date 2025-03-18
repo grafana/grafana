@@ -19,8 +19,8 @@ type ExportWorker struct {
 	// Tempdir for repo clones
 	clonedir string
 
-	// When exporting from apiservers
-	clients *resources.ClientFactory
+	// required to create clients
+	clientFactory *resources.ClientFactory
 
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
@@ -29,14 +29,14 @@ type ExportWorker struct {
 	secrets secrets.Service
 }
 
-func NewExportWorker(clients *resources.ClientFactory,
+func NewExportWorker(clientFactory *resources.ClientFactory,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 	clonedir string,
 ) *ExportWorker {
 	return &ExportWorker{
 		clonedir,
-		clients,
+		clientFactory,
 		storageStatus,
 		secrets,
 	}
@@ -80,12 +80,12 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return errors.New("export job submitted targeting repository that is not a ReaderWriter")
 	}
 
-	dynamicClient, _, err := r.clients.New(rw.Config().Namespace)
+	clients, err := r.clientFactory.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
-		return fmt.Errorf("error getting client: %w", err)
+		return err
 	}
 
-	worker := newExportJob(ctx, rw, *options, dynamicClient, progress)
+	worker := newExportJob(ctx, rw, *options, clients, progress)
 
 	// Load and write all folders
 	progress.SetMessage(ctx, "start folder export")

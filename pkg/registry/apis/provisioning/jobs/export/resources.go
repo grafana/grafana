@@ -35,7 +35,10 @@ func (r *exportJob) loadResources(ctx context.Context) error {
 }
 
 func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.GroupVersionResource) error {
-	client := r.client.Resource(kind)
+	client, _, err := r.client.ForResource(kind)
+	if err != nil {
+		return err
+	}
 
 	var continueToken string
 	for {

@@ -102,8 +102,8 @@ func NewRepositoryController(
 		repoGetter: repoGetter,
 		parsers:    parsers,
 		finalizer: &finalizer{
-			lister: resourceLister,
-			client: parsers.Client,
+			lister:        resourceLister,
+			clientFactory: parsers.ClientFactory,
 		},
 		tester:    tester,
 		jobs:      jobs,

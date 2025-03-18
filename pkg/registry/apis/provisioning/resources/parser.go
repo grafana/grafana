@@ -25,30 +25,28 @@ import (
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 
 type ParserFactory struct {
-	Client *ClientFactory
+	ClientFactory *ClientFactory
 }
 
 func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
 	config := repo.Config()
-	client, kinds, err := f.Client.New(config.Namespace) // As system user
+
+	clients, err := f.ClientFactory.Clients(ctx, config.GetNamespace())
 	if err != nil {
 		return nil, err
 	}
 
 	urls, _ := repo.(repository.RepositoryWithURLs)
-	parser := &Parser{
+	return &Parser{
 		repo: provisioning.ResourceRepositoryInfo{
 			Type:      config.Spec.Type,
 			Title:     config.Spec.Title,
 			Namespace: config.Namespace,
 			Name:      config.Name,
 		},
-		urls:   urls,
-		client: client,
-		kinds:  kinds,
-	}
-
-	return parser, nil
+		urls:    urls,
+		clients: clients,
+	}, nil
 }
 
 type Parser struct {
@@ -58,9 +56,8 @@ type Parser struct {
 	// for repositories that have URL support
 	urls repository.RepositoryWithURLs
 
-	// client helper (for this namespace?)
-	client *DynamicClient
-	kinds  KindsLookup
+	// ResourceClients give access to k8s apis
+	clients *ResourceClients
 }
 
 type ParsedResource struct {
@@ -105,8 +102,8 @@ type ParsedResource struct {
 	Errors []error
 }
 
-func (r *Parser) Client() *DynamicClient {
-	return r.client
+func (r *Parser) Clients() *ResourceClients {
+	return r.clients
 }
 
 func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
@@ -182,13 +179,17 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		return parsed, nil
 	}
 
-	gvr, ok := r.kinds.Resource(*parsed.GVK)
-	if !ok {
-		return parsed, nil
+	if r.clients == nil {
+		return parsed, fmt.Errorf("no client configured")
+	}
+
+	client, gvr, err := r.clients.ForKind(*parsed.GVK)
+	if err != nil {
+		return nil, err // does not map to a resour e
 	}
 
 	parsed.GVR = &gvr
-	parsed.Client = r.client.Resource(gvr)
+	parsed.Client = client
 	if !validate {
 		return parsed, nil
 	}

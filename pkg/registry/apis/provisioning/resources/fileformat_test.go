@@ -99,8 +99,6 @@ spec:
 			repo: provisioning.ResourceRepositoryInfo{
 				Name: "test",
 			},
-			client: &DynamicClient{},
-			kinds:  &StaticKindsLookup{},
 		}
 
 		// try to validate (and lint)
@@ -108,8 +106,8 @@ spec:
 
 		// Support dashboard conversion
 		parsed, err := parser.Parse(context.Background(), info, validate)
+		require.Error(t, err) // no clients configured!
 
-		require.NoError(t, err)
 		require.Equal(t, provisioning.ClassicDashboard, parsed.Classic)
 		require.Equal(t, &schema.GroupVersionKind{
 			Group:   "dashboard.grafana.app",

@@ -11,7 +11,6 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -29,8 +28,8 @@ const ReleaseOrphanResourcesFinalizer = "release-orphan-resources"
 const CleanFinalizer = "cleanup"
 
 type finalizer struct {
-	lister resources.ResourceLister
-	client *resources.ClientFactory
+	lister        resources.ResourceLister
+	clientFactory *resources.ClientFactory
 }
 
 func (f *finalizer) process(ctx context.Context,
@@ -88,7 +87,7 @@ func (f *finalizer) processExistingItems(
 	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
 ) error {
 	logger := logging.FromContext(ctx)
-	client, _, err := f.client.New(repo.Namespace)
+	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
 	if err != nil {
 		return err
 	}
@@ -105,22 +104,13 @@ func (f *finalizer) processExistingItems(
 	errors := 0
 
 	for _, item := range items.Items {
-		// HACK: we need to find a better way to know the API version
-		var version string
-		switch item.Group {
-		case folders.GROUP:
-			version = folders.VERSION
-		case dashboard.GROUP:
-			version = "v0alpha1" // the constant is internal
-		default:
-			version = "v0alpha1"
-		}
-
-		res := client.Resource(schema.GroupVersionResource{
+		res, _, err := clients.ForResource(schema.GroupVersionResource{
 			Group:    item.Group,
 			Resource: item.Resource,
-			Version:  version,
 		})
+		if err != nil {
+			return err
+		}
 
 		err = cb(res, &item)
 		if err != nil {

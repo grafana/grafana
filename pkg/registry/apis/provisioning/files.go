@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -274,7 +273,11 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 }
 
 func (s *filesConnector) doCreateFolder(ctx context.Context, repo repository.Writer, path string, ref string, message string, parser *resources.Parser) (*provisioning.ResourceWrapper, error) {
-	manager := resources.NewFolderManager(repo, parser.Client().Resource(folder.SchemeGroupVersion.WithResource(folder.RESOURCE)))
+	client, err := parser.Clients().Folder()
+	if err != nil {
+		return nil, err
+	}
+	manager := resources.NewFolderManager(repo, client)
 
 	// Now actually create the folder
 	if err := repo.Create(ctx, path, ref, nil, message); err != nil {
