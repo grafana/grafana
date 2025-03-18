@@ -61,6 +61,19 @@ echo "  Author: $(git log -1 --format="%an <%ae>" "$COMMIT_HASH")"
 echo "  Date: $(git log -1 --format="%ad" --date=iso "$COMMIT_HASH")"
 echo
 
+# Check for backport information
+echo "Backport information:"
+if git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep -q "cherry picked from commit"; then
+    ORIGINAL_COMMIT=$(git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep "cherry picked from commit" | sed 's/.*cherry picked from commit \([a-f0-9]*\).*/\1/')
+    echo "  This is a backport from commit: $ORIGINAL_COMMIT"
+    echo "  Original commit details:"
+    echo "    Author: $(git log -1 --format="%an <%ae>" "$ORIGINAL_COMMIT")"
+    echo "    Date: $(git log -1 --format="%ad" --date=iso "$ORIGINAL_COMMIT")"
+else
+    echo "  Not a backport"
+fi
+echo
+
 # Arrays to store results
 declare -a release_branches=()
 declare -a direct_tags=()
