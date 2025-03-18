@@ -376,6 +376,23 @@
       "export": "Export",
       "reorder": "Re-order rules"
     },
+    "irm-integration": {
+      "connection-method": "How to connect to IRM",
+      "disabled-description": "Enable Grafana IRM to use this integration",
+      "enabled-description": "Seamless way to handle alerts and manage incidents",
+      "existing-integration": "Existing IRM integration",
+      "existing-integration-description": "Use an existing IRM integration",
+      "integration": "IRM Integration",
+      "integration-description": "The IRM integration to send alerts to",
+      "integration-name": "Integration name",
+      "integration-name-description": "The name of the new IRM integration",
+      "integration-name-exists": "Integration of this name already exists in IRM",
+      "integration-required": "Selection of existing IRM integration is required",
+      "new-integration": "New IRM integration",
+      "new-integration-description": "A new IRM integration without escalation chains will be automatically created",
+      "recommended": "Recommended",
+      "validation-failed": "Failed to validate IRM integration name. Is the OnCall API available?"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
