@@ -42,7 +42,8 @@ export class K8sDashboardV2API
 
       if (
         dashboard.status?.conversion?.failed &&
-        (dashboard.status.conversion.error === 'v1alpha1' || dashboard.status.conversion.error === 'v0alpha1')
+        (dashboard.status.conversion.storedVersion === 'v1alpha1' ||
+          dashboard.status.conversion.storedVersion === 'v0alpha1')
       ) {
         throw new DashboardVersionError(dashboard.status.conversion.storedVersion, dashboard.status.conversion.error);
       }
