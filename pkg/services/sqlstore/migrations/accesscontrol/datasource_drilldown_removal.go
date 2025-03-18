@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	datasourceDrilldownRemoval = "delete all drilldown actions, their assignments, and related roles"
+	datasourceDrilldownRemoval = "remove the datasources:drilldown action"
 )
 
 func AddDatasourceDrilldownRemovalMigration(mg *migrator.Migrator) {
