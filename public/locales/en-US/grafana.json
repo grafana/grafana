@@ -1198,6 +1198,10 @@
           "heading": "Panel",
           "title": "A container for visualizations and other content"
         },
+        "paste-panel": {
+          "heading": "Paste panel",
+          "title": "Paste a panel from the clipboard"
+        },
         "row": {
           "heading": "Row",
           "title": "A group of panels with an optional header"
@@ -1422,8 +1426,6 @@
       "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "open-original": "Open original dashboard",
-      "paste-panel": "Paste panel",
-      "paste-panel-description": "Paste a panel from the clipboard",
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
