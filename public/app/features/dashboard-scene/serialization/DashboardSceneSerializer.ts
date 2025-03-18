@@ -250,7 +250,6 @@ export class V2DashboardSerializer
         }
       }
     });
-    console.log('resolver map ds', this.defaultDsReferencesMap);
   }
 
   getDSReferencesMapping() {

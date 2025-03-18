@@ -621,18 +621,11 @@ function getPersistedDSForQuery(
   queryRunner: SceneQueryRunner,
   panelDsReferences: Set<string> | undefined
 ) {
-  // if query.refId exist in elementReferences.queries
-  // it means this query did not have a datasource set by the user
-  // therefore return undefined
+  // if the query has a refId and it is in the panelDsReferences then it did NOT have a datasource
   const hasMatchingRefId = panelDsReferences?.has(query.refId);
   if (hasMatchingRefId) {
-    console.log('query.refId exist in elementReferences.queries', query.refId);
     return undefined;
   }
-
-  // if query.refId does not exist in elementReferences.queries
-  // it means this query did have a datasource set by the user
-  // therefore return the datasource
 
   return query.datasource || queryRunner?.state?.datasource;
 }
