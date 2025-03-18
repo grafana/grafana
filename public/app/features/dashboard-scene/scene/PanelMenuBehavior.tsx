@@ -23,7 +23,10 @@ import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
+import {
+  createPluginExtensionsGetter,
+  type GetPluginExtensions,
+} from 'app/features/plugins/extensions/getPluginExtensions';
 import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
@@ -42,7 +45,17 @@ import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 
-const getPluginExtensions = createPluginExtensionsGetter(pluginExtensionRegistries);
+let getPluginExtensions: GetPluginExtensions;
+
+function setupGetPluginExtensions() {
+  if (getPluginExtensions) {
+    return getPluginExtensions;
+  }
+
+  getPluginExtensions = createPluginExtensionsGetter(pluginExtensionRegistries);
+
+  return getPluginExtensions;
+}
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -290,6 +303,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     }
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
+
+    setupGetPluginExtensions();
 
     const { extensions } = getPluginExtensions({
       extensionPointId: PluginExtensionPoints.DashboardPanelMenu,

@@ -6,7 +6,6 @@ import {
   type PluginExtensionLink,
   type PluginExtensionComponent,
 } from '@grafana/data';
-import { GetPluginExtensions } from '@grafana/runtime';
 
 import { log } from './logs/log';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
@@ -35,6 +34,13 @@ type GetExtensions = ({
   addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]> | undefined;
   addedLinksRegistry: RegistryType<AddedLinkRegistryItem[]> | undefined;
 }) => { extensions: PluginExtension[] };
+
+export type GetPluginExtensions<T = PluginExtension> = (options: {
+  extensionPointId: string;
+  // Make sure this object is properly memoized and not mutated.
+  context?: object | Record<string | symbol, unknown>;
+  limitPerPlugin?: number;
+}) => { extensions: T[] };
 
 export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
   let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
