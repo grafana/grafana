@@ -22,7 +22,9 @@ weight: 300
 
 System for Cross-domain Identity Management (SCIM) is an open standard that allows automated user provisioning and management. With SCIM, you can automate the provisioning of users and groups from your identity provider to Grafana.
 
-> **Note:** Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+{{< /admonition >}}
 
 {{% admonition type="note" %}}
 This feature is behind the `enableSCIM` feature toggle.
