@@ -21,22 +21,6 @@
   "includes": [
     {
       "type": "page",
-      "name": "Legacy Getters",
-      "path": "/a/grafana-extensionstest-app/legacy-getters",
-      "role": "Admin",
-      "addToNav": true,
-      "defaultNav": false
-    },
-    {
-      "type": "page",
-      "name": "Legacy Hooks",
-      "path": "/a/grafana-extensionstest-app/legacy-hooks",
-      "role": "Admin",
-      "addToNav": true,
-      "defaultNav": false
-    },
-    {
-      "type": "page",
       "name": "Exposed components",
       "path": "/a/grafana-extensionstest-app/exposed-components",
       "role": "Admin",

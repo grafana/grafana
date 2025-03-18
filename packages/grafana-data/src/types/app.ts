@@ -4,8 +4,6 @@ import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
 import {
-  type PluginExtensionLinkConfig,
-  PluginExtensionComponentConfig,
   PluginExtensionExposedComponentConfig,
   PluginExtensionAddedComponentConfig,
   PluginExtensionAddedLinkConfig,
@@ -143,15 +141,6 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 
-  /** @deprecated Use .addLink() instead */
-  configureExtensionLink<Context extends object>(extension: Omit<PluginExtensionLinkConfig<Context>, 'type'>) {
-    this.addLink({
-      targets: [extension.extensionPointId],
-      ...extension,
-    });
-
-    return this;
-  }
   /** @deprecated Use .addComponent() instead */
   configureExtensionComponent<Props = {}>(extension: Omit<PluginExtensionComponentConfig<Props>, 'type'>) {
     this.addComponent({
