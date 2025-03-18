@@ -1260,12 +1260,12 @@
       "name": "Auto grid",
       "options": {
         "columns": "Columns",
-        "fixed": "Fixed: {{size}}px",
-        "min": "Min: {{size}}px",
-        "one-column": "1 column",
-        "rows": "Rows",
-        "three-columns": "3 columns",
-        "two-columns": "2 columns"
+        "max-columns": "Max count",
+        "max-height": "Max height",
+        "min-height": "Min height",
+        "min-width": "Min width",
+        "min-width-tooltip": "Controls how narrow a column can be on smaller screens",
+        "rows": "Row height"
       }
     },
     "rows-layout": {

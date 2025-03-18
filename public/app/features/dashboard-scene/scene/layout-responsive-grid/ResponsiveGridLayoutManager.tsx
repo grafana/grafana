@@ -1,4 +1,5 @@
 import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -14,7 +15,17 @@ import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
+  maxColumnCount: string;
+  minColumnWidth: string;
+  minRowHeight: string;
+  maxRowHeight: string;
 }
+
+export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = '3';
+export const AUTO_GRID_DEFAULT_MIN_COLUMN_WIDTH = '384';
+
+export const AUTO_GRID_DEFAULT_MAX_ROW_HEIGHT = 'auto';
+export const AUTO_GRID_DEFAULT_MIN_ROW_HEIGHT = '256';
 
 export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
@@ -39,13 +50,25 @@ export class ResponsiveGridLayoutManager
 
   public readonly descriptor = ResponsiveGridLayoutManager.descriptor;
 
-  public static defaultCSS = {
-    templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
-    autoRows: 'minmax(300px, auto)',
-  };
+  public constructor(state: Partial<ResponsiveGridLayoutManagerState>) {
+    const maxColumnCount = state.maxColumnCount ?? AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT;
+    const minColumnWidth = state.minColumnWidth ?? AUTO_GRID_DEFAULT_MIN_COLUMN_WIDTH;
+    const minRowHeight = state.minRowHeight ?? AUTO_GRID_DEFAULT_MIN_ROW_HEIGHT;
+    const maxRowHeight = state.maxRowHeight ?? AUTO_GRID_DEFAULT_MAX_ROW_HEIGHT;
 
-  public constructor(state: ResponsiveGridLayoutManagerState) {
-    super(state);
+    super({
+      ...state,
+      maxColumnCount,
+      minColumnWidth,
+      minRowHeight,
+      maxRowHeight,
+      layout:
+        state.layout ??
+        new SceneCSSGridLayout({
+          templateColumns: getTemplateColumnsTemplate(maxColumnCount, minColumnWidth),
+          autoRows: getAutoRowsTemplate(minRowHeight, maxRowHeight),
+        }),
+    });
 
     // @ts-ignore
     this.state.layout.getDragClassCancel = () => 'drag-cancel';
@@ -139,22 +162,36 @@ export class ResponsiveGridLayoutManager
     return getEditOptions(this);
   }
 
-  public changeColumns(columns: string) {
-    this.state.layout.setState({ templateColumns: columns });
+  public onMaxColumnCountChanged(maxColumnCount: string) {
+    this.setState({ maxColumnCount: maxColumnCount });
+    this.state.layout.setState({
+      templateColumns: getTemplateColumnsTemplate(maxColumnCount, this.state.minColumnWidth),
+    });
   }
 
-  public changeRows(rows: string) {
-    this.state.layout.setState({ autoRows: rows });
+  public onMinColumnWidthChanged(minColumnWidth: string) {
+    this.setState({ minColumnWidth: minColumnWidth });
+    this.state.layout.setState({
+      templateColumns: getTemplateColumnsTemplate(this.state.maxColumnCount, this.state.minColumnWidth),
+    });
+  }
+
+  public onMaxRowHeightChanged(maxRowHeight: string) {
+    this.setState({ maxRowHeight });
+    this.state.layout.setState({
+      autoRows: getAutoRowsTemplate(this.state.minRowHeight, maxRowHeight),
+    });
+  }
+
+  public onMinRowHeightChanged(minRowHeight: string) {
+    this.setState({ minRowHeight });
+    this.state.layout.setState({
+      autoRows: getAutoRowsTemplate(minRowHeight, this.state.maxRowHeight),
+    });
   }
 
   public static createEmpty(): ResponsiveGridLayoutManager {
-    return new ResponsiveGridLayoutManager({
-      layout: new SceneCSSGridLayout({
-        children: [],
-        templateColumns: ResponsiveGridLayoutManager.defaultCSS.templateColumns,
-        autoRows: ResponsiveGridLayoutManager.defaultCSS.autoRows,
-      }),
-    });
+    return new ResponsiveGridLayoutManager({});
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): ResponsiveGridLayoutManager {
@@ -174,4 +211,13 @@ export class ResponsiveGridLayoutManager
 
 function ResponsiveGridLayoutManagerRenderer({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) {
   return <model.state.layout.Component model={model.state.layout} />;
+}
+
+function getTemplateColumnsTemplate(maxColumnCount: string, minColumnWidth: string) {
+  return `repeat(auto-fit, minmax(min(max(100% / ${maxColumnCount} - ${GRID_CELL_VMARGIN}px, ${minColumnWidth}px), 100%), 1fr))`;
+}
+
+function getAutoRowsTemplate(minRowHeight: string, maxRowHeight: string) {
+  const maxRowHeightValue = maxRowHeight === 'auto' ? 'auto' : `${maxRowHeight}px`;
+  return `minmax(${minRowHeight}px, ${maxRowHeightValue})`;
 }
