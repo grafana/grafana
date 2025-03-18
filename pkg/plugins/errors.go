@@ -35,4 +35,16 @@ var (
 	// Exposed as a base error to wrap it with plugin cancelled errors.
 	ErrPluginRequestCanceledErrorBase = errutil.ClientClosedRequest("plugin.requestCanceled",
 		errutil.WithPublicMessage("Plugin request canceled"))
+
+	ErrGrpcResourceExhaustedBase = errutil.Internal("plugin.resourceExhausted",
+		errutil.WithPublicMessage("The response is too large. Please try to reduce the time range or narrow down your query to return fewer data points."),
+		errutil.WithDownstream())
+	// ErrResourceExhausted error returned when a plugin is unavailable.
+	ErrResourceExhausted = ErrGrpcResourceExhaustedBase.Errorf("resource exhausted")
+
+	ErrGrpcPluginConnectionIssueBase = errutil.Internal("plugin.connectionIssue",
+		errutil.WithPublicMessage("Unable to communicate with data source. Please try again."),
+		errutil.WithDownstream())
+	// ErrPluginConnectionIssue error returned when a plugin connection issue occurs.
+	ErrPluginConnectionIssue = ErrGrpcPluginConnectionIssueBase.Errorf("plugin connection issues")
 )

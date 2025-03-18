@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -29,6 +30,11 @@ var (
 	errNilRequest = errors.New("req cannot be nil")
 	errNilSender  = errors.New("sender cannot be nil")
 )
+
+var managedGrpcErrors = []errutil.Base{
+	plugins.ErrGrpcResourceExhaustedBase,
+	plugins.ErrGrpcPluginConnectionIssueBase,
+}
 
 type Service struct {
 	pluginRegistry registry.Service
@@ -52,6 +58,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	resp, err := p.QueryData(ctx, req)
 	if err != nil {
+		for _, e := range managedGrpcErrors {
+			if errors.Is(err, e) {
+				return nil, err
+			}
+		}
+
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
 			return nil, err
 		}
