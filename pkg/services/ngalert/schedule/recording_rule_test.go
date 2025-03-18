@@ -518,6 +518,67 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			require.Equal(t, "error", status.Health)
 		})
 	})
+
+	t.Run("paused rule", func(t *testing.T) {
+		gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
+		ruleStore := newFakeRulesStore()
+		reg := prometheus.NewPedanticRegistry()
+		sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
+		sch.recordingWriter = writer
+		rule := gen.With(withQueryForHealth("ok")).GenerateRef()
+		rule.IsPaused = true
+		ruleStore.PutRule(context.Background(), rule)
+		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
+		ruleFactory := ruleFactoryFromScheduler(sch)
+
+		process := ruleFactory.new(context.Background(), rule)
+		evalDoneChan := make(chan time.Time)
+		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
+			evalDoneChan <- t
+		}
+		now := time.Now()
+
+		go func() {
+			_ = process.Run()
+		}()
+
+		process.Eval(&Evaluation{
+			scheduledAt: now,
+			rule:        rule,
+			folderTitle: folderTitle,
+		})
+
+		select {
+		case <-evalDoneChan:
+			// We should not receive any evaluation done signal
+			t.Fatal("Received evaluation done signal for paused rule")
+		case <-time.After(100 * time.Millisecond):
+		}
+
+		t.Run("status remains unchanged", func(t *testing.T) {
+			status := process.(*recordingRule).Status()
+			require.Equal(t, "unknown", status.Health)
+			require.Nil(t, status.LastError)
+			require.Zero(t, status.EvaluationTimestamp)
+			require.Zero(t, status.EvaluationDuration)
+		})
+
+		t.Run("no metrics were incremented", func(t *testing.T) {
+			expectedMetric := fmt.Sprintf(
+				`
+				# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
+				# TYPE grafana_alerting_rule_evaluations_total counter
+				grafana_alerting_rule_evaluations_total{org="%[1]d"} 0
+				`,
+				rule.OrgID,
+			)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric),
+				"grafana_alerting_rule_evaluations_total",
+			)
+			require.NoError(t, err)
+		})
+	})
 }
 
 func withQueryForHealth(health string) models.AlertRuleMutator {
