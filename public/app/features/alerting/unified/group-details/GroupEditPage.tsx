@@ -248,93 +248,100 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      {groupIdentifier.groupOrigin === 'datasource' && (
+    <>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {groupIdentifier.groupOrigin === 'datasource' && (
+          <Field
+            label={t('alerting.group-edit.form.namespace-label', 'Namespace')}
+            required
+            invalid={!!errors.namespace}
+            error={errors.namespace?.message}
+            className={styles.input}
+          >
+            <Input
+              id="namespace"
+              {...register('namespace', {
+                required: t('alerting.group-edit.form.namespace-required', 'Namespace is required'),
+              })}
+            />
+          </Field>
+        )}
+        {groupIdentifier.groupOrigin === 'grafana' && (
+          <Field label={t('alerting.group-edit.form.folder-label', 'Folder')} required>
+            <Input id="folder" value={folder?.title ?? ''} readOnly />
+          </Field>
+        )}
         <Field
-          label={t('alerting.group-edit.form.namespace-label', 'Namespace')}
+          label={t('alerting.group-edit.form.group-name-label', 'Evaluation group name')}
           required
-          invalid={!!errors.namespace}
-          error={errors.namespace?.message}
+          invalid={!!errors.name}
+          error={errors.name?.message}
           className={styles.input}
         >
           <Input
-            id="namespace"
-            {...register('namespace', {
-              required: t('alerting.group-edit.form.namespace-required', 'Namespace is required'),
+            id="group-name"
+            {...register('name', {
+              required: t('alerting.group-edit.form.group-name-required', 'Group name is required'),
             })}
           />
         </Field>
-      )}
-      {groupIdentifier.groupOrigin === 'grafana' && (
-        <Field label={t('alerting.group-edit.form.folder-label', 'Folder')} required>
-          <Input id="folder" value={folder?.title ?? ''} readOnly />
-        </Field>
-      )}
-      <Field
-        label={t('alerting.group-edit.form.group-name-label', 'Evaluation group name')}
-        required
-        invalid={!!errors.name}
-        error={errors.name?.message}
-        className={styles.input}
-      >
-        <Input
-          id="group-name"
-          {...register('name', {
-            required: t('alerting.group-edit.form.group-name-required', 'Group name is required'),
-          })}
-        />
-      </Field>
-      <Field
-        label={t('alerting.group-edit.form.interval-label', 'Evaluation interval')}
-        description={t('alerting.group-edit.form.interval-description', 'How often is the group evaluated')}
-        invalid={!!errors.interval}
-        error={errors.interval?.message}
-        className={styles.input}
-        htmlFor="interval"
-      >
-        <>
-          <Input
-            id="interval"
-            {...register('interval', evaluateEveryValidationOptions(rulerGroup.rules))}
-            className={styles.intervalInput}
-          />
-          <EvaluationGroupQuickPick
-            currentInterval={getValues('interval')}
-            onSelect={(value) => setValue('interval', value, { shouldValidate: true, shouldDirty: true })}
-          />
-        </>
-      </Field>
-      <Field
-        label={t('alerting.group-edit.form.rules-label', 'Alerting and recording rules')}
-        description={t('alerting.group-edit.form.rules-description', 'Drag rules to reorder')}
-      >
-        <DraggableRulesTable rules={rulerGroup.rules} groupInterval={groupIntervalOrDefault} onSwap={onSwap} />
-      </Field>
-
-      <Stack>
-        <Button type="submit" disabled={isSubmitting} icon={isSubmitting ? 'spinner' : undefined}>
-          <Trans i18nKey="alerting.group-edit.form.save">Save</Trans>
-        </Button>
-        <LinkButton variant="secondary" disabled={isSubmitting} href={returnTo}>
-          <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-        </LinkButton>
-        {groupIdentifier.groupOrigin === 'datasource' && (
+        <Field
+          label={t('alerting.group-edit.form.interval-label', 'Evaluation interval')}
+          description={t('alerting.group-edit.form.interval-description', 'How often is the group evaluated')}
+          invalid={!!errors.interval}
+          error={errors.interval?.message}
+          className={styles.input}
+          htmlFor="interval"
+        >
           <>
-            <Button variant="destructive" onClick={() => setConfirmDeleteOpened(true)} disabled={isSubmitting}>
-              <Trans i18nKey="alerting.group-edit.form.delete">Delete</Trans>
-            </Button>
-            <ConfirmModal
-              isOpen={confirmDeleteOpened}
-              title={t('alerting.group-edit.form.delete-title', 'Delete rule group')}
-              body={t('alerting.group-edit.form.delete-body', 'Are you sure you want to delete this rule group?')}
-              confirmText={t('alerting.group-edit.form.delete-confirm', 'Delete')}
-              onConfirm={onDelete}
-              onDismiss={() => setConfirmDeleteOpened(false)}
+            <Input
+              id="interval"
+              {...register('interval', evaluateEveryValidationOptions(rulerGroup.rules))}
+              className={styles.intervalInput}
+            />
+            <EvaluationGroupQuickPick
+              currentInterval={getValues('interval')}
+              onSelect={(value) => setValue('interval', value, { shouldValidate: true, shouldDirty: true })}
             />
           </>
-        )}
-      </Stack>
-    </form>
+        </Field>
+        <Field
+          label={t('alerting.group-edit.form.rules-label', 'Alerting and recording rules')}
+          description={t('alerting.group-edit.form.rules-description', 'Drag rules to reorder')}
+        >
+          <DraggableRulesTable rules={rulerGroup.rules} groupInterval={groupIntervalOrDefault} onSwap={onSwap} />
+        </Field>
+
+        <Stack>
+          <Button type="submit" disabled={isSubmitting} icon={isSubmitting ? 'spinner' : undefined}>
+            <Trans i18nKey="alerting.group-edit.form.save">Save</Trans>
+          </Button>
+          <LinkButton variant="secondary" disabled={isSubmitting} href={returnTo}>
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+          </LinkButton>
+        </Stack>
+      </form>
+      {groupIdentifier.groupOrigin === 'datasource' && (
+        <Stack direction="row" justifyContent="flex-end">
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => setConfirmDeleteOpened(true)}
+            disabled={isSubmitting}
+          >
+            <Trans i18nKey="alerting.group-edit.form.delete">Delete</Trans>
+          </Button>
+          <ConfirmModal
+            isOpen={confirmDeleteOpened}
+            title={t('alerting.group-edit.form.delete-title', 'Delete rule group')}
+            body={t('alerting.group-edit.form.delete-body', 'Are you sure you want to delete this rule group?')}
+            confirmText={t('alerting.group-edit.form.delete-confirm', 'Delete')}
+            onConfirm={onDelete}
+            onDismiss={() => setConfirmDeleteOpened(false)}
+          />
+        </Stack>
+      )}
+    </>
   );
 }
 

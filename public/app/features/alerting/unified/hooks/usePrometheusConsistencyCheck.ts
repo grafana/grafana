@@ -72,20 +72,21 @@ export function useRuleGroupIsInSync() {
       const namespace =
         ruleIdentifier.groupOrigin === 'datasource' ? ruleIdentifier.namespace.name : ruleIdentifier.namespace.uid;
 
-      const promQueryParams = {
+      const promQueryParams: Parameters<typeof fetchPrometheusRuleGroups>[0] = {
         ruleSourceName: dsFeatures.name,
         namespace: namespace,
         groupName: ruleIdentifier.groupName,
       };
-      const rulerParams = {
+      const rulerParams: Parameters<typeof fetchRuleGroup>[0] = {
         namespace,
         group: ruleIdentifier.groupName,
         rulerConfig: dsFeatures.rulerConfig,
+        notificationOptions: { showSuccessAlert: false, showErrorAlert: false },
       };
 
       const [promResponse, rulerResponse] = await Promise.allSettled([
-        fetchPrometheusRuleGroups(promQueryParams),
-        fetchRuleGroup(rulerParams),
+        fetchPrometheusRuleGroups(promQueryParams).unwrap(),
+        fetchRuleGroup(rulerParams).unwrap(),
       ]);
 
       if (promResponse.status === 'rejected' && rulerResponse.status === 'rejected') {
@@ -110,16 +111,16 @@ export function useRuleGroupIsInSync() {
 
       if (rulerResponse.status === 'rejected' && promResponse.status === 'fulfilled') {
         // We assume the group no longer exists in the ruler
-        // The state is consistent if
-        const promGroups = promResponse.value.data?.flatMap((ns) => ns.groups);
-        return !promGroups?.some((g) => g.name === ruleIdentifier.groupName);
+        // The state is consistent if the group is not present in the Prometheus response
+        const promGroups = promResponse.value.flatMap((ns) => ns.groups);
+        return promGroups.every((g) => g.name !== ruleIdentifier.groupName);
       }
 
       if (promResponse.status === 'fulfilled' && rulerResponse.status === 'fulfilled') {
-        const promGroup = promResponse.value.data
-          ?.flatMap((ns) => ns.groups)
+        const promGroup = promResponse.value
+          .flatMap((ns) => ns.groups)
           .find((g) => g.name === ruleIdentifier.groupName);
-        const rulerGroup = rulerResponse.value.data;
+        const rulerGroup = rulerResponse.value;
 
         if (promGroup && rulerGroup) {
           const rulesCountMatches = promGroup.rules.length === rulerGroup.rules.length;
