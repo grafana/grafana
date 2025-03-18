@@ -1,6 +1,6 @@
 import { Grammar } from 'prismjs';
 
-import { DataFrame } from '@grafana/data';
+import { CoreApp, DataFrame } from '@grafana/data';
 import { LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 
 type onNewLogsReceivedType = (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
@@ -16,4 +16,17 @@ export function isOnLogOptionsChange(callback: unknown): callback is onLogOption
 
 export function isLogsGrammar(grammar: unknown): grammar is Grammar {
   return grammar !== null && typeof grammar === 'object' && Object.getPrototypeOf(grammar) === Object.prototype;
+}
+
+export function isCoreApp(app: unknown): app is CoreApp {
+  return (
+    app === CoreApp.CloudAlerting ||
+    app === CoreApp.Correlations ||
+    app === CoreApp.Dashboard ||
+    app === CoreApp.Explore ||
+    app === CoreApp.PanelEditor ||
+    app === CoreApp.PanelViewer ||
+    app === CoreApp.UnifiedAlerting ||
+    app === CoreApp.Unknown
+  );
 }

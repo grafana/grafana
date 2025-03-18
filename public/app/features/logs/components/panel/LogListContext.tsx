@@ -123,35 +123,28 @@ export const LogListContextProvider = ({
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
-    if (showControls) {
+    if (showControls && app !== CoreApp.PanelEditor) {
       return;
     }
     const newState = {
       ...logListState,
+      dedupStrategy,
+      showTime,
+      sortOrder,
+      syntaxHighlighting,
+      wrapLogMessage,
     };
-    if (dedupStrategy !== logListState.dedupStrategy) {
-      newState.dedupStrategy = dedupStrategy;
-    }
     if (!shallowCompare(logListState.displayedFields, displayedFields)) {
       newState.displayedFields = displayedFields;
     }
     if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
       newState.pinnedLogs = pinnedLogs;
     }
-    if (showTime !== logListState.showTime) {
-      newState.showTime = showTime;
+    if (!shallowCompare(logListState, newState)) {
+      setLogListState(newState);
     }
-    if (sortOrder !== logListState.sortOrder) {
-      newState.sortOrder = sortOrder;
-    }
-    if (syntaxHighlighting !== logListState.syntaxHighlighting) {
-      newState.syntaxHighlighting = syntaxHighlighting;
-    }
-    if (wrapLogMessage !== logListState.wrapLogMessage) {
-      newState.wrapLogMessage = wrapLogMessage;
-    }
-    setLogListState(newState);
   }, [
+    app,
     dedupStrategy,
     displayedFields,
     logListState,

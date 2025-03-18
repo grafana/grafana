@@ -11,7 +11,7 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
@@ -20,7 +20,7 @@ import { requestMoreLogs } from '../logs/LogsPanel';
 import { useDatasourcesFromTargets } from '../logs/useDatasourcesFromTargets';
 
 import { Options } from './panelcfg.gen';
-import { isLogsGrammar, isOnLogOptionsChange, isOnNewLogsReceivedType } from './types';
+import { isCoreApp, isLogsGrammar, isOnLogOptionsChange, isOnNewLogsReceivedType } from './types';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -50,6 +50,7 @@ export const LogsPanel = ({
   const keepScrollPositionRef = useRef(false);
   // Loading ref to prevent firing multiple requests
   const loadingRef = useRef(false);
+  const { app } = usePanelContext();
 
   const logs = useMemo(() => {
     const logsModel = panelData
@@ -110,7 +111,7 @@ export const LogsPanel = ({
     <div className={style.container} ref={(element: HTMLDivElement) => setLogsContainer(element)}>
       {logs.length > 0 && logsContainer && (
         <LogList
-          app={CoreApp.Dashboard}
+          app={isCoreApp(app) ? app : CoreApp.Dashboard}
           containerElement={logsContainer}
           dedupStrategy={dedupStrategy}
           displayedFields={[]}

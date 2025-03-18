@@ -95,7 +95,7 @@ export const LogListControls = ({ app, eventBus }: Props) => {
     [dedupStrategy, setDedupStrategy, styles.menuItemActive]
   );
 
-  const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor;
+  const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer;
 
   return (
     <div className={styles.navContainer}>
