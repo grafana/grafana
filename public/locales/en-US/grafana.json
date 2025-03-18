@@ -1438,6 +1438,17 @@
       "it-cannot-contain-or": "It cannot contain '//' or '..'.",
       "least-valid-character": "It must have at least one valid character."
     },
+    "dashboard-preview-banner": {
+      "not-saved": "The value is not yet saved in the Grafana database",
+      "not-yet-saved": "The value is not saved in the Grafana database",
+      "open-pull-request-in-git-hub": "Open pull request in GitHub",
+      "title-dashboard-loaded-branch-git-hub": "This dashboard is loaded from a branch in GitHub.",
+      "title-dashboard-loaded-external-repository": "This dashboard is loaded from an external repository",
+      "title-dashboard-loaded-request-git-hub": "This dashboard is loaded from a pull request in GitHub.",
+      "title-error-loading-dashboard": "Error loading dashboard",
+      "value-not-saved": "The value is not yet saved in the Grafana database",
+      "view-pull-request-in-git-hub": "View pull request in GitHub"
+    },
     "provisioned-resource-delete-modal": {
       "file-path": "File path:",
       "managed-by-version-control": "This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository and synchronise to apply the changes.",
