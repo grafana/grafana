@@ -185,7 +185,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                 }
                 // For each field of type match, apply operator
                 frame.fields.map((field, index) => {
-                  if (!options.replaceFields) {
+                  if (!options.replaceFields && !newFields.includes(field)) {
                     newFields.push(field);
                   }
                   if (field.type === fieldType) {
@@ -210,6 +210,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                       name: `${field.name} ${options.binary?.operator ?? ''} ${options.binary?.right.matcher?.options ?? options.binary?.right.fixed}`,
                       values: arr,
                     };
+                    delete newField.state;
                     newFields.push(newField);
                     didAddNewFields = true;
                   }

@@ -15,6 +15,7 @@ import { DataTransformerConfig, LoadingState } from '@grafana/schema';
 
 import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { cacheFieldDisplayNames } from '../../field/fieldState';
 import { DataFrame, FieldType } from '../../types/dataFrame';
 import { getDefaultTimeRange } from '../../types/time';
 import { BinaryOperationID } from '../../utils/binaryOperators';
@@ -218,6 +219,71 @@ describe('calculateField transformer w/ timeseries', () => {
           TheTime: 2000,
         },
       ]);
+    });
+  });
+
+  it("byType/number: don't inherit original field.state in new fields. don't create duplicate fields.", async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: { matcher: { id: FieldMatcherID.byType, options: FieldType.number } },
+          operator: BinaryOperationID.Add,
+          right: '2',
+        },
+        replaceFields: false,
+      },
+    };
+
+    cacheFieldDisplayNames([seriesBC]);
+
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+
+      expect(filtered).toEqual({
+        fields: [
+          {
+            name: 'TheTime',
+            type: 'time',
+            values: [1000, 2000],
+            config: {},
+            state: { displayName: 'TheTime', multipleFrames: false },
+          },
+          {
+            name: 'B',
+            type: 'number',
+            values: [2, 200],
+            config: {},
+            state: { displayName: 'B', multipleFrames: false },
+          },
+          { name: 'B + 2', type: 'number', values: [4, 202], config: {} },
+          {
+            name: 'C',
+            type: 'number',
+            values: [3, 300],
+            config: {},
+            state: { displayName: 'C', multipleFrames: false },
+          },
+          { name: 'C + 2', type: 'number', values: [5, 302], config: {} },
+          {
+            name: 'D',
+            type: 'string',
+            values: ['first', 'second'],
+            config: {},
+            state: { displayName: 'D', multipleFrames: false },
+          },
+          {
+            name: 'E',
+            type: 'boolean',
+            values: [true, false],
+            config: {},
+            state: { displayName: 'E', multipleFrames: false },
+          },
+        ],
+        length: 2,
+      });
     });
   });
 
