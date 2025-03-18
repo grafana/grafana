@@ -44,6 +44,7 @@ A contact point includes one or more contact point integrations for sending aler
 - Email
 - Google Chat
 - Grafana Oncall
+- Jira
 - Kafka REST Proxy
 - Line
 - Microsoft Teams
