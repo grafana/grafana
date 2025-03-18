@@ -5,7 +5,7 @@ import { FolderDTO, FolderListItemDTO } from '../../../../types';
 import { NestedFolderDTO } from '../../../search/service/types';
 import { DashboardScene } from '../../scene/DashboardScene';
 
-export type FolderDataType = FolderListItemDTO | NestedFolderDTO | FolderDTO;
+type FolderDataType = FolderListItemDTO | NestedFolderDTO | FolderDTO;
 
 export interface Props {
   onDismiss: () => void;
@@ -52,8 +52,4 @@ export function ProvisionedResourceDeleteModal({ onDismiss, resource }: Props) {
 
 function isDashboard(resource: DashboardScene | FolderDataType): resource is DashboardScene {
   return resource instanceof DashboardScene;
-}
-
-export function isFolder(resource: DashboardScene | FolderDataType): resource is FolderDataType {
-  return !isDashboard(resource);
 }

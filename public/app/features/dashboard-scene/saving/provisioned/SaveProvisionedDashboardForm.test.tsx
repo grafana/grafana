@@ -139,6 +139,7 @@ function setup(props: Partial<Props> = {}) {
       title: 'Test Repository',
       github: {
         branch: 'main',
+        generateDashboardPreviews: false,
       },
     },
     ...props,
