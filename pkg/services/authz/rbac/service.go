@@ -103,6 +103,14 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
 
+	span.SetAttributes(
+		attribute.String("subject", req.Subject),
+		attribute.String("namespace", checkReq.Namespace.Value),
+		attribute.String("action", checkReq.Action),
+		attribute.String("name", checkReq.Name),
+		attribute.String("folder", checkReq.ParentFolder),
+	)
+
 	permissions, err := s.getIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
@@ -133,6 +141,12 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 		return &authzv1.ListResponse{}, err
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
+
+	span.SetAttributes(
+		attribute.String("subject", req.Subject),
+		attribute.String("namespace", listReq.Namespace.Value),
+		attribute.String("action", listReq.Action),
+	)
 
 	permissions, err := s.getIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
 	if err != nil {
