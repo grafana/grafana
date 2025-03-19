@@ -10,9 +10,9 @@ export function sortedDeepCloneWithoutNulls<T>(value: T): T {
       .sort()
       .reduce((acc: any, key) => {
         const v = (value as any)[key];
-        // Remove null values and also -Infinity which is not a valid JSON value
-        if (v != null && v !== -Infinity) {
-          acc[key] = sortedDeepCloneWithoutNulls(v);
+        // Remove null values and convert -Infinity to 0 because -Infinity is not a valid JSON value
+        if (v != null) {
+          acc[key] = v === -Infinity ? 0 : sortedDeepCloneWithoutNulls(v);
         }
         return acc;
       }, {});

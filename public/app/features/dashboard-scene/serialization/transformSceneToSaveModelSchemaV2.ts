@@ -189,6 +189,12 @@ function getElements(scene: DashboardScene) {
         }).filter(([_, value]) => value !== undefined)
       );
 
+      // if mappings is empty, we don't want to persist it because backend will return
+      // not persist empty mappings and we'll have an unneeded diff in the save UI
+      if (!vizPanel.state.fieldConfig.defaults.mappings?.length) {
+        defaults.mappings = undefined;
+      }
+
       const vizFieldConfig: FieldConfigSource = {
         ...vizPanel.state.fieldConfig,
         defaults,
