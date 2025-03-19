@@ -12,7 +12,6 @@ import { useSelector } from 'app/types';
 import { snoozeApiKeyMigrationSummary } from '../reducers/user/user';
 import { getPerconaUser } from '../selectors';
 
-
 export const useMigrator = () => {
   const migrationResult = useSelector((state) => state.apiKeys.migrationResult);
   const { snoozedApiKeysMigration } = useSelector(getPerconaUser);

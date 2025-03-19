@@ -66,9 +66,12 @@ const trendPanel = async () => await import(/* webpackChunkName: "trendPanel" */
 const welcomeBanner = async () =>
   await import(/* webpackChunkName: "welcomeBanner" */ 'app/plugins/panel/welcome/module');
 // @PERCONA
-const pmmCheckPanel = async () => await import(/* webpackChunkName: "pmmCheckPanel" */ 'app/plugins/panel/pmm-check/module');
-const pmmPTSummaryPanel = async () => await import(/* webpackChunkName: "pmmPTSummaryPanel" */ 'app/plugins/panel/pmm-pt-summary-panel/module');
-const pmmUpdatePanel = async () => await import(/* webpackChunkName: "pmmUpdatePanel" */ 'app/plugins/panel/pmm-update/module');
+const pmmCheckPanel = async () =>
+  await import(/* webpackChunkName: "pmmCheckPanel" */ 'app/plugins/panel/pmm-check/module');
+const pmmPTSummaryPanel = async () =>
+  await import(/* webpackChunkName: "pmmPTSummaryPanel" */ 'app/plugins/panel/pmm-pt-summary-panel/module');
+const pmmUpdatePanel = async () =>
+  await import(/* webpackChunkName: "pmmUpdatePanel" */ 'app/plugins/panel/pmm-update/module');
 
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
