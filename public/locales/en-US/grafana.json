@@ -1549,10 +1549,15 @@
       "more-save-options": "More save options",
       "new": {
         "back-to-dashboard": "Back to dashboard",
+        "dashboard-settings": {
+          "tooltip": "Dashboard settings"
+        },
         "discard-library-panel-changes": "Discard library panel changes",
         "discard-panel": "Discard panel changes",
         "discard-panel-new": "Discard panel",
-        "edit-dashboard-v2-schema": "Edit dashboard v2 schema",
+        "edit-dashboard-v2-schema": {
+          "tooltip": "Edit dashboard v2 schema"
+        },
         "edit-toggle": {
           "enter": {
             "label": "Enter edit mode"
