@@ -1,8 +1,7 @@
 import { isEqual } from 'lodash';
-import React from 'react';
+import { createRef } from 'react';
 
 import {
-  SceneObject,
   CustomVariable,
   LocalValueVariable,
   MultiValueVariable,
@@ -44,13 +43,13 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     onVariableUpdateCompleted: () => this.performRepeat(),
   });
   public readonly isDashboardLayoutItem = true;
+  public containerRef = createRef<HTMLDivElement>();
+  public cachedBoundingBox: Rect | undefined;
 
   public constructor(state: ResponsiveGridItemState) {
     super({ ...state, conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty() });
     this.addActivationHandler(() => this._activationHandler());
   }
-
-  public containerRef = React.createRef<HTMLDivElement>();
 
   private _activationHandler() {
     if (this.state.variableName) {
@@ -68,20 +67,6 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
 
   public getOptions(): OptionsPaneCategoryDescriptor {
     return getOptions(this);
-  }
-
-  public toggleHideWhenNoData() {
-    this.setState({ hideWhenNoData: !this.state.hideWhenNoData });
-  }
-
-  public setBody(body: SceneObject): void {
-    if (body instanceof VizPanel) {
-      this.setState({ body });
-    }
-  }
-
-  public getVizPanel() {
-    return this.state.body;
   }
 
   public performRepeat() {
@@ -158,7 +143,6 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     this.performRepeat();
   }
 
-  public cachedBoundingBox: Rect | undefined;
   public computeBoundingBox() {
     const itemContainer = this.containerRef.current;
     if (!itemContainer || this.state.isHidden) {

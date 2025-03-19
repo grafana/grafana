@@ -1,8 +1,8 @@
 import { SceneObjectState, SceneObjectBase, SceneObjectRef, sceneGraph, VizPanel } from '@grafana/scenes';
 
-import { DropZonePlaceholder } from '../layout-default/DropZonePlaceholder';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../types/DashboardLayoutItem';
 
+import { DropZonePlaceholder } from './DropZonePlaceholder';
 import { closestOfType, DropZone, isSceneLayoutWithDragAndDrop, Point, SceneLayoutWithDragAndDrop } from './utils';
 
 interface LayoutOrchestratorState extends SceneObjectState {
@@ -22,8 +22,13 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
       return;
     }
 
+    if (!(e.target instanceof HTMLElement)) {
+      console.warn('Target is not a HTML element.');
+      return;
+    }
+
     document.body.setPointerCapture(e.pointerId);
-    const targetRect = (e.target as HTMLElement).getBoundingClientRect();
+    const targetRect = e.target.getBoundingClientRect();
     this.dragOffset = { top: e.y - targetRect.top, left: e.x - targetRect.left };
     this.setState({ activeLayoutItemRef: closestLayoutItem.getRef() });
     document.addEventListener('pointermove', this.onDrag);
@@ -111,10 +116,9 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
   }
 
   public findClosestDropZone(p: Point) {
-    const sceneLayouts = sceneGraph.findAllObjects(
-      this.getRoot(),
-      isSceneLayoutWithDragAndDrop
-    ) as SceneLayoutWithDragAndDrop[];
+    const sceneLayouts = sceneGraph
+      .findAllObjects(this.getRoot(), isSceneLayoutWithDragAndDrop)
+      .filter(isSceneLayoutWithDragAndDrop);
     let closestDropZone: (DropZone & { layout: SceneObjectRef<SceneLayoutWithDragAndDrop> }) | undefined = undefined;
     let closestDistance = Number.MAX_VALUE;
     for (const layout of sceneLayouts) {

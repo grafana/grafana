@@ -1,5 +1,4 @@
-import { css } from '@emotion/css';
-import classNames from 'classnames';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
@@ -20,11 +19,11 @@ export class DropZonePlaceholder extends SceneObjectBase<DropZonePlaceholderStat
     return (
       <Portal>
         <div
-          className={classNames(styles.placeholder, {
+          className={cx(styles.placeholder, {
             [styles.visible]: width > 0 && height > 0,
           })}
           style={{ width, height, transform: `translate(${left}px, ${top}px)` }}
-        ></div>
+        />
       </Portal>
     );
   };

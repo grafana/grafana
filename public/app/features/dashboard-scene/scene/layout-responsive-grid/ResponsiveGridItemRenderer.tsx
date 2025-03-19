@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import { cx } from '@emotion/css';
 
 import { SceneComponentProps } from '@grafana/scenes';
 
@@ -10,7 +10,6 @@ export interface ResponsiveGridItemProps extends SceneComponentProps<ResponsiveG
 
 export function ResponsiveGridItemRenderer({ model }: ResponsiveGridItemProps) {
   const { body } = model.useState();
-  // const style = useStyles2(getStyles);
   const { showHiddenElements } = useDashboardState(model);
   const isConditionallyHidden = useIsConditionallyHidden(model);
 
@@ -22,16 +21,13 @@ export function ResponsiveGridItemRenderer({ model }: ResponsiveGridItemProps) {
   return model.state.repeatedPanels ? (
     <>
       {model.state.repeatedPanels.map((item) => (
-        <div
-          className={classNames({ 'dashboard-visible-hidden-element': isHiddenButVisibleElement })}
-          key={item.state.key}
-        >
+        <div className={cx({ 'dashboard-visible-hidden-element': isHiddenButVisibleElement })} key={item.state.key}>
           <item.Component model={item} />
         </div>
       ))}
     </>
   ) : (
-    <div className={classNames({ 'dashboard-visible-hidden-element': isHiddenButVisibleElement })}>
+    <div className={cx({ 'dashboard-visible-hidden-element': isHiddenButVisibleElement })}>
       <body.Component model={body} />
     </div>
   );
