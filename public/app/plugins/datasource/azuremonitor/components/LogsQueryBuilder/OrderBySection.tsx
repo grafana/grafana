@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, Select, Label } from '@grafana/ui';
+import { Button, Select, Label, Icon, Tooltip } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -174,6 +174,13 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
             <Button variant="secondary" onClick={() => handleOrderByChange(-1, 'column', '')} icon="plus" />
           </>
         </EditorField>
+        <Tooltip
+          content={<>Sort results based on one or more columns in ascending or descending order.</>}
+          placement="right"
+          interactive={true}
+        >
+          <Icon name="info-circle" />
+        </Tooltip>
       </EditorFieldGroup>
     </EditorRow>
   );

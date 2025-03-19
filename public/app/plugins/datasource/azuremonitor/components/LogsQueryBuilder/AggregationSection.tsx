@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
+import { Icon, Tooltip } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -190,6 +191,19 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
               renderItem={makeRenderAggregate(availableColumns, onDeleteAggregate, templateVariableOptions)}
             />
           </EditorField>
+          <Tooltip
+            content={
+              <>
+                Perform calculations across rows of data, such as count, sum, average, minimum, maximum, standard
+                deviation or percentiles. Aggregates condense multiple rows into a single value based on mathematical
+                operations applied to the data.{' '}
+              </>
+            }
+            placement="right"
+            interactive={true}
+          >
+            <Icon name="info-circle" />
+          </Tooltip>
         </EditorFieldGroup>
       </EditorRow>
     </div>

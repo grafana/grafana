@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
-import { Alert, Input } from '@grafana/ui';
+import { EditorRows } from '@grafana/plugin-ui';
+import { Alert } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -18,6 +18,7 @@ import { FilterSection } from './FilterSection';
 import { FuzzySearch } from './FuzzySearch';
 import { GroupBySection } from './GroupBySection';
 import KQLPreview from './KQLPreview';
+import { LimitSection } from './LimitSection';
 import { OrderBySection } from './OrderBySection';
 import { TableSection } from './TableSection';
 import { DEFAULT_LOGS_BUILDER_QUERY, parseQueryToBuilder } from './utils';
@@ -33,7 +34,6 @@ interface LogsQueryBuilderProps {
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const { query, onQueryChange, schema } = props;
   const [isKQLPreviewHidden, setIsKQLPreviewHidden] = useState<boolean>(true);
-  const [limit, setLimit] = useState<number>();
 
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
     return schema?.database?.tables || [];
@@ -104,23 +104,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         <GroupBySection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <OrderBySection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <FuzzySearch {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
-        <EditorRow>
-          <EditorFieldGroup>
-            <EditorField label="Limit" optional={true}>
-              <Input
-                className="width-10"
-                type="number"
-                placeholder="Enter limit"
-                value={limit ?? 1000}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  const newValue = e.target.value.replace(/[^0-9]/g, '');
-                  setLimit(newValue ? Number(newValue) : undefined);
-                  handleQueryLimitUpdate(Number(newValue));
-                }}
-              />
-            </EditorField>
-          </EditorFieldGroup>
-        </EditorRow>
+        <LimitSection handleQueryLimitUpdate={handleQueryLimitUpdate} />
         <KQLPreview
           query={query.azureLogAnalytics?.query || ''}
           hidden={isKQLPreviewHidden}

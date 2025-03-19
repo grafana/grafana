@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorRow, EditorFieldGroup, EditorField, InputGroup } from '@grafana/plugin-ui';
-import { Button, Input, Select } from '@grafana/ui';
+import { Button, Icon, Input, Select, Tooltip } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -195,6 +195,19 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
             {!isOpen ? <Button variant="secondary" onClick={() => setIsOpen(true)} icon="plus" /> : <></>}
           </InputGroup>
         </EditorField>
+        <Tooltip
+          content={
+            <>
+              Find approximate text matches with tolerance for spelling variations. By default, fuzzy search scans all
+              columns (*) in the entire table, not just specific fields. This enables locating content across the
+              dataset even when exact spelling or column location is unknown.
+            </>
+          }
+          placement="right"
+          interactive={true}
+        >
+          <Icon name="info-circle" />
+        </Tooltip>
       </EditorFieldGroup>
     </EditorRow>
   );

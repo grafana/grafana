@@ -30,6 +30,7 @@ export const DEFAULT_LOGS_BUILDER_QUERY: BuilderQueryExpression = {
   groupBy: { expressions: [], type: BuilderQueryEditorExpressionType.Group_by },
   reduce: { expressions: [], type: BuilderQueryEditorExpressionType.Reduce },
   where: { expressions: [], type: BuilderQueryEditorExpressionType.And },
+  limit: 1000,
 };
 
 export const OPERATORS_BY_TYPE: Record<string, Array<SelectableValue<string>>> = {
@@ -115,6 +116,7 @@ export const parseQueryToBuilder = (query: string): BuilderQueryExpression => {
   };
 
   const lines = query.split('\n');
+  expression.limit = 1000; // default to 1000
 
   lines.forEach((line, index) => {
     if (index === 0 && !line.startsWith('|')) {

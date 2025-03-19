@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, Input, Label, Select, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, Label, Select, Tooltip, useStyles2 } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -254,6 +254,19 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
             <Button variant="secondary" onClick={() => onChangeFilter(-1, 'column', '')} icon="plus" />
           </>
         </EditorField>
+        <Tooltip
+          content={
+            <>
+              Narrow results by applying conditions to specific columns. Filters help focus on relevant data by using
+              operators such as equals, not equals, greater than, less than, or contains to define criteria that rows
+              must match to be included in the results.
+            </>
+          }
+          placement="right"
+          interactive={true}
+        >
+          <Icon name="info-circle" />
+        </Tooltip>
       </EditorFieldGroup>
     </EditorRow>
   );

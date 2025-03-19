@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button } from '@grafana/ui';
+import { Button, Icon, Tooltip } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -205,6 +205,19 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
             )}
           </InputGroup>
         </EditorField>
+        <Tooltip
+          content={
+            <>
+              Organize results into categories based on specified columns. Group by can be used independently to list
+              unique values in selected columns, or combined with aggregate functions to produce summary statistics for
+              each group. When used alone, it returns distinct combinations of the specified columns.{' '}
+            </>
+          }
+          placement="right"
+          interactive={true}
+        >
+          <Icon name="info-circle" />
+        </Tooltip>
       </EditorFieldGroup>
     </EditorRow>
   );
