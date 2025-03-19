@@ -173,7 +173,6 @@ func TestAlertRule(t *testing.T) {
 				t.Fatal("No message was received on eval channel")
 			}
 		})
-
 	})
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("Update should do nothing", func(t *testing.T) {

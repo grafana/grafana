@@ -239,7 +239,6 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	span.AddEvent("rule evaluated")
 	r.lastError.Store(nil)
 	r.health.Store("ok")
-
 }
 
 func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logger log.Logger) error {
