@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isEmpty } from 'lodash';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -65,7 +66,7 @@ const ImportFromDSRules = () => {
         ...(data.ruleGroup ? { group: data.ruleGroup } : {}),
       }).unwrap();
 
-      const isRootFolder = data.targetFolder?.uid === '';
+      const isRootFolder = isEmpty(data.targetFolder?.uid);
 
       const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', data.targetFolder?.title ?? '']]);
       notifyApp.success(
