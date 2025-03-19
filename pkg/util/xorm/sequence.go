@@ -12,6 +12,7 @@ import (
 type batchState struct {
 	nextValue        int64
 	lastValueInBatch int64
+	mu               sync.Mutex
 }
 
 type sequenceGenerator struct {
@@ -40,10 +41,8 @@ func (sg *sequenceGenerator) Reset() {
 func (sg *sequenceGenerator) Next(ctx context.Context, table, column string) (int64, error) {
 	key := fmt.Sprintf("%s:%s", table, column)
 
+	// First get or create the state with a global lock (only for map access)
 	sg.mu.Lock()
-	defer sg.mu.Unlock()
-
-	// Get or initialize batch state for this sequence
 	state, exists := sg.batchStates[key]
 	if !exists {
 		state = &batchState{
@@ -52,6 +51,11 @@ func (sg *sequenceGenerator) Next(ctx context.Context, table, column string) (in
 		}
 		sg.batchStates[key] = state
 	}
+	sg.mu.Unlock() // Release global lock as soon as possible
+
+	// Now lock only the specific sequence state
+	state.mu.Lock()
+	defer state.mu.Unlock()
 
 	// If we've used all values in the current batch, get a new batch
 	if state.nextValue > state.lastValueInBatch {
