@@ -554,10 +554,10 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		sess.Select("team_member.org_id," +
 			"team_member.team_id," +
 			"team_member.user_id," +
-			"user.email," +
-			"user.name," +
-			"user.login," +
-			"\"user\".\"uid\" as \"user_uid\"," +
+			"\"user\".email," +
+			"\"user\".name," +
+			"\"user\".login," +
+			"\"user\".uid as user_uid," +
 			"team_member.external," +
 			"team_member.permission," +
 			"user_auth.auth_module," +
