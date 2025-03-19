@@ -89,7 +89,6 @@ type APIBuilder struct {
 	storageStatus     dualwrite.Service
 	unified           resource.ResourceClient
 	secrets           secrets.Service
-	usageStatsService usagestats.Service
 }
 
 // NewAPIBuilder creates an API builder.

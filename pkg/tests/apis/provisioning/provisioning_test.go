@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	gh "github.com/google/go-github/v69/github"
@@ -17,6 +18,8 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
@@ -81,15 +84,36 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	}
 
 	// Viewer can see settings listing
-	settings := &provisioning.RepositoryViewList{}
-	rsp := helper.ViewerREST.Get().
-		Namespace("default").
-		Suffix("settings").
-		Do(context.Background())
-	require.NoError(t, rsp.Error())
-	err := rsp.Into(settings)
-	require.NoError(t, err)
-	require.Len(t, settings.Items, len(inputFiles))
+	t.Run("viewer has access to list", func(t *testing.T) {
+		settings := &provisioning.RepositoryViewList{}
+		rsp := helper.ViewerREST.Get().
+			Namespace("default").
+			Suffix("settings").
+			Do(context.Background())
+		require.NoError(t, rsp.Error())
+		err := rsp.Into(settings)
+		require.NoError(t, err)
+		require.Len(t, settings.Items, len(inputFiles))
+	})
+
+	t.Run("Repositories are reported in stats", func(t *testing.T) {
+		report := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{
+			Method: http.MethodGet,
+			Path:   "/api/admin/usage-report-preview",
+			User:   helper.K8sTestHelper.Org1.Admin,
+		}, &usagestats.Report{})
+
+		stats := map[string]any{}
+		for k, v := range report.Result.Metrics {
+			if strings.HasPrefix(k, "stats.provisioning.") {
+				stats[k] = v
+			}
+		}
+		require.Equal(t, map[string]any{
+			"stats.provisioning.repo.github.count": 1.0,
+			"stats.provisioning.repo.local.count":  1.0,
+		}, stats)
+	})
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
