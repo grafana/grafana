@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"path"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,7 +18,6 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type filesConnector struct {
@@ -73,28 +71,13 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		logger := logger.With("url", r.URL.Path, "ref", ref, "message", message)
 		ctx := logging.Context(r.Context(), logger)
 
-		prefix := fmt.Sprintf("/%s/files", name)
-		idx := strings.Index(r.URL.Path, prefix)
-		if idx == -1 {
-			logger.Debug("failed to find a file path in the URL")
-			responder.Error(apierrors.NewBadRequest("invalid request path"))
+		filePath, err := ExtractFilePath(r.URL.Path, fmt.Sprintf("/%s/files/", name))
+		if err != nil {
+			responder.Error(err)
 			return
 		}
 
-		filePath := strings.TrimPrefix(r.URL.Path[idx+len(prefix):], "/")
-		if err := safepath.ValidatePath(filePath); err != nil {
-			if errors.Is(err, safepath.ErrPathTooLong) {
-				responder.Error(apierrors.NewBadRequest("path length exceeds maximum allowed"))
-			} else if errors.Is(err, safepath.ErrPathTooDeep) {
-				responder.Error(apierrors.NewBadRequest("directory nesting exceeds maximum allowed"))
-			} else {
-				responder.Error(err)
-			}
-			return
-		}
-
-		isFolderPath := strings.HasSuffix(filePath, "/")
-
+		isFolderPath := IsFolderPath(filePath)
 		if r.Method == http.MethodGet && (filePath == "" || isFolderPath) {
 			// TODO: Implement folder navigation
 			if len(filePath) > 0 {
@@ -122,18 +105,6 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			}
 			responder.Object(http.StatusOK, files)
 			return
-		}
-
-		// TODO: document in API specification
-		if !isFolderPath {
-			switch path.Ext(filePath) {
-			case ".json", ".yaml", ".yml":
-				// ok
-			default:
-				logger.Debug("got a file extension that was not JSON or YAML", "extension", path.Ext(filePath))
-				responder.Error(apierrors.NewBadRequest("only yaml and json files supported"))
-				return
-			}
 		}
 
 		var obj *provisioning.ResourceWrapper

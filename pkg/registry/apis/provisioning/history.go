@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -62,22 +61,20 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		versioned, ok := repo.(repository.Versioned)
 		if !ok {
-			responder.Error(errors.NewBadRequest("this repository does not support history"))
+			responder.Error(apierrors.NewBadRequest("this repository does not support history"))
 			return
 		}
 
 		query := r.URL.Query()
 		ref := query.Get("ref")
 
-		var filePath string
-		prefix := fmt.Sprintf("/%s/history/", name)
-		idx := strings.Index(r.URL.Path, prefix)
-		if idx != -1 {
-			filePath = r.URL.Path[idx+len(prefix):]
+		filePath, err := ExtractFilePath(r.URL.Path, fmt.Sprintf("/%s/history/", name))
+		if err != nil {
+			responder.Error(err)
+			return
 		}
-
-		logger := logger.With("ref", ref, "path", filePath)
-		ctx := logging.Context(r.Context(), logger)
+		logger = logger.With("ref", ref, "path", filePath)
+		ctx = logging.Context(r.Context(), logger)
 
 		// TODO: Add history pagination
 		commits, err := versioned.History(ctx, filePath, ref)
