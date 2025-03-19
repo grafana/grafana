@@ -218,12 +218,12 @@ export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
         }
         break;
       case MappingType.RangeToText:
-        if (item.from != null && item.to != null) {
+        if (item.from != null || item.to != null) {
           mappings.push({
             type: item.type,
             options: {
-              from: item.from,
-              to: item.to,
+              from: item.from ?? null,
+              to: item.to ?? null,
               result,
             },
           });
