@@ -48,5 +48,5 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 16, len(doc.Fields))
+	require.Equal(t, 17, len(doc.Fields))
 }
