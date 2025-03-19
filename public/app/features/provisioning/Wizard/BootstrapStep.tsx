@@ -3,7 +3,6 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import {
   Alert,
-  Badge,
   Box,
   Card,
   Field,
@@ -135,18 +134,6 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
           )}
         />
 
-        {state.disabled.map((action) => (
-          <Card disabled={true} key={`${action.target}-${action.operation}`}>
-            <Card.Heading>
-              <Stack direction="row" alignItems="center" gap={2}>
-                <Text color="secondary">{action.label}</Text>
-                <Badge color="blue" text="Not available" icon="info" />
-              </Stack>
-            </Card.Heading>
-            <Card.Description>{action.disabledReason ?? action.description}</Card.Description>
-          </Card>
-        ))}
-
         {/* Add migration options */}
         {selectedOption?.operation === 'migrate' && (
           <>
@@ -155,10 +142,10 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                 Dashboards will be unavailable while running this process.
               </Alert>
             )}
-            {Boolean(state.fileCount) && (
+            {Boolean(state.fileCount) && Boolean(state.resourceCount) && (
               <Alert title="Files exist in the target" severity="info">
-                The {state.resourceCount} resources will be added to the repository. Grafana will have both the current
-                resources and anything from the repository when done.
+                The {state.resourceCount} resources in grafana will be added to the repository. Grafana will then
+                include both the current resources and anything from the repository when done.
               </Alert>
             )}
             <FieldSet label="Migrate options">

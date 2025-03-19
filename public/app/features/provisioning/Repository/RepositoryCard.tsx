@@ -64,7 +64,7 @@ export function RepositoryCard({ repository }: Props) {
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center">
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
-          <StatusBadge enabled={Boolean(spec?.sync?.enabled)} state={status?.sync?.state} name={name} />
+          <StatusBadge repo={repository} />
         </Stack>
       </Card.Heading>
 
