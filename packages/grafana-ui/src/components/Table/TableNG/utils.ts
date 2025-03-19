@@ -324,15 +324,32 @@ export function getFooterItemNG(rows: TableRow[], field: Field): FooterItem | nu
   return Object.keys(footerItem).length > 0 ? footerItem : null;
 }
 
-export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
+export const getFooterStyles = (theme: GrafanaTheme2) => ({
   footerCell: css({
+    border: `1px solid ${theme.colors.border.medium}`,
+    boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: justifyContent,
-    justifyContent: 'flex-start',
-    height: '100%', // Ensure the footer cell takes full height of its container
-    boxSizing: 'border-box',
+    height: '100%',
+    padding: theme.spacing(1),
     width: '100%',
+  }),
+  footerItem: css({
+    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  }),
+  footerItemLabel: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightLight,
+    marginRight: theme.spacing(1),
+    textTransform: 'uppercase',
+  }),
+  footerItemValue: css({
+    fontWeight: theme.typography.fontWeightMedium,
   }),
 });
 
@@ -508,7 +525,6 @@ export interface MapFrameToGridOptions extends TableNGProps {
   rows: TableRow[];
   sortedRows: TableRow[];
   setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
-  setFooterHeight: (height: number) => void;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   setIsInspecting: (isInspecting: boolean) => void;
   setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>;
@@ -596,3 +612,49 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
 /** Returns true if the DataFrame contains nested frames */
 export const getIsNestedTable = (dataFrame: DataFrame): boolean =>
   dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
+
+// Get the maximum number of reducers across all fields
+const getMaxReducerCount = (dataFrame: DataFrame, fieldConfig: TableNGProps['fieldConfig']): number => {
+  // Filter to only numeric fields that can have reducers
+  const numericFields = dataFrame.fields.filter(({ type }) => type === FieldType.number);
+
+  // If there are no numeric fields, return 0
+  if (numericFields.length === 0) {
+    return 0;
+  }
+
+  // Map each field to its reducer count (direct config or override)
+  const reducerCounts = numericFields.map((field) => {
+    // Get the direct reducer count from the field config
+    const directReducers = field.config?.custom?.footer?.reducer ?? [];
+    let reducerCount = directReducers.length;
+
+    // Check for overrides if field config is available
+    if (fieldConfig?.overrides) {
+      // Find override that matches this field
+      const override = fieldConfig.overrides.find(
+        ({ matcher: { id, options } }) => id === 'byName' && options === field.name
+      );
+
+      // Check if there's a footer reducer property in the override
+      const footerProperty = override?.properties?.find(({ id }) => id === 'custom.footer.reducer');
+      if (footerProperty?.value && Array.isArray(footerProperty.value)) {
+        // If override exists, it takes precedence over direct config
+        reducerCount = footerProperty.value.length;
+      }
+    }
+
+    return reducerCount;
+  });
+
+  // Return the maximum count or 0 if no reducers found
+  return reducerCounts.length > 0 ? Math.max(...reducerCounts) : 0;
+};
+
+// Calculate the footer height based on the maximum reducer count
+export const calculateFooterHeight = (dataFrame: DataFrame, fieldConfig: TableNGProps['fieldConfig']) => {
+  const maxReducerCount = getMaxReducerCount(dataFrame, fieldConfig);
+  // Base height (+ padding) + height per reducer
+  const dynamicHeight = 36 + maxReducerCount * 22;
+  return Math.max(dynamicHeight, 36); // Ensure minimum height of 36px
+};

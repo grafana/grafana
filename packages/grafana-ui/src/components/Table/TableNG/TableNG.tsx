@@ -17,6 +17,7 @@ import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspecto
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
+import { SummaryCell } from './Cells/summaryCell';
 import { COLUMN, TABLE } from './constants';
 import {
   TableNGProps,
@@ -28,12 +29,11 @@ import {
   TableColumn,
 } from './types';
 import {
+  calculateFooterHeight,
   frameToRecords,
   getColumnWidth,
   getComparator,
   getDefaultRowHeight,
-  getFooterItemNG,
-  getFooterStyles,
   getIsNestedTable,
   getRowHeight,
   getTextAlign,
@@ -73,7 +73,6 @@ export function TableNG(props: TableNGProps) {
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
-  const [footerHeight, setFooterHeight] = useState(0);
 
   /* ------------------------------- Local refs ------------------------------- */
   const crossFilterOrder = useRef<string[]>([]);
@@ -88,7 +87,10 @@ export function TableNG(props: TableNGProps) {
   const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
 
   const theme = useTheme2();
-  const styles = useStyles2(getStyles, textWrap);
+  // For some reason Firefox doesn't set the summary cell height correctly with the react-data-grid
+  // prop called summaryRowHeight. This is a workaround to set the height manually via CSS instead.
+  const footerHeight = calculateFooterHeight(props.data, fieldConfig);
+  const styles = useStyles2(getStyles, textWrap, footerHeight);
 
   const isFooterVisible = useMemo(() => {
     return props.data.fields.some((field) => field.config?.custom?.footer?.reducer?.length ?? false);
@@ -313,7 +315,6 @@ export function TableNG(props: TableNGProps) {
           rows,
           setContextMenuProps,
           setFilter,
-          setFooterHeight,
           setIsInspecting,
           setSortColumns,
           sortColumnsRef,
@@ -388,7 +389,6 @@ export function TableNG(props: TableNGProps) {
             resizable: true,
           }}
           rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
-          summaryRowHeight={footerHeight}
           // TODO: This doesn't follow current table behavior
           style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
           renderers={{ renderRow: (key, props) => myRowRenderer(key, props, expandedRows) }}
@@ -491,7 +491,6 @@ export function mapFrameToDataGrid({
     osContext,
     rows,
     setContextMenuProps,
-    setFooterHeight,
     setFilter,
     setIsInspecting,
     setSortColumns,
@@ -580,7 +579,6 @@ export function mapFrameToDataGrid({
     const key = field.name;
     const width = getColumnWidth(field, fieldConfig, key);
     const justifyColumnContent = getTextAlign(field);
-    const footerStyles = getFooterStyles(justifyColumnContent);
 
     // Add a column for each field
     columns.push({
@@ -624,27 +622,9 @@ export function mapFrameToDataGrid({
           />
         );
       },
-      renderSummaryCell: () => {
-        const footerItem = getFooterItemNG(sortedRows, field);
-
-        if (!footerItem) {
-          return null;
-        }
-
-        // Calculate appropriate row height based on number of reducers
-        const reducerCount = Object.keys(footerItem).length;
-        // Base height plus additional height per reducer after the first one
-        const dynamicHeight = 30 + Math.max(0, reducerCount - 1) * 22; // 30px base + 22px per additional reducer
-        setFooterHeight(dynamicHeight);
-        // Render each reducer in the footer
-        return (
-          <div className={footerStyles.footerCell}>
-            {Object.entries(footerItem).map(([reducerId, { reducerName, formattedValue }]) => (
-              <div key={reducerId}>{`${reducerName}: ${formattedValue}`}</div>
-            ))}
-          </div>
-        );
-      },
+      renderSummaryCell: () => (
+        <SummaryCell sortedRows={sortedRows} field={field} fieldIndex={fieldIndex} theme={theme} />
+      ),
       renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
         <HeaderCell
           column={column}
@@ -696,7 +676,7 @@ export function myRowRenderer(
   return <Row key={key} {...props} />;
 }
 
-const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, textWrap: boolean, footerHeight: number) => ({
   dataGrid: css({
     '--rdg-background-color': theme.colors.background.primary,
     '--rdg-header-background-color': theme.colors.background.primary,
@@ -719,6 +699,9 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
       '--rdg-summary-border-color': theme.colors.border.medium,
 
       '.rdg-cell': {
+        height: footerHeight,
+        padding: theme.spacing(1),
+        paddingInline: 'unset',
         borderRight: 'none',
       },
     },

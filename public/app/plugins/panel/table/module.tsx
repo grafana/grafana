@@ -1,10 +1,4 @@
-import {
-  PanelPlugin,
-  ReducerID,
-  standardEditorsRegistry,
-  identityOverrideProcessor,
-  FieldConfigProperty,
-} from '@grafana/data';
+import { PanelPlugin, standardEditorsRegistry, identityOverrideProcessor, FieldConfigProperty } from '@grafana/data';
 import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
@@ -110,7 +104,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           description: 'Choose a reducer function / calculation',
           editor: standardEditorsRegistry.get('stats-picker').editor,
           override: standardEditorsRegistry.get('stats-picker').editor,
-          defaultValue: [ReducerID.sum],
+          defaultValue: [],
           process: identityOverrideProcessor,
           shouldApply: () => true,
           settings: {
