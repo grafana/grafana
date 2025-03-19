@@ -1,9 +1,9 @@
 package provisioning
 
 import (
-	"path"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
@@ -29,14 +29,8 @@ func ExtractFilePath(urlPath, prefix string) (string, error) {
 	}
 
 	// Only check file extension if it's not a folder path
-	if !IsFolderPath(filePath) {
-		// TODO: don't we have already a function somewhere for this?
-		switch path.Ext(filePath) {
-		case ".json", ".yaml", ".yml":
-			// ok
-		default:
-			return "", apierrors.NewBadRequest("only yaml and json files supported")
-		}
+	if !IsFolderPath(filePath) && resources.ShouldIgnorePath(filePath) {
+		return "", apierrors.NewBadRequest("only yaml and json files supported")
 	}
 
 	return filePath, nil
