@@ -203,37 +203,6 @@ then run:
 kubectl --kubeconfig=./grafana.kubeconfig create -f folder-generate.yaml
 ```
 
-### Use a separate database
-
-By default Unified Storage uses the Grafana database. To run against a separate database, update `custom.ini` by adding the following section to it:
-
-```
-[resource_api]
-db_type = mysql
-db_host = localhost:3306
-db_name = grafana
-db_user = <username>
-db_pass = <password>
-```
-
-MySQL and Postgres are both supported. The `<username>` and `<password>` values can be found in the following devenv docker compose files: [MySQL](https://github.com/grafana/grafana/blob/main/devenv/docker/blocks/mysql/docker-compose.yaml#L6-L7) and [Postgres](https://github.com/grafana/grafana/blob/main/devenv/docker/blocks/postgres/docker-compose.yaml#L4-L5).
-
-Then, run
-```sh
-make devenv sources=<source>
-```
-where source is either `mysql` or `postgres`.
-
-Finally, run the Grafana backend with
-
-```sh
-bra run
-```
-or
-```sh
-make run
-```
-
 ### Run as a GRPC service
 
 #### Start GRPC storage-server
