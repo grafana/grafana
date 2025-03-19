@@ -558,7 +558,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 			user.email,
 			user.name,
 			user.login,
-			user.uid AS user_uid,
+			user.uid as "user_uid",
 			team_member.external,
 			team_member.permission,
 			user_auth.auth_module,
