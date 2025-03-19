@@ -311,6 +311,13 @@ test-go-integration-memcached: ## Run integration tests for memcached cache.
 	$(GO) clean -testcache
 	MEMCACHED_HOSTS=localhost:11211 $(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -run IntegrationMemcached -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
 
+.PHONY: test-go-integration-spanner
+test-go-integration-spanner: ## Run integration tests for Spanner backend with flags. Uses spanner-emulator on localhost:9010 and localhost:9020.
+	@if [ "${WIRE_TAGS}" != "enterprise" ]; then echo "Spanner integration test require enterprise setup"; exit 1; fi
+	@echo "test backend integration spanner tests"
+	GRAFANA_TEST_DB=spanner SPANNER_DB=emulator \
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -v -run "^TestIntegration" -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
+
 .PHONY: test-js
 test-js: ## Run tests for frontend.
 	@echo "test frontend"

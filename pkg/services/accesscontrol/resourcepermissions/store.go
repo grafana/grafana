@@ -449,7 +449,7 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	builtin := builtinSelect + builtinFrom + where
 	args = append(args, args[:initialLength]...)
 
-	sql := userQuery + " UNION " + team + " UNION " + builtin
+	sql := userQuery + " " + s.sql.GetDialect().UnionDistinct() + " " + team + " " + s.sql.GetDialect().UnionDistinct() + " " + builtin
 	queryResults := make([]flatResourcePermission, 0)
 	if err := sess.SQL(sql, args...).Find(&queryResults); err != nil {
 		return nil, err
