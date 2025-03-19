@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
@@ -29,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
@@ -41,8 +39,6 @@ type Options struct {
 	DB       infraDB.DB
 	Tracer   tracing.Tracer
 	Reg      prometheus.Registerer
-	Authzc   types.AccessClient
-	Docs     resource.DocumentBuilderSupplier
 }
 
 type clientMetrics struct {
@@ -51,7 +47,7 @@ type clientMetrics struct {
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics) (resource.ResourceClient, error) {
+func ProvideUnifiedStorageClient(opts *Options, sqlBackendServer sql.SqlBackendResourceServer) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
@@ -59,7 +55,7 @@ func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.Storage
 		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
 		Address:      apiserverCfg.Key("address").MustString(""), // client address
 		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, sqlBackendServer)
 	if err == nil {
 		// Used to get the folder stats
 		client = federated.NewFederatedClient(
@@ -74,13 +70,9 @@ func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.Storage
 func newClient(opts options.StorageOptions,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	authzc types.AccessClient,
-	docs resource.DocumentBuilderSupplier,
-	storageMetrics *resource.StorageMetrics,
-	indexMetrics *resource.BleveIndexMetrics,
+	sqlBackendServer sql.SqlBackendResourceServer,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 	switch opts.StorageType {
@@ -153,15 +145,7 @@ func newClient(opts options.StorageOptions,
 
 	// Use the local SQL
 	default:
-		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics)
-		if err != nil {
-			return nil, err
-		}
-		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions, storageMetrics, indexMetrics, features)
-		if err != nil {
-			return nil, err
-		}
-		return resource.NewLocalResourceClient(server), nil
+		return resource.NewLocalResourceClient(sqlBackendServer), nil
 	}
 }
 

@@ -60,7 +60,6 @@ type service struct {
 func ProvideUnifiedStorageGrpcService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
 	log log.Logger,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
@@ -78,11 +77,6 @@ func ProvideUnifiedStorageGrpcService(
 		return nil, err
 	}
 
-	// reg can be nil when running unified storage in standalone mode
-	if reg == nil {
-		reg = prometheus.DefaultRegisterer
-	}
-
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
 	authn := grpcutils.NewAuthenticatorWithFallback(cfg, reg, tracing, &grpc.Authenticator{Tracer: tracing})
@@ -93,7 +87,6 @@ func ProvideUnifiedStorageGrpcService(
 		stopCh:         make(chan struct{}),
 		authenticator:  authn,
 		tracing:        tracing,
-		db:             db,
 		log:            log,
 		reg:            reg,
 		docBuilders:    docBuilders,
@@ -113,12 +106,12 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics)
+	searchOptions, err := search.ProvideSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics)
 	if err != nil {
 		return err
 	}
 
-	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics, s.features)
+	server, err := ProvideSqlBackendResourceServer(nil, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics, s.features)
 	if err != nil {
 		return err
 	}

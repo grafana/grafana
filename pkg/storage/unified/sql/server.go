@@ -10,6 +10,7 @@ import (
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -17,12 +18,20 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
+type SqlBackendResourceServer resource.ResourceServer
+
 // Creates a new ResourceServer
-func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
+func ProvideSqlBackendResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient,
 	searchOptions resource.SearchOptions, storageMetrics *resource.StorageMetrics,
-	indexMetrics *resource.BleveIndexMetrics, features featuremgmt.FeatureToggles) (resource.ResourceServer, error) {
+	indexMetrics *resource.BleveIndexMetrics, features featuremgmt.FeatureToggles) (SqlBackendResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	storageType := options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified)))
+
+	if storageType == options.StorageTypeFile || storageType == options.StorageTypeUnifiedGrpc {
+		return nil, nil
+	}
+
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
 		Blob: resource.BlobConfig{

@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tracer tracing.Tracer, docs resource.DocumentBuilderSupplier, indexMetrics *resource.BleveIndexMetrics) (resource.SearchOptions, error) {
+func ProvideSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tracer tracing.Tracer, docs resource.DocumentBuilderSupplier, indexMetrics *resource.BleveIndexMetrics) (resource.SearchOptions, error) {
 	// Setup the search server
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
 		root := cfg.IndexPath
