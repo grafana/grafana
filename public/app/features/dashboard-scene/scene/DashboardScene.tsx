@@ -70,6 +70,7 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { LayoutParent } from './types/LayoutParent';
@@ -173,6 +174,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     Dashboard | DashboardV2Spec,
     DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   >;
+
+  private _layoutRestorer = new LayoutRestorer();
 
   public constructor(state: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
     super({
@@ -613,8 +616,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ body: layout });
-    layout.activateRepeaters?.();
+    this.setState({ body: this._layoutRestorer.getLayout(layout, this.state.body) });
+    this.state.body.activateRepeaters?.();
   }
 
   public getLayout(): DashboardLayoutManager {
