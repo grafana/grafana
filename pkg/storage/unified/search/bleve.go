@@ -859,34 +859,37 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 }
 
 func newQuery(key string, value string, prefix string) query.Query {
-	c, ok := hasTerms(value)
+	delimiter, ok := hasTerms(value)
 	if termField[key] && ok {
-		tokens := strings.Split(value, c)
-		// won't match with ending space
-		value = strings.TrimSuffix(value, " ")
-
-		q := bleve.NewTermQuery(value)
-		q.FieldVal = prefix + key
-
-		qq := bleve.NewConjunctionQuery()
-		for _, token := range tokens {
-			_, ok := hasTerms(token)
-			if ok {
-				tq := bleve.NewTermQuery(token)
-				tq.FieldVal = prefix + key
-				qq.AddQuery(tq)
-				continue
-			}
-			mq := bleve.NewMatchQuery(token)
-			mq.FieldVal = prefix + key
-			qq.AddQuery(mq)
-		}
-
-		return bleve.NewDisjunctionQuery(q, qq)
+		return newTermsQuery(key, value, delimiter, prefix)
 	}
 	q := bleve.NewMatchQuery(value)
 	q.FieldVal = prefix + key
 	return q
+}
+
+func newTermsQuery(key string, value string, delimiter string, prefix string) query.Query {
+	tokens := strings.Split(value, delimiter)
+	// won't match with ending space
+	value = strings.TrimSuffix(value, " ")
+
+	q := bleve.NewTermQuery(value)
+	q.FieldVal = prefix + key
+
+	qq := bleve.NewConjunctionQuery()
+	for _, token := range tokens {
+		_, ok := hasTerms(token)
+		if ok {
+			tq := bleve.NewTermQuery(token)
+			tq.FieldVal = prefix + key
+			qq.AddQuery(tq)
+			continue
+		}
+		mq := bleve.NewMatchQuery(token)
+		mq.FieldVal = prefix + key
+		qq.AddQuery(mq)
+	}
+	return bleve.NewDisjunctionQuery(q, qq)
 }
 
 // filterValue will convert the value to lower case if the field is a phrase field
