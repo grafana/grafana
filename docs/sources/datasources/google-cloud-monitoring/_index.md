@@ -111,7 +111,7 @@ To configure basic settings for the data source, complete the following steps:
 
 ### Provision the data source
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
 #### Provisioning examples
