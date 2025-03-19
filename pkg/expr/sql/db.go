@@ -4,6 +4,7 @@ package sql
 
 import (
 	"context"
+	"fmt"
 
 	sqle "github.com/dolthub/go-mysql-server"
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -14,6 +15,42 @@ import (
 
 // DB is a database that can execute SQL queries against a set of Frames.
 type DB struct{}
+
+// GoMySQLServerError represents an error from the underlying Go MySQL Server
+type GoMySQLServerError struct {
+	Err error
+}
+
+// Error implements the error interface
+func (e *GoMySQLServerError) Error() string {
+	return fmt.Sprintf("error in go-mysql-server: %v", e.Err)
+}
+
+// Unwrap provides the original error for errors.Is/As
+func (e *GoMySQLServerError) Unwrap() error {
+	return e.Err
+}
+
+// WrapGoMySQLServerError wraps errors from Go MySQL Server with additional context
+func WrapGoMySQLServerError(err error) error {
+	// Don't wrap nil errors
+	if err == nil {
+		return nil
+	}
+
+	// Check if it's a function not found error or other specific GMS errors
+	if isFunctionNotFoundError(err) {
+		return &GoMySQLServerError{Err: err}
+	}
+
+	// Return original error if it's not one we want to wrap
+	return err
+}
+
+// isFunctionNotFoundError checks if the error is related to a function not being found
+func isFunctionNotFoundError(err error) bool {
+	return mysql.ErrFunctionNotFound.Is(err)
+}
 
 // QueryFrames runs the sql query query against a database created from frames, and returns the frame.
 // The RefID of each frame becomes a table in the database.
@@ -47,7 +84,7 @@ func (db *DB) QueryFrames(ctx context.Context, name string, query string, frames
 
 	schema, iter, _, err := engine.Query(mCtx, query)
 	if err != nil {
-		return nil, err
+		return nil, WrapGoMySQLServerError(err)
 	}
 
 	f, err := convertToDataFrame(mCtx, iter, schema)
