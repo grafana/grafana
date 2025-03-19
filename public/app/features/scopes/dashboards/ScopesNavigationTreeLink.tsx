@@ -33,7 +33,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:last-child': css({
         paddingBottom: 0,
       }),
-      '&:hover': css({
+      '&:hover, &:focus': css({
         textDecoration: 'underline',
       }),
     }),
