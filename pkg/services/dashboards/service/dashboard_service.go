@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
+	"github.com/grafana/grafana/pkg/util/retryer"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/maps"
@@ -559,6 +561,22 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 	return isParentFolderChanged, nil
 }
 
+// waitForSearchQuery waits for the search query to return the expected number of hits.
+// Since US doesn't offer search-after-write guarantees, we can use this to wait after writes until the indexer is up to date.
+func (dr *DashboardServiceImpl) waitForSearchQuery(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, maxRetries int, expectedHits int64) error {
+	return retryer.Retry(func() (retryer.RetrySignal, error) {
+		results, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
+		dr.log.Debug("waitForSearchQuery", "dashboardUIDs", strings.Join(query.DashboardUIDs, ","), "total_hits", results.TotalHits, "err", err)
+		if err != nil {
+			return retryer.FuncError, err
+		}
+		if results.TotalHits == expectedHits {
+			return retryer.FuncComplete, nil
+		}
+		return retryer.FuncFailure, nil
+	}, maxRetries, 1*time.Second, 5*time.Second)
+}
+
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		// check each org for orphaned provisioned dashboards
@@ -578,10 +596,20 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 			if err != nil {
 				return err
 			}
+			dr.log.Debug("Found dashboards to be deleted", "orgId", org.ID, "count", len(foundDashs))
 
 			// delete them
+			var deletedUids []string
 			for _, foundDash := range foundDashs {
 				if err = dr.deleteDashboard(ctx, foundDash.DashboardID, foundDash.DashboardUID, org.ID, false); err != nil {
+					return err
+				}
+				deletedUids = append(deletedUids, foundDash.DashboardUID)
+			}
+			if len(deletedUids) > 0 {
+				// wait for deleted dashboards to be removed from the index
+				err = dr.waitForSearchQuery(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: org.ID, DashboardUIDs: deletedUids}, 5, 0)
+				if err != nil {
 					return err
 				}
 			}
@@ -1272,6 +1300,14 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				Tags:        hit.Tags,
 			}
 
+			if hit.Field != nil && query.Sort.Name != "" {
+				fieldName, _, err := legacysearcher.ParseSortName(query.Sort.Name)
+				if err != nil {
+					return nil, err
+				}
+				result.SortMeta = hit.Field.GetNestedInt64(fieldName)
+			}
+
 			if hit.Resource == folderv0alpha1.RESOURCE {
 				result.IsFolder = true
 			}
@@ -1817,12 +1853,12 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.Federated = []*resource.ResourceKey{federate}
 	}
 
-	// technically, there exists the ability to register multiple ways of sorting using the legacy database
-	// see RegisterSortOption in pkg/services/search/sorting.go
-	// however, it doesn't look like we are taking advantage of that. And since by default the legacy
-	// sql will sort by title ascending, we only really need to handle the "alpha-desc" case
-	if query.Sort.Name == "alpha-desc" {
-		request.SortBy = append(request.SortBy, &resource.ResourceSearchRequest_Sort{Field: resource.SEARCH_FIELD_TITLE, Desc: true})
+	if query.Sort.Name != "" {
+		sortName, isDesc, err := legacysearcher.ParseSortName(query.Sort.Name)
+		if err != nil {
+			return dashboardv0alpha1.SearchResults{}, err
+		}
+		request.SortBy = append(request.SortBy, &resource.ResourceSearchRequest_Sort{Field: sortName, Desc: isDesc})
 	}
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
@@ -1949,11 +1985,12 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	dashVersion := obj.GetGeneration()
 	spec["version"] = dashVersion
 
+	title, _, _ := unstructured.NestedString(spec, "title")
 	out := dashboards.Dashboard{
 		OrgID:      orgID,
 		ID:         obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		UID:        uid,
-		Slug:       obj.GetSlug(),
+		Slug:       slugify.Slugify(title),
 		FolderUID:  obj.GetFolder(),
 		Version:    int(dashVersion),
 		Data:       simplejson.NewFromAny(spec),
