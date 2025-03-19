@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
@@ -233,6 +233,31 @@ describe('TraceQLSearch', () => {
       const serviceNameValue = container.querySelector(`input[aria-label="select service-name value"]`);
       expect(serviceNameValue).toBeNull();
       expect(serviceNameValue).not.toBeInTheDocument();
+    });
+  });
+
+  it('should not render group by alert when query does not contain group by', async () => {
+    await act(async () => {
+      render(
+        <TraceQLSearch datasource={datasource} query={query} onChange={onChange} onClearResults={onClearResults} />
+      );
+      expect(screen.queryByRole('button', { name: 'Remove aggregate by from this query' })).toBeInTheDocument();
+    });
+  });
+
+  it('should render group by alert when query contains group by', async () => {
+    const onChange = jest.fn();
+    await waitFor(async () => {
+      render(
+        <TraceQLSearch
+          datasource={datasource}
+          query={{ ...query, groupBy: [] }}
+          onChange={onChange}
+          onClearResults={onClearResults}
+        />
+      );
+      const button = screen.queryByRole('button', { name: 'Remove aggregate by from this query' });
+      expect(button).toBeInTheDocument();
     });
   });
 });
