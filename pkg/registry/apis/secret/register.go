@@ -40,7 +40,6 @@ type SecretAPIBuilder struct {
 	tracer                     tracing.Tracer
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
-	decryptStorage             contracts.DecryptStorage
 	accessClient               claims.AccessClient
 	decryptersAllowList        map[string]struct{}
 	isDevMode                  bool // REMOVE ME
@@ -50,12 +49,11 @@ func NewSecretAPIBuilder(
 	tracer tracing.Tracer,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	decryptStorage contracts.DecryptStorage,
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
 	isDevMode bool, // REMOVE ME
 ) *SecretAPIBuilder {
-	return &SecretAPIBuilder{tracer, secureValueMetadataStorage, keeperMetadataStorage, decryptStorage, accessClient, decryptersAllowList, isDevMode}
+	return &SecretAPIBuilder{tracer, secureValueMetadataStorage, keeperMetadataStorage, accessClient, decryptersAllowList, isDevMode}
 }
 
 func RegisterAPIService(
@@ -65,7 +63,6 @@ func RegisterAPIService(
 	tracer tracing.Tracer,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	decryptStorage contracts.DecryptStorage,
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
 ) (*SecretAPIBuilder, error) {
@@ -81,7 +78,6 @@ func RegisterAPIService(
 		fmt.Println("developer mode enabled")
 		secureValueMetadataStorage = reststorage.NewFakeSecureValueMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
 		keeperMetadataStorage = reststorage.NewFakeKeeperMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
-		decryptStorage = reststorage.NewFakeDecryptStore(secureValueMetadataStorage)
 	}
 
 	if err := RegisterAccessControlRoles(accessControlService); err != nil {
@@ -92,7 +88,6 @@ func RegisterAPIService(
 		tracer,
 		secureValueMetadataStorage,
 		keeperMetadataStorage,
-		decryptStorage,
 		accessClient,
 		nil, // OSS does not need an allow list.
 		cfg.SecretsManagement.IsDeveloperMode,
@@ -149,10 +144,6 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		// Default path for `securevalue`.
 		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
 		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueMetadataStorage, secureValueResource),
-
-		// TODO: only for testing purposes; remove it in favour of the grpc handler.
-		// This is a subresource from `securevalue`. It gets accessed like `securevalue/xyz/decrypt`.
-		secureValueResource.StoragePath("decrypt"): reststorage.NewDecryptRest(secureValueResource, b.decryptStorage),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
 		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, keeperResource),

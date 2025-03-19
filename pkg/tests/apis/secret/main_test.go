@@ -80,7 +80,7 @@ func TestIntegrationDiscoveryClient(t *testing.T) {
 
 		apiResources, ok := apiResourceList["resources"].([]any)
 		require.True(t, ok)
-		require.Len(t, apiResources, 3) // securevalue + keeper + (subresources...)
+		require.Len(t, apiResources, 2) // securevalue + keeper + (subresources...)
 	})
 }
 
