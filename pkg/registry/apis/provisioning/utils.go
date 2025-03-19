@@ -31,6 +31,7 @@ func readBody(r *http.Request, maxSize int64) ([]byte, error) {
 		}
 		return nil, fmt.Errorf("error reading request body: %w", err)
 	}
+
 	return body, nil
 }
 
