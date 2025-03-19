@@ -426,7 +426,7 @@ export class DefaultGridLayoutManager
 
       currentX += panelWidth;
 
-      if (currentX + panelWidth >= GRID_COLUMN_COUNT) {
+      if (currentX + panelWidth > GRID_COLUMN_COUNT) {
         currentX = 0;
         currentY += panelHeight;
       }
