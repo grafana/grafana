@@ -458,17 +458,10 @@ func (r *githubClient) ListWebhooks(ctx context.Context, owner, repository strin
 		return r.gh.Repositories.ListHooks(ctx, owner, repository, opts)
 	}
 
-	// Use smaller page size for webhooks since they're typically fewer
-	opts := listOptions{
-		Page:     1,
-		PerPage:  50,
-		MaxItems: maxWebhooks,
-	}
-
 	hooks, err := paginatedList(
 		ctx,
 		listFn,
-		opts,
+		defaultListOptions(maxWebhooks),
 	)
 	if errors.Is(err, ErrTooManyItems) {
 		return nil, fmt.Errorf("too many webhooks configured (more than %d)", maxWebhooks)
@@ -746,28 +739,18 @@ func keepNonEmpty(strs []string) []string {
 
 // listOptions represents pagination parameters for list operations
 type listOptions struct {
-	// Page number (1-based)
-	Page int
-	// Number of items per page
-	PerPage int
-	// Maximum total items to fetch
+	github.ListOptions
 	MaxItems int
 }
 
 // defaultListOptions returns a ListOptions with sensible defaults
 func defaultListOptions(maxItems int) listOptions {
 	return listOptions{
-		Page:     1,
-		PerPage:  100,
+		ListOptions: github.ListOptions{
+			Page:    1,
+			PerPage: 100,
+		},
 		MaxItems: maxItems,
-	}
-}
-
-// toGitHubListOptions converts our ListOptions to GitHub's ListOptions
-func (o listOptions) toGitHubListOptions() *github.ListOptions {
-	return &github.ListOptions{
-		Page:    o.Page,
-		PerPage: o.PerPage,
 	}
 }
 
@@ -780,7 +763,7 @@ func paginatedList[T any](
 	var allItems []T
 
 	for {
-		items, resp, err := listFn(ctx, opts.toGitHubListOptions())
+		items, resp, err := listFn(ctx, &opts.ListOptions)
 		if err != nil {
 			var ghErr *github.ErrorResponse
 			if !errors.As(err, &ghErr) {
