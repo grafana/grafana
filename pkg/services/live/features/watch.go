@@ -2,7 +2,6 @@ package features
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -185,15 +185,23 @@ func (b *watcher) run(ctx context.Context) {
 				return
 			}
 
-			jj, err := json.Marshal(event)
-			if err != nil {
-				logger.Error("unable to marshal event", "channel", b.channel, "err", err)
-				b.watch.Stop()
-				b.done = true // will force reconnect from the frontend
-				continue
-			}
+			cfg := jsoniter.ConfigCompatibleWithStandardLibrary
+			stream := cfg.BorrowStream(nil)
+			defer cfg.ReturnStream(stream)
 
-			err = b.publisher(b.orgId, b.channel, jj)
+			stream.WriteObjectStart()
+			stream.WriteObjectField("type")
+			stream.WriteString(string(event.Type))
+			stream.WriteMore()
+			stream.WriteObjectField("object")
+			stream.WriteVal(event.Object)
+			stream.WriteObjectEnd()
+
+			buf := stream.Buffer()
+			data := make([]byte, len(buf))
+			copy(data, buf)
+
+			err := b.publisher(b.orgId, b.channel, data)
 			if err != nil {
 				logger.Error("publish error", "channel", b.channel, "err", err)
 				b.watch.Stop()

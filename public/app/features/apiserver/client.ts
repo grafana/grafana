@@ -49,7 +49,10 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
         })
         .pipe(
           filter((event) => isLiveChannelMessageEvent(event)),
-          map((event) => event.message)
+          map((event) => {
+            console.log('WATCH (websocket)', event.message);
+            return event.message;
+          })
         );
     }
 
@@ -78,7 +81,9 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
         filter((line) => line.length > 0),
         map((line) => {
           try {
-            return JSON.parse(line);
+            const v = JSON.parse(line);
+            console.log('WATCH (long polling)', v);
+            return v;
           } catch (e) {
             console.warn('Invalid JSON in watch stream:', e, line);
             return null;
