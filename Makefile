@@ -316,7 +316,7 @@ test-go-integration-spanner: ## Run integration tests for Spanner backend with f
 	@if [ "${WIRE_TAGS}" != "enterprise" ]; then echo "Spanner integration test require enterprise setup"; exit 1; fi
 	@echo "test backend integration spanner tests"
 	GRAFANA_TEST_DB=spanner SPANNER_DB=emulator \
-	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -v -run "^TestIntegration" -covermode=atomic -timeout=120m $(GO_INTEGRATION_TESTS)
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -v -run "^TestIntegration" -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-js
 test-js: ## Run tests for frontend.
