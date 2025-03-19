@@ -48,6 +48,7 @@ export interface DashboardQueryResult {
   // debugging fields
   score: number;
   explain: {};
+  managedBy?: ManagerKind;
 
   // enterprise sends extra properties through for sorting (views, errors, etc)
   [key: string]: unknown;
