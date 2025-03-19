@@ -370,6 +370,30 @@ export const LogsPanel = ({
     }
   }, [options.displayedFields]);
 
+  // Respect the scroll position when refreshing the panel
+  useEffect(() => {
+    function handleScroll() {
+      if (!scrollElement) {
+        return;
+      }
+      // Signal to keep the user scroll position
+      keepScrollPositionRef.current = true;
+      const atTheBottom = scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight === 0;
+      // Except when the user resets the scroll to the original position depending on the sort direction
+      if (scrollElement.scrollTop === 0 && !isAscending) {
+        keepScrollPositionRef.current = false;
+      } else if (atTheBottom && isAscending) {
+        keepScrollPositionRef.current = false;
+      }
+    }
+    scrollElement?.addEventListener('scroll', handleScroll);
+    scrollElement?.addEventListener('wheel', handleScroll);
+    return () => {
+      scrollElement?.removeEventListener('scroll', handleScroll);
+      scrollElement?.removeEventListener('wheel', handleScroll);
+    };
+  }, [isAscending, scrollElement]);
+
   const loadMoreLogs = useCallback(
     async (scrollRange: AbsoluteTimeRange) => {
       if (!data.request || !config.featureToggles.logsInfiniteScrolling || loadingRef.current) {
