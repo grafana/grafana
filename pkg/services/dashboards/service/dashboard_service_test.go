@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -2165,9 +2166,15 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 	query := &dashboards.FindPersistedDashboardsQuery{
 		OrgId: 1,
+		Sort:  sort.SortAlphaAsc,
 	}
 	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+		return len(req.SortBy) == 1 &&
+			// should be converted to "title" due to ParseSortName
+			req.SortBy[0].Field == "title" &&
+			!req.SortBy[0].Desc
+	})).Return(&resource.ResourceSearchResponse{
 		Results: &resource.ResourceTable{
 			Columns: []*resource.ResourceTableColumnDefinition{
 				{
