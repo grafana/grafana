@@ -1,4 +1,5 @@
 import { ProxyTarget } from '@locker/near-membrane-shared';
+import DOMPurify from 'dompurify';
 import { cloneDeep, isFunction } from 'lodash';
 
 import { config } from '@grafana/runtime';
@@ -203,7 +204,8 @@ function distortInnerHTML(distortions: DistortionMap) {
   function getInnerHTMLDistortion(originalMethod: unknown, meta: SandboxPluginMeta) {
     const pluginId = meta.id;
     return function innerHTMLDistortion(this: HTMLElement, ...args: string[]) {
-      for (const arg of args) {
+      for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
         // NOTE: DOMPurify anti-tamper mechanism requires us to clone the string
         // calling any method whatsoever on a string will cause the string to be tampered
         // and DOMPurify will return empty strings
@@ -222,6 +224,16 @@ function distortInnerHTML(distortions: DistortionMap) {
             }
             throw new Error('<' + forbiddenElement + '> is not allowed in sandboxed plugins');
           }
+        }
+        // prevent some dom operations that use direct callbacks
+        if (lowerCase.match(/onerror|onload|onsuccess|onbeforeunload/)) {
+          logWarning(`Plugin ${pluginId} tried to set forbidden attribute in innerHTML`, {
+            pluginId,
+            attrOrMethod: 'innerHTML',
+            param: arg,
+            entity: 'HTMLElement',
+          });
+          args[i] = DOMPurify.sanitize(args[i]);
         }
       }
 
