@@ -98,8 +98,10 @@ func GetPreferencesFor(ctx context.Context,
 		if preference.JSONData.Language != "" {
 			dto.Language = &preference.JSONData.Language
 		}
-		if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) && preference.JSONData.Locale != "" {
-			dto.Locale = &preference.JSONData.Locale
+		if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) {
+			if preference.JSONData.Locale != "" {
+				dto.Locale = &preference.JSONData.Locale
+			}
 		}
 
 		if preference.JSONData.Navbar.BookmarkUrls != nil {
