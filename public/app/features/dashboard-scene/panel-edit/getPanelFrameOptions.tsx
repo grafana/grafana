@@ -84,8 +84,8 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
       )
     );
 
-  if (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions) {
-    descriptor.addCategory(layoutElement.getOptions());
+  if (isDashboardLayoutItem(layoutElement)) {
+    layoutElement.getOptions?.().forEach(descriptor.addCategory);
   }
 
   return descriptor;

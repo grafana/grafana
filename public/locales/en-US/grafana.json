@@ -1331,6 +1331,15 @@
     },
     "responsive-layout": {
       "description": "Panels resize to fit and form uniform grids",
+      "item-options": {
+        "repeat": {
+          "variable": {
+            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
+            "title": "Repeat by variable"
+          }
+        },
+        "title": "Repeat options"
+      },
       "name": "Auto grid",
       "options": {
         "columns": "Columns",

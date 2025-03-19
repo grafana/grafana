@@ -14,7 +14,7 @@ export interface DashboardLayoutItem extends SceneObject {
   /**
    * Return layout item options (like repeat, repeat direction, etc. for the default DashboardGridItem)
    */
-  getOptions?(): OptionsPaneCategoryDescriptor;
+  getOptions?(): OptionsPaneCategoryDescriptor[];
 
   /**
    * When going into panel edit

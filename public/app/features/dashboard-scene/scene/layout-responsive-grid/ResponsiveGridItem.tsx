@@ -60,7 +60,7 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     };
   }
 
-  public getOptions(): OptionsPaneCategoryDescriptor {
+  public getOptions(): OptionsPaneCategoryDescriptor[] {
     return getOptions(this);
   }
 
