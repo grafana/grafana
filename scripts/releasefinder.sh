@@ -47,8 +47,8 @@ fi
 echo "Fetching latest remote information..."
 git fetch --all --tags --prune 2>/dev/null
 
-echo "Finding release branches containing the commit"
-echo "Finding tags associated with the commit"
+echo "Finding release branches containing the commit..."
+echo "Finding tags associated with the commit..."
 echo
 
 echo "Results for commit: $COMMIT_HASH"
