@@ -624,6 +624,8 @@
       "import-to-gma-banner": {
         "title": "You can migrate your Data source-managed alert rules to Grafana-managed rules by clicking the \"Export to Grafana-managed rules\" button."
       },
+      "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
+      "no-rules": "No rules found.",
       "section": {
         "dataSourceManaged": {
           "title": "Data source-managed"
@@ -635,7 +637,7 @@
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
         },
-        "loading-rules": "Loading rules from"
+        "loading-rules": "Loading rules from {{numberOfSources}} {{sources}}"
       }
     },
     "manage-permissions": {
