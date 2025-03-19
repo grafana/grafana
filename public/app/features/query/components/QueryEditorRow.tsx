@@ -8,6 +8,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
+  PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   EventBusExtended,
   HistoryItem,
   LoadingState,
@@ -15,11 +16,12 @@ import {
   QueryResultMetaNotice,
   TimeRange,
   getDataSourceRef,
+  PluginExtensionPoints,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -302,7 +304,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const colour = type === 'warning' ? 'orange' : 'blue';
     const iconName = type === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
 
-    const serializedWarnings = uniqueWarnings.map((warning) => warning.text).join('\n');
+    const listItems = uniqueWarnings.map((warning) => warning.text);
+    const serializedWarnings = <List items={listItems} renderItem={(item) => <>{item}</>} />;
 
     return (
       <Badge
@@ -345,6 +348,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     extraActions.push(this.renderWarnings('info'));
     extraActions.push(this.renderWarnings('warning'));
+    extraActions.push(<AdaptiveTelemetryQueryActions key="adaptive-telemetry-actions" query={query} />);
 
     return extraActions;
   };
@@ -509,4 +513,28 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
   return renderSaveQueryButton(props.query);
+}
+
+function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
+  try {
+    const { isLoading, components } = usePluginComponents<PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context>({
+      extensionPointId: PluginExtensionPoints.QueryEditorRowAdaptiveTelemetryV1,
+    });
+
+    if (isLoading || !components.length) {
+      return null;
+    }
+
+    return renderLimitedComponents({
+      props: { query, contextHints: ['queryeditorrow', 'header'] },
+      components,
+      limit: 1,
+      pluginId: /grafana-adaptive.*/,
+    });
+  } catch (error) {
+    // If `usePluginComponents` isn't properly resolved, tests will fail with 'setPluginComponentsHook(options) can only be used after the Grafana instance has started.'
+    // This will be resolved in https://github.com/grafana/grafana/pull/92983
+    // In this case, Return `null` like when there are no extensions.
+    return null;
+  }
 }

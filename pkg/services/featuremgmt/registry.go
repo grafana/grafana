@@ -223,9 +223,10 @@ var (
 		{
 			Name:         "prometheusRunQueriesInParallel",
 			Description:  "Enables running Prometheus queries in parallel",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false,
 			Owner:        grafanaOSSBigTent,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "lokiLogsDataplane",
