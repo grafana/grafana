@@ -1,3 +1,6 @@
+/* Spreading unbound arrays can be very slow or even crash the browser if used for arguments */
+/* eslint no-restricted-syntax: ["error", "SpreadElement"] */
+
 import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
@@ -14,7 +17,7 @@ type AsyncOptions<T extends string | number> =
 const asyncNoop = () => Promise.resolve([]);
 
 /**
- * Abstracts away sync/async options for MultiCombobox (and later Combobox).
+ * Abstracts away sync/async options for combobox components.
  * It also filters options based on the user's input.
  *
  * Returns:
@@ -66,14 +69,11 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
         //we just focus on the value to check if the option already exists
         const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
         if (!customValueExists) {
-          currentOptions = [
-            {
-              label: userTypedSearch,
-              value: userTypedSearch as T,
-              description: t('combobox.custom-value.description', 'Use custom value'),
-            },
-            ...currentOptions,
-          ];
+          currentOptions.unshift({
+            label: userTypedSearch,
+            value: userTypedSearch as T,
+            description: t('combobox.custom-value.description', 'Use custom value'),
+          });
         }
       }
       return currentOptions;
@@ -131,21 +131,21 @@ function sortByGroup<T extends string | number>(options: Array<ComboboxOption<T>
   let currentIndex = 0;
 
   // Reorganize options to have groups first, then undefined group
-  const reorganizeOptions = [];
+  let reorganizeOptions: Array<ComboboxOption<T>> = [];
   for (const [group, groupOptions] of groupedOptions) {
     if (!group) {
       continue;
     }
 
     groupStartIndices.set(group, currentIndex);
-    reorganizeOptions.push(...groupOptions);
+    reorganizeOptions = reorganizeOptions.concat(groupOptions);
     currentIndex += groupOptions.length;
   }
 
   const undefinedGroupOptions = groupedOptions.get(undefined);
   if (undefinedGroupOptions) {
     groupStartIndices.set('undefined', currentIndex);
-    reorganizeOptions.push(...undefinedGroupOptions);
+    reorganizeOptions = reorganizeOptions.concat(undefinedGroupOptions);
   }
 
   return {
