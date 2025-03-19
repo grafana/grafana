@@ -3822,8 +3822,8 @@
     {
       "metadata": {
         "name": "secretsManagementAppPlatform",
-        "resourceVersion": "1734017153108",
-        "creationTimestamp": "2024-12-12T15:25:53Z"
+        "resourceVersion": "1742370596238",
+        "creationTimestamp": "2025-03-19T07:49:56Z"
       },
       "spec": {
         "description": "Enable the secrets management API and services under app platform",
