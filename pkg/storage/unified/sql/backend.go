@@ -88,6 +88,7 @@ type pruningKey struct {
 	namespace string
 	group     string
 	resource  string
+	name      string
 }
 
 // Small abstraction to allow for different pruner implementations.
@@ -215,6 +216,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 						Namespace: key.namespace,
 						Group:     key.group,
 						Resource:  key.resource,
+						Name:      key.name,
 					},
 				})
 				if err != nil {
@@ -228,6 +230,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 					"namespace", key.namespace,
 					"group", key.group,
 					"resource", key.resource,
+					"name", key.name,
 					"rows", rows)
 				return nil
 			})
@@ -237,6 +240,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 				"namespace", key.namespace,
 				"group", key.group,
 				"resource", key.resource,
+				"name", key.name,
 				"error", err)
 		},
 		Reg: b.reg,
