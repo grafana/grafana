@@ -351,7 +351,7 @@ type Cfg struct {
 	ExternalSnapshotName string
 	ExternalEnabled      bool
 
-	// Only used in https://snapshots.raintank.io/
+	// Only used in external snapshot instances
 	SnapshotPublicMode bool
 
 	ErrTemplateName string

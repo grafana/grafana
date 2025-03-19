@@ -157,11 +157,10 @@ To manage your reports, navigate to **Dashboards > Reporting > Reports**.
 
 A dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
 
-You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
+You can publish snapshots to your local instance or to an external instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
 {{< admonition type=note >}}
-The snapshots.raintank.io option is disabled by default in Grafana Cloud. You can update [your config file](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_enabled) to enable this functionality.
-{{< /admonition >}}
+Publishing to the external instance snapshots.raintank.io is disabled by default. Snapshots raintank instance will be turned off in Grafana 13. You can update [your config file](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_enabled) to enable this functionality.{{< /admonition >}}
 
 To see the other snapshots shared from your organization, navigate to **Dashboards > Snapshots** in the main menu.
 
@@ -176,9 +175,9 @@ To share your dashboard with anyone as a snapshot, follow these steps:
    - **1 Day**
    - **1 Week**
    - **Never**
-1. Click **Publish snapshot** or **Publish to snapshots.raintank.io**.
+1. Click **Publish snapshot**.
 
-   Grafana generates the link of the snapshot. Note that you can't publish dashboard snapshots containing custom panels to snapshot.raintank.io.
+   Grafana generates the link of the snapshot.
 
 1. Click **Copy link**, and share it either within your organization or publicly on the web.
 1. Click the **X** at the top-right corner to close the share drawer.
@@ -330,10 +329,9 @@ The result is an interactive Grafana visualization embedded in an iframe.
 
 A panel snapshot shares an interactive panel publicly while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
 
-You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
-
+You can publish snapshots to your local instance or to an external instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 {{< admonition type=note >}}
-The snapshots.raintank.io option is disabled by default in Grafana Cloud. You can update [your config file](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_enabled) to enable this functionality.
+Publishing to the external instance snapshots.raintank.io is disabled by default. Snapshots raintank instance will be turned off in Grafana 13. You can update [your config file](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_enabled) to enable this functionality.
 {{< /admonition >}}
 
 To see the other snapshots shared from your organization, navigate to **Dashboards > Snapshots** in the main menu.
@@ -348,9 +346,9 @@ To share your panel with anyone as a snapshot, follow these steps:
    - **1 Day**
    - **1 Week**
    - **Never**
-1. Click **Publish snapshot** or **Publish to snapshots.raintank.io**.
+1. Click **Publish snapshot**.
 
-   Grafana generates the link of the snapshot. Note that you can't publish snapshots that include custom panels to snapshot.raintank.io.
+   Grafana generates the link of the snapshot.
 
 1. Click **Copy link**, and share it either within your organization or publicly on the web.
 1. Click the **X** at the top-right corner to close the share drawer.
