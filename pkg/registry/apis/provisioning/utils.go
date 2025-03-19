@@ -22,12 +22,14 @@ const (
 
 // readBody reads the request body and limits the size
 func readBody(r *http.Request, maxSize int64) ([]byte, error) {
-	body, err := io.ReadAll(io.LimitReader(r.Body, maxSize+1))
+	limitedBody := http.MaxBytesReader(nil, r.Body, maxSize)
+	body, err := io.ReadAll(limitedBody)
 	if err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			return nil, fmt.Errorf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize)
+		}
 		return nil, fmt.Errorf("error reading request body: %w", err)
-	}
-	if int64(len(body)) > maxSize {
-		return nil, fmt.Errorf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize)
 	}
 	return body, nil
 }
