@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Alert, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -79,10 +79,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
             ) : (
               <div />
             )}
-            <Stack gap={1}>
-              <CreateRecordingRuleButton />
-              {canMigrateToGMA && <MigrateToGMAButton />}
-            </Stack>
+            <CreateRecordingRuleButton />
           </div>
         </div>
       </Stack>
@@ -176,15 +173,12 @@ export function CreateRecordingRuleButton() {
 }
 
 export function MigrateToGMAButton() {
-  const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
-  return (
-    <LinkButton variant="secondary" href={importUrl} icon="arrow-up">
-      <Trans i18nKey="alerting.rule-list.export-to-gma">Export to Grafana-managed rules</Trans>
-    </LinkButton>
-  );
+  return <Trans i18nKey="alerting.rule-list.export-to-gma">Export to Grafana-managed rules</Trans>;
 }
 
 export function MigrationToGMABanner() {
+  const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
+
   return (
     <Alert
       title={t(
@@ -192,6 +186,10 @@ export function MigrationToGMABanner() {
         'You can migrate your Data source-managed alert rules to Grafana-managed rules by clicking the "Export to Grafana-managed rules" button.'
       )}
       severity="info"
+      onRemove={() => {
+        locationService.push(importUrl);
+      }}
+      buttonContent={<MigrateToGMAButton />}
     />
   );
 }
