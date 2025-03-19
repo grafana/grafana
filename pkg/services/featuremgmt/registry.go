@@ -952,6 +952,12 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "secretsManagementAppPlatform",
+			Description: "Enable the secrets management API and services under app platform",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:         "alertingSaveStatePeriodic",
 			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
 			Stage:        FeatureStagePrivatePreview,
