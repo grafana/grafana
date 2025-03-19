@@ -23,7 +23,8 @@ const (
 	// LabelJobClaim includes the timestamp when the job was claimed.
 	// The label must be formatted as milliseconds from Epoch. This grants a natural ordering, allowing for less-than operators in label selectors.
 	// The natural ordering would be broken if the number rolls over into 1 more digit. This won't happen before Nov, 2286.
-	LabelJobClaim        = "provisioning.grafana.app/claim"
+	LabelJobClaim = "provisioning.grafana.app/claim"
+	// LabelJobOriginalName contains the Job's name as a label. This allows for label selectors to find the archived version of a job.
 	LabelJobOriginalName = "provisioning.grafana.app/original-name"
 )
 
