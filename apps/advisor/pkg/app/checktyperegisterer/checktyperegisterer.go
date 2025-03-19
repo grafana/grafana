@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -91,6 +92,20 @@ func (r *Runner) Run(ctx context.Context) error {
 				"identity.GetIDToken()", identity.GetIDToken(),
 			)
 		}
+		info, ok := types.AuthInfoFrom(ctx)
+		if !ok {
+			r.log.Error("Error getting auth info", "error", err)
+		} else {
+			r.log.Info(
+				"Auth info",
+				"info", info,
+				"info.GetUID()", info.GetUID(),
+				"info.GetIdentityType()", info.GetIdentityType(),
+				"info.GetSubject()", info.GetSubject(),
+				"info.GetIDToken()", info.GetIDToken(),
+			)
+		}
+
 		_, err = r.client.Create(ctx, id, obj, resource.CreateOptions{})
 		if err != nil {
 			r.log.Info("Error creating check type, retrying", "check_type", id, "error", err)
