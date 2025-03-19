@@ -129,6 +129,15 @@ func TestMode1_Get(t *testing.T) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
 				},
 			},
+			{
+				name: "should not block for unified storage",
+				setupLegacyFn: func(m *mock.Mock, name string) {
+					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, name string) {
+					m.On("Get", mock.Anything, name, mock.Anything).WaitUntil(time.After(time.Hour)).Return(anotherObj, nil)
+				},
+			},
 		}
 
 	name := "foo"
