@@ -34,9 +34,9 @@ interface ScopesContextProviderProps {
 export function defaultScopesServices() {
   const client = new ScopesApiClient();
   const dashboardService = new ScopesDashboardsService(client);
-  const selectorService = new ScopesSelectorService(client, dashboardService, locationService);
+  const selectorService = new ScopesSelectorService(client, dashboardService);
   return {
-    scopesService: new ScopesService(selectorService, dashboardService),
+    scopesService: new ScopesService(selectorService, dashboardService, locationService),
     scopesSelectorService: selectorService,
     scopesDashboardsService: dashboardService,
     client,
@@ -50,7 +50,6 @@ export const ScopesContextProvider = ({ children, services }: ScopesContextProvi
 
   useEffect(() => {
     return () => {
-      memoizedServices.scopesSelectorService.cleanUp();
       memoizedServices.scopesService.cleanUp();
     };
   }, [memoizedServices]);

@@ -1,7 +1,4 @@
 import { isEqual, last } from 'lodash';
-import { Subscription } from 'rxjs';
-
-import { LocationService } from '@grafana/runtime';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -26,18 +23,14 @@ export interface ScopesSelectorServiceState {
 }
 
 export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServiceState> {
-  private subscriptions: Subscription[] = [];
-
   /**
    * When creating the service, make sure you call cleanUp() when you are done with it to avoid memory leaks.
    * @param apiClient
    * @param dashboardsService
-   * @param locationService
    */
   constructor(
     private apiClient: ScopesApiClient,
-    private dashboardsService: ScopesDashboardsService,
-    private locationService: LocationService
+    private dashboardsService: ScopesDashboardsService
   ) {
     super({
       loading: false,
@@ -59,29 +52,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       selectedScopes: [],
       treeScopes: [],
     });
-
-    this.subscriptions.push(
-      locationService.getLocationObservable().subscribe((location) => {
-        const queryParams = new URLSearchParams(location.search);
-        this.changeScopes(queryParams.getAll('scopes'));
-      })
-    );
-
-    this.subscriptions.push(
-      this.subscribeToState((state, prev) => {
-        const oldScopeNames = prev.selectedScopes.map((scope) => scope.scope.metadata.name);
-        const newScopeNames = state.selectedScopes.map((scope) => scope.scope.metadata.name);
-        if (!isEqual(oldScopeNames, newScopeNames)) {
-          const scopeNames = newScopeNames.join(',');
-          this.locationService.partial(
-            {
-              scopes: scopeNames,
-            },
-            true
-          );
-        }
-      })
-    );
   }
 
   /**
@@ -259,15 +229,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ opened: false });
     this.setNewScopes();
   };
-
-  /**
-   * Cleanup subscriptions so this can be garbage collected.
-   */
-  public cleanUp() {
-    for (const sub of this.subscriptions) {
-      sub.unsubscribe();
-    }
-  }
 }
 
 /**
