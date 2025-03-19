@@ -70,6 +70,11 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   initialSaveModel?: Dashboard;
   metadata?: DashboardMeta;
   protected elementPanelMap = new Map<string, number>();
+  protected defaultDsReferencesMap = {
+    panels: new Map<string, Set<string>>(), // refIds as keys
+    variables: new Set<string>(), // variable names as keys
+    annotations: new Set<string>(), // annotation names as keys
+  };
 
   initializeMapping(saveModel: Dashboard | undefined) {
     this.elementPanelMap.clear();
@@ -87,6 +92,15 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
 
   getElementPanelMapping() {
     return this.elementPanelMap;
+  }
+
+  initializeDSReferencesMapping(saveModel: Dashboard | undefined) {
+    // To be implemented in a different PR
+    return {};
+  }
+
+  getDSReferencesMapping() {
+    return this.defaultDsReferencesMap;
   }
 
   getPanelIdForElement(elementId: string) {
