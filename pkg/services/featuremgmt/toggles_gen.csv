@@ -186,7 +186,7 @@ unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchSprinkles,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchPermissionFiltering,experimental,@grafana/search-and-storage,false,false,false
 managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
-pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false
+pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 prometheusUsesCombobox,experimental,@grafana/oss-big-tent,false,false,false

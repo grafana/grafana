@@ -826,6 +826,7 @@ export interface FeatureToggles {
   managedDualWriter?: boolean;
   /**
   * Enables SRI checks for plugin assets
+  * @default false
   */
   pluginsSriChecks?: boolean;
   /**
