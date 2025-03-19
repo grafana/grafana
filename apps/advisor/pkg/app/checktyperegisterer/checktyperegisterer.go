@@ -11,6 +11,7 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,9 +78,22 @@ func (r *Runner) Run(ctx context.Context) error {
 			},
 		}
 		id := obj.GetStaticMetadata().Identifier()
-		_, err := r.client.Create(ctx, id, obj, resource.CreateOptions{})
+		identity, err := identity.GetRequester(ctx)
 		if err != nil {
-			r.log.Debug("Error creating check type, retrying", "check_type", id, "error", err)
+			r.log.Error("Error getting identity", "error", err)
+		} else {
+			r.log.Info(
+				"Identity",
+				"identity", identity,
+				"identity.GetIdentityType()", identity.GetIdentityType(),
+				"identity.GetUID()", identity.GetUID(),
+				"identity.GetSubject()", identity.GetSubject(),
+				"identity.GetIDToken()", identity.GetIDToken(),
+			)
+		}
+		_, err = r.client.Create(ctx, id, obj, resource.CreateOptions{})
+		if err != nil {
+			r.log.Info("Error creating check type, retrying", "check_type", id, "error", err)
 			if errors.IsUnauthorized(err) {
 				// Observed that this request is not authorized when the cluster is not ready
 				// Retry after a while
@@ -95,11 +109,11 @@ func (r *Runner) Run(ctx context.Context) error {
 				r.log.Error("Error creating check type after retry", "check_type", id, "error", err)
 				return err
 			} else {
-				r.log.Debug("Check type created after retry", "check_type", id)
+				r.log.Info("Check type created after retry", "check_type", id)
 				continue
 			}
 		}
-		r.log.Debug("Check type created without errors", "check_type", id)
+		r.log.Info("Check type created without errors", "check_type", id)
 	}
 	return nil
 }
