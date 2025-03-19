@@ -324,9 +324,25 @@
     },
     {
       "metadata": {
+        "name": "alertingMigrationUI",
+        "resourceVersion": "1741968018953",
+        "creationTimestamp": "2025-03-14T16:00:18Z"
+      },
+      "spec": {
+        "description": "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNoDataErrorExecution",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-08-15T14:27:15Z",
+        "deletionTimestamp": "2025-03-13T19:16:25Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -2915,6 +2931,21 @@
     },
     {
       "metadata": {
+        "name": "noBackdropBlur",
+        "resourceVersion": "1741879106163",
+        "creationTimestamp": "2025-03-13T15:18:26Z"
+      },
+      "spec": {
+        "description": "Disables backdrop blur",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "nodeGraphDotLayout",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-31T16:26:12Z"
@@ -3207,15 +3238,15 @@
     {
       "metadata": {
         "name": "pluginsDetailsRightPanel",
-        "resourceVersion": "1720788722220",
+        "resourceVersion": "1741965023728",
         "creationTimestamp": "2024-08-13T09:55:30Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-12 12:52:02.22099 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-14 15:10:23.728257 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables right panel for the plugins details page",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
       }
@@ -3414,16 +3445,17 @@
     {
       "metadata": {
         "name": "prometheusRunQueriesInParallel",
-        "resourceVersion": "1735845919509",
+        "resourceVersion": "1741880974067",
         "creationTimestamp": "2024-08-12T12:31:39Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-13 15:49:34.067699 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables running Prometheus queries in parallel",
-        "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent"
+        "stage": "GA",
+        "codeowner": "@grafana/oss-big-tent",
+        "expression": "true"
       }
     },
     {
@@ -3788,6 +3820,18 @@
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "secretsManagementAppPlatform",
+        "resourceVersion": "1742370596238",
+        "creationTimestamp": "2025-03-19T07:49:56Z"
+      },
+      "spec": {
+        "description": "Enable the secrets management API and services under app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad"
       }
     },
     {
@@ -4165,6 +4209,20 @@
         "description": "Enables to save big objects in blob storage",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageHistoryPruner",
+        "resourceVersion": "1742163088045",
+        "creationTimestamp": "2025-03-16T22:11:28Z"
+      },
+      "spec": {
+        "description": "Enables the unified storage history pruner",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
