@@ -14,6 +14,7 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/infra/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 )
@@ -30,6 +31,7 @@ type Runner struct {
 	evaluationInterval time.Duration
 	maxHistory         int
 	namespace          string
+	log                log.Logger
 }
 
 // NewRunner creates a new Runner.
@@ -66,6 +68,7 @@ func New(cfg app.Config) (app.Runnable, error) {
 		evaluationInterval: evalInterval,
 		maxHistory:         maxHistory,
 		namespace:          namespace,
+		log:                log.New("advisor.checkscheduler"),
 	}, nil
 }
 
@@ -122,8 +125,16 @@ func (r *Runner) Run(ctx context.Context) error {
 func (r *Runner) checkLastCreated(ctx context.Context) (time.Time, error) {
 	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
 	if err != nil {
-		return time.Time{}, err
+		// Observed that this request is not authorized when the cluster is not ready
+		// Retry after a while
+		r.log.Error("Check last created not authorized, retrying", "error", err)
+		time.Sleep(5 * time.Second)
+		list, err = r.client.List(ctx, r.namespace, resource.ListOptions{})
+		if err != nil {
+			return time.Time{}, err
+		}
 	}
+	r.log.Debug("Check last created", "items", len(list.GetItems()))
 	lastCreated := time.Time{}
 	for _, item := range list.GetItems() {
 		itemCreated := item.GetCreationTimestamp().Time

@@ -3,6 +3,7 @@ package checktyperegisterer
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -10,6 +11,7 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -21,6 +23,7 @@ type Runner struct {
 	checkRegistry checkregistry.CheckService
 	client        resource.Client
 	namespace     string
+	log           log.Logger
 }
 
 // NewRunner creates a new Runner.
@@ -47,6 +50,7 @@ func New(cfg app.Config) (app.Runnable, error) {
 		checkRegistry: checkRegistry,
 		client:        client,
 		namespace:     namespace,
+		log:           log.New("advisor.checktyperegisterer"),
 	}, nil
 }
 
@@ -75,6 +79,17 @@ func (r *Runner) Run(ctx context.Context) error {
 		id := obj.GetStaticMetadata().Identifier()
 		_, err := r.client.Create(ctx, id, obj, resource.CreateOptions{})
 		if err != nil {
+			if errors.IsUnauthorized(err) {
+				// Observed that this request is not authorized when the cluster is not ready
+				// Retry after a while
+				r.log.Info("Check type not authorized, retrying", "check_type", id)
+				time.Sleep(5 * time.Second)
+				_, err = r.client.Create(ctx, id, obj, resource.CreateOptions{})
+				if err != nil {
+					return err
+				}
+				continue
+			}
 			if errors.IsAlreadyExists(err) {
 				// Already exists, update
 				_, err = r.client.Update(ctx, id, obj, resource.UpdateOptions{})
@@ -86,6 +101,7 @@ func (r *Runner) Run(ctx context.Context) error {
 			}
 			return err
 		}
+		r.log.Debug("Check type created", "check_type", id)
 	}
 	return nil
 }
