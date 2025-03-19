@@ -160,7 +160,7 @@ A dashboard snapshot publicly shares a dashboard while removing sensitive data s
 You can publish snapshots to your local instance or to an external instance and anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
 {{< admonition type=note >}}
-Publishing to the external instance snapshots.raintank.io is disabled by default. The snapshots Raintank instance will be turned off in Grafana 13. You can update [your `config` file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#external_enabled) to enable this functionality.
+Publishing to the external instance snapshots.raintank.io is disabled by default. The snapshots `Raintank` instance will be turned off in Grafana 13. You can update [your `config` file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#external_enabled) to enable this functionality.
 {{< /admonition >}}
 
 To see the other snapshots shared from your organization, navigate to **Dashboards > Snapshots** in the main menu.
@@ -332,7 +332,7 @@ A panel snapshot shares an interactive panel publicly while removing sensitive d
 
 You can publish snapshots to your local instance or to an external instance and anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 {{< admonition type=note >}}
-Publishing to the external instance snapshots.raintank.io is disabled by default. The snapshots Raintank instance will be turned off in Grafana 13. You can update [your `config` file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#external_enabled) to enable this functionality.
+Publishing to the external instance snapshots.raintank.io is disabled by default. The snapshots `Raintank` instance will be turned off in Grafana 13. You can update [your `config` file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#external_enabled) to enable this functionality.
 {{< /admonition >}}
 
 To see the other snapshots shared from your organization, navigate to **Dashboards > Snapshots** in the main menu.
