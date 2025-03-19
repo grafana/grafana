@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -32,7 +33,7 @@ func (b *APIBuilder) collectProvisioningStats(ctx context.Context) (map[string]a
 		counts[v.Kind] = counts[v.Kind] + int(v.Count)
 	}
 	for k, v := range counts {
-		m["stats.managed.resources."+k+".count"] = v
+		m[fmt.Sprintf("stats.managed_by.%s.count", k)] = v
 	}
 
 	// Inspect all configs
@@ -45,9 +46,9 @@ func (b *APIBuilder) collectProvisioningStats(ctx context.Context) (map[string]a
 		counts[string(repo.Spec.Type)] = counts[string(repo.Spec.Type)] + 1
 	}
 
-	// Count how many items of each type
+	// Count how many items of each repository type
 	for k, v := range counts {
-		m["stats.provisioning.repo."+k+".count"] = v
+		m[fmt.Sprintf("stats.repository.%s.count", k)] = v
 	}
 
 	return m, nil

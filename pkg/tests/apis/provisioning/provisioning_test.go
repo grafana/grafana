@@ -105,13 +105,13 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 
 		stats := map[string]any{}
 		for k, v := range report.Result.Metrics {
-			if strings.HasPrefix(k, "stats.provisioning.") {
+			if strings.HasPrefix(k, "stats.repository.") {
 				stats[k] = v
 			}
 		}
 		require.Equal(t, map[string]any{
-			"stats.provisioning.repo.github.count": 1.0,
-			"stats.provisioning.repo.local.count":  1.0,
+			"stats.repository.github.count": 1.0,
+			"stats.repository.local.count":  1.0,
 		}, stats)
 	})
 }
