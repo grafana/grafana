@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/services"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
@@ -37,6 +38,8 @@ type SecureValueRest struct {
 	storage        contracts.SecureValueMetadataStorage
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
+
+	createSecureValueSvc *services.CreateSecureValue // Interface
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
@@ -122,12 +125,7 @@ func (s *SecureValueRest) Create(
 		return nil, err
 	}
 
-	createdSecureValue, err := s.storage.Create(ctx, sv)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create secure value: %w", err)
-	}
-
-	return createdSecureValue, nil
+	return s.createSecureValueSvc.Handle(ctx, sv)
 }
 
 // Update a `securevalue`'s `value`. The second return parameter indicates whether the resource was newly created.
