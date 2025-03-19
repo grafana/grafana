@@ -18,4 +18,10 @@ WHERE 1 = 1
   {{ if (gt .StartRV 0) }}
   AND {{ .Ident "resource_version" }} < {{ .Arg .StartRV }}
   {{ end }}
+  {{ if (gt .MinRV 0) }}
+  AND {{ .Ident "resource_version" }} >= {{ .Arg .MinRV }}
+  {{ end }}
+  {{ if (gt .ExactRV 0) }}
+  AND {{ .Ident "resource_version" }} = {{ .Arg .ExactRV }}
+  {{ end }}
 ORDER BY resource_version DESC
