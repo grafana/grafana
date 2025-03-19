@@ -186,3 +186,22 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		RolesToRemove: rolesToRemove,
 	})
 }
+
+// ClearUserPermissionCacheHook clears a user's permission cache if user Login succeeded. Necessary so that if a user logs in
+// through different SSO providers with different roles assigned in each, they do not get the wrong permissions.
+func (s *RBACSync) ClearUserPermissionCacheHook(ctx context.Context, ident *authn.Identity, r *authn.Request, err error) {
+	ctx, span := s.tracer.Start(ctx, "rbac.sync.ClearUserPermissionCacheHook")
+	defer span.End()
+
+	if err != nil {
+		return
+	}
+
+	ctxLogger := s.log.FromContext(ctx)
+	if !ident.IsIdentityType(claims.TypeUser) {
+		ctxLogger.Debug("Skipping user permission cache clear, not a user", "type", ident.GetIdentityType())
+		return
+	}
+
+	s.ac.ClearUserPermissionCache(ident)
+}
