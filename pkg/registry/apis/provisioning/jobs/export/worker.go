@@ -71,7 +71,8 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("unable to clone target: %w", err)
 		}
 
-		repo = buffered     // send all writes to the buffered repo
+		repo = buffered // send all writes to the buffered repo
+		defer buffered.Remove(ctx)
 		options.Branch = "" // :( the branch is now baked into the repo
 	}
 

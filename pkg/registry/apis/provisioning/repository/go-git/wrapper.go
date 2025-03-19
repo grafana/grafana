@@ -245,6 +245,10 @@ func (g *GoGitRepo) Push(ctx context.Context, progress io.Writer) error {
 	return err
 }
 
+func (g *GoGitRepo) Remove(ctx context.Context) error {
+	return os.RemoveAll(g.dir)
+}
+
 // Config implements repository.Repository.
 func (g *GoGitRepo) Config() *provisioning.Repository {
 	return g.config
