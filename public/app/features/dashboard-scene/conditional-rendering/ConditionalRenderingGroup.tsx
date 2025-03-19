@@ -1,17 +1,12 @@
 import { css } from '@emotion/css';
 import { Fragment, ReactNode, useMemo } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { Divider, Dropdown, Field, Menu, RadioButtonGroup, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Combobox, ComboboxOption, Divider, Field, Stack, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
-import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { ConditionalRenderingData } from './ConditionalRenderingData';
-import { ConditionalRenderingInterval } from './ConditionalRenderingInterval';
-import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 import { ConditionalRenderingConditions } from './shared';
 
 export type GroupConditionValue = ConditionalRenderingConditions[];
@@ -20,10 +15,6 @@ export interface ConditionalRenderingGroupState extends ConditionalRenderingBase
 }
 
 export class ConditionalRenderingGroup extends ConditionalRenderingBase<ConditionalRenderingGroupState> {
-  public get title(): string {
-    return t('dashboard.conditional-rendering.group.label', 'Group');
-  }
-
   public evaluate(): boolean {
     if (this.state.value.length === 0) {
       return true;
@@ -90,86 +81,47 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
   const styles = useStyles2(getStyles);
   const { condition, value } = model.useState();
 
-  const conditionsOptions: Array<SelectableValue<'and' | 'or'>> = useMemo(
+  const conditionsOptions: Array<ComboboxOption<'and' | 'or'>> = useMemo(
     () => [
-      { label: t('dashboard.conditional-rendering.group.condition.meet-all', 'Meet all'), value: 'and' },
-      { label: t('dashboard.conditional-rendering.group.condition.meet-any', 'Meet any'), value: 'or' },
+      { label: t('dashboard.conditional-rendering.group.condition.meet-all', 'All conditions are met'), value: 'and' },
+      { label: t('dashboard.conditional-rendering.group.condition.meet-any', 'Any condition is met'), value: 'or' },
     ],
     []
   );
 
   return (
     <Stack direction="column">
-      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
-      <Field label={t('dashboard.conditional-rendering.group.condition.label', 'Evaluate conditions')}>
-        <RadioButtonGroup
-          fullWidth
-          options={conditionsOptions}
-          value={condition}
-          onChange={(value) => model.changeCondition(value!)}
-        />
-      </Field>
+      {value.length > 1 ? (
+        <>
+          <Field
+            label={t('dashboard.conditional-rendering.group.condition.label', 'Apply if')}
+            className={styles.field}
+          >
+            <Combobox
+              options={conditionsOptions}
+              value={condition}
+              onChange={({ value }) => model.changeCondition(value!)}
+            />
+          </Field>
 
-      <Divider spacing={1} />
+          <Divider spacing={1} />
+        </>
+      ) : null}
 
       {value.map((entry) => (
         <Fragment key={entry!.state.key}>
           {/* @ts-expect-error */}
           <entry.Component model={entry} />
 
-          <div className={styles.entryDivider}>
-            <Divider spacing={1} />
-            <p className={styles.entryDividerText}> {condition}</p>
-            <Divider spacing={1} />
-          </div>
+          <Divider spacing={1} />
         </Fragment>
       ))}
-
-      <div className={styles.addButtonContainer}>
-        <Dropdown
-          overlay={
-            <Menu>
-              <Menu.Item
-                label={t('dashboard.conditional-rendering.group.add.data', 'Data')}
-                onClick={() => model.addItem(new ConditionalRenderingData({ value: true }))}
-              />
-              <Menu.Item
-                label={t('dashboard.conditional-rendering.group.add.interval', 'Interval')}
-                onClick={() => model.addItem(new ConditionalRenderingInterval({ value: '7d' }))}
-              />
-              <Menu.Item
-                label={t('dashboard.conditional-rendering.group.add.variable', 'Variable value')}
-                onClick={() =>
-                  model.addItem(new ConditionalRenderingVariable({ value: { name: '', operator: '=', value: '' } }))
-                }
-              />
-            </Menu>
-          }
-        >
-          <ToolbarButton icon="plus" iconSize="xs" variant="canvas">
-            <Trans i18nKey="dashboard.conditional-rendering.group.add.button">Add condition based on</Trans>
-          </ToolbarButton>
-        </Dropdown>
-      </div>
     </Stack>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  entryDivider: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-  }),
-  entryDividerText: css({
+const getStyles = () => ({
+  field: css({
     margin: 0,
-    padding: theme.spacing(0, 2),
-    textTransform: 'capitalize',
-  }),
-  addButtonContainer: css({
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
   }),
 });

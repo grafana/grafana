@@ -1203,43 +1203,59 @@
       "subtitle": "Alert rules related to this dashboard"
     },
     "conditional-rendering": {
+      "add": {
+        "data": "Data",
+        "interval": "Interval",
+        "label": "Add condition",
+        "variable": "Variable value"
+      },
       "data": {
-        "disable": "Disable",
-        "enable": "Enable",
-        "label": "Data"
+        "text": "Show when has data"
+      },
+      "delete-condition": {
+        "label": "Delete Condition"
       },
       "group": {
-        "add": {
-          "button": "Add condition based on",
-          "data": "Data",
-          "interval": "Interval",
-          "variable": "Variable value"
-        },
         "condition": {
-          "label": "Evaluate conditions",
-          "meet-all": "Meet all",
-          "meet-any": "Meet any"
-        },
-        "label": "Group"
+          "label": "Apply if",
+          "meet-all": "All conditions are met",
+          "meet-any": "Any condition is met"
+        }
       },
       "interval": {
-        "input-label": "Value",
-        "invalid-message": "Invalid interval",
-        "label": "Time range interval"
+        "input-label": "Time range interval",
+        "invalid-message": "Invalid interval"
       },
-      "shared": {
-        "delete-condition": "Delete Condition"
-      },
-      "title": "Conditional rendering options",
+      "title": "Display conditions",
       "variable": {
-        "label": "Variable",
-        "operator": {
-          "equals": "Equals",
-          "not-equal": "Not equal"
+        "card": {
+          "edit": "Edit",
+          "name": "Variable: {{name}}",
+          "value": "Value: {{value}}"
         },
-        "select-operator": "Operator",
-        "select-variable": "Select variable",
-        "value-input": "Value"
+        "editor": {
+          "button": {
+            "add": "Add",
+            "cancel": "Cancel",
+            "discard": "Discard",
+            "save": "Save"
+          },
+          "name": {
+            "label": "Name"
+          },
+          "operator": {
+            "equals": "Equals",
+            "label": "Operator",
+            "not-equal": "Not equal"
+          },
+          "title": {
+            "add": "Add variable condition",
+            "edit": "Edit variable condition"
+          },
+          "value": {
+            "label": "Value"
+          }
+        }
       }
     },
     "default-layout": {
