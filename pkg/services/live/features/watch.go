@@ -189,6 +189,7 @@ func (b *watcher) run(ctx context.Context) {
 			stream := cfg.BorrowStream(nil)
 			defer cfg.ReturnStream(stream)
 
+			// regular json.Marshal() uses upper case
 			stream.WriteObjectStart()
 			stream.WriteObjectField("type")
 			stream.WriteString(string(event.Type))
