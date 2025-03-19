@@ -61,19 +61,6 @@ echo "  Author: $(git log -1 --format="%an <%ae>" "$COMMIT_HASH")"
 echo "  Date: $(git log -1 --format="%ad" --date=iso "$COMMIT_HASH")"
 echo
 
-# Check for backport information
-echo "Backport information:"
-if git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep -q "cherry picked from commit"; then
-    ORIGINAL_COMMIT=$(git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep "cherry picked from commit" | sed 's/.*cherry picked from commit \([a-f0-9]*\).*/\1/')
-    echo "  This is a backport from commit: $ORIGINAL_COMMIT"
-    echo "  Original commit details:"
-    echo "    Author: $(git log -1 --format="%an <%ae>" "$ORIGINAL_COMMIT")"
-    echo "    Date: $(git log -1 --format="%ad" --date=iso "$ORIGINAL_COMMIT")"
-else
-    echo "  Not a backport"
-fi
-echo
-
 # Arrays to store results
 declare -a release_branches=()
 declare -a direct_tags=()
@@ -108,7 +95,7 @@ done
 # Print release branches
 echo "Included in release branches:"
 if [ ${#release_branches[@]} -eq 0 ]; then
-    echo "  None"
+    echo "  Has not been released yet"
 else
     for branch in "${release_branches[@]}"; do
         # Convert branch name to tag format (e.g., release-11.5.0 -> v11.5.0)
@@ -123,28 +110,18 @@ else
 fi
 echo
 
-# Print initial release tag
-echo "Initial release tag (the first release in which this commit was included):"
-if [ ${#direct_tags[@]} -eq 0 ]; then
-    echo "  None"
-else
-    printf "  - %s\n" "${direct_tags[@]}" | sort -V
+# Print all release tags if they exist
+if [ ${#direct_tags[@]} -gt 0 ] || [ ${#included_tags[@]} -gt 0 ]; then
+    echo "Included in these release tags:"
+    printf "  - %s\n" "${direct_tags[@]}" "${included_tags[@]}" | sort -V
+    echo
 fi
-echo
-
-# Print included tags
-echo "Included in these release tags (the subsequent releases that included this commit):"
-if [ ${#included_tags[@]} -eq 0 ]; then
-    echo "  None"
-else
-    printf "  - %s\n" "${included_tags[@]}" | sort -V
-fi
-echo
 
 # Find first release
 if [ ${#direct_tags[@]} -gt 0 ]; then
     first_release=$(printf "%s\n" "${direct_tags[@]}" | sort -V | head -n1)
-    echo "First included in release: $first_release"
+    echo "This code was first released in the following on-prem version: $first_release"
+    echo "Note: This code may have been backported to previous release branches. Please check the original PR for backport information."
 else
-    echo "Not included in any releases"
+    echo "This code has not been released in any on-prem release yet"
 fi 
