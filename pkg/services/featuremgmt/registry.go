@@ -1190,14 +1190,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:              "authZGRPCServer",
-			Description:       "Enables the gRPC server for authorization",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-		},
-		{
 			Name:            "ssoSettingsLDAP",
 			Description:     "Use the new SSO Settings API to configure LDAP",
 			Stage:           FeatureStagePublicPreview,

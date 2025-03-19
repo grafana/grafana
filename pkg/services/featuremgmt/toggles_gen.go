@@ -631,10 +631,6 @@ const (
 	// Enables pinning of nav items
 	FlagPinNavItems = "pinNavItems"
 
-	// FlagAuthZGRPCServer
-	// Enables the gRPC server for authorization
-	FlagAuthZGRPCServer = "authZGRPCServer"
-
 	// FlagSsoSettingsLDAP
 	// Use the new SSO Settings API to configure LDAP
 	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
