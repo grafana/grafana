@@ -77,10 +77,6 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 						Type:        resource.ResourceTableColumnDefinition_INT64,
 						Description: "Deprecated legacy id of the dashboard",
 					},
-					{
-						Name: "", // sort by should be empty if title is what we sorted by
-						Type: resource.ResourceTableColumnDefinition_INT64,
-					},
 				},
 				Rows: []*resource.ResourceTableRow{
 					{
@@ -94,7 +90,6 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 							[]byte("folder1"),
 							tags,
 							[]byte("1"),
-							[]byte(strconv.FormatInt(0, 10)),
 						},
 					},
 					{
@@ -108,7 +103,6 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 							[]byte("folder2"),
 							emptyTags,
 							[]byte("2"),
-							[]byte(strconv.FormatInt(0, 10)),
 						},
 					},
 				},
@@ -501,4 +495,131 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		}
 		require.Equal(t, resp.TotalHits, int64(1))
 	})
+
+	t.Run("Should set empty sort field when sorting by title", func(t *testing.T) {
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			SignedInUser: user,
+			Sort:         sort.SortAlphaAsc,
+			Type:         "dash-db",
+		}).Return([]dashboards.DashboardSearchProjection{
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		}, nil).Once()
+
+		req := &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: dashboardKey,
+			},
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{
+					Field: resource.SEARCH_FIELD_TITLE,
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Len(t, resp.Results.Columns, 4)
+		mockStore.AssertExpectations(t)
+	})
+
+	t.Run("Should set correct sort field when sorting by views", func(t *testing.T) {
+		mockStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", SortMeta: 100},
+		}, nil).Once()
+
+		req := &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: dashboardKey,
+			},
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{
+					Field: resource.SEARCH_FIELD_PREFIX + unisearch.DASHBOARD_VIEWS_TOTAL,
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		require.Len(t, resp.Results.Columns, 5)
+		i := len(resp.Results.Columns) - 1
+		require.Equal(t, "views_total", resp.Results.Columns[i].Name)
+		require.Equal(t, []byte(strconv.FormatInt(100, 10)), resp.Results.Rows[0].Cells[i]) // views should be set to 100
+		mockStore.AssertExpectations(t)
+	})
+}
+
+func TestParseSortName(t *testing.T) {
+	tests := []struct {
+		name      string
+		sortName  string
+		wantField string
+		wantDesc  bool
+		wantErr   bool
+	}{
+		{
+			name:      "empty sort name",
+			sortName:  "",
+			wantField: "",
+			wantDesc:  false,
+			wantErr:   false,
+		},
+		{
+			name:      "viewed-recently with desc suffix",
+			sortName:  "viewed-recently-desc",
+			wantField: unisearch.DASHBOARD_VIEWS_LAST_30_DAYS,
+			wantDesc:  true,
+			wantErr:   false,
+		},
+		{
+			name:      "defaults to desc",
+			sortName:  "viewed",
+			wantField: unisearch.DASHBOARD_VIEWS_TOTAL,
+			wantDesc:  true,
+			wantErr:   false,
+		},
+		{
+			name:      "errors-recentlyy with asc suffix",
+			sortName:  "errors-recently-asc",
+			wantField: unisearch.DASHBOARD_ERRORS_LAST_30_DAYS,
+			wantDesc:  false,
+			wantErr:   false,
+		},
+		{
+			name:      "errors - defaults to desc too",
+			sortName:  "errors",
+			wantField: unisearch.DASHBOARD_ERRORS_TOTAL,
+			wantDesc:  true,
+			wantErr:   false,
+		},
+		{
+			name:      "alpha sort with asc suffix",
+			sortName:  "alpha-asc",
+			wantField: "title",
+			wantDesc:  false,
+			wantErr:   false,
+		},
+		{
+			name:      "invalid sort name",
+			sortName:  "invalid-sort-desc",
+			wantField: "",
+			wantDesc:  false,
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			field, isDesc, err := ParseSortName(tt.sortName)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.wantField, field)
+			require.Equal(t, tt.wantDesc, isDesc)
+		})
+	}
 }
