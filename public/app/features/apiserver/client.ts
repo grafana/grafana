@@ -38,25 +38,6 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
   }
 
   public watch(params?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
-    // For now, watch over live only supports provisioning
-    if (this.gvr.group === 'provisioning.grafana.app') {
-      const query = params?.name ? `=${params.name}` : '';
-      return getGrafanaLiveSrv()
-        .getStream<ResourceEvent<T, S, K>>({
-          scope: LiveChannelScope.Watch,
-          namespace: this.gvr.group,
-          path: `${this.gvr.version}/${this.gvr.resource}${query}/${config.bootData.user.uid}`,
-        })
-        .pipe(
-          filter((event) => isLiveChannelMessageEvent(event)),
-          map((event) => {
-            console.log('WATCH (websocket)', event.message);
-            return event.message;
-          })
-        );
-    }
-
-    const decoder = new TextDecoder();
     const requestParams = {
       watch: true,
       labelSelector: this.parseListOptionsSelector(params?.labelSelector),
@@ -65,6 +46,26 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     if (params?.name) {
       requestParams.fieldSelector = `metadata.name=${name}`;
     }
+
+    // For now, watch over live only supports provisioning
+    if (this.gvr.group === 'provisioning.grafana.app') {
+      let query = '';
+      if (requestParams.fieldSelector?.startsWith('metadata.name=')) {
+        query = requestParams.fieldSelector.substring('metadata.name'.length);
+      }
+      return getGrafanaLiveSrv()
+        .getStream<ResourceEvent<T, S, K>>({
+          scope: LiveChannelScope.Watch,
+          namespace: this.gvr.group,
+          path: `${this.gvr.version}/${this.gvr.resource}${query}/${config.bootData.user.uid}`,
+        })
+        .pipe(
+          filter((event) => isLiveChannelMessageEvent(event)),
+          map((event) => event.message)
+        );
+    }
+
+    const decoder = new TextDecoder();
     return getBackendSrv()
       .chunked({
         url: this.url,
@@ -81,9 +82,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
         filter((line) => line.length > 0),
         map((line) => {
           try {
-            const v = JSON.parse(line);
-            console.log('WATCH (long polling)', v);
-            return v;
+            return JSON.parse(line);
           } catch (e) {
             console.warn('Invalid JSON in watch stream:', e, line);
             return null;
