@@ -49,9 +49,11 @@ export function createOnCacheEntryAdded<
           const existingIndex = draft.items.findIndex((item) => item.metadata?.name === event.object.metadata.name);
 
           if (event.type === 'ADDED') {
-            // Add the new item
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            draft.items.push(event.object as unknown as T);
+            // Only add if it doesn't already exist
+            if (existingIndex === -1) {
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              draft.items.push(event.object as unknown as T);
+            }
           } else if (event.type === 'MODIFIED' && existingIndex !== -1) {
             // Update the existing item if it exists
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
