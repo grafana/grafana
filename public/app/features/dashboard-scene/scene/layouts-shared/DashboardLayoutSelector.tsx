@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { RadioButtonDot, Stack, useStyles2, Text } from '@grafana/ui';
@@ -20,8 +20,18 @@ export interface Props {
 export function DashboardLayoutSelector({ layoutManager }: Props) {
   const isGridLayout = layoutManager.descriptor.isGridLayout;
   const options = layoutRegistry.list().filter((layout) => layout.isGridLayout === isGridLayout);
-
   const styles = useStyles2(getStyles);
+
+  const onChangeLayout = useCallback(
+    (newLayout: LayoutRegistryItem) => {
+      const layoutParent = layoutManager.parent;
+
+      if (layoutParent && isLayoutParent(layoutParent)) {
+        layoutParent.switchLayout(newLayout.createFromLayout(layoutManager));
+      }
+    },
+    [layoutManager]
+  );
 
   return (
     <div role="radiogroup" className={styles.radioGroup}>
@@ -30,11 +40,10 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
           case 'rows-layout':
             return (
               <LayoutRadioButton
-                label={opt.name}
-                id={opt.id}
-                description={opt.description!}
+                item={opt}
                 isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={() => changeLayoutTo(layoutManager, opt)}
+                onSelect={onChangeLayout}
+                key={opt.id}
               >
                 <div className={styles.rowsLayoutViz}>
                   {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
@@ -53,11 +62,10 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
           case 'tabs-layout':
             return (
               <LayoutRadioButton
-                label={opt.name}
-                id={opt.id}
-                description={opt.description!}
+                item={opt}
                 isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={() => changeLayoutTo(layoutManager, opt)}
+                onSelect={onChangeLayout}
+                key={opt.id}
               >
                 <Stack direction="column" gap={0.5} height={'100%'}>
                   <div className={styles.tabsBar}>
@@ -78,11 +86,10 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
           case 'responsive-grid':
             return (
               <LayoutRadioButton
-                label={opt.name}
-                id={opt.id}
-                description={opt.description!}
+                item={opt}
                 isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={() => changeLayoutTo(layoutManager, opt)}
+                onSelect={onChangeLayout}
+                key={opt.id}
               >
                 <div className={styles.autoGridViz}>
                   <GridCell />
@@ -96,11 +103,10 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
           default:
             return (
               <LayoutRadioButton
-                label={opt.name}
-                id={opt.id}
-                description={opt.description!}
+                item={opt}
                 isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={() => changeLayoutTo(layoutManager, opt)}
+                onSelect={onChangeLayout}
+                key={opt.id}
               >
                 <div className={styles.customGridViz}>
                   <GridCell colSpan={2} />
@@ -120,15 +126,13 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
 }
 
 interface LayoutRadioButtonProps {
-  label: string;
-  id: string;
-  description: string;
+  item: LayoutRegistryItem;
   isSelected: boolean;
-  onSelect: () => void;
+  onSelect: (item: LayoutRegistryItem) => void;
   children: React.ReactNode;
 }
 
-function LayoutRadioButton({ label, id, description, isSelected, children, onSelect }: LayoutRadioButtonProps) {
+function LayoutRadioButton({ item, isSelected, children, onSelect }: LayoutRadioButtonProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -136,20 +140,26 @@ function LayoutRadioButton({ label, id, description, isSelected, children, onSel
     // label (as the RadioButtonDot has a label element and they can't nest)
     <div className={styles.radioButtonOuter}>
       <label
-        htmlFor={`layout-${id}`}
+        htmlFor={`layout-${item.id}`}
         tabIndex={0}
         className={cx(styles.radioButton, isSelected && styles.radioButtonActive)}
       >
         {children}
         <Stack direction="column" gap={1} justifyContent="space-between" grow={1}>
-          <Text weight="medium">{label}</Text>
+          <Text weight="medium">{item.name}</Text>
           <Text variant="bodySmall" color="secondary">
-            {description}
+            {item.description!}
           </Text>
         </Stack>
       </label>
       <div className={styles.radioDot}>
-        <RadioButtonDot id={`layout-${id}`} name={'layout'} label={<></>} onChange={onSelect} checked={isSelected} />
+        <RadioButtonDot
+          id={`layout-${item.id}`}
+          name={'layout'}
+          label={<></>}
+          onChange={() => onSelect(item)}
+          checked={isSelected}
+        />
       </div>
     </div>
   );
@@ -189,13 +199,6 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
 
     return layoutCategory;
   }, [layoutManager]);
-}
-
-function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {
-  const layoutParent = currentLayout.parent;
-  if (layoutParent && isLayoutParent(layoutParent)) {
-    layoutParent.switchLayout(newLayoutDescriptor.createFromLayout(currentLayout));
-  }
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
