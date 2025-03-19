@@ -157,8 +157,6 @@ func (c cleanUpRuleVersionsMigration) Exec(sess *xorm.Session, mg *migrator.Migr
 		toKeep = maxRetention
 	}
 
-	mg.Logger.Debug("Cleaning up rule versions", "batchSize", batchSize)
-
 	var rules []alertRule
 	err := sess.Table(alertRule{}).Select("uid, version").Find(&rules)
 	if err != nil {
@@ -169,7 +167,8 @@ func (c cleanUpRuleVersionsMigration) Exec(sess *xorm.Session, mg *migrator.Migr
 	if len(rules)%batchSize != 0 {
 		batches++
 	}
-	mg.Logger.Debug("Processing in batches", "batchSize", batchSize, "batches", batches)
+
+	mg.Logger.Info("Cleaning up table `alert_rule_version`", "batchSize", batchSize, "batches", batches, "keepVersions", toKeep)
 
 	for i := 0; i < batches; i++ {
 		end := i*batchSize + batchSize
@@ -196,6 +195,7 @@ func (c cleanUpRuleVersionsMigration) Exec(sess *xorm.Session, mg *migrator.Migr
 		if err != nil {
 			return err
 		}
+
 		mg.Logger.Debug(fmt.Sprintf("Batch %d of %d processed", i+1, batches))
 	}
 	return nil
