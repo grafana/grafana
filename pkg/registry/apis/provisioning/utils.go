@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -57,28 +58,23 @@ func unmarshalJSON(r *http.Request, maxSize int64, v interface{}) error {
 		return fmt.Errorf("content type is not JSON: %s", r.Header.Get("Content-Type"))
 	}
 
-	// Create a reader that will error if the size exceeds maxSize
-	limitedReader := io.LimitReader(r.Body, maxSize+1)
-	decoder := json.NewDecoder(limitedReader)
-	decoder.DisallowUnknownFields() // Adds extra safety against malformed JSON
+	r.Body = http.MaxBytesReader(nil, r.Body, maxSize)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(v); err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			return fmt.Errorf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize)
+		}
 		if err == io.EOF {
 			return fmt.Errorf("empty request body")
 		}
 		return fmt.Errorf("error decoding JSON: %w", err)
 	}
 
-	// Check if there's more data after the first JSON object
 	if decoder.More() {
 		return fmt.Errorf("multiple JSON objects not allowed")
-	}
-
-	// Check if we hit the size limit
-	extraByte := make([]byte, 1)
-	n, err := limitedReader.Read(extraByte)
-	if n > 0 || err == nil {
-		return fmt.Errorf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize)
 	}
 
 	return nil
