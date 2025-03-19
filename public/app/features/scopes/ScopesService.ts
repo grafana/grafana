@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, Subscription } from 'rxjs';
 import { map, distinctUntilChanged } from 'rxjs/operators';
 
 import { ScopesContextValue, ScopesContextValueState } from '@grafana/runtime';
@@ -24,6 +24,8 @@ export class ScopesService implements ScopesContextValue {
   // This will contain the combined state that will be public.
   private readonly _stateObservable: BehaviorSubject<ScopesContextValueState>;
 
+  private subscriptions: Subscription[] = [];
+
   constructor(
     private selectorService: ScopesSelectorService,
     private dashboardsService: ScopesDashboardsService
@@ -41,24 +43,26 @@ export class ScopesService implements ScopesContextValue {
     });
 
     // We combine the latest emissions from this state + selectorService + dashboardsService.
-    combineLatest([
-      this._state.asObservable(),
-      this.getSelectorServiceStateObservable(),
-      this.getDashboardsServiceStateObservable(),
-    ])
-      .pipe(
-        // Map the 3 states into single ScopesContextValueState object
-        map(
-          ([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
-            ...thisState,
-            value: selectorState.selectedScopes,
-            loading: selectorState.loading,
-            drawerOpened: dashboardsState.drawerOpened,
-          })
+    this.subscriptions.push(
+      combineLatest([
+        this._state.asObservable(),
+        this.getSelectorServiceStateObservable(),
+        this.getDashboardsServiceStateObservable(),
+      ])
+        .pipe(
+          // Map the 3 states into single ScopesContextValueState object
+          map(
+            ([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
+              ...thisState,
+              value: selectorState.selectedScopes,
+              loading: selectorState.loading,
+              drawerOpened: dashboardsState.drawerOpened,
+            })
+          )
         )
-      )
-      // We pass this into behaviourSubject so we get the 1 event buffer and we can access latest value.
-      .subscribe(this._stateObservable);
+        // We pass this into behaviourSubject so we get the 1 event buffer and we can access latest value.
+        .subscribe(this._stateObservable)
+    );
   }
 
   /**
@@ -126,5 +130,14 @@ export class ScopesService implements ScopesContextValue {
     return this.dashboardsService.stateObservable.pipe(
       distinctUntilChanged((prev, curr) => prev.drawerOpened === curr.drawerOpened)
     );
+  }
+
+  /**
+   * Cleanup subscriptions so this can be garbage collected.
+   */
+  public cleanUp() {
+    for (const sub of this.subscriptions) {
+      sub.unsubscribe();
+    }
   }
 }

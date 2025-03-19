@@ -3,7 +3,7 @@ import { KBarProvider } from 'kbar';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { defaultDashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
@@ -185,7 +185,7 @@ export async function renderDashboard(
   const dto: DashboardDTO = getDashboardDTO(overrideDashboard, overrideMeta);
   const scene = transformSaveModelToScene(dto);
 
-  const services = defaultScopesServices();
+  const services = defaultScopesServices(locationService);
 
   render(
     <KBarProvider>
