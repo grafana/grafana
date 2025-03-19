@@ -967,9 +967,6 @@ const (
 	// Enables additional languages
 	FlagExtraLanguages = "extraLanguages"
 
-	// FlagAzureMonitorEnableLogsBuilderMode
-	// Enables logs builder for Azure Monitor datasource
-	FlagAzureMonitorEnableLogsBuilderMode = "azureMonitorEnableLogsBuilderMode"
 	// FlagNoBackdropBlur
 	// Disables backdrop blur
 	FlagNoBackdropBlur = "noBackdropBlur"
