@@ -40,7 +40,11 @@ export class K8sDashboardV2API
     try {
       const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
-      if (dashboard.status?.conversion?.failed) {
+      if (
+        dashboard.status?.conversion?.failed &&
+        (dashboard.status.conversion.storedVersion === 'v1alpha1' ||
+          dashboard.status.conversion.storedVersion === 'v0alpha1')
+      ) {
         throw new DashboardVersionError(dashboard.status.conversion.storedVersion, dashboard.status.conversion.error);
       }
 
