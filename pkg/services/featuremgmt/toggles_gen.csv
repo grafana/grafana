@@ -49,7 +49,7 @@ enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,true
 pluginsFrontendSandbox,privatePreview,@grafana/plugins-platform-backend,false,false,false
-frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,false,true
+frontendSandboxMonitorOnly,privatePreview,@grafana/plugins-platform-backend,false,false,true
 pluginsDetailsRightPanel,privatePreview,@grafana/plugins-platform-backend,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
