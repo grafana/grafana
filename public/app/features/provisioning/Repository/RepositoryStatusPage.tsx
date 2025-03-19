@@ -3,7 +3,7 @@ import { useLocation } from 'react-router';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
-import { Alert, EmptyState, Modal, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
+import { Alert, EmptyState, Modal, Spinner, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, useListRepositoryQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -37,7 +37,7 @@ export default function RepositoryStatusPage() {
 
   const query = useListRepositoryQuery({
     fieldSelector: `metadata.name=${name}`,
-    watch: false,
+    watch: true,
   });
   const data = query.data?.items?.[0];
   const location = useLocation();
@@ -92,6 +92,11 @@ export default function RepositoryStatusPage() {
                   ))}
                 </TabsBar>
                 <TabContent>
+                  {data?.metadata?.deletionTimestamp && (
+                    <Alert title="Queued for deletion" severity="warning">
+                      <Spinner /> Cleaning up repository resources
+                    </Alert>
+                  )}
                   {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
                   {tab === TabSelection.Resources && <RepositoryResources repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}

@@ -26,11 +26,7 @@ export function RepositoryActions({
 
   return (
     <Stack>
-      <StatusBadge
-        enabled={Boolean(repository.spec?.sync?.enabled)}
-        state={repository.status?.sync?.state}
-        name={name}
-      />
+      <StatusBadge repo={repository} />
       {repoHref && (
         <Button variant="secondary" icon="github" onClick={() => window.open(repoHref, '_blank')}>
           Source Code

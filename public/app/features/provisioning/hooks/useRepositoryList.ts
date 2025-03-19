@@ -6,10 +6,6 @@ import { ListRepositoryApiArg, Repository, useListRepositoryQuery } from 'app/ap
 export function useRepositoryList(
   options: ListRepositoryApiArg | typeof skipToken = {}
 ): [Repository[] | undefined, boolean] {
-  // TODO Fix watch blocking requests
-  if (typeof options === 'object' && 'watch' in options && options.watch) {
-    options.watch = false;
-  }
   const query = useListRepositoryQuery(options);
   const collator = new Intl.Collator(undefined, { numeric: true });
 
