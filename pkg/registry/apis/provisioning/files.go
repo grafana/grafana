@@ -19,6 +19,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type filesConnector struct {
@@ -81,10 +82,21 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		filePath := strings.TrimPrefix(r.URL.Path[idx+len(prefix):], "/")
-		// TODO: limit the path length and how nested
+		if err := safepath.ValidatePath(filePath); err != nil {
+			if errors.Is(err, safepath.ErrPathTooLong) {
+				responder.Error(apierrors.NewBadRequest("path length exceeds maximum allowed"))
+			} else if errors.Is(err, safepath.ErrPathTooDeep) {
+				responder.Error(apierrors.NewBadRequest("directory nesting exceeds maximum allowed"))
+			} else {
+				responder.Error(err)
+			}
+			return
+		}
+
 		isFolderPath := strings.HasSuffix(filePath, "/")
 
 		if r.Method == http.MethodGet && (filePath == "" || isFolderPath) {
+			// TODO: Implement folder navigation
 			if len(filePath) > 0 {
 				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
 				return
