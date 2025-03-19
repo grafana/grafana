@@ -224,7 +224,7 @@ export class GeneralSettingsEditView
               <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
             </Field>
             <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
-              {dashboard.isManaged() ? (
+              {dashboard.isManagedRepository() ? (
                 <Input readOnly value={meta.folderTitle} />
               ) : (
                 <FolderPicker

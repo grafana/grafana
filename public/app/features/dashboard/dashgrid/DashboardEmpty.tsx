@@ -52,7 +52,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     }
   };
 
-  const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManaged();
+  const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManagedRepository();
   return (
     <Stack alignItems="center" justifyContent="center">
       <div className={styles.wrapper}>
