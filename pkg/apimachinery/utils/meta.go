@@ -35,7 +35,6 @@ const AnnoKeyCreatedBy = "grafana.app/createdBy"
 const AnnoKeyUpdatedTimestamp = "grafana.app/updatedTimestamp"
 const AnnoKeyUpdatedBy = "grafana.app/updatedBy"
 const AnnoKeyFolder = "grafana.app/folder"
-const AnnoKeySlug = "grafana.app/slug"
 const AnnoKeyBlob = "grafana.app/blob"
 const AnnoKeyMessage = "grafana.app/message"
 
@@ -87,9 +86,6 @@ type GrafanaMetaAccessor interface {
 	GetMessage() string
 	SetMessage(msg string)
 	SetAnnotation(key string, val string)
-
-	GetSlug() string
-	SetSlug(v string)
 
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
@@ -268,14 +264,6 @@ func (m *grafanaMetaAccessor) GetMessage() string {
 
 func (m *grafanaMetaAccessor) SetMessage(uid string) {
 	m.SetAnnotation(AnnoKeyMessage, uid)
-}
-
-func (m *grafanaMetaAccessor) GetSlug() string {
-	return m.get(AnnoKeySlug)
-}
-
-func (m *grafanaMetaAccessor) SetSlug(v string) {
-	m.SetAnnotation(AnnoKeySlug, v)
 }
 
 // This will be removed in Grafana 13. Do not add any new usage of it.
