@@ -17,7 +17,7 @@ import (
 
 type exportConnector struct {
 	repoGetter RepoGetter
-	jobs       jobs.JobQueue
+	jobs       jobs.Queue
 }
 
 func (*exportConnector) New() runtime.Object {
@@ -64,7 +64,7 @@ func (c *exportConnector) Connect(
 			responder.Error(apierrors.NewBadRequest("error decoding ExportJobOptions from request"))
 			return
 		}
-		job, err := c.jobs.Add(ctx, &provisioning.Job{
+		job, err := c.jobs.Insert(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: cfg.Namespace,
 			},

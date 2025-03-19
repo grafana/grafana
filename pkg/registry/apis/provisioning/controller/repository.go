@@ -62,7 +62,7 @@ type RepositoryController struct {
 	secrets        secrets.Service
 	dualwrite      dualwrite.Service
 
-	jobs      jobs.JobQueue
+	jobs      jobs.Queue
 	finalizer *finalizer
 
 	// Converts config to instance
@@ -84,7 +84,7 @@ func NewRepositoryController(
 	resourceLister resources.ResourceLister,
 	parsers *resources.ParserFactory,
 	tester RepositoryTester,
-	jobs jobs.JobQueue,
+	jobs jobs.Queue,
 	secrets secrets.Service,
 	dualwrite dualwrite.Service,
 ) (*RepositoryController, error) {
@@ -360,7 +360,7 @@ func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {
-	job, err := rc.jobs.Add(ctx, &provisioning.Job{
+	job, err := rc.jobs.Insert(ctx, &provisioning.Job{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: obj.Namespace,
 		},
@@ -443,7 +443,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err
 	}
 
-	ctx, _, err := identity.WithProvisioningIdentitiy(context.Background(), namespace)
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), namespace)
 	if err != nil {
 		return err
 	}
