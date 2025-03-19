@@ -3,7 +3,6 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import {
   Alert,
-  Badge,
   Box,
   Card,
   Field,
@@ -134,18 +133,6 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
             </>
           )}
         />
-
-        {state.disabled.map((action) => (
-          <Card disabled={true} key={`${action.target}-${action.operation}`}>
-            <Card.Heading>
-              <Stack direction="row" alignItems="center" gap={2}>
-                <Text color="secondary">{action.label}</Text>
-                <Badge color="blue" text="Not available" icon="info" />
-              </Stack>
-            </Card.Heading>
-            <Card.Description>{action.disabledReason ?? action.description}</Card.Description>
-          </Card>
-        ))}
 
         {/* Add migration options */}
         {selectedOption?.operation === 'migrate' && (
