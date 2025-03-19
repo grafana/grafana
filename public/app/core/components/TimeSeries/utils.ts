@@ -576,6 +576,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
     focus: {
       prox: hoverProximity ?? DEFAULT_FOCUS_PROXIMITY,
     },
+    points: { one: true },
   };
 
   builder.setCursor(cursor);
