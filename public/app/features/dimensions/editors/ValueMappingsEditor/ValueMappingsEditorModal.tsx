@@ -279,8 +279,8 @@ export function buildEditRowModels(value: ValueMapping[]) {
             createRow({
               type: mapping.type,
               result: mapping.options.result,
-              from: mapping.options.from ?? 0,
-              to: mapping.options.to ?? 0,
+              from: mapping.options.from,
+              to: mapping.options.to,
             })
           );
           break;
