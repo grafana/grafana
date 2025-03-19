@@ -57,6 +57,7 @@
 /go.work @grafana/grafana-app-platform-squad
 /go.work.sum @grafana/grafana-app-platform-squad
 /.bingo/ @grafana/grafana-backend-group
+/.citools @grafana/grafana-developer-enablement-squad
 /pkg/README.md @grafana/grafana-backend-group
 /pkg/ruleguard.rules.go @grafana/grafana-backend-group
 /.bra.toml @grafana/grafana-backend-group
@@ -823,7 +824,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/actions/changelog @zserge
-/.github/workflows/frontend-unit-tests.yml @grafana/grafana-frontend-platform
+/.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
 /.github/workflows/analytics-events-report.yml @grafana/grafana-frontend-platform
 
