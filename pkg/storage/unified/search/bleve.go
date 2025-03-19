@@ -796,7 +796,6 @@ var termField = map[string]bool{
 
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
-	key := req.Key
 	switch selection.Operator(req.Operator) {
 	case selection.Equals, selection.DoubleEquals:
 		if len(req.Values) == 0 {
@@ -804,13 +803,13 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		}
 
 		if len(req.Values) == 1 {
-			filter := filterValue(key, req.Values[0])
-			return newQuery(key, filter, prefix), nil
+			filter := filterValue(req.Key, req.Values[0])
+			return newQuery(req.Key, filter, prefix), nil
 		}
 
 		conjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := newQuery(key, filterValue(key, v), prefix)
+			q := newQuery(req.Key, filterValue(req.Key, v), prefix)
 			conjuncts = append(conjuncts, q)
 		}
 
@@ -826,13 +825,13 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 			return query.NewMatchAllQuery(), nil
 		}
 		if len(req.Values) == 1 {
-			q := newQuery(key, filterValue(key, req.Values[0]), prefix)
+			q := newQuery(req.Key, filterValue(req.Key, req.Values[0]), prefix)
 			return q, nil
 		}
 
 		disjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := newQuery(key, filterValue(key, v), prefix)
+			q := newQuery(req.Key, filterValue(req.Key, v), prefix)
 			disjuncts = append(disjuncts, q)
 		}
 
@@ -843,7 +842,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			q := newQuery(key, filterValue(key, value), prefix)
+			q := newQuery(req.Key, filterValue(req.Key, value), prefix)
 			mustNotQueries = append(mustNotQueries, q)
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
@@ -883,8 +882,7 @@ func newQuery(key string, value string, prefix string) query.Query {
 			qq.AddQuery(mq)
 		}
 
-		cq := bleve.NewDisjunctionQuery(q, qq)
-		return cq
+		return bleve.NewDisjunctionQuery(q, qq)
 	}
 	q := bleve.NewMatchQuery(value)
 	q.FieldVal = prefix + key
