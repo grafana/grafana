@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .bingo/Variables.mk
 
 GO = go
-GO_VERSION = 1.23.5
+GO_VERSION = 1.23.7
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -44,7 +44,7 @@ deps: deps-js ## Install all dependencies.
 .PHONY: node_modules
 node_modules: package.json yarn.lock ## Install node modules.
 	@echo "install frontend dependencies"
-	YARN_CHECKSUM_BEHAVIOR=update YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
 
 ##@ Swagger
 SPEC_TARGET = public/api-spec.json
@@ -210,7 +210,7 @@ build-cli: ## Build Grafana CLI application.
 .PHONY: build-js
 build-js: ## Build frontend assets.
 	@echo "build frontend"
-	yarn run build-max-memory
+	yarn run build
 	yarn run plugins:build-bundled
 
 PLUGIN_ID ?=
@@ -240,10 +240,6 @@ run-go: ## Build and run web server immediately.
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
-
-run-local-env:               ## Start local frontend with pmm-server:dev-latest
-	yarn dev
-	docker compose up -d
 
 ##@ Testing
 
@@ -480,9 +476,3 @@ check-tparse:
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-
-rebuild-pmm:
-		make build-go
-		rm -f /usr/sbin/grafana
-		cp ./bin/linux-amd64/grafana /usr/sbin/grafana
-		supervisorctl restart grafana

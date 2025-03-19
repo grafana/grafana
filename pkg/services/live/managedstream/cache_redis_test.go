@@ -65,17 +65,3 @@ func redisCleanup(t *testing.T, redisClient *redis.Client, prefix string) func()
 		}
 	}
 }
-
-func redisCleanup(t *testing.T, redisClient *redis.Client, prefix string) func() {
-	return func() {
-		keys, err := redisClient.Keys(redisClient.Context(), prefix+"*").Result()
-		if err != nil {
-			require.NoError(t, err)
-		}
-
-		for _, key := range keys {
-			_, err := redisClient.Del(redisClient.Context(), key).Result()
-			require.NoError(t, err)
-		}
-	}
-}

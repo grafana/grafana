@@ -1,8 +1,6 @@
 module github.com/grafana/grafana/pkg/util/xorm
 
-go 1.22
-
-toolchain go1.23.1
+go 1.23.7
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.22

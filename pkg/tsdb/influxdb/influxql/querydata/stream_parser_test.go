@@ -123,11 +123,3 @@ func TestInfluxDBStreamingParser(t *testing.T) {
 		require.EqualError(t, result.Error, "InfluxDB returned error: failed to parse query: found WERE, expected ; at line 1, char 38")
 	})
 }
-
-func TestInfluxDBStreamingParser(t *testing.T) {
-	t.Run("Influxdb response parser with error message", func(t *testing.T) {
-		result := ResponseParse(readJsonFile("invalid_response"), 400, generateQuery("Test raw query", "time_series", ""))
-		require.Nil(t, result.Frames)
-		require.EqualError(t, result.Error, "InfluxDB returned error: failed to parse query: found WERE, expected ; at line 1, char 38")
-	})
-}

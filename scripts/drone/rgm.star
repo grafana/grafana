@@ -17,10 +17,6 @@ load(
     "test_frontend",
 )
 load(
-    "scripts/drone/pipelines/whats_new_checker.star",
-    "whats_new_checker_pipeline",
-)
-load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
     "github_app_step_volumes",
@@ -291,7 +287,6 @@ def rgm_tag_pipeline():
 
     return [
         build,
-        whats_new_checker_pipeline(tag_trigger),
         verify_release_pipeline(
             trigger = tag_trigger,
             name = "rgm-tag-verify-prerelease-assets",
