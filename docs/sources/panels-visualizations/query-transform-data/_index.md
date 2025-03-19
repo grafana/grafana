@@ -133,6 +133,7 @@ In the **Query library** drawer, you can:
 - Search for queries by data source name, query content, and description.
 - Filter by data source name and author name (filters use the OR operator).
 - Edit a query description.
+- Delete a saved query.
 
 To view your saved queries, click **+ Add query from library** from the query editor:
 
