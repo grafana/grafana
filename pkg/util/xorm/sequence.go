@@ -5,17 +5,31 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sync"
 )
+
+// batchState represents the state of a sequence batch
+type batchState struct {
+	nextValue        int64
+	lastValueInBatch int64
+}
 
 type sequenceGenerator struct {
 	db             *sql.DB
 	sequencesTable string
+	batchSize      int64
+
+	// Track sequence batches per key (table:column)
+	batchStates map[string]*batchState
+	mu          sync.Mutex
 }
 
 func newSequenceGenerator(db *sql.DB) *sequenceGenerator {
 	return &sequenceGenerator{
 		db:             db,
 		sequencesTable: "autoincrement_sequences",
+		batchSize:      100, // Default batch size
+		batchStates:    make(map[string]*batchState),
 	}
 }
 
@@ -24,48 +38,90 @@ func (sg *sequenceGenerator) Reset() {
 }
 
 func (sg *sequenceGenerator) Next(ctx context.Context, table, column string) (int64, error) {
-	// Current implementation fetches new value for each Next call.
 	key := fmt.Sprintf("%s:%s", table, column)
 
+	sg.mu.Lock()
+	defer sg.mu.Unlock()
+
+	// Get or initialize batch state for this sequence
+	state, exists := sg.batchStates[key]
+	if !exists {
+		state = &batchState{
+			nextValue:        0,
+			lastValueInBatch: -1,
+		}
+		sg.batchStates[key] = state
+	}
+
+	// If we've used all values in the current batch, get a new batch
+	if state.nextValue > state.lastValueInBatch {
+		if err := sg.getBatch(ctx, key, state); err != nil {
+			return 0, err
+		}
+	}
+
+	// Return the next value from the batch
+	val := state.nextValue
+	state.nextValue++
+	return val, nil
+}
+
+func (sg *sequenceGenerator) getBatch(ctx context.Context, key string, state *batchState) error {
 	tx, err := sg.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	// TODO: "FOR UPDATE". (Somehow this doesn't seem to be supported in Spanner emulator?)
 	r, err := tx.QueryContext(ctx, "SELECT next_value FROM "+sg.sequencesTable+" WHERE name = ?", key)
 	if err != nil {
 		err2 := tx.Rollback()
-		return 0, errors.Join(err, err2)
+		return errors.Join(err, err2)
 	}
 	defer r.Close()
 
-	// Sequence doesn't exist yet. Return 1, and put 2 into the table.
+	// Sequence doesn't exist yet. Return 1, and put batch size + 1 into the table.
 	if !r.Next() {
 		if err := r.Err(); err != nil {
-			return 0, errors.Join(err, tx.Rollback())
+			return errors.Join(err, tx.Rollback())
 		}
-		val := int64(1)
 
-		_, err := tx.ExecContext(ctx, "INSERT INTO "+sg.sequencesTable+" (name, next_value) VALUES(?, ?)", key, val+1)
+		// Start with 1 and allocate a batch
+		state.nextValue = 1
+		state.lastValueInBatch = sg.batchSize
+
+		// Insert the next batch start value (batchSize + 1)
+		_, err := tx.ExecContext(ctx, "INSERT INTO "+sg.sequencesTable+" (name, next_value) VALUES(?, ?)", key, sg.batchSize+1)
 		if err != nil {
-			return 0, errors.Join(err, tx.Rollback())
+			return errors.Join(err, tx.Rollback())
 		}
 
-		return val, tx.Commit()
+		return tx.Commit()
 	}
 
-	var val int64
-	if err := r.Scan(&val); err != nil {
-		return 0, errors.Join(err, tx.Rollback())
+	var nextBatchStart int64
+	if err := r.Scan(&nextBatchStart); err != nil {
+		return errors.Join(err, tx.Rollback())
 	}
 
-	_, err = tx.ExecContext(ctx, "UPDATE "+sg.sequencesTable+" SET next_value = ? WHERE name = ?", val+1, key)
+	// Update the next batch start value in the database
+	_, err = tx.ExecContext(ctx, "UPDATE "+sg.sequencesTable+" SET next_value = ? WHERE name = ?", nextBatchStart+sg.batchSize, key)
 	if err != nil {
-		return 0, errors.Join(err, tx.Rollback())
+		return errors.Join(err, tx.Rollback())
 	}
 
-	return val, tx.Commit()
+	// Set our current batch range
+	state.nextValue = nextBatchStart
+	state.lastValueInBatch = nextBatchStart + sg.batchSize - 1
+
+	return tx.Commit()
+}
+
+// SetBatchSize allows changing the batch size
+func (sg *sequenceGenerator) SetBatchSize(size int64) {
+	sg.mu.Lock()
+	defer sg.mu.Unlock()
+	sg.batchSize = size
 }
 
 func (sg *sequenceGenerator) close() {
