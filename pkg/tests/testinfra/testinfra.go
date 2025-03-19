@@ -495,9 +495,17 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_open_conn", "2")
+	if db.IsTestDBSpanner() {
+		_, err = dbSection.NewKey("max_open_conn", "20")
+	} else {
+		_, err = dbSection.NewKey("max_open_conn", "2")
+	}
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_idle_conn", "2")
+	if db.IsTestDBSpanner() {
+		_, err = dbSection.NewKey("max_idle_conn", "20")
+	} else {
+		_, err = dbSection.NewKey("max_idle_conn", "2")
+	}
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
