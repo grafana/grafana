@@ -1423,6 +1423,7 @@ var (
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "false", // disabled by default
 		},
 		{
 			Name:        "unifiedStorageBigObjectsSupport",
