@@ -254,6 +254,7 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 				log.Error("failed background DELETE collection to unified storage", "err", err)
 			}
 		}()
+		return deletedLegacy, nil
 	}
 	// Otherwise we have to check the error and run it in the foreground.
 	if deletedStorage, err := d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions); err != nil {
