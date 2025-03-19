@@ -23,7 +23,7 @@ interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSection
 
 export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: PaginatedDataSourceLoaderProps) {
   const { uid, name } = rulesSourceIdentifier;
-  const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
+  const prometheusGroupsGenerator = usePrometheusGroupsGenerator({ populateCache: true });
 
   const groupsGenerator = useRef(prometheusGroupsGenerator(rulesSourceIdentifier, DATA_SOURCE_GROUP_PAGE_SIZE));
 

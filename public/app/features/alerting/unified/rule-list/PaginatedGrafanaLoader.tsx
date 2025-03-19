@@ -20,7 +20,7 @@ import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGrou
 const GRAFANA_GROUP_PAGE_SIZE = 40;
 
 export function PaginatedGrafanaLoader() {
-  const grafanaGroupsGenerator = useGrafanaGroupsGenerator();
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true });
 
   const groupsGenerator = useRef(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE));
 

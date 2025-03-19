@@ -8,67 +8,79 @@ import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
 
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
 
+interface UseGeneratorHookOptions {
+  populateCache?: boolean;
+}
+
 interface FetchGroupsOptions {
   groupLimit?: number;
   groupNextToken?: string;
 }
 
-export function usePrometheusGroupsGenerator() {
+export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {
   const dispatch = useDispatch();
   const [getGroups] = useLazyGetGroupsQuery();
 
   return useCallback(
     async function* (ruleSource: DataSourceRulesSourceIdentifier, groupLimit: number) {
-      const getRuleSourceGroupsWithCache = async (options: FetchGroupsOptions) => {
-        const response = await getGroups({ ruleSource: { uid: ruleSource.uid }, ...options }).unwrap();
+      const getRuleSourceGroupsWithCache = async (fetchOptions: FetchGroupsOptions) => {
+        const response = await getGroups({ ruleSource: { uid: ruleSource.uid }, ...fetchOptions }).unwrap();
 
-        response.data.groups.forEach((group) => {
-          dispatch(
-            prometheusApi.util.upsertQueryData(
-              'getGroups',
-              { ruleSource: { uid: ruleSource.uid }, namespace: group.file, groupName: group.name },
-              { data: { groups: [group] }, status: 'success' }
-            )
-          );
-        });
+        if (hookOptions.populateCache) {
+          response.data.groups.forEach((group) => {
+            dispatch(
+              prometheusApi.util.upsertQueryData(
+                'getGroups',
+                { ruleSource: { uid: ruleSource.uid }, namespace: group.file, groupName: group.name },
+                { data: { groups: [group] }, status: 'success' }
+              )
+            );
+          });
+        }
 
         return response;
       };
 
       yield* genericGroupsGenerator(getRuleSourceGroupsWithCache, groupLimit);
     },
-    [getGroups, dispatch]
+    [getGroups, dispatch, hookOptions.populateCache]
   );
 }
 
-export function useGrafanaGroupsGenerator() {
+export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {
   const dispatch = useDispatch();
   const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
 
   const getGroupsAndProvideCache = useCallback(
-    async (options: FetchGroupsOptions) => {
-      const response = await getGrafanaGroups(options).unwrap();
+    async (fetchOptions: FetchGroupsOptions) => {
+      const response = await getGrafanaGroups(fetchOptions).unwrap();
 
       // This is not mandatory to preload ruler rules, but it improves the UX
       // Because the user waits a bit longer for the initial load but doesn't need to wait for each group to be loaded
-      const cacheAndRulerPreload = response.data.groups.map(async (group) => {
-        await dispatch(
-          alertRuleApi.endpoints.getGrafanaRulerGroup.initiate({ folderUid: group.folderUid, groupName: group.name })
-        );
-        await dispatch(
-          prometheusApi.util.upsertQueryData(
-            'getGrafanaGroups',
-            { folderUid: group.folderUid, groupName: group.name },
-            { data: { groups: [group] }, status: 'success' }
-          )
-        );
-      });
+      if (hookOptions.populateCache) {
+        const cacheAndRulerPreload = response.data.groups.map(async (group) => {
+          dispatch(
+            alertRuleApi.util.prefetch(
+              'getGrafanaRulerGroup',
+              { folderUid: group.folderUid, groupName: group.name },
+              { force: true }
+            )
+          );
+          await dispatch(
+            prometheusApi.util.upsertQueryData(
+              'getGrafanaGroups',
+              { folderUid: group.folderUid, groupName: group.name },
+              { data: { groups: [group] }, status: 'success' }
+            )
+          );
+        });
 
-      await Promise.allSettled(cacheAndRulerPreload);
+        await Promise.allSettled(cacheAndRulerPreload);
+      }
 
       return response;
     },
-    [getGrafanaGroups, dispatch]
+    [getGrafanaGroups, dispatch, hookOptions.populateCache]
   );
 
   return useCallback(
@@ -92,7 +104,7 @@ async function* genericGroupsGenerator<TGroup>(
     response = await fetchGroups({ groupLimit });
     yield* response.data.groups;
   } catch (error) {
-    return;
+    throw error;
   }
 
   let lastToken: string | undefined = response.data?.groupNextToken;
@@ -104,7 +116,7 @@ async function* genericGroupsGenerator<TGroup>(
       yield* response.data.groups;
       lastToken = response.data?.groupNextToken;
     } catch (error) {
-      return;
+      throw error;
     }
   }
 }
