@@ -20,7 +20,11 @@ var (
 	//lint:ignore ST1005 this is not punctuation
 	ErrPathTraversalDisallowed = errors.New("the path contained ..") //nolint:stylecheck
 	ErrServiceUnavailable      = apierrors.NewServiceUnavailable("github is unavailable")
+	ErrFileTooLarge            = errors.New("file exceeds maximum allowed size")
 )
+
+// MaxFileSize maximum file size limit (10MB)
+const MaxFileSize = 10 * 1024 * 1024 // 10MB in bytes
 
 type ErrRateLimited = github.RateLimitError
 

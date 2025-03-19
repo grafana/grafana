@@ -99,6 +99,10 @@ func (r *githubClient) GetContents(ctx context.Context, owner, repository, path,
 	}
 
 	if fc != nil {
+		// Check file size before returning content
+		if fc.GetSize() > MaxFileSize {
+			return nil, nil, ErrFileTooLarge
+		}
 		return realRepositoryContent{fc}, nil, nil
 	}
 
