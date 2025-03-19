@@ -1,7 +1,8 @@
-import { SceneCSSGridLayout, SceneGridLayout } from '@grafana/scenes';
+import { SceneGridLayout } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
 import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
@@ -232,7 +233,7 @@ describe('serialization', () => {
           title: 'Row 1',
           isCollapsed: false,
           layout: new ResponsiveGridLayoutManager({
-            layout: new SceneCSSGridLayout({
+            layout: new ResponsiveGridLayout({
               children: [],
               templateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
               autoRows: 'minmax(min-content, max-content)',

@@ -9,7 +9,6 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneCSSGridLayout,
   SceneGridLayout,
   SceneGridRow,
   SceneRefreshPicker,
@@ -41,6 +40,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { ResponsiveGridLayout } from '../scene/layout-responsive-grid/ResponsiveGridLayout';
 import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
@@ -475,7 +475,7 @@ describe('dynamic layouts', () => {
           rows: [
             new RowItem({
               layout: new ResponsiveGridLayoutManager({
-                layout: new SceneCSSGridLayout({
+                layout: new ResponsiveGridLayout({
                   children: [
                     new ResponsiveGridItem({
                       body: new VizPanel({}),
@@ -520,7 +520,7 @@ describe('dynamic layouts', () => {
     const scene = setupDashboardScene(
       getMinimalSceneState(
         new ResponsiveGridLayoutManager({
-          layout: new SceneCSSGridLayout({
+          layout: new ResponsiveGridLayout({
             autoRows: 'rowString',
             templateColumns: 'colString',
             children: [

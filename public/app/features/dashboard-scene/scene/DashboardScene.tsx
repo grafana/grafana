@@ -70,6 +70,8 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DropZonePlaceholder } from './layout-manager/DropZonePlaceholder';
+import { LayoutOrchestrator } from './layout-manager/LayoutOrchestrator';
 import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
@@ -135,6 +137,8 @@ export interface DashboardSceneState extends SceneObjectState {
   /** options pane */
   editPane: DashboardEditPane;
   scopesBridge: SceneScopesBridge | undefined;
+  /** Manages dragging/dropping of layout items */
+  layoutOrchestrator: LayoutOrchestrator;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -188,6 +192,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       ...state,
       editPane: new DashboardEditPane(),
       scopesBridge: config.featureToggles.scopeFilters ? new SceneScopesBridge({}) : undefined,
+      layoutOrchestrator: new LayoutOrchestrator({
+        placeholder: new DropZonePlaceholder({ top: 0, left: 0, width: 0, height: 0 }),
+      }),
     });
 
     this.serializer =

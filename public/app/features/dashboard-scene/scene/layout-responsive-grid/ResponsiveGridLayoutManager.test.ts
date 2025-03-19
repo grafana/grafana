@@ -1,9 +1,10 @@
-import { SceneCSSGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { findVizPanelByKey } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
+import { ResponsiveGridLayout } from './ResponsiveGridLayout';
 import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
 
 describe('ResponsiveGridLayoutManager', () => {
@@ -45,7 +46,7 @@ function setup() {
     }),
   ];
 
-  const manager = new ResponsiveGridLayoutManager({ layout: new SceneCSSGridLayout({ children: gridItems }) });
+  const manager = new ResponsiveGridLayoutManager({ layout: new ResponsiveGridLayout({ children: gridItems }) });
 
   new DashboardScene({ body: manager });
 
