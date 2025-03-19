@@ -26,6 +26,7 @@ Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and
 ## Overview
 
 With SCIM, you can:
+
 - **Automate user management** by provisioning and updating users directly from Okta and Azure AD, including automatic profile updates when user details change
 - **Streamline team operations** through automatic team creation and membership management based on identity provider group assignments
 - **Enhance security** with automatic user deprovisioning when users are removed from the identity provider
@@ -94,14 +95,14 @@ team_sync_mode = "scim_sync"
 mapping_mode = "strict|create"
 ```
 
-| **Setting** | **Description** |
-|------------|----------------|
-| `team_sync_mode = "scim_sync"` | Enables SCIM Group Sync (disables Team Sync). |
-| `mapping_mode = "strict"` | Only syncs teams if explicitly mapped in Grafana. |
-| `mapping_mode = "create"` | Automatically creates new Grafana teams for IdP groups. |
-
+| **Setting**                    | **Description**                                         |
+| ------------------------------ | ------------------------------------------------------- |
+| `team_sync_mode = "scim_sync"` | Enables SCIM Group Sync (disables Team Sync).           |
+| `mapping_mode = "strict"`      | Only syncs teams if explicitly mapped in Grafana.       |
+| `mapping_mode = "create"`      | Automatically creates new Grafana teams for IdP groups. |
 
 ### How SCIM maps users to teams
+
 1. User is assigned to a group in the identity provider (Okta or Azure AD)
 2. SCIM automatically creates a corresponding Grafana team if it does not exist
 3. SCIM syncs users into teams based on their identity provider group assignments

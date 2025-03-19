@@ -85,4 +85,3 @@ The following table compares SCIM with other synchronization methods to help you
 - [Manage users and teams with SCIM provisioning](manage-users-teams/)
 - [Configure SCIM with Azure AD](azuread/)
 - [Configure SCIM with Okta](okta/)
-
