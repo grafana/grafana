@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
 
 import { DateTime, SelectableValue, toUtc } from '@grafana/data';

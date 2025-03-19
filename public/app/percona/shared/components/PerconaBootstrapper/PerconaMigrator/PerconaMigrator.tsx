@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { useMigrator } from 'app/percona/shared/core/hooks/migrator';
 import { useSelector } from 'app/types';

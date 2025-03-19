@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { config } from '@grafana/runtime';
 import { useStyles } from '@grafana/ui';

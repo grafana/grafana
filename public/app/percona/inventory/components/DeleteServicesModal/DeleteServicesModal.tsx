@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import { FC, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { Alert, Button, Checkbox, Modal } from '@grafana/ui';

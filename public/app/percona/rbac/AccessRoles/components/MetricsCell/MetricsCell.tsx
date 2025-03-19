@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { RawQuery } from '@grafana/experimental';
 import { promqlGrammar } from '@grafana/prometheus';

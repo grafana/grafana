@@ -1,4 +1,3 @@
-import React from 'react';
 
 import { config } from '@grafana/runtime';
 import { locationService } from '@grafana/runtime/src/services/LocationService';

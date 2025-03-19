@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 
 import { Alert, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';

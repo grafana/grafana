@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 
 import { AppEvents, OrgRole, UrlQueryMap } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';

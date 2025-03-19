@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Button, Modal, TextLink, useStyles2 } from '@grafana/ui';
 import { MigrationSummaryProps } from 'app/features/api-keys/ApiKeysPage';

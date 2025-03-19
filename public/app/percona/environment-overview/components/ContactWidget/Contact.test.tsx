@@ -1,5 +1,5 @@
 import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
-import React, { FC, PropsWithChildren } from 'react';
+import { FC, PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 

@@ -1,6 +1,6 @@
 import { FormState } from 'final-form';
 import { debounce } from 'lodash';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Form, FormSpy } from 'react-final-form';
 
 import { useStyles2 } from '@grafana/ui';

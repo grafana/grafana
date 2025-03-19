@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Icon, IconName, useStyles2 } from '@grafana/ui';
 import { DATABASE_ICONS } from 'app/percona/shared/core';

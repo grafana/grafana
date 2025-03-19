@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-import React, { FC, useMemo } from 'react';
+import { FC, useMemo } from 'react';
 
 import { Tooltip, useTheme2, Icon, IconName } from '@grafana/ui';
 import { Ellipsis } from 'app/percona/shared/components/Elements/Icons';

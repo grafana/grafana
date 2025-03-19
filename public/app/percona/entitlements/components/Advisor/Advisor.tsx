@@ -1,4 +1,3 @@
-import React from 'react';
 
 import { Icon, useStyles2 } from '@grafana/ui';
 

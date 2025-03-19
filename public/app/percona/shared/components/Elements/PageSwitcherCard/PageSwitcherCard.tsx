@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Field } from 'react-final-form';
 
 import { Card, useStyles2 } from '@grafana/ui';

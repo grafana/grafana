@@ -1,6 +1,6 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 import { Provider } from 'react-redux';
 import selectEvent from 'react-select-event';
 

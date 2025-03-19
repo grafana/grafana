@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';

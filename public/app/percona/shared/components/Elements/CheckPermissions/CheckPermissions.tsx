@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 import { Spinner, useStyles } from '@grafana/ui';
 import { SettingsService } from 'app/percona/settings/Settings.service';

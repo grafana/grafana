@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC, useMemo, useState } from 'react';
+import { FC, useMemo, useState } from 'react';
 
 import { Icon, useStyles } from '@grafana/ui';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';

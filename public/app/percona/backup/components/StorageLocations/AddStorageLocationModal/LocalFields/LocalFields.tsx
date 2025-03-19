@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
 import { validators } from 'app/percona/shared/helpers/validatorsForm';

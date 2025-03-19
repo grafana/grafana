@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo } from 'react';
 import { useField } from 'react-final-form';
 
 import { useStyles2 } from '@grafana/ui';

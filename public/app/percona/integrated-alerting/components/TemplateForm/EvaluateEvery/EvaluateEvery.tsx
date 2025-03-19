@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import { FC, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useStyles2 } from '@grafana/ui';

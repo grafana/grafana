@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { EmptyBlock } from 'app/percona/shared/components/Elements/EmptyBlock';
 

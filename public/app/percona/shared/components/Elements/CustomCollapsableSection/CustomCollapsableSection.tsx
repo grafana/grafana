@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 
 import { ControlledCollapse, useTheme2 } from '@grafana/ui';
 

@@ -1,5 +1,4 @@
 import { render, screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react';
-import React from 'react';
 import { Provider } from 'react-redux';
 
 import * as reducers from 'app/percona/shared/core/reducers';

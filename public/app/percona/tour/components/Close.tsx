@@ -1,7 +1,7 @@
 // there is a problem with exported types from react tour
 // @ts-ignore
 import { CloseProps } from '@reactour/tour/dist/components/Close';
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { IconButton, useStyles2 } from '@grafana/ui';
 

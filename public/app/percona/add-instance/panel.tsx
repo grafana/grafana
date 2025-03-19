@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name,@typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
-import React, { MouseEventHandler, useMemo, useState } from 'react';
+import { MouseEventHandler, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
 import { PageLayoutType } from '@grafana/data';

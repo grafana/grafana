@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Icon, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
 

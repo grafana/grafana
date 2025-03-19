@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { Row } from 'react-table';
 
 import { Collapse, HorizontalGroup, Icon, IconName } from '@grafana/ui';

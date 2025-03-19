@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { ComponentProps, FC } from 'react';
+import { ComponentProps, FC } from 'react';
 
 import { useStyles, FieldSet as GrafanaFieldSet, CollapsableSection } from '@grafana/ui';
 

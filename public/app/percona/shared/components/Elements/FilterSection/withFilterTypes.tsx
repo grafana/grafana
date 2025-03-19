@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/no-redundant-roles */
 /* eslint-disable react/display-name */
 import { cx } from '@emotion/css';
-import React, { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useState } from 'react';
 import { withTypes } from 'react-final-form';
 
 import { Collapse, HorizontalGroup, useStyles2 } from '@grafana/ui';

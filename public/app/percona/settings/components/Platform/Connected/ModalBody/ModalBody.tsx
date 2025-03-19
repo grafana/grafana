@@ -1,4 +1,3 @@
-import React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { getPerconaUser } from 'app/percona/shared/core/selectors';

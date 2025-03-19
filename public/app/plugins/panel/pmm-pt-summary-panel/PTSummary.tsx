@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';

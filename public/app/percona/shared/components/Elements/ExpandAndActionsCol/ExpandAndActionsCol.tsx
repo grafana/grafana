@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { PropsWithChildren, ReactElement } from 'react';
+import { PropsWithChildren, ReactElement } from 'react';
 
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { ExpandableRowButton } from 'app/percona/shared/components/Elements/ExpandableRowButton/ExpandableRowButton';

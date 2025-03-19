@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';

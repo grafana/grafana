@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
+import { FC, useState, useEffect, useCallback, useMemo } from 'react';
 import { Field, withTypes } from 'react-final-form';
 import { useHistory } from 'react-router-dom';
 

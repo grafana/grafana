@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { KeysBlock } from '../../KeysBlock';
 import { LocationType, S3Location, StorageLocation } from '../StorageLocations.types';

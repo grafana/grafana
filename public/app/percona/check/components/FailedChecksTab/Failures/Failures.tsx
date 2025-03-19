@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { FailedChecksCounts } from 'app/percona/check/types';

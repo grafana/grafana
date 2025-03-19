@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import { FC, useMemo } from 'react';
 
 import { MetricsLabelsSection, PromQuery, PrometheusDatasource, QueryPreview } from '@grafana/prometheus';
 import { promQueryModeller } from '@grafana/prometheus/src/querybuilder/PromQueryModeller';

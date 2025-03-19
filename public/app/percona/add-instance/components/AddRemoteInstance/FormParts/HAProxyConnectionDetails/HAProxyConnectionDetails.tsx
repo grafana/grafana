@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo } from 'react';
+import { FC, useCallback, useMemo } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { PasswordInputField } from 'app/percona/shared/components/Form/PasswordInput';

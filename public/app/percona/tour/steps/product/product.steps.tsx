@@ -1,4 +1,3 @@
-import React from 'react';
 
 import { Settings } from 'app/percona/settings/Settings.types';
 import { TourStep } from 'app/percona/shared/core/reducers/tour';

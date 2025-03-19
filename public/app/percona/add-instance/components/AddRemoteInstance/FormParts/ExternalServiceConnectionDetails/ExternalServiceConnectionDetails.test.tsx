@@ -1,5 +1,4 @@
 import { render, fireEvent, screen } from '@testing-library/react';
-import React from 'react';
 import { Form } from 'react-final-form';
 import { Provider } from 'react-redux';
 

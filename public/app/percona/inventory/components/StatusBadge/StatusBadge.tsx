@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Badge, BadgeColor, Link, useStyles2 } from '@grafana/ui';
 

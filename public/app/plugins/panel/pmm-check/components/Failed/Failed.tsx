@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 
 import { config } from '@grafana/runtime';
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';

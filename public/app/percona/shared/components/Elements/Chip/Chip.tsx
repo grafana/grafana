@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import { FC, useState } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 

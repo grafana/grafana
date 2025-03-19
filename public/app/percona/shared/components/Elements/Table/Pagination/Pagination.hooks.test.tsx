@@ -1,5 +1,5 @@
 import { render, fireEvent } from '@testing-library/react';
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { PAGE_SIZES } from './Pagination.constants';
 import { useStoredTablePageSize } from './Pagination.hooks';

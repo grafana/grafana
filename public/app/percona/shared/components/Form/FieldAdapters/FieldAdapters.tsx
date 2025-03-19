@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { cx } from '@emotion/css';
-import React from 'react';
 
 import { Select, Spinner, useTheme } from '@grafana/ui';
 

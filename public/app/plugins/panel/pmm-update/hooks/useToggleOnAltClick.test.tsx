@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { useToggleOnAltClick } from './useToggleOnAltClick';
 

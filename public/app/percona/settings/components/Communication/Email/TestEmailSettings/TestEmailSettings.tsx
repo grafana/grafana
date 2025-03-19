@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import { FC, useState } from 'react';
 import { Form } from 'react-final-form';
 
 import { Button, useStyles } from '@grafana/ui';

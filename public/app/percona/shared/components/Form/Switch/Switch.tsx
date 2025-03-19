@@ -1,6 +1,4 @@
-/** @jsx jsx */
 import { cx } from '@emotion/css';
-import { jsx } from '@emotion/react';
 import { FC, useMemo } from 'react';
 import { Field } from 'react-final-form';
 
@@ -46,7 +44,7 @@ export const SwitchField: FC<SwitchFieldProps> = ({
             tooltipLinkTarget={tooltipLinkTarget}
             tooltipIcon={tooltipIcon}
           />
-          <Switch css={{}} {...input} value={input.checked} disabled={disabled} data-testid={`${name}-switch`} />
+          <Switch {...input} value={input.checked} disabled={disabled} data-testid={`${name}-switch`} />
           <div data-testid={`${name}-field-error-message`} className={styles.errorMessage}>
             {meta.touched && meta.error}
           </div>

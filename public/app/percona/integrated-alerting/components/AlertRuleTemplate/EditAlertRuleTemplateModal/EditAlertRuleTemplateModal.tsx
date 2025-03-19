@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { Form } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';

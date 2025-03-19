@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import { FC, useMemo } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { Button, Form, InputControl, Modal, Select } from '@grafana/ui';

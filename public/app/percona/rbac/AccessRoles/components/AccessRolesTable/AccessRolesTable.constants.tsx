@@ -1,4 +1,3 @@
-import React from 'react';
 import { Column } from 'react-table';
 
 import { Messages } from '../../AccessRole.messages';

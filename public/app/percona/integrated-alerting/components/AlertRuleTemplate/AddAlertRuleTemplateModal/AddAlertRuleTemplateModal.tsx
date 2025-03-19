@@ -1,5 +1,5 @@
 import { FormApi } from 'final-form';
-import React, { ChangeEvent, FC, useCallback, useRef } from 'react';
+import { ChangeEvent, FC, useCallback, useRef } from 'react';
 import { Form } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';

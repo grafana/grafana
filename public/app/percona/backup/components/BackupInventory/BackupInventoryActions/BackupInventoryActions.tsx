@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Tooltip, useStyles2 } from '@grafana/ui';
 import { BackupStatus } from 'app/percona/backup/Backup.types';

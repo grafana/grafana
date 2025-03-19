@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Spinner, useStyles } from '@grafana/ui';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';

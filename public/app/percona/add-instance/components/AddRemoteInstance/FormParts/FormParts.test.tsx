@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { FormApi, FormState } from 'final-form';
-import React from 'react';
 import { Form } from 'react-final-form';
 import { Provider } from 'react-redux';
 

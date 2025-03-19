@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { BackupMode, BackupStatus, DataModel } from 'app/percona/backup/Backup.types';
 import { Databases } from 'app/percona/shared/core';

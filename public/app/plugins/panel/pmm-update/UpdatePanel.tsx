@@ -1,4 +1,4 @@
-import React, { FC, MouseEvent, useState } from 'react';
+import { FC, MouseEvent, useState } from 'react';
 
 import { Button, Spinner } from '@grafana/ui';
 import { PMM_UPDATES_LINK } from 'app/percona/shared/components/PerconaBootstrapper/PerconaNavigation';

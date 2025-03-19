@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 
-import React, { FC, useState, useMemo } from 'react';
+import { FC, useState, useMemo } from 'react';
 
 import { useStyles, IconName, Button, Select } from '@grafana/ui';
 

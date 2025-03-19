@@ -1,4 +1,4 @@
-import React, { FC, PropsWithChildren } from 'react';
+import { FC, PropsWithChildren } from 'react';
 
 import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
 import { useSelector } from 'app/types';

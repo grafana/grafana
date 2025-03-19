@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import { FC, useState } from 'react';
 
 import { Collapse, useStyles } from '@grafana/ui';
 import { Label } from 'app/percona/shared/components/Form/Label';

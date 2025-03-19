@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { act } from 'react-dom/test-utils';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 

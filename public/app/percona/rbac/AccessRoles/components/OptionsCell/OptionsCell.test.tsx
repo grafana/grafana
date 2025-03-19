@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 import { Provider } from 'react-redux';
 
 import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';

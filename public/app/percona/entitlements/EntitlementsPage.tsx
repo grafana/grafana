@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { CollapsableSection } from '@grafana/ui/src/components';

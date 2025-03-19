@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Badge, useStyles2 } from '@grafana/ui';
 import { ServiceStatus } from 'app/percona/shared/services/services/Services.types';

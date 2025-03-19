@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import { cx } from '@emotion/css';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Field, FieldInputProps, FieldMetaState, UseFieldConfig } from 'react-final-form';
 
 import { SelectableValue } from '@grafana/data';

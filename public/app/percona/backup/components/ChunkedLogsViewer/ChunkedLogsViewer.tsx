@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useState, useRef } from 'react';
+import { FC, useCallback, useEffect, useState, useRef } from 'react';
 
 import { ClipboardButton, useStyles } from '@grafana/ui';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';

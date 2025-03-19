@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';

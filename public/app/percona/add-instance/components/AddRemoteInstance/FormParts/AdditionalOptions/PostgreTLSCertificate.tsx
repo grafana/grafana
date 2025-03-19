@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { TextareaInputField } from 'app/percona/shared/components/Form/TextareaInput';
 

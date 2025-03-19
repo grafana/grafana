@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name, @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 
 import { cx } from '@emotion/css';
-import React, { FC, useEffect } from 'react';
+import { FC, useEffect } from 'react';
 import { useRowSelect, useTable } from 'react-table';
 
 import { Checkbox, Spinner, useTheme } from '@grafana/ui';
