@@ -1836,6 +1836,13 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},
+		{
+			Name:        "azureMonitorLogsBuilderEditor",
+			Description: "Enables the logs builder mode for the Azure Monitor data source",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // enabled by default
+		},
 	}
 )
 

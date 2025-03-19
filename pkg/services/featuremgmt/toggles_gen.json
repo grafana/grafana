@@ -882,6 +882,19 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorLogsBuilderEditor",
+        "resourceVersion": "1742424709998",
+        "creationTimestamp": "2025-03-19T22:51:49Z"
+      },
+      "spec": {
+        "description": "Enables the logs builder mode for the Azure Monitor data source",
+        "stage": "preview",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureMonitorPrometheusExemplars",
         "resourceVersion": "1723028568258",
         "creationTimestamp": "2024-06-06T16:53:17Z",

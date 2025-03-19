@@ -1064,4 +1064,9 @@ export interface FeatureToggles {
   * Enables the unified storage history pruner
   */
   unifiedStorageHistoryPruner?: boolean;
+  /**
+  * Enables the logs builder mode for the Azure Monitor data source
+  * @default true
+  */
+  azureMonitorLogsBuilderEditor?: boolean;
 }
