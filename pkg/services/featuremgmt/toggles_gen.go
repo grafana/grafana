@@ -511,6 +511,10 @@ const (
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
+	// FlagSecretsManagementAppPlatform
+	// Enable the secrets management API and services under app platform
+	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
+
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"

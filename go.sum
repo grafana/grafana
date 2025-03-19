@@ -1588,8 +1588,10 @@ github.com/grafana/grafana/apps/playlist v0.0.0-20250220164708-c8d4ff28a450 h1:h
 github.com/grafana/grafana/apps/playlist v0.0.0-20250220164708-c8d4ff28a450/go.mod h1:KKIsWpbv88Lwwcvdjon73zFL7vNJvuXLtsSoUjJErTw=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 h1:9qOLpC21AmXZqZ6rUhrBWl2mVqS3CzV53pzw0BCuHt0=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8/go.mod h1:deLQ/ywLvpVGbncRGUA4UDGt8a5Ei9sivOP+x6AQ2ko=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432 h1:/0MLOGx9Ow7ihR4smlUYHFvomXBpdpf/jLWHKNfEUiI=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432/go.mod h1:A/SJ9CiAWNOdeD/IezNwRaDZusLKq0z6dTfhKDgZw5Y=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250314071911-14e2784e6979 h1:B7kt2We4CVCWRJGgaIyx8lhZqTeDAk6bspOkGYWoB/I=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250314071911-14e2784e6979/go.mod h1:A/SJ9CiAWNOdeD/IezNwRaDZusLKq0z6dTfhKDgZw5Y=
+github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a h1:dMllTcE0R1qvV4rWDehQzxNiHaale1yCzXsVkub07D0=
+github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a/go.mod h1:K/fP4kODJmABug5b90PhACUZD6Xh/veEz2b1VRKNyuA=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295 h1:ivbywO8ZnmzDDkn169qUb9REsCGYAA7H8W6VfqSmCEw=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295/go.mod h1:OugmKouuvgWeOI8Kghram2Pv8b/1SuXRR8/iW068uLk=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
