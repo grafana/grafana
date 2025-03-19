@@ -17,6 +17,7 @@ WHERE {{ .Ident "guid" }} IN (
     {{ .Ident "namespace" }} = {{ .Arg .Key.Namespace }}
     AND {{ .Ident "group" }} = {{ .Arg .Key.Group }}
     AND {{ .Ident "resource" }} = {{ .Arg .Key.Resource }}
+    AND {{ .Ident "name" }} = {{ .Arg .Key.Name }}
   ) AS {{ .Ident "ranked" }}
   WHERE {{ .Ident "rn" }} > {{ .Arg .HistoryLimit }}
 );
