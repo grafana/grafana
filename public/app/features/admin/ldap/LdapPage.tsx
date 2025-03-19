@@ -7,7 +7,7 @@ import { featureEnabled } from '@grafana/runtime';
 import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import {
   AppNotificationSeverity,
@@ -123,7 +123,7 @@ export const LdapPage = ({
                 <Trans i18nKey="admin.ldap.test-mapping-heading">Test user mapping</Trans>
               </h3>
               <form onSubmit={handleSubmit(search)}>
-                <Field label="Username">
+                <Field label={t('admin.ldap-page.label-username', 'Username')}>
                   <Input
                     {...register('username', { required: true })}
                     width={34}

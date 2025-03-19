@@ -16,7 +16,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { UserDTO } from 'app/types';
 
 import { OrgUnits } from './OrgUnits';
@@ -55,7 +55,12 @@ export const UsersTable = ({
         header: 'Login',
         cell: ({ row: { original } }: Cell<'login'>) => {
           return (
-            <TextLink color="primary" inline={false} href={`/admin/users/edit/${original.uid}`} title="Edit user">
+            <TextLink
+              color="primary"
+              inline={false}
+              href={`/admin/users/edit/${original.uid}`}
+              title={t('admin.users-table.columns.title-edit-user', 'Edit user')}
+            >
               {original.login}
             </TextLink>
           );

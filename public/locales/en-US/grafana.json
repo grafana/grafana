@@ -35,14 +35,56 @@
     }
   },
   "admin": {
+    "add-to-org-modal": {
+      "label-organization": "Organization",
+      "label-role": "Role",
+      "title-add-to-an-organization": "Add to an organization"
+    },
+    "admin-edit-org-page": {
+      "label-name": "Name",
+      "render-missing-permission-message": {
+        "title-access-denied": "Access denied"
+      }
+    },
+    "admin-feature-toggles-table": {
+      "get-stage-cell": {
+        "beta": "Beta",
+        "deprecated": "Deprecated",
+        "ga": "GA"
+      },
+      "title-apply-feature-toggle-changes": "Apply feature toggle changes"
+    },
+    "admin-orgs-table": {
+      "aria-label-delete-org": "Delete org",
+      "title-delete": "Delete"
+    },
     "anon-users": {
       "not-found": "No anonymous users found."
+    },
+    "base-user-sessions": {
+      "title-force-logout-from-all-devices": "Force logout from all devices"
     },
     "edit-org": {
       "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
       "heading": "Edit Organization",
       "update-button": "Update",
       "users-heading": "Organization users"
+    },
+    "feature-listing": {
+      "title-auditing": "Auditing",
+      "title-dashboard-presence-indicators": "Dashboard presence indicators",
+      "title-dashboard-usage-stats-drawer": "Dashboard usage stats drawer",
+      "title-data-source-permissions": "Data source permissions",
+      "title-enhanced-ldap-integration": "Enhanced LDAP integration",
+      "title-enterprise-plugins": "Enterprise plugins",
+      "title-find-unused-dashboards": "Find unused dashboards",
+      "title-grafana-usage-insights": "Grafana usage insights",
+      "title-reporting": "Reporting",
+      "title-saml-authentication": "SAML authentication",
+      "title-settings-updates-at-runtime": "Settings updates at runtime",
+      "title-sort-dashboards-by-popularity-in-search": "Sort dashboards by popularity in search",
+      "title-team-sync": "Team Sync",
+      "title-white-labeling": "White labeling"
     },
     "feature-toggles": {
       "sub-title": "View and edit feature toggles. Read more about feature toggles at <2>grafana.com</2>."
@@ -61,10 +103,22 @@
       "test-mapping-heading": "Test user mapping",
       "test-mapping-run-button": "Run"
     },
+    "ldap-error-box": {
+      "title-connection-error": "Connection error"
+    },
+    "ldap-page": {
+      "label-username": "Username"
+    },
     "ldap-permissions": {
       "active": "<0></0> Active",
       "admin": "<0></0> Yes",
       "inactive": "<0></0> Inactive"
+    },
+    "ldap-settings-page": {
+      "label-reset-to-default-values": "Reset to default values",
+      "title-invalid-configuration": "Invalid configuration",
+      "title-more-actions": "More actions",
+      "tooltip-more-actions": "More actions"
     },
     "ldap-status": {
       "title": "LDAP Connection"
@@ -87,11 +141,20 @@
     "ldap-user-info": {
       "no-team": "No teams found via LDAP"
     },
+    "org-role-picker": {
+      "placeholder-choose-role": "Choose role..."
+    },
     "org-uers": {
       "last-seen-never": "Never"
     },
     "org-users": {
       "not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details."
+    },
+    "org-users-table": {
+      "columns": {
+        "aria-label-role": "Role"
+      },
+      "title-delete": "Delete"
     },
     "orgs": {
       "delete-body": "Are you sure you want to delete '{{deleteOrgName}}'?<3></3> <5>All dashboards for this organization will be removed!</5>",
@@ -107,11 +170,37 @@
       "title": "Instance statistics",
       "users-button": "Manage users"
     },
+    "service-info": {
+      "title-critical-sla-hours": "Critical SLA: 2 hours",
+      "title-enterprise-plugins": "Enterprise Plugins",
+      "title-unlimited-expert-support": "Unlimited Expert Support"
+    },
     "settings": {
       "info-description": "These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change these you currently need to restart Grafana."
     },
     "upgrade-info": {
       "title": "Enterprise license"
+    },
+    "user-create-page": {
+      "label-email": "Email",
+      "label-name": "Name",
+      "label-password": "Password",
+      "label-username": "Username"
+    },
+    "user-ldap-sync-info": {
+      "label-ldap": "LDAP"
+    },
+    "user-list-admin-page-un-connected": {
+      "placeholder-search-login-email": "Search user by login, email, or name."
+    },
+    "user-list-anonymous-devices-page-un-connected": {
+      "placeholder-search-devices-by-ip-address": "Search devices by IP address."
+    },
+    "user-list-page": {
+      "label-all-users": "All users",
+      "label-anonymous-devices": "Anonymous devices",
+      "label-organization-users": "Organization users",
+      "label-users": "Users"
     },
     "user-orgs": {
       "add-button": "Add user to organization",
@@ -137,7 +226,14 @@
       "disable-button": "Disable user",
       "edit-button": "Edit",
       "enable-button": "Enable user",
-      "title": "User information"
+      "label-email": "Email",
+      "label-name": "Name",
+      "label-numerical-identifier": "Numerical identifier",
+      "label-password": "Password",
+      "label-username": "Username",
+      "title": "User information",
+      "title-delete-user": "Delete user",
+      "title-disable-user": "Disable user"
     },
     "user-sessions": {
       "browser-column": "Browser and OS",
@@ -155,6 +251,9 @@
       "create-button": "New user"
     },
     "users-table": {
+      "columns": {
+        "title-edit-user": "Edit user"
+      },
       "last-seen-never": "Never",
       "no-licensed-roles": "Not assigned"
     }
@@ -819,6 +918,9 @@
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
     },
+    "browse-view": {
+      "this-folder-is-empty": "This folder is empty"
+    },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
       "alertRule_other": "{{count}} alert rule",
@@ -838,6 +940,9 @@
       "select-all-header-checkbox": "Select all",
       "select-checkbox": "Select",
       "tags-column": "Tags"
+    },
+    "descendant-count": {
+      "title-unable-to-retrieve-descendant-information": "Unable to retrieve descendant information"
     },
     "empty-state": {
       "button-title": "Create dashboard",
@@ -868,6 +973,9 @@
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
       "panels": "Panels"
+    },
+    "name-cell": {
+      "no-items": "No items"
     },
     "new-folder-form": {
       "cancel-label": "Cancel",
@@ -2428,8 +2536,31 @@
     }
   },
   "library-panels": {
+    "add-library-panel-modal": {
+      "title-create-library-panel": "Create library panel"
+    },
+    "confirm": {
+      "delete-panel": "Do you want to delete this panel?"
+    },
+    "delete-library-panel-modal": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "title-delete-library-panel": "Delete library panel"
+    },
     "empty-state": {
       "message": "No library panels found"
+    },
+    "folder-link": {
+      "dashboards": "Dashboards"
+    },
+    "has-connected-dashboards": {
+      "dashboard-name": "Dashboard name"
+    },
+    "library-panels-search": {
+      "placeholder-search-by-name-or-description": "Search by name or description"
+    },
+    "loading-indicator": {
+      "loading-library-panel": "Loading library panel..."
     },
     "loading-panel-text": "Loading library panel",
     "modal": {
@@ -2443,9 +2574,20 @@
       "select-placeholder": "Start typing to search for dashboard",
       "title": "View panel in dashboard"
     },
+    "panel-library-options-group": {
+      "create-new-library-panel": "Create new library panel"
+    },
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
+    },
+    "save-library-panel-modal": {
+      "cancel": "Cancel",
+      "dashboard-name": "Dashboard name",
+      "discard": "Discard",
+      "loading-connected-dashboards": "Loading connected dashboards...",
+      "placeholder-search-affected-dashboards": "Search affected dashboards",
+      "update-all": "Update all"
     }
   },
   "link": {
@@ -3187,6 +3329,27 @@
       "error": "Login provider denied login request"
     }
   },
+  "org": {
+    "new-org-page": {
+      "create": "Create",
+      "label-organization-name": "Organization name",
+      "placeholder-org-name": "Org name"
+    },
+    "org-profile": {
+      "label-organization-name": "Organization name",
+      "label-organization-profile": "Organization profile",
+      "update-organization-name": "Update organization name"
+    },
+    "user-invite-form": {
+      "back": "Back",
+      "label-email-or-username": "Email or username",
+      "label-name": "Name",
+      "label-send-invite-email": "Send invite email",
+      "placeholder-optional": "(optional)",
+      "role": "Role",
+      "submit": "Submit"
+    }
+  },
   "panel": {
     "header-menu": {
       "copy": "Copy",
@@ -3216,6 +3379,19 @@
   },
   "panel-type-filter": {
     "clear-button": "Clear types"
+  },
+  "playlist": {
+    "start-modal": {
+      "description-customize-dashboard-elements-visibility": "Customize dashboard elements visibility",
+      "description-panel-heights-adjusted-screen": "Panel heights will be adjusted to fit screen size",
+      "label-autofit": "Autofit",
+      "label-dashboard-links": "Dashboard links",
+      "label-display-dashboard-controls": "Display dashboard controls",
+      "label-mode": "Mode",
+      "label-time-and-refresh": "Time and refresh",
+      "label-variables": "Variables",
+      "title-start-playlist": "Start playlist"
+    }
   },
   "playlist-edit": {
     "error-prefix": "Error loading playlist:",
@@ -4038,11 +4214,37 @@
     "placeholder": "Filter by tag"
   },
   "teams": {
+    "create-team": {
+      "create": "Create",
+      "label-name": "Name",
+      "label-role": "Role"
+    },
     "empty-state": {
       "button-title": "New team",
       "message": "No teams found",
       "pro-tip": "Assign folder and dashboard permissions to teams instead of users to ease administration. <2>Learn more</2>",
       "title": "You haven't created any teams yet"
+    },
+    "team-group-sync": {
+      "add-group": "Add group",
+      "external-group-id": "External Group ID",
+      "external-group-sync": "External group sync",
+      "title-there-external-groups": "There are no external groups to sync with"
+    },
+    "team-list": {
+      "columns": {
+        "title-edit-team": "Edit team"
+      },
+      "new-team": "New Team",
+      "placeholder-search-teams": "Search teams"
+    },
+    "team-settings": {
+      "label-email": "Email",
+      "label-name": "Name",
+      "label-numerical-identifier": "Numerical identifier",
+      "label-role": "Role",
+      "label-team-details": "Team details",
+      "save": "Save"
     }
   },
   "theme-preview": {
