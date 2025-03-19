@@ -59,8 +59,8 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 	}
 
 	// While testing with provisioning repositories, we will limit this to admin only
-	if u.HasRole(identity.RoleAdmin) {
-		return return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("only admin users for now")
+	if !u.HasRole(identity.RoleAdmin) {
+		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("only admin users for now")
 	}
 
 	b.watchingMu.Lock()
