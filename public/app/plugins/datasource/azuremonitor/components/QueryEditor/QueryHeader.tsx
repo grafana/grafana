@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, RadioButtonGroup } from '@grafana/ui';
 
 import { LogsEditorMode } from '../../dataquery.gen';
@@ -97,7 +97,7 @@ export const QueryHeader = ({ query, onQueryChange, setAzureLogsCheatSheetModalO
           </Button>
         )}
         <FlexItem grow={1} />
-        {query.queryType === AzureQueryType.LogAnalytics && (
+        {(query.queryType === AzureQueryType.LogAnalytics && !!config.featureToggles.azureMonitorLogsBuilderEditor) && (
           <RadioButtonGroup
             size="sm"
             options={EDITOR_MODES}
