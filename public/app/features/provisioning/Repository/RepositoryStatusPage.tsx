@@ -37,7 +37,7 @@ export default function RepositoryStatusPage() {
 
   const query = useListRepositoryQuery({
     fieldSelector: `metadata.name=${name}`,
-    watch: false,
+    watch: true,
   });
   const data = query.data?.items?.[0];
   const location = useLocation();
