@@ -1,6 +1,7 @@
 SELECT p.kind, p.attribute, p.identifier, p.scope FROM "grafana"."permission" as p
 LEFT JOIN "grafana"."builtin_role" as br ON p.role_id = br.role_id 
-    AND ((br.role = 'Viewer' AND (br.org_id = 1 OR br.org_id = 0))
+    AND (
+      (br.role = 'Viewer' AND (br.org_id = 1 OR br.org_id = 0))
     )
 WHERE
   p.action = 'folders:read'

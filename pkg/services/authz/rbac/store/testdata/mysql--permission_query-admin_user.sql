@@ -1,7 +1,8 @@
 SELECT p.kind, p.attribute, p.identifier, p.scope FROM `grafana`.`permission` as p
 LEFT JOIN `grafana`.`builtin_role` as br ON p.role_id = br.role_id 
-    AND ((br.role = 'Admin' AND (br.org_id = 1 OR br.org_id = 0))
-    OR (br.role = 'Grafana Admin')
+    AND (
+      (br.role = 'Admin' AND (br.org_id = 1 OR br.org_id = 0))
+      OR (br.role = 'Grafana Admin')
     )
 LEFT JOIN `grafana`.`user_role` as ur ON p.role_id = ur.role_id 
     AND ur.user_id = 1 AND (ur.org_id = 1 OR ur.org_id = 0)
