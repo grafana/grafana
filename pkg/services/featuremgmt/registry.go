@@ -376,7 +376,7 @@ var (
 		{
 			Name:         "frontendSandboxMonitorOnly",
 			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
