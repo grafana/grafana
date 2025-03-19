@@ -70,7 +70,11 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
             {dataSourcesLoading.length ? (
               <LoadingPlaceholder
                 className={styles.loader}
-                text={`${t('alerting.list-view.section.loading-rules', 'Loading rules from')} ${dataSourcesLoading.length} ${pluralize('source', dataSourcesLoading.length)}`}
+                text={t(
+                  'alerting.list-view.section.loading-rules',
+                  'Loading rules from {{numberOfSources}} {{sources}}',
+                  { numberOfSource: dataSourcesLoading.length, sources: pluralize('source', dataSourcesLoading.length) }
+                )}
               />
             ) : (
               <div />
@@ -95,8 +99,18 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
         );
       })}
 
-      {!hasDataSourcesConfigured && <p>There are no Prometheus or Loki data sources configured.</p>}
-      {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && <p>No rules found.</p>}
+      {!hasDataSourcesConfigured && (
+        <p>
+          <Trans i18nKey="alerting.list-view.no-prom-or-loki-rules">
+            There are no Prometheus or Loki data sources configured
+          </Trans>
+        </p>
+      )}
+      {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && (
+        <p>
+          <Trans i18nKey="alerting.list-view.no-rules">No rules found.</Trans>
+        </p>
+      )}
       {!hasSomeResults && hasDataSourcesLoading && <Spinner size="xl" className={styles.spinner} />}
 
       <Pagination
