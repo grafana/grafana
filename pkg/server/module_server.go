@@ -18,12 +18,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics)
+func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics, promGatherer prometheus.Gatherer) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, promGatherer)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +36,7 @@ func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.Fea
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics) (*ModuleServer, error) {
+func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics, promGatherer prometheus.Gatherer) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
@@ -53,6 +54,7 @@ func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremg
 		buildBranch:      opts.BuildBranch,
 		storageMetrics:   storageMetrics,
 		indexMetrics:     indexMetrics,
+		promGatherer:     promGatherer,
 	}
 
 	return s, nil
@@ -81,6 +83,8 @@ type ModuleServer struct {
 	version     string
 	commit      string
 	buildBranch string
+
+	promGatherer prometheus.Gatherer
 }
 
 // init initializes the server and its services.
@@ -119,7 +123,7 @@ func (s *ModuleServer) Run() error {
 		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) {
 			return services.NewBasicService(nil, nil, nil).WithName(modules.InstrumentationServer), nil
 		}
-		return NewInstrumentationService(s.log, s.cfg)
+		return NewInstrumentationService(s.log, s.cfg, s.promGatherer)
 	})
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
