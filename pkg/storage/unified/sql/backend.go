@@ -798,6 +798,19 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 		listReq.StartRV = continueToken.ResourceVersion
 	}
 
+	// Set ExactRV when using Exact matching
+	if req.VersionMatch == resource.ResourceVersionMatch_Exact {
+		if req.ResourceVersion <= 0 {
+			return 0, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
+		}
+		listReq.ExactRV = req.ResourceVersion
+	}
+
+	// Set MinRV when using NotOlderThan matching to filter at the database level
+	if req.ResourceVersion > 0 && req.VersionMatch == resource.ResourceVersionMatch_NotOlderThan {
+		listReq.MinRV = req.ResourceVersion
+	}
+
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
