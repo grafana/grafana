@@ -467,7 +467,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
   const dashboard = useDashboard(model);
 
-  // If we are top level layout and have no children, show empty state
+  // If we are top level layout and we have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {
     return (
       <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />
