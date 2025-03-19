@@ -628,10 +628,12 @@ export class DashboardMigrator {
         }
         panel.type = wasAngularTable ? 'table-old' : 'table';
         // Hacky way to call the automigrate feature
-        const newType = getPanelPluginToMigrateTo(panel);
-        if (newType) {
-          panel.autoMigrateFrom = panel.type;
-          panel.type = newType;
+        if (panel.type === 'table-old') {
+          const newType = getPanelPluginToMigrateTo(panel);
+          if (newType) {
+            panel.autoMigrateFrom = panel.type;
+            panel.type = newType;
+          }
         }
         return panel;
       });
