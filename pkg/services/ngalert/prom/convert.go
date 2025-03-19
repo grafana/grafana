@@ -134,7 +134,6 @@ func (p *Converter) PrometheusRulesToGrafana(orgID int64, namespaceUID string, g
 }
 
 func (p *Converter) convertRuleGroup(orgID int64, namespaceUID string, promGroup PrometheusRuleGroup) (*models.AlertRuleGroup, error) {
-	uniqueNames := map[string]int{}
 	rules := make([]models.AlertRule, 0, len(promGroup.Rules))
 
 	interval := time.Duration(promGroup.Interval)
@@ -149,12 +148,6 @@ func (p *Converter) convertRuleGroup(orgID int64, namespaceUID string, promGroup
 		}
 		gr.RuleGroupIndex = i + 1
 		gr.IntervalSeconds = int64(interval.Seconds())
-
-		// Check rule title uniqueness within the group.
-		uniqueNames[gr.Title]++
-		if val := uniqueNames[gr.Title]; val > 1 {
-			gr.Title = fmt.Sprintf("%s (%d)", gr.Title, val)
-		}
 
 		uid, err := getUID(orgID, namespaceUID, promGroup.Name, i, rule)
 		if err != nil {
@@ -224,13 +217,6 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		isPaused = p.cfg.AlertRules.IsPaused
 		title = rule.Alert
 	}
-
-	// Temporary workaround for avoiding the uniqueness check for the rule title.
-	// In Grafana alert rule titles must be unique within the same org and folder,
-	// but Prometheus allows multiple rules with the same name. By adding the group name
-	// to the title we ensure that the title is unique within the group.
-	// TODO: Remove this workaround when we have a proper solution for handling rule title uniqueness.
-	title = fmt.Sprintf("[%s] %s", promGroup.Name, title)
 
 	labels := make(map[string]string, len(rule.Labels)+len(promGroup.Labels))
 	maps.Copy(labels, promGroup.Labels)
