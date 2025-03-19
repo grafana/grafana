@@ -317,6 +317,7 @@
 /Makefile @grafana/grafana-developer-enablement-squad
 /scripts/build/ @grafana/grafana-developer-enablement-squad
 /scripts/list-release-artifacts.sh @grafana/grafana-developer-enablement-squad
+/scripts/releasefinder.sh @baldm0mma
 /.trivyignore @grafana/grafana-backend-services-squad
 
 # OSS Plugin Partnerships backend code
