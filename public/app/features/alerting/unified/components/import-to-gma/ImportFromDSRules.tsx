@@ -58,14 +58,16 @@ const ImportFromDSRules = () => {
     try {
       await convert({
         datasourceUID: data.selectedDatasourceUID,
-        targetFolderUID: data.targetFolder!.uid,
+        targetFolderUID: data.targetFolder?.uid,
         pauseRecordingRules: data.pauseRecordingRules,
         pauseAlerts: data.pauseAlertingRules,
         ...(data.namespace ? { namespace: data.namespace } : {}),
         ...(data.ruleGroup ? { group: data.ruleGroup } : {}),
       }).unwrap();
 
-      const ruleListUrl = createListFilterLink([['namespace', data.targetFolder?.title ?? '']]);
+      const isRootFolder = data.targetFolder?.uid === '';
+
+      const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', data.targetFolder?.title ?? '']]);
       notifyApp.success(
         t('alerting.import-to-gma.success', 'Successfully exported alert rules to Grafana-managed rules.')
       );
@@ -125,7 +127,7 @@ const ImportFromDSRules = () => {
 
               <InlineField
                 transparent={true}
-                label={t('alerting.import-to-gma.target-folder.label', 'Target Folder')}
+                label={t('alerting.import-to-gma.target-folder.label', 'Target Folder (optional)')}
                 labelWidth={20}
                 invalid={!!errors.selectedDatasourceName}
                 error={errors.selectedDatasourceName?.message}
@@ -134,7 +136,6 @@ const ImportFromDSRules = () => {
                   render={({ field: { onChange, ref, ...field } }) => (
                     <Stack width={50}>
                       <NestedFolderPicker
-                        showRootFolder={false}
                         invalid={!!errors.targetFolder?.message}
                         {...field}
                         value={targetFolder?.uid}
@@ -149,12 +150,6 @@ const ImportFromDSRules = () => {
                     </Stack>
                   )}
                   name="targetFolder"
-                  rules={{
-                    required: {
-                      value: true,
-                      message: t('alerting.import-to-gma.taget-folder.required', 'Please select a target folder'),
-                    },
-                  }}
                   control={control}
                 />
               </InlineField>
@@ -186,7 +181,7 @@ const ImportFromDSRules = () => {
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={isSubmitting || !watch('selectedDatasourceName') || !watch('targetFolder')}
+                  disabled={isSubmitting || !watch('selectedDatasourceName')}
                   onClick={() => clearErrors()}
                 >
                   {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
