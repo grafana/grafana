@@ -873,10 +873,14 @@ func newQuery(key string, value string, prefix string) query.Query {
 		for _, token := range tokens {
 			_, ok := hasTerms(token)
 			if ok {
-				qq.AddQuery(bleve.NewTermQuery(token))
+				tq := bleve.NewTermQuery(token)
+				tq.FieldVal = prefix + key
+				qq.AddQuery(tq)
 				continue
 			}
-			qq.AddQuery(bleve.NewMatchQuery(token))
+			mq := bleve.NewMatchQuery(token)
+			mq.FieldVal = prefix + key
+			qq.AddQuery(mq)
 		}
 
 		cq := bleve.NewDisjunctionQuery(q, qq)
