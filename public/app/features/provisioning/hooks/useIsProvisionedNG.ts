@@ -17,7 +17,7 @@ export function useIsProvisionedNG(dashboard: DashboardScene): boolean {
     return false;
   }
   return (
-    dashboard.isManaged() ||
+    dashboard.isManagedRepository() ||
     Boolean(folderRepository) ||
     Boolean(data?.items.some((item) => item.target === 'instance'))
   );
