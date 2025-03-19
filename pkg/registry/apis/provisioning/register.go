@@ -316,21 +316,27 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	if err != nil {
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
+	realJobStatusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, realJobStore)
 
 	historicJobStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create historic job storage: %w", err)
 	}
+	historicJobStatusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, historicJobStore)
 	_, _ = historicJobStore, realJobStore
 
-	b.jobs, err = jobs.NewStore2(realJobStore, historicJobStore, time.Second*30)
+	b.jobs, err = jobs.NewStore2(realJobStore, realJobStatusStore, historicJobStore, historicJobStatusStore, time.Second*30)
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
 
 	storage := map[string]rest.Storage{}
+	// Although we never interact with these resources via the API, we want them to be readable from the API.
+	// TODO: Make a read-only rest.Storage wrapper.
 	storage[provisioning.JobResourceInfo.StoragePath()] = realJobStore
+	storage[provisioning.JobResourceInfo.StoragePath("status")] = realJobStatusStore
 	storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
+	storage[provisioning.HistoricJobResourceInfo.StoragePath("status")] = historicJobStatusStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 

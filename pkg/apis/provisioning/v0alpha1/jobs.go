@@ -66,9 +66,6 @@ const (
 	// Job has been submitted, but not processed yet
 	JobStatePending JobState = "pending"
 
-	// Job has been claimed, but not processed yet
-	JobStateClaimed JobState = "claimed"
-
 	// The job is running
 	JobStateWorking JobState = "working"
 

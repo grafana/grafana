@@ -69,8 +69,10 @@ type jobStorage interface {
 // When store2 claims a job, it will update the status of it. This does a ResourceVersion check to ensure it is atomic; if the job has been claimed by another worker, the claim will fail.
 // When a job is completed, it is moved to the historic job store by first deleting it from the job store and then creating it in the historic job store. We are fine with the job being lost if the historic job store fails to create it.
 type store2 struct {
-	jobStore         jobStorage
-	historicJobStore rest.Creater
+	jobStore               jobStorage
+	jobStatusStore         rest.Updater
+	historicJobStore       rest.Creater
+	historicJobStatusStore rest.Updater
 
 	// clock is a function that returns the current time.
 	clock func() time.Time
@@ -85,8 +87,8 @@ type store2 struct {
 }
 
 func NewStore2(
-	jobStore jobStorage,
-	historicJobStore rest.Creater,
+	jobStore jobStorage, jobStatusStore rest.Updater,
+	historicJobStore rest.Creater, historicJobStatusStore rest.Updater,
 	expiry time.Duration,
 ) (*store2, error) {
 	if expiry <= 0 {
@@ -94,8 +96,10 @@ func NewStore2(
 	}
 
 	return &store2{
-		jobStore:         jobStore,
-		historicJobStore: historicJobStore,
+		jobStore:               jobStore,
+		jobStatusStore:         jobStatusStore,
+		historicJobStore:       historicJobStore,
+		historicJobStatusStore: historicJobStatusStore,
 
 		clock:  time.Now,
 		expiry: expiry,
@@ -137,7 +141,6 @@ func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback fun
 			job.Labels = make(map[string]string)
 		}
 		job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
-		job.Status.State = provisioning.JobStateClaimed
 
 		// TODO: Assumption: the resource version will be updated for us here.
 		// TODO: Assumption: Unified Storage has properly implemented resource versions.
@@ -189,7 +192,6 @@ func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback fun
 
 			// Rollback the claim.
 			delete(refetchedJob.Labels, LabelJobClaim)
-			refetchedJob.Status.State = provisioning.JobStatePending
 
 			// TODO: Assumption: the resource version will be updated for us here.
 			timeoutCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
@@ -204,8 +206,26 @@ func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback fun
 			cancel() // we have no response body to read (the obj already contains all of it), so just cancel immediately
 			if err != nil && !apierrors.IsConflict(err) && !errors.Is(err, errWouldCreate) {
 				logger.Warn("failed to roll back job claim; letting periodic cleaner deal with it", "error", err)
+				return
 			} else if err != nil {
 				logger.Debug("failed to roll back job claim; got an OK error", "error", err)
+				return
+			}
+
+			// As the claim was rolled back, we should also set the status back to pending.
+			refetchedJob.Status.State = provisioning.JobStatePending
+			timeoutCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
+			_, _, err = s.jobStatusStore.Update(timeoutCtx,
+				refetchedJob.GetName(),                      // name
+				rest.DefaultUpdatedObjectInfo(refetchedJob), // objInfo
+				failCreation,            // createValidation
+				nil,                     // updateValidation
+				false,                   // forceAllowCreate
+				&metav1.UpdateOptions{}, // options
+			)
+			cancel() // we have no response body to read (the obj already contains all of it), so just cancel immediately
+			if err != nil && !apierrors.IsConflict(err) && !errors.Is(err, errWouldCreate) {
+				logger.Warn("failed to set status to pending; letting periodic cleaner deal with it", "error", err)
 			}
 		}, nil
 	}
@@ -215,8 +235,8 @@ func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback fun
 }
 
 // Update saves the job back to the store.
-func (s *store2) Update(ctx context.Context, job *provisioning.Job) error {
-	_, _, err := s.jobStore.Update(ctx,
+func (s *store2) UpdateStatus(ctx context.Context, job *provisioning.Job) error {
+	_, _, err := s.jobStatusStore.Update(ctx,
 		job.GetName(),                      // name
 		rest.DefaultUpdatedObjectInfo(job), // objInfo
 		failCreation,                       // createValidation
@@ -262,11 +282,28 @@ func (s *store2) Complete(ctx context.Context, job *provisioning.Job) error {
 		Spec:       job.Spec,
 		Status:     job.Status,
 	}
-	_, err = s.historicJobStore.Create(ctx, historicJob, nil, &metav1.CreateOptions{})
+	historic, err := s.historicJobStore.Create(ctx, historicJob, nil, &metav1.CreateOptions{})
 	if err != nil {
 		// We're not going to return this as it is not critical. Not ideal, but not critical.
-		logging.FromContext(ctx).Warn("failed to create historic job", "job", *historicJob, "error", err)
+		logging.FromContext(ctx).Warn("failed to create historic job", "historic_job", *historicJob, "error", err)
+		return nil
 	}
+	if hj, ok := historic.(*provisioning.HistoricJob); ok {
+		hj.Status = job.Status
+		_, _, err = s.historicJobStatusStore.Update(ctx,
+			hj.GetName(),                      // name
+			rest.DefaultUpdatedObjectInfo(hj), // objInfo
+			failCreation,                      // createValidation
+			nil,                               // updateValidation
+			false,                             // forceAllowCreate
+			&metav1.UpdateOptions{},           // options
+		)
+		if err != nil {
+			// We're not going to return this as it is not critical. Not ideal, but not critical.
+			logging.FromContext(ctx).Warn("failed to update historic job status", "historic_job", *hj, "error", err)
+		}
+	}
+
 	return nil
 }
 

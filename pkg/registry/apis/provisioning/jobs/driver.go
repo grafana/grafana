@@ -36,7 +36,7 @@ type Store interface {
 	InsertNotifications() chan struct{}
 
 	// Update saves the job back to the store.
-	Update(ctx context.Context, job *provisioning.Job) error
+	UpdateStatus(ctx context.Context, job *provisioning.Job) error
 }
 
 var _ Store = (*store2)(nil)
@@ -141,7 +141,7 @@ func (d *jobDriver) drive(ctx context.Context) error {
 
 	// Process the job.
 	start := time.Now()
-	err = d.processJob(ctx, job)
+	err = d.processJob(ctx, job) // NOTE: We pass in a pointer here such that the job status can be kept in Complete without re-fetching.
 	end := time.Now()
 	logger.Debug("job processed", "duration", end.Sub(start), "error", err)
 
@@ -185,6 +185,6 @@ func (d *jobDriver) onProgress(job *provisioning.Job) ProgressFn {
 	return func(ctx context.Context, status provisioning.JobStatus) error {
 		logging.FromContext(ctx).Debug("job progress", "status", status)
 		job.Status = status
-		return d.store.Update(ctx, job)
+		return d.store.UpdateStatus(ctx, job)
 	}
 }
