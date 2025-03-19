@@ -196,10 +196,6 @@ The following video shows you how to create gauge, time series line graph, stats
 
 {{< youtube id="yNRnLyVntUw" >}}
 
-The following video shows you how to create gauge, time series line graph, stats, logs, and node graph visualizations:
-
-{{< youtube id="yNRnLyVntUw" >}}
-
 ## Get more
 
 You can add more visualization types by installing [panel plugins](https://grafana.com/grafana/plugins/?type=panel).

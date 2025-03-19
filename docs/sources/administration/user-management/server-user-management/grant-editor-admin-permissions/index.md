@@ -13,7 +13,7 @@ weight: 60
 
 By default, the editor organization role does not allow editors to creator and manage teams. You can allow them to do so using the `editors_can_admin` configuration option.
 
-When `editors_can_admin` is enabled, users with the Editor role in an organization can create teams, and they are Administrators of the teams they create. To learn more about team permissions, refer to [Team management]({{< relref "../../../team-management/" >}}).
+When `editors_can_admin` is enabled, users with the Editor role in an organization can create teams, and they are Administrators of the teams they create. To learn more about team permissions, refer to [Team management](../../../team-management/).
 
 ## Before you begin
 
@@ -23,7 +23,7 @@ When `editors_can_admin` is enabled, users with the Editor role in an organizati
 
 1. Log in to the Grafana server and open the Grafana configuration file.
 
-   For more information about the Grafana configuration file and its location, refer to [Configuration]({{< relref "../../../../setup-grafana/configure-grafana/" >}}).
+   For more information about the Grafana configuration file and its location, refer to [Configuration](../../../../setup-grafana/configure-grafana/).
 
 1. Locate the `editors_can_admin` parameter.
 1. Set the `editors_can_admin` value to `true`.

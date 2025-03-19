@@ -30,10 +30,6 @@ You can access the **Playlist** feature from Grafana's side menu, in the Dashboa
 You must have at least Editor role permissions to create and manage playlists.
 {{< /admonition >}}
 
-{{< admonition type="note" >}}
-You must have at least Editor role permissions to create and manage playlists.
-{{< /admonition >}}
-
 ## Access, share, and control a playlist
 
 Use the information in this section to access playlists. Start and control the display of a playlist using one of the six available modes.

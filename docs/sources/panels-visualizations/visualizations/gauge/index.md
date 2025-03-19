@@ -45,22 +45,6 @@ The following video provides beginner steps for creating gauge panels. You'll le
 
 {{< youtube id="QwXj3y_YpnE" >}}
 
-You can use gauges if you need to track:
-
-- Service level objectives (SLOs)
-- How full a piece of equipment is
-- How fast a vehicle is moving within a set of limits
-- Network latency
-- Equipment state with setpoint and alarm thresholds
-- CPU consumption (0-100%)
-- RAM availability
-
-## Configure a time series visualization
-
-The following video provides beginner steps for creating gauge panels. You'll learn the data requirements and caveats, special customizations, and much more:
-
-{{< youtube id="QwXj3y_YpnE" >}}
-
 {{< docs/play title="Grafana Gauge Visualization" url="https://play.grafana.org/d/KIhkVD6Gk/" >}}
 
 ## Supported data formats

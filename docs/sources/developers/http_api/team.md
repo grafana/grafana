@@ -29,7 +29,7 @@ Access to these API endpoints is restricted as follows:
 - If you enable `editors_can_admin` configuration flag, then Organization Editors can create teams and manage teams where they are Admin.
   - If you enable `editors_can_admin` configuration flag, Editors can find out whether a team that they are not members of exists by trying to create a team with the same name.
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Team Search With Paging
 
@@ -41,7 +41,7 @@ or
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction](#team-api) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -107,7 +107,7 @@ The `name` parameter returns a single team if the parameter matches the `name` f
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction](#team-api) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -153,7 +153,7 @@ The Team `name` needs to be unique. `name` is required and `email` is optional.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction](#team-api) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -197,7 +197,7 @@ There are two fields that can be updated for a team: `name` and `email`.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction](#team-api) for an explanation.
 
 | Action      | Scope    |
 | ----------- | -------- |
@@ -240,7 +240,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction](#team-api) for an explanation.
 
 | Action       | Scope    |
 | ------------ | -------- |
@@ -277,7 +277,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction](#team-api) for an explanation.
 
 | Action                 | Scope    |
 | ---------------------- | -------- |
@@ -330,7 +330,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction](#team-api) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -372,7 +372,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction](#team-api) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -412,7 +412,7 @@ Will override all current members and administrators for the specified team.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction](#team-api) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -455,7 +455,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction](#team-api) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -489,7 +489,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction](#team-api) for an explanation.
 
 | Action      | Scope    |
 | ----------- | -------- |
