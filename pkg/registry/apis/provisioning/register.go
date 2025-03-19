@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -1087,6 +1086,6 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		}
 		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
 	default:
-		return nil, errors.New("unknown repository type")
+		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}
 }
