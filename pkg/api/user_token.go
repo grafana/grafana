@@ -299,7 +299,7 @@ type GetUserAuthTokensResponse struct {
 
 // @PERCONA
 func (hs *HTTPServer) GetUserOAuthToken(c *contextmodel.ReqContext) response.Response {
-	if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(hs.context, c.SignedInUser); token != nil {
+	if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(hs.context, c.SignedInUser, c.UserToken); token != nil {
 		return response.JSON(200, token)
 	}
 

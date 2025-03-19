@@ -129,7 +129,12 @@ func (api *ServiceAccountsAPI) CurrentServiceAccount(ctx *contextmodel.ReqContex
 		return response.Error(http.StatusBadRequest, "Auth method is not service account token", errors.New("failed to get service account info"))
 	}
 
-	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgID, ctx.UserID)
+	query := serviceaccounts.GetServiceAccountQuery{
+		OrgID: ctx.OrgID,
+		ID:    ctx.UserID,
+	}
+
+	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), &query)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
