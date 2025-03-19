@@ -256,6 +256,22 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
+			sqlResourceHistoryPrune: {
+				{
+					Name: "simple",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+							Name:      "na",
+						},
+						HistoryLimit: 100,
+					},
+				},
+			},
+
 			sqlResourceVersionGet: {
 				{
 					Name: "single path",
