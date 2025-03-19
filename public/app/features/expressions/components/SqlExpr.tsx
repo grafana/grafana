@@ -55,6 +55,12 @@ export const SqlExpr = ({ onChange, refIds, query }: Props) => {
     return () => resizeObserver.disconnect();
   }, []);
 
+  useEffect(() => {
+    // Call the onChange method once so we have access to the initial query in consuming components
+    onEditorChange(initialQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div ref={containerRef} className={styles.editorContainer}>
       <SQLEditor
