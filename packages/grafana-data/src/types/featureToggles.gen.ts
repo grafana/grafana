@@ -259,4 +259,5 @@ export interface FeatureToggles {
   grafanaManagedRecordingRulesDatasources?: boolean;
   inviteUserExperimental?: boolean;
   extraLanguages?: boolean;
+  azureMonitorEnableLogsBuilderMode?: boolean;
 }

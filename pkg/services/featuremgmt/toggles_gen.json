@@ -833,6 +833,19 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorEnableLogsBuilderMode",
+        "resourceVersion": "1742405276376",
+        "creationTimestamp": "2025-03-19T17:27:56Z"
+      },
+      "spec": {
+        "description": "Enables logs builder for Azure Monitor datasource",
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureMonitorEnableUserAuth",
         "resourceVersion": "1732189410576",
         "creationTimestamp": "2024-11-27T14:01:54Z",

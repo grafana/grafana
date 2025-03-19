@@ -1819,6 +1819,13 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "azureMonitorEnableLogsBuilderMode",
+			Description: "Enables logs builder for Azure Monitor datasource",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // Enabled by default for now
+		},
 	}
 )
 
