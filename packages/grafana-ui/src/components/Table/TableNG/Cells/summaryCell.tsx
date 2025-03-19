@@ -1,32 +1,74 @@
+import { css, cx } from '@emotion/css';
+
 import { GrafanaTheme2, Field } from '@grafana/data';
 
+import { useStyles2 } from '../../../../themes';
 import { TableRow } from '../types';
-import { getFooterItemNG, getFooterStyles } from '../utils';
+import { getFooterItemNG } from '../utils';
 
 interface SummaryCellProps {
   sortedRows: TableRow[];
   field: Field;
-  fieldIndex: number;
-  theme: GrafanaTheme2;
 }
 
-export const SummaryCell = ({ sortedRows, field, fieldIndex, theme }: SummaryCellProps) => {
-  const footerStyles = getFooterStyles(theme);
+export const SummaryCell = ({ sortedRows, field }: SummaryCellProps) => {
+  const styles = useStyles2(getStyles);
   const footerItem = getFooterItemNG(sortedRows, field);
 
   if (!footerItem) {
-    return null;
+    return <div className={styles.footerCell} />;
   }
 
   // Render each reducer in the footer
   return (
-    <div className={footerStyles.footerCell}>
-      {Object.entries(footerItem).map(([reducerId, { reducerName, formattedValue }]) => (
-        <div key={reducerId} className={footerStyles.footerItem}>
-          <div className={footerStyles.footerItemLabel}>{reducerName}</div>
-          <div className={footerStyles.footerItemValue}>{formattedValue}</div>
-        </div>
-      ))}
+    <div className={styles.footerCell}>
+      {Object.entries(footerItem).map(([reducerId, { reducerName, formattedValue }]) => {
+        const allSumReducers = Object.keys(footerItem).every((item) => item === 'sum');
+
+        return (
+          <div key={reducerId} className={cx(styles.footerItem, allSumReducers && styles.sumReducer)}>
+            {!allSumReducers && <div className={styles.footerItemLabel}>{reducerName}</div>}
+            <div className={styles.footerItemValue}>{formattedValue}</div>
+          </div>
+        );
+      })}
     </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  footerCell: css({
+    borderRight: `1px solid ${theme.colors.border.strong}`,
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    paddingRight: theme.spacing(1),
+    paddingLeft: theme.spacing(1),
+    width: '100%',
+  }),
+  footerItem: css({
+    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  }),
+  footerItemLabel: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightLight,
+    marginRight: theme.spacing(1),
+    textTransform: 'uppercase',
+  }),
+  footerItemValue: css({
+    fontWeight: theme.typography.fontWeightMedium,
+  }),
+  sumReducer: css({
+    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'end',
+    width: '100%',
+  }),
+});

@@ -622,9 +622,7 @@ export function mapFrameToDataGrid({
           />
         );
       },
-      renderSummaryCell: () => (
-        <SummaryCell sortedRows={sortedRows} field={field} fieldIndex={fieldIndex} theme={theme} />
-      ),
+      renderSummaryCell: () => <SummaryCell sortedRows={sortedRows} field={field} />,
       renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
         <HeaderCell
           column={column}

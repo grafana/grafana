@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { Property } from 'csstype';
 import React from 'react';
 import { SortColumn, SortDirection } from 'react-data-grid';
@@ -324,35 +323,6 @@ export function getFooterItemNG(rows: TableRow[], field: Field): FooterItem | nu
   return Object.keys(footerItem).length > 0 ? footerItem : null;
 }
 
-export const getFooterStyles = (theme: GrafanaTheme2) => ({
-  footerCell: css({
-    border: `1px solid ${theme.colors.border.medium}`,
-    boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    padding: theme.spacing(1),
-    width: '100%',
-  }),
-  footerItem: css({
-    alignItems: 'center',
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  }),
-  footerItemLabel: css({
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.bodySmall.fontSize,
-    fontWeight: theme.typography.fontWeightLight,
-    marginRight: theme.spacing(1),
-    textTransform: 'uppercase',
-  }),
-  footerItemValue: css({
-    fontWeight: theme.typography.fontWeightMedium,
-  }),
-});
-
 /* ------------------------- Cell color calculation ------------------------- */
 const CELL_COLOR_DARKENING_MULTIPLIER = 10;
 const CELL_GRADIENT_DARKENING_MULTIPLIER = 15;
@@ -655,6 +625,6 @@ const getMaxReducerCount = (dataFrame: DataFrame, fieldConfig: TableNGProps['fie
 export const calculateFooterHeight = (dataFrame: DataFrame, fieldConfig: TableNGProps['fieldConfig']) => {
   const maxReducerCount = getMaxReducerCount(dataFrame, fieldConfig);
   // Base height (+ padding) + height per reducer
-  const dynamicHeight = 36 + maxReducerCount * 22;
+  const dynamicHeight = 22 + maxReducerCount * 22;
   return Math.max(dynamicHeight, 36); // Ensure minimum height of 36px
 };
