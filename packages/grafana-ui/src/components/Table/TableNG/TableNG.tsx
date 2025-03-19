@@ -38,6 +38,7 @@ import {
 } from './types';
 import {
   frameToRecords,
+  getColumnMinWidth,
   getColumnWidth,
   getComparator,
   getDefaultRowHeight,
@@ -605,6 +606,7 @@ export function mapFrameToDataGrid({
     }
     const key = field.name;
     const width = getColumnWidth(field, fieldConfig, key);
+    const minWidth = width === 'auto' ? getColumnMinWidth(field, fieldConfig, key) : COLUMN.MIN_WIDTH;
     const justifyColumnContent = getTextAlign(field);
     const footerStyles = getFooterStyles(justifyColumnContent);
 
@@ -681,7 +683,7 @@ export function mapFrameToDataGrid({
         />
       ),
       width: width ?? columnWidth,
-      minWidth: field.config.custom.width !== 'auto' ? field.config?.custom?.minWidth : columnMinWidth,
+      minWidth: minWidth,
     });
   });
 
