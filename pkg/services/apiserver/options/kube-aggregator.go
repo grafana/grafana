@@ -48,7 +48,7 @@ func (o *KubeAggregatorOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.ProxyClientKeyFile, "proxy-client-key-file", o.ProxyClientKeyFile,
 		"path to proxy client key file")
 
-	fs.BoolVar(&o.LegacyClientCertAuth, "legacy_client_cert_auth", true,
+	fs.BoolVar(&o.LegacyClientCertAuth, "legacy-client-cert-auth", true,
 		"whether to use legacy client cert auth")
 }
 
@@ -103,9 +103,6 @@ func (o *KubeAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Co
 		return err
 	}
 	genericConfig.MergedResourceConfig = mergedResourceConfig
-
-	aggregatorConfig.ExtraConfig.ProxyClientCertFile = o.ProxyClientCertFile
-	aggregatorConfig.ExtraConfig.ProxyClientKeyFile = o.ProxyClientKeyFile
 
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
 

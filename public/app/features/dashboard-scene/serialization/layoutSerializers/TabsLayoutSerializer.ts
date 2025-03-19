@@ -44,6 +44,6 @@ export class TabsLayoutSerializer implements LayoutManagerSerializer {
         layout: layoutSerializerRegistry.get(layout.kind).serializer.deserialize(layout, elements, preload),
       });
     });
-    return new TabsLayoutManager({ tabs, currentTab: tabs[0] });
+    return new TabsLayoutManager({ tabs });
   }
 }

@@ -38,18 +38,9 @@ export const CloudWatchAnnotationSupport = {
       return undefined;
     }
 
-    const {
-      prefixMatching,
-      actionPrefix,
-      alarmNamePrefix,
-      statistic,
-      namespace,
-      metricName,
-      dimensions = {},
-    } = anno.target;
+    const { prefixMatching, actionPrefix, alarmNamePrefix, statistic, namespace, metricName } = anno.target;
     const validPrefixMatchingQuery = !!prefixMatching && !!actionPrefix && !!alarmNamePrefix;
-    const validMetricStatQuery =
-      !prefixMatching && !!namespace && !!metricName && !!statistic && !!Object.values(dimensions).length;
+    const validMetricStatQuery = !prefixMatching && !!namespace && !!metricName && !!statistic;
 
     if (validPrefixMatchingQuery || validMetricStatQuery) {
       return anno.target;

@@ -74,7 +74,7 @@ This topic explains configuring and querying specific to the Azure Monitor data 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
 Only users with the organization administrator role can add data sources.
 
-Once you've added the Azure Monitor data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+Once you've added the Azure Monitor data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 The Azure Monitor data source supports visualizing data from four Azure services:
 
@@ -338,7 +338,7 @@ If a user tries to create an alert for a resource that the fallback credentials 
 
 The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, the Azure Resource Graph, and Application Insights Traces. Each source has its own specialized query editor.
 
-For details, see the [query editor documentation]({{< relref "./query-editor" >}}).
+For details, see the [query editor documentation](query-editor/).
 
 ## Use template variables
 
@@ -346,7 +346,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+For details, see the [template variables documentation](template-variables/).
 
 ## Application Insights and Insights Analytics (removed)
 

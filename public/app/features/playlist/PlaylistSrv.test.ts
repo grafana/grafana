@@ -1,4 +1,3 @@
-// @ts-ignore
 import { Store } from 'redux';
 import configureMockStore from 'redux-mock-store';
 
@@ -138,5 +137,30 @@ describe('PlaylistSrv', () => {
     // eslint-disable-next-line
     expect((srv as any).validPlaylistUrl).toBe('/url/to/bbb');
     expect(srv.state.isPlaying).toBe(true);
+  });
+
+  it('should replace playlist start page in history when starting playlist', async () => {
+    // Start at playlists page
+    locationService.push('/playlists');
+
+    // Navigate to playlist start page
+    locationService.push('/playlists/play/foo');
+
+    // Start the playlist
+    await srv.start('foo');
+
+    // Get history entries
+    const history = locationService.getHistory();
+    const entries = (history as unknown as { entries: Location[] }).entries;
+
+    // The current entry should be the first dashboard
+    expect(entries[entries.length - 1].pathname).toBe('/url/to/aaa');
+
+    // The previous entry should be the playlists page, not the start page
+    expect(entries[entries.length - 2].pathname).toBe('/playlists');
+
+    // Verify the start page (/playlists/play/foo) is not in history
+    const hasStartPage = entries.some((entry: { pathname: string }) => entry.pathname === '/playlists/play/foo');
+    expect(hasStartPage).toBe(false);
   });
 });

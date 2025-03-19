@@ -1,6 +1,0 @@
-apiVersion: dashboard.grafana.app/v0alpha1
-kind: Dashboard
-metadata:
-  name: test
-spec:
-  title: Test dashboard (apply from k8s; PATCH) X

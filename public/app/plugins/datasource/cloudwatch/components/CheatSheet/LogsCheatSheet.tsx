@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Collapse, useStyles2, Text } from '@grafana/ui';
-import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
+import { flattenTokens } from '@grafana/ui/internal';
 
 import { trackSampleQuerySelection } from '../../tracking';
 import { CloudWatchLogsQuery, CloudWatchQuery, LogsQueryLanguage } from '../../types';

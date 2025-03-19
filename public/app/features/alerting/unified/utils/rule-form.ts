@@ -1,7 +1,5 @@
 import {
-  DataQuery,
   DataSourceInstanceSettings,
-  DataSourceRef,
   IntervalValues,
   RelativeTimeRange,
   ScopedVars,
@@ -14,7 +12,7 @@ import { PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { VizPanel, sceneGraph } from '@grafana/scenes';
-import { DataSourceJsonData } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -58,14 +56,7 @@ import {
   isGrafanaRulesSource,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import {
-  isAlertingRulerRule,
-  isGrafanaAlertingRuleByType,
-  isGrafanaRecordingRule,
-  isGrafanaRecordingRuleByType,
-  isGrafanaRulerRule,
-  isRecordingRulerRule,
-} from './rules';
+import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType, rulerRuleType } from './rules';
 import { parseInterval } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -155,6 +146,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     manualRouting,
     type,
     metric,
+    targetDatasourceUid,
   } = values;
   if (!condition) {
     throw new Error('You cannot create an alert rule without specifying the alert condition');
@@ -203,6 +195,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         record: {
           metric: metric ?? name,
           from: condition,
+          target_datasource_uid: targetDatasourceUid,
         },
       },
       annotations,
@@ -275,7 +268,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   const defaultFormValues = getDefaultFormValues();
   if (isGrafanaRulesSource(ruleSourceName)) {
     // GRAFANA-MANAGED RULES
-    if (isGrafanaRecordingRule(rule)) {
+    if (rulerRuleType.grafana.recordingRule(rule)) {
       // grafana recording rule
       const ga = rule.grafana_alert;
       return {
@@ -291,8 +284,9 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
+        targetDatasourceUid: ga.record?.target_datasource_uid,
       };
-    } else if (isGrafanaRulerRule(rule)) {
+    } else if (rulerRuleType.grafana.rule(rule)) {
       // grafana alerting rule
       const ga = rule.grafana_alert;
       const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
@@ -326,7 +320,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     // DATASOURCE-MANAGED RULES
-    if (isAlertingRulerRule(rule)) {
+    if (rulerRuleType.dataSource.alertingRule(rule)) {
       const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
 
       const defaultQuery = {
@@ -354,7 +348,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         namespace,
         group: group.name,
       };
-    } else if (isRecordingRulerRule(rule)) {
+    } else if (rulerRuleType.dataSource.recordingRule(rule)) {
       const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
 
       return {

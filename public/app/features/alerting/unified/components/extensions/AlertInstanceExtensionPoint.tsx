@@ -4,9 +4,9 @@ import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 import { Dropdown, IconButton } from '@grafana/ui';
 import { ConfirmNavigationModal } from 'app/features/explore/extensions/ConfirmNavigationModal';
+// We might want to customise this in future but right now the toolbar menu from the Explore view is fine.
+import { ToolbarExtensionPointMenu as AlertExtensionPointMenu } from 'app/features/explore/extensions/ToolbarExtensionPointMenu';
 import { Alert, CombinedRule } from 'app/types/unified-alerting';
-
-import { AlertExtensionPointMenu } from './AlertInstanceExtensionPointMenu';
 
 interface AlertInstanceExtensionPointProps {
   rule?: CombinedRule;

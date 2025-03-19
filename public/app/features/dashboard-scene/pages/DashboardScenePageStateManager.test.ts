@@ -4,15 +4,16 @@ import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 import { DashboardV2Spec, defaultDashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import store from 'app/core/store';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
-import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import {
   DashboardScenePageStateManager,
+  UnifiedDashboardScenePageStateManager,
   DASHBOARD_CACHE_TTL,
   DashboardScenePageStateManagerV2,
 } from './DashboardScenePageStateManager';
@@ -20,6 +21,22 @@ import {
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
 }));
+
+const setupDashboardAPI = (
+  d: DashboardWithAccessInfo<DashboardV2Spec> | undefined,
+  spy: jest.Mock,
+  effect?: () => void
+) => {
+  (getDashboardAPI as jest.Mock).mockImplementation(() => ({
+    getDashboardDTO: async () => {
+      spy();
+      effect?.();
+      return d;
+    },
+    deleteDashboard: jest.fn(),
+    saveDashboard: jest.fn(),
+  }));
+};
 
 describe('DashboardScenePageStateManager v1', () => {
   afterEach(() => {
@@ -165,7 +182,7 @@ describe('DashboardScenePageStateManager v1', () => {
 
         expect(loader.state.dashboard).toBeUndefined();
         expect(loader.state.loadError).toEqual({
-          message: 'v2 dashboard spec is not supported. Enable useV2DashboardsAPI feature toggle',
+          message: 'You are trying to load a v2 dashboard spec as v1. Use DashboardScenePageStateManagerV2 instead.',
           messageId: undefined,
           status: undefined,
         });
@@ -267,24 +284,6 @@ describe('DashboardScenePageStateManager v2', () => {
   });
 
   describe('when fetching/loading a dashboard', () => {
-    const setupDashboardAPI = (
-      d: DashboardWithAccessInfo<DashboardV2Spec> | undefined,
-      spy: jest.Mock,
-      effect?: () => void
-    ) => {
-      (getDashboardAPI as jest.Mock).mockImplementation(() => {
-        // Return whatever you want for this mock
-        return {
-          getDashboardDTO: async () => {
-            spy();
-            effect?.();
-            return d;
-          },
-          deleteDashboard: jest.fn(),
-          saveDashboard: jest.fn(),
-        };
-      });
-    };
     it('should call loader from server if the dashboard is not cached', async () => {
       const getDashSpy = jest.fn();
       setupDashboardAPI(
@@ -473,10 +472,9 @@ describe('DashboardScenePageStateManager v2', () => {
 
       it('should not transform v2 custom home dashboard spec', async () => {
         setBackendSrv({
-          get: () =>
-            Promise.resolve({
-              dashboard: customHomeDashboardV2Spec,
-              meta: {
+          get: () => {
+            return Promise.resolve({
+              access: {
                 canSave: false,
                 canEdit: true,
                 canAdmin: false,
@@ -500,7 +498,16 @@ describe('DashboardScenePageStateManager v2', () => {
                 provisionedExternalId: '',
                 annotationsPermissions: null,
               },
-            }),
+              apiVersion: 'v2alpha1',
+              kind: 'DashboardWithAccessInfo',
+              metadata: {
+                name: 'home',
+                creationTimestamp: '',
+                resourceVersion: '1',
+              },
+              spec: customHomeDashboardV2Spec,
+            });
+          },
         } as unknown as BackendSrv);
 
         const loader = new DashboardScenePageStateManagerV2({});
@@ -644,6 +651,142 @@ describe('DashboardScenePageStateManager v2', () => {
         await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(getDashSpy).toHaveBeenCalledTimes(2);
       });
+    });
+  });
+});
+
+describe('UnifiedDashboardScenePageStateManager', () => {
+  afterEach(() => {
+    store.delete(DASHBOARD_FROM_LS_KEY);
+  });
+
+  describe('when fetching/loading a dashboard', () => {
+    it('should use v1 manager by default and handle v1 dashboards', async () => {
+      const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined);
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+    });
+
+    it('should switch to v2 manager when loading v2 dashboard', async () => {
+      setupLoadDashboardMockReject(new DashboardVersionError('v2alpha1'));
+
+      const getDashSpy = jest.fn();
+      setupDashboardAPI(
+        {
+          access: {},
+          apiVersion: 'v2alpha1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            resourceVersion: '1',
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        },
+        getDashSpy
+      );
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+      expect(getDashSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should maintain active manager state between operations', async () => {
+      const getDashSpy = jest.fn();
+      setupLoadDashboardMockReject(new DashboardVersionError('v2alpha1'));
+      setupDashboardAPI(
+        {
+          access: {},
+          apiVersion: 'v2alpha1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            resourceVersion: '1',
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        },
+        getDashSpy
+      );
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+
+      // First load switches to v2
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+
+      // Cache should use the active v2 manager
+      const cachedDash = manager.getDashboardFromCache('fake-dash');
+      expect(cachedDash).toBeDefined();
+    });
+
+    it.todo('should handle snapshot loading for both v1 and v2');
+
+    it('should handle dashboard reloading with current active manager', async () => {
+      const getDashSpy = jest.fn();
+      setupDashboardAPI(
+        {
+          access: {},
+          apiVersion: 'v2alpha1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            resourceVersion: '1',
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        },
+        getDashSpy
+      );
+      setupLoadDashboardMockReject(new DashboardVersionError('v2alpha1'));
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+
+      // Initial load with v2 dashboard
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+
+      // Reload for v2 is not supported yet
+      await expect(
+        manager.reloadDashboard({ version: 1, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} })
+      ).rejects.toThrow('Method not implemented.');
+    });
+
+    it('should transform responses correctly based on dashboard version', async () => {
+      const manager = new UnifiedDashboardScenePageStateManager({});
+
+      // V1 dashboard response
+      const v1Response: DashboardDTO = {
+        dashboard: { uid: 'v1-dash', title: 'V1 Dashboard' } as DashboardDataDTO,
+        meta: {},
+      };
+
+      const v1Scene = manager.transformResponseToScene(v1Response, { uid: 'v1-dash', route: DashboardRoutes.Normal });
+      expect(v1Scene).toBeInstanceOf(DashboardScene);
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+
+      // V2 dashboard response
+      const v2Response: DashboardWithAccessInfo<DashboardV2Spec> = {
+        access: {},
+        apiVersion: 'v2alpha1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          name: 'v2-dash',
+          creationTimestamp: '',
+          resourceVersion: '1',
+        },
+        spec: { ...defaultDashboardV2Spec() },
+      };
+
+      const v2Scene = manager.transformResponseToScene(v2Response, { uid: 'v2-dash', route: DashboardRoutes.Normal });
+      expect(v2Scene).toBeInstanceOf(DashboardScene);
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
     });
   });
 });

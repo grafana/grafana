@@ -1,7 +1,10 @@
+import { uniq } from 'lodash';
+
 import { v1Tags, v2Tags } from './SearchTraceQLEditor/utils.test';
 import { TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import TempoLanguageProvider from './language_provider';
+import { intrinsics } from './traceql/traceql';
 import { Scope } from './types';
 
 describe('Language_provider', () => {
@@ -15,7 +18,7 @@ describe('Language_provider', () => {
     it('for API v2 intrinsic tags', async () => {
       const lp = setup(undefined, v2Tags);
       const tags = lp.getMetricsSummaryTags(TraceqlSearchScope.Intrinsic);
-      expect(tags).toEqual(['duration', 'kind', 'name', 'status']);
+      expect(tags).toEqual(uniq(['duration', 'kind', 'name', 'status'].concat(intrinsics)));
     });
 
     it('for API v2 resource tags', async () => {
@@ -105,7 +108,9 @@ describe('Language_provider', () => {
     it('for API v2 tags', async () => {
       const lp = setup(undefined, v2Tags);
       const tags = lp.getAutocompleteTags();
-      expect(tags).toEqual(['cluster', 'container', 'db', 'duration', 'kind', 'name', 'status']);
+      expect(tags).toEqual(
+        uniq(['cluster', 'container', 'db', 'duration', 'kind', 'name', 'status'].concat(intrinsics))
+      );
     });
   });
 

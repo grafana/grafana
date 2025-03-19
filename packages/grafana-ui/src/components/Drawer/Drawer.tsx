@@ -45,9 +45,10 @@ export interface Props {
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
   tabs?: React.ReactNode;
-  // TODO remove this prop next major version
   /**
-   * @deprecated this is now default behaviour. content is always scrollable.
+   * Whether the content should be wrapped in a ScrollContainer
+   * Only change this if you intend to manage scroll behaviour yourself
+   * (e.g. having a split pane with independent scrolling)
    **/
   scrollableContent?: boolean;
   /** Callback for closing the drawer */
@@ -337,6 +338,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(2),
       height: '100%',
       flexGrow: 1,
+      minHeight: 0,
     }),
     tabsWrapper: css({
       label: 'drawer-tabs',

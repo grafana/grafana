@@ -1,18 +1,15 @@
 import { CSSProperties, ReactNode } from 'react';
 
-import { useTheme2 } from '@grafana/ui';
-
-import { getStyles } from './LogLine';
+import { LogLineStyles } from './LogLine';
 
 interface Props {
   children: ReactNode;
   onClick?: () => void;
   style: CSSProperties;
+  styles: LogLineStyles;
 }
 
-export const LogLineMessage = ({ children, onClick, style }: Props) => {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+export const LogLineMessage = ({ children, onClick, style, styles }: Props) => {
   return (
     <div style={style} className={`${styles.logLine} ${styles.logLineMessage}`}>
       {onClick ? (

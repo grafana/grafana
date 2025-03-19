@@ -25,9 +25,9 @@ Warning messages are displayed if a dashboard depends on an a panel visualizatio
 
 To avoid disruption:
 
-- Ensure that you are running the latest version of plugins by following this guide on [updating]({{< relref "../../administration/plugin-management/#update-a-plugin" >}}). Many panels and data sources have migrated from AngularJS.
-- If you are using legacy Core Grafana visualizations such as Graph or Table-old, migrate to their replacements using the provided [automatic migrations]({{< relref "./angular-plugins/#automatic-migration-of-plugins" >}}).
-- Review the [list of current Angular plugins]({{< relref "./angular-plugins/" >}}) to discover which Core and external plugins are impacted, and whether an update or alternative is required.
+- Ensure that you are running the latest version of plugins by following this guide on [updating](../../administration/plugin-management/#update-a-plugin). Many panels and data sources have migrated from AngularJS.
+- If you are using legacy Core Grafana visualizations such as Graph or Table-old, migrate to their replacements using the provided [automatic migrations](angular-plugins/#automatic-migration-of-plugins).
+- Review the [list of current Angular plugins](angular-plugins/) to discover which Core and external plugins are impacted, and whether an update or alternative is required.
 
 ## Why are we deprecating Angular support?
 
@@ -35,7 +35,7 @@ AngularJS is an old frontend framework whose active development stopped many yea
 
 ## When will Angular plugins stop working?
 
-In Grafana 11, which will be released in preview in April 2024 and generally available in May, we will change the default behavior of the [angular_support_enabled](https://github.com/grafana/grafana/blob/d61bcdf4ca5e69489e0067c56fbe7f0bfdf84ee4/conf/defaults.ini#L362) configuration parameter to turn off support for AngularJS based plugins. In case you still rely on [AngularJS-based plugins]({{< relref "./angular-plugins/" >}}) developed internally or by the community, you will need to enable this option to continue using them.
+In Grafana 11, which will be released in preview in April 2024 and generally available in May, we will change the default behavior of the [angular_support_enabled](https://github.com/grafana/grafana/blob/d61bcdf4ca5e69489e0067c56fbe7f0bfdf84ee4/conf/defaults.ini#L362) configuration parameter to turn off support for AngularJS based plugins. In case you still rely on [AngularJS-based plugins](angular-plugins/) developed internally or by the community, you will need to enable this option to continue using them.
 
 New Grafana Cloud users will be unable to request for support to be added to their instance.
 
@@ -63,4 +63,4 @@ We encourage you to locate the repository of the corresponding plugin and create
 - [Migrate Angular to React](https://grafana.com/developers/plugin-tools/migration-guides/angular-react/)
 - [Build a panel plugin](https://grafana.com/tutorials/build-a-panel-plugin/)
 - [Build a data source plugin](https://grafana.com/tutorials/build-a-data-source-plugin/)
-- [List of current Angular plugins]({{< relref "./angular-plugins/" >}})
+- [List of current Angular plugins](angular-plugins/)

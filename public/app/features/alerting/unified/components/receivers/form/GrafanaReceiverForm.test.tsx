@@ -42,9 +42,9 @@ const ui = {
   onCallIntegrationType: byRole('radiogroup'),
   integrationOption: {
     new: byRole('radio', {
-      name: 'A new OnCall integration without escalation chains will be automatically created',
+      name: 'A new IRM integration without escalation chains will be automatically created',
     }),
-    existing: byRole('radio', { name: 'Use an existing OnCall integration' }),
+    existing: byRole('radio', { name: 'Use an existing IRM integration' }),
   },
   newOnCallIntegrationName: byRole('textbox', { name: /Integration name/ }),
   existingOnCallIntegrationSelect: (index: number) => byTestId(`items.${index}.settings.url`),

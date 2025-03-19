@@ -6,8 +6,12 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -22,16 +26,28 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder = (*APIBuilder)(nil)
+	_ builder.APIGroupBuilder               = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation              = (*APIBuilder)(nil)
+	_ builder.APIGroupValidation            = (*APIBuilder)(nil)
+	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
 
-type APIBuilder struct{}
+type APIBuilder struct {
+	secrets secrets.Service
+	jobs    jobs.JobQueue
+	getter  rest.Getter
+}
 
 // NewAPIBuilder creates an API builder.
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
-func NewAPIBuilder() *APIBuilder {
-	return &APIBuilder{}
+func NewAPIBuilder(
+	secrets secrets.Service,
+) *APIBuilder {
+	return &APIBuilder{
+		secrets: secrets,
+	}
 }
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
@@ -39,13 +55,14 @@ func NewAPIBuilder() *APIBuilder {
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
+	secretsSvc grafanasecrets.Service,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
 		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
 
-	builder := NewAPIBuilder()
+	builder := NewAPIBuilder(secrets.NewSingleTenant(secretsSvc))
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -87,9 +104,14 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
+	// FIXME: Make job queue store the jobs somewhere persistent.
+	jobStore := jobs.NewJobStore(50, b) // in memory, for now...
+	b.jobs = jobStore
+
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 
 	storage := map[string]rest.Storage{}
+	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
@@ -157,4 +179,17 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	}
 
 	return oas, nil
+}
+
+// Helpers for fetching valid Repository objects
+
+func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
+	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	_ = obj
+	// FIXME: Return a valid Repository object with the correct underlying storage.
+	panic("FIXME")
 }

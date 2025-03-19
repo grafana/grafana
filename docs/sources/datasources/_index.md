@@ -117,7 +117,7 @@ Grafana includes three special data sources:
 
 ### Grafana
 
-A built-in data source that generates random walk data and can poll the [Testdata]({{< relref "./testdata/" >}}) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
+A built-in data source that generates random walk data and can poll the [Testdata](testdata/) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
 
 ### Mixed
 
@@ -140,24 +140,24 @@ These built-in core data sources are also included in the Grafana documentation:
 
 {{< column-list >}}
 
-- [Alertmanager]({{< relref "./alertmanager" >}})
-- [AWS CloudWatch]({{< relref "./aws-cloudwatch" >}})
-- [Azure Monitor]({{< relref "./azure-monitor" >}})
-- [Elasticsearch]({{< relref "./elasticsearch" >}})
-- [Google Cloud Monitoring]({{< relref "./google-cloud-monitoring" >}})
-- [Graphite]({{< relref "./graphite" >}})
-- [InfluxDB]({{< relref "./influxdb" >}})
-- [Jaeger]({{< relref "./jaeger" >}})
-- [Loki]({{< relref "./loki" >}})
-- [Microsoft SQL Server (MSSQL)]({{< relref "./mssql" >}})
-- [MySQL]({{< relref "./mysql" >}})
-- [OpenTSDB]({{< relref "./opentsdb" >}})
-- [PostgreSQL]({{< relref "./postgres" >}})
-- [Prometheus]({{< relref "./prometheus" >}})
-- [Pyroscope]({{< relref "./pyroscope" >}})
-- [Tempo]({{< relref "./tempo" >}})
-- [Testdata]({{< relref "./testdata" >}})
-- [Zipkin]({{< relref "./zipkin" >}})
+- [Alertmanager](alertmanager/)
+- [AWS CloudWatch](aws-cloudwatch/)
+- [Azure Monitor](azure-monitor/)
+- [Elasticsearch](elasticsearch/)
+- [Google Cloud Monitoring](google-cloud-monitoring/)
+- [Graphite](graphite/)
+- [InfluxDB](influxdb/)
+- [Jaeger](jaeger/)
+- [Loki](loki/)
+- [Microsoft SQL Server (MSSQL)](mssql/)
+- [MySQL](mysql/)
+- [OpenTSDB](opentsdb/)
+- [PostgreSQL](postgres/)
+- [Prometheus](prometheus/)
+- [Pyroscope](pyroscope/)
+- [Tempo](tempo/)
+- [Testdata](testdata/)
+- [Zipkin](zipkin/)
 
 {{< /column-list >}}
 

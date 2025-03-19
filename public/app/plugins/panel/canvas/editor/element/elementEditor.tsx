@@ -1,7 +1,6 @@
 import { get as lodashGet } from 'lodash';
 
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
-import { config } from '@grafana/runtime';
 import { CanvasElementOptions } from 'app/features/canvas/element';
 import {
   canvasElementRegistry,
@@ -67,8 +66,6 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       const current = options?.type ? options.type : DEFAULT_CANVAS_ELEMENT_CONFIG.type;
       const layerTypes = getElementTypes(opts.scene.shouldShowAdvancedTypes, current).options;
 
-      const actionsEnabled = config.featureToggles.vizActions;
-
       const isUnsupported =
         !opts.scene.shouldShowAdvancedTypes && !defaultElementItems.filter((item) => item.id === options?.type).length;
 
@@ -123,9 +120,7 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       }
 
       optionBuilder.addDataLinks(builder, ctx);
-      if (actionsEnabled) {
-        optionBuilder.addActions(builder, ctx);
-      }
+      optionBuilder.addActions(builder, ctx);
     },
   };
 }

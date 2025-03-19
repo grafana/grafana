@@ -5,7 +5,7 @@ import { DataSourceRuleGroupIdentifier, Rule, RuleIdentifier } from 'app/types/u
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { equal, fromRule, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
-import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
+import { getRulePluginOrigin, prometheusRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
@@ -74,7 +74,7 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
     return null;
   }, [groupIdentifier, isLoading, rule, rulerRule]);
 
-  if (isAlertingRule(rule)) {
+  if (prometheusRuleType.alertingRule(rule)) {
     return (
       <AlertRuleListItem
         name={rule.name}
@@ -96,7 +96,7 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
     );
   }
 
-  if (isRecordingRule(rule)) {
+  if (prometheusRuleType.recordingRule(rule)) {
     return (
       <RecordingRuleListItem
         name={rule.name}

@@ -131,6 +131,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(dashboardControls).toBeDefined();
     expect(dashboardControls.state.refreshPicker.state.intervals).toEqual(time.autoRefreshIntervals);
     expect(dashboardControls.state.hideTimeControls).toBe(time.hideTimepicker);
+    expect(dashboardControls.state.timePicker.state.quickRanges).toEqual(dash.timeSettings.quickRanges);
 
     // Variables
     const variables = scene.state?.$variables;
@@ -222,9 +223,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(dataLayers.state.annotationLayers[3].state.name).toBe(dash.annotations[3].spec.name);
     expect(dataLayers.state.annotationLayers[3].state.isEnabled).toBe(dash.annotations[3].spec.enable);
     expect(dataLayers.state.annotationLayers[3].state.isHidden).toBe(dash.annotations[3].spec.hide);
-
-    // To be implemented
-    // expect(timePicker.state.ranges).toEqual(dash.timeSettings.quickRanges);
 
     // VizPanel
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();

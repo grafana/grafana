@@ -35,9 +35,13 @@ describe('MetricCombobox', () => {
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   const mockDatasource = new PrometheusDatasource(instanceSettings);
-  const mockValues = [{ label: 'random_metric' }, { label: 'unique_metric' }, { label: 'more_unique_metric' }];
 
-  // Mock metricFindQuery which will call backend API
+  // Options returned when user first opens the combobox - returned by onGetMetrics
+  const initialMockValues = [{ label: 'top_metric_one' }, { label: 'top_metric_two' }, { label: 'top_metric_three' }];
+  const mockOnGetMetrics = jest.fn(() => Promise.resolve(initialMockValues.map((v) => ({ value: v.label }))));
+
+  // Options returned when user searches for a metric
+  const mockValues = [{ label: 'random_metric' }, { label: 'unique_metric' }, { label: 'more_unique_metric' }];
   mockDatasource.metricFindQuery = jest.fn((query: string) => {
     // return Promise.resolve([]);
     // Use the label values regex to get the values inside the label_values function call
@@ -61,7 +65,6 @@ describe('MetricCombobox', () => {
   });
 
   const mockOnChange = jest.fn();
-  const mockOnGetMetrics = jest.fn(() => Promise.resolve(mockValues.map((v) => ({ value: v.label }))));
 
   const defaultProps: MetricComboboxProps = {
     metricLookupDisabled: false,
@@ -92,10 +95,11 @@ describe('MetricCombobox', () => {
     const combobox = screen.getByPlaceholderText('Select metric');
     await userEvent.click(combobox);
 
-    expect(mockOnGetMetrics).toHaveBeenCalledTimes(1);
-
-    const item = await screen.findByRole('option', { name: 'random_metric' });
+    const item = await screen.findByRole('option', { name: 'top_metric_one' });
     expect(item).toBeInTheDocument();
+
+    // This should be asserted by the above check, but double check anyway
+    expect(mockOnGetMetrics).toHaveBeenCalledTimes(1);
   });
 
   it('fetches metrics for the users query', async () => {
@@ -108,8 +112,9 @@ describe('MetricCombobox', () => {
     const item = await screen.findByRole('option', { name: 'unique_metric' });
     expect(item).toBeInTheDocument();
 
-    const negativeItem = screen.queryByRole('option', { name: 'random_metric' });
-    expect(negativeItem).not.toBeInTheDocument();
+    // This should be asserted by the above check, but double check anyway
+    // This is the actual argument, created by formatKeyValueStringsForLabelValuesQuery()
+    expect(mockDatasource.metricFindQuery).toHaveBeenCalledWith('label_values({__name__=~".*unique.*"},__name__)');
   });
 
   it('calls onChange with the correct value when a metric is selected', async () => {
@@ -118,10 +123,10 @@ describe('MetricCombobox', () => {
     const combobox = screen.getByPlaceholderText('Select metric');
     await userEvent.click(combobox);
 
-    const item = await screen.findByRole('option', { name: 'random_metric' });
+    const item = await screen.findByRole('option', { name: 'top_metric_two' });
     await userEvent.click(item);
 
-    expect(mockOnChange).toHaveBeenCalledWith({ metric: 'random_metric', labels: [], operations: [] });
+    expect(mockOnChange).toHaveBeenCalledWith({ metric: 'top_metric_two', labels: [], operations: [] });
   });
 
   it('shows the metrics explorer button by default', () => {

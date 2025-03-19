@@ -52,13 +52,15 @@ An alert instance can be in either of the following states:
 | **No Data<sup>\*</sup>** | The state of an alert whose query returns no data or all values are null. <br/> An alert in this state generates a new [DatasourceNoData alert](#no-data-and-error-alerts). You can [modify the default behavior of the no data state](#modify-the-no-data-or-error-state).       |
 | **Error<sup>\*</sup>**   | The state of an alert when an error or timeout occurred evaluating the alert rule. <br/> An alert in this state generates a new [DatasourceError alert](#no-data-and-error-alerts). You can [modify the default behavior of the error state](#modify-the-no-data-or-error-state). |
 
+If an alert rule changes (except for updates to annotations, the evaluation interval, or other internal fields), its alert instances reset to the `Normal` state. The alert instance state then updates accordingly during the next evaluation.
+
+{{< figure src="/media/docs/alerting/alert-instance-states-v3.png" caption="Alert instance state diagram" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
+
 {{< admonition type="note" >}}
 
 `No Data` and `Error` states are supported only for Grafana-managed alert rules.
 
 {{< /admonition >}}
-
-{{< figure src="/media/docs/alerting/alert-instance-states-v3.png" caption="Alert instance state diagram" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
 
 ### Notification routing
 
@@ -68,7 +70,7 @@ Alert instances will be routed for [notifications](ref:notifications) when they 
 
 ### `No Data` and `Error` alerts
 
-When evaluation of an alert rule produces state `No Data` or `Error`, Grafana Alerting generates a new alert instance that have the following additional labels:
+When an alert rule evaluation results in a `No Data` or `Error` state, Grafana Alerting immediately creates a new alert instance —skipping the pending period—with the following additional labels:
 
 - `alertname`: Either `DatasourceNoData` or `DatasourceError` depending on the state.
 - `datasource_uid`: The UID of the data source that caused the state.

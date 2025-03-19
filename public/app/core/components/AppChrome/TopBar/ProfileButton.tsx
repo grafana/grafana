@@ -8,6 +8,7 @@ import { Dropdown, Menu, MenuItem, ToolbarButton, useStyles2 } from '@grafana/ui
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 
+import { ThemeSelectorDrawer } from '../../ThemeSelector/ThemeSelectorDrawer';
 import { enrichWithInteractionTracking } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsDrawer';
 
@@ -21,6 +22,7 @@ export function ProfileButton({ profileNode }: Props) {
   const styles = useStyles2(getStyles);
   const node = enrichWithInteractionTracking(cloneDeep(profileNode), false);
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
+  const [showThemeDrawer, onToggleThemeDrawer] = useToggle(false);
 
   if (!node) {
     return null;
@@ -28,16 +30,27 @@ export function ProfileButton({ profileNode }: Props) {
 
   const renderMenu = () => (
     <TopNavBarMenu node={profileNode}>
-      {config.newsFeedEnabled && (
-        <>
-          <Menu.Divider />
+      <>
+        {config.featureToggles.grafanaconThemes && (
+          <MenuItem icon="palette" onClick={onToggleThemeDrawer} label={t('profile.change-theme', 'Change theme')} />
+        )}
+        {config.newsFeedEnabled && (
           <MenuItem
             icon="rss"
             onClick={onToggleShowNewsDrawer}
             label={t('navigation.rss-button', 'Latest from the blog')}
           />
-        </>
-      )}
+        )}
+        <Menu.Divider />
+        {!config.auth.disableSignoutMenu && (
+          <MenuItem
+            url={`${config.appSubUrl}/logout`}
+            label={t('nav.sign-out.title', 'Sign out')}
+            icon="arrow-from-right"
+            target={'_self'}
+          />
+        )}
+      </>
     </TopNavBarMenu>
   );
 
@@ -52,6 +65,7 @@ export function ProfileButton({ profileNode }: Props) {
         />
       </Dropdown>
       {showNewsDrawer && <NewsContainer onClose={onToggleShowNewsDrawer} />}
+      {showThemeDrawer && <ThemeSelectorDrawer onClose={onToggleThemeDrawer} />}
     </>
   );
 }

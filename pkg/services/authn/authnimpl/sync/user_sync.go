@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	claims "github.com/grafana/authlib/types"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -63,6 +64,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 		log:                   log.New("user.sync"),
 		tracer:                tracer,
 		features:              features,
+		lastSeenSF:            &singleflight.Group{},
 	}
 }
 
@@ -74,6 +76,7 @@ type UserSync struct {
 	log                   log.Logger
 	tracer                tracing.Tracer
 	features              featuremgmt.FeatureToggles
+	lastSeenSF            *singleflight.Group
 }
 
 // SyncUserHook syncs a user with the database
@@ -186,19 +189,14 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 	}
 
 	goCtx := context.WithoutCancel(ctx)
-	go func(userID int64) {
-		defer func() {
-			if err := recover(); err != nil {
-				s.log.Error("Panic during user last seen sync", "err", err)
-			}
-		}()
-
-		if err := s.userService.UpdateLastSeenAt(goCtx,
-			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil &&
-			!errors.Is(err, user.ErrLastSeenUpToDate) {
+	// nolint:dogsled
+	_, _, _ = s.lastSeenSF.Do(fmt.Sprintf("%d-%d", id.GetOrgID(), userID), func() (interface{}, error) {
+		err := s.userService.UpdateLastSeenAt(goCtx, &user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: id.GetOrgID()})
+		if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
-	}(userID)
+		return nil, nil
+	})
 
 	return nil
 }

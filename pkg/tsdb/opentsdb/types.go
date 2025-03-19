@@ -6,8 +6,17 @@ type OpenTsdbQuery struct {
 	Queries []map[string]any `json:"queries"`
 }
 
+type OpenTsdbCommon struct {
+	Metric string            `json:"metric"`
+	Tags   map[string]string `json:"tags"`
+}
+
 type OpenTsdbResponse struct {
-	Metric     string            `json:"metric"`
-	Tags       map[string]string `json:"tags"`
-	DataPoints [][]float64       `json:"dps"`
+	OpenTsdbCommon
+	DataPoints map[string]float64 `json:"dps"`
+}
+
+type OpenTsdbResponse24 struct {
+	OpenTsdbCommon
+	DataPoints [][]float64 `json:"dps"`
 }

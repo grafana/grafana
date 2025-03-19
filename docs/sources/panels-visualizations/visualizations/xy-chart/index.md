@@ -308,7 +308,7 @@ You can customize the following standard options:
 
 To learn more, refer to [Configure standard options](ref:configure-standard-options).
 
-## Data links
+## Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 

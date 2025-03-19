@@ -99,8 +99,14 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                     <Trans i18nKey="plugins.details.labels.repository">Repository</Trans>
                   </LinkButton>
                 )}
-                {plugin.raiseAnIssueUrl && (
-                  <LinkButton href={plugin.raiseAnIssueUrl} variant="secondary" fill="solid" icon="bug" target="_blank">
+                {plugin.details?.raiseAnIssueUrl && (
+                  <LinkButton
+                    href={plugin.details?.raiseAnIssueUrl}
+                    variant="secondary"
+                    fill="solid"
+                    icon="bug"
+                    target="_blank"
+                  >
                     <Trans i18nKey="plugins.details.labels.raiseAnIssue">Raise an issue</Trans>
                   </LinkButton>
                 )}

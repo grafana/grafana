@@ -62,6 +62,9 @@ type IndexableDocument struct {
 	// The generic display name
 	Title string `json:"title,omitempty"`
 
+	// internal field for searching title with ngrams
+	TitleNgram string `json:"title_ngram,omitempty"`
+
 	// internal sort field for title ( don't set this directly )
 	TitlePhrase string `json:"title_phrase,omitempty"`
 
@@ -102,7 +105,22 @@ type IndexableDocument struct {
 	References ResourceReferences `json:"reference,omitempty"`
 
 	// When the resource is managed by an upstream repository
-	RepoInfo *utils.ResourceRepositoryInfo `json:"repo,omitempty"`
+	Manager *utils.ManagerProperties `json:"manager,omitempty"`
+
+	// indexed only field for faceting manager info
+	ManagedBy string `json:"managedBy,omitempty"`
+
+	// When the manager knows about file paths
+	Source *utils.SourceProperties `json:"source,omitempty"`
+}
+
+func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
+	m.TitleNgram = m.Title
+	m.TitlePhrase = strings.ToLower(m.Title) // Lowercase for case-insensitive sorting ?? in the analyzer?
+	if m.Manager != nil {
+		m.ManagedBy = fmt.Sprintf("%s:%s", m.Manager.Kind, m.Manager.Identity)
+	}
+	return m
 }
 
 func (m *IndexableDocument) Type() string {
@@ -163,17 +181,24 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 		}
 	}
 	doc := &IndexableDocument{
-		Key:         key,
-		RV:          rv,
-		Name:        key.Name,
-		Title:       title,                  // We always want *something* to display
-		TitlePhrase: strings.ToLower(title), // Lowercase for case-insensitive sorting
-		Labels:      obj.GetLabels(),
-		Folder:      obj.GetFolder(),
-		CreatedBy:   obj.GetCreatedBy(),
-		UpdatedBy:   obj.GetUpdatedBy(),
+		Key:       key,
+		RV:        rv,
+		Name:      key.Name,
+		Title:     title, // We always want *something* to display
+		Labels:    obj.GetLabels(),
+		Folder:    obj.GetFolder(),
+		CreatedBy: obj.GetCreatedBy(),
+		UpdatedBy: obj.GetUpdatedBy(),
 	}
-	doc.RepoInfo, _ = obj.GetRepositoryInfo()
+	m, ok := obj.GetManagerProperties()
+	if ok {
+		doc.Manager = &m
+		doc.ManagedBy = fmt.Sprintf("%s:%s", m.Kind, m.Identity)
+	}
+	s, ok := obj.GetSourceProperties()
+	if ok {
+		doc.Source = &s
+	}
 	ts := obj.GetCreationTimestamp()
 	if !ts.Time.IsZero() {
 		doc.Created = ts.Time.UnixMilli()
@@ -182,7 +207,7 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	if err != nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
 	}
-	return doc
+	return doc.UpdateCopyFields()
 }
 
 func StandardDocumentBuilder() DocumentBuilder {
@@ -254,6 +279,7 @@ const SEARCH_FIELD_NAMESPACE = "namespace"
 const SEARCH_FIELD_NAME = "name"
 const SEARCH_FIELD_RV = "rv"
 const SEARCH_FIELD_TITLE = "title"
+const SEARCH_FIELD_TITLE_NGRAM = "title_ngram"
 const SEARCH_FIELD_TITLE_PHRASE = "title_phrase" // filtering/sorting on title by full phrase
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"
@@ -265,10 +291,12 @@ const SEARCH_FIELD_CREATED_BY = "createdBy"
 const SEARCH_FIELD_UPDATED = "updated"
 const SEARCH_FIELD_UPDATED_BY = "updatedBy"
 
-const SEARCH_FIELD_REPOSITORY_NAME = "repo.name"
-const SEARCH_FIELD_REPOSITORY_PATH = "repo.path"
-const SEARCH_FIELD_REPOSITORY_HASH = "repo.hash"
-const SEARCH_FIELD_REPOSITORY_TIME = "repo.time"
+const SEARCH_FIELD_MANAGED_BY = "managedBy" // {kind}:{id}
+const SEARCH_FIELD_MANAGER_KIND = "manager.kind"
+const SEARCH_FIELD_MANAGER_ID = "manager.id"
+const SEARCH_FIELD_SOURCE_PATH = "source.path"
+const SEARCH_FIELD_SOURCE_CHECKSUM = "source.checksum"
+const SEARCH_FIELD_SOURCE_TIME = "source.timestampMillis"
 
 const SEARCH_FIELD_SCORE = "_score"     // the match score
 const SEARCH_FIELD_EXPLAIN = "_explain" // score explanation as JSON object

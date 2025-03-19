@@ -145,4 +145,14 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddAlertRuleUpdatedByMigration(mg)
 
 	ualert.AddAlertRuleStateTable(mg)
+
+	ualert.AddAlertRuleGuidMigration(mg)
+
+	ualert.AddAlertRuleKeepFiringFor(mg)
+
+	ualert.AddAlertRuleMissingSeriesEvalsToResolve(mg)
+
+	accesscontrol.AddDatasourceDrilldownRemovalMigration(mg)
+
+	ualert.DropTitleUniqueIndexMigration(mg)
 }

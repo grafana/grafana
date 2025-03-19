@@ -553,6 +553,7 @@ RowsLayoutRowSpec: {
   title?: string
   collapsed: bool
   repeat?: RowRepeatOptions
+  conditionalRendering?: ConditionalRenderingGroupKind
   layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
 }
 
@@ -574,6 +575,8 @@ ResponsiveGridLayoutItemKind: {
 
 ResponsiveGridLayoutItemSpec: {
   element: ElementReference
+  repeat?: ResponsiveGridRepeatOptions
+  conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 TabsLayoutKind: {
@@ -911,4 +914,43 @@ AdHocFilterWithLabels: {
 AdhocVariableKind: {
   kind: "AdhocVariable"
   spec: AdhocVariableSpec
+}
+
+ConditionalRenderingGroupKind: {
+  kind: "ConditionalRenderingGroup"
+  spec: ConditionalRenderingGroupSpec
+}
+
+ConditionalRenderingGroupSpec: {
+  condition: "and" | "or"
+  items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
+}
+
+ConditionalRenderingVariableKind: {
+  kind: "ConditionalRenderingVariable"
+  spec: ConditionalRenderingVariableSpec
+}
+
+ConditionalRenderingVariableSpec: {
+  variable: string
+  operator: "equals" | "notEquals"
+  value: string
+}
+
+ConditionalRenderingDataKind: {
+  kind: "ConditionalRenderingData"
+  spec: ConditionalRenderingDataSpec
+}
+
+ConditionalRenderingDataSpec: {
+  value: bool
+}
+
+ConditionalRenderingTimeIntervalKind: {
+  kind: "ConditionalRenderingTimeInterval"
+  spec: ConditionalRenderingTimeIntervalSpec
+} 
+
+ConditionalRenderingTimeIntervalSpec: {
+  value: string
 }

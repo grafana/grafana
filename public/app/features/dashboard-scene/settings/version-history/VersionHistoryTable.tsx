@@ -70,7 +70,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
                             version: version.version,
                             index: idx,
                             confirm: false,
-                            timestamp: version.created,
+                            version_date: version.created,
                           });
                         }}
                       >

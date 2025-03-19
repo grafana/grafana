@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/url"
 
-	alertingReceivers "github.com/grafana/alerting/receivers"
+	alertingHTTP "github.com/grafana/alerting/http"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -71,7 +71,7 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		request.Header.Set(k, v)
 	}
 
-	resp, err := alertingReceivers.NewTLSClient(webhook.TLSConfig).Do(request)
+	resp, err := alertingHTTP.NewTLSClient(webhook.TLSConfig).Do(request)
 	if err != nil {
 		return redactURL(err)
 	}

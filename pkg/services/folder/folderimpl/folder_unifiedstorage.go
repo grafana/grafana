@@ -33,6 +33,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const folderSearchLimit = 100000
+
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
@@ -171,7 +173,7 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 			Fields: []*resource.Requirement{},
 			Labels: []*resource.Requirement{},
 		},
-		Limit: 100000}
+		Limit: folderSearchLimit}
 
 	if len(query.UIDs) > 0 {
 		request.Options.Fields = []*resource.Requirement{{
@@ -269,7 +271,7 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 				},
 			},
 		},
-		Limit: 100000}
+		Limit: folderSearchLimit}
 
 	res, err := s.k8sclient.Search(ctx, orgID, request)
 	if err != nil {
@@ -312,17 +314,12 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 
 	request := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
-			Key: folderkey,
-			Fields: []*resource.Requirement{
-				{
-					Key:      resource.SEARCH_FIELD_TITLE_PHRASE,
-					Operator: string(selection.In),
-					Values:   []string{title},
-				},
-			},
+			Key:    folderkey,
+			Fields: []*resource.Requirement{},
 			Labels: []*resource.Requirement{},
 		},
-		Limit: 100000}
+		Query: title,
+		Limit: folderSearchLimit}
 
 	if parentUID != nil {
 		req := []*resource.Requirement{{
@@ -635,10 +632,12 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		return err
 	}
 
-	folders := []string{cmd.UID}
+	folders := []string{}
 	for _, f := range descFolders {
 		folders = append(folders, f.UID)
 	}
+	// must delete children first, then the parent folder
+	folders = append(folders, cmd.UID)
 
 	if cmd.ForceDeleteRules {
 		if err := s.deleteChildrenInFolder(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
@@ -671,7 +670,7 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 					},
 				},
 			},
-			Limit: 100000}
+			Limit: folderSearchLimit}
 
 		res, err := s.dashboardK8sClient.Search(ctx, cmd.OrgID, request)
 		if err != nil {
@@ -843,12 +842,6 @@ func (s *Service) canMoveViaApiServer(ctx context.Context, cmd *folder.MoveFolde
 	var evaluators []accesscontrol.Evaluator
 	currentFolderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID)
 	for action, scopes := range permissions {
-		// Skip unexpanded action sets - they have no impact if action sets are not enabled
-		if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-			if action == "folders:view" || action == "folders:edit" || action == "folders:admin" {
-				continue
-			}
-		}
 		for _, scope := range newFolderAndParentUIDs {
 			if slices.Contains(scopes, scope) {
 				evaluators = append(evaluators, accesscontrol.EvalPermission(action, currentFolderScope))

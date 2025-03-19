@@ -6,7 +6,7 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '..';
 import { useStyles2, useTheme2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 
 import { FilterList } from './FilterList';
 import { TableStyles } from './styles';
@@ -75,7 +75,7 @@ export const FilterPopup = ({
               </Label>
               <IconButton
                 name="text-fields"
-                tooltip="Match case"
+                tooltip={t('grafana-ui.table.filter-popup-match-case', 'Match case')}
                 style={{ color: matchCase ? theme.colors.text.link : theme.colors.text.disabled }}
                 onClick={() => {
                   setMatchCase((s) => !s);

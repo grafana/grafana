@@ -81,14 +81,26 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 
 	// Standard
 	builder = resource.StandardDocumentBuilder()
-	doSnapshotTests(t, builder, "folder", key, []string{
+	doSnapshotTests(t, builder, "folder", &resource.ResourceKey{
+		Namespace: "default",
+		Group:     "folder.grafana.app",
+		Resource:  "folders",
+	}, []string{
 		"aaa",
 		"bbb",
 	})
-	doSnapshotTests(t, builder, "playlist", key, []string{
+	doSnapshotTests(t, builder, "playlist", &resource.ResourceKey{
+		Namespace: "default",
+		Group:     "playlist.grafana.app",
+		Resource:  "playlists",
+	}, []string{
 		"aaa",
 	})
-	doSnapshotTests(t, builder, "report", key, []string{
+	doSnapshotTests(t, builder, "report", &resource.ResourceKey{
+		Namespace: "default",
+		Group:     "reporting.grafana.app",
+		Resource:  "reports",
+	}, []string{
 		"aaa",
 	})
 }

@@ -75,7 +75,7 @@ func (x *ResourceKey) ReadSearchID(v string) error {
 }
 
 // The namespace/group/resource
-func (x *ResourceKey) BatchID() string {
+func (x *ResourceKey) NSGR() string {
 	var sb strings.Builder
 	if x.Namespace == "" {
 		sb.WriteString(clusterNamespace)

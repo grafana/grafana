@@ -6,8 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,15 +32,6 @@ type Store struct {
 	dbStore    db.DB
 	log        log.Logger
 	localCache *localcache.CacheService
-}
-
-type SigningKey struct {
-	ID         int64                   `json:"-" xorm:"id" db:"id"`
-	KeyID      string                  `json:"key_id" xorm:"key_id" db:"key_id"`
-	PrivateKey []byte                  `json:"private_key" xorm:"private_key" db:"private_key"`
-	AddedAt    time.Time               `json:"added_at" xorm:"added_at" db:"added_at"`
-	ExpiresAt  *time.Time              `json:"expires_at" xorm:"expires_at" db:"expires_at"`
-	Alg        jose.SignatureAlgorithm `json:"alg" xorm:"alg" db:"alg"`
 }
 
 func NewSigningKeyStore(dbStore db.DB) *Store {

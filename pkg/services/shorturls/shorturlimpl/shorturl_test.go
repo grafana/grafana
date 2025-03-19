@@ -75,6 +75,8 @@ func TestShortURLService(t *testing.T) {
 
 			t.Run("and no action when no stale short urls exist", func(t *testing.T) {
 				cmd := shorturls.DeleteShortUrlCommand{OlderThan: time.Unix(existingShortURL.CreatedAt, 0)}
+
+				err = service.DeleteStaleShortURLs(context.Background(), &cmd)
 				require.NoError(t, err)
 				require.Equal(t, int64(0), cmd.NumDeleted)
 			})
@@ -88,5 +90,47 @@ func TestShortURLService(t *testing.T) {
 		require.Error(t, err)
 		require.True(t, shorturls.ErrShortURLNotFound.Is(err))
 		require.Nil(t, shortURL)
+	})
+
+	t.Run("User cannot create short URLs from invalid paths", func(t *testing.T) {
+		service := ShortURLService{SQLStore: &sqlStore{db: store}}
+
+		ctx := context.Background()
+
+		absolutePath := "/path?test=true"
+		newShortURL, err := service.CreateShortURL(ctx, user, absolutePath)
+		require.ErrorIs(t, err, shorturls.ErrShortURLAbsolutePath)
+		require.Nil(t, newShortURL)
+
+		relativePath := "path/../test?test=true"
+		newShortURL, err = service.CreateShortURL(ctx, user, relativePath)
+		require.ErrorIs(t, err, shorturls.ErrShortURLInvalidPath)
+		require.Nil(t, newShortURL)
+
+		relativePath = "../path/test?test=true"
+		newShortURL, err = service.CreateShortURL(ctx, user, relativePath)
+		require.ErrorIs(t, err, shorturls.ErrShortURLInvalidPath)
+		require.Nil(t, newShortURL)
+	})
+
+	t.Run("The same URL will generate different entries", func(t *testing.T) {
+		service := ShortURLService{SQLStore: &sqlStore{db: store}}
+
+		ctx := context.Background()
+
+		const refPath = "mock/path?test=true"
+
+		newShortURL1, err := service.CreateShortURL(ctx, user, refPath)
+		require.NoError(t, err)
+		require.NotNil(t, newShortURL1)
+		require.NotEmpty(t, newShortURL1.Uid)
+
+		newShortURL2, err := service.CreateShortURL(ctx, user, refPath)
+		require.NoError(t, err)
+		require.NotNil(t, newShortURL2)
+		require.NotEmpty(t, newShortURL2.Uid)
+
+		require.NotEqual(t, newShortURL1.Uid, newShortURL2.Uid)
+		require.Equal(t, newShortURL1.Path, newShortURL2.Path)
 	})
 }

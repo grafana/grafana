@@ -4,9 +4,8 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
 import { locationSearchToObject } from '@grafana/runtime';
-import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, Button } from '@grafana/ui';
+import { Select, RadioButtonGroup, useStyles2, Tooltip, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { useSelector } from 'app/types';
@@ -15,6 +14,7 @@ import { HorizontalGroup } from '../components/HorizontalGroup';
 import { PluginList } from '../components/PluginList';
 import { RoadmapLinks } from '../components/RoadmapLinks';
 import { SearchField } from '../components/SearchField';
+import UpdateAllButton from '../components/UpdateAllButton';
 import { UpdateAllModal } from '../components/UpdateAllModal';
 import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
@@ -86,15 +86,17 @@ export default function Browse() {
       .
     </div>
   );
-  const updateAll = (
-    <Button disabled={disableUpdateAllButton} onClick={onUpdateAll}>
-      <Trans i18nKey="plugins.catalog.update-all.button">Update all</Trans>
-      {disableUpdateAllButton ? '' : ` (${updatablePlugins.length})`}
-    </Button>
+
+  const updateAllButton = (
+    <UpdateAllButton
+      disabled={disableUpdateAllButton}
+      onUpdateAll={onUpdateAll}
+      updatablePluginsLength={updatablePlugins.length}
+    />
   );
 
   return (
-    <Page navModel={navModel} actions={updateAll} subTitle={subTitle}>
+    <Page navModel={navModel} actions={updateAllButton} subTitle={subTitle}>
       <Page.Contents>
         <HorizontalGroup wrap>
           <Field label="Search">

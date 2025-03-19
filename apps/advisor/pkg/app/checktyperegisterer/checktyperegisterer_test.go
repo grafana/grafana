@@ -3,9 +3,11 @@ package checktyperegisterer
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	k8sErrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -87,6 +89,24 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			},
 			expectedErr: errors.New("update error"),
 		},
+		{
+			name: "custom namespace",
+			checks: []checks.Check{
+				&mockCheck{
+					id: "check1",
+					steps: []checks.Step{
+						&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
+					},
+				},
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				if obj.GetNamespace() != "custom-namespace" {
+					return nil, fmt.Errorf("expected namespace %s, got %s", "custom-namespace", obj.GetNamespace())
+				}
+				return obj, nil
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for _, tt := range tests {
@@ -97,6 +117,7 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 					createFunc: tt.createFunc,
 					updateFunc: tt.updateFunc,
 				},
+				namespace: "custom-namespace",
 			}
 			err := r.Run(context.Background())
 			if err != nil {
@@ -134,8 +155,6 @@ func (m *mockCheck) Steps() []checks.Step {
 }
 
 type mockStep struct {
-	checks.Step
-
 	id          string
 	title       string
 	description string
@@ -151,6 +170,14 @@ func (m *mockStep) Title() string {
 
 func (m *mockStep) Description() string {
 	return m.description
+}
+
+func (m *mockStep) Resolution() string {
+	return ""
+}
+
+func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item any) (*advisorv0alpha1.CheckReportFailure, error) {
+	return nil, nil
 }
 
 type mockClient struct {

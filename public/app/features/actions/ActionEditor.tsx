@@ -2,15 +2,8 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Switch } from '@grafana/ui/';
-import { Field } from '@grafana/ui/src/components/Forms/Field';
-import { InlineField } from '@grafana/ui/src/components/Forms/InlineField';
-import { InlineFieldRow } from '@grafana/ui/src/components/Forms/InlineFieldRow';
-import { RadioButtonGroup } from '@grafana/ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup';
-import { JSONFormatter } from '@grafana/ui/src/components/JSONFormatter/JSONFormatter';
-import { useStyles2 } from '@grafana/ui/src/themes';
-import { t } from '@grafana/ui/src/utils/i18n';
+import { Switch, Field, InlineField, InlineFieldRow, RadioButtonGroup, JSONFormatter, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
@@ -108,8 +101,6 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     value.fetch.method !== HttpRequestMethod.GET &&
     value.fetch.headers?.some(([name, value]) => name === 'Content-Type' && value === 'application/json');
 
-  const action = config.featureToggles.vizActions ? 'or action' : '';
-
   return (
     <div className={styles.listItem}>
       <Field label={t('grafana-ui.action-editor.modal.action-title', 'Title')} className={styles.inputField}>
@@ -147,8 +138,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
           label={t('grafana-ui.data-link-inline-editor.one-click', 'One click')}
           description={t(
             'grafana-ui.action-editor.modal.one-click-description',
-            'Only one link {{ action }} can have one click enabled at a time',
-            { action }
+            'Only one link or action can have one click enabled at a time'
           )}
         >
           <Switch value={value.oneClick || false} onChange={onOneClickChanged} />

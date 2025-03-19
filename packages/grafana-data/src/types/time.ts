@@ -76,7 +76,7 @@ export function getDefaultTimeRange(): TimeRange {
 }
 
 /**
- * Returns the default realtive time range.
+ * Returns the default relative time range.
  *
  * @public
  */

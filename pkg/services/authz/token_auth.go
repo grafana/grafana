@@ -6,7 +6,8 @@ import (
 	"github.com/grafana/authlib/authn"
 )
 
-func newGRPCTokenAuth(audience, namespace string, tc authn.TokenExchanger) *tokenAuth {
+// TODO: move this to authlib
+func NewGRPCTokenAuth(audience, namespace string, tc authn.TokenExchanger) *tokenAuth {
 	return &tokenAuth{audience, namespace, tc}
 }
 
@@ -25,7 +26,9 @@ func (t *tokenAuth) GetRequestMetadata(ctx context.Context, _ ...string) (map[st
 		return nil, err
 	}
 
-	return map[string]string{authn.DefaultAccessTokenMetadataKey: token.Token}, nil
+	const metadataKey = "X-Access-Token"
+
+	return map[string]string{metadataKey: token.Token}, nil
 }
 
 func (t *tokenAuth) RequireTransportSecurity() bool { return false }

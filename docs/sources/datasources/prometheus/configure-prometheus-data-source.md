@@ -55,7 +55,7 @@ To add the Prometheus data source, complete the following steps:
 1. Click **Connections** in the left-side menu.
 1. Under **Connections**, click **Add new connection**.
 1. Enter `Prometheus` in the search bar.
-1. Select **Prometheus**.
+1. Click **Prometheus data source**.
 1. Click **Add new data source** in the upper right.
 1. Enter a name for the data source.
 
@@ -132,7 +132,7 @@ Following are additional configuration options.
 
 {{% admonition type="note" %}}
 
-The **Manage alerts via Alerting UI** toggle is enabled by default. You can change this behavior by setting the [default_manage_alerts_ui_toggle]({{< relref "../../setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle" >}}) option in the Grafana configuration file.
+The **Manage alerts via Alerting UI** toggle is enabled by default. You can change this behavior by setting the [default_manage_alerts_ui_toggle](../../../setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle) option in the Grafana configuration file.
 
 {{% /admonition %}}
 
@@ -144,7 +144,7 @@ The **Manage alerts via Alerting UI** toggle is enabled by default. You can chan
 
 ### Query editor
 
-- **Default editor** - Sets a default editor. Options are `Builder` or `Code`. For information on query editor types see [Prometheus query editor]({{< relref "./query-editor" >}}).
+- **Default editor** - Sets a default editor. Options are `Builder` or `Code`. For information on query editor types see [Prometheus query editor](../query-editor/).
 
 - **Disable metrics lookup** - Toggle on to disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with large Prometheus instances.
 
@@ -186,7 +186,14 @@ Refer to the following troubleshooting information, as required.
 
 #### Data doesn't appear in Explore metrics
 
-If metric data doesn't appear in Explore after you've successfully tested a connection to a Prometheus data source, ensure that you've selected the correct data source in the **Data source** drop-down menu.
+<!-- vale Grafana.Spelling = NO -->
+
+If metric data doesn't appear in Explore after you've successfully tested a connection to a Prometheus data source or sent
+metrics to Grafana Cloud, ensure that you've selected the correct data source in the **Data source** drop-down menu. If
+you've used remote_write to send metrics to Grafana Cloud, the data source name follows the convention
+`grafanacloud-stackname-prom`.
+
+<!-- vale Grafana.Spelling = YES -->
 
 The following image shows the **Data source** field in Explore metrics.
 

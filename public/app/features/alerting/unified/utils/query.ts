@@ -8,7 +8,7 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { isCloudRulesSource } from './datasource';
-import { isGrafanaRulerRule } from './rules';
+import { rulerRuleType } from './rules';
 import { safeParsePrometheusDuration } from './time';
 
 export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null): AlertQuery[] {
@@ -18,7 +18,7 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
   const { namespace, rulerRule } = combinedRule;
   const { rulesSource } = namespace;
 
-  if (isGrafanaRulerRule(rulerRule)) {
+  if (rulerRuleType.grafana.rule(rulerRule)) {
     const query = rulerRule.grafana_alert.data;
     return widenRelativeTimeRanges(query, rulerRule.for ?? '', combinedRule.group.interval);
   }

@@ -406,6 +406,13 @@ describe('ResponseTransformers', () => {
             ],
             collapsed: true,
           },
+          {
+            id: 6,
+            type: 'row',
+            title: 'Row with no panel property',
+            gridPos: { x: 0, y: 25, w: 12, h: 1 },
+            collapsed: true,
+          },
         ],
       };
 
@@ -483,7 +490,7 @@ describe('ResponseTransformers', () => {
       // Panel
       expect(spec.layout.kind).toBe('GridLayout');
       const layout = spec.layout as GridLayoutKind;
-      expect(layout.spec.items).toHaveLength(4);
+      expect(layout.spec.items).toHaveLength(5);
       expect(layout.spec.items[0].spec).toEqual({
         element: {
           kind: 'ElementReference',
@@ -605,6 +612,11 @@ describe('ResponseTransformers', () => {
         width: 16,
         height: 8,
       });
+
+      const rowWithNoPanelProperty = layout.spec.items[4].spec as GridLayoutRowSpec;
+      expect(rowWithNoPanelProperty.collapsed).toBe(true);
+      expect(rowWithNoPanelProperty.title).toBe('Row with no panel property');
+      expect(rowWithNoPanelProperty.elements).toHaveLength(0);
 
       // Variables
       validateVariablesV1ToV2(spec.variables[0], dashboardV1.templating?.list?.[0]);

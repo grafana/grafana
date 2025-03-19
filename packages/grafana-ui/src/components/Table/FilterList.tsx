@@ -7,7 +7,7 @@ import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue 
 
 import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '..';
 import { useStyles2, useTheme2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 
 interface Props {
   values: SelectableValue[];
@@ -172,7 +172,13 @@ export const FilterList = ({
 
   return (
     <Stack direction="column" gap={0.25}>
-      {!showOperators && <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />}
+      {!showOperators && (
+        <FilterInput
+          placeholder={t('grafana-ui.table.filter-placeholder', 'Filter values')}
+          onChange={setSearchFilter}
+          value={searchFilter}
+        />
+      )}
       {showOperators && (
         <Stack direction="row" gap={0}>
           <ButtonSelect
@@ -182,7 +188,11 @@ export const FilterList = ({
             value={operator}
             tooltip={operator.description}
           />
-          <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
+          <FilterInput
+            placeholder={t('grafana-ui.table.filter-placeholder', 'Filter values')}
+            onChange={setSearchFilter}
+            value={searchFilter}
+          />
         </Stack>
       )}
       {items.length > 0 ? (

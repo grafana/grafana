@@ -295,6 +295,11 @@ const (
 	// Error is the eval state for an alert rule condition
 	// that evaluated to Error.
 	Error
+
+	// Recovering is the eval state for an alert instance condition
+	// that evaluated to false (Normal) but has not yet met
+	// the KeepFiringFor duration defined in AlertRule.
+	Recovering
 )
 
 func (s State) IsValid() bool {
@@ -302,7 +307,7 @@ func (s State) IsValid() bool {
 }
 
 func (s State) String() string {
-	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
+	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error", "Recovering"}[s]
 }
 
 func ParseStateString(repr string) (State, error) {
@@ -317,6 +322,8 @@ func ParseStateString(repr string) (State, error) {
 		return NoData, nil
 	case "error":
 		return Error, nil
+	case "recovering":
+		return Recovering, nil
 	default:
 		return -1, fmt.Errorf("invalid state: %s", repr)
 	}
@@ -501,7 +508,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			if frame.Fields[0].Len() == 1 {
 				v = frame.At(0, 0).(*float64) // type checked above
 			}
-			captureFn(frame.RefID, frame.Fields[0].Labels, v)
+			captureFn(refID, frame.Fields[0].Labels, v)
 		}
 
 		if refID == c.Condition {

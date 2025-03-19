@@ -1,34 +1,18 @@
 import { uniqBy } from 'lodash';
 
-import {
-  BRAZILIAN_PORTUGUESE,
-  CHINESE_SIMPLIFIED,
-  DEFAULT_LANGUAGE,
-  ENGLISH_US,
-  FRENCH_FRANCE,
-  GERMAN_GERMANY,
-  LANGUAGES,
-  PSEUDO_LOCALE,
-  SPANISH_SPAIN,
-  VALID_LANGUAGES,
-} from './constants';
+import { LANGUAGES, VALID_LANGUAGES } from './constants';
 
 describe('internationalization constants', () => {
-  it('should have set the constants correctly', () => {
-    expect(ENGLISH_US).toBe('en-US');
-    expect(FRENCH_FRANCE).toBe('fr-FR');
-    expect(SPANISH_SPAIN).toBe('es-ES');
-    expect(GERMAN_GERMANY).toBe('de-DE');
-    expect(BRAZILIAN_PORTUGUESE).toBe('pt-BR');
-    expect(CHINESE_SIMPLIFIED).toBe('zh-Hans');
-    expect(PSEUDO_LOCALE).toBe('pseudo');
-    expect(DEFAULT_LANGUAGE).toBe(ENGLISH_US);
-  });
-
   it('should match a canonical locale definition', () => {
     for (const lang of LANGUAGES) {
       const resolved = Intl.getCanonicalLocales(lang.code);
       expect(lang.code).toEqual(resolved[0]);
+    }
+  });
+
+  it('should have locale codes including the country code', () => {
+    for (const lang of LANGUAGES) {
+      expect(lang.code).toMatch(/^[a-z]{2}-[a-zA-Z]+$/);
     }
   });
 

@@ -22,7 +22,7 @@ weight: 800
 The Azure AD authentication allows you to use a Microsoft Entra ID (formerly known as Azure Active Directory) tenant as an identity provider for Grafana. You can use Entra ID application roles to assign users and groups to Grafana roles from the Azure Portal.
 
 {{% admonition type="note" %}}
-If Users use the same email address in Microsoft Entra ID that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) for more information.
+If Users use the same email address in Microsoft Entra ID that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) for more information.
 {{% /admonition %}}
 
 ## Create the Microsoft Entra ID application
@@ -253,11 +253,11 @@ Refer to [Terraform Registry](https://registry.terraform.io/providers/grafana/gr
 
 ## Configure Azure AD authentication client using the Grafana configuration file
 
-Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
+Ensure that you have access to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location).
 
 ### Enable Azure AD OAuth in Grafana
 
-Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}):
+Add the following to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location):
 
 ```
 [auth.azuread]
@@ -293,7 +293,7 @@ GF_AUTH_AZUREAD_FEDERATED_CREDENTIAL_AUDIENCE
 ```
 
 {{% admonition type="note" %}}
-Verify that the Grafana [root_url]({{< relref "../../../configure-grafana#root_url" >}}) is set in your Azure Application Redirect URLs.
+Verify that the Grafana [root_url](../../../configure-grafana/#root_url) is set in your Azure Application Redirect URLs.
 {{% /admonition %}}
 
 ### Configure refresh token
@@ -417,7 +417,7 @@ Entra ID does not emit the groups claim in the token and emits a group overage c
 If Grafana receives a token with a group overage claim instead of a groups claim,
 Grafana attempts to retrieve the user's group membership by calling the included endpoint.
 
-To ensure this functionality works correctly, you must enable [`force_use_graph_api`]({{< relref "./#force-fetching-groups-from-microsoft-graph-api" >}}) in your configuration.
+To ensure this functionality works correctly, you must enable [`force_use_graph_api`](./#force-fetching-groups-from-microsoft-graph-api) in your configuration.
 
 {{% admonition type="note" %}}
 The 'App registration' must include the `GroupMember.Read.All` API permission for group overage claim calls to succeed.
@@ -451,7 +451,7 @@ force_use_graph_api = true
 By default, Azure AD authentication will map users to organization roles based on the most privileged application role assigned to the user in Entra ID.
 
 If no application role is found, the user is assigned the role specified by
-[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+[the `auto_assign_org_role` option](../../../configure-grafana/#auto_assign_org_role).
 You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned and the `org_mapping` expression evaluates to an empty mapping.
 
 You can use the `org_mapping` configuration option to assign the user to multiple organizations and specify their role based on their Entra ID group membership. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If the org role mapping (`org_mapping`) is specified and Entra ID returns a valid role, then the user will get the highest of the two roles.
@@ -476,7 +476,7 @@ org_mapping = ["032cb8e0-240f-4347-9120-6f33013e817a:org_foo:Viewer", "bce1c492-
 ## Skip organization role sync
 
 If Azure AD authentication is not intended to sync user roles and organization membership and prevent the sync of org roles from Entra ID, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
-See [Configure Grafana]({{< relref "../../../configure-grafana#authazuread" >}}) for more details.
+See [Configure Grafana](../../../configure-grafana/#authazuread) for more details.
 
 ```ini
 [auth.azuread]
@@ -487,7 +487,7 @@ skip_org_role_sync = true
 
 ## Configuration options
 
-The following table outlines the various Azure AD/Entra ID configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables]({{< relref "../../../configure-grafana#override-configuration-with-environment-variables" >}}).
+The following table outlines the various Azure AD/Entra ID configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
 
 | Setting                      | Required | Supported on Cloud | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Default                |
 | ---------------------------- | -------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
@@ -502,12 +502,12 @@ The following table outlines the various Azure AD/Entra ID configuration options
 | `scopes`                     | No       | Yes                | List of comma- or space-separated OAuth2 scopes.                                                                                                                                                                                                                                                                                                                                                                                                                                                | `openid email profile` |
 | `allow_sign_up`              | No       | Yes                | Controls Grafana user creation through the Azure AD/Entra ID login. Only existing Grafana users can log in with Azure AD/Entra ID if set to `false`.                                                                                                                                                                                                                                                                                                                                            | `true`                 |
 | `auto_login`                 | No       | Yes                | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                                                                                                                                                                                                                          | `false`                |
-| `role_attribute_strict`      | No       | Yes                | Set to `true` to deny user login if the Grafana org role cannot be extracted using `role_attribute_path` or `org_mapping`. For more information on user role mapping, refer to [Map roles]({{< relref "#map-roles" >}}).                                                                                                                                                                                                                                                                        | `false`                |
+| `role_attribute_strict`      | No       | Yes                | Set to `true` to deny user login if the Grafana org role cannot be extracted using `role_attribute_path` or `org_mapping`. For more information on user role mapping, refer to [Map roles](#map-roles).                                                                                                                                                                                                                                                                                         | `false`                |
 | `org_attribute_path`         | No       | No                 | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana org to role lookup. Grafana will first evaluate the expression using the OAuth2 ID token. If no value is returned, the expression will be evaluated using the user information obtained from the UserInfo endpoint. The result of the evaluation will be mapped to org roles based on `org_mapping`. For more information on org to role mapping, refer to [Org roles mapping example](#org-roles-mapping-example). |                        |
 | `org_mapping`                | No       | No                 | List of comma- or space-separated `<ExternalOrgName>:<OrgIdOrName>:<Role>` mappings. Value can be `*` meaning "All users". Role is optional and can have the following values: `None`, `Viewer`, `Editor` or `Admin`. For more information on external organization to role mapping, refer to [Org roles mapping example](#org-roles-mapping-example).                                                                                                                                          |                        |
-| `allow_assign_grafana_admin` | No       | No                 | Set to `true` to automatically sync the Grafana server administrator role. When enabled, if the Azure AD/Entra ID user's App role is `GrafanaAdmin`, Grafana grants the user server administrator privileges and the organization administrator role. If disabled, the user will only receive the organization administrator role. For more details on user role mapping, refer to [Map roles]({{< relref "#map-roles" >}}).                                                                    | `false`                |
+| `allow_assign_grafana_admin` | No       | No                 | Set to `true` to automatically sync the Grafana server administrator role. When enabled, if the Azure AD/Entra ID user's App role is `GrafanaAdmin`, Grafana grants the user server administrator privileges and the organization administrator role. If disabled, the user will only receive the organization administrator role. For more details on user role mapping, refer to [Map roles](#map-roles).                                                                                     | `false`                |
 | `skip_org_role_sync`         | No       | Yes                | Set to `true` to stop automatically syncing user roles. This will allow you to set organization roles for your users from within Grafana manually.                                                                                                                                                                                                                                                                                                                                              | `false`                |
-| `allowed_groups`             | No       | Yes                | List of comma- or space-separated groups. The user should be a member of at least one group to log in. If you configure `allowed_groups`, you must also configure Azure AD/Entra ID to include the `groups` claim following [Configure group membership claims on the Azure Portal]({{< relref "#configure-group-membership-claims-on-the-azure-portal" >}}).                                                                                                                                   |                        |
+| `allowed_groups`             | No       | Yes                | List of comma- or space-separated groups. The user should be a member of at least one group to log in. If you configure `allowed_groups`, you must also configure Azure AD/Entra ID to include the `groups` claim following [Configure group membership claims on the Azure Portal](#configure-group-membership-claims-on-the-azure-portal).                                                                                                                                                    |                        |
 | `allowed_organizations`      | No       | Yes                | List of comma- or space-separated Azure tenant identifiers. The user should be a member of at least one tenant to log in.                                                                                                                                                                                                                                                                                                                                                                       |                        |
 | `allowed_domains`            | No       | Yes                | List of comma- or space-separated domains. The user should belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                             |                        |
 | `tls_skip_verify_insecure`   | No       | No                 | If set to `true`, the client accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.                                                                                                                                                                                                                                                          | `false`                |

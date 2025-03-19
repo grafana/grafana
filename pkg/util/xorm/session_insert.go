@@ -345,6 +345,26 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		return 0, err
 	}
 
+	// If engine has a sequence number generator, use it to produce values for auto-increment columns.
+	if len(table.AutoIncrement) > 0 && session.engine.sequenceGenerator != nil {
+		var found bool
+		for _, col := range colNames {
+			if col == table.AutoIncrement {
+				found = true
+				break
+			}
+		}
+		if !found {
+			seq, err := session.engine.sequenceGenerator.Next(session.ctx, table.Name, table.AutoIncrement)
+			if err != nil {
+				return 0, fmt.Errorf("failed to generate next value for auto_increment columns: %v", err)
+			}
+
+			colNames = append(colNames, table.AutoIncrement)
+			args = append(args, seq)
+		}
+	}
+
 	exprs := session.statement.exprColumns
 	colPlaces := strings.Repeat("?, ", len(colNames))
 	if exprs.Len() <= 0 && len(colPlaces) > 0 {
@@ -423,9 +443,11 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 	}
 
 	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == core.POSTGRES {
-		if _, err := buf.WriteString(" RETURNING " + session.engine.Quote(table.AutoIncrement)); err != nil {
-			return 0, err
-		}
+		buf.WriteString(" RETURNING " + session.engine.Quote(table.AutoIncrement))
+	}
+
+	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == "spanner" {
+		buf.WriteString(" THEN RETURN " + session.engine.Quote(table.AutoIncrement))
 	}
 
 	sqlStr := buf.String()
@@ -461,6 +483,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 
 	// for postgres, many of them didn't implement lastInsertId, so we should
 	// implemented it ourself.
+	var insertID, rowsAffected int64
 	if session.engine.dialect.DBType() == core.ORACLE && len(table.AutoIncrement) > 0 {
 		res, err := session.queryBytes("select seq_atable.currval from dual", args...)
 		if err != nil {
@@ -483,23 +506,11 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		}
 
 		idByte := res[0][table.AutoIncrement]
-		id, err := strconv.ParseInt(string(idByte), 10, 64)
-		if err != nil || id <= 0 {
+		insertID, err = strconv.ParseInt(string(idByte), 10, 64)
+		if err != nil || insertID <= 0 {
 			return 1, err
 		}
-
-		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
-		if err != nil {
-			session.engine.logger.Error(err)
-		}
-
-		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
-			return 1, nil
-		}
-
-		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
-
-		return 1, nil
+		rowsAffected = 1
 	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == core.POSTGRES) {
 		res, err := session.queryBytes(sqlStr, args...)
 
@@ -522,23 +533,11 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		}
 
 		idByte := res[0][table.AutoIncrement]
-		id, err := strconv.ParseInt(string(idByte), 10, 64)
-		if err != nil || id <= 0 {
+		insertID, err = strconv.ParseInt(string(idByte), 10, 64)
+		if err != nil || insertID <= 0 {
 			return 1, err
 		}
-
-		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
-		if err != nil {
-			session.engine.logger.Error(err)
-		}
-
-		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
-			return 1, nil
-		}
-
-		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
-
-		return 1, nil
+		rowsAffected = 1
 	} else {
 		res, err := session.exec(sqlStr, args...)
 		if err != nil {
@@ -560,25 +559,29 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 			return res.RowsAffected()
 		}
 
-		var id int64
-		id, err = res.LastInsertId()
-		if err != nil || id <= 0 {
+		insertID, err = res.LastInsertId()
+		if err != nil || insertID <= 0 {
 			return res.RowsAffected()
 		}
 
-		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
+		rowsAffected, err = res.RowsAffected()
 		if err != nil {
-			session.engine.logger.Error(err)
+			return 0, err
 		}
-
-		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
-			return res.RowsAffected()
-		}
-
-		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
-
-		return res.RowsAffected()
 	}
+
+	// Set insertID back to the bean.
+	aiValue, err := table.AutoIncrColumn().ValueOf(bean)
+	if err != nil {
+		session.engine.logger.Error(err)
+	}
+
+	if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
+		return rowsAffected, nil
+	}
+
+	aiValue.Set(int64ToIntValue(insertID, aiValue.Type()))
+	return rowsAffected, nil
 }
 
 // InsertOne insert only one struct into database as a record.

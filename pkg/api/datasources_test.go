@@ -229,7 +229,7 @@ func TestAddDataSourceTeamHTTPHeaders(t *testing.T) {
 			expectedDatasource: &datasources.DataSource{},
 		},
 		Cfg:                  setting.NewCfg(),
-		Features:             featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
+		Features:             featuremgmt.WithFeatures(),
 		accesscontrolService: actest.FakeService{},
 		AccessControl: actest.FakeAccessControl{
 			ExpectedEvaluate: true,

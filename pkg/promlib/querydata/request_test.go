@@ -472,7 +472,7 @@ func setup() (*testContext, error) {
 		return nil, err
 	}
 
-	queryData, _ := querydata.New(httpClient, settings, log.New())
+	queryData, _ := querydata.New(httpClient, settings, log.New(), backend.FeatureToggles{})
 
 	return &testContext{
 		httpProvider: httpProvider,

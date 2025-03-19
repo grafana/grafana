@@ -3,15 +3,22 @@ package search
 import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func getBleveMappings(fields resource.SearchableDocumentFields) mapping.IndexMapping {
+func getBleveMappings(fields resource.SearchableDocumentFields) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
+
+	err := RegisterCustomAnalyzers(mapper)
+	if err != nil {
+		return nil, err
+	}
 	mapper.DefaultMapping = getBleveDocMappings(fields)
-	return mapper
+
+	return mapper, nil
 }
 
 func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
@@ -24,14 +31,22 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_NAME, nameMapping)
 
+	// for searching by title - uses an edge ngram token filter
+	titleSearchMapping := bleve.NewTextFieldMapping()
+	titleSearchMapping.Analyzer = TITLE_ANALYZER
+	titleSearchMapping.Store = false // already stored in title
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_NGRAM, titleSearchMapping)
+
+	// mapping for title to search on words/tokens larger than the ngram size
+	titleWordMapping := bleve.NewTextFieldMapping()
+	titleWordMapping.Analyzer = standard.Name
+	titleWordMapping.Store = true
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleWordMapping)
+
 	// for filtering/sorting by title full phrase
 	titlePhraseMapping := bleve.NewKeywordFieldMapping()
+	titleSearchMapping.Store = false // already stored in title
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_PHRASE, titlePhraseMapping)
-
-	// for searching by title
-	// TODO: do we still need this since we have SEARCH_FIELD_TITLE_PHRASE?
-	titleSearchMapping := bleve.NewTextFieldMapping()
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleSearchMapping)
 
 	descriptionMapping := &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_DESCRIPTION,
@@ -69,9 +84,9 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_FOLDER, folderMapping)
 
 	// Repositories
-	repo := bleve.NewDocumentStaticMapping()
-	repo.AddFieldMappingsAt("name", &mapping.FieldMapping{
-		Name:               "name",
+	manager := bleve.NewDocumentStaticMapping()
+	manager.AddFieldMappingsAt("kind", &mapping.FieldMapping{
+		Name:               "kind",
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Store:              true,
@@ -79,7 +94,18 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		IncludeTermVectors: false,
 		IncludeInAll:       true,
 	})
-	repo.AddFieldMappingsAt("path", &mapping.FieldMapping{
+	manager.AddFieldMappingsAt("id", &mapping.FieldMapping{
+		Name:               "id",
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       true,
+	})
+
+	source := bleve.NewDocumentStaticMapping()
+	source.AddFieldMappingsAt("path", &mapping.FieldMapping{
 		Name:               "path",
 		Type:               "text",
 		Analyzer:           keyword.Name,
@@ -88,8 +114,8 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		IncludeTermVectors: false,
 		IncludeInAll:       true,
 	})
-	repo.AddFieldMappingsAt("hash", &mapping.FieldMapping{
-		Name:               "hash",
+	source.AddFieldMappingsAt("checksum", &mapping.FieldMapping{
+		Name:               "checksum",
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Store:              true,
@@ -97,9 +123,19 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		IncludeTermVectors: false,
 		IncludeInAll:       true,
 	})
-	repo.AddFieldMappingsAt("time", mapping.NewDateTimeFieldMapping())
+	source.AddFieldMappingsAt("timestampMillis", mapping.NewNumericFieldMapping())
 
-	mapper.AddSubDocumentMapping("repo", repo)
+	mapper.AddSubDocumentMapping("source", source)
+	mapper.AddSubDocumentMapping("manager", manager)
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_MANAGED_BY, &mapping.FieldMapping{
+		Name:               "managedBy",
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Index:              true, // only used for faceting
+		Store:              false,
+		IncludeTermVectors: false,
+		IncludeInAll:       false,
+	})
 
 	labelMapper := bleve.NewDocumentMapping()
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)

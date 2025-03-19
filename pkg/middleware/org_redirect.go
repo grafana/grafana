@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -50,7 +49,7 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 			qs = fmt.Sprintf("%s&kiosk", urlParams.Encode())
 		}
 
-		newURL := fmt.Sprintf("%s%s?%s", cfg.AppSubURL, strings.TrimPrefix(c.Req.URL.Path, "/"), qs)
+		newURL := fmt.Sprintf("%s%s?%s", cfg.AppSubURL, c.Req.URL.Path, qs)
 
 		c.Redirect(newURL, 302)
 	}

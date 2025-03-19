@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -898,6 +899,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			nil,
 			tracer,
 			nil,
+			dualwrite.ProvideTestService(),
 			sort.ProvideService(),
 		)
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -915,6 +917,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			nil,
 			nil,
 			nil,
+			dualwrite.ProvideTestService(),
 			sort.ProvideService(),
 		)
 		dashboardService.RegisterDashboardPermissions(dashboardPermissions)
@@ -989,6 +992,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		nil,
 		tracer,
 		nil,
+		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
 	)
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -1008,6 +1012,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		nil,
 		nil,
 		nil,
+		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
 	)
 	require.NoError(t, err)
@@ -1043,6 +1048,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		nil,
 		tracer,
 		nil,
+		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
 	)
 	service, err := ProvideDashboardServiceImpl(
@@ -1059,6 +1065,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		nil,
 		nil,
 		nil,
+		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
 	)
 	require.NoError(t, err)
@@ -1113,6 +1120,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		nil,
 		tracer,
 		nil,
+		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
 	)
 	service, err := ProvideDashboardServiceImpl(
@@ -1129,6 +1137,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		nil,
 		nil,
 		nil,
+		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
 	)
 	require.NoError(t, err)
@@ -1189,6 +1198,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		nil,
 		tracer,
 		nil,
+		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
 	)
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
@@ -1206,6 +1216,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		nil,
 		nil,
 		nil,
+		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
 	)
 	require.NoError(t, err)

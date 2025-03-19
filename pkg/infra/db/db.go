@@ -94,3 +94,11 @@ func IsTestDBMSSQL() bool {
 
 	return false
 }
+
+func IsTestDBSpanner() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == migrator.Spanner
+	}
+
+	return false
+}

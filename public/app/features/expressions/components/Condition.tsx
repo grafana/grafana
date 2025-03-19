@@ -69,7 +69,10 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
   });
 
   const isRange =
-    condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
+    condition.evaluator.type === EvalFunction.IsWithinRange ||
+    condition.evaluator.type === EvalFunction.IsOutsideRange ||
+    condition.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
+    condition.evaluator.type === EvalFunction.IsWithinRangeIncluded;
 
   return (
     <Stack>

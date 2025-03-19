@@ -204,11 +204,10 @@ func TestRoleAppPluginAuth(t *testing.T) {
 							0: tc.role,
 						},
 					})
-					features := featuremgmt.WithFeatures()
 					logger := &logtest.Fake{}
 					ac := &actest.FakeAccessControl{}
 
-					sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
+					sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, logger), func(c *contextmodel.ReqContext) {
 						c.JSON(http.StatusOK, map[string]interface{}{})
 					})
 					sc.fakeReq("GET", path).exec()
@@ -227,10 +226,9 @@ func TestRoleAppPluginAuth(t *testing.T) {
 				0: org.RoleViewer,
 			},
 		})
-		features := featuremgmt.WithFeatures()
 		logger := &logtest.Fake{}
 		ac := &actest.FakeAccessControl{}
-		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, &pluginstore.FakePluginStore{}, features, logger), func(c *contextmodel.ReqContext) {
+		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, &pluginstore.FakePluginStore{}, logger), func(c *contextmodel.ReqContext) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/test").exec()
@@ -245,7 +243,6 @@ func TestRoleAppPluginAuth(t *testing.T) {
 				0: org.RoleViewer,
 			},
 		})
-		features := featuremgmt.WithFeatures()
 		logger := &logtest.Fake{}
 		ac := &actest.FakeAccessControl{}
 		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, pluginstore.NewFakePluginStore(pluginstore.Plugin{
@@ -259,7 +256,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				},
 			},
-		}), features, logger), func(c *contextmodel.ReqContext) {
+		}), logger), func(c *contextmodel.ReqContext) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/notExistingPath").exec()
@@ -307,7 +304,6 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				})
 				logger := &logtest.Fake{}
-				features := featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 				ac := &actest.FakeAccessControl{
 					ExpectedEvaluate: tc.evalResult,
 					ExpectedErr:      tc.evalErr,
@@ -327,7 +323,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				})
 
-				sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
+				sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, logger), func(c *contextmodel.ReqContext) {
 					c.JSON(http.StatusOK, map[string]interface{}{})
 				})
 				sc.fakeReq("GET", path).exec()

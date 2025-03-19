@@ -7,7 +7,7 @@
     "spec": {
         "title": "Load devenv dashboards",
         "description": "Load /devenv/dev-dashboards (from root of repository)",
-        "readOnly": false,
+        "workflows": ["write"],
         "sync": {
             "enabled": true,
             "target": "mirror",

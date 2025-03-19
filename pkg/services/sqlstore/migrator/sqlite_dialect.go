@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/mattn/go-sqlite3"
+
 	"xorm.io/xorm"
 )
 
@@ -30,6 +31,13 @@ func (db *SQLite3) Quote(name string) string {
 
 func (db *SQLite3) AutoIncrStr() string {
 	return "AUTOINCREMENT"
+}
+
+func (db *SQLite3) BooleanValue(value bool) any {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func (db *SQLite3) BooleanStr(value bool) string {

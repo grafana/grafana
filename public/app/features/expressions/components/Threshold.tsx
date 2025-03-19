@@ -5,8 +5,9 @@ import * as React from 'react';
 import { FormEvent, useEffect, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, useStyles2, Stack } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Stack, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { t } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import { ClassicCondition, ExpressionQuery, thresholdFunctions } from '../types';
@@ -81,7 +82,9 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
 
   const isRange =
     conditionInState.evaluator.type === EvalFunction.IsWithinRange ||
-    conditionInState.evaluator.type === EvalFunction.IsOutsideRange;
+    conditionInState.evaluator.type === EvalFunction.IsOutsideRange ||
+    conditionInState.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
+    conditionInState.evaluator.type === EvalFunction.IsWithinRangeIncluded;
 
   const hysteresisEnabled = Boolean(config.featureToggles?.recoveryThreshold) && useHysteresis;
 
@@ -155,7 +158,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
         <div onMouseDown={onHysteresisCheckDown}>
           <InlineSwitch
             showLabel={true}
-            label="Custom recovery threshold"
+            label={t('alerting.rule-form.threshold.recovery.title', 'Custom recovery threshold')}
             value={hasHysteresis}
             onChange={onHysteresisCheckChange}
             className={styles.switch}
@@ -211,111 +214,286 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
   }
 
   function RecoveryForRange({ allowOnblur }: RecoveryProps) {
-    if (condition.evaluator.type === EvalFunction.IsWithinRange) {
-      return (
-        <InlineFieldRow className={styles.hysteresis}>
-          <InlineField label="Stop alerting when outside range" labelWidth={'auto'}>
-            <Stack direction="row" gap={0}>
-              <div className={styles.range}>
-                <InlineField invalid={Boolean(errorMsgFrom)} error={errorMsgFrom} className={styles.noMargin}>
-                  <Input
-                    type="number"
-                    width={10}
-                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 0)}
-                    defaultValue={condition.unloadEvaluator?.params[0]}
-                  />
-                </InlineField>
-              </div>
-              <ToLabel />
-              <div className={styles.range}>
-                <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
-                  <Input
-                    type="number"
-                    width={10}
-                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 1)}
-                    defaultValue={condition.unloadEvaluator?.params[1]}
-                  />
-                </InlineField>
-              </div>
-            </Stack>
-          </InlineField>
-        </InlineFieldRow>
-      );
-    } else {
-      return (
-        <InlineFieldRow className={styles.hysteresis}>
-          <InlineField label="Stop alerting when inside range" labelWidth={'auto'}>
-            <Stack direction="row" gap={0}>
-              <div className={styles.range}>
-                <InlineField invalid={Boolean(errorMsgFrom)} error={errorMsgFrom}>
-                  <Input
-                    type="number"
-                    width={10}
-                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 0)}
-                    defaultValue={condition.unloadEvaluator?.params[0]}
-                  />
-                </InlineField>
-              </div>
+    switch (condition.evaluator.type) {
+      case EvalFunction.IsWithinRange:
+        if (condition.evaluator.type === EvalFunction.IsWithinRange) {
+          return (
+            <InlineFieldRow className={styles.hysteresis}>
+              <InlineField
+                label={t(
+                  'alerting.rule-form.threshold.recovery.stop-alerting-outside-range',
+                  'Stop alerting when outside range'
+                )}
+                labelWidth={'auto'}
+              >
+                <Stack direction="row" gap={0}>
+                  <div className={styles.range}>
+                    <InlineField invalid={Boolean(errorMsgFrom)} error={errorMsgFrom} className={styles.noMargin}>
+                      <Input
+                        type="number"
+                        width={10}
+                        onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 0)}
+                        defaultValue={condition.unloadEvaluator?.params[0]}
+                      />
+                    </InlineField>
+                  </div>
+                  <ToLabel />
+                  <div className={styles.range}>
+                    <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
+                      <Input
+                        type="number"
+                        width={10}
+                        onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 1)}
+                        defaultValue={condition.unloadEvaluator?.params[1]}
+                      />
+                    </InlineField>
+                  </div>
+                </Stack>
+              </InlineField>
+            </InlineFieldRow>
+          );
+        }
+      case EvalFunction.IsOutsideRange:
+        return (
+          <InlineFieldRow className={styles.hysteresis}>
+            <InlineField
+              label={t(
+                'alerting.rule-form.threshold.recovery.stop-alerting-inside-range',
+                'Stop alerting when inside range'
+              )}
+              labelWidth={'auto'}
+            >
+              <Stack direction="row" gap={0}>
+                <div className={styles.range}>
+                  <InlineField invalid={Boolean(errorMsgFrom)} error={errorMsgFrom}>
+                    <Input
+                      type="number"
+                      width={10}
+                      onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 0)}
+                      defaultValue={condition.unloadEvaluator?.params[0]}
+                    />
+                  </InlineField>
+                </div>
 
-              <ToLabel />
-              <div className={styles.range}>
-                <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
-                  <Input
-                    type="number"
-                    width={10}
-                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 1)}
-                    defaultValue={condition.unloadEvaluator?.params[1]}
-                  />
-                </InlineField>
-              </div>
-            </Stack>
-          </InlineField>
-        </InlineFieldRow>
-      );
+                <ToLabel />
+                <div className={styles.range}>
+                  <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
+                    <Input
+                      type="number"
+                      width={10}
+                      onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 1)}
+                      defaultValue={condition.unloadEvaluator?.params[1]}
+                    />
+                  </InlineField>
+                </div>
+              </Stack>
+            </InlineField>
+          </InlineFieldRow>
+        );
+      case EvalFunction.IsOutsideRangeIncluded:
+        return (
+          <InlineFieldRow className={styles.hysteresis}>
+            <InlineField
+              label={t(
+                'alerting.rule-form.threshold.recovery.stop-alerting-inside-range',
+                'Stop alerting when inside range'
+              )}
+              labelWidth={'auto'}
+            >
+              <Stack direction="row" gap={0}>
+                <div className={styles.range}>
+                  <InlineField invalid={Boolean(errorMsgFrom)} error={errorMsgFrom}>
+                    <Input
+                      type="number"
+                      width={10}
+                      onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 0)}
+                      defaultValue={condition.unloadEvaluator?.params[0]}
+                    />
+                  </InlineField>
+                </div>
+                <ToLabel />
+                <div className={styles.range}>
+                  <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
+                    <Input
+                      type="number"
+                      width={10}
+                      onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 1)}
+                      defaultValue={condition.unloadEvaluator?.params[1]}
+                    />
+                  </InlineField>
+                </div>
+              </Stack>
+            </InlineField>
+          </InlineFieldRow>
+        );
+      case EvalFunction.IsWithinRangeIncluded:
+        return (
+          <InlineFieldRow className={styles.hysteresis}>
+            <InlineField
+              label={t(
+                'alerting.rule-form.threshold.recovery.stop-alerting-outside-range',
+                'Stop alerting when outside range'
+              )}
+              labelWidth={'auto'}
+            >
+              <Stack direction="row" gap={0}>
+                <div className={styles.range}>
+                  <InlineField invalid={Boolean(errorMsgFrom)} error={errorMsgFrom}>
+                    <Input
+                      type="number"
+                      width={10}
+                      onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 0)}
+                      defaultValue={condition.unloadEvaluator?.params[0]}
+                    />
+                  </InlineField>
+                </div>
+                <ToLabel />
+                <div className={styles.range}>
+                  <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
+                    <Input
+                      type="number"
+                      width={10}
+                      onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 1)}
+                      defaultValue={condition.unloadEvaluator?.params[1]}
+                    />
+                  </InlineField>
+                </div>
+              </Stack>
+            </InlineField>
+          </InlineFieldRow>
+        );
+      default:
+        return null;
     }
   }
 
   function RecoveryForSingleValue({ allowOnblur }: RecoveryProps) {
-    if (condition.evaluator.type === EvalFunction.IsAbove) {
-      return (
-        <InlineFieldRow className={styles.hysteresis}>
-          <InlineField
-            label="Stop alerting when below"
-            labelWidth={'auto'}
-            invalid={Boolean(invalidErrorMsg)}
-            error={invalidErrorMsg}
-          >
-            <Input
-              type="number"
-              width={10}
-              onBlur={(event) => {
-                allowOnblur.current && onUnloadValueChange(event, 0);
-              }}
-              defaultValue={condition.unloadEvaluator?.params[0]}
-            />
-          </InlineField>
-        </InlineFieldRow>
-      );
-    } else {
-      return (
-        <InlineFieldRow className={styles.hysteresis}>
-          <InlineField
-            label="Stop alerting when above"
-            labelWidth={'auto'}
-            invalid={Boolean(invalidErrorMsg)}
-            error={invalidErrorMsg}
-          >
-            <Input
-              type="number"
-              width={10}
-              onBlur={(event) => {
-                allowOnblur.current && onUnloadValueChange(event, 0);
-              }}
-              defaultValue={condition.unloadEvaluator?.params[0]}
-            />
-          </InlineField>
-        </InlineFieldRow>
-      );
+    switch (condition.evaluator.type) {
+      case EvalFunction.IsAbove:
+        return (
+          <InlineFieldRow className={styles.hysteresis}>
+            <InlineField
+              label={t('alerting.rule-form.threshold.recovery.stop-alerting-bellow', 'Stop alerting when below')}
+              labelWidth={'auto'}
+              invalid={Boolean(invalidErrorMsg)}
+              error={invalidErrorMsg}
+            >
+              <Input
+                type="number"
+                width={10}
+                onBlur={(event) => {
+                  allowOnblur.current && onUnloadValueChange(event, 0);
+                }}
+                defaultValue={condition.unloadEvaluator?.params[0]}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        );
+      case EvalFunction.IsBelow:
+        return (
+          <InlineFieldRow className={styles.hysteresis}>
+            <InlineField
+              label={t('alerting.rule-form.threshold.recovery.stop-alerting-above', 'Stop alerting when above')}
+              labelWidth={'auto'}
+              invalid={Boolean(invalidErrorMsg)}
+              error={invalidErrorMsg}
+            >
+              <Input
+                type="number"
+                width={10}
+                onBlur={(event) => {
+                  allowOnblur.current && onUnloadValueChange(event, 0);
+                }}
+                defaultValue={condition.unloadEvaluator?.params[0]}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        );
+      case EvalFunction.IsEqual:
+        return (
+          <InlineFieldRow className={styles.hysteresis}>
+            <InlineField
+              label={t('alerting.rule-form.threshold.recovery.stop-alerting-equal', 'Stop alerting when equal to')}
+              labelWidth={'auto'}
+              invalid={Boolean(invalidErrorMsg)}
+              error={invalidErrorMsg}
+            >
+              <Input
+                type="number"
+                width={10}
+                onBlur={(event) => {
+                  allowOnblur.current && onUnloadValueChange(event, 0);
+                }}
+                defaultValue={condition.unloadEvaluator?.params[0]}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        );
+      case EvalFunction.IsNotEqual:
+        return (
+          <InlineFieldRow className={styles.hysteresis}>
+            <InlineField
+              label={t(
+                'alerting.rule-form.threshold.recovery.stop-alerting-not-equal',
+                'Stop alerting when not equal to'
+              )}
+              labelWidth={'auto'}
+              invalid={Boolean(invalidErrorMsg)}
+              error={invalidErrorMsg}
+            >
+              <Input
+                type="number"
+                width={10}
+                onBlur={(event) => {
+                  allowOnblur.current && onUnloadValueChange(event, 0);
+                }}
+                defaultValue={condition.unloadEvaluator?.params[0]}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        );
+      case EvalFunction.IsGreaterThanEqual:
+        return (
+          <InlineFieldRow className={styles.hysteresis}>
+            <InlineField
+              label={t('alerting.rule-form.threshold.recovery.stop-alerting-less', 'Stop alerting when less than')}
+              labelWidth={'auto'}
+              invalid={Boolean(invalidErrorMsg)}
+              error={invalidErrorMsg}
+            >
+              <Input
+                type="number"
+                width={10}
+                onBlur={(event) => {
+                  allowOnblur.current && onUnloadValueChange(event, 0);
+                }}
+                defaultValue={condition.unloadEvaluator?.params[0]}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        );
+      case EvalFunction.IsLessThanEqual:
+        return (
+          <InlineFieldRow className={styles.hysteresis}>
+            <InlineField
+              label={t('alerting.rule-form.threshold.recovery.stop-alerting-more', 'Stop alerting when more than')}
+              labelWidth={'auto'}
+              invalid={Boolean(invalidErrorMsg)}
+              error={invalidErrorMsg}
+            >
+              <Input
+                type="number"
+                width={10}
+                onBlur={(event) => {
+                  allowOnblur.current && onUnloadValueChange(event, 0);
+                }}
+                defaultValue={condition.unloadEvaluator?.params[0]}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        );
+      default:
+        return null;
     }
   }
 }

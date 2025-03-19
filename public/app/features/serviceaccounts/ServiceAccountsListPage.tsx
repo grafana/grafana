@@ -1,9 +1,20 @@
+import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { OrgRole } from '@grafana/data';
-import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, InlineField, EmptyState, Box } from '@grafana/ui';
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import {
+  ConfirmModal,
+  FilterInput,
+  LinkButton,
+  RadioButtonGroup,
+  InlineField,
+  EmptyState,
+  Box,
+  Stack,
+  useStyles2,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -78,6 +89,7 @@ export const ServiceAccountsListPageUnconnected = ({
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
   const [newToken, setNewToken] = useState('');
   const [currentServiceAccount, setCurrentServiceAccount] = useState<ServiceAccountDTO | null>(null);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     fetchServiceAccounts({ withLoadingIndicator: true });
@@ -192,13 +204,13 @@ export const ServiceAccountsListPageUnconnected = ({
       }
     >
       <Page.Contents>
-        <div className="page-action-bar">
+        <Stack justifyContent="space-between" wrap="wrap">
           <InlineField grow>
             <FilterInput
+              className={styles.filterInput}
               placeholder="Search service account by name"
               value={query}
               onChange={onQueryChange}
-              width={50}
             />
           </InlineField>
           <Box marginBottom={1}>
@@ -208,7 +220,7 @@ export const ServiceAccountsListPageUnconnected = ({
               value={serviceAccountStateFilter}
             />
           </Box>
-        </div>
+        </Stack>
         {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && (
           <EmptyState
             variant="not-found"
@@ -290,6 +302,12 @@ export const ServiceAccountsListPageUnconnected = ({
     </Page>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  filterInput: css({
+    maxWidth: theme.spacing(50),
+  }),
+});
 
 const ServiceAccountsListPage = connector(ServiceAccountsListPageUnconnected);
 export default ServiceAccountsListPage;

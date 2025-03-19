@@ -470,6 +470,34 @@ describe('Language completion provider', () => {
           )
         );
       });
+
+      it('should set `labelKeys` on language provider', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'C',
+            expr: 'go_gc_pauses_seconds_bucket',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request').mockResolvedValue(['foo', 'bar']);
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        expect(languageProvider.labelKeys).toEqual(['bar', 'foo']);
+      });
+
+      it('should return labelKeys from request', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'C',
+            expr: 'go_gc_pauses_seconds_bucket',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request').mockResolvedValue(['foo', 'bar']);
+        const keys = await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        expect(keys).toEqual(['bar', 'foo']);
+      });
     });
 
     describe('with GET', () => {

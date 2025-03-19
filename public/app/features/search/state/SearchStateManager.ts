@@ -171,6 +171,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   onSortChange = (sort: string | undefined) => {
     if (sort) {
       localStorage.setItem(SEARCH_SELECTED_SORT, sort);
+      // Switch to list view if sort is set to preserve sort order when navigating back
+      localStorage.setItem(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
     } else {
       localStorage.removeItem(SEARCH_SELECTED_SORT);
     }

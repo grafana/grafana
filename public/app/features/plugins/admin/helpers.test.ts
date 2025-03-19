@@ -1,4 +1,4 @@
-import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './__mocks__';
@@ -12,8 +12,10 @@ import {
   Sorters,
   isLocalPluginVisibleByConfig,
   isRemotePluginVisibleByConfig,
+  isNonAngularVersion,
+  isDisabledAngularPlugin,
 } from './helpers';
-import { RemotePlugin, LocalPlugin, RemotePluginStatus } from './types';
+import { RemotePlugin, LocalPlugin, RemotePluginStatus, Version, CatalogPlugin } from './types';
 
 describe('Plugins/Helpers', () => {
   let remotePlugin: RemotePlugin;
@@ -874,6 +876,37 @@ describe('Plugins/Helpers', () => {
       });
 
       expect(isRemotePluginVisibleByConfig(plugin)).toBe(false);
+    });
+  });
+
+  describe('isNonAngularVersion()', () => {
+    test('should return TRUE if the version is not using angular', () => {
+      expect(isNonAngularVersion({ angularDetected: false } as Version)).toBe(true);
+    });
+
+    test('should return FALSE if the version is using angular', () => {
+      expect(isNonAngularVersion({ angularDetected: true } as Version)).toBe(false);
+    });
+
+    test('should return FALSE if the version is not set', () => {
+      expect(isNonAngularVersion(undefined)).toBe(false);
+    });
+  });
+
+  describe('isDisabledAngularPlugin', () => {
+    it('should return true for disabled angular plugins', () => {
+      const plugin = { isDisabled: true, error: PluginErrorCode.angular } as CatalogPlugin;
+      expect(isDisabledAngularPlugin(plugin)).toBe(true);
+    });
+
+    it('should return false for non-angular plugins', () => {
+      const plugin = { isDisabled: true, error: undefined } as CatalogPlugin;
+      expect(isDisabledAngularPlugin(plugin)).toBe(false);
+    });
+
+    it('should return false for plugins that are not disabled', () => {
+      const plugin = { isDisabled: false, error: undefined } as CatalogPlugin;
+      expect(isDisabledAngularPlugin(plugin)).toBe(false);
     });
   });
 });

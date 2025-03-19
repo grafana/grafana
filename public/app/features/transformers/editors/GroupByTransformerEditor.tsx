@@ -32,7 +32,7 @@ export const GroupByTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<GroupByTransformerOptions>) => {
-  const fieldNames = useAllFieldNamesFromDataFrames(input);
+  const fieldNames = useAllFieldNamesFromDataFrames(input, true);
 
   const onConfigChange = useCallback(
     (fieldName: string) => (config: GroupByFieldOptions) => {

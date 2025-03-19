@@ -154,7 +154,7 @@ export class MetricDatasourceHelper {
   }
 
   /**
-   * Used for additional filtering for adhoc vars labels in Explore metrics.
+   * Used for additional filtering for adhoc vars labels in Metrics Drilldown.
    * @param options
    * @returns
    */
@@ -170,7 +170,7 @@ export class MetricDatasourceHelper {
   }
 
   /**
-   * Used for additional filtering for adhoc vars label values in Explore metrics.
+   * Used for additional filtering for adhoc vars label values in Metrics Drilldown.
    * @param options
    * @returns
    */

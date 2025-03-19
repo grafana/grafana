@@ -9,6 +9,11 @@ import (
 type RepositoryViewList struct {
 	metav1.TypeMeta `json:",inline"`
 
+	// The backend is using legacy storage
+	// FIXME: Not sure where this should be exposed... but we need it somewhere
+	// The UI should force the onboarding workflow when this is true
+	LegacyStorage bool `json:"legacyStorage,omitempty"`
+
 	// +mapType=atomic
 	Items []RepositoryView `json:"items"`
 }

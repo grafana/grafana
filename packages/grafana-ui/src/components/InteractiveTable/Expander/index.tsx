@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { CellProps, HeaderProps } from 'react-table';
 
+import { t } from '../../../utils/i18n';
 import { IconButton } from '../../IconButton/IconButton';
 
 const expanderContainerStyles = css({
@@ -13,7 +14,7 @@ export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, vo
   return (
     <div className={expanderContainerStyles}>
       <IconButton
-        tooltip="toggle row expanded"
+        tooltip={t('grafana-ui.interactive-table.expand-row-tooltip', 'Toggle row expanded')}
         aria-controls={__rowID}
         // @ts-expect-error react-table doesn't ship with useExpanded types and we can't use declaration merging without affecting the table viz
         name={row.isExpanded ? 'angle-down' : 'angle-right'}

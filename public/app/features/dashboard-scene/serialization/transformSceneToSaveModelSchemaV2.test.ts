@@ -404,6 +404,18 @@ function getMinimalSceneState(body: DashboardLayoutManager): Partial<DashboardSc
       timePicker: new SceneTimePicker({
         isOnCanvas: true,
         hidePicker: true,
+        quickRanges: [
+          {
+            display: 'Last 6 hours',
+            from: 'now-6h',
+            to: 'now',
+          },
+          {
+            display: 'Last 3 days',
+            from: 'now-3d',
+            to: 'now',
+          },
+        ],
       }),
     }),
 
@@ -549,14 +561,7 @@ describe('dynamic layouts', () => {
       }),
     ];
 
-    const scene = setupDashboardScene(
-      getMinimalSceneState(
-        new TabsLayoutManager({
-          currentTab: tabs[0],
-          tabs,
-        })
-      )
-    );
+    const scene = setupDashboardScene(getMinimalSceneState(new TabsLayoutManager({ tabs })));
     const result = transformSceneToSaveModelSchemaV2(scene);
     expect(result.layout.kind).toBe('TabsLayout');
     const tabsLayout = result.layout.spec as TabsLayoutSpec;

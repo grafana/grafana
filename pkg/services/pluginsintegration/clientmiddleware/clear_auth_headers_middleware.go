@@ -67,3 +67,33 @@ func (m *ClearAuthHeadersMiddleware) CheckHealth(ctx context.Context, req *backe
 
 	return m.BaseHandler.CheckHealth(ctx, req)
 }
+
+func (m *ClearAuthHeadersMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if req == nil {
+		return m.BaseHandler.SubscribeStream(ctx, req)
+	}
+
+	m.clearHeaders(ctx, req)
+
+	return m.BaseHandler.SubscribeStream(ctx, req)
+}
+
+func (m *ClearAuthHeadersMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	if req == nil {
+		return m.BaseHandler.PublishStream(ctx, req)
+	}
+
+	m.clearHeaders(ctx, req)
+
+	return m.BaseHandler.PublishStream(ctx, req)
+}
+
+func (m *ClearAuthHeadersMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	if req == nil {
+		return m.BaseHandler.RunStream(ctx, req, sender)
+	}
+
+	m.clearHeaders(ctx, req)
+
+	return m.BaseHandler.RunStream(ctx, req, sender)
+}
