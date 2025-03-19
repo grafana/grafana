@@ -3,7 +3,6 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Field, Input, Select } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { FolderAndGroup } from 'app/features/alerting/unified/components/rule-editor/FolderAndGroup';
 import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
 import { durationValidationPattern, parseDurationToMilliseconds } from 'app/features/alerting/unified/utils/time';
 import {
@@ -215,7 +214,8 @@ export const TemplateForm: FC = () => {
         />
       </Field>
 
-      <FolderAndGroup enableProvisionedGroups />
+      {/* @TODO */}
+      {/* <FolderAndGroup enableProvisionedGroups /> */}
 
       <EvaluateEvery />
 
