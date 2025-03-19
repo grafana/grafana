@@ -1,9 +1,8 @@
 package safepath
 
 import (
+	"errors"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 var (
