@@ -14,6 +14,7 @@ import (
 	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
+	"github.com/grafana/dskit/concurrency"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -132,32 +133,38 @@ func (s *SpannerDialect) ColStringNoPk(col *Column) string {
 }
 
 func (s *SpannerDialect) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.DBMetas()
+	// Get tables names only, no columns or indexes.
+	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
 	}
 	sess := engine.NewSession()
 	defer sess.Close()
 
+	var statements []string
+
 	for _, table := range tables {
 		switch table.Name {
 		case "":
 			continue
+		case "autoincrement_sequences":
+			// Don't delete sequence number for migration_log.id column.
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE name <> 'migration_log:id'", s.Quote(table.Name)))
 		case "migration_log":
 			continue
 		case "dashboard_acl":
 			// keep default dashboard permissions
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", s.Quote(table.Name))); err != nil {
-				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
-			}
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", s.Quote(table.Name)))
 		default:
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE TRUE;", s.Quote(table.Name))); err != nil {
-				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
-			}
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE TRUE;", s.Quote(table.Name)))
 		}
 	}
 
-	return nil
+	// Run statements concurrently.
+	return concurrency.ForEachJob(context.Background(), len(statements), 10, func(ctx context.Context, idx int) error {
+		_, err := sess.Exec(statements[idx])
+		return err
+	})
 }
 
 // CleanDB drops all existing tables and their indexes.
@@ -169,12 +176,15 @@ func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 
 	// Collect all DROP statements.
 	var statements []string
-	for _, table := range tables {
-		// Ignore these tables used by Unified storage.
-		if table.Name == "resource" || table.Name == "resource_blob" || table.Name == "resource_history" {
-			continue
-		}
+	changeStreams, err := s.findChangeStreams(engine)
+	if err != nil {
+		return err
+	}
+	for _, cs := range changeStreams {
+		statements = append(statements, fmt.Sprintf("DROP CHANGE STREAM `%s`", cs))
+	}
 
+	for _, table := range tables {
 		// Indexes must be dropped first, otherwise dropping tables fails.
 		for _, index := range table.Indexes {
 			if !index.IsRegular {
@@ -333,4 +343,25 @@ func SpannerConnectorConfigToClientOptions(connectorConfig spannerdriver.Connect
 
 func (s *SpannerDialect) UnionDistinct() string {
 	return "UNION DISTINCT"
+}
+
+func (s *SpannerDialect) findChangeStreams(engine *xorm.Engine) ([]string, error) {
+	var result []string
+	query := `SELECT c.CHANGE_STREAM_NAME
+	FROM INFORMATION_SCHEMA.CHANGE_STREAMS AS C
+	WHERE C.CHANGE_STREAM_CATALOG=''
+	AND C.CHANGE_STREAM_SCHEMA=''`
+	rows, err := engine.DB().Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		result = append(result, name)
+	}
+	return result, nil
 }

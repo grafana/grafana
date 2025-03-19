@@ -134,6 +134,13 @@ export function formatPrometheusDuration(milliseconds: number): string {
   );
 }
 
+/**
+ * Parses a Prometheus duration string and returns the duration in milliseconds.
+ * If the duration is invalid, it returns 0.
+ *
+ * @param duration - The Prometheus duration string to parse.
+ * @returns The duration in milliseconds.
+ */
 export const safeParsePrometheusDuration = (duration: string): number => {
   try {
     return parsePrometheusDuration(duration);
