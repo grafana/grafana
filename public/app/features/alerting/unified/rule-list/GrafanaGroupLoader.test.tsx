@@ -16,7 +16,7 @@ import { setupMswServer } from '../mockApi';
 import { mockGrafanaPromAlertingRule, mockGrafanaRulerRule } from '../mocks';
 import { grafanaRulerGroup, grafanaRulerNamespace } from '../mocks/grafanaRulerApi';
 import { setGrafanaPromRules } from '../mocks/server/configure';
-import { isGrafanaAlertingRule } from '../utils/rules';
+import { rulerRuleType } from '../utils/rules';
 import { intervalToSeconds } from '../utils/time';
 
 import { GrafanaGroupLoader, matchRules } from './GrafanaGroupLoader';
@@ -166,7 +166,7 @@ function rulerRuleToPromRule(rule: RulerGrafanaRuleDTO): GrafanaPromRuleDTO {
     folderUid: rule.grafana_alert.namespace_uid,
     health: 'ok',
     state: PromAlertingRuleState.Inactive,
-    type: isGrafanaAlertingRule(rule) ? PromRuleType.Alerting : PromRuleType.Recording,
+    type: rulerRuleType.grafana.alertingRule(rule) ? PromRuleType.Alerting : PromRuleType.Recording,
   };
 }
 

@@ -36,7 +36,11 @@ import {
   trackNewGrafanaAlertRuleFormError,
   trackNewGrafanaAlertRuleFormSavedSuccess,
 } from '../../../Analytics';
-import { RulerGroupUpdatedResponse, isGrafanaGroupUpdatedResponse } from '../../../api/alertRuleModel';
+import {
+  GrafanaGroupUpdatedResponse,
+  RulerGroupUpdatedResponse,
+  isGrafanaGroupUpdatedResponse,
+} from '../../../api/alertRuleModel';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
@@ -386,7 +390,9 @@ function useRedirectToDetailsPage() {
     (saveResult: GrafanaGroupUpdatedResponse) => {
       const newOrUpdatedRuleUid = saveResult.created?.[0] || saveResult.updated?.[0];
       if (newOrUpdatedRuleUid) {
-        locationService.replace(rulesNav.detailsPageLink('grafana', newOrUpdatedRuleUid));
+        locationService.replace(
+          rulesNav.detailsPageLink('grafana', { uid: newOrUpdatedRuleUid, ruleSourceName: 'grafana' })
+        );
       } else {
         notifyApp.error(
           'Cannot navigate to the new rule details page.',
@@ -413,14 +419,14 @@ function useRedirectToDetailsPage() {
       if (isGrafanaGroupUpdatedResponse(saveResult)) {
         redirectGrafanaRule(saveResult);
         return;
-      } else if (isCloudRulerRule(rule)) {
+      } else if (rulerRuleType.dataSource.rule(rule)) {
         redirectCloudRulerRule(rule, groupId);
         return;
       }
 
       logWarning(
         'Cannot navigate to the new rule details page. The response is not a GrafanaGroupUpdatedResponse and ruleDefinition is not a Cloud Ruler rule.',
-        { ruleFormType: isGrafanaRulerRule(rule) ? 'grafana' : 'datasource' }
+        { ruleFormType: rulerRuleType.dataSource.rule(rule) ? 'datasource' : 'grafana' }
       );
     },
     [redirectGrafanaRule, redirectCloudRulerRule]

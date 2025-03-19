@@ -10,9 +10,10 @@ import {
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from '../../../../../../types/unified-alerting-dto';
-import { GrafanaGroupUpdatedResponse } from '../../../api/alertRuleApi';
+import { GrafanaGroupUpdatedResponse } from '../../../api/alertRuleModel';
 import { getHistoryResponse, grafanaRulerRule, rulerTestDb, time_0, time_plus_30 } from '../../grafanaRulerApi';
 import { HandlerOptions } from '../configure';
+
 export const rulerRulesHandler = () => {
   return http.get(`/api/ruler/grafana/api/v1/rules`, () =>
     HttpResponse.json<RulerRulesConfigDTO>(rulerTestDb.getRulerConfig())

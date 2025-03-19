@@ -2,7 +2,6 @@ import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { GrafanaGroupUpdatedResponse } from 'app/features/alerting/unified/api/alertRuleApi';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import {
   setupAlertmanagerConfigMapDefaultState,
@@ -28,6 +27,8 @@ import {
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
 import { DashboardSearchItem } from '../../search/types';
+
+import { GrafanaGroupUpdatedResponse } from './api/alertRuleModel';
 
 type Configurator<T> = (builder: T) => T;
 

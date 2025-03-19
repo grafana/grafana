@@ -1,9 +1,8 @@
-import { RuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
-
-import { stringifyIdentifier } from './rule-id';
+import { RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
 
 import { createReturnTo } from '../hooks/useReturnTo';
 
+import { stringifyIdentifier } from './rule-id';
 import { createRelativeUrl } from './url';
 
 type QueryParams = ConstructorParameters<typeof URLSearchParams>[0];

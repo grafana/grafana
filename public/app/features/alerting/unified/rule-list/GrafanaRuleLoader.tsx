@@ -3,7 +3,7 @@ import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { GrafanaRulesSource } from '../utils/datasource';
-import { isGrafanaAlertingRule, isGrafanaRecordingRule } from '../utils/rules';
+import { rulerRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
@@ -82,7 +82,7 @@ export function GrafanaRuleListItem({
     actions: <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />,
   };
 
-  if (isGrafanaAlertingRule(rulerRule)) {
+  if (rulerRuleType.grafana.alertingRule(rulerRule)) {
     const promAlertingRule = rule && rule.type === PromRuleType.Alerting ? rule : undefined;
 
     return (
@@ -96,7 +96,7 @@ export function GrafanaRuleListItem({
     );
   }
 
-  if (isGrafanaRecordingRule(rulerRule)) {
+  if (rulerRuleType.grafana.recordingRule(rulerRule)) {
     return <RecordingRuleListItem {...commonProps} />;
   }
 

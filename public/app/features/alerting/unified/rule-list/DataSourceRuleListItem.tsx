@@ -3,7 +3,7 @@ import { PromRuleType, RulerRuleDTO, RulesSourceApplication } from 'app/types/un
 
 import { Annotation } from '../utils/constants';
 import { fromRule, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
-import { getRuleName, getRulePluginOrigin, isAlertingRulerRule } from '../utils/rules';
+import { getRuleName, getRulePluginOrigin, rulerRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
 import { AlertRuleListItem, RecordingRuleListItem } from './components/AlertRuleListItem';
@@ -51,7 +51,7 @@ export function DataSourceRuleListItem({
 
   switch (rule.type) {
     case PromRuleType.Alerting:
-      const annotations = (isAlertingRulerRule(rulerRule) ? rulerRule.annotations : rule.annotations) ?? {};
+      const annotations = (rulerRuleType.any.alertingRule(rulerRule) ? rulerRule.annotations : rule.annotations) ?? {};
       const summary = annotations[Annotation.summary];
 
       return (

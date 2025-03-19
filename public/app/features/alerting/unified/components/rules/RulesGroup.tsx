@@ -5,22 +5,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import {
-  CombinedRuleGroup,
-  CombinedRuleNamespace,
-  RuleGroupIdentifierV2,
-  RulesSource,
-} from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
 
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import {
-  GRAFANA_RULES_SOURCE_NAME,
-  getDatasourceAPIUid,
-  getRulesSourceName,
-  isCloudRulesSource,
-} from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
 import { isFederatedRuleGroup, isPluginProvidedRule, rulerRuleType } from '../../utils/rules';
@@ -180,23 +170,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       );
     }
   }
-
-  const groupIdentifier: RuleGroupIdentifierV2 = folder
-    ? {
-        groupName: group.name,
-        namespace: { uid: folder.uid },
-        groupOrigin: 'grafana',
-      }
-    : {
-        rulesSource: {
-          uid: getDatasourceAPIUid(rulesSourceName),
-          name: rulesSourceName,
-          ruleSourceType: 'datasource',
-        },
-        groupName: group.name,
-        namespace: { name: namespace.name },
-        groupOrigin: 'datasource',
-      };
 
   // ungrouped rules are rules that are in the "default" group name
   const groupName = isListView ? (
