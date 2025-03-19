@@ -128,7 +128,6 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
-			// TODO: limit file size
 			code, obj, err = s.doRead(ctx, reader, filePath, ref)
 		case http.MethodPost:
 			// TODO: limit file size
