@@ -8,7 +8,6 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
 const { DefinePlugin, EnvironmentPlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
-// @PERCONA
 const LiveReloadPlugin = require('webpack-livereload-plugin');
 const { merge } = require('webpack-merge');
 const WebpackBar = require('webpackbar');
@@ -155,10 +154,6 @@ module.exports = (env = {}) => {
       new WebpackBar({
         color: '#eb7b18',
         name: 'Grafana',
-      }),
-      // @PERCONA
-      new LiveReloadPlugin({
-        delay: 1000,
       }),
       new EnvironmentPlugin(envConfig),
     ],
