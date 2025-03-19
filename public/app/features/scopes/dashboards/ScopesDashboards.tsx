@@ -41,7 +41,7 @@ export function ScopesDashboards() {
           <Trans i18nKey="scopes.dashboards.noResultsNoScopes">No scopes selected</Trans>
         </div>
       );
-    } else if (dashboards.length === 0) {
+    } else if (dashboards.length === 0 && scopeNavigations.length === 0) {
       return (
         <div
           className={cx(styles.container, styles.noResultsContainer)}
@@ -56,13 +56,6 @@ export function ScopesDashboards() {
   return (
     <div className={styles.container} data-testid="scopes-dashboards-container">
       <ScopesDashboardsTreeSearch disabled={loading} query={searchQuery} onChange={changeSearchQuery} />
-
-      {scopeNavigations.map((scopeNavigation) => (
-        <div key={scopeNavigation.metadata.name}>
-          <h3>{scopeNavigation.metadata.name}</h3>
-          <p>{scopeNavigation.spec.URL}</p>
-        </div>
-      ))}
 
       {loading ? (
         <LoadingPlaceholder

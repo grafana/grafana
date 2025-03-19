@@ -85,8 +85,8 @@ export interface ScopeNode {
 }
 
 export interface ScopeNavigationSpec {
-  URL: string;
-  Scope: string;
+  url: string;
+  scope: string;
 }
 
 export interface ScopeNavigationStatus {
@@ -99,4 +99,5 @@ export interface ScopeNavigation {
     name: string;
   };
   spec: ScopeNavigationSpec;
+  status: ScopeNavigationStatus;
 }

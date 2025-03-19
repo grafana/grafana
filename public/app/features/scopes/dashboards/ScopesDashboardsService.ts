@@ -90,11 +90,20 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     this.updateState({ forScopeNames, loading: true });
 
     const dashboards = await this.apiClient.fetchDashboards(forScopeNames);
+    const scopeNavigations = await this.apiClient.fetchScopeNavigations(forScopeNames);
+
     if (isEqual(this.state.forScopeNames, forScopeNames)) {
-      const folders = this.groupDashboards(dashboards);
+      const folders = this.groupSuggestedItems(dashboards, scopeNavigations);
       const filteredFolders = this.filterFolders(folders, this.state.searchQuery);
 
-      this.updateState({ dashboards, filteredFolders, folders, loading: false, drawerOpened: dashboards.length > 0 });
+      this.updateState({
+        dashboards,
+        scopeNavigations,
+        filteredFolders,
+        folders,
+        loading: false,
+        drawerOpened: dashboards.length > 0,
+      });
     }
   };
 
@@ -108,51 +117,91 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     this.updateState({ scopeNavigations });
   };
 
-  public groupDashboards = (dashboards: ScopeDashboardBinding[]): SuggestedDashboardsFoldersMap => {
-    return dashboards.reduce<SuggestedDashboardsFoldersMap>(
-      (acc, dashboard) => {
-        const rootNode = acc[''];
-        const groups = dashboard.status.groups ?? [];
-
-        groups.forEach((group) => {
-          if (group && !rootNode.folders[group]) {
-            rootNode.folders[group] = {
-              title: group,
-              expanded: false,
-              folders: {},
-              dashboards: {},
-            };
-          }
-        });
-
-        const targets =
-          groups.length > 0
-            ? groups.map((group) => (group === '' ? rootNode.dashboards : rootNode.folders[group].dashboards))
-            : [rootNode.dashboards];
-
-        targets.forEach((target) => {
-          if (!target[dashboard.spec.dashboard]) {
-            target[dashboard.spec.dashboard] = {
-              dashboard: dashboard.spec.dashboard,
-              dashboardTitle: dashboard.status.dashboardTitle,
-              items: [],
-            };
-          }
-
-          target[dashboard.spec.dashboard].items.push(dashboard);
-        });
-
-        return acc;
+  public groupSuggestedItems = (
+    dashboards: ScopeDashboardBinding[],
+    navigations: ScopeNavigation[]
+  ): SuggestedDashboardsFoldersMap => {
+    const folders: SuggestedDashboardsFoldersMap = {
+      '': {
+        title: '',
+        expanded: true,
+        folders: {},
+        dashboards: {},
+        suggestedNavigations: {},
       },
-      {
-        '': {
-          title: '',
-          expanded: true,
-          folders: {},
-          dashboards: {},
-        },
-      }
-    );
+    };
+
+    // Process dashboards
+    dashboards.forEach((dashboard) => {
+      const rootNode = folders[''];
+      const groups = dashboard.status.groups ?? [];
+
+      groups.forEach((group) => {
+        if (group && !rootNode.folders[group]) {
+          rootNode.folders[group] = {
+            title: group,
+            expanded: false,
+            folders: {},
+            dashboards: {},
+            suggestedNavigations: {},
+          };
+        }
+      });
+
+      const targets =
+        groups.length > 0
+          ? groups.map((group) => (group === '' ? rootNode.dashboards : rootNode.folders[group].dashboards))
+          : [rootNode.dashboards];
+
+      targets.forEach((target) => {
+        if (!target[dashboard.spec.dashboard]) {
+          target[dashboard.spec.dashboard] = {
+            dashboard: dashboard.spec.dashboard,
+            dashboardTitle: dashboard.status.dashboardTitle,
+            items: [],
+          };
+        }
+
+        target[dashboard.spec.dashboard].items.push(dashboard);
+      });
+    });
+
+    // Process navigations
+    navigations.forEach((navigation) => {
+      const rootNode = folders[''];
+      const groups = navigation.status.groups ?? [];
+
+      groups.forEach((group) => {
+        if (group && !rootNode.folders[group]) {
+          rootNode.folders[group] = {
+            title: group,
+            expanded: false,
+            folders: {},
+            dashboards: {},
+            suggestedNavigations: {},
+          };
+        }
+      });
+
+      const targets =
+        groups.length > 0
+          ? groups.map((group) =>
+              group === '' ? rootNode.suggestedNavigations : rootNode.folders[group].suggestedNavigations
+            )
+          : [rootNode.suggestedNavigations];
+
+      targets.forEach((target) => {
+        if (!target[navigation.spec.url]) {
+          target[navigation.spec.url] = {
+            title: navigation.status.title || navigation.metadata.name,
+            groups: navigation.status.groups ?? [],
+            url: navigation.spec.url,
+          };
+        }
+      });
+    });
+
+    return folders;
   };
 
   public filterFolders = (folders: SuggestedDashboardsFoldersMap, query: string): SuggestedDashboardsFoldersMap => {
@@ -173,13 +222,17 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       const filteredDashboards = Object.entries(folder.dashboards).filter(([_, dashboard]) =>
         dashboard.dashboardTitle.toLowerCase().includes(query)
       );
+      const filteredNavigations = Object.entries(folder.suggestedNavigations).filter(([_, navigation]) =>
+        navigation.title.toLowerCase().includes(query)
+      );
 
-      if (Object.keys(filteredFolders).length > 0 || filteredDashboards.length > 0) {
+      if (Object.keys(filteredFolders).length > 0 || filteredDashboards.length > 0 || filteredNavigations.length > 0) {
         acc[folderId] = {
           ...folder,
           expanded: true,
           folders: filteredFolders,
           dashboards: Object.fromEntries(filteredDashboards),
+          suggestedNavigations: Object.fromEntries(filteredNavigations),
         };
       }
 
