@@ -79,29 +79,27 @@ func (r *Runner) Run(ctx context.Context) error {
 		id := obj.GetStaticMetadata().Identifier()
 		_, err := r.client.Create(ctx, id, obj, resource.CreateOptions{})
 		if err != nil {
+			r.log.Debug("Error creating check type, retrying", "check_type", id, "error", err)
 			if errors.IsUnauthorized(err) {
 				// Observed that this request is not authorized when the cluster is not ready
 				// Retry after a while
 				r.log.Info("Check type not authorized, retrying", "check_type", id)
 				time.Sleep(5 * time.Second)
 				_, err = r.client.Create(ctx, id, obj, resource.CreateOptions{})
-				if err != nil {
-					return err
-				}
-				continue
 			}
 			if errors.IsAlreadyExists(err) {
 				// Already exists, update
 				_, err = r.client.Update(ctx, id, obj, resource.UpdateOptions{})
-				if err != nil {
-					return err
-				} else {
-					continue
-				}
 			}
-			return err
+			if err != nil {
+				r.log.Error("Error creating check type after retry", "check_type", id, "error", err)
+				return err
+			} else {
+				r.log.Debug("Check type created after retry", "check_type", id)
+				continue
+			}
 		}
-		r.log.Debug("Check type created", "check_type", id)
+		r.log.Debug("Check type created without errors", "check_type", id)
 	}
 	return nil
 }

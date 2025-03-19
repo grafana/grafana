@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -29,6 +30,7 @@ func TestRunner_Run_ErrorOnList(t *testing.T) {
 	runner := &Runner{
 		checkRegistry: mockCheckService,
 		client:        mockClient,
+		log:           log.New("advisor.checkscheduler"),
 	}
 
 	err := runner.Run(context.Background())
@@ -44,6 +46,7 @@ func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
+		log:    log.New("advisor.checkscheduler"),
 	}
 
 	lastCreated, err := runner.checkLastCreated(context.Background())
