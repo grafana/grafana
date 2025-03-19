@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -13,6 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+)
+
+const (
+	maxGitBytes = 1000000000 // 1GB
+	gitTimeout  = 10 * time.Minute
 )
 
 type ExportWorker struct {
@@ -66,6 +72,8 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   r.clonedir,
 			SingleCommitBeforePush: true,
+			Timeout:                gitTimeout,
+			MaxSize:                maxGitBytes,
 		}, r.secrets, os.Stdout)
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
@@ -102,7 +110,10 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	if buffered != nil {
 		progress.SetMessage(ctx, "push changes")
-		if err := buffered.Push(ctx, os.Stdout); err != nil {
+		if err := buffered.Push(ctx, gogit.GoGitPushOptions{
+			Timeout: gitTimeout,
+			MaxSize: maxGitBytes,
+		}, os.Stdout); err != nil {
 			return fmt.Errorf("error pushing changes: %w", err)
 		}
 	}

@@ -91,6 +91,9 @@ func TestGoGitWrapper(t *testing.T) {
 	}
 
 	fmt.Printf("push...\n")
-	err = wrap.Push(ctx, os.Stdout)
+	err = wrap.Push(ctx, GoGitPushOptions{
+		Timeout: 10,
+		MaxSize: 1000,
+	}, os.Stdout)
 	require.NoError(t, err)
 }
