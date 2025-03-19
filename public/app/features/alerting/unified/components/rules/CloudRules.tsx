@@ -5,8 +5,8 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Alert, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -60,25 +60,28 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
 
   return (
     <section className={styles.wrapper}>
-      <div className={styles.sectionHeader}>
-        <div className={styles.headerRow}>
-          <Text element="h2" variant="h5">
-            <Trans i18nKey="alerting.list-view.section.dataSourceManaged.title">Data source-managed</Trans>
-          </Text>
-          {dataSourcesLoading.length ? (
-            <LoadingPlaceholder
-              className={styles.loader}
-              text={`Loading rules from ${dataSourcesLoading.length} ${pluralize('source', dataSourcesLoading.length)}`}
-            />
-          ) : (
-            <div />
-          )}
-          <Stack gap={1}>
-            <CreateRecordingRuleButton />
-            {canMigrateToGMA && <MigrateToGMAButton />}
-          </Stack>
+      <Stack gap={2} direction="column">
+        {canMigrateToGMA && <MigrationToGMABanner />}
+        <div className={styles.sectionHeader}>
+          <div className={styles.headerRow}>
+            <Text element="h2" variant="h5">
+              <Trans i18nKey="alerting.list-view.section.dataSourceManaged.title">Data source-managed</Trans>
+            </Text>
+            {dataSourcesLoading.length ? (
+              <LoadingPlaceholder
+                className={styles.loader}
+                text={`${t('alerting.list-view.section.loading-rules', 'Loading rules from')} ${dataSourcesLoading.length} ${pluralize('source', dataSourcesLoading.length)}`}
+              />
+            ) : (
+              <div />
+            )}
+            <Stack gap={1}>
+              <CreateRecordingRuleButton />
+              {canMigrateToGMA && <MigrateToGMAButton />}
+            </Stack>
+          </div>
         </div>
-      </div>
+      </Stack>
 
       {pageItems.map(({ group, namespace }) => {
         return (
@@ -164,5 +167,17 @@ export function MigrateToGMAButton() {
     <LinkButton variant="secondary" href={importUrl} icon="arrow-up">
       <Trans i18nKey="alerting.rule-list.export-to-gma">Export to Grafana-managed rules</Trans>
     </LinkButton>
+  );
+}
+
+export function MigrationToGMABanner() {
+  return (
+    <Alert
+      title={t(
+        'alerting.list-view.import-to-gma-banner.title',
+        'You can migrate your Data source-managed alert rules to Grafana-managed rules by clicking the "Export to Grafana-managed rules" button.'
+      )}
+      severity="info"
+    />
   );
 }

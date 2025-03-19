@@ -588,6 +588,7 @@
         "label": "Datasource",
         "required-message": "Please select a datasource"
       },
+      "error": "Failed to export alert rules: {{error}}",
       "group": {
         "description": "Type to search for an existing group or create a new one",
         "label": "Group"
@@ -596,6 +597,7 @@
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
       },
+      "optional-filters": "Optional filters",
       "pageTitle": "Export alert rules from a datasource to Grafana-managed rules.",
       "pause": {
         "label": "Pause alerting rules",
@@ -605,11 +607,9 @@
         "label": "Pause recording rules",
         "tooltip": "Exported recording rules will be paused."
       },
-      "taget-folder": {
-        "required": "Please select a target folder"
-      },
+      "success": "Successfully exported alert rules to Grafana-managed rules.",
       "target-folder": {
-        "label": "Target Folder"
+        "label": "Target Folder (optional)"
       },
       "title": "Migrate your alert rules from a datasource into Grafana."
     },
@@ -621,6 +621,9 @@
         "new-recording-rule": "New recording rule",
         "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
       },
+      "import-to-gma-banner": {
+        "title": "You can migrate your Data source-managed alert rules to Grafana-managed rules by clicking the \"Export to Grafana-managed rules\" button."
+      },
       "section": {
         "dataSourceManaged": {
           "title": "Data source-managed"
@@ -631,7 +634,8 @@
           "loading": "Loading...",
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
-        }
+        },
+        "loading-rules": "Loading rules from"
       }
     },
     "manage-permissions": {

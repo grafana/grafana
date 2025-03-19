@@ -8,7 +8,7 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         datasourceUID: string;
         namespace?: string;
         group?: string;
-        targetFolderUID: string;
+        targetFolderUID?: string;
         pauseRecordingRules?: boolean;
         pauseAlerts?: boolean;
       }
