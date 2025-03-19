@@ -12,12 +12,17 @@ import {
 import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import {
   DashboardV2Spec,
+  ResponsiveGridLayoutItemKind,
+  RowsLayoutRowKind,
   LibraryPanelKind,
   PanelKind,
   PanelQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
+import { conditionalRenderingSerializerRegistry } from '../../conditional-rendering/serializers';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
@@ -201,4 +206,19 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
     throw new Error(`Layout serializer not found for kind: ${sceneState.descriptor.kind}`);
   }
   return registryItem.serializer.serialize(sceneState);
+}
+
+export function getConditionalRendering(item: RowsLayoutRowKind | ResponsiveGridLayoutItemKind): ConditionalRendering {
+  if (!item.spec.conditionalRendering) {
+    return ConditionalRendering.createEmpty();
+  }
+  const rootGroup = conditionalRenderingSerializerRegistry
+    .get(item.spec.conditionalRendering.kind)
+    .serializer.deserialize(item.spec.conditionalRendering);
+
+  if (rootGroup && !(rootGroup instanceof ConditionalRenderingGroup)) {
+    throw new Error(`Conditional rendering must always start with a root group`);
+  }
+
+  return new ConditionalRendering({ rootGroup: rootGroup });
 }

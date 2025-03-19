@@ -1,13 +1,13 @@
-import { SceneCSSGridLayout } from '@grafana/scenes';
 import { DashboardV2Spec, ResponsiveGridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
+import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
 import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 
-import { buildLibraryPanel, buildVizPanel } from './utils';
+import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './utils';
 
 export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: ResponsiveGridLayoutManager): DashboardV2Spec['layout'] {
@@ -34,6 +34,12 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
               },
             },
           };
+
+          const conditionalRenderingRootGroup = child.state.conditionalRendering?.serialize();
+          // Only serialize the conditional rendering if it has items
+          if (conditionalRenderingRootGroup?.spec.items.length) {
+            layoutItem.spec.conditionalRendering = conditionalRenderingRootGroup;
+          }
 
           if (child.state.variableName) {
             layoutItem.spec.repeat = {
@@ -62,11 +68,12 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
         key: getGridItemKeyForPanelId(panel.spec.id),
         body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel) : buildVizPanel(panel),
         variableName: item.spec.repeat?.value,
+        conditionalRendering: getConditionalRendering(item),
       });
     });
 
     return new ResponsiveGridLayoutManager({
-      layout: new SceneCSSGridLayout({
+      layout: new ResponsiveGridLayout({
         templateColumns: layout.spec.col,
         autoRows: layout.spec.row,
         children,

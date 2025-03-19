@@ -7,28 +7,26 @@ import { useScopes } from '@grafana/runtime';
 import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { ScopesDashboardsService } from './ScopesDashboardsService';
+import { useScopesServices } from '../ScopesContextProvider';
+
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
 
 export function ScopesDashboards() {
   const styles = useStyles2(getStyles);
   const scopes = useScopes();
+  const scopeServices = useScopesServices();
 
-  const scopesDashboardsService = ScopesDashboardsService.instance;
+  useObservable(
+    scopeServices?.scopesDashboardsService.stateObservable ?? new Observable(),
+    scopeServices?.scopesDashboardsService.state
+  );
 
-  useObservable(scopesDashboardsService?.stateObservable ?? new Observable(), scopesDashboardsService?.state);
-
-  if (
-    !scopes ||
-    !scopesDashboardsService ||
-    !scopes.state.enabled ||
-    !scopes.state.drawerOpened ||
-    scopes.state.readOnly
-  ) {
+  if (!scopeServices || !scopes || !scopes.state.enabled || !scopes.state.drawerOpened || scopes.state.readOnly) {
     return null;
   }
 
+  const { scopesDashboardsService } = scopeServices;
   const { loading, forScopeNames, dashboards, searchQuery, filteredFolders } = scopesDashboardsService.state;
   const { changeSearchQuery, updateFolder, clearSearchQuery } = scopesDashboardsService;
 

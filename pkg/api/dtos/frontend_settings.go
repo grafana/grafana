@@ -207,7 +207,6 @@ type FrontendSettingsDTO struct {
 	ExternalUserMngAnalyticsParams      string   `json:"externalUserMngAnalyticsParams"`
 	ViewersCanEdit                      bool     `json:"viewersCanEdit"`
 	AngularSupportEnabled               bool     `json:"angularSupportEnabled"`
-	EditorsCanAdmin                     bool     `json:"editorsCanAdmin"`
 	DisableSanitizeHtml                 bool     `json:"disableSanitizeHtml"`
 	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
 	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
@@ -270,9 +269,8 @@ type FrontendSettingsDTO struct {
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
 
-	CloudMigrationIsTarget       bool   `json:"cloudMigrationIsTarget"`
-	CloudMigrationFeedbackURL    string `json:"cloudMigrationFeedbackURL"`
-	CloudMigrationPollIntervalMs int    `json:"cloudMigrationPollIntervalMs"`
+	CloudMigrationIsTarget       bool `json:"cloudMigrationIsTarget"`
+	CloudMigrationPollIntervalMs int  `json:"cloudMigrationPollIntervalMs"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 

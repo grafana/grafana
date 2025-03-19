@@ -27,7 +27,7 @@ func BenchmarkReadPrometheusStyleResult_FromFile(b *testing.B) {
 		"prom-matrix-histogram-partitioned.json",
 	}
 
-	opt := Options{Dataplane: true}
+	opt := Options{}
 
 	for _, tf := range testFiles {
 		testData := readTestData(b, tf)

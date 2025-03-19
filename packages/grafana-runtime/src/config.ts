@@ -103,7 +103,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   passwordHint = '';
   loginError: string | undefined = undefined;
   viewersCanEdit = false;
-  editorsCanAdmin = false;
   disableSanitizeHtml = false;
   trustedTypesDefaultPolicyEnabled = false;
   cspReportOnlyEnabled = false;
@@ -199,7 +198,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
-  cloudMigrationFeedbackURL = '';
   cloudMigrationPollIntervalMs = 2000;
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset = '1h';
@@ -229,7 +227,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
         env: 'production',
       },
       viewersCanEdit: false,
-      editorsCanAdmin: false,
       disableSanitizeHtml: false,
     };
 
