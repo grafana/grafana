@@ -79,7 +79,7 @@ After the command has finished, you can start building the source code:
 yarn start
 ```
 
-> If you get the error `[webpack-cli] Failed to load '/Users/marcodeabreu/git_projects/grafana_org/grafana/public/app/plugins/datasource/tempo/webpack.config.ts' config - cannot find module` with a reference to grafana-plugins, verify that your node version `node --version` is matching the one defined in `.nvmrc`. You might have to delete your `node-modules` & `yarn.lock` and rerun the installation.
+> If you get the error `[webpack-cli] Failed to load './public/app/plugins/datasource/tempo/webpack.config.ts' config - cannot find module` with a reference to grafana-plugins, verify that your node version `node --version` is matching the one defined in `.nvmrc`. You might have to delete your `node-modules` & `yarn.lock` and rerun the installation.
 
 This command generates SASS theme files, builds all external plugins, and then builds the frontend assets.
 
