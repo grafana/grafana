@@ -122,10 +122,6 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		storageObj, errObjectSt := d.unified.Create(ctx, createdCopy, createValidation, options)
 		if errObjectSt != nil {
 			log.Error("unable to create object in unified storage", "err", errObjectSt)
-			if d.errorIsOK {
-				return createdFromLegacy, nil
-			}
-
 			// If we cannot create in unified storage, attempt to clean up legacy.
 			_, _, err = d.legacy.Delete(ctx, accCreated.GetName(), nil, &metav1.DeleteOptions{})
 			if err != nil {
@@ -216,11 +212,7 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	}
 	// If unified storage is our primary store, just update it there and return.
 	if d.readUnified {
-		objFromStorage, created, err := d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-		if err != nil {
-			log.With("object", objFromStorage).Error("could not update in storage", "err", err)
-		}
-		return objFromStorage, created, nil
+		return d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	} else if d.errorIsOK {
 		// If unified is not primary, but errors are okay, we can just run in the background.
 		go func() {
@@ -254,12 +246,7 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 
 	// If unified is the primary store, we can just delete it there and return.
 	if d.readUnified {
-		deletedStorage, err := d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
-		if err != nil {
-			log.With("deleted", deletedStorage).Error("failed to delete collection successfully from Storage", "err", err)
-			return nil, err
-		}
-		return deletedStorage, nil
+		return d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	} else if d.errorIsOK {
 		// If unified storage is not the primary store and errors are okay, we can just run it in the background.
 		go func() {
