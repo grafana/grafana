@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Stack } from '@grafana/ui';
+import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Space, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -237,7 +237,7 @@ export class QueryInspector extends PureComponent<Props, State> {
           </p>
         </div>
         {this.renderExecutedQueries(executedQueries)}
-        <div className={styles.toolbar}>
+        <Stack direction={'row'} gap={2} justifyContent={'flex-start'} wrap>
           <Button
             icon="sync"
             onClick={onRefreshQuery}
@@ -247,28 +247,23 @@ export class QueryInspector extends PureComponent<Props, State> {
           </Button>
 
           {haveData && allNodesExpanded && (
-            <Button icon="minus" variant="secondary" className={styles.toolbarItem} onClick={this.onToggleExpand}>
+            <Button icon="minus" variant="secondary" onClick={this.onToggleExpand}>
               <Trans i18nKey="inspector.query.collapse-all">Collapse all</Trans>
             </Button>
           )}
           {haveData && !allNodesExpanded && (
-            <Button icon="plus" variant="secondary" className={styles.toolbarItem} onClick={this.onToggleExpand}>
+            <Button icon="plus" variant="secondary" onClick={this.onToggleExpand}>
               <Trans i18nKey="inspector.query.expand-all">Expand all</Trans>
             </Button>
           )}
 
           {haveData && (
-            <ClipboardButton
-              getText={this.getTextForClipboard}
-              className={styles.toolbarItem}
-              icon="copy"
-              variant="secondary"
-            >
+            <ClipboardButton getText={this.getTextForClipboard} icon="copy" variant="secondary">
               <Trans i18nKey="inspector.query.copy-to-clipboard">Copy to clipboard</Trans>
             </ClipboardButton>
           )}
-          <div className="flex-grow-1" />
-        </div>
+        </Stack>
+        <Space v={2} />
         <div className={styles.content}>
           {isLoading && <LoadingPlaceholder text="Loading query inspector..." />}
           {!isLoading && haveData && (
