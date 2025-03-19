@@ -1,9 +1,9 @@
 SELECT p.kind, p.attribute, p.identifier, p.scope FROM {{ .Ident .PermissionTable }} as p
 LEFT JOIN {{ .Ident .BuiltinRoleTable }} as br ON p.role_id = br.role_id 
-    AND (br.role = {{ .Arg .Query.Role }} AND (br.org_id = {{ .Arg .Query.OrgID }} OR br.org_id = 0))
+    AND ((br.role = {{ .Arg .Query.Role }} AND (br.org_id = {{ .Arg .Query.OrgID }} OR br.org_id = 0))
     {{ if .Query.IsServerAdmin }}
     OR (br.role = 'Grafana Admin')
-    {{ end }}
+    {{ end }})
 {{ if .Query.UserID }}
 LEFT JOIN {{ .Ident .UserRoleTable }} as ur ON p.role_id = ur.role_id 
     AND ur.user_id = {{ .Arg .Query.UserID }} AND (ur.org_id = {{ .Arg .Query.OrgID }} OR ur.org_id = 0)
