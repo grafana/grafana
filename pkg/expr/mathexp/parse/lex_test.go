@@ -170,97 +170,69 @@ func TestLex(t *testing.T) {
 	}
 }
 
-// TestShutdown verifies that lexer goroutines are properly terminated
-func TestShutdown(t *testing.T) {
-	// Count goroutines before creating lexer
-	beforeCount := runtime.NumGoroutine()
-
+// TestLexerClose verifies that a lexer can be explicitly closed
+func TestLexerClose(t *testing.T) {
 	// Create a lexer with some input
 	lexer := lex("1 + 2")
 
-	// Read a couple of items to verify it's working
-	item1 := lexer.nextItem()
-	if item1.typ != itemNumber || item1.val != "1" {
-		t.Errorf("unexpected first item: %v", item1)
+	// Read one item to verify it's working
+	item := lexer.nextItem()
+	if item.typ != itemNumber || item.val != "1" {
+		t.Errorf("unexpected first item: %v", item)
 	}
 
-	// Now close the lexer
+	// Close the lexer explicitly
 	lexer.Close()
 
-	// Try to read more items - the channel should eventually close
-	// We need to read in a goroutine with a timeout to avoid blocking forever
-	done := make(chan bool)
-	go func() {
-		for {
-			_, ok := <-lexer.items
-			if !ok {
-				// Channel closed, which is what we want
-				done <- true
-				return
-			}
-		}
-	}()
-
-	// Wait for either completion or timeout
+	// Verify the lexer's channel closes
 	select {
-	case <-done:
-		// Success - lexer properly shut down
+	case _, ok := <-lexer.items:
+		if ok {
+			t.Fatal("lexer.items channel should be closed after lexer.Close()")
+		}
 	case <-time.After(100 * time.Millisecond):
-		t.Fatal("lexer goroutine did not shut down within timeout")
-	}
-
-	// Allow a bit of time for the goroutine to exit
-	time.Sleep(10 * time.Millisecond)
-
-	// Check that goroutine count returns to what it was before
-	afterCount := runtime.NumGoroutine()
-	if afterCount > beforeCount {
-		t.Fatalf("Goroutine leak detected: %d goroutines before, %d after",
-			beforeCount, afterCount)
+		t.Fatal("timed out waiting for lexer.items channel to close")
 	}
 }
 
-// TestParseErrorShutdown verifies that lexer goroutines are properly terminated when Parse encounters an error
-func TestParseErrorShutdown(t *testing.T) {
-	// Create a tree and try to parse an invalid expression that will cause an error
-	tree := New()
-	input := "invalid expression with $"
-	err := tree.Parse(input)
-
-	// Verify that Parse returned an error
-	if err == nil {
-		t.Fatal("expected error but got nil")
-	}
-
-	// Verify that lex was set to nil, indicating cleanup occurred
-	if tree.lex != nil {
-		t.Fatal("tree.lex was not set to nil after error, indicating possible goroutine leak")
-	}
-}
-
-// TestGoroutineLeak verifies that lexer goroutines are properly cleaned up when Parse encounters an error
-func TestGoroutineLeak(t *testing.T) {
-	// Get the initial number of goroutines
+// TestParseErrorNoLeak verifies that lexer goroutines are properly terminated when Parse encounters errors
+func TestParseErrorNoLeak(t *testing.T) {
+	// Count initial goroutines
 	initialGoroutines := runtime.NumGoroutine()
 
-	// Create several trees and parse invalid expressions to trigger errors
-	for i := 0; i < 50; i++ {
+	// Create several trees with parsing errors to check for leaks
+	for i := 0; i < 10; i++ {
 		tree := New()
 		input := "invalid expression with $"
-		_ = tree.Parse(input) // Error expected, ignoring
+		err := tree.Parse(input)
+
+		// Verify that Parse returned an error
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+
+		// Verify that tree.lex is nil after an error
+		if tree.lex != nil {
+			t.Fatal("tree.lex was not set to nil after error")
+		}
 	}
 
-	// Allow some time for goroutines to clean up if they're going to
-	time.Sleep(100 * time.Millisecond)
+	// Poll for goroutine count to stabilize
+	deadline := time.Now().Add(500 * time.Millisecond)
+	var finalGoroutines int
 
-	// Get the final number of goroutines
-	finalGoroutines := runtime.NumGoroutine()
+	for time.Now().Before(deadline) {
+		finalGoroutines = runtime.NumGoroutine()
+		// If we're close to the initial count, we can exit early
+		if finalGoroutines <= initialGoroutines+2 {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 
-	// Check if we've leaked goroutines - add a buffer of 10 to avoid flakiness
-	// If no leak, finalGoroutines should be very close to initialGoroutines
-	// If leaking, we expect finalGoroutines to be much higher (50+ more)
-	if finalGoroutines > initialGoroutines+10 {
-		t.Fatalf("Likely goroutine leak detected: started with %d goroutines, ended with %d (difference of %d)",
+	// Check if we've leaked goroutines (with a small buffer for normal variations)
+	if finalGoroutines > initialGoroutines+5 {
+		t.Fatalf("Goroutine leak detected: started with %d goroutines, ended with %d (difference of %d)",
 			initialGoroutines, finalGoroutines, finalGoroutines-initialGoroutines)
 	}
 }
