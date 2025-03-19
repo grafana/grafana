@@ -6,7 +6,12 @@ import { GrafanaRulesSource } from '../utils/datasource';
 import { rulerRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
-import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
+import {
+  AlertRuleListItem,
+  RecordingRuleListItem,
+  RuleListItemCommonProps,
+  UnknownRuleListItem,
+} from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleOperation } from './components/RuleListIcon';
@@ -67,7 +72,7 @@ export function GrafanaRuleListItem({
     labels = {},
   } = rulerRule;
 
-  const commonProps = {
+  const commonProps: RuleListItemCommonProps = {
     name: title,
     rulesSource: GrafanaRulesSource,
     group: groupIdentifier.groupName,

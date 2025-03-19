@@ -23,7 +23,7 @@ import { DataSourceIcon } from './Namespace';
 import { RuleListIcon, RuleOperation } from './RuleListIcon';
 import { calculateNextEvaluationEstimate } from './util';
 
-interface AlertRuleListItemProps {
+export interface AlertRuleListItemProps {
   name: string;
   href: string;
   summary?: string;
@@ -149,7 +149,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   );
 };
 
-type RecordingRuleListItemProps = Omit<AlertRuleListItemProps, 'summary' | 'state' | 'instancesCount' | 'contactPoint'>;
+export type RecordingRuleListItemProps = Omit<
+  AlertRuleListItemProps,
+  'summary' | 'state' | 'instancesCount' | 'contactPoint'
+>;
 
 export function RecordingRuleListItem({
   name,
@@ -380,3 +383,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: 0,
   }),
 });
+
+export type RuleListItemCommonProps = Pick<
+  AlertRuleListItemProps,
+  Extract<keyof AlertRuleListItemProps, keyof RecordingRuleListItemProps>
+>;

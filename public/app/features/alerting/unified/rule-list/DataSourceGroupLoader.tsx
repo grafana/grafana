@@ -32,12 +32,18 @@ const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
 
 export interface DataSourceGroupLoaderProps {
   groupIdentifier: DataSourceRuleGroupIdentifier;
+  /**
+   * Used to display the same number of skeletons as there are rules
+   * The number of rules is typically known from paginated Prometheus response
+   * Ruler response might contain different number of rules, but in most cases what we get from Prometheus is fine
+   */
   expectedRulesCount?: number;
 }
 
 /**
- * Loads both Prometheus and Ruler endpoints for the specified group.
- * There is a pooling for Prometheus query, to update if there are any changes in progress
+ * Loads an evaluation group from Prometheus and Ruler endpoints.
+ * Displays a loading skeleton while the data is being fetched.
+ * Polls the Prometheus endpoint every 20 seconds to refresh the data.
  */
 export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 }: DataSourceGroupLoaderProps) {
   const { namespace, groupName } = groupIdentifier;

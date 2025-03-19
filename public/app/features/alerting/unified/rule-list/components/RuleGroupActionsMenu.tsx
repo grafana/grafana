@@ -11,7 +11,7 @@ import { useFolder } from '../../hooks/useFolder';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSourceByUID } from '../../utils/datasource';
 import { groups } from '../../utils/navigation';
-import { isFederatedRuleGroup, isPluginProvidedGroup } from '../../utils/rules';
+import { isFederatedRuleGroup, isPluginProvidedGroup, isProvisionedRuleGroup } from '../../utils/rules';
 
 import { GroupStatus } from './GroupStatus';
 import { RuleActionsSkeleton } from './RuleActionsSkeleton';
@@ -130,7 +130,7 @@ function GrafanaGroupsActionMenu({ groupIdentifier }: GrafanaGroupsActionMenuPro
     groupName: groupIdentifier.groupName,
   });
 
-  const isProvisioned = rulerRuleGroup?.rules.some((r) => Boolean(r.grafana_alert.provenance));
+  const isProvisioned = rulerRuleGroup ? isProvisionedRuleGroup(rulerRuleGroup) : false;
   const isPluginProvided = rulerRuleGroup ? isPluginProvidedGroup(rulerRuleGroup) : false;
 
   const folderUid = groupIdentifier.namespace.uid;

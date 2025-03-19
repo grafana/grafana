@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { DataSourceRuleGroupIdentifier, Rule, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromRuleType, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
@@ -6,7 +8,7 @@ import { fromRule, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
 import { getRuleName, getRulePluginOrigin, rulerRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
-import { AlertRuleListItem, RecordingRuleListItem } from './components/AlertRuleListItem';
+import { AlertRuleListItem, RecordingRuleListItem, RuleListItemCommonProps } from './components/AlertRuleListItem';
 
 export interface DataSourceRuleListItemProps {
   rule: Rule;
@@ -35,7 +37,7 @@ export function DataSourceRuleListItem({
   const ruleName = rulerRule ? getRuleName(rulerRule) : rule.name;
   const labels = rulerRule ? rulerRule.labels : rule.labels;
 
-  const commonProps = {
+  const commonProps: RuleListItemCommonProps = {
     name: ruleName,
     rulesSource: rulesSource,
     application: application,
