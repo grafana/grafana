@@ -53,7 +53,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		// search for phrase
-		query := newQuery("")
+		query := newTestQuery("")
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
@@ -88,7 +88,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		// search for phrase
-		query := newQuery("want hello")
+		query := newTestQuery("want hello")
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
@@ -122,7 +122,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		query := newQuery("New dash")
+		query := newTestQuery("New dash")
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
@@ -157,7 +157,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		// search for exact match
-		query := newQuery("we want hello")
+		query := newTestQuery("we want hello")
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
@@ -180,13 +180,19 @@ func TestCanSearchByTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		// search for prefix of title with mix of chars and numbers
-		query := newQuery("A12")
+		query := newQueryByTitle("A12")
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), res.TotalHits)
 
 		// search for whole title
-		query = newQuery("A123456")
+		query = newQueryByTitle("A123456")
+		res, err = index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), res.TotalHits)
+
+		// case insensive search for partial title
+		query = newQueryByTitle("a1234")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), res.TotalHits)
@@ -208,43 +214,43 @@ func TestCanSearchByTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		// search by entire phrase
-		query := newQuery("I want to say a wonderfully Hello to the WORLD! Hello-world")
+		query := newTestQuery("I want to say a wonderfully Hello to the WORLD! Hello-world")
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), res.TotalHits)
 
 		// search for word at start
-		query = newQuery("hello")
+		query = newTestQuery("hello")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), res.TotalHits)
 
 		// search for word larger than ngram max size
-		query = newQuery("wonderfully")
+		query = newQueryByTitle("wonderfully")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), res.TotalHits)
 
 		// search for word at end
-		query = newQuery("world")
+		query = newQueryByTitle("world")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), res.TotalHits)
 
 		// can search for word substring anchored at start of word (edge ngram)
-		query = newQuery("worl")
+		query = newQueryByTitle("worl")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), res.TotalHits)
 
 		// can search for multiple, non-consecutive words in title
-		query = newQuery("hello world")
+		query = newQueryByTitle("hello world")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), res.TotalHits)
 
 		// can search for a term with a hyphen
-		query = newQuery("hello-world")
+		query = newQueryByTitle("Hello-world")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), res.TotalHits)
@@ -290,26 +296,79 @@ func TestCanSearchByTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		// word that doesn't exist
-		query := newQuery("cats")
+		query := newQueryByTitle("cats")
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(0), res.TotalHits)
 
 		// string shorter than 3 chars (ngam min)
-		query = newQuery("ma")
+		query = newQueryByTitle("ma")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(0), res.TotalHits)
 
 		// substring that doesn't exist
-		query = newQuery("A01")
+		query = newQueryByTitle("A01")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(0), res.TotalHits)
 	})
+
+	t.Run("title search with character will match one document", func(t *testing.T) {
+		index := newTestDashboardsIndex(t)
+		err := index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name1",
+			Key: &resource.ResourceKey{
+				Name:      "aaa",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title: "foo",
+		})
+		require.NoError(t, err)
+
+		for i, v := range termCharacters {
+			err = index.Write(&resource.IndexableDocument{
+				RV:   int64(i),
+				Name: fmt.Sprintf("name%d", i),
+				Key: &resource.ResourceKey{
+					Name:      fmt.Sprintf("name%d", i),
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+				Title: fmt.Sprintf(`test foo%d%sbar`, i, v),
+			})
+			require.NoError(t, err)
+		}
+
+		for i, v := range termCharacters {
+			title := fmt.Sprintf(`test foo%d%sbar`, i, v)
+			query := newQueryByTitle(title)
+			res, err := index.Search(context.Background(), nil, query, nil)
+			require.NoError(t, err)
+			if res.TotalHits != 1 {
+				fmt.Printf("i: %d, v: %s, title: %s", i, v, title)
+			}
+			require.Equal(t, int64(1), res.TotalHits)
+
+			// can search for a title with a term character suffix
+			title = fmt.Sprintf(`foo%d%s`, i, v)
+			query = newQueryByTitle(title)
+			res, err = index.Search(context.Background(), nil, query, nil)
+			require.NoError(t, err)
+			if res.TotalHits != 1 {
+				fmt.Printf("i: %d, v: %s, title: %s", i, v, title)
+			}
+
+			require.Equal(t, int64(1), res.TotalHits)
+		}
+	})
 }
 
-func newQuery(query string) *resource.ResourceSearchRequest {
+func newTestQuery(query string) *resource.ResourceSearchRequest {
 	return &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
 			Key: &resource.ResourceKey{
@@ -320,6 +379,20 @@ func newQuery(query string) *resource.ResourceSearchRequest {
 		},
 		Limit: 100000,
 		Query: query,
+	}
+}
+
+func newQueryByTitle(query string) *resource.ResourceSearchRequest {
+	return &resource.ResourceSearchRequest{
+		Options: &resource.ListOptions{
+			Key: &resource.ResourceKey{
+				Namespace: "default",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+			Fields: []*resource.Requirement{{Key: "title", Operator: "=", Values: []string{query}}},
+		},
+		Limit: 100000,
 	}
 }
 

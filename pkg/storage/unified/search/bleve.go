@@ -789,24 +789,28 @@ var textSortFields = map[string]string{
 
 const lowerCase = "phrase"
 
+// termField fields to use termQuery for filtering
+var termField = map[string]bool{
+	resource.SEARCH_FIELD_TITLE: true,
+}
+
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
+	key := req.Key
 	switch selection.Operator(req.Operator) {
 	case selection.Equals, selection.DoubleEquals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}
 
-		if len(req.Values[0]) == 1 {
-			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
-			q.FieldVal = prefix + req.Key
-			return q, nil
+		if len(req.Values) == 1 {
+			filter := filterValue(key, req.Values[0])
+			return newQuery(key, filter, prefix), nil
 		}
 
 		conjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(filterValue(req.Key, v))
-			q.FieldVal = prefix + req.Key
+			q := newQuery(key, filterValue(key, v), prefix)
 			conjuncts = append(conjuncts, q)
 		}
 
@@ -822,15 +826,13 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 			return query.NewMatchAllQuery(), nil
 		}
 		if len(req.Values) == 1 {
-			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
-			q.FieldVal = prefix + req.Key
+			q := newQuery(key, filterValue(key, req.Values[0]), prefix)
 			return q, nil
 		}
 
 		disjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(filterValue(req.Key, v))
-			q.FieldVal = prefix + req.Key
+			q := newQuery(key, filterValue(key, v), prefix)
 			disjuncts = append(disjuncts, q)
 		}
 
@@ -841,7 +843,8 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(filterValue(req.Key, value)))
+			q := newQuery(key, filterValue(key, value), prefix)
+			mustNotQueries = append(mustNotQueries, q)
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
 
@@ -854,6 +857,34 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
 	)
+}
+
+func newQuery(key string, value string, prefix string) query.Query {
+	c, ok := hasTerms(value)
+	if termField[key] && ok {
+		tokens := strings.Split(value, c)
+		// won't match with ending space
+		value = strings.TrimSuffix(value, " ")
+
+		q := bleve.NewTermQuery(value)
+		q.FieldVal = prefix + key
+
+		qq := bleve.NewConjunctionQuery()
+		for _, token := range tokens {
+			_, ok := hasTerms(token)
+			if ok {
+				qq.AddQuery(bleve.NewTermQuery(token))
+				continue
+			}
+			qq.AddQuery(bleve.NewMatchQuery(token))
+		}
+
+		cq := bleve.NewDisjunctionQuery(q, qq)
+		return cq
+	}
+	q := bleve.NewMatchQuery(value)
+	q.FieldVal = prefix + key
+	return q
 }
 
 // filterValue will convert the value to lower case if the field is a phrase field
@@ -1067,4 +1098,21 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 	})
 
 	return filteringSearcher, nil
+}
+
+// hasTerms - any value that will be split into multiple tokens
+var hasTerms = func(v string) (string, bool) {
+	for _, c := range termCharacters {
+		if strings.Contains(v, c) {
+			return c, true
+		}
+	}
+	return "", false
+}
+
+// characters that will be used to determine if a value is split into tokens
+var termCharacters = []string{
+	" ", "-", "_", ".", ",", ":", ";", "?", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+",
+	"=", "{", "}", "[", "]", "|", "\\", "/", "<", ">", "~", "`",
+	"'", "\"",
 }
