@@ -146,9 +146,9 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 			}
 
 			// If we cannot create in unified storage, attempt to clean up legacy.
-			_, _, err = d.legacy.Delete(ctx, accCreated.GetName(), nil, &metav1.DeleteOptions{})
-			if err != nil {
-				log.Error("unable to cleanup object in legacy storage", "err", err)
+			_, _, errLegacy := d.legacy.Delete(ctx, accCreated.GetName(), nil, &metav1.DeleteOptions{})
+			if errLegacy != nil {
+				log.Error("unable to cleanup object in legacy storage", "err", errLegacy)
 			}
 			return nil, err
 		}
