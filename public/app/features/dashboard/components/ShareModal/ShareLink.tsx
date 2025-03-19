@@ -88,6 +88,7 @@ export class ShareLink extends PureComponent<Props, State> {
     const { useCurrentTimeRange, useShortUrl, selectedTheme, shareUrl, imageUrl } = this.state;
     const selectors = e2eSelectors.pages.SharePanelModal;
     const isDashboardSaved = Boolean(dashboard.id);
+    // @PERCONA
     const isPMM = !!(config.bootData.navTree || []).find((item) => item.id === 'pmm');
     const differentLocalhostDomains =
       isPMM && config.appUrl.includes('localhost') && !window.location.host.includes('localhost');

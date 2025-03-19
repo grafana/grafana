@@ -1,7 +1,3 @@
-// @PERCONA
-// Running typecheck in root of repo would yield errors here
-// @ts-nocheck
-
 import { Icon } from '../Icon/Icon';
 
 import { TableStyles } from './styles';

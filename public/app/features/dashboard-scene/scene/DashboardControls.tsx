@@ -170,10 +170,6 @@ function getStyles(theme: GrafanaTheme2) {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
       },
-      [theme.breakpoints.up('sm')]: {
-        position: 'sticky',
-        top: 0,
-      },
     }),
     controlsPanelEdit: css({
       // In panel edit we do not need any right padding as the splitter is providing it

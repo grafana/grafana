@@ -514,24 +514,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       });
     }
 
-    if (query.filters) {
-      expandedQuery.filters = query.filters.map((filter) => {
-        const updatedFilter = {
-          ...filter,
-          tag: this.templateSrv.replace(filter.tag ?? '', scopedVars),
-        };
-
-        if (filter.value) {
-          updatedFilter.value =
-            typeof filter.value === 'string'
-              ? this.templateSrv.replace(filter.value ?? '', scopedVars, VariableFormatID.Pipe)
-              : filter.value.map((v) => this.templateSrv.replace(v ?? '', scopedVars, VariableFormatID.Pipe));
-        }
-
-        return updatedFilter;
-      });
-    }
-
     return {
       ...expandedQuery,
       query: this.templateSrv.replace(query.query ?? '', scopedVars, VariableFormatID.Pipe),

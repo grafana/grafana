@@ -169,14 +169,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
     }
 
-    if (typeof values.kiosk === 'string') {
-      if (values.kiosk === 'true' || values.kiosk === '') {
-        update.kioskMode = KioskMode.Full;
-      } else if (values.kiosk === 'tv') {
-        update.kioskMode = KioskMode.TV;
-      }
-    }
-
     if (Object.keys(update).length > 0) {
       this._scene.setState(update);
     }

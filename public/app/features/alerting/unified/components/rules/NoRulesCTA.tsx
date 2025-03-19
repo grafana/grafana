@@ -1,4 +1,3 @@
-
 import { EmptyState, LinkButton, Stack, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { usePerconaAlertingEnabled } from 'app/percona/integrated-alerting/hooks';

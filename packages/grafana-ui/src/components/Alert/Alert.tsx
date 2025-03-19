@@ -106,6 +106,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
               />
             </div>
           )}
+
           {onRemove && buttonContent && (
             <Box marginLeft={1} display="flex" alignItems="center">
               <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">

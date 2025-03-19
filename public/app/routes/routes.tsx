@@ -131,7 +131,7 @@ export function getAppRoutes(): RouteDescriptor[] {
           ? import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
           : import(
               /* webpackChunkName: "CorrelationsFeatureToggle" */ 'app/features/correlations/CorrelationsFeatureToggle'
-          )
+            )
       ),
     },
     {

@@ -53,7 +53,7 @@ describe('DashboardScenePageStateManager v1', () => {
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
-      expect(loader.state.dashboard).toBeDefined();
+      expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
       expect(loader.state.loadError).toBe('Dashboard not found');
     });

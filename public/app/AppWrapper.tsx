@@ -140,10 +140,10 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   </PerconaTourProvider>
                 </KBarProvider>
               </CacheProvider>
-            </ThemeProvider >
-          </GrafanaContext.Provider >
-        </ErrorBoundaryAlert >
-      </Provider >
+            </ThemeProvider>
+          </GrafanaContext.Provider>
+        </ErrorBoundaryAlert>
+      </Provider>
     );
   }
 }

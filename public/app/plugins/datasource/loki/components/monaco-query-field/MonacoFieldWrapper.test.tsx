@@ -30,9 +30,7 @@ function renderComponent({ initialValue = '', onChange = jest.fn(), onRunQuery =
 
 describe('MonacoFieldWrapper', () => {
   test('Renders with no errors', async () => {
-    await act(() => {
-      renderComponent();
-    });
+    renderComponent();
 
     await waitFor(async () => {
       const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.editorLazy);

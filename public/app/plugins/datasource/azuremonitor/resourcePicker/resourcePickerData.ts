@@ -284,7 +284,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     | project subscriptionName=name, subscriptionId
 
     | join kind=leftouter (
-      resourcecontainers
+      resourcecontainers            
             | where type == "microsoft.resources/subscriptions/resourcegroups"
             | where id =~ "${resourceGroupURI}"
             | project resourceGroupName=name, resourceGroup, subscriptionId

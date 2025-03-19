@@ -45,6 +45,7 @@ describe('MonitorConfig', () => {
     expect(defaultProps.updateOptions).toHaveBeenCalled();
     expect(screen.getByText('Azure Cloud')).toBeInTheDocument();
   });
+
   expect(defaultProps.options.jsonData.azureAuthType).toBe('clientsecret');
 
   it('should render component and set the default subscription if specified', async () => {

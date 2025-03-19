@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import { memo, ReactNode, useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,10 +11,8 @@ import {
   ButtonGroup,
   Dropdown,
   Icon,
-  InlineLabel,
   Menu,
   Stack,
-  Switch,
   ToolbarButton,
   ToolbarButtonRow,
   useStyles2,
@@ -25,10 +24,9 @@ import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { useSelector } from 'app/types';
+import { ScopesSelector } from 'app/features/scopes';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
-import { selectFolderRepository } from '../../provisioning/utils/selectors';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
@@ -38,13 +36,12 @@ import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
-import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
 
 interface Props {
   dashboard: DashboardScene;
 }
 
-export const NavToolbarActions = memo<Props>(({ dashboard }) => {
+export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   const id = useId();
 
   const actions = <ToolbarActions dashboard={dashboard} key={id} />;
@@ -57,8 +54,7 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, showHiddenElements, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } =
-    dashboard.useState();
+  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
 
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
@@ -71,18 +67,20 @@ export function ToolbarActions({ dashboard }: Props) {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
-  const isNew = !Boolean(uid || dashboard.isManaged());
-
+  const isNotFound = Boolean(meta.dashboardNotFound);
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
+  const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-  const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
-  const isManaged = Boolean(dashboard.isManaged() || folderRepo);
+
+  if (isNotFound) {
+    return null;
+  }
 
   if (!isEditingPanel) {
-    // This adds the presence indicators in enterprise
+    // This adds the precence indicators in enterprise
     addDynamicActions(toolbarActions, dynamicDashNavActions.left, 'left-actions');
   }
 
@@ -118,22 +116,12 @@ export function ToolbarActions({ dashboard }: Props) {
         return (
           <Badge
             color="blue"
-            text={t('dashboard.toolbar.public-dashboard', 'Public')}
+            text="Public"
             key="public-dashboard-button-badge"
             className={styles.publicBadge}
             data-testid={selectors.pages.Dashboard.DashNav.publicDashboardTag}
           />
         );
-      },
-    });
-  }
-
-  if (isManaged && meta.canEdit) {
-    toolbarActions.push({
-      group: 'icon-actions',
-      condition: true,
-      render: () => {
-        return <ManagedDashboardNavBarBadge meta={meta} key="managed-dashboard-badge" />;
       },
     });
   }
@@ -146,7 +134,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <ToolbarButton
         key="view-in-old-dashboard-button"
-        tooltip={t('dashboard.toolbar.switch-old-dashboard', 'Switch to old dashboard page')}
+        tooltip={'Switch to old dashboard page'}
         icon="apps"
         onClick={() => {
           locationService.partial({ scenes: false });
@@ -157,7 +145,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: meta.isSnapshot && !isEditing,
+    condition: meta.isSnapshot && !meta.dashboardNotFound && !isEditing,
     render: () => (
       <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl() ?? ''} />
     ),
@@ -170,22 +158,61 @@ export function ToolbarActions({ dashboard }: Props) {
 
   if (dashboardNewLayouts) {
     leftActions.push({
-      group: 'hidden-elements',
+      group: 'add-panel',
       condition: isEditingAndShowingDashboard,
       render: () => (
-        <InlineLabel key="toggle-hidden-elements" transparent={true} className={styles.hiddenElementsContainer}>
-          <Switch
-            value={showHiddenElements}
-            onChange={(evt) => {
-              evt.stopPropagation();
-              dashboard.onToggleHiddenElements();
-            }}
-            data-testid={selectors.components.PageToolbar.itemButton('toggle_hidden_elements')}
-          />
-          <span>
-            <Trans i18nKey="dashboard.toolbar.show-hidden-elements">Show hidden</Trans>
-          </span>
-        </InlineLabel>
+        <Button
+          key="add-panel-button"
+          variant="secondary"
+          size="sm"
+          icon="plus"
+          fill="text"
+          onClick={() => {
+            dashboard.onCreateNewPanel();
+          }}
+          data-testid={selectors.components.PageToolbar.itemButton('add_visualization')}
+        >
+          Panel
+        </Button>
+      ),
+    });
+    leftActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <Button
+          key="add-panel-button"
+          variant="secondary"
+          size="sm"
+          icon="plus"
+          fill="text"
+          onClick={() => {
+            dashboard.onCreateNewRow();
+          }}
+          data-testid={selectors.components.PageToolbar.itemButton('add_row')}
+        >
+          Row
+        </Button>
+      ),
+    });
+    leftActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <Button
+          key="add-panel-lib"
+          variant="secondary"
+          size="sm"
+          icon="plus"
+          fill="text"
+          data-testid={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
+          onClick={() => {
+            dashboard.onShowAddLibraryPanelDrawer();
+            DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+          }}
+        >
+          Import
+        </Button>
       ),
     });
   } else {
@@ -219,7 +246,6 @@ export function ToolbarActions({ dashboard }: Props) {
                   dashboard.onShowAddLibraryPanelDrawer();
                   DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
                 }}
-                disabled={dashboard.isManaged()}
               />
               <Menu.Item
                 key="add-row"
@@ -318,7 +344,7 @@ export function ToolbarActions({ dashboard }: Props) {
         icon="arrow-left"
         data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
       >
-        <Trans i18nKey="dashboard.toolbar.back-to-dashboard">Back to dashboard</Trans>
+        Back to dashboard
       </Button>
     ),
   });
@@ -339,7 +365,7 @@ export function ToolbarActions({ dashboard }: Props) {
         icon="arrow-left"
         data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
       >
-        <Trans i18nKey="dashboard.toolbar.back-to-dashboard">Back to dashboard</Trans>
+        Back to dashboard
       </Button>
     ),
   });
@@ -351,7 +377,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         key="share-dashboard-button"
-        tooltip={t('dashboard.toolbar.share.tooltip', 'Share dashboard')}
+        tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
         size="sm"
         className={styles.buttonWithExtraMargin}
         fill="outline"
@@ -361,7 +387,7 @@ export function ToolbarActions({ dashboard }: Props) {
         }}
         data-testid={selectors.components.NavToolbar.shareDashboard}
       >
-        <Trans i18nKey="dashboard.toolbar.share.label">Share</Trans>
+        Share
       </Button>
     ),
   });
@@ -374,14 +400,14 @@ export function ToolbarActions({ dashboard }: Props) {
         onClick={() => {
           dashboard.onEnterEditMode();
         }}
-        tooltip={t('dashboard.toolbar.edit.tooltip', 'Enter edit mode')}
+        tooltip="Enter edit mode"
         key="edit"
         className={styles.buttonWithExtraMargin}
         variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
       >
-        <Trans i18nKey="dashboard.toolbar.edit.label">Edit</Trans>
+        Edit
       </Button>
     ),
   });
@@ -395,14 +421,14 @@ export function ToolbarActions({ dashboard }: Props) {
           dashboard.onEnterEditMode();
           dashboard.setState({ editable: true, meta: { ...meta, canEdit: true } });
         }}
-        tooltip={t('dashboard.toolbar.enter-edit-mode.tooltip', 'This dashboard was marked as read only')}
+        tooltip="This dashboard was marked as read only"
         key="edit"
         className={styles.buttonWithExtraMargin}
         variant="secondary"
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
       >
-        <Trans i18nKey="dashboard.toolbar.enter-edit-mode.label">Make editable</Trans>
+        Make editable
       </Button>
     ),
   });
@@ -419,42 +445,40 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 
-  if (!dashboardNewLayouts) {
-    toolbarActions.push({
-      group: 'settings',
-      condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
-      render: () => (
-        <Button
-          onClick={() => {
-            dashboard.onOpenSettings();
-          }}
-          tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
-          fill="text"
-          size="sm"
-          key="settings"
-          variant="secondary"
-          data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
-        >
-          <Trans i18nKey="dashboard.toolbar.dashboard-settings.label">Settings</Trans>
-        </Button>
-      ),
-    });
-  }
+  toolbarActions.push({
+    group: 'settings',
+    condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
+    render: () => (
+      <Button
+        onClick={() => {
+          dashboard.onOpenSettings();
+        }}
+        tooltip="Dashboard settings"
+        fill="text"
+        size="sm"
+        key="settings"
+        variant="secondary"
+        data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
+      >
+        Settings
+      </Button>
+    ),
+  });
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !isNew && isShowingDashboard,
+    condition: isEditing && !meta.isNew && isShowingDashboard,
     render: () => (
       <Button
         onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
-        tooltip={t('dashboard.toolbar.exit-edit-mode.tooltip', 'Exits edit mode and discards unsaved changes')}
+        tooltip="Exits edit mode and discards unsaved changes"
         size="sm"
         key="discard"
         fill="text"
         variant="primary"
         data-testid={selectors.components.NavToolbar.editDashboard.exitButton}
       >
-        <Trans i18nKey="dashboard.toolbar.exit-edit-mode.label">Exit edit</Trans>
+        Exit edit
       </Button>
     ),
   });
@@ -465,11 +489,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={editPanel?.onDiscard}
-        tooltip={
-          editPanel?.state.isNewPanel
-            ? t('dashboard.toolbar.discard-panel-new', 'Discard panel')
-            : t('dashboard.toolbar.discard-panel', 'Discard panel changes')
-        }
+        tooltip={editPanel?.state.isNewPanel ? 'Discard panel' : 'Discard panel changes'}
         size="sm"
         disabled={!isEditedPanelDirty}
         key="discard"
@@ -477,11 +497,7 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="destructive"
         data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
       >
-        {editPanel?.state.isNewPanel ? (
-          <Trans i18nKey="dashboard.toolbar.discard-panel-new">Discard panel</Trans>
-        ) : (
-          <Trans i18nKey="dashboard.toolbar.discard-panel">Discard panel changes</Trans>
-        )}
+        {editPanel?.state.isNewPanel ? 'Discard panel' : 'Discard panel changes'}
       </Button>
     ),
   });
@@ -492,14 +508,14 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={editPanel?.onDiscard}
-        tooltip={t('dashboard.toolbar.discard-library-panel-changes', 'Discard library panel changes')}
+        tooltip="Discard library panel changes"
         size="sm"
         key="discardLibraryPanel"
         fill="outline"
         variant="destructive"
         data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
       >
-        <Trans i18nKey="dashboard.toolbar.discard-library-panel-changes">Discard library panel changes</Trans>
+        Discard library panel changes
       </Button>
     ),
   });
@@ -510,14 +526,14 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={editPanel?.onUnlinkLibraryPanel}
-        tooltip={t('dashboard.toolbar.unlink-library-panel', 'Unlink library panel')}
+        tooltip="Unlink library panel"
         size="sm"
         key="unlinkLibraryPanel"
         fill="outline"
         variant="secondary"
         data-testid={selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton}
       >
-        <Trans i18nKey="dashboard.toolbar.unlink-library-panel">Unlink library panel</Trans>
+        Unlink library panel
       </Button>
     ),
   });
@@ -528,14 +544,14 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={editPanel?.onSaveLibraryPanel}
-        tooltip={t('dashboard.toolbar.save-library-panel', 'Save library panel')}
+        tooltip="Save library panel"
         size="sm"
         key="saveLibraryPanel"
         fill="outline"
         variant="primary"
         data-testid={selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton}
       >
-        <Trans i18nKey="dashboard.toolbar.save-library-panel">Save library panel</Trans>
+        Save library panel
       </Button>
     ),
   });
@@ -545,38 +561,38 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: isEditing && !isEditingLibraryPanel && (meta.canSave || canSaveAs),
     render: () => {
       // if we  only can save
-      if (isNew) {
+      if (meta.isNew) {
         return (
           <Button
             onClick={() => {
               dashboard.openSaveDrawer({});
             }}
             className={styles.buttonWithExtraMargin}
-            tooltip={t('dashboard.toolbar.save-dashboard.tooltip', 'Save changes')}
+            tooltip="Save changes"
             key="save"
             size="sm"
-            variant="primary"
+            variant={'primary'}
             data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
           >
-            <Trans i18nKey="dashboard.toolbar.save-dashboard.label">Save dashboard</Trans>
+            Save dashboard
           </Button>
         );
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave && !meta.canMakeEditable && !isManaged) {
+      if (canSaveAs && !meta.canSave && !meta.canMakeEditable) {
         return (
           <Button
             onClick={() => {
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
             className={styles.buttonWithExtraMargin}
-            tooltip={t('dashboard.toolbar.save-dashboard-copy.tooltip', 'Save as copy')}
+            tooltip="Save as copy"
             key="save"
             size="sm"
             variant={isDirty ? 'primary' : 'secondary'}
           >
-            <Trans i18nKey="dashboard.toolbar.save-dashboard-copy.label">Save as copy</Trans>
+            Save as copy
           </Button>
         );
       }
@@ -585,14 +601,14 @@ export function ToolbarActions({ dashboard }: Props) {
       const menu = (
         <Menu>
           <Menu.Item
-            label={t('dashboard.toolbar.save-dashboard-short', 'Save')}
+            label="Save"
             icon="save"
             onClick={() => {
               dashboard.openSaveDrawer({});
             }}
           />
           <Menu.Item
-            label={t('dashboard.toolbar.save-dashboard-copy.label', 'Save as copy')}
+            label="Save as copy"
             icon="copy"
             onClick={() => {
               dashboard.openSaveDrawer({ saveAsCopy: true });
@@ -607,16 +623,16 @@ export function ToolbarActions({ dashboard }: Props) {
             onClick={() => {
               dashboard.openSaveDrawer({});
             }}
-            tooltip={t('dashboard.toolbar.save-dashboard.tooltip', 'Save changes')}
+            tooltip="Save changes"
             size="sm"
             data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
             variant={isDirty ? 'primary' : 'secondary'}
           >
-            <Trans i18nKey="dashboard.toolbar.save-dashboard.label">Save dashboard</Trans>
+            Save dashboard
           </Button>
           <Dropdown overlay={menu}>
             <Button
-              aria-label={t('dashboard.toolbar.more-save-options', 'More save options')}
+              aria-label="More save options"
               icon="angle-down"
               variant={isDirty ? 'primary' : 'secondary'}
               size="sm"
@@ -627,14 +643,14 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  // Will open a schema v2 editor drawer. Only available with new dashboard layouts.
+  // Will open a schema v2 editor drawer. Only available with useV2DashboardsAPI feature toggle on.
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && dashboardNewLayouts,
+    condition: uid && config.featureToggles.useV2DashboardsAPI,
     render: () => {
       return (
         <ToolbarButton
-          tooltip={t('dashboard.toolbar.edit-dashboard-v2-schema', 'Edit dashboard v2 schema')}
+          tooltip={'Edit dashboard v2 schema'}
           icon={<Icon name="brackets-curly" size="lg" type="default" />}
           key="schema-v2-button"
           onClick={() => {
@@ -645,20 +661,21 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  const rightActionsElements: ReactNode[] = renderActionElements(toolbarActions);
-  const leftActionsElements: ReactNode[] = renderActionElements(leftActions);
-  const hasActionsToLeftAndRight = leftActionsElements.length > 0;
+  const rigthActionsElements: React.ReactNode[] = renderActionElements(toolbarActions);
+  const leftActionsElements: React.ReactNode[] = renderActionElements(leftActions);
+  const hasActionsToLeftAndRight = showScopesSelector || leftActionsElements.length > 0;
 
   return (
     <Stack flex={1} minWidth={0} justifyContent={hasActionsToLeftAndRight ? 'space-between' : 'flex-end'}>
+      {showScopesSelector && <ScopesSelector />}
       {leftActionsElements.length > 0 && <ToolbarButtonRow alignment="left">{leftActionsElements}</ToolbarButtonRow>}
-      <ToolbarButtonRow alignment="right">{rightActionsElements}</ToolbarButtonRow>
+      <ToolbarButtonRow alignment="right">{rigthActionsElements}</ToolbarButtonRow>
     </Stack>
   );
 }
 
 function renderActionElements(toolbarActions: ToolbarAction[]) {
-  const actionElements: ReactNode[] = [];
+  const actionElements: React.ReactNode[] = [];
   let lastGroup = '';
 
   for (const action of toolbarActions) {
@@ -673,7 +690,6 @@ function renderActionElements(toolbarActions: ToolbarAction[]) {
     actionElements.push(action.render());
     lastGroup = action.group;
   }
-
   return actionElements;
 }
 
@@ -720,17 +736,11 @@ function usePanelEditDirty(panelEditor?: PanelEditor) {
 interface ToolbarAction {
   group: string;
   condition?: boolean | string;
-  render: () => ReactNode;
+  render: () => React.ReactNode;
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    hiddenElementsContainer: css({
-      display: 'flex',
-      padding: 0,
-      gap: theme.spacing(1),
-      whiteSpace: 'nowrap',
-    }),
     buttonWithExtraMargin: css({
       margin: theme.spacing(0, 0.5),
     }),

@@ -69,18 +69,6 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
       ...gridItemToPanel(gridItem),
       ...vizPanelToPanel(panel),
     };
-  } else if (scene.state.editPanel) {
-    // If panel edit mode is open when the user chooses the "get help" panel menu option
-    // we want the debug dashboard to include the panel with any changes that were made while
-    // in panel edit mode.
-    const sourcePanel = scene.state.editPanel.state.vizManager.state.sourcePanel.resolve();
-    const dashGridItem = sourcePanel.parent instanceof LibraryVizPanel ? sourcePanel.parent.parent : sourcePanel.parent;
-    if (dashGridItem instanceof DashboardGridItem) {
-      saveModel = {
-        ...gridItemToPanel(dashGridItem),
-        ...vizPanelToPanel(scene.state.editPanel.state.vizManager.state.panel.clone()),
-      };
-    }
   } else {
     saveModel = gridItemToPanel(gridItem);
   }

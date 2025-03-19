@@ -99,6 +99,7 @@ export const PageToolbar = memo(
                 // @PERCONA
                 size="xl"
                 aria-label={selectors.components.BackButton.backArrow}
+                data-testid={selectors.components.BackButton.backArrow}
                 onClick={onGoBack}
               />
             </div>
