@@ -18,6 +18,7 @@ interface Props extends ToolbarActionProps {
   onButtonClick?: () => void;
   arrowLabel: string;
   arrowTestId: string;
+  variant?: 'primary' | 'secondary';
 }
 
 export const ShareExportDashboardButton = ({
@@ -31,6 +32,7 @@ export const ShareExportDashboardButton = ({
   onButtonClick,
   arrowLabel,
   arrowTestId,
+  variant = 'secondary',
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
@@ -61,7 +63,7 @@ export const ShareExportDashboardButton = ({
         }
       }}
     >
-      <Button data-testid={buttonTestId} size="sm" tooltip={buttonTooltip} variant="secondary" onClick={onButtonClick}>
+      <Button data-testid={buttonTestId} size="sm" tooltip={buttonTooltip} variant={variant} onClick={onButtonClick}>
         {buttonLabel}
       </Button>
       <Dropdown
@@ -82,7 +84,7 @@ export const ShareExportDashboardButton = ({
           data-testid={arrowTestId}
           size="sm"
           icon={isOpen ? 'angle-up' : 'angle-down'}
-          variant="secondary"
+          variant={variant}
         />
       </Dropdown>
     </ButtonGroup>

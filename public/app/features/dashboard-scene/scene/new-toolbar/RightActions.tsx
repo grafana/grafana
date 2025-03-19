@@ -8,6 +8,7 @@ import { isLibraryPanel } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
+import { DashboardSettingsButton } from './actions/DashboardSettingsButton';
 import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
 import { DiscardPanelButton } from './actions/DiscardPanelButton';
 import { EditDashboardSwitch } from './actions/EditDashboardSwitch';
@@ -105,6 +106,18 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             condition: showPanelButtons && isEditingLibraryPanel,
           },
           {
+            key: 'edit-schema-v2-button',
+            component: EditSchemaV2Button,
+            group: 'dashboard',
+            condition: isEditingAndShowingDashboard && hasUid,
+          },
+          {
+            key: 'dashboard-settings',
+            component: DashboardSettingsButton,
+            group: 'dashboard',
+            condition: isEditingAndShowingDashboard && dashboard.canEditDashboard(),
+          },
+          {
             key: 'save-dashboard',
             component: SaveDashboard,
             group: 'save-edit',
@@ -133,12 +146,6 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             component: ShareDashboardButton,
             group: 'export-share',
             condition: showShareButton,
-          },
-          {
-            key: 'edit-schema-v2-button',
-            component: EditSchemaV2Button,
-            group: 'misc',
-            condition: hasUid,
           },
         ],
         dashboard
