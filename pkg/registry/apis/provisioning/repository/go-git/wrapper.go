@@ -269,10 +269,6 @@ func (g *GoGitRepo) Push(ctx context.Context, opts GoGitPushOptions, progress io
 		}
 	}
 
-	if opts.MaxSize > 0 {
-		progress = newMaxBytesWriter(progress, opts.MaxSize, cancel)
-	}
-
 	err := g.repo.PushContext(ctx, &git.PushOptions{
 		Progress: progressWriter,
 		Force:    true, // avoid fast-forward-errors

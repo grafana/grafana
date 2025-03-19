@@ -2,6 +2,7 @@ package gogit
 
 import (
 	"bytes"
+	"errors"
 	"testing"
 )
 
@@ -42,7 +43,7 @@ func TestMaxBytesWriter(t *testing.T) {
 		data := []byte("hello world")
 		n, err := writer.Write(data)
 
-		if err != ErrMaxBytesExceeded {
+		if !errors.Is(err, ErrMaxBytesExceeded) {
 			t.Errorf("expected ErrMaxBytesExceeded, got %v", err)
 		}
 		if !exceedCalled {
@@ -64,7 +65,7 @@ func TestMaxBytesWriter(t *testing.T) {
 
 		// Second write should fail immediately
 		n, err := writer.Write([]byte("more data"))
-		if err != ErrMaxBytesExceeded {
+		if !errors.Is(err, ErrMaxBytesExceeded) {
 			t.Errorf("expected ErrMaxBytesExceeded, got %v", err)
 		}
 		if n != 0 {
@@ -98,7 +99,7 @@ func TestMaxBytesWriter(t *testing.T) {
 		data := []byte("hello world")
 		n, err := writer.Write(data)
 
-		if err != ErrMaxBytesExceeded {
+		if !errors.Is(err, ErrMaxBytesExceeded) {
 			t.Errorf("expected ErrMaxBytesExceeded, got %v", err)
 		}
 		if n != len(data) {
