@@ -17,6 +17,7 @@ WHERE `guid` IN (
     `namespace` = 'nn'
     AND `group` = 'gg'
     AND `resource` = 'rr'
+    AND `name` = 'na'
   ) AS `ranked`
   WHERE `rn` > 100
 );
