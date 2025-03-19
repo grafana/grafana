@@ -3237,10 +3237,9 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardRangeMap(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "And this is no longer producing valid TS / Go output type: MappingType & \"range\"",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"options": {
@@ -3268,10 +3267,9 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardRegexMap(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "And this is no longer producing valid TS / Go output type: MappingType & \"regex\"",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"options": {
@@ -3795,10 +3793,9 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardSpecialValueMap(ref common.Refe
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "And this is no longer producing valid TS / Go output type: MappingType & \"special\"",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"options": {
@@ -4463,10 +4460,9 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardValueMap(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "And this is no longer producing valid TS / Go output type: MappingType & \"value\"",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"options": {

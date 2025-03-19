@@ -9,6 +9,7 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 
 import { DashboardScene } from '../scene/DashboardScene';
 
+import { getProvisionedMeta } from './provisioned/utils/getProvisionedMeta';
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
@@ -131,10 +132,17 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
       <Field label="Folder">
         <FolderPicker
-          onChange={(uid: string | undefined, title: string | undefined) => {
+          onChange={async (uid: string | undefined, title: string | undefined) => {
             setValue('folder', { uid, title });
             const folderUid = dashboard.state.meta.folderUid;
             setHasFolderChanged(uid !== folderUid);
+            const meta = await getProvisionedMeta(uid);
+            dashboard.setState({
+              meta: {
+                ...meta,
+                folderUid: uid,
+              },
+            });
           }}
           // Old folder picker fields
           value={formValues.folder?.uid}

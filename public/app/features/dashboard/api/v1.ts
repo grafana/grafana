@@ -97,7 +97,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
 
       // This could come as conversion error from v0 or v2 to V1.
-      if (dash.status?.conversion?.failed) {
+      if (dash.status?.conversion?.failed && dash.status.conversion.storedVersion === 'v2alpha1') {
         throw new DashboardVersionError(dash.status.conversion.storedVersion, dash.status.conversion.error);
       }
 
