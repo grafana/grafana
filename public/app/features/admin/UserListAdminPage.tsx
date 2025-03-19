@@ -75,7 +75,10 @@ const UserListAdminPageUnConnected = ({
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
           <FilterInput
-            placeholder="Search user by login, email, or name."
+            placeholder={t(
+              'admin.user-list-admin-page-un-connected.placeholder-search-login-email',
+              'Search user by login, email, or name.'
+            )}
             autoFocus={true}
             value={query}
             onChange={changeQuery}

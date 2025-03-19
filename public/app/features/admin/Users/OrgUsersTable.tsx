@@ -24,7 +24,7 @@ import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicke
 import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../OrgRolePicker';
@@ -165,7 +165,7 @@ export const OrgUsersTable = ({
             />
           ) : (
             <OrgRolePicker
-              aria-label="Role"
+              aria-label={t('admin.org-users-table.columns.aria-label-role', 'Role')}
               value={value}
               disabled={basicRoleDisabled}
               onChange={(newRole) => onRoleChange(newRole, original)}
@@ -254,7 +254,7 @@ export const OrgUsersTable = ({
         <ConfirmModal
           body={`Are you sure you want to delete user ${userToRemove?.login}?`}
           confirmText="Delete"
-          title="Delete"
+          title={t('admin.org-users-table.title-delete', 'Delete')}
           onDismiss={() => {
             setUserToRemove(null);
           }}

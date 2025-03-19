@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { Playlist, PlaylistMode } from './types';
 
@@ -50,38 +51,52 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
   };
 
   return (
-    <Modal isOpen={true} icon="play" title="Start playlist" onDismiss={onDismiss}>
+    <Modal
+      isOpen={true}
+      icon="play"
+      title={t('playlist.start-modal.title-start-playlist', 'Start playlist')}
+      onDismiss={onDismiss}
+    >
       <FieldSet>
-        <Field label="Mode">
+        <Field label={t('playlist.start-modal.label-mode', 'Mode')}>
           <RadioButtonGroup value={mode} options={modes} onChange={setMode} />
         </Field>
         <Field>
           <Checkbox
-            label="Autofit"
-            description="Panel heights will be adjusted to fit screen size"
+            label={t('playlist.start-modal.label-autofit', 'Autofit')}
+            description={t(
+              'playlist.start-modal.description-panel-heights-adjusted-screen',
+              'Panel heights will be adjusted to fit screen size'
+            )}
             name="autofix"
             value={autoFit}
             onChange={(e) => setAutofit(e.currentTarget.checked)}
           />
         </Field>
         {config.featureToggles.dashboardScene && (
-          <Field label="Display dashboard controls" description="Customize dashboard elements visibility">
+          <Field
+            label={t('playlist.start-modal.label-display-dashboard-controls', 'Display dashboard controls')}
+            description={t(
+              'playlist.start-modal.description-customize-dashboard-elements-visibility',
+              'Customize dashboard elements visibility'
+            )}
+          >
             <Box marginTop={2} marginBottom={2}>
               <Stack direction="column" alignItems="start" justifyContent="left" gap={2}>
                 <Checkbox
-                  label="Time and refresh"
+                  label={t('playlist.start-modal.label-time-and-refresh', 'Time and refresh')}
                   name="displayTimePicker"
                   value={displayTimePicker}
                   onChange={(e) => setDisplayTimePicker(e.currentTarget.checked)}
                 />
                 <Checkbox
-                  label="Variables"
+                  label={t('playlist.start-modal.label-variables', 'Variables')}
                   name="displayVariableControls"
                   value={displayVariables}
                   onChange={(e) => setDisplayVariables(e.currentTarget.checked)}
                 />
                 <Checkbox
-                  label="Dashboard links"
+                  label={t('playlist.start-modal.label-dashboard-links', 'Dashboard links')}
                   name="displayLinks"
                   value={displayLinks}
                   onChange={(e) => setDisplayLinks(e.currentTarget.checked)}

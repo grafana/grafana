@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { Alert, CellProps, Column, Icon, InteractiveTable, Stack, Text, Tooltip } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {
@@ -98,7 +98,10 @@ export const LdapErrorBox = ({ ldapConnectionInfo }: LdapConnectionErrorProps) =
   ));
 
   return (
-    <Alert title="Connection error" severity={AppNotificationSeverity.Error}>
+    <Alert
+      title={t('admin.ldap-error-box.title-connection-error', 'Connection error')}
+      severity={AppNotificationSeverity.Error}
+    >
       {errorElements}
     </Alert>
   );
