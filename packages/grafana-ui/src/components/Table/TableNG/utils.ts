@@ -202,12 +202,17 @@ export function getColumnMinWidth(field: Field, fieldConfig: TableNGProps['field
   // - The field's 'width' is overridden or set to 'auto' by default.
   // Otherwise, the current or overridden 'width' is used.
 
-  const overriddenMinWidth = fieldConfig?.overrides
+  const override = fieldConfig?.overrides
     ?.find(({ matcher: { id, options } }) => id === 'byName' && options === key)
-    ?.properties?.find(({ id }) => id === 'custom.minWidth')?.value;
+    ?.properties?.find(({ id }) => id === 'custom.minWidth');
+
+  const overriddenMinWidth = override?.value ?? (override ? COLUMN.DEFAULT_WIDTH : undefined);
 
   return (
-    overriddenMinWidth ?? field.config.custom.minWidth ?? fieldConfig?.defaults?.custom?.minWidth ?? COLUMN.MIN_WIDTH
+    overriddenMinWidth ??
+    field.config.custom.minWidth ??
+    fieldConfig?.defaults?.custom?.minWidth ??
+    COLUMN.DEFAULT_WIDTH
   );
 }
 
