@@ -272,11 +272,6 @@ export function getDataQueryKind(query: SceneDataQuery | string): string {
     return getDefaultDataSourceRef()?.type ?? '';
   }
 
-  // FIXME: this is a hack for Grafana datasource we don't have a 'query' field
-  // if (query.datasource?.uid === 'grafana') {
-  //   return 'grafana';
-  // }
-
   return query.datasource?.type ?? getDefaultDataSourceRef()?.type ?? '';
 }
 
