@@ -408,6 +408,42 @@ func TestProvisioningApi(t *testing.T) {
 				updated := deserializeRule(t, response.Body())
 				require.Equal(t, rule.UID, updated.UID)
 			})
+
+			t.Run("PUT without MissingSeriesEvalsToResolve clears the field", func(t *testing.T) {
+				oldValue := util.Pointer(5)
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.MissingSeriesEvalsToResolve = oldValue
+				insertRule(t, sut, rule)
+				rule.MissingSeriesEvalsToResolve = nil
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+				require.Equal(t, 200, response.Status(), string(response.Body()))
+				require.NotEmpty(t, response.Body())
+				updated := deserializeRule(t, response.Body())
+				require.Equal(t, rule.UID, updated.UID)
+				require.Nil(t, updated.MissingSeriesEvalsToResolve)
+			})
+
+			t.Run("PUT with MissingSeriesEvalsToResolve updates the value", func(t *testing.T) {
+				oldValue := util.Pointer(5)
+				newValue := util.Pointer(10)
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.MissingSeriesEvalsToResolve = oldValue
+				insertRule(t, sut, rule)
+				rule.MissingSeriesEvalsToResolve = newValue
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+				require.Equal(t, 200, response.Status(), string(response.Body()))
+				require.NotEmpty(t, response.Body())
+				updated := deserializeRule(t, response.Body())
+				require.Equal(t, rule.UID, updated.UID)
+				require.NotNil(t, updated.MissingSeriesEvalsToResolve)
+				require.Equal(t, *newValue, *updated.MissingSeriesEvalsToResolve)
+			})
 		})
 
 		t.Run("exist in non-default orgs", func(t *testing.T) {

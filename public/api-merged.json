@@ -12663,6 +12663,10 @@
             "type": "string"
           }
         },
+        "missing_series_evals_to_resolve": {
+          "type": "integer",
+          "format": "int64"
+        },
         "noDataState": {
           "type": "string",
           "enum": [
@@ -16112,6 +16116,10 @@
         "metadata": {
           "$ref": "#/definitions/AlertRuleMetadata"
         },
+        "missing_series_evals_to_resolve": {
+          "type": "integer",
+          "format": "int64"
+        },
         "namespace_uid": {
           "type": "string"
         },
@@ -18494,6 +18502,10 @@
         "metadata": {
           "$ref": "#/definitions/AlertRuleMetadata"
         },
+        "missing_series_evals_to_resolve": {
+          "type": "integer",
+          "format": "int64"
+        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -18839,6 +18851,11 @@
           "example": {
             "team": "sre-team-1"
           }
+        },
+        "missingSeriesEvalsToResolve": {
+          "type": "integer",
+          "format": "int64",
+          "example": 2
         },
         "noDataState": {
           "type": "string",
@@ -22701,6 +22718,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",

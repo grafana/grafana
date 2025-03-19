@@ -1753,6 +1753,89 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		require.Equal(t, newKeepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
 	})
 
+	t.Run("missing_series_evals_to_resolve", func(t *testing.T) {
+		testCases := []struct {
+			name           string
+			initialValue   *int
+			updatedValue   *int
+			expectedStatus int
+		}{
+			{
+				name:           "should be able to set missing_series_evals_to_resolve to 5",
+				initialValue:   nil,
+				updatedValue:   util.Pointer(5),
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should be able to update missing_series_evals_to_resolve",
+				initialValue:   util.Pointer(1),
+				updatedValue:   util.Pointer(2),
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should be able to set missing_series_evals_to_resolve to nil",
+				initialValue:   util.Pointer(5),
+				updatedValue:   nil,
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should reject missing_series_evals_to_resolve < 0",
+				initialValue:   util.Pointer(1),
+				updatedValue:   util.Pointer(-1),
+				expectedStatus: http.StatusBadRequest,
+			},
+			{
+				name:           "should not be able to set missing_series_evals_to_resolve to 0",
+				initialValue:   util.Pointer(1),
+				updatedValue:   util.Pointer(0),
+				expectedStatus: http.StatusBadRequest,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				// Create a new rule
+				group := generateAlertRuleGroup(1, alertRuleGen())
+				group.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve = tc.initialValue
+
+				// Post the rule group with our alert rule
+				_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+				require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+				// and the value of the missing_series_evals_to_resolve
+				getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
+				require.Equal(t, http.StatusAccepted, status)
+				if tc.initialValue == nil {
+					require.Nil(t, getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				} else {
+					require.Equal(t, *tc.initialValue, *getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				}
+
+				// Now let's update the initial value with the updated value
+				group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+				group.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve = tc.updatedValue
+				_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group)
+				require.Equalf(t, tc.expectedStatus, status, "failed to post rule group. Response: %s", body)
+				// Check the response status
+				require.Equal(t, tc.expectedStatus, status)
+				if tc.expectedStatus != http.StatusAccepted {
+					// If the status is not accepted, we don't need to check the response body
+					return
+				}
+
+				// Get the group again and check that the value is updated to updatedValue
+				getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
+				require.Equal(t, http.StatusAccepted, status)
+
+				if tc.updatedValue == nil {
+					require.Nil(t, getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				} else {
+					require.Equal(t, *tc.updatedValue, *getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				}
+			})
+		}
+	})
+
 	t.Run("when data source missing", func(t *testing.T) {
 		var groupName string
 		{
