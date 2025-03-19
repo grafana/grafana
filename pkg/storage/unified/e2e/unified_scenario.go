@@ -56,8 +56,7 @@ func (s *UnifiedScenario) NewGrafanaService(name string, grpcEndpoint string) (*
 		"GF_DATABASE_SSL_MODE":              "disable",
 	}
 
-	err := s.loadCfg(name, grafanaINI)
-	if err != nil {
+	if err := s.loadCfg(name, grafanaINI); err != nil {
 		return nil, err
 	}
 	g := NewGrafanaService(name, flags, envVars)
@@ -92,8 +91,7 @@ func (s *UnifiedScenario) NewStorageService(name string) (*StorageService, error
 		"GF_DATABASE_SSL_MODE":      "disable",
 	}
 
-	err := s.loadCfg(name, storageINI)
-	if err != nil {
+	if err := s.loadCfg(name, storageINI); err != nil {
 		return nil, err
 	}
 	us := NewStorageService(name, flags, envVars)
