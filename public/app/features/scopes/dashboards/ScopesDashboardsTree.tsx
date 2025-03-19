@@ -17,8 +17,6 @@ export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: Sc
   const folderId = folderPath[folderPath.length - 1];
   const folder = folders[folderId];
 
-  console.log(folder);
-
   return (
     <div role="tree">
       {Object.entries(folder.folders).map(([subFolderId, subFolder]) => (

@@ -33,6 +33,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:last-child': css({
         paddingBottom: 0,
       }),
+      '&:hover': css({
+        textDecoration: 'underline',
+      }),
     }),
     icon: css({
       marginTop: theme.spacing(0.25),
