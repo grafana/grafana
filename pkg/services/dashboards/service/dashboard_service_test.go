@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -816,6 +817,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
 		publicDashboardService: fakePublicDashboardService,
+		log:                    log.NewNopLogger(),
 	}
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
@@ -969,6 +971,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 			},
 			publicDashboardService: fakePublicDashboardService,
+			log:                    log.NewNopLogger(),
 		}
 		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
 		provisioningTimestamp := int64(1234567)
@@ -1048,6 +1051,37 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			Results:   &resource.ResourceTable{},
 			TotalHits: 0,
 		}, nil).Once()
+
+		err := singleOrgService.DeleteOrphanedProvisionedDashboards(ctx, &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
+			ReaderNames: []string{"test"},
+		})
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("Will not wait for indexer when no dashboards were deleted", func(t *testing.T) {
+		repo := "test"
+		singleOrgService := &DashboardServiceImpl{
+			cfg:            setting.NewCfg(),
+			dashboardStore: &fakeStore,
+			orgService: &orgtest.FakeOrgService{
+				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
+			},
+			publicDashboardService: fakePublicDashboardService,
+			log:                    log.NewNopLogger(),
+		}
+		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
+
+		// Call to searchProvisionedDashboardsThroughK8s()
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+			// make sure the kind is added to the query
+			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
+				req.Options.Fields[1].Values[0] == repo
+		})).Return(&resource.ResourceSearchResponse{
+			Results:   &resource.ResourceTable{},
+			TotalHits: 0,
+		}, nil)
 
 		err := singleOrgService.DeleteOrphanedProvisionedDashboards(ctx, &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
 			ReaderNames: []string{"test"},
@@ -2132,9 +2166,15 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 	query := &dashboards.FindPersistedDashboardsQuery{
 		OrgId: 1,
+		Sort:  sort.SortAlphaAsc,
 	}
 	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+		return len(req.SortBy) == 1 &&
+			// should be converted to "title" due to ParseSortName
+			req.SortBy[0].Field == "title" &&
+			!req.SortBy[0].Desc
+	})).Return(&resource.ResourceSearchResponse{
 		Results: &resource.ResourceTable{
 			Columns: []*resource.ResourceTableColumnDefinition{
 				{
