@@ -355,7 +355,7 @@ describe('PanelDataQueriesTab', () => {
 
       expect(modelMock.onQueriesChange).toHaveBeenCalledWith([]);
     });
-    
+
     it('renders add expression button when datasource meta.backend is true', async () => {
       // arrange
       const modelMock = await createModelMock();
@@ -373,30 +373,30 @@ describe('PanelDataQueriesTab', () => {
             },
             author: {
               name: '',
-              url: undefined
+              url: undefined,
             },
             description: '',
             links: [],
             screenshots: [],
             updated: '',
-            version: ''
+            version: '',
           },
           backend: true,
           name: '',
           type: PluginType.datasource,
           module: '',
-          baseUrl: ''
+          baseUrl: '',
         },
         readOnly: false,
         jsonData: {},
         access: 'proxy',
       };
-      modelMock.setState({datasource: ds1Mock, dsSettings: dsSettingsMock});
-      
-      // act      
+      modelMock.setState({ datasource: ds1Mock, dsSettings: dsSettingsMock });
+
+      // act
       render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
 
-      // assert      
+      // assert
       await screen.findByTestId(selectors.components.QueryTab.addExpression);
     });
   });
