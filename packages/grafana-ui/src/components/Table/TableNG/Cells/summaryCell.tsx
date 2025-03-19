@@ -23,11 +23,11 @@ export const SummaryCell = ({ sortedRows, field }: SummaryCellProps) => {
   return (
     <div className={styles.footerCell}>
       {Object.entries(footerItem).map(([reducerId, { reducerName, formattedValue }]) => {
-        const allSumReducers = Object.keys(footerItem).every((item) => item === 'sum');
+        const isSingleSumReducer = Object.keys(footerItem).every((item) => item === 'sum');
 
         return (
-          <div key={reducerId} className={cx(styles.footerItem, allSumReducers && styles.sumReducer)}>
-            {!allSumReducers && <div className={styles.footerItemLabel}>{reducerName}</div>}
+          <div key={reducerId} className={cx(styles.footerItem, isSingleSumReducer && styles.sumReducer)}>
+            {!isSingleSumReducer && <div className={styles.footerItemLabel}>{reducerName}</div>}
             <div className={styles.footerItemValue}>{formattedValue}</div>
           </div>
         );

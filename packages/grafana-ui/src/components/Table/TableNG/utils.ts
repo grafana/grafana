@@ -14,6 +14,7 @@ import {
   LinkModel,
   DisplayValueAlignmentFactors,
   DataFrame,
+  FieldState,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -38,6 +39,11 @@ import {
   TableNGProps,
   Comparator,
 } from './types';
+
+// Extend FieldState to include our custom tracking property
+interface FooterFieldState extends FieldState {
+  lastProcessedRowCount?: number;
+}
 
 /* ---------------------------- Cell calculations --------------------------- */
 export function getCellHeight(
@@ -277,7 +283,7 @@ export function getAlignmentFactor(
 
 export interface FooterItem {
   [reducerId: string]: {
-    value: string;
+    value: number | null;
     formattedValue: string;
     reducerName: string;
   };
@@ -294,6 +300,25 @@ export function getFooterItemNG(rows: TableRow[], field: Field): FooterItem | nu
     return null;
   }
 
+  // Cache invalidation tracking
+  // Only invalidate the cache when the row count changes, which indicates filtering/sorting changes
+  if (!field.state) {
+    field.state = {};
+  }
+
+  const currentRowCount = rows.length;
+  const lastRowCount = (field.state as FooterFieldState).lastProcessedRowCount;
+
+  // Check if we need to invalidate the cache
+  if (lastRowCount !== currentRowCount) {
+    // Cache should be invalidated as row count has changed
+    if (field.state.calcs) {
+      delete field.state.calcs;
+    }
+    // Update the row count tracker
+    (field.state as FooterFieldState).lastProcessedRowCount = currentRowCount;
+  }
+
   // Calculate all specified reducers
   const results = reduceField({
     field: {
@@ -308,7 +333,7 @@ export function getFooterItemNG(rows: TableRow[], field: Field): FooterItem | nu
 
   reducers.forEach((reducerId: string) => {
     if (results[reducerId] !== undefined) {
-      const value = results[reducerId];
+      const value: number | null = results[reducerId];
       const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
       const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
 
