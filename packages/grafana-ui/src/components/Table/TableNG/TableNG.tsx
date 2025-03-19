@@ -681,7 +681,7 @@ export function mapFrameToDataGrid({
         />
       ),
       width: width ?? columnWidth,
-      minWidth: field.config?.custom?.minWidth ?? columnMinWidth,
+      minWidth: field.config.custom.width !== 'auto' ? field.config?.custom?.minWidth : columnMinWidth,
     });
   });
 
