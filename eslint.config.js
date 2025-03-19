@@ -330,4 +330,15 @@ module.exports = [
       ],
     },
   },
+  // @PERCONA
+  {
+    name: 'percona/pmm',
+    files: ['public/app/percona/**/*.{ts,tsx}', 'public/app/plugins/panel/pmm-*/**/*.{ts,tsx}'],
+    plugins: {
+      '@emotion': emotionPlugin,
+    },
+    rules: {
+      '@emotion/syntax-preference': 'off',
+    },
+  },
 ];
