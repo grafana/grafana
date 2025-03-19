@@ -2,10 +2,12 @@ package folders
 
 import (
 	"fmt"
+	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -70,11 +72,11 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
 	// as the only user identifier
 
-	if v.CreatedByUID != "" {
-		meta.SetCreatedBy(v.UpdatedByUID)
+	if v.CreatedBy != 0 {
+		meta.SetCreatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(v.CreatedBy, 10)))
 	}
-	if v.UpdatedByUID != "" {
-		meta.SetUpdatedBy(v.UpdatedByUID)
+	if v.UpdatedBy != 0 {
+		meta.SetUpdatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(v.UpdatedBy, 10)))
 	}
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)

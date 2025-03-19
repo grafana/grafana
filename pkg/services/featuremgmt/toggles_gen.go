@@ -974,4 +974,8 @@ const (
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
+
+	// FlagUnifiedStorageHistoryPruner
+	// Enables the unified storage history pruner
+	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
 )
