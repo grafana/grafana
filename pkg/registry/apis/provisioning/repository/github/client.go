@@ -21,6 +21,7 @@ var (
 	ErrPathTraversalDisallowed = errors.New("the path contained ..") //nolint:stylecheck
 	ErrServiceUnavailable      = apierrors.NewServiceUnavailable("github is unavailable")
 	ErrFileTooLarge            = errors.New("file exceeds maximum allowed size")
+	ErrTooManyItems            = errors.New("maximum number of items exceeded")
 )
 
 // MaxFileSize maximum file size limit (10MB)

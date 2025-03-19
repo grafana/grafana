@@ -64,13 +64,14 @@ func (r *githubClient) RepoExists(ctx context.Context, owner, repository string)
 }
 
 const (
-	maxDirectoryItems           = 1000  // Maximum number of items allowed in a directory
-	maxTreeItems                = 10000 // Maximum number of items allowed in a tree
-	maxCommits                  = 1000  // Maximum number of commits to fetch
-	maxCompareFiles             = 1000  // Maximum number of files to compare between commits
-	maxWebhooks                 = 100   // Maximum number of webhooks allowed per repository
-	maxPRFiles                  = 1000  // Maximum number of files allowed in a pull request
-	maxPullRequestsFileComments = 1000  // Maximum number of comments allowed in a pull request
+	maxDirectoryItems           = 1000             // Maximum number of items allowed in a directory
+	maxTreeItems                = 10000            // Maximum number of items allowed in a tree
+	maxCommits                  = 1000             // Maximum number of commits to fetch
+	maxCompareFiles             = 1000             // Maximum number of files to compare between commits
+	maxWebhooks                 = 100              // Maximum number of webhooks allowed per repository
+	maxPRFiles                  = 1000             // Maximum number of files allowed in a pull request
+	maxPullRequestsFileComments = 1000             // Maximum number of comments allowed in a pull request
+	maxFileSize                 = 10 * 1024 * 1024 // 10MB in bytes
 )
 
 func (r *githubClient) GetContents(ctx context.Context, owner, repository, path, ref string) (fileContents RepositoryContent, dirContents []RepositoryContent, err error) {
@@ -100,7 +101,7 @@ func (r *githubClient) GetContents(ctx context.Context, owner, repository, path,
 
 	if fc != nil {
 		// Check file size before returning content
-		if fc.GetSize() > MaxFileSize {
+		if fc.GetSize() > maxFileSize {
 			return nil, nil, ErrFileTooLarge
 		}
 		return realRepositoryContent{fc}, nil, nil
@@ -769,9 +770,6 @@ func (o listOptions) toGitHubListOptions() *github.ListOptions {
 		PerPage: o.PerPage,
 	}
 }
-
-// ErrTooManyItems is returned when the number of items exceeds the maximum limit
-var ErrTooManyItems = errors.New("maximum number of items exceeded")
 
 // paginatedList is a generic function to handle GitHub API pagination
 func paginatedList[T any](
