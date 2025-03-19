@@ -241,7 +241,7 @@ describe('TraceQLSearch', () => {
       render(
         <TraceQLSearch datasource={datasource} query={query} onChange={onChange} onClearResults={onClearResults} />
       );
-      expect(screen.queryByRole('button', { name: 'Remove aggregate by from this query' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Remove aggregate by from this query' })).not.toBeInTheDocument();
     });
   });
 
