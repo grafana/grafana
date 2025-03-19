@@ -154,15 +154,15 @@ func testCheck(t *testing.T, server *Server) {
 	})
 
 	t.Run("user:13 should be able to read folder status for all subfolders of folder 5", func(t *testing.T) {
-		res, err := server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "5", ""))
+		res, err := server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "", "5"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 
-		res, err = server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "6", ""))
+		res, err = server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "", "6"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 
-		res, err = server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "4", ""))
+		res, err = server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "", "4"))
 		require.NoError(t, err)
 		assert.False(t, res.GetAllowed())
 	})

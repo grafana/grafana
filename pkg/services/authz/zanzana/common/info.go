@@ -148,3 +148,7 @@ func (r ResourceInfo) Context() *structpb.Struct {
 func (r ResourceInfo) IsValidRelation(relation string) bool {
 	return isValidRelation(relation, r.relations)
 }
+
+func (r ResourceInfo) HasSubresource() bool {
+	return r.subresource != ""
+}
