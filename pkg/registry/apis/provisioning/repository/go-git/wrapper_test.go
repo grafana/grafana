@@ -73,10 +73,6 @@ func TestGoGitWrapper(t *testing.T) {
 
 	fmt.Printf("TREE:%s\n", string(jj))
 
-	branch := fmt.Sprintf("unit-test-%s", time.Now().Format("20060102-150405")) // the branch name to create
-	err = wrap.Checkout(ctx, branch, true)
-	require.NoError(t, err)
-
 	ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{
 		Name:  "xxxxx",
 		Email: "rrr@yyyy.zzz",
