@@ -536,7 +536,6 @@ export function mapFrameToDataGrid({
   const columns: TableColumn[] = [];
   const hasNestedFrames = getIsNestedTable(frame);
 
-  const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || COLUMN.MIN_WIDTH;
   const cellInspect = fieldConfig?.defaults?.custom?.inspect ?? false;
   const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
 
