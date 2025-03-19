@@ -220,6 +220,7 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 				log.Error("failed background UPDATE to unified storage", "err", err)
 			}
 		}()
+		return objFromLegacy, createdLegacy, nil
 	}
 	// If we want to check unified errors just run it in foreground.
 	if _, _, err := d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options); err != nil {
