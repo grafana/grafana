@@ -27,7 +27,7 @@ func TestMigrate(t *testing.T) {
 			"schemaVersion": schemaversion.MIN_VERSION - 1,
 		}, schemaversion.MIN_VERSION)
 
-		var minVersionErr = schemaversion.NewMigrationError("schema version is too old", schemaversion.MIN_VERSION-1, schemaversion.MIN_VERSION)
+		var minVersionErr = schemaversion.NewMinimumVersionError(schemaversion.MIN_VERSION - 1)
 		require.ErrorAs(t, err, &minVersionErr)
 	})
 
