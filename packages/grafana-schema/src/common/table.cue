@@ -100,10 +100,10 @@ TableFieldOptions: {
 	// This field is deprecated in favor of using cellOptions
 	displayMode?: TableCellDisplayMode
 	cellOptions: TableCellOptions
+	footer?: TableFooterOptions
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool
 	// Hides any header for a column, useful for columns that show some static content or buttons.
 	hideHeader?: bool
 } @cuetsy(kind="interface")
-

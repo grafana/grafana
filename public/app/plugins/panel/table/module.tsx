@@ -1,13 +1,4 @@
-import {
-  FieldOverrideContext,
-  FieldType,
-  getFieldDisplayName,
-  PanelPlugin,
-  ReducerID,
-  standardEditorsRegistry,
-  identityOverrideProcessor,
-  FieldConfigProperty,
-} from '@grafana/data';
+import { PanelPlugin, standardEditorsRegistry, identityOverrideProcessor, FieldConfigProperty } from '@grafana/data';
 import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
@@ -104,6 +95,21 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           name: 'Hide in table',
           defaultValue: undefined,
           hideFromDefaults: true,
+        })
+        .addCustomEditor({
+          id: 'footer.reducer',
+          category: [footerCategory],
+          path: 'footer.reducer',
+          name: 'Calculation',
+          description: 'Choose a reducer function / calculation',
+          editor: standardEditorsRegistry.get('stats-picker').editor,
+          override: standardEditorsRegistry.get('stats-picker').editor,
+          defaultValue: [],
+          process: identityOverrideProcessor,
+          shouldApply: () => true,
+          settings: {
+            allowMultiple: true,
+          },
         });
     },
   })
@@ -126,62 +132,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           ],
         },
       })
-      .addBooleanSwitch({
-        path: 'footer.show',
-        category: [footerCategory],
-        name: 'Show table footer',
-        defaultValue: defaultOptions.footer?.show,
-      })
-      .addCustomEditor({
-        id: 'footer.reducer',
-        category: [footerCategory],
-        path: 'footer.reducer',
-        name: 'Calculation',
-        description: 'Choose a reducer function / calculation',
-        editor: standardEditorsRegistry.get('stats-picker').editor,
-        defaultValue: [ReducerID.sum],
-        showIf: (cfg) => cfg.footer?.show,
-      })
-      .addBooleanSwitch({
-        path: 'footer.countRows',
-        category: [footerCategory],
-        name: 'Count rows',
-        description: 'Display a single count for all data rows',
-        defaultValue: defaultOptions.footer?.countRows,
-        showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
-      })
-      .addMultiSelect({
-        path: 'footer.fields',
-        category: [footerCategory],
-        name: 'Fields',
-        description: 'Select the fields that should be calculated',
-        settings: {
-          allowCustomValue: false,
-          options: [],
-          placeholder: 'All Numeric Fields',
-          getOptions: async (context: FieldOverrideContext) => {
-            const options = [];
-            if (context && context.data && context.data.length > 0) {
-              const frame = context.data[0];
-              for (const field of frame.fields) {
-                if (field.type === FieldType.number) {
-                  const name = getFieldDisplayName(field, frame, context.data);
-                  const value = field.name;
-                  options.push({ value, label: name });
-                }
-              }
-            }
-            return options;
-          },
-        },
-        defaultValue: '',
-        showIf: (cfg) => cfg.footer?.show && !cfg.footer?.countRows,
-      })
       .addCustomEditor({
         id: 'footer.enablePagination',
         path: 'footer.enablePagination',
         name: 'Enable pagination',
+        category: [footerCategory],
         editor: PaginationEditor,
+        defaultValue: defaultOptions.footer?.enablePagination,
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

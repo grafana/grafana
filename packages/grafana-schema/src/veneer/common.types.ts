@@ -44,6 +44,12 @@ export const defaultTableFieldOptions: raw.TableFieldOptions = {
   cellOptions: {
     type: raw.TableCellDisplayMode.Auto,
   },
+  footer: {
+    show: false,
+    reducer: ['sum'],
+    countRows: false,
+    fields: [],
+  },
 };
 
 /**
