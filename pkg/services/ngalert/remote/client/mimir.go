@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -139,7 +140,12 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 	ct := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(ct, "application/json") {
 		msg := "Response content-type is not application/json"
-		mc.logger.Error(msg, "content-type", "url", r.URL.String(), "method", r.Method, ct, "status", resp.StatusCode)
+		body, err := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+		if err != nil {
+			bodyStr = fmt.Sprintf("fail_to_read: %s", err)
+		}
+		mc.logger.Error(msg, "content-type", "url", r.URL.String(), "method", r.Method, ct, "status", resp.StatusCode, "body", bodyStr)
 		return nil, fmt.Errorf("%s: %s", msg, ct)
 	}
 
