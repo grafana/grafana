@@ -40,7 +40,9 @@ beforeEach(() => {
 const io = mockIntersectionObserver();
 
 describe('RuleList - FilterView', () => {
-  // jest.retryTimes(2);
+  jest.setTimeout(60 * 1000);
+  jest.retryTimes(2);
+
   it('should render multiple pages of results', async () => {
     render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
 

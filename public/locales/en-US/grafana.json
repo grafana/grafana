@@ -526,6 +526,9 @@
       "rule-group-error": "Error loading rule group",
       "title": "Edit evaluation group"
     },
+    "group-loader": {
+      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
+    },
     "irm-integration": {
       "connection-method": "How to connect to IRM",
       "disabled-description": "Enable Grafana IRM to use this integration",
@@ -542,9 +545,6 @@
       "new-integration-description": "A new IRM integration without escalation chains will be automatically created",
       "recommended": "Recommended",
       "validation-failed": "Failed to validate IRM integration name. Is the OnCall API available?"
-    },
-    "group-loader": {
-      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
     },
     "list-view": {
       "empty": {
