@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/kinds/preferences"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
@@ -68,7 +69,7 @@ func GetPreferencesFor(ctx context.Context,
 	}
 
 	var dashboardUID string
-
+	var features featuremgmt.FeatureToggles
 	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
 	if preference.HomeDashboardID != 0 {
 		query := dashboards.GetDashboardQuery{ID: preference.HomeDashboardID, OrgID: orgID}
@@ -97,7 +98,7 @@ func GetPreferencesFor(ctx context.Context,
 		if preference.JSONData.Language != "" {
 			dto.Language = &preference.JSONData.Language
 		}
-		if preference.JSONData.Locale != "" {
+		if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) && preference.JSONData.Locale != "" {
 			dto.Locale = &preference.JSONData.Locale
 		}
 
