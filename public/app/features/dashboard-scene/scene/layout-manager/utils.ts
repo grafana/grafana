@@ -27,7 +27,12 @@ export interface SceneLayoutWithDragAndDrop extends SceneLayout {
 
 // todo@kay: Not the most robust interface check, should make more robust.
 export function isSceneLayoutWithDragAndDrop(o: SceneObject): o is SceneLayoutWithDragAndDrop {
-  return typeof (o as any).isDraggable === 'function' && typeof (o as any).closestDropZone === 'function';
+  return (
+    'isDraggable' in o &&
+    'closestDropZone' in o &&
+    typeof o.isDraggable === 'function' &&
+    typeof o.closestDropZone === 'function'
+  );
 }
 
 /** Walks up the scene graph, returning the first non-undefined result of `extract` */

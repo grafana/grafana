@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import classNames from 'classnames';
 import { CSSProperties, ReactElement, ReactNode, useId, useRef, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
@@ -348,7 +347,7 @@ export function PanelChrome({
 
       {hasHeader && (
         <div
-          className={classNames(styles.headerContainer, dragClass)}
+          className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
           data-testid="header-container"
           onPointerMove={() => {

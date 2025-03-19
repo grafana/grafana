@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { createRef, RefObject } from 'react';
+import { createRef } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -53,6 +53,8 @@ export class DashboardGridItem
   private _prevRepeatValues?: VariableValueSingle[];
 
   private _gridSizeSub: Unsubscribable | undefined;
+
+  public containerRef = createRef<HTMLElement>();
 
   public constructor(state: DashboardGridItemState) {
     super(state);
@@ -248,17 +250,15 @@ export class DashboardGridItem
     return this.state.variableName !== undefined;
   }
 
-  toIntermediate(): IntermediateLayoutItem {
+  public toIntermediate(): IntermediateLayoutItem {
     throw new Error('Method not implemented.');
   }
 
-  // Drag and drop
-  public containerRef: RefObject<HTMLElement> = createRef<HTMLElement>();
   public distanceToPoint?(point: Point): number {
     throw new Error('Method not implemented.');
   }
 
-  boundingBox?(): Rect | undefined {
+  public boundingBox?(): Rect | undefined {
     throw new Error('Method not implemented.');
   }
 }

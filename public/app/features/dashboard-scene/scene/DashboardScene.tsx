@@ -70,7 +70,7 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DropZonePlaceholder } from './layout-default/DropZonePlaceholder';
+import { DropZonePlaceholder } from './layout-manager/DropZonePlaceholder';
 import { LayoutOrchestrator } from './layout-manager/LayoutOrchestrator';
 import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';

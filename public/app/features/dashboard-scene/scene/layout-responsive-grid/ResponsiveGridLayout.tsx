@@ -1,10 +1,10 @@
 import { createRef, CSSProperties, PointerEvent } from 'react';
 
-import { SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-import { DashboardScene } from '../DashboardScene';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
-import { DropZone, getClosest, Point, Rect, SceneLayoutWithDragAndDrop } from '../layout-manager/utils';
+import { DropZone, Point, Rect, SceneLayoutWithDragAndDrop } from '../layout-manager/utils';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
@@ -12,15 +12,18 @@ import { ResponsiveGridLayoutRenderer } from './ResponsiveGridLayoutRenderer';
 
 export interface ResponsiveGridLayoutState extends SceneObjectState, ResponsiveGridLayoutOptions {
   children: ResponsiveGridItem[];
+
   /**
-   * True when the item should rendered but not visible.
+   * True when the item should be rendered but not visible.
    * Useful for conditional display of layout items
    */
   isHidden?: boolean;
+
   /**
-   * For media query for sceens smaller than md breakpoint
+   * For media query for screens smaller than md breakpoint
    */
   md?: ResponsiveGridLayoutOptions;
+
   /** True when the items should be lazy loaded */
   isLazy?: boolean;
 }
@@ -57,6 +60,15 @@ export class ResponsiveGridLayout
 
   public static Component = ResponsiveGridLayoutRenderer;
 
+  public containerRef = createRef<HTMLDivElement>();
+
+  public activeIndex: number | undefined;
+  public activeGridCell = { row: 1, column: 1 };
+  public columnCount = 1;
+  // maybe not needed?
+  public rowCount = 1;
+  public scrollPos: ReturnType<typeof closestScroll> | undefined;
+
   public constructor(state: Partial<ResponsiveGridLayoutState>) {
     super({
       rowGap: 1,
@@ -71,18 +83,18 @@ export class ResponsiveGridLayout
   }
 
   private activationHandler = () => {
-    this.layoutOrchestrator = findLayoutOrchestrator(this);
+    this.layoutOrchestrator = getDashboardSceneFor(this).state.layoutOrchestrator;
   };
 
   public isDraggable(): boolean {
     return true;
   }
 
-  public getDragClass() {
+  public getDragClass(): string {
     return `grid-drag-handle-${this.state.key}`;
   }
 
-  public getDragClassCancel() {
+  public getDragClassCancel(): string {
     return 'grid-drag-cancel';
   }
 
@@ -90,8 +102,6 @@ export class ResponsiveGridLayout
     return { onDragStart: this.onPointerDown };
   };
 
-  public containerRef = createRef<HTMLDivElement>();
-  public scrollPos: ReturnType<typeof closestScroll> | undefined;
   public onPointerDown = (e: PointerEvent, panel: VizPanel) => {
     const cannotDrag = this.cannotDrag(e.target);
     if (cannotDrag || !this.layoutOrchestrator) {
@@ -110,7 +120,7 @@ export class ResponsiveGridLayout
     this.layoutOrchestrator.onDragStart(e.nativeEvent, panel);
   };
 
-  private cannotDrag(el: EventTarget) {
+  private cannotDrag(el: EventTarget): boolean | Element {
     const dragClass = this.getDragClass();
     const dragCancelClass = this.getDragClassCancel();
 
@@ -118,12 +128,6 @@ export class ResponsiveGridLayout
     // or if the drag class isn't set on an ancestor
     return el instanceof Element && (el.closest(`.${dragCancelClass}`) || !el.closest(`.${dragClass}`));
   }
-
-  public activeIndex: number | undefined;
-  public activeGridCell = { row: 1, column: 1 };
-  public columnCount = 1;
-  // maybe not needed?
-  public rowCount = 1;
 
   /**
    * Find the drop zone in this layout closest to the provided `point`.
@@ -156,7 +160,7 @@ export class ResponsiveGridLayout
     return { ...closestRect, distanceToPoint: minDistance };
   }
 
-  importLayoutItem(layoutItem: DashboardLayoutItem): void {
+  public importLayoutItem(layoutItem: DashboardLayoutItem) {
     const layoutItemIR = layoutItem.toIntermediate();
     const layoutChildren = [...this.state.children];
 
@@ -172,7 +176,7 @@ export class ResponsiveGridLayout
     newLayoutItem.activate();
   }
 
-  removeLayoutItem(layoutItem: DashboardLayoutItem): void {
+  public removeLayoutItem(layoutItem: DashboardLayoutItem) {
     this.setState({
       children: this.state.children.filter((c) => c !== layoutItem),
     });
@@ -181,22 +185,7 @@ export class ResponsiveGridLayout
   }
 }
 
-export interface GridCell extends Rect {
-  order: number;
-  rowIndex: number;
-  columnIndex: number;
-}
-
-function findLayoutOrchestrator(root: SceneObject | undefined) {
-  if (!root) {
-    return undefined;
-  }
-
-  const dashboard = getClosest(root, (s) => (s instanceof DashboardScene ? s : undefined));
-  return dashboard?.state.layoutOrchestrator;
-}
-
-export function closestScroll(el?: HTMLElement | null): {
+function closestScroll(el?: HTMLElement | null): {
   scrollTop: number;
   scrollTopMax: number;
   wrapper?: HTMLElement | null;

@@ -1,4 +1,4 @@
-import React from 'react';
+import { RefObject } from 'react';
 
 import { SceneObject, VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -23,6 +23,11 @@ export interface DashboardLayoutItem extends SceneObject {
   isDashboardLayoutItem: true;
 
   /**
+   * Reference to the container DOM element.
+   */
+  containerRef: RefObject<HTMLElement>;
+
+  /**
    * Return layout item options (like repeat, repeat direction, etc. for the default DashboardGridItem)
    */
   getOptions?(): OptionsPaneCategoryDescriptor;
@@ -37,11 +42,19 @@ export interface DashboardLayoutItem extends SceneObject {
    */
   editingCompleted?(withChanges: boolean): void;
 
+  /**
+   * Converts the current layout item into an intermediate format.
+   */
   toIntermediate(): IntermediateLayoutItem;
 
-  containerRef: React.RefObject<HTMLElement>;
-
+  /**
+   * Calculates the distance from the current object to a specified point.
+   */
   distanceToPoint?(point: Point): number;
+
+  /**
+   * Retrieves the bounding box of an element or object.
+   */
   boundingBox?(): Rect | undefined;
 }
 

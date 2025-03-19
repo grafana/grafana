@@ -1,33 +1,19 @@
-import { css } from '@emotion/css';
-import classNames from 'classnames';
-import { ComponentType, type PointerEventHandler, MutableRefObject, useEffect } from 'react';
+import { css, cx } from '@emotion/css';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { DashboardScene } from '../DashboardScene';
-import { closestOfType } from '../layout-manager/utils';
+import { getDashboardSceneFor } from '../../utils/utils';
 
-import { ResponsiveGridItemProps } from './ResponsiveGridItemRenderer';
 import { ResponsiveGridLayout, ResponsiveGridLayoutState } from './ResponsiveGridLayout';
-
-export interface DragAndDropProps {
-  handleProps: {
-    onPointerDown: PointerEventHandler<HTMLElement>;
-  };
-
-  containerProps: {
-    ref: MutableRefObject<HTMLElement>;
-  };
-}
 
 export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<ResponsiveGridLayout>) {
   const { children, isHidden, isLazy } = model.useState();
   const styles = useStyles2(getStyles, model.state);
-  const dashboard = closestOfType(model, (s) => s instanceof DashboardScene);
+  const { layoutOrchestrator } = getDashboardSceneFor(model).state;
 
-  const layoutOrchestrator = dashboard!.state.layoutOrchestrator;
   const { activeLayoutItemRef } = layoutOrchestrator.useState();
   const activeLayoutItem = activeLayoutItemRef?.resolve();
   const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
@@ -59,30 +45,29 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
           gridColumn: model.activeGridCell.column,
           display: currentLayoutIsActive && model.activeIndex !== undefined ? 'grid' : 'none',
         }}
-      ></div>
+      />
       {children.map((item) => {
-        const Component = item.Component as ComponentType<ResponsiveGridItemProps>;
         const Wrapper = isLazy ? LazyLoader : 'div';
         const isDragging = activeLayoutItem === item;
-        const dragStyles =
-          isDragging && layoutOrchestrator && item.cachedBoundingBox
-            ? {
-                width: item.cachedBoundingBox.right - item.cachedBoundingBox.left,
-                height: item.cachedBoundingBox.bottom - item.cachedBoundingBox.top,
-                translate: `${-layoutOrchestrator.dragOffset.left}px ${-layoutOrchestrator.dragOffset.top}px`,
-                // --x/y-pos are set in LayoutOrchestrator
-                transform: `translate(var(--x-pos), var(--y-pos))`,
-              }
-            : {};
 
         return (
           <Wrapper
             key={item.state.key!}
-            className={classNames(styles.wrapper, { [styles.dragging]: isDragging })}
-            style={dragStyles}
+            className={cx(styles.wrapper, { [styles.dragging]: isDragging })}
+            style={
+              isDragging && layoutOrchestrator && item.cachedBoundingBox
+                ? {
+                    width: item.cachedBoundingBox.right - item.cachedBoundingBox.left,
+                    height: item.cachedBoundingBox.bottom - item.cachedBoundingBox.top,
+                    translate: `${-layoutOrchestrator.dragOffset.left}px ${-layoutOrchestrator.dragOffset.top}px`,
+                    // --x/y-pos are set in LayoutOrchestrator
+                    transform: `translate(var(--x-pos), var(--y-pos))`,
+                  }
+                : {}
+            }
             ref={item.containerRef}
           >
-            <Component model={item} />
+            <item.Component model={item} />
           </Wrapper>
         );
       })}
