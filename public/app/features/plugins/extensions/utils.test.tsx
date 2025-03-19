@@ -227,7 +227,7 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy.a = 'b';
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
     });
 
     it('should not be possible to modify values in proxied array', () => {
@@ -235,7 +235,7 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy[0] = 2;
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
     });
 
     it('should not be possible to modify nested objects in proxied object', () => {
@@ -248,7 +248,31 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy.a.c = 'testing';
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
+    });
+
+    it('should not be possible to modify a nested object in the proxied object if any of its ancestors are already frozen', () => {
+      const obj = {
+        a: {
+          b: {
+            c: {
+              d: 'd',
+            },
+          },
+        },
+      };
+
+      Object.freeze(obj);
+      Object.freeze(obj.a);
+      Object.freeze(obj.a.b);
+
+      const proxy = getReadOnlyProxy(obj);
+
+      expect(() => {
+        proxy.a.b.c.d = 'testing';
+      }).toThrow(TypeError);
+
+      expect(obj.a.b.c.d).toBe('d');
     });
 
     it('should not be possible to modify nested arrays in proxied object', () => {
@@ -261,7 +285,7 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy.a.c[0] = 'testing';
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
     });
 
     it('should be possible to modify source object', () => {

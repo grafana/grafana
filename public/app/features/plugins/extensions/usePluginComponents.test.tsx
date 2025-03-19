@@ -204,15 +204,16 @@ describe('usePluginComponents()', () => {
     });
   });
 
-  it('should return pass the props as read-only to the components', async () => {
+  it('should pass a read-only version of the to the components', async () => {
     type Props = {
-      foo1: {
+      foo: {
         foo2: {
           foo3: {
             foo4: string;
           };
         };
       };
+      override?: boolean;
     };
 
     const originalFoo = {
@@ -231,10 +232,12 @@ describe('usePluginComponents()', () => {
           title: '1',
           description: '1',
           // @ts-ignore - The register() method is not designed to be called directly like this, and because of that it doesn't have a way to set the type of the Props
-          component: ({ foo1 }: Props) => {
+          component: ({ foo, override = false }: Props) => {
             // Trying to override the prop
-            const foo3 = foo1.foo2.foo3;
-            foo3.foo4 = 'baz';
+            if (override) {
+              const foo3 = foo.foo2.foo3;
+              foo3.foo4 = 'baz';
+            }
 
             return <span>Foo</span>;
           },
@@ -248,9 +251,13 @@ describe('usePluginComponents()', () => {
 
     const Component = result.current.components[0];
 
+    // Should be possible to render the component if it doesn't want to change the props
+    const rendered = render(<Component foo={originalFoo} />);
+    expect(rendered.getByText('Foo')).toBeVisible();
+
     // Check if it throws a TypeError due to trying to change the prop
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(<Component foo1={originalFoo} />)).toThrow(TypeError);
+    expect(() => render(<Component foo={originalFoo} override />)).toThrow(TypeError);
     jest.spyOn(console, 'error').mockRestore();
 
     // Check if the original property hasn't been changed
