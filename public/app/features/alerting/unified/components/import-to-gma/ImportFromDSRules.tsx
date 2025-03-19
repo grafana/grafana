@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
+import { useToggle } from 'react-use';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Button, InlineField, InlineSwitch, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, InlineField, InlineSwitch, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
@@ -83,6 +84,7 @@ const ImportFromDSRules = () => {
   };
 
   const notifyApp = useAppNotification();
+  const [optionsShowing, toggleOptions] = useToggle(false);
 
   return (
     <AlertingPageWrapper
@@ -97,99 +99,105 @@ const ImportFromDSRules = () => {
         </Text>
         <FormProvider {...formAPI}>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <Stack gap={2} direction={'column'}>
-              <InlineField
-                transparent={true}
-                label={t('alerting.import-to-gma.datasource.label', 'Datasource')}
-                labelWidth={20}
-                invalid={!!errors.selectedDatasourceName}
-                error={errors.selectedDatasourceName?.message}
-              >
-                <Controller
-                  render={({ field: { onChange, ref, ...field } }) => (
-                    <CloudRulesSourcePicker
-                      {...field}
-                      onChange={(ds: DataSourceInstanceSettings) => {
-                        setValue('selectedDatasourceUID', ds.uid);
-                        setValue('selectedDatasourceName', ds.name);
-                      }}
-                    />
-                  )}
-                  name="selectedDatasourceName"
-                  rules={{
-                    required: {
-                      value: true,
-                      message: t('alerting.import-to-gma.datasource.required-message', 'Please select a datasource'),
-                    },
-                  }}
-                  control={control}
-                />
-              </InlineField>
-
-              <InlineField
-                transparent={true}
-                label={t('alerting.import-to-gma.target-folder.label', 'Target Folder (optional)')}
-                labelWidth={20}
-                invalid={!!errors.selectedDatasourceName}
-                error={errors.selectedDatasourceName?.message}
-              >
-                <Controller
-                  render={({ field: { onChange, ref, ...field } }) => (
-                    <Stack width={50}>
-                      <NestedFolderPicker
-                        invalid={!!errors.targetFolder?.message}
-                        {...field}
-                        value={targetFolder?.uid}
-                        onChange={(uid, title) => {
-                          if (uid && title) {
-                            setValue('targetFolder', { title, uid });
-                          } else {
-                            setValue('targetFolder', undefined);
-                          }
-                        }}
-                      />
-                    </Stack>
-                  )}
-                  name="targetFolder"
-                  control={control}
-                />
-              </InlineField>
-
-              <InlineField
-                transparent={true}
-                label={t('alerting.import-to-gma.pause.label', 'Pause alerting rules')}
-                labelWidth={25}
-                tooltip={t('alerting.import-to-gma.pause.tooltip', 'Exported alerting rules will be paused.')}
-              >
-                <InlineSwitch {...register('pauseAlertingRules')} />
-              </InlineField>
-
-              <InlineField
-                transparent={true}
-                label={t('alerting.import-to-gma.pause-recording.label', 'Pause recording rules')}
-                labelWidth={25}
-                tooltip={t(
-                  'alerting.import-to-gma.pause-recording.tooltip',
-                  'Exported recording rules will be paused.'
+            <InlineField
+              transparent={true}
+              label={t('alerting.import-to-gma.datasource.label', 'Datasource')}
+              labelWidth={20}
+              invalid={!!errors.selectedDatasourceName}
+              error={errors.selectedDatasourceName?.message}
+            >
+              <Controller
+                render={({ field: { onChange, ref, ...field } }) => (
+                  <CloudRulesSourcePicker
+                    {...field}
+                    onChange={(ds: DataSourceInstanceSettings) => {
+                      setValue('selectedDatasourceUID', ds.uid);
+                      setValue('selectedDatasourceName', ds.name);
+                    }}
+                  />
                 )}
-              >
-                <InlineSwitch {...register('pauseRecordingRules')} />
-              </InlineField>
+                name="selectedDatasourceName"
+                rules={{
+                  required: {
+                    value: true,
+                    message: t('alerting.import-to-gma.datasource.required-message', 'Please select a datasource'),
+                  },
+                }}
+                control={control}
+              />
+            </InlineField>
 
-              {selectedDatasourceName ? <NamespaceAndGroupFilter rulesSourceName={selectedDatasourceName} /> : null}
-
-              <Stack>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  disabled={isSubmitting || !watch('selectedDatasourceName')}
-                  onClick={() => clearErrors()}
+            <Collapse label="Optional settings" isOpen={optionsShowing} onToggle={toggleOptions} collapsible={true}>
+              <Stack direction={'column'} gap={0}>
+                <InlineField
+                  transparent={true}
+                  label={t('alerting.import-to-gma.target-folder.label', 'Target Folder (optional)')}
+                  labelWidth={20}
+                  invalid={!!errors.selectedDatasourceName}
+                  error={errors.selectedDatasourceName?.message}
                 >
-                  {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-                  <Trans i18nKey="alerting.import-to-gma.action-button">Export</Trans>
-                </Button>
+                  <Controller
+                    render={({ field: { onChange, ref, ...field } }) => (
+                      <Stack width={50}>
+                        <NestedFolderPicker
+                          showRootFolder={false}
+                          invalid={!!errors.targetFolder?.message}
+                          {...field}
+                          value={targetFolder?.uid}
+                          onChange={(uid, title) => {
+                            if (uid && title) {
+                              setValue('targetFolder', { title, uid });
+                            } else {
+                              setValue('targetFolder', undefined);
+                            }
+                          }}
+                        />
+                      </Stack>
+                    )}
+                    name="targetFolder"
+                    control={control}
+                  />
+                </InlineField>
+
+                <InlineField
+                  transparent={true}
+                  label={t('alerting.import-to-gma.pause.label', 'Pause alerting rules')}
+                  labelWidth={25}
+                  tooltip={t('alerting.import-to-gma.pause.tooltip', 'Exported alerting rules will be paused.')}
+                >
+                  <InlineSwitch {...register('pauseAlertingRules')} />
+                </InlineField>
+
+                <InlineField
+                  transparent={true}
+                  label={t('alerting.import-to-gma.pause-recording.label', 'Pause recording rules')}
+                  labelWidth={25}
+                  tooltip={t(
+                    'alerting.import-to-gma.pause-recording.tooltip',
+                    'Exported recording rules will be paused.'
+                  )}
+                >
+                  <InlineSwitch {...register('pauseRecordingRules')} />
+                </InlineField>
+
+                {selectedDatasourceName ? (
+                  <Stack direction="column">
+                    <Text variant="h4">{t('alerting.import-to-gma.optional-filters', 'Optional filters')}</Text>
+                    <NamespaceAndGroupFilter rulesSourceName={selectedDatasourceName} />
+                  </Stack>
+                ) : null}
               </Stack>
-            </Stack>
+            </Collapse>
+
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={isSubmitting || !watch('selectedDatasourceName')}
+              onClick={() => clearErrors()}
+            >
+              {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
+              <Trans i18nKey="alerting.import-to-gma.action-button">Export</Trans>
+            </Button>
           </form>
         </FormProvider>
       </Stack>
