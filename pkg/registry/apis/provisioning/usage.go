@@ -29,7 +29,7 @@ func (b *APIBuilder) collectProvisioningStats(ctx context.Context) (map[string]a
 	}
 	counts := make(map[string]int, 10)
 	for _, v := range count.Items {
-		counts[string(v.Kind)] = counts[string(v.Kind)] + int(v.Count)
+		counts[v.Kind] = counts[v.Kind] + int(v.Count)
 	}
 	for k, v := range counts {
 		m["stats.managed.resources."+k+".count"] = v
