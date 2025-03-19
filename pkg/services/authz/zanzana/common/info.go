@@ -4,6 +4,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -133,7 +134,7 @@ func (r ResourceInfo) Type() string {
 }
 
 func (r ResourceInfo) Context() *structpb.Struct {
-	if !r.IsGeneric() {
+	if !r.IsGeneric() && r.typ != TypeFolder {
 		return nil
 	}
 
