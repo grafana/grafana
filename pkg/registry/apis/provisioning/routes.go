@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -65,7 +66,7 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: b.handleStats,
+				Handler: withTimeoutFunc(b.handleStats, 30*time.Second),
 			},
 			{
 				Path: "settings",
@@ -113,7 +114,7 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: b.handleSettings,
+				Handler: withTimeoutFunc(b.handleSettings, 30*time.Second),
 			},
 		},
 	}
@@ -127,6 +128,7 @@ func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("expected user"))
 		return
 	}
+	// TODO: check if lister could list too many repositories or resources
 	stats, err := b.resourceLister.Stats(r.Context(), u.GetNamespace(), "")
 	if err != nil {
 		errhttp.Write(r.Context(), err, w)
@@ -146,6 +148,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: check if lister could list too many repositories or resources
 	all, err := b.repositoryLister.Repositories(u.GetNamespace()).List(labels.Everything())
 	if err != nil {
 		errhttp.Write(r.Context(), err, w)

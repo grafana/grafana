@@ -2,8 +2,8 @@ package provisioning
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,10 +54,10 @@ func (c *syncConnector) Connect(
 	}
 	cfg := repo.Config()
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var options provisioning.SyncJobOptions
-		err := json.NewDecoder(r.Body).Decode(&options)
-		if err != nil {
+
+		if err := unmarshalJSON(r, defaultMaxBodySize, &options); err != nil {
 			responder.Error(apierrors.NewBadRequest("error decoding SyncJobOptions from request"))
 			return
 		}
@@ -77,7 +77,7 @@ func (c *syncConnector) Connect(
 			return
 		}
 		responder.Object(http.StatusAccepted, job)
-	}), nil
+	}), 30*time.Second), nil
 }
 
 var (

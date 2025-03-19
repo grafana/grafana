@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"path"
 	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,6 +19,11 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+)
+
+const (
+	// Files endpoint max size for dashboards etc (5MB)
+	filesMaxBodySize = 5 * 1024 * 1024
 )
 
 type filesConnector struct {
@@ -65,7 +70,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, apierrors.NewBadRequest("repository does not support read")
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		ref := query.Get("ref")
 		message := query.Get("message")
@@ -131,14 +136,12 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			// TODO: limit file size
 			code, obj, err = s.doRead(ctx, reader, filePath, ref)
 		case http.MethodPost:
-			// TODO: limit file size
 			obj, err = s.doWrite(ctx, false, repo, filePath, ref, message, r)
 		case http.MethodPut:
 			// TODO: document in API specification
 			if isFolderPath {
 				err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 			} else {
-				// TODO: limit file size
 				obj, err = s.doWrite(ctx, true, repo, filePath, ref, message, r)
 			}
 		case http.MethodDelete:
@@ -161,7 +164,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 		logger.Debug("request resulted in valid object", "object", obj)
 		responder.Object(code, obj)
-	}), nil
+	}), 30*time.Second), nil
 }
 
 func (s *filesConnector) doRead(ctx context.Context, repo repository.Reader, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
@@ -206,6 +209,10 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return nil, err
 	}
 
+	if !isJSONContentType(req) {
+		return nil, fmt.Errorf("invalid content type: %s", req.Header.Get("Content-Type"))
+	}
+
 	writer, ok := repo.(repository.ReaderWriter)
 	if !ok {
 		return nil, apierrors.NewBadRequest("repository does not support read-writing")
@@ -221,7 +228,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return s.doCreateFolder(ctx, writer, path, ref, message, parser)
 	}
 
-	data, err := io.ReadAll(req.Body)
+	data, err := readBody(req, filesMaxBodySize)
 	if err != nil {
 		return nil, err
 	}
@@ -232,6 +239,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		Ref:  ref,
 	}
 
+	// TODO: improve parser to parse out of reader
 	parsed, err := parser.Parse(ctx, info, true)
 	if err != nil {
 		if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
