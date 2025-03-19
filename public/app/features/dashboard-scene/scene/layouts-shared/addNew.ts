@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { SceneGridRow } from '@grafana/scenes';
+import { sceneGraph, SceneGridRow } from '@grafana/scenes';
 
 import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -62,6 +62,12 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   const layoutParent = layout.parent!;
   if (!isLayoutParent(layoutParent)) {
     throw new Error('Parent layout is not a LayoutParent');
+  }
+
+  // Instead of nesting rows we add it as a sibling
+  if (layoutParent instanceof RowItem) {
+    const rowsLayout = sceneGraph.getAncestor(layoutParent, RowsLayoutManager);
+    return rowsLayout.addRowBelow(layoutParent);
   }
 
   const rowsLayout = RowsLayoutManager.createFromLayout(layoutParent.getLayout());
