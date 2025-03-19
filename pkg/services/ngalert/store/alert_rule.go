@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -39,7 +38,7 @@ var (
 )
 
 // DeleteAlertRulesByUID is a handler for deleting an alert rule.
-func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, ruleUID ...string) error {
+func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, permanently bool, ruleUID ...string) error {
 	if len(ruleUID) == 0 {
 		return nil
 	}
@@ -73,7 +72,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		logger.Debug("Deleted alert rule state", "count", rows)
 
 		var versions []alertRuleVersion
-		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) && st.Cfg.DeletedRuleRetention > 0 { // save deleted version only if retention is greater than 0
+		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) && st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
 			versions, err = st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
 			if err != nil {
 				logger.Error("Failed to get latest version of deleted alert rules. The recovery will not be possible", "error", err)
@@ -374,7 +373,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ruleConstraintViolationToErr(sess, rules[i], err, st.Logger)
+						return ruleConstraintViolationToErr(rules[i], err)
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
@@ -432,7 +431,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			if updated, err := sess.ID(r.Existing.ID).AllCols().Omit("rule_guid").Update(converted); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ruleConstraintViolationToErr(sess, r.New, err, st.Logger)
+						return ruleConstraintViolationToErr(r.New, err)
 					}
 					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
 				}
@@ -919,7 +918,7 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 			}
 		}
 
-		if err := st.DeleteAlertRulesByUID(ctx, orgID, ngmodels.NewUserUID(user), uids...); err != nil {
+		if err := st.DeleteAlertRulesByUID(ctx, orgID, ngmodels.NewUserUID(user), false, uids...); err != nil {
 			return err
 		}
 	}
@@ -1201,22 +1200,9 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 	return result, nil, st.UpdateAlertRules(ctx, &ngmodels.AlertingUserUID, updates)
 }
 
-func ruleConstraintViolationToErr(sess *db.Session, rule ngmodels.AlertRule, err error, logger log.Logger) error {
+func ruleConstraintViolationToErr(rule ngmodels.AlertRule, err error) error {
 	msg := err.Error()
-	if strings.Contains(msg, "UQE_alert_rule_org_id_namespace_uid_title") || strings.Contains(msg, "alert_rule.org_id, alert_rule.namespace_uid, alert_rule.title") {
-		// return verbose conflicting alert rule error response
-		// see: https://github.com/grafana/grafana/issues/89755
-		var fetched_uid string
-		var existingPartialAlertRule ngmodels.AlertRule
-		ok, uid_fetch_err := sess.Table("alert_rule").Cols("uid").Where("org_id = ? AND title = ? AND namespace_uid = ?", rule.OrgID, rule.Title, rule.NamespaceUID).Get(&fetched_uid)
-		if uid_fetch_err != nil {
-			logger.Error("Error fetching uid from alert_rule table", "reason", uid_fetch_err.Error())
-		}
-		if ok {
-			existingPartialAlertRule = ngmodels.AlertRule{UID: fetched_uid, Title: rule.Title, NamespaceUID: rule.NamespaceUID}
-		}
-		return ngmodels.ErrAlertRuleConflictVerbose(existingPartialAlertRule, rule, ngmodels.ErrAlertRuleUniqueConstraintViolation)
-	} else if strings.Contains(msg, "UQE_alert_rule_org_id_uid") || strings.Contains(msg, "alert_rule.org_id, alert_rule.uid") {
+	if strings.Contains(msg, "UQE_alert_rule_org_id_uid") || strings.Contains(msg, "alert_rule.org_id, alert_rule.uid") {
 		// return verbose conflicting alert rule error response
 		// see: https://github.com/grafana/grafana/issues/89755
 		existingPartialAlertRule := ngmodels.AlertRule{UID: rule.UID}
@@ -1270,4 +1256,21 @@ func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
 	}
 
 	return args, in
+}
+
+func (st DBstore) DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ruleGUID string) (int64, error) {
+	affectedRows := int64(-1)
+	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		st.Logger.FromContext(ctx).Debug("Deleting a deleted rule by GUID", "ruleGUID", ruleGUID)
+		result, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_uid='' AND rule_org_id = ? AND rule_guid = ? ", orgID, ruleGUID)
+		if err != nil {
+			return err
+		}
+		affectedRows, err = result.RowsAffected()
+		if err != nil {
+			st.Logger.FromContext(ctx).Warn("Failed to get rows affected by the delete operation", "error", err)
+		}
+		return nil
+	})
+	return affectedRows, err
 }
