@@ -47,8 +47,8 @@ fi
 echo "Fetching latest remote information..."
 git fetch --all --tags --prune 2>/dev/null
 
-echo "Finding release branches containing the commit..."
-echo "Finding tags associated with the commit..."
+echo "Finding release branches containing the commit"
+echo "Finding tags associated with the commit"
 echo
 
 echo "Results for commit: $COMMIT_HASH"
@@ -110,12 +110,21 @@ echo "Included in release branches:"
 if [ ${#release_branches[@]} -eq 0 ]; then
     echo "  None"
 else
-    printf "  - %s\n" "${release_branches[@]}" | sort -V
+    for branch in "${release_branches[@]}"; do
+        # Convert branch name to tag format (e.g., release-11.5.0 -> v11.5.0)
+        tag_version="v${branch#release-}"
+        # Check if tag exists
+        if git tag | grep -q "^$tag_version$"; then
+            echo "  - $branch"
+        else
+            echo "  - $branch (release for this branch upcoming)"
+        fi
+    done | sort -V
 fi
 echo
 
 # Print initial release tag
-echo "Initial release tag:"
+echo "Initial release tag (the first release in which this commit was included):"
 if [ ${#direct_tags[@]} -eq 0 ]; then
     echo "  None"
 else
@@ -124,7 +133,7 @@ fi
 echo
 
 # Print included tags
-echo "Included in these release tags:"
+echo "Included in these release tags (the subsequent releases that included this commit):"
 if [ ${#included_tags[@]} -eq 0 ]; then
     echo "  None"
 else
