@@ -2701,12 +2701,6 @@
       "link-title": "Grafana Cloud pricing",
       "title": "How much does it cost?"
     },
-    "public-preview": {
-      "button-text": "Give feedback",
-      "message": "<0>Visit our docs</0> to learn more about this feature!",
-      "message-cloud": "Your self-managed instance of Grafana requires version 11.5+, or 11.2+ with the onPremToCloudMigrations feature flag enabled.",
-      "title": "Migrate to Grafana Cloud is in public preview"
-    },
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
