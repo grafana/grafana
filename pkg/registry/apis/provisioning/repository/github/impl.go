@@ -63,14 +63,27 @@ func (r *githubClient) RepoExists(ctx context.Context, owner, repository string)
 	return false, err
 }
 
+const (
+	maxDirectoryItems           = 1000  // Maximum number of items allowed in a directory
+	maxTreeItems                = 10000 // Maximum number of items allowed in a tree
+	maxCommits                  = 1000  // Maximum number of commits to fetch
+	maxCompareFiles             = 1000  // Maximum number of files to compare between commits
+	maxWebhooks                 = 100   // Maximum number of webhooks allowed per repository
+	maxPRFiles                  = 1000  // Maximum number of files allowed in a pull request
+	maxPullRequestsFileComments = 1000  // Maximum number of comments allowed in a pull request
+)
+
 func (r *githubClient) GetContents(ctx context.Context, owner, repository, path, ref string) (fileContents RepositoryContent, dirContents []RepositoryContent, err error) {
 	if strings.Contains(path, "..") {
 		return nil, nil, ErrPathTraversalDisallowed
 	}
 
-	fc, dc, _, err := r.gh.Repositories.GetContents(ctx, owner, repository, path, &github.RepositoryContentGetOptions{
+	// First try to get repository contents
+	opts := &github.RepositoryContentGetOptions{
 		Ref: ref,
-	})
+	}
+
+	fc, dc, _, err := r.gh.Repositories.GetContents(ctx, owner, repository, path, opts)
 	if err != nil {
 		var ghErr *github.ErrorResponse
 		if !errors.As(err, &ghErr) {
@@ -83,15 +96,24 @@ func (r *githubClient) GetContents(ctx context.Context, owner, repository, path,
 			return nil, nil, ErrResourceNotFound
 		}
 		return nil, nil, err
-	} else if fc != nil {
-		return realRepositoryContent{fc}, nil, nil
-	} else {
-		converted := make([]RepositoryContent, 0, len(dc))
-		for _, original := range dc {
-			converted = append(converted, realRepositoryContent{original})
-		}
-		return nil, converted, nil
 	}
+
+	if fc != nil {
+		return realRepositoryContent{fc}, nil, nil
+	}
+
+	// For directories, check size limits
+	if len(dc) > maxDirectoryItems {
+		return nil, nil, fmt.Errorf("directory contains too many items (more than %d)", maxDirectoryItems)
+	}
+
+	// Convert directory contents
+	allContents := make([]RepositoryContent, 0, len(dc))
+	for _, original := range dc {
+		allContents = append(allContents, realRepositoryContent{original})
+	}
+
+	return nil, allContents, nil
 }
 
 func (r *githubClient) GetTree(ctx context.Context, owner, repository, basePath, ref string, recursive bool) ([]RepositoryContent, bool, error) {
@@ -133,6 +155,11 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, basePath,
 			return nil, false, err
 		}
 
+		// Check if we've exceeded the maximum allowed items
+		if len(tree.Entries) > maxTreeItems {
+			return nil, false, fmt.Errorf("tree contains too many items (more than %d)", maxTreeItems)
+		}
+
 		// Prep for next iteration.
 		if len(subPaths) == 0 {
 			// We're done: we've discovered the tree we want.
@@ -152,6 +179,11 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, basePath,
 			// We couldn't find the folder in the tree...
 			return nil, false, nil
 		}
+	}
+
+	// If the tree is truncated and we're in recursive mode, return an error
+	if tree.GetTruncated() && recursive {
+		return nil, true, fmt.Errorf("tree is too large to fetch recursively (more than %d items)", maxTreeItems)
 	}
 
 	entries := make([]RepositoryContent, 0, len(tree.Entries))
@@ -270,24 +302,25 @@ func (r *githubClient) DeleteFile(ctx context.Context, owner, repository, path, 
 	return err
 }
 
+// Commits returns a list of commits for a given repository and branch.
 func (r *githubClient) Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error) {
-	commits, _, err := r.gh.Repositories.ListCommits(ctx, owner, repository, &github.CommitsListOptions{
-		Path: path,
-		SHA:  branch,
-	})
+	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.RepositoryCommit, *github.Response, error) {
+		return r.gh.Repositories.ListCommits(ctx, owner, repository, &github.CommitsListOptions{
+			Path:        path,
+			SHA:         branch,
+			ListOptions: *opts,
+		})
+	}
+
+	commits, err := paginatedList(
+		ctx,
+		listFn,
+		defaultListOptions(maxCommits),
+	)
+	if errors.Is(err, ErrTooManyItems) {
+		return nil, fmt.Errorf("too many commits to fetch (more than %d)", maxCommits)
+	}
 	if err != nil {
-		var ghErr *github.ErrorResponse
-		if !errors.As(err, &ghErr) {
-			return nil, err
-		}
-		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return nil, ErrServiceUnavailable
-		}
-
-		if ghErr.Response.StatusCode == http.StatusNotFound {
-			return nil, ErrResourceNotFound
-		}
-
 		return nil, err
 	}
 
@@ -327,38 +360,33 @@ func (r *githubClient) Commits(ctx context.Context, owner, repository, path, bra
 }
 
 func (r *githubClient) CompareCommits(ctx context.Context, owner, repository, base, head string) ([]CommitFile, error) {
-	var allFiles []CommitFile
-	opts := &github.ListOptions{
-		PerPage: 100,
-	}
-
-	for {
+	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.CommitFile, *github.Response, error) {
 		compare, resp, err := r.gh.Repositories.CompareCommits(ctx, owner, repository, base, head, opts)
 		if err != nil {
-			var ghErr *github.ErrorResponse
-			if !errors.As(err, &ghErr) {
-				return nil, err
-			}
-			if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-				return nil, ErrServiceUnavailable
-			}
-			if ghErr.Response.StatusCode == http.StatusNotFound {
-				return nil, ErrResourceNotFound
-			}
-			return nil, err
+			return nil, resp, err
 		}
-
-		for _, f := range compare.Files {
-			allFiles = append(allFiles, f)
-		}
-
-		if resp.NextPage == 0 {
-			break
-		}
-		opts.Page = resp.NextPage
+		return compare.Files, resp, nil
 	}
 
-	return allFiles, nil
+	files, err := paginatedList(
+		ctx,
+		listFn,
+		defaultListOptions(maxCompareFiles),
+	)
+	if errors.Is(err, ErrTooManyItems) {
+		return nil, fmt.Errorf("too many files changed between commits (more than %d)", maxCompareFiles)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to the interface type
+	ret := make([]CommitFile, 0, len(files))
+	for _, f := range files {
+		ret = append(ret, f)
+	}
+
+	return ret, nil
 }
 
 func (r *githubClient) GetBranch(ctx context.Context, owner, repository, branchName string) (Branch, error) {
@@ -421,31 +449,32 @@ func (r *githubClient) BranchExists(ctx context.Context, owner, repository, bran
 }
 
 func (r *githubClient) ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error) {
-	var allHooks []*github.Hook
-	opts := &github.ListOptions{
-		PerPage: 100,
+	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.Hook, *github.Response, error) {
+		return r.gh.Repositories.ListHooks(ctx, owner, repository, opts)
 	}
 
-	for {
-		hooks, resp, err := r.gh.Repositories.ListHooks(ctx, owner, repository, opts)
-		if err != nil {
-			var ghErr *github.ErrorResponse
-			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-				return nil, ErrServiceUnavailable
-			}
-			return nil, err
-		}
-
-		allHooks = append(allHooks, hooks...)
-
-		if resp.NextPage == 0 {
-			break
-		}
-		opts.Page = resp.NextPage
+	// Use smaller page size for webhooks since they're typically fewer
+	opts := listOptions{
+		Page:     1,
+		PerPage:  50,
+		MaxItems: maxWebhooks,
 	}
 
-	ret := make([]WebhookConfig, 0, len(allHooks))
-	for _, h := range allHooks {
+	hooks, err := paginatedList(
+		ctx,
+		listFn,
+		opts,
+	)
+	if errors.Is(err, ErrTooManyItems) {
+		return nil, fmt.Errorf("too many webhooks configured (more than %d)", maxWebhooks)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Pre-allocate the result slice
+	ret := make([]WebhookConfig, 0, len(hooks))
+	for _, h := range hooks {
 		contentType := h.GetConfig().GetContentType()
 		if contentType == "" {
 			contentType = "form"
@@ -567,31 +596,25 @@ func (r *githubClient) EditWebhook(ctx context.Context, owner, repository string
 }
 
 func (r *githubClient) ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error) {
-	var allFiles []*github.CommitFile
-	opts := &github.ListOptions{
-		PerPage: 100,
+	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.CommitFile, *github.Response, error) {
+		return r.gh.PullRequests.ListFiles(ctx, owner, repository, number, opts)
 	}
 
-	for {
-		files, resp, err := r.gh.PullRequests.ListFiles(ctx, owner, repository, number, opts)
-		if err != nil {
-			var ghErr *github.ErrorResponse
-			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-				return nil, ErrServiceUnavailable
-			}
-			return nil, err
-		}
-
-		allFiles = append(allFiles, files...)
-
-		if resp.NextPage == 0 {
-			break
-		}
-		opts.Page = resp.NextPage
+	files, err := paginatedList(
+		ctx,
+		listFn,
+		defaultListOptions(maxPRFiles),
+	)
+	if errors.Is(err, ErrTooManyItems) {
+		return nil, fmt.Errorf("pull request contains too many files (more than %d)", maxPRFiles)
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	ret := make([]CommitFile, 0, len(allFiles))
-	for _, f := range allFiles {
+	// Convert to the interface type
+	ret := make([]CommitFile, 0, len(files))
+	for _, f := range files {
 		ret = append(ret, f)
 	}
 
@@ -635,29 +658,18 @@ func (r *githubClient) CreatePullRequestFileComment(ctx context.Context, owner, 
 }
 
 func (r *githubClient) ClearAllPullRequestFileComments(ctx context.Context, owner, repository string, number int) error {
-	var allComments []*github.PullRequestComment
-	opts := &github.PullRequestListCommentsOptions{
-		ListOptions: github.ListOptions{
-			PerPage: 100,
-		},
+	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.PullRequestComment, *github.Response, error) {
+		return r.gh.PullRequests.ListComments(ctx, owner, repository, number, &github.PullRequestListCommentsOptions{
+			ListOptions: *opts,
+		})
 	}
 
-	for {
-		comments, resp, err := r.gh.PullRequests.ListComments(ctx, owner, repository, number, opts)
-		if err != nil {
-			var ghErr *github.ErrorResponse
-			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-				return ErrServiceUnavailable
-			}
-			return err
-		}
-
-		allComments = append(allComments, comments...)
-
-		if resp.NextPage == 0 {
-			break
-		}
-		opts.Page = resp.NextPage
+	comments, err := paginatedList(ctx, listFn, defaultListOptions(maxPullRequestsFileComments))
+	if errors.Is(err, ErrTooManyItems) {
+		return fmt.Errorf("too many comments to process (more than %d)", maxPullRequestsFileComments)
+	}
+	if err != nil {
+		return err
 	}
 
 	userLogin, _, err := r.gh.Users.Get(ctx, "")
@@ -665,7 +677,7 @@ func (r *githubClient) ClearAllPullRequestFileComments(ctx context.Context, owne
 		return fmt.Errorf("get user: %w", err)
 	}
 
-	for _, c := range allComments {
+	for _, c := range comments {
 		// skip if comments were not created by us
 		if c.User.GetLogin() != userLogin.GetLogin() {
 			continue
@@ -725,4 +737,82 @@ func keepNonEmpty(strs []string) []string {
 		}
 	}
 	return ret
+}
+
+// listOptions represents pagination parameters for list operations
+type listOptions struct {
+	// Page number (1-based)
+	Page int
+	// Number of items per page
+	PerPage int
+	// Maximum total items to fetch
+	MaxItems int
+}
+
+// defaultListOptions returns a ListOptions with sensible defaults
+func defaultListOptions(maxItems int) listOptions {
+	return listOptions{
+		Page:     1,
+		PerPage:  100,
+		MaxItems: maxItems,
+	}
+}
+
+// toGitHubListOptions converts our ListOptions to GitHub's ListOptions
+func (o listOptions) toGitHubListOptions() *github.ListOptions {
+	return &github.ListOptions{
+		Page:    o.Page,
+		PerPage: o.PerPage,
+	}
+}
+
+// ErrTooManyItems is returned when the number of items exceeds the maximum limit
+var ErrTooManyItems = errors.New("maximum number of items exceeded")
+
+// paginatedList is a generic function to handle GitHub API pagination
+func paginatedList[T any](
+	ctx context.Context,
+	listFn func(context.Context, *github.ListOptions) ([]T, *github.Response, error),
+	opts listOptions,
+) ([]T, error) {
+	var allItems []T
+
+	for {
+		items, resp, err := listFn(ctx, opts.toGitHubListOptions())
+		if err != nil {
+			var ghErr *github.ErrorResponse
+			if !errors.As(err, &ghErr) {
+				return nil, err
+			}
+			if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+				return nil, ErrServiceUnavailable
+			}
+			if ghErr.Response.StatusCode == http.StatusNotFound {
+				return nil, ErrResourceNotFound
+			}
+			return nil, err
+		}
+
+		// Pre-allocate the slice if this is the first page
+		if allItems == nil {
+			allItems = make([]T, 0, len(items)*2) // Estimate double the first page size
+		}
+
+		allItems = append(allItems, items...)
+
+		// Check if we've exceeded the maximum allowed items
+		if len(allItems) > opts.MaxItems {
+			return nil, ErrTooManyItems
+		}
+
+		// If there are no more pages, break
+		if resp.NextPage == 0 {
+			break
+		}
+
+		// Set up next page
+		opts.Page = resp.NextPage
+	}
+
+	return allItems, nil
 }
