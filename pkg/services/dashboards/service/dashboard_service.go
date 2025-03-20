@@ -1606,12 +1606,13 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 	meta.SetManagerProperties(m)
 	meta.SetSourceProperties(s)
 
-	out, err := dr.createOrUpdateDash(ctx, obj, cmd.OrgID)
+	// Update will create if not exists (upsert!)
+	out, err := dr.k8sclient.Update(ctx, obj, cmd.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
-	return out, nil
+	return dr.UnstructuredToLegacyDashboard(ctx, out, cmd.OrgID)
 }
 
 func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd *dashboards.SaveDashboardCommand, orgID int64) (*dashboards.Dashboard, error) {
