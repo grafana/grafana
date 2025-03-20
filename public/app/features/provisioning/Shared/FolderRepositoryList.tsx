@@ -11,13 +11,13 @@ export function FolderRepositoryList({ items }: { items: Repository[] }) {
   const [query, setQuery] = useState('');
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
   const settings = useGetFrontendSettingsQuery();
-  const [instanceConnected] = checkSyncSettings(settings.data);
+  const [instanceConnected, maxReposReached] = checkSyncSettings(settings.data);
 
   return (
     <Stack direction={'column'} gap={3}>
       <Stack gap={2}>
         <FilterInput placeholder="Search" value={query} onChange={setQuery} />
-        {!instanceConnected && (
+        {!instanceConnected && !maxReposReached && (
           <LinkButton href={CONNECT_URL} variant="primary" icon={'plus'}>
             Connect to repository
           </LinkButton>

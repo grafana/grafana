@@ -2,6 +2,7 @@ import { Stack, Text, Box, LinkButton, Icon } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning';
 
 import { CONNECT_URL } from '../constants';
+import { checkSyncSettings } from '../utils/checkSyncSettings';
 
 interface FeatureItemProps {
   children: React.ReactNode;
@@ -37,6 +38,11 @@ export const FeaturesList = ({
           </LinkButton>
         </Box>
       );
+    }
+
+    const [instanceConnected, maxReposReached] = checkSyncSettings(settings);
+    if (instanceConnected || maxReposReached) {
+      return null;
     }
 
     return (
