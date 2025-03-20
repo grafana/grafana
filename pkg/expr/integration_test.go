@@ -185,7 +185,7 @@ func TestSQLExpressionsIsLossless(t *testing.T) {
 		},
 	}
 
-	// Create a DSNode
+	// Create a DSNode, which is an input to the SQL expression
 	dsNode := &DSNode{
 		baseNode: baseNode{
 			id:    1,
@@ -209,6 +209,7 @@ func TestSQLExpressionsIsLossless(t *testing.T) {
 			OrgId: 1,
 			User:  &user.SignedInUser{},
 		},
+		isInputToSQLExpr: true,
 	}
 
 	// Create a SQL Expression CMDNode that depends on the DSNode
