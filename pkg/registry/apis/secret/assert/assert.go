@@ -20,3 +20,7 @@ func ErrorIs(err1, err2 error) {
 		panic(fmt.Sprintf("expected error %T%+v to be %T%+v", err1, err1, err2, err2))
 	}
 }
+
+func Equal[T comparable](v1 T, v2 T, msg string) {
+	True(v1 == v2, msg, "expected %+v to equal %+v: %s", v1, v2, msg)
+}

@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	ErrSecureValueNotFound = errors.New("secure value not found")
+	ErrSecureValueNotFound      = errors.New("secure value not found")
+	ErrSecureValueAlreadyExists = errors.New("secure value already exists")
 )
 
 // SecureValueMetadataStorage is the interface for wiring and dependency injection.
@@ -22,7 +23,6 @@ type SecureValueMetadataStorage interface {
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
 	List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
 
-	SecretMetadataHasPendingStatus(ctx context.Context, namespace xkube.Namespace, name string) (bool, error)
 	SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID ExternalID) error
 }

@@ -9,16 +9,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/coro"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/fakes"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/simulator/assert"
-
-	"github.com/grafana/grafana/pkg/registry/apis/secret/services"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type Action string
@@ -31,17 +31,21 @@ const (
 )
 
 type Simulator struct {
+	t     *testing.T
+	model *Model
 	// A seeded prng.
 	rng                   *rand.Rand
 	config                SimulatorConfig
 	runtime               *coro.Runtime
 	activityLog           *ActivityLog
 	simNetwork            *SimNetwork
-	simDatabase           *SimDatabase
+	simDatabaseClient     *SimDatabaseClient
+	simDatabaseServer     *SimDatabaseServer
 	simOutboxQueue        *SimOutboxQueue
 	keepers               map[contracts.KeeperType]contracts.Keeper
-	simSecureValueStorage *SimSecureValueStorage
-	secureValueService    *services.CreateSecureValue
+	simSecureValueStorage *SimSecureValueMetadataStorage
+	keeperMetadataStorage contracts.KeeperMetadataStorage
+	secureValueRest       *reststorage.SecureValueRest
 	metrics               SimulationMetrics
 }
 
@@ -49,9 +53,13 @@ type SimulationMetrics struct {
 	// The number of workers running at the moment.
 	// The max number of workers is defined in SimulatorConfig.
 	NumWorkersStarted uint
+	// The number of create secret requets sent
+	NumCreateSecrets uint
 }
 
 func NewSimulator(
+	t *testing.T,
+	model *Model,
 	rng *rand.Rand,
 	config SimulatorConfig,
 	runtime *coro.Runtime,
@@ -59,11 +67,15 @@ func NewSimulator(
 	simNetwork *SimNetwork,
 	simOutboxQueue *SimOutboxQueue,
 	keepers map[contracts.KeeperType]contracts.Keeper,
-	simDatabase *SimDatabase,
-	simSecureValueStorage *SimSecureValueStorage,
-	secureValueService *services.CreateSecureValue,
+	simDatabaseClient *SimDatabaseClient,
+	simDatabaseServer *SimDatabaseServer,
+	simSecureValueStorage *SimSecureValueMetadataStorage,
+	keeperMetadataStorage contracts.KeeperMetadataStorage,
+	secureValueRest *reststorage.SecureValueRest,
 ) *Simulator {
 	return &Simulator{
+		t:                     t,
+		model:                 model,
 		rng:                   rng,
 		config:                config,
 		runtime:               runtime,
@@ -71,9 +83,11 @@ func NewSimulator(
 		simNetwork:            simNetwork,
 		simOutboxQueue:        simOutboxQueue,
 		keepers:               keepers,
-		simDatabase:           simDatabase,
+		simDatabaseClient:     simDatabaseClient,
+		simDatabaseServer:     simDatabaseServer,
 		simSecureValueStorage: simSecureValueStorage,
-		secureValueService:    secureValueService,
+		keeperMetadataStorage: keeperMetadataStorage,
+		secureValueRest:       secureValueRest,
 		metrics:               SimulationMetrics{},
 	}
 }
@@ -89,8 +103,9 @@ func (sim *Simulator) enabledActions() []Action {
 	for _, action := range []Action{ActionCreateSecret, ActionResumeCoroutine, ActionStartOutboxWorker} {
 		switch action {
 		case ActionCreateSecret:
-			// It always makes sense to try to create a secret, no matter the state of system.
-			enabled = append(enabled, action)
+			if sim.metrics.NumCreateSecrets < sim.config.MaxCreateSecrets {
+				enabled = append(enabled, action)
+			}
 
 		case ActionResumeCoroutine:
 			if sim.runtime.HasCoroutinesReady() {
@@ -124,11 +139,13 @@ func (sim *Simulator) step() {
 func (sim *Simulator) execute(action Action) {
 	switch action {
 	case ActionCreateSecret:
+		sim.metrics.NumCreateSecrets += 1
 		sim.activityLog.Record("[SIM] %s", action)
+
 		// Spawn a coroutine to make the request resumable
 		coroutine := sim.runtime.Spawn(func() {
-			// TODO: call secure_value_rest.Create
-			_, err := sim.secureValueService.Handle(context.Background(), &secretv0alpha1.SecureValue{
+			ctx := context.Background()
+			sv := &secretv0alpha1.SecureValue{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "sv-1",
 				},
@@ -139,10 +156,14 @@ func (sim *Simulator) execute(action Action) {
 				Status: secretv0alpha1.SecureValueStatus{
 					Phase: secretv0alpha1.SecureValuePhasePending,
 				},
-			})
-			if err != nil {
-				assert.ErrorIs(err, services.ErrSecretInPendingState)
 			}
+			validateObjectFunc := func(ctx context.Context, obj runtime.Object) error {
+				return nil
+			}
+			createOptions := &metav1.CreateOptions{}
+			_, err := sim.secureValueRest.Create(ctx, sv, validateObjectFunc, createOptions)
+			_, modelErr := sim.model.Create(ctx, sv, validateObjectFunc, createOptions)
+			require.ErrorIs(sim.t, err, modelErr, err)
 		})
 		// Resume once so action can make progress at least once
 		coroutine.Resume(nil)
@@ -159,15 +180,13 @@ func (sim *Simulator) execute(action Action) {
 	case ActionStartOutboxWorker:
 		sim.metrics.NumWorkersStarted += 1
 
-		fmt.Printf("\n\naaaaaaa  starting worker\n\n")
-
 		coroutine := sim.runtime.Spawn(func() {
 			worker := worker.NewWorker(worker.Config{
 				// Generate a number between 1 and 100
 				BatchSize: uint(1 + sim.rng.Intn(100)),
 				// Generate a number between 1 and 100
 				ReceiveTimeout: time.Duration(1+sim.rng.Intn(100)) * time.Millisecond,
-			}, sim.simOutboxQueue, sim.simSecureValueStorage, sim.keepers)
+			}, sim.simDatabaseClient, sim.simOutboxQueue, sim.simSecureValueStorage, sim.keeperMetadataStorage, sim.keepers)
 
 			if err := worker.ControlLoop(context.Background()); err != nil {
 				panic(fmt.Sprintf("worker panicked: %+v", err))
@@ -187,6 +206,8 @@ type SimulatorConfig struct {
 	Steps int64
 	// The number of outbox queue workers to start
 	NumWorkers uint
+	// The maximum number of create secrets requests to send
+	MaxCreateSecrets uint
 }
 
 func int64FromEnv(key string) (bool, int64) {
@@ -223,7 +244,8 @@ func getSimulatorConfigOrDefault() SimulatorConfig {
 		Seed:  seed,
 		Steps: steps,
 		// TODO: random number of workers
-		NumWorkers: 1,
+		NumWorkers:       1,
+		MaxCreateSecrets: 2,
 	}
 }
 
@@ -231,7 +253,7 @@ func TestSimulate(t *testing.T) {
 	t.Parallel()
 
 	simulatorConfig := getSimulatorConfigOrDefault()
-	rng := rand.New(rand.NewSource(simulatorConfig.Seed))
+	rng := rand.New(rand.NewSource(6975927690679579418))
 	activityLog := NewActivityLog()
 
 	defer func() {
@@ -244,48 +266,68 @@ func TestSimulate(t *testing.T) {
 		}
 	}()
 
-	simDatabase := NewSimDatabase()
+	simDatabaseServer := NewSimDatabaseServer(activityLog)
 
-	simNetwork := NewSimNetwork(SimNetworkConfig{rng: rng}, activityLog, simDatabase)
+	simNetwork := NewSimNetwork(SimNetworkConfig{rng: rng}, activityLog, simDatabaseServer)
 
-	simTransactionManager := NewSimTransactionManager(simNetwork, simDatabase)
+	simDatabaseClient := NewSimDatabaseClient(simNetwork, simDatabaseServer)
 
-	simSecureValueStorage := NewSimSecureValueStorage(simNetwork, simDatabase)
+	simSecureValueMetadataStorage := NewSimSecureMetadataValueStorage(simNetwork, simDatabaseServer)
 
-	simOutboxQueue := NewSimOutboxQueue(simNetwork, simDatabase)
+	simOutboxQueue := NewSimOutboxQueue(simNetwork, simDatabaseServer)
 
 	keepers := map[contracts.KeeperType]contracts.Keeper{
 		contracts.SQLKeeperType: fakes.NewFakeKeeper(),
 	}
 
-	secureValueService := services.NewCreateSecureValue(simTransactionManager, simSecureValueStorage, simOutboxQueue)
+	simKeeperMetadataStorage := NewSimKeeperMetadataStorage()
+
+	secureValueRest := reststorage.NewSecureValueRest(simSecureValueMetadataStorage, simDatabaseClient, simOutboxQueue, utils.ResourceInfo{})
 
 	runtime := coro.NewRuntime()
 
-	simulator := NewSimulator(rng, simulatorConfig, runtime, activityLog, simNetwork, simOutboxQueue, keepers, simDatabase, simSecureValueStorage, secureValueService)
+	simulator := NewSimulator(
+		t,
+		NewModel(),
+		rng,
+		simulatorConfig,
+		runtime,
+		activityLog,
+		simNetwork,
+		simOutboxQueue,
+		keepers,
+		simDatabaseClient,
+		simDatabaseServer,
+		simSecureValueMetadataStorage,
+		simKeeperMetadataStorage,
+		secureValueRest,
+	)
 
 	for range simulatorConfig.Steps {
 		simulator.step()
 
-		invOnlyOneOperationPerSecureValueInTheQueueAtATime(t, simDatabase)
-		invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t, simDatabase)
+		invOnlyOneOperationPerSecureValueInTheQueueAtATime(t, simDatabaseServer)
+		invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t, simDatabaseServer)
 	}
 }
 
 // TLA+ inv: OnlyOneOperationPerSecureValueInTheQueueAtATime
-func invOnlyOneOperationPerSecureValueInTheQueueAtATime(t *testing.T, simDatabase *SimDatabase) {
-	uniqueSecretName := make(map[string]struct{}, 0)
+func invOnlyOneOperationPerSecureValueInTheQueueAtATime(t *testing.T, simDatabase *SimDatabaseServer) {
+	// A set of secure value names
+	seen := make(map[string]struct{}, 0)
+
 	for _, sv := range simDatabase.outboxQueue {
 		secureValueName := sv.Name
 
-		require.NotContains(t, uniqueSecretName, secureValueName, fmt.Sprintf("Current SecureValues: %v", uniqueSecretName))
+		require.NotContains(t, seen, secureValueName, fmt.Sprintf("Current SecureValues: %v", seen))
 
-		uniqueSecretName[secureValueName] = struct{}{}
+		// Add the secure value name to the set
+		seen[secureValueName] = struct{}{}
 	}
 }
 
 // TLA+ inv: SecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue
-func invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t *testing.T, simDatabase *SimDatabase) {
+func invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t *testing.T, simDatabase *SimDatabaseServer) {
 	secureValuesInQueue := make(map[string]map[string]struct{}, 0)
 	for _, sv := range simDatabase.outboxQueue {
 		if _, ok := secureValuesInQueue[sv.Namespace]; !ok {
@@ -297,10 +339,12 @@ func invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t *testing
 
 	for namespace, secureValues := range simDatabase.secretMetadata {
 		for _, secureValue := range secureValues {
+			require.NotEmpty(t, secureValue.Status.Phase)
+
 			_, exists := secureValuesInQueue[namespace][secureValue.Name]
 			statusPending := secureValue.Status.Phase == secretv0alpha1.SecureValuePhasePending
 
-			require.True(t, (statusPending && exists || (!statusPending && !exists)), fmt.Sprintf("statusPending=%v exists=%v metadata_db=%v", statusPending, exists, simDatabase.secretMetadata))
+			require.True(t, (statusPending && exists || (!statusPending && !exists)), fmt.Sprintf("statusPending=%v exists=%v currentStatus=%+v metadata_db=%v", statusPending, exists, secureValue.Status.Phase, simDatabase.secretMetadata))
 		}
 	}
 }

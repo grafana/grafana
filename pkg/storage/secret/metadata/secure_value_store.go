@@ -20,7 +20,14 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func ProvideSecureValueMetadataStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, accessClient claims.AccessClient, keeperService secretkeeper.Service) (contracts.SecureValueMetadataStorage, error) {
+func ProvideSecureValueMetadataStorage(
+	db db.DB,
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	accessClient claims.AccessClient,
+	keeperService secretkeeper.Service,
+	keeperMetadataStorage contracts.KeeperMetadataStorage,
+) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueMetadataStorage{}, nil
@@ -35,14 +42,20 @@ func ProvideSecureValueMetadataStorage(db db.DB, cfg *setting.Cfg, features feat
 		return nil, fmt.Errorf("failed to get keepers: %w", err)
 	}
 
-	return &secureValueMetadataStorage{db: db, accessClient: accessClient, keepers: keepers}, nil
+	return &secureValueMetadataStorage{
+		db:                    db,
+		accessClient:          accessClient,
+		keepers:               keepers,
+		keeperMetadataStorage: keeperMetadataStorage,
+	}, nil
 }
 
 // secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueMetadataStorage struct {
-	db           db.DB
-	accessClient claims.AccessClient
-	keepers      map[contracts.KeeperType]contracts.Keeper
+	db                    db.DB
+	accessClient          claims.AccessClient
+	keepers               map[contracts.KeeperType]contracts.Keeper
+	keeperMetadataStorage contracts.KeeperMetadataStorage
 }
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
@@ -311,20 +324,10 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	}, nil
 }
 
-// /\ SecretMetadataHasPendingStatus(s)
-func (s *secureValueStorage) SecretMetadataHasPendingStatus(ctx context.Context, tx *db.Session, namespace xkube.Namespace, name string) (bool, error) {
-	secureValueDB := &secureValueDB{Name: name, Namespace: namespace.String()}
+func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
+	panic("TODO: secureValueMetadataStorage.SetExternalID")
+}
 
-	found, err := tx.Table(secureValueDB.TableName()).ForUpdate().Get(secureValueDB)
-	if err != nil {
-		return false, fmt.Errorf("failed to get sv: %w", err)
-	}
-
-	// TODO: maybe we need to fix this, if there's no metadata found, we want to proceed and not return false necessarily.
-
-	if found && secureValueDB.StatusPhase == string(secretv0alpha1.SecureValuePhasePending) {
-		return true, nil
-	}
-
-	return false, nil
+func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+	panic("TODO: secureValueMetadataStorage.SetStatusSucceeded")
 }

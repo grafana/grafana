@@ -25,20 +25,13 @@ type SimNetworkConfig struct {
 
 // Simulation version of the network which requests go through.
 type SimNetwork struct {
-	config        SimNetworkConfig
-	activityLog   *ActivityLog
-	simDatabase   *SimDatabase
-	nextMessageID uint64
+	config      SimNetworkConfig
+	activityLog *ActivityLog
+	simDatabase *SimDatabaseServer
 }
 
-func NewSimNetwork(config SimNetworkConfig, activityLog *ActivityLog, simDatabase *SimDatabase) *SimNetwork {
+func NewSimNetwork(config SimNetworkConfig, activityLog *ActivityLog, simDatabase *SimDatabaseServer) *SimNetwork {
 	return &SimNetwork{config: config, activityLog: activityLog, simDatabase: simDatabase}
-}
-
-func (network *SimNetwork) getNextMessageID() uint64 {
-	id := network.nextMessageID
-	network.nextMessageID += 1
-	return id
 }
 
 func (network *SimNetwork) Send(input SendInput) any {
@@ -73,7 +66,8 @@ type simDatabaseAppendQuery struct {
 }
 
 type simDatabaseOutboxReceive struct {
-	n uint
+	transactionID TransactionID
+	n             uint
 }
 
 type simDatabaseSecretMetadataHasPendingStatusQuery struct {
@@ -91,6 +85,24 @@ type simDatabaseCreateSecureValueMetadataQuery struct {
 type simDatabaseBeginTxQuery struct {
 	ctx  context.Context
 	opts *sql.TxOptions
+}
+
+type simDatabaseSetExternalIDQuery struct {
+	transactionID TransactionID
+	namespace     xkube.Namespace
+	name          string
+	externalID    contracts.ExternalID
+}
+
+type simDatabaseSetStatusSucceededQuery struct {
+	transactionID TransactionID
+	namespace     xkube.Namespace
+	name          string
+}
+
+type simDatabaseOutboxDeleteQuery struct {
+	transactionID TransactionID
+	messageID     string
 }
 
 /*** Response ***/
@@ -131,5 +143,17 @@ type simDatabaseRollback struct {
 }
 
 type simDatabaseRollbackResponse struct {
+	err error
+}
+
+type simDatabaseSetExternalIDResponse struct {
+	err error
+}
+
+type simDatabaseSetStatusSucceededResponse struct {
+	err error
+}
+
+type simDatabaseOutboxDeleteResponse struct {
 	err error
 }

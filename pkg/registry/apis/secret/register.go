@@ -148,7 +148,7 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	secureRestStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
 		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
-		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueMetadataStorage, secureValueResource),
+		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueMetadataStorage, nil, nil, secureValueResource),
 
 		// TODO: only for testing purposes; remove it in favour of the grpc handler.
 		// This is a subresource from `securevalue`. It gets accessed like `securevalue/xyz/decrypt`.

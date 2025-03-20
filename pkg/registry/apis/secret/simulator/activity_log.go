@@ -20,7 +20,6 @@ func (log *ActivityLog) Record(msg string, args ...any) {
 	} else {
 		log.events = append(log.events, msg)
 	}
-
 }
 
 func (log *ActivityLog) String() string {
