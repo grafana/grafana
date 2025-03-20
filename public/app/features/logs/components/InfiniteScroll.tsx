@@ -98,6 +98,7 @@ export const InfiniteScroll = ({
       } else if (scrollDirection === ScrollDirection.Bottom) {
         scrollBottom();
       }
+      lastEvent.current = null;
     }
 
     function scrollTop() {
@@ -245,7 +246,7 @@ export function shouldLoadMore(
     return ScrollDirection.NoScroll;
   }
 
-  if (lastEvent && shouldIgnoreChainOfEvents(event, lastEvent, countRef)) {
+  if (!lastEvent || shouldIgnoreChainOfEvents(event, lastEvent, countRef)) {
     return ScrollDirection.NoScroll;
   }
 
