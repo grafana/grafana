@@ -184,6 +184,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		ClientCount:      g.ClientCount,
 		Store:            sqlStore,
 		DashboardService: dashboardService,
+		AccessControl:    accessControl,
 	}
 	g.storage = database.NewStorage(g.SQLStore, g.CacheService)
 	g.GrafanaScope.Dashboards = dash

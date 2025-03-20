@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -139,22 +138,24 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			dto.PluginID = manager.Identity
 		}
 
-		guardian, err := guardian.NewByDashboard(ctx, dto, info.OrgID, user)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-		canView, err := guardian.CanView()
+		dashScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(name)
+		evaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashScope)
+		canView, err := r.accessControl.Evaluate(ctx, user, evaluator)
 		if err != nil || !canView {
 			responder.Error(fmt.Errorf("not allowed to view"))
 			return
 		}
 
 		access := &dashboard.DashboardAccess{}
-		access.CanEdit, _ = guardian.CanEdit()
-		access.CanSave, _ = guardian.CanSave()
-		access.CanAdmin, _ = guardian.CanAdmin()
-		access.CanDelete, _ = guardian.CanDelete()
+		writeEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashScope)
+		access.CanSave, _ = r.accessControl.Evaluate(ctx, user, writeEvaluator)
+		access.CanEdit = access.CanSave
+		adminEvaluator := accesscontrol.EvalAll(
+			accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsRead, dashScope),
+			accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashScope))
+		access.CanAdmin, _ = r.accessControl.Evaluate(ctx, user, adminEvaluator)
+		deleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsDelete, dashScope)
+		access.CanDelete, _ = r.accessControl.Evaluate(ctx, user, deleteEvaluator)
 		access.CanStar = user.IsIdentityType(claims.TypeUser)
 
 		access.AnnotationsPermissions = &dashboard.AnnotationPermission{}
