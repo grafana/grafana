@@ -276,7 +276,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   isExpressionsSupported(dsSettings: DataSourceInstanceSettings): boolean {
-    return (dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
+    return (dsSettings.meta.backend || dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
   }
 
   renderExtraActions() {
