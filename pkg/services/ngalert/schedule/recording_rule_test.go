@@ -356,26 +356,63 @@ func TestRecordingRuleAfterEval(t *testing.T) {
 	t.Run("afterEval callback is called before stopping rule evaluation", func(t *testing.T) {
 		ctx := setup(t, defaultSetupConfig)
 
-		// First verify that the callback is called for normal evaluation
-		runTest(t, ctx, true)
+		// Create a channel to signal when Stop is called
+		stopSignalCh := make(chan struct{})
 
-		// Reset the counter for the stop test
-		ctx.callCount.Store(0)
+		// Send an evaluation that will be pending when we stop the rule
+		now := time.Now()
+		folderTitle := ctx.ruleStore.getNamespaceTitle(ctx.rule.NamespaceUID)
+		eval := &Evaluation{
+			scheduledAt: now,
+			rule:        ctx.rule,
+			folderTitle: folderTitle,
+			afterEval: func() {
+				// Wait until we know Stop has been called
+				select {
+				case <-stopSignalCh:
+					// Stop was called before this callback executed
+				case <-time.After(100 * time.Millisecond):
+					t.Error("afterEval callback executed but Stop signal wasn't received")
+				}
+
+				ctx.callCount.Inc()
+				select {
+				case ctx.afterEvalCh <- struct{}{}:
+				default:
+					// Channel is full, which is fine for tests
+				}
+			},
+		}
+		ctx.process.Eval(eval)
 
 		// Create a stopChan to verify rule stopping
 		stopChan := make(chan struct{})
 		go func() {
+			// Signal that we're about to call Stop
+			close(stopSignalCh)
 			ctx.process.Stop(nil)
 			close(stopChan)
 		}()
 
-		// Verify we can exit cleanly
+		// Verify afterEval was called during stopping
+		select {
+		case <-ctx.afterEvalCh:
+			// Success - afterEval was called during stopping
+		case <-time.After(5 * time.Second):
+			t.Fatal("afterEval callback was not called during rule stopping")
+		}
+
+		// Verify the rule stopped properly
 		select {
 		case <-stopChan:
 			// Success - the rule stopped
 		case <-time.After(5 * time.Second):
 			t.Fatal("Rule did not stop in time")
 		}
+
+		// Verify callback count
+		count := ctx.callCount.Load()
+		require.Equal(t, int32(1), count, "afterEval callback should have been called exactly once during stopping")
 	})
 
 	t.Run("afterEval callback is still called when rule is paused", func(t *testing.T) {
