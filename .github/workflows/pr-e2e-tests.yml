@@ -23,7 +23,7 @@ jobs:
         with:
           path: ./grafana
       - run: echo "GRAFANA_GO_VERSION=$(grep "go 1." grafana/go.work |  cut -d\  -f2)" >> "$GITHUB_ENV"
-      - uses: dagger/dagger-for-github@v8.0.0
+      - uses: dagger/dagger-for-github@8.0.0
         if: matrix.type == 'grafana'
         with:
           verb: run
