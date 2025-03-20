@@ -1,4 +1,4 @@
-import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
+import { autoUpdate, autoPlacement, size, useFloating } from '@floating-ui/react';
 import { useMemo, useRef, useState } from 'react';
 
 import { measureText } from '../../utils';
@@ -31,10 +31,10 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
 
   // the order of middleware is important!
   const middleware = [
-    flip({
-      // see https://floating-ui.com/docs/flip#combining-with-shift
+    autoPlacement({
+      // see https://floating-ui.com/docs/autoplacement
       crossAxis: true,
-      boundary: document.body,
+      allowedPlacements: ['bottom-start', 'bottom-end', 'top-start', 'top-end'],
     }),
     size({
       apply({ availableWidth, availableHeight }) {
