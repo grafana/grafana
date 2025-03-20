@@ -231,6 +231,15 @@ func TestSQLExpressionsIsLossless(t *testing.T) {
 	dsResult, err := dsNode.Execute(ctx, now, vars, svc)
 	require.NoError(t, err)
 
+	// TODO: Decide whether to include this check from the LLM
+	// Or maybe even restructure the code a bit? The LLM keeps getting fooled that
+	// the result is a TableData, but it's not.
+	// // Verify dsResult was properly converted for SQL input
+	// // When isInputToSQLExpr is true, the result should be a TableData with a single frame
+	// tableData, ok := dsResult.Values[0].(mathexp.TableData)
+	// require.True(t, ok, "Expected dsResult.Values[0] to be mathexp.TableData due to isInputToSQLExpr=true")
+	// require.NotNil(t, tableData.Frame, "The frame inside TableData should not be nil")
+
 	// Store the DSNode result in vars
 	vars[dsNode.RefID()] = dsResult
 
