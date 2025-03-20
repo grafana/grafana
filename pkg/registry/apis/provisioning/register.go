@@ -502,7 +502,7 @@ func (b *APIBuilder) verifyAgaintsExistingRepositories(cfg *provisioning.Reposit
 
 	if len(all) >= 10 {
 		return field.Forbidden(field.NewPath("spec"),
-			"Only 10 repositories are allowed to target a single instance")
+			"Maximum number of 10 repositories reached")
 	}
 
 	return nil
