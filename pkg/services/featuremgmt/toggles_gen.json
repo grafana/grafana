@@ -1913,12 +1913,15 @@
     {
       "metadata": {
         "name": "frontendSandboxMonitorOnly",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-07-05T11:48:25Z"
+        "resourceVersion": "1741965568775",
+        "creationTimestamp": "2023-07-05T11:48:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-14 15:19:28.77575 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables monitor only in the plugin frontend sandbox (if enabled)",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
       }
@@ -3281,13 +3284,17 @@
     {
       "metadata": {
         "name": "pluginsSriChecks",
-        "resourceVersion": "1727785264632",
-        "creationTimestamp": "2024-10-04T12:55:09Z"
+        "resourceVersion": "1742405194835",
+        "creationTimestamp": "2024-10-04T12:55:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-19 17:26:34.83562 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SRI checks for plugin assets",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
       }
     },
     {
@@ -3817,6 +3824,18 @@
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "secretsManagementAppPlatform",
+        "resourceVersion": "1742370596238",
+        "creationTimestamp": "2025-03-19T07:49:56Z"
+      },
+      "spec": {
+        "description": "Enable the secrets management API and services under app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad"
       }
     },
     {

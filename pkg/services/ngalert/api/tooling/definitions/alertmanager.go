@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/mohae/deepcopy"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
@@ -696,26 +695,6 @@ func (c *PostableUserConfig) validate() error {
 	}
 
 	return nil
-}
-
-// Decrypt returns a copy of the configuration struct with decrypted secure settings in receivers.
-func (c *PostableUserConfig) Decrypt(decryptFn func(payload []byte) ([]byte, error)) (PostableUserConfig, error) {
-	newCfg, ok := deepcopy.Copy(c).(*PostableUserConfig)
-	if !ok {
-		return PostableUserConfig{}, fmt.Errorf("failed to copy config")
-	}
-
-	// Iterate through receivers and decrypt secure settings.
-	for _, rcv := range newCfg.AlertmanagerConfig.Receivers {
-		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			decrypted, err := gmr.DecryptSecureSettings(decryptFn)
-			if err != nil {
-				return PostableUserConfig{}, err
-			}
-			gmr.SecureSettings = decrypted
-		}
-	}
-	return *newCfg, nil
 }
 
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers

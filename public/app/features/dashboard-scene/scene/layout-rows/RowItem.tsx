@@ -5,6 +5,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getDefaultVizPanel } from '../../utils/utils';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
@@ -36,6 +37,7 @@ export class RowItem
   });
 
   public readonly isEditableDashboardElement = true;
+  private _layoutRestorer = new LayoutRestorer();
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -71,7 +73,7 @@ export class RowItem
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ layout });
+    this.setState({ layout: this._layoutRestorer.getLayout(layout, this.state.layout) });
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
@@ -84,6 +86,14 @@ export class RowItem
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
     return new RowItems(items.filter((item) => item instanceof RowItem));
+  }
+
+  public onDuplicate() {
+    this._getParentLayout().duplicateRow(this);
+  }
+
+  public duplicate(): RowItem {
+    return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
   }
 
   public onAddPanel(panel = getDefaultVizPanel()) {

@@ -35,14 +35,56 @@
     }
   },
   "admin": {
+    "add-to-org-modal": {
+      "label-organization": "",
+      "label-role": "",
+      "title-add-to-an-organization": ""
+    },
+    "admin-edit-org-page": {
+      "label-name": "",
+      "render-missing-permission-message": {
+        "title-access-denied": ""
+      }
+    },
+    "admin-feature-toggles-table": {
+      "get-stage-cell": {
+        "beta": "",
+        "deprecated": "",
+        "ga": ""
+      },
+      "title-apply-feature-toggle-changes": ""
+    },
+    "admin-orgs-table": {
+      "aria-label-delete-org": "",
+      "title-delete": ""
+    },
     "anon-users": {
       "not-found": ""
+    },
+    "base-user-sessions": {
+      "title-force-logout-from-all-devices": ""
     },
     "edit-org": {
       "access-denied": "",
       "heading": "",
       "update-button": "",
       "users-heading": ""
+    },
+    "feature-listing": {
+      "title-auditing": "",
+      "title-dashboard-presence-indicators": "",
+      "title-dashboard-usage-stats-drawer": "",
+      "title-data-source-permissions": "",
+      "title-enhanced-ldap-integration": "",
+      "title-enterprise-plugins": "",
+      "title-find-unused-dashboards": "",
+      "title-grafana-usage-insights": "",
+      "title-reporting": "",
+      "title-saml-authentication": "",
+      "title-settings-updates-at-runtime": "",
+      "title-sort-dashboards-by-popularity-in-search": "",
+      "title-team-sync": "",
+      "title-white-labeling": ""
     },
     "feature-toggles": {
       "sub-title": ""
@@ -61,10 +103,22 @@
       "test-mapping-heading": "",
       "test-mapping-run-button": ""
     },
+    "ldap-error-box": {
+      "title-connection-error": ""
+    },
+    "ldap-page": {
+      "label-username": ""
+    },
     "ldap-permissions": {
       "active": "",
       "admin": "",
       "inactive": ""
+    },
+    "ldap-settings-page": {
+      "label-reset-to-default-values": "",
+      "title-invalid-configuration": "",
+      "title-more-actions": "",
+      "tooltip-more-actions": ""
     },
     "ldap-status": {
       "title": ""
@@ -87,11 +141,20 @@
     "ldap-user-info": {
       "no-team": ""
     },
+    "org-role-picker": {
+      "placeholder-choose-role": ""
+    },
     "org-uers": {
       "last-seen-never": ""
     },
     "org-users": {
       "not-editable": ""
+    },
+    "org-users-table": {
+      "columns": {
+        "aria-label-role": ""
+      },
+      "title-delete": ""
     },
     "orgs": {
       "delete-body": "",
@@ -107,11 +170,37 @@
       "title": "",
       "users-button": ""
     },
+    "service-info": {
+      "title-critical-sla-hours": "",
+      "title-enterprise-plugins": "",
+      "title-unlimited-expert-support": ""
+    },
     "settings": {
       "info-description": ""
     },
     "upgrade-info": {
       "title": ""
+    },
+    "user-create-page": {
+      "label-email": "",
+      "label-name": "",
+      "label-password": "",
+      "label-username": ""
+    },
+    "user-ldap-sync-info": {
+      "label-ldap": ""
+    },
+    "user-list-admin-page-un-connected": {
+      "placeholder-search-login-email": ""
+    },
+    "user-list-anonymous-devices-page-un-connected": {
+      "placeholder-search-devices-by-ip-address": ""
+    },
+    "user-list-page": {
+      "label-all-users": "",
+      "label-anonymous-devices": "",
+      "label-organization-users": "",
+      "label-users": ""
     },
     "user-orgs": {
       "add-button": "",
@@ -137,7 +226,14 @@
       "disable-button": "",
       "edit-button": "",
       "enable-button": "",
-      "title": ""
+      "label-email": "",
+      "label-name": "",
+      "label-numerical-identifier": "",
+      "label-password": "",
+      "label-username": "",
+      "title": "",
+      "title-delete-user": "",
+      "title-disable-user": ""
     },
     "user-sessions": {
       "browser-column": "",
@@ -155,6 +251,9 @@
       "create-button": ""
     },
     "users-table": {
+      "columns": {
+        "title-edit-user": ""
+      },
       "last-seen-never": "",
       "no-licensed-roles": ""
     }
@@ -353,6 +452,12 @@
       "missing-reference": "",
       "self-reference": ""
     },
+    "draggable-rules-table": {
+      "evals-to-start-alerting": "",
+      "pending-period": "",
+      "recording": "",
+      "rule-name": ""
+    },
     "export": {
       "subtitle": {
         "formats": "",
@@ -375,6 +480,45 @@
       "edit": "",
       "export": "",
       "reorder": ""
+    },
+    "group-details": {
+      "ds-features-error": "",
+      "edit": "",
+      "evaluations-to-fire": "",
+      "export": "",
+      "folder": "",
+      "group-loading-error": "",
+      "interval": "",
+      "namespace": "",
+      "pending-period": "",
+      "recording": "",
+      "rule-name": ""
+    },
+    "group-edit": {
+      "ds-error": "",
+      "form": {
+        "delete": "",
+        "delete-body": "",
+        "delete-confirm": "",
+        "delete-title": "",
+        "folder-label": "",
+        "group-name-label": "",
+        "group-name-required": "",
+        "interval-description": "",
+        "interval-label": "",
+        "namespace-label": "",
+        "namespace-required": "",
+        "rules-description": "",
+        "rules-label": "",
+        "save": "",
+        "update-error": "",
+        "update-success": ""
+      },
+      "group-not-editable": "",
+      "group-not-editable-description": "",
+      "page-title": "",
+      "rule-group-error": "",
+      "title": ""
     },
     "irm-integration": {
       "connection-method": "",
@@ -600,6 +744,13 @@
         }
       }
     },
+    "rule-group-action": {
+      "details": "",
+      "edit": "",
+      "export-rules-folder": "",
+      "go-to-folder": "",
+      "manage-permissions": ""
+    },
     "rule-groups": {
       "delete": {
         "success": ""
@@ -767,6 +918,9 @@
     "actions": {
       "button-to-recently-deleted": ""
     },
+    "browse-view": {
+      "this-folder-is-empty": ""
+    },
     "counts": {
       "alertRule_one": "{{count}} règle d'alerte",
       "alertRule_other": "{{count}} règles d'alerte",
@@ -786,6 +940,9 @@
       "select-all-header-checkbox": "Tout sélectionner",
       "select-checkbox": "Sélectionner",
       "tags-column": "Étiquettes"
+    },
+    "descendant-count": {
+      "title-unable-to-retrieve-descendant-information": ""
     },
     "empty-state": {
       "button-title": "",
@@ -816,6 +973,9 @@
       "alert-rules": "Règles d'alerte",
       "dashboards": "Tableaux de bord",
       "panels": "Panneaux"
+    },
+    "name-cell": {
+      "no-items": ""
     },
     "new-folder-form": {
       "cancel-label": "Annuler",
@@ -1137,6 +1297,28 @@
       }
     },
     "edit-pane": {
+      "add": {
+        "lib-panel": {
+          "heading": "",
+          "title": ""
+        },
+        "panel": {
+          "heading": "",
+          "title": ""
+        },
+        "paste-panel": {
+          "heading": "",
+          "title": ""
+        },
+        "row": {
+          "heading": "",
+          "title": ""
+        },
+        "tab": {
+          "heading": "",
+          "title": ""
+        }
+      },
       "elements": {
         "dashboard": "",
         "objects": "",
@@ -1327,11 +1509,6 @@
     },
     "toolbar": {
       "add": "Ajouter",
-      "add-panel": "",
-      "add-panel-description": "",
-      "add-panel-lib": "",
-      "add-row": "",
-      "add-tab": "",
       "alert-rules": "Règles d'alerte",
       "back-to-dashboard": "",
       "dashboard-settings": {
@@ -1354,7 +1531,6 @@
         "label": "",
         "tooltip": ""
       },
-      "libray-panel-description": "",
       "mark-favorite": "Marquer comme favori",
       "more-save-options": "",
       "open-original": "Ouvrir le tableau de bord d'origine",
@@ -1363,7 +1539,6 @@
       "playlist-stop": "Arrêter la liste de lecture",
       "public-dashboard": "",
       "refresh": "Actualiser le tableau de bord",
-      "row-description": "",
       "save": "Enregistrer le tableau de bord",
       "save-dashboard": {
         "label": "",
@@ -1383,7 +1558,6 @@
       "share-button": "Partager",
       "show-hidden-elements": "",
       "switch-old-dashboard": "",
-      "tabs-description": "",
       "unlink-library-panel": "",
       "unmark-favorite": "Supprimer des favoris"
     },
@@ -1437,6 +1611,17 @@
       "invalid-branch-name": "",
       "it-cannot-contain-or": "",
       "least-valid-character": ""
+    },
+    "dashboard-preview-banner": {
+      "not-saved": "",
+      "not-yet-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "title-dashboard-loaded-branch-git-hub": "",
+      "title-dashboard-loaded-external-repository": "",
+      "title-dashboard-loaded-request-git-hub": "",
+      "title-error-loading-dashboard": "",
+      "value-not-saved": "",
+      "view-pull-request-in-git-hub": ""
     },
     "provisioned-resource-delete-modal": {
       "file-path": "",
@@ -2351,8 +2536,31 @@
     }
   },
   "library-panels": {
+    "add-library-panel-modal": {
+      "title-create-library-panel": ""
+    },
+    "confirm": {
+      "delete-panel": ""
+    },
+    "delete-library-panel-modal": {
+      "cancel": "",
+      "delete": "",
+      "title-delete-library-panel": ""
+    },
     "empty-state": {
       "message": ""
+    },
+    "folder-link": {
+      "dashboards": ""
+    },
+    "has-connected-dashboards": {
+      "dashboard-name": ""
+    },
+    "library-panels-search": {
+      "placeholder-search-by-name-or-description": ""
+    },
+    "loading-indicator": {
+      "loading-library-panel": ""
     },
     "loading-panel-text": "",
     "modal": {
@@ -2366,9 +2574,20 @@
       "body_one": "Ce panneau est utilisé dans {{count}} tableau de bord. Choisissez dans quel tableau de bord le panneau sera affiché :",
       "body_other": "Ce panneau est utilisé dans {{count}} tableaux de bord. Choisissez dans quel tableau de bord le panneau sera affiché :"
     },
+    "panel-library-options-group": {
+      "create-new-library-panel": ""
+    },
     "save": {
       "error": "Erreur lors de l'enregistrement du panneau de bibliothèque : \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
+    },
+    "save-library-panel-modal": {
+      "cancel": "",
+      "dashboard-name": "",
+      "discard": "",
+      "loading-connected-dashboards": "",
+      "placeholder-search-affected-dashboards": "",
+      "update-all": ""
     }
   },
   "link": {
@@ -2623,12 +2842,6 @@
       "body": "Grafana Cloud propose une formule gratuite généreuse et un essai illimité de 14 jours. Après votre période d'essai, nous vous facturerons en fonction de votre utilisation dépassant les limites de la formule gratuite.",
       "link-title": "Tarifs de Grafana Cloud",
       "title": "Combien ça coûte ?"
-    },
-    "public-preview": {
-      "button-text": "",
-      "message": "",
-      "message-cloud": "",
-      "title": ""
     },
     "resource-details": {
       "dismiss-button": "",
@@ -3116,6 +3329,27 @@
       "error": ""
     }
   },
+  "org": {
+    "new-org-page": {
+      "create": "",
+      "label-organization-name": "",
+      "placeholder-org-name": ""
+    },
+    "org-profile": {
+      "label-organization-name": "",
+      "label-organization-profile": "",
+      "update-organization-name": ""
+    },
+    "user-invite-form": {
+      "back": "",
+      "label-email-or-username": "",
+      "label-name": "",
+      "label-send-invite-email": "",
+      "placeholder-optional": "",
+      "role": "",
+      "submit": ""
+    }
+  },
   "panel": {
     "header-menu": {
       "copy": "Copier",
@@ -3145,6 +3379,19 @@
   },
   "panel-type-filter": {
     "clear-button": ""
+  },
+  "playlist": {
+    "start-modal": {
+      "description-customize-dashboard-elements-visibility": "",
+      "description-panel-heights-adjusted-screen": "",
+      "label-autofit": "",
+      "label-dashboard-links": "",
+      "label-display-dashboard-controls": "",
+      "label-mode": "",
+      "label-time-and-refresh": "",
+      "label-variables": "",
+      "title-start-playlist": ""
+    }
   },
   "playlist-edit": {
     "error-prefix": "Erreur lors du chargement de la playlist :",
@@ -3967,11 +4214,37 @@
     "placeholder": "Filtrer par étiquette"
   },
   "teams": {
+    "create-team": {
+      "create": "",
+      "label-name": "",
+      "label-role": ""
+    },
     "empty-state": {
       "button-title": "",
       "message": "",
       "pro-tip": "",
       "title": ""
+    },
+    "team-group-sync": {
+      "add-group": "",
+      "external-group-id": "",
+      "external-group-sync": "",
+      "title-there-external-groups": ""
+    },
+    "team-list": {
+      "columns": {
+        "title-edit-team": ""
+      },
+      "new-team": "",
+      "placeholder-search-teams": ""
+    },
+    "team-settings": {
+      "label-email": "",
+      "label-name": "",
+      "label-numerical-identifier": "",
+      "label-role": "",
+      "label-team-details": "",
+      "save": ""
     }
   },
   "theme-preview": {
