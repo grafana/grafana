@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"cloud.google.com/go/spanner"
@@ -15,12 +14,10 @@ import (
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
 	"github.com/grafana/dskit/concurrency"
-	"google.golang.org/api/option"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"xorm.io/core"
 
+	spannerext "github.com/grafana/grafana/pkg/extensions/spanner"
 	"xorm.io/xorm"
 
 	_ "embed"
@@ -294,7 +291,7 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 		return err
 	}
 
-	opts := SpannerConnectorConfigToClientOptions(cfg)
+	opts := spannerext.SpannerConnectorConfigToClientOptions(cfg)
 
 	databaseAdminClient, err := database.NewDatabaseAdminClient(ctx, opts...)
 	if err != nil {
@@ -317,28 +314,6 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 		return fmt.Errorf("failed to apply database DDL update: %v", err)
 	}
 	return nil
-}
-
-// SpannerConnectorConfigToClientOptions is adapted from https://github.com/googleapis/go-sql-spanner/blob/main/driver.go#L341-L477, from version 1.11.1.
-func SpannerConnectorConfigToClientOptions(connectorConfig spannerdriver.ConnectorConfig) []option.ClientOption {
-	var opts []option.ClientOption
-	if connectorConfig.Host != "" {
-		opts = append(opts, option.WithEndpoint(connectorConfig.Host))
-	}
-	if strval, ok := connectorConfig.Params["credentials"]; ok {
-		opts = append(opts, option.WithCredentialsFile(strval))
-	}
-	if strval, ok := connectorConfig.Params["credentialsjson"]; ok {
-		opts = append(opts, option.WithCredentialsJSON([]byte(strval)))
-	}
-	if strval, ok := connectorConfig.Params["useplaintext"]; ok {
-		if val, err := strconv.ParseBool(strval); err == nil && val {
-			opts = append(opts,
-				option.WithGRPCDialOption(grpc.WithTransportCredentials(insecure.NewCredentials())),
-				option.WithoutAuthentication())
-		}
-	}
-	return opts
 }
 
 func (s *SpannerDialect) UnionDistinct() string {
