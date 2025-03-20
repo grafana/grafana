@@ -30,6 +30,7 @@ import (
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
@@ -331,11 +332,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	storage := map[string]rest.Storage{}
 	// Although we never interact with these resources via the API, we want them to be readable from the API.
-	// TODO: Make a read-only rest.Storage wrapper.
-	storage[provisioning.JobResourceInfo.StoragePath()] = realJobStore
-	storage[provisioning.JobResourceInfo.StoragePath("status")] = realJobStatusStore
-	storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
-	storage[provisioning.HistoricJobResourceInfo.StoragePath("status")] = historicJobStatusStore
+	storage[provisioning.JobResourceInfo.StoragePath()] = readonly.Wrap(realJobStore)
+	storage[provisioning.JobResourceInfo.StoragePath("status")] = readonly.Wrap(realJobStatusStore)
+	storage[provisioning.HistoricJobResourceInfo.StoragePath()] = readonly.Wrap(historicJobStore)
+	storage[provisioning.HistoricJobResourceInfo.StoragePath("status")] = readonly.Wrap(historicJobStatusStore)
+
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
