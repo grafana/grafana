@@ -868,6 +868,7 @@ func newQuery(key string, value string, prefix string) query.Query {
 	return q
 }
 
+// newTermsQuery will create a query that will match on term or tokens
 func newTermsQuery(key string, value string, delimiter string, prefix string) query.Query {
 	tokens := strings.Split(value, delimiter)
 	// won't match with ending space
@@ -876,20 +877,26 @@ func newTermsQuery(key string, value string, delimiter string, prefix string) qu
 	q := bleve.NewTermQuery(value)
 	q.FieldVal = prefix + key
 
-	qq := bleve.NewConjunctionQuery()
+	cq := newMatchAllTokensQuery(tokens, key, prefix)
+	return bleve.NewDisjunctionQuery(q, cq)
+}
+
+// newMatchAllTokensQuery will create a query that will match on all tokens
+func newMatchAllTokensQuery(tokens []string, key string, prefix string) query.Query {
+	cq := bleve.NewConjunctionQuery()
 	for _, token := range tokens {
 		_, ok := hasTerms(token)
 		if ok {
 			tq := bleve.NewTermQuery(token)
 			tq.FieldVal = prefix + key
-			qq.AddQuery(tq)
+			cq.AddQuery(tq)
 			continue
 		}
 		mq := bleve.NewMatchQuery(token)
 		mq.FieldVal = prefix + key
-		qq.AddQuery(mq)
+		cq.AddQuery(mq)
 	}
-	return bleve.NewDisjunctionQuery(q, qq)
+	return cq
 }
 
 // filterValue will convert the value to lower case if the field is a phrase field
