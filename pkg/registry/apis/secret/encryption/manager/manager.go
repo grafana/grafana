@@ -129,23 +129,23 @@ func (s *EncryptionManager) registerUsageMetrics() {
 		// Current provider
 		kind, err := s.currentProviderID.Kind()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("encryptionManager.registerUsageMetrics: %w", err)
 		}
-		usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
+		usageMetrics[fmt.Sprintf("stats.%s.encryption.current_provider.%s.count", encryption.UsageInsightsPrefix, kind)] = 1
 
 		// Count by kind
-		countByKind := make(map[string]int)
+		countByKind := make(map[string]int, len(s.providers))
 		for id := range s.providers {
 			kind, err := id.Kind()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("encryptionManager.registerUsageMetrics: %w", err)
 			}
 
 			countByKind[kind]++
 		}
 
 		for kind, count := range countByKind {
-			usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
+			usageMetrics[fmt.Sprintf("stats.%s.encryption.providers.%s.count", encryption.UsageInsightsPrefix, kind)] = count
 		}
 
 		return usageMetrics, nil
