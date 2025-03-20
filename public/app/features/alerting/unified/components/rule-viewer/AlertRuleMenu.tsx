@@ -1,4 +1,5 @@
 import { AppEvents } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
@@ -24,6 +25,7 @@ interface Props {
   handleDelete: (rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifierV2) => void;
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
+  handleDeletePermanently: (rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifierV2) => void;
   buttonSize?: ComponentSize;
 }
 
@@ -40,6 +42,7 @@ const AlertRuleMenu = ({
   handleDelete,
   handleDuplicateRule,
   onPauseChange,
+  handleDeletePermanently,
   buttonSize,
 }: Props) => {
   // check all abilities and permissions
@@ -48,6 +51,17 @@ const AlertRuleMenu = ({
 
   const [deleteSupported, deleteAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Delete);
   const canDelete = deleteSupported && deleteAllowed;
+
+  const [deletePermanentlySupported, deletePermanentlyAllowed] = useRulerRuleAbility(
+    rulerRule,
+    groupIdentifier,
+    AlertRuleAction.DeletePermanently
+  );
+  const canDeletePermanently =
+    deletePermanentlySupported &&
+    deletePermanentlyAllowed &&
+    config.featureToggles.alertingRuleRecoverDeleted &&
+    config.featureToggles.alertRuleRestore;
 
   const [duplicateSupported, duplicateAllowed] = useRulerRuleAbility(
     rulerRule,
@@ -139,6 +153,14 @@ const AlertRuleMenu = ({
             onClick={() => handleDelete(rulerRule, groupIdentifier)}
           />
         </>
+      )}
+      {canDeletePermanently && rulerRule && (
+        <Menu.Item
+          label={t('alerting.alert-menu.delete-permanently', 'Delete Permanently')}
+          icon="exclamation-triangle"
+          destructive
+          onClick={() => handleDeletePermanently(rulerRule, groupIdentifier)}
+        />
       )}
     </>
   );

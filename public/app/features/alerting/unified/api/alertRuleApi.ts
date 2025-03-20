@@ -315,16 +315,17 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         rulerConfig: RulerDataSourceConfig;
         namespace: string;
         payload: PostableRulerRuleGroupDTO;
+        deletePermanently?: boolean;
       }>
     >({
-      query: ({ payload, namespace, rulerConfig, notificationOptions }) => {
+      query: ({ payload, namespace, rulerConfig, notificationOptions, deletePermanently }) => {
         const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
 
         const successMessage = t('alerting.rule-groups.update.success', 'Successfully updated rule group');
 
         return {
           url: path,
-          params,
+          params: { ...params, deletePermanently: deletePermanently ? 'true' : undefined },
           data: payload,
           method: 'POST',
           notificationOptions: {
