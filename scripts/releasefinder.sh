@@ -99,13 +99,13 @@ done
 
 # Print previous releases if they exist
 if [ ${#direct_tags[@]} -gt 0 ] || [ ${#included_tags[@]} -gt 0 ]; then
-    echo "Included in these previous releases:"
+    echo "This commit HAS BEEN included in these PREVIOUS on-prem releases:"
     printf "  - %s\n" "${direct_tags[@]}" "${included_tags[@]}" | sort -V
     echo
 fi
 
 # Print upcoming releases
-echo "This commit will be included in these upcoming releases:"
+echo "This commit WILL BE included in these UPCOMING on-prem releases:"
 if [ ${#release_branches[@]} -eq 0 ]; then
     echo "  No upcoming releases"
 else
