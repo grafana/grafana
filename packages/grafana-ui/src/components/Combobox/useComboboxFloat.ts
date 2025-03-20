@@ -33,8 +33,9 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
   const middleware = [
     autoPlacement({
       // see https://floating-ui.com/docs/autoplacement
-      crossAxis: true,
       allowedPlacements: ['bottom-start', 'bottom-end', 'top-start', 'top-end'],
+      boundary: document.body,
+      crossAxis: true,
     }),
     size({
       apply({ availableWidth, availableHeight }) {
