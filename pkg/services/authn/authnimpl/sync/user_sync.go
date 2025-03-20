@@ -46,6 +46,10 @@ var (
 		"user.sync.fetch-not-found",
 		errutil.WithPublicMessage("User not found"),
 	)
+	errMismatchedExternalUID = errutil.Unauthorized(
+		"user.sync.mismatched-externalUID",
+		errutil.WithPublicMessage("Mismatched externalUID"),
+	)
 )
 
 var (
@@ -82,7 +86,6 @@ type UserSync struct {
 
 // SyncUserHook syncs a user with the database
 func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
-	// fmt.Println("SyncUserHook")
 	ctx, span := s.tracer.Start(ctx, "user.sync.SyncUserHook")
 	defer span.End()
 
@@ -322,10 +325,9 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 			return err
 		}
 
-		// Validate the authID matches the identity authId and the userUniqueID
 		if id.ExternalUID != authInfo.ExternalUID {
 			s.log.Error("mismatched externalUID", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
-			return errors.New("authID mistmatch") // TODO: assign an error
+			return errMismatchedExternalUID.Errorf("authID mistmatch")
 		}
 	}
 
