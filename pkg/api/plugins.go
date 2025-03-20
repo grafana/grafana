@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -601,4 +602,16 @@ func mdFilepath(mdFilename string) (string, error) {
 	default:
 		return "", ErrUnexpectedFileExtension
 	}
+}
+
+// OnCallPluginScopeResolver provides an ScopeAttributeResolver able to
+// resolve the oncall plugin scope to both the oncall and irm scopes.
+func OnCallPluginScopeResolver() (string, ac.ScopeAttributeResolver) {
+	prefix := "plugins:id:"
+	return prefix, accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
+		if initialScope == "plugins:id:grafana-oncall-app" {
+			return []string{initialScope, "plugins:id:grafana-irm-app"}, nil
+		}
+		return []string{initialScope}, nil
+	})
 }
