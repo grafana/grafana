@@ -85,7 +85,7 @@ You can expand any span in a trace and view the details, including the span and 
 
 For more information about spans and traces, refer to [Introduction to tracing](https://grafana.com/docs/tempo/latest/introduction/) in the Tempo documentation.
 
-Span details include span attributes, resource attributes, events, and links. 
+Span details include span attributes, resource attributes, events, and links.
 
 #### Span and resource attributes
 
@@ -101,7 +101,7 @@ Span attributes are specific to a particular operation, while resource attribute
 
 #### Events
 
-Events are log-like records attached to a span that represent an occurrence during its execution. They record notable moments or occurrences within the span’s lifecycle, such as errors, warnings, or checkpoints. If an error occurs during an operation, an event can be added to the span to indicate what went wrong and when. Events include a timestamp, name, and key-value pairs attributes that provide additional context or details about the event.
+Events are log-like records attached to a span that represent an occurrence during its execution. They record notable moments or occurrences within the span's lifecycle, such as errors, warnings, or checkpoints. If an error occurs during an operation, an event can be added to the span to indicate what went wrong and when. Events include a timestamp, name, and key-value pairs attributes that provide additional context or details about the event.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-events.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span events" >}}
 
