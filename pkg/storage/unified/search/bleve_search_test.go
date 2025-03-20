@@ -201,6 +201,27 @@ func TestCanSearchByTitle(t *testing.T) {
 		require.Equal(t, int64(1), res.TotalHits)
 	})
 
+	t.Run("title will match escaped characters", func(t *testing.T) {
+		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
+		err := index.Write(&resource.IndexableDocument{
+			RV:   1,
+			Name: "name1",
+			Key: &resource.ResourceKey{
+				Name:      "aaa",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title: "what\"s up",
+		})
+		require.NoError(t, err)
+
+		query := newQueryByTitle("what\"s up")
+		res, err := index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), res.TotalHits)
+	})
+
 	t.Run("title search will match document", func(t *testing.T) {
 		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
 		err := index.Write(&resource.IndexableDocument{
