@@ -141,9 +141,12 @@ export class ScopesService implements ScopesContextValue {
     if (this.state.enabled !== enabled) {
       this.updateState({ enabled });
       if (enabled) {
-        this.locationService.partial({
-          scopes: this.selectorService.state.selectedScopes.map(({ scope }) => scope.metadata.name),
-        });
+        this.locationService.partial(
+          {
+            scopes: this.selectorService.state.selectedScopes.map(({ scope }) => scope.metadata.name),
+          },
+          true
+        );
       }
     }
   };
