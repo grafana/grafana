@@ -17,6 +17,7 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport/client"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,6 +29,22 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
+
+const (
+	// maxOperationBytes is the maximum size of a git operation in bytes (1 GB)
+	maxOperationBytes   = int64(1 << 30)
+	maxOperationTimeout = 10 * time.Minute
+)
+
+func init() {
+	// Create a size-limited writer that will cancel the context if size is exceeded
+	limitedTransport := NewByteLimitedTransport(http.DefaultTransport, maxOperationBytes)
+	httpClient := githttp.NewClient(&http.Client{
+		Transport: limitedTransport,
+	})
+	client.InstallProtocol("https", httpClient)
+	client.InstallProtocol("http", httpClient)
+}
 
 var _ repository.Repository = (*GoGitRepo)(nil)
 
@@ -48,7 +65,6 @@ type GoGitCloneOptions struct {
 }
 
 type GoGitPushOptions struct {
-	MaxSize int64
 	Timeout time.Duration
 }
 
@@ -82,13 +98,12 @@ func Clone(
 		return nil, fmt.Errorf("missing root config")
 	}
 
-	// Create a cancellable context for the clone operation
-	var cancel context.CancelFunc
+	// add a timeout to the operation
+	timeout := maxOperationTimeout
 	if opts.Timeout > 0 {
-		ctx, cancel = context.WithTimeout(ctx, opts.Timeout)
-	} else {
-		ctx, cancel = context.WithCancel(ctx)
+		timeout = opts.Timeout
 	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	decrypted, err := secrets.Decrypt(ctx, gitcfg.EncryptedToken)
@@ -105,15 +120,7 @@ func Clone(
 		return nil, fmt.Errorf("create temp clone dir: %w", err)
 	}
 
-	// Create a size-limited writer that will cancel the context if size is exceeded
-	var progressWriter io.Writer
-	if opts.MaxSize > 0 {
-		progressWriter = newMaxBytesWriter(progress, opts.MaxSize, cancel)
-	} else {
-		progressWriter = progress
-	}
-
-	repo, worktree, err := clone(ctx, config, opts, decrypted, dir, progressWriter)
+	repo, worktree, err := clone(ctx, config, opts, decrypted, dir, progress)
 	if err != nil {
 		if err := os.RemoveAll(dir); err != nil {
 			return nil, fmt.Errorf("remove temp clone dir after clone failed: %w", err)
@@ -248,20 +255,13 @@ func (g *GoGitRepo) Checkout(ctx context.Context, branch string, createIfNotFoun
 
 // Affer making changes to the worktree, push changes
 func (g *GoGitRepo) Push(ctx context.Context, opts GoGitPushOptions, progress io.Writer) error {
-	var cancel context.CancelFunc
+	timeout := maxOperationTimeout
 	if opts.Timeout > 0 {
-		ctx, cancel = context.WithTimeout(ctx, opts.Timeout)
-	} else {
-		ctx, cancel = context.WithCancel(ctx)
+		timeout = opts.Timeout
 	}
-	defer cancel()
 
-	var progressWriter io.Writer
-	if opts.MaxSize > 0 {
-		progressWriter = newMaxBytesWriter(progress, opts.MaxSize, cancel)
-	} else {
-		progressWriter = progress
-	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 
 	if g.opts.SingleCommitBeforePush {
 		_, err := g.tree.Commit("exported from grafana", &git.CommitOptions{
@@ -276,7 +276,7 @@ func (g *GoGitRepo) Push(ctx context.Context, opts GoGitPushOptions, progress io
 	}
 
 	err := g.repo.PushContext(ctx, &git.PushOptions{
-		Progress: progressWriter,
+		Progress: progress,
 		Force:    true, // avoid fast-forward-errors
 		Auth: &githttp.BasicAuth{ // reuse logic from clone?
 			Username: "grafana",
