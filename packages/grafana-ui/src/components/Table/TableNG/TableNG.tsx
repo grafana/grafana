@@ -35,11 +35,10 @@ import {
   ColumnTypes,
   TableColumnResizeActionCallback,
   TableColumn,
+  TableFieldOptionsType,
 } from './types';
 import {
   frameToRecords,
-  getColumnMinWidth,
-  getColumnWidth,
   getComparator,
   getDefaultRowHeight,
   getFooterItemNG,
@@ -356,6 +355,7 @@ export function TableNG(props: TableNGProps) {
           onCellExpand,
           onColumnResize: onColumnResize!,
         },
+        availableWidth: width,
       }),
     [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
   );
@@ -500,15 +500,16 @@ export function mapFrameToDataGrid({
   calcsRef,
   options,
   handlers,
+  availableWidth,
 }: {
   frame: DataFrame;
   calcsRef: React.MutableRefObject<string[]>;
   options: MapFrameToGridOptions;
   handlers: { onCellExpand: (rowIdx: number) => void; onColumnResize: TableColumnResizeActionCallback };
+  availableWidth: number;
 }): TableColumn[] {
   const {
     columnTypes,
-    columnWidth,
     crossFilterOrder,
     crossFilterRows,
     defaultLineHeight,
@@ -578,6 +579,7 @@ export function mapFrameToDataGrid({
             calcsRef,
             options: { ...options },
             handlers: { onCellExpand, onColumnResize },
+            availableWidth: availableWidth - COLUMN.EXPANDER_WIDTH,
           });
           expandedRecords = frameToRecords(row.data);
         }
@@ -596,18 +598,27 @@ export function mapFrameToDataGrid({
       width: COLUMN.EXPANDER_WIDTH,
       minWidth: COLUMN.EXPANDER_WIDTH,
     });
+
+    availableWidth -= COLUMN.EXPANDER_WIDTH;
   }
 
+  let fieldCountWithoutWidth = 0;
   frame.fields.map((field, fieldIndex) => {
     if (field.type === FieldType.nestedFrames) {
       // Don't render nestedFrames type field
       return;
     }
+    const fieldTableOptions: TableFieldOptionsType = field.config.custom || {};
     const key = field.name;
-    const width = getColumnWidth(field, fieldConfig, key);
-    const minWidth = width === 'auto' ? getColumnMinWidth(field, fieldConfig, key) : COLUMN.MIN_WIDTH;
     const justifyColumnContent = getTextAlign(field);
     const footerStyles = getFooterStyles(justifyColumnContent);
+
+    // current/old table width logic calculations
+    if (fieldTableOptions.width) {
+      availableWidth -= fieldTableOptions.width;
+    } else {
+      fieldCountWithoutWidth++;
+    }
 
     // Add a column for each field
     columns.push({
@@ -681,10 +692,32 @@ export function mapFrameToDataGrid({
           crossFilterRows={crossFilterRows}
         />
       ),
-      width: width ?? columnWidth,
-      minWidth: minWidth,
+      width: fieldTableOptions.width,
+      minWidth: fieldTableOptions.minWidth || COLUMN.DEFAULT_WIDTH,
     });
   });
+
+  // set columns that are at minimum width
+  let sharedWidth = availableWidth / fieldCountWithoutWidth;
+  for (let i = fieldCountWithoutWidth; i > 0; i--) {
+    for (const column of columns) {
+      if (!column.width && column.minWidth! > sharedWidth) {
+        column.width = column.minWidth;
+        availableWidth -= column.width!;
+        fieldCountWithoutWidth -= 1;
+        sharedWidth = availableWidth / fieldCountWithoutWidth;
+      }
+    }
+  }
+
+  // divide up the rest of the space
+  for (const column of columns) {
+    if (!column.width) {
+      column.width = sharedWidth;
+    }
+    // IHOR: column min-width always 50
+    column.minWidth = COLUMN.MIN_WIDTH;
+  }
 
   return columns;
 }
