@@ -18,7 +18,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	authtypes "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
