@@ -90,7 +90,11 @@ func (d *jobDriver) Run(ctx context.Context) {
 
 	logger := logging.FromContext(ctx).With("logger", "job-driver")
 	ctx = logging.Context(ctx, logger)
-	ctx = identity.WithServiceIdentityContext(ctx, 0) // Org ID 0 will let us list all jobs across all namespaces.
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants us access to all namespaces.
+	if err != nil {
+		logger.Error("failed to grant provisioning identity; this will panic!", "error", err)
+		panic("unreachable?: failed to grant provisioning identity: " + err.Error())
+	}
 
 	// Drive without waiting on startup.
 	d.startDriving(ctx)
