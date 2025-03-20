@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/apifmt"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
@@ -115,7 +117,7 @@ func NewStore2(
 //
 // If err is not nil, the job and rollback values are always nil.
 // The err may be ErrNoJobs if there are no jobs to claim.
-func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback func(context.Context), err error) {
+func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error) {
 	requirement, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
 	if err != nil {
 		return nil, nil, apifmt.Errorf("could not create requirement: %w", err)
@@ -143,6 +145,15 @@ func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback fun
 		}
 		job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
 
+		// We list jobs from all namespaces. So when we want to update a specific job, we also need its namespace in the context.
+		ctx := request.WithNamespace(ctx, job.GetNamespace())
+		// Likewise, we should use the provisioning identity now that we have the namespace we are operating within.
+		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
+		if err != nil {
+			// This should never happen, as it is already a valid namespace from the job existing... but better be safe.
+			return nil, nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
+		}
+
 		// This relies on the resource version being updated for us.
 		// If the resource version we pass in via the current job is not the same as the one currently in the store, it will fail with Conflict.
 		// This is the desired behavior, as it ensures that claims are atomic.
@@ -168,8 +179,9 @@ func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback fun
 			return nil, nil, apifmt.Errorf("unexpected object type %T", updated)
 		}
 
-		return updatedJob.DeepCopy(), func(ctx context.Context) {
+		return updatedJob.DeepCopy(), func() {
 			// Rolling back does not need to care about the parent's cancellation state.
+			// This will also use the parent context (i.e. from the for loop!), ensuring we have permissions to do this.
 			ctx = context.WithoutCancel(ctx)
 
 			logger := logging.FromContext(ctx).With("namespace", updatedJob.GetNamespace(), "job", updatedJob.GetName())
@@ -352,6 +364,15 @@ func (s *store2) cleanupClaims(ctx context.Context) error {
 		}
 		delete(job.Labels, LabelJobClaim)
 		job.Status.State = provisioning.JobStatePending
+
+		// We list jobs from all namespaces. So when we want to update a specific job, we also need its namespace in the context.
+		ctx := request.WithNamespace(ctx, job.GetNamespace())
+		// Likewise, we should use the provisioning identity now that we have the namespace we are operating within.
+		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
+		if err != nil {
+			// This should never happen, as it is already a valid namespace from the job existing... but better be safe.
+			return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
+		}
 
 		timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		_, _, err := s.jobStore.Update(timeoutCtx,

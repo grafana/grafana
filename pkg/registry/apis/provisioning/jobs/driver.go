@@ -21,7 +21,7 @@ type Store interface {
 	//
 	// If err is not nil, the job and rollback values are always nil.
 	// The err may be ErrNoJobs if there are no jobs to claim.
-	Claim(ctx context.Context) (job *provisioning.Job, rollback func(context.Context), err error)
+	Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error)
 
 	// Complete marks a job as completed and moves it to the historic job store.
 	// When in the historic store, there is no more claim on the job.
@@ -90,12 +90,10 @@ func (d *jobDriver) Run(ctx context.Context) {
 
 	logger := logging.FromContext(ctx).With("logger", "job-driver")
 	ctx = logging.Context(ctx, logger)
-	ctx = request.WithNamespace(ctx, "default")                      // TODO: use appropriate namespace
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, "default") // TODO: use appropriate namespace
-	if err != nil {
-		// FIXME: We should set this all up before getting here.
-		panic("unreachable: couldn't get provisioning identity: " + err.Error())
-	}
+	ctx = identity.WithServiceIdentityContext(ctx, 0) // Org ID 0 will let us list all jobs across all namespaces.
+
+	// Drive without waiting on startup.
+	d.startDriving(ctx)
 
 	for {
 		select {
@@ -134,10 +132,19 @@ func (d *jobDriver) drive(ctx context.Context) error {
 	}
 	// Ensure that the job is cleaned up if we fail to complete it.
 	// The rollback function does not care about cancellations.
-	defer rollback(ctx)
+	defer rollback()
+
 	logger = logger.With("job", job.GetName(), "namespace", job.GetNamespace())
 	ctx = logging.Context(ctx, logger)
 	logger.Debug("claimed a job")
+
+	// Now that we have a job, we need to augment our namespace to grant ourselves permission to work on it.
+	// Incidentally, this also limits our permissions to only the namespace of the job.
+	ctx = request.WithNamespace(ctx, job.GetNamespace())
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
+	if err != nil {
+		return apifmt.Errorf("failed to grant provisioning identity: %w", err)
+	}
 
 	// Process the job.
 	start := time.Now()
