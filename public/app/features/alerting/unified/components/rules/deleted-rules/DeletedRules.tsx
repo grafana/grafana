@@ -5,6 +5,7 @@ import { Alert, Button, Column, InteractiveTable, LoadingPlaceholder, Stack } fr
 import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRuleDefinition, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { trackDeletedRuleRestoreFail, trackDeletedRuleRestoreSuccess } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
 import { stringifyErrorLike } from '../../../utils/misc';
@@ -162,8 +163,8 @@ export function DeletedRules() {
         ruleToRestore={restoreRule}
         isOpen={confirmRestore}
         onDismiss={hideConfirmation}
-        onRestoreSucess={() => {}}
-        onRestoreError={() => {}}
+        onRestoreSucess={() => trackDeletedRuleRestoreSuccess()}
+        onRestoreError={() => trackDeletedRuleRestoreFail()}
       />
     </>
   );
