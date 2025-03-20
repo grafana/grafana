@@ -376,7 +376,7 @@ var (
 		{
 			Name:         "frontendSandboxMonitorOnly",
 			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
@@ -1421,8 +1421,9 @@ var (
 		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "false", // disabled by default
 		},
 		{
 			Name:        "unifiedStorageBigObjectsSupport",

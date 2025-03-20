@@ -88,6 +88,14 @@ export class RowItem
     return new RowItems(items.filter((item) => item instanceof RowItem));
   }
 
+  public onDuplicate() {
+    this._getParentLayout().duplicateRow(this);
+  }
+
+  public duplicate(): RowItem {
+    return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
+  }
+
   public onAddPanel(panel = getDefaultVizPanel()) {
     this.getLayout().addPanel(panel);
   }

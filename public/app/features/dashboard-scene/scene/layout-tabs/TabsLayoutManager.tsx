@@ -54,6 +54,16 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     });
   }
 
+  public duplicate(): DashboardLayoutManager {
+    // Maybe not needed, depending on if we want nested tabs or tabs within rows
+    throw new Error('Method not implemented.');
+  }
+
+  public duplicateTab(tab: TabItem) {
+    const newTab = tab.duplicate();
+    this.setState({ tabs: [...this.state.tabs, newTab] });
+  }
+
   public getUrlState() {
     return { tab: this.state.currentTabIndex.toString() };
   }
