@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,6 +28,64 @@ func newValidMySQLGetter(withKeyPrefix bool) confGetter {
 		prefix + "user":     "user",
 		prefix + "password": "password",
 	}, prefix)
+}
+
+func TestGetEngine(t *testing.T) {
+	t.Parallel()
+
+	t.Run("MySQL engine", func(t *testing.T) {
+		t.Parallel()
+		cfg := setting.NewCfg()
+		dbSection := cfg.SectionWithEnvOverrides("database")
+		dbSection.Key("type").SetValue(dbTypeMySQL)
+		dbSection.Key("host").SetValue("/var/run/mysql.socket")
+		dbSection.Key("name").SetValue("grafana")
+		dbSection.Key("user").SetValue("user")
+		dbSection.Key("password").SetValue("password")
+
+		engine, err := getEngine(cfg)
+		require.NoError(t, err)
+		require.NotNil(t, engine)
+	})
+
+	t.Run("Postgres engine", func(t *testing.T) {
+		t.Parallel()
+		cfg := setting.NewCfg()
+		dbSection := cfg.SectionWithEnvOverrides("database")
+		dbSection.Key("type").SetValue(dbTypePostgres)
+		dbSection.Key("host").SetValue("localhost")
+		dbSection.Key("name").SetValue("grafana")
+		dbSection.Key("user").SetValue("user")
+		dbSection.Key("password").SetValue("password")
+
+		engine, err := getEngine(cfg)
+		require.NoError(t, err)
+		require.NotNil(t, engine)
+	})
+
+	t.Run("SQLite engine", func(t *testing.T) {
+		t.Parallel()
+		cfg := setting.NewCfg()
+		dbSection := cfg.SectionWithEnvOverrides("database")
+		dbSection.Key("type").SetValue(dbTypeSQLite)
+		dbSection.Key("path").SetValue(":memory:")
+
+		engine, err := getEngine(cfg)
+		require.NoError(t, err)
+		require.NotNil(t, engine)
+	})
+
+	t.Run("Unknown database type", func(t *testing.T) {
+		t.Parallel()
+		cfg := setting.NewCfg()
+		dbSection := cfg.SectionWithEnvOverrides("database")
+		dbSection.Key("type").SetValue("unknown")
+
+		engine, err := getEngine(cfg)
+		require.Error(t, err)
+		require.Nil(t, engine)
+		require.Contains(t, err.Error(), "unsupported database type")
+	})
 }
 
 func TestGetEngineMySQLFromConfig(t *testing.T) {

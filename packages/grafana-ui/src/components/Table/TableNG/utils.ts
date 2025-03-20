@@ -291,6 +291,13 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
     return '';
   }
 
+  // If fields array is specified, only show footer for fields included in that array
+  if (options.fields && options.fields.length > 0) {
+    if (!options.fields.includes(field.name)) {
+      return '';
+    }
+  }
+
   const calc = options.reducer[0];
   const value = reduceField({
     field: {
