@@ -62,7 +62,10 @@ echo "  Date: $(git log -1 --format="%ad" --date=iso "$COMMIT_HASH")"
 # Extract original PR number and create link
 PR_NUMBER=$(git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep -o '#[0-9]\+' | head -n1 | tr -d '#')
 if [ ! -z "$PR_NUMBER" ]; then
-    echo "  PR: #$PR_NUMBER (https://github.com/grafana/grafana/pull/$PR_NUMBER)"
+    # Extract PR title (first line of commit message)
+    PR_TITLE=$(git log -1 --pretty=format:"%s" "$COMMIT_HASH")
+    echo "  PR: #$PR_NUMBER - $PR_TITLE"
+    echo "  Link: https://github.com/grafana/grafana/pull/$PR_NUMBER"
 fi
 echo
 
@@ -99,13 +102,13 @@ done
 
 # Print previous releases if they exist
 if [ ${#direct_tags[@]} -gt 0 ] || [ ${#included_tags[@]} -gt 0 ]; then
-    echo "This commit HAS BEEN included in these PREVIOUS on-prem releases:"
+    echo "This commit has been included in these PREVIOUS on-prem releases:"
     printf "  - %s\n" "${direct_tags[@]}" "${included_tags[@]}" | sort -V
     echo
 fi
 
 # Print upcoming releases
-echo "This commit WILL BE included in these UPCOMING on-prem releases:"
+echo "This commit will be included in these UPCOMING on-prem releases:"
 if [ ${#release_branches[@]} -eq 0 ]; then
     echo "  No upcoming releases"
 else
