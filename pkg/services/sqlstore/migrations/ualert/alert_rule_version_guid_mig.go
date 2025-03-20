@@ -158,11 +158,11 @@ func (c cleanUpRuleVersionsMigration) Exec(sess *xorm.Session, mg *migrator.Migr
 	}
 
 	var rules []alertRule
-	err := sess.Table(alertRule{}).Select("uid, version").Find(&rules)
+	err := sess.Table(alertRule{}).Select("uid, version").Where("version > ?", toKeep).Find(&rules)
 	if err != nil {
 		return err
 	}
-	mg.Logger.Debug("Got alert rule UIDs", "count", len(rules))
+	mg.Logger.Debug("Got alert rule UIDs with versions greater than retention", "count", len(rules))
 	batches := len(rules) / batchSize
 	if len(rules)%batchSize != 0 {
 		batches++
