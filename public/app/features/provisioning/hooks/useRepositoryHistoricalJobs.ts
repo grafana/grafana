@@ -21,7 +21,7 @@ export function useRepositoryHistoricalJobs(args: RepositoryHistoricalJobsArgs =
     HistoricJob[] | undefined,
     ReturnType<typeof useListHistoricJobQuery>,
 ] {
-    const query = useListHistoricJobQuery({ labelSelector: labelSelectors(args), watch: args.watch ?? true, limit: 100 });
+    const query = useListHistoricJobQuery({ labelSelector: labelSelectors(args), watch: args.watch });
 
     const collator = new Intl.Collator(undefined, { numeric: true });
     const sortedItems = query.data?.items?.slice().sort((a, b) => {
