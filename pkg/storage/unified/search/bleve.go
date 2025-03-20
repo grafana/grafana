@@ -660,8 +660,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		}
 	}
 
-	// Add a text query
-	if req.Query != "" && req.Query != "*" {
+	if len(req.Query) > 1 && strings.Contains(req.Query, "*") {
+		// wildcard query is expensive - should be used with caution
+		wildcard := bleve.NewWildcardQuery(req.Query)
+		queries = append(queries, wildcard)
+	}
+
+	if req.Query != "" && !strings.Contains(req.Query, "*") {
+		// Add a text query
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
 
 		// There are multiple ways to match the query string to documents. The following queries are ordered by priority:
