@@ -86,8 +86,7 @@ export class ResponsiveGridLayoutManager
               }),
             });
           }
-
-          return child.clone({ key: undefined });
+          throw new Error('Unexpected child type, needs to be a ResponsiveGridItem');
         }),
       }),
     });
