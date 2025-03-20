@@ -427,11 +427,11 @@ func (sch *schedule) runJobFn(next readyToRunItem, prev ...readyToRunItem) func(
 }
 
 func (sch *schedule) runSequences(sequences []sequence, numItems int64) {
-	// jitter the start time based on the base interval and total scheduled items
 	if len(sequences) == 0 {
 		return // Nothing to do
 	}
 
+	// jitter the start time based on the base interval and total scheduled items
 	var step int64
 	if numItems > 0 {
 		step = sch.baseInterval.Nanoseconds() / numItems
