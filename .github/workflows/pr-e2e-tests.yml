@@ -19,7 +19,7 @@ jobs:
     outputs:
       artifact: ${{ steps.artifact.outputs.artifact }}
     steps:
-      - run: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           path: ./grafana
       - run: dagger run go run ./cmd artifacts -a grafana:linux/amd64:targz --grafana-dir=./grafana --build-id=${{ github.run_number }} > out.txt
