@@ -551,17 +551,18 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		if query.External {
 			sess.Where("team_member.external=?", ss.db.GetDialect().BooleanValue(true))
 		}
-		sess.Select("team_member.org_id," +
-			"team_member.team_id," +
-			"team_member.user_id," +
-			"\"user\".email," +
-			"\"user\".name," +
-			"\"user\".login," +
-			"\"user\".uid as user_uid," +
-			"team_member.external," +
-			"team_member.permission," +
-			"user_auth.auth_module," +
-			"team.uid")
+		sess.Cols(
+			"team_member.org_id",
+			"team_member.team_id",
+			"team_member.user_id",
+			"user.email",
+			"user.name",
+			"user.login",
+			"team_member.external",
+			"team_member.permission",
+			"user_auth.auth_module",
+			"team.uid",
+		)
 		sess.Asc("user.login", "user.email")
 
 		err := sess.Find(&queryResult)
