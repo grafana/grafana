@@ -70,8 +70,8 @@ func (ro readOnly) New() runtime.Object {
 	return ro.inner.New()
 }
 
-func (o readOnlyLister) NewList() runtime.Object {
-	return o.inner.NewList()
+func (ro readOnlyLister) NewList() runtime.Object {
+	return ro.inner.NewList()
 }
 
 func (ro readOnly) Destroy() {
