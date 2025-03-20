@@ -1416,21 +1416,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:7.26.10":
+"@babel/runtime@npm:7.26.10, @babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.15.4, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.17.8, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.23.9, @babel/runtime@npm:^7.24.5, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.25.0, @babel/runtime@npm:^7.25.6, @babel/runtime@npm:^7.25.7, @babel/runtime@npm:^7.3.1, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7":
   version: 7.26.10
   resolution: "@babel/runtime@npm:7.26.10"
   dependencies:
     regenerator-runtime: "npm:^0.14.0"
   checksum: 10/9d7ff8e96abe3791047c1138789c742411e3ef19c4d7ca18ce916f83cec92c06ec5dc64401759f6dd1e377cf8a01bbd2c62e033eb7550f435cf6579768d0d4a5
-  languageName: node
-  linkType: hard
-
-"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.15.4, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.17.8, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.23.9, @babel/runtime@npm:^7.24.5, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.25.0, @babel/runtime@npm:^7.25.6, @babel/runtime@npm:^7.25.7, @babel/runtime@npm:^7.3.1, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7":
-  version: 7.26.9
-  resolution: "@babel/runtime@npm:7.26.9"
-  dependencies:
-    regenerator-runtime: "npm:^0.14.0"
-  checksum: 10/08edd07d774eafbf157fdc8450ed6ddd22416fdd8e2a53e4a00349daba1b502c03ab7f7ad3ad3a7c46b9a24d99b5697591d0f852ee2f84642082ef7dda90b83d
   languageName: node
   linkType: hard
 
@@ -3480,11 +3471,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.3.1":
-  version: 6.3.1
-  resolution: "@grafana/scenes-react@npm:6.3.1"
+"@grafana/scenes-react@npm:6.5.0":
+  version: 6.5.0
+  resolution: "@grafana/scenes-react@npm:6.5.0"
   dependencies:
-    "@grafana/scenes": "npm:6.3.1"
+    "@grafana/scenes": "npm:6.5.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3496,13 +3487,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/77dd6f7bbe3699ece25435623a78f2ef5d831ab83b59612baa362581f7c3f6c02cb420b5acfff4e3d266872a694e08b98340370468bb246d102b20e9fcc79438
+  checksum: 10/e4f58ff0d247cb9de7d4edb3e00f6e363f30e731efd5d42c55865abbd2ade9249684acef2a8a4145f90608f830e701f4911bf44d5b8b17d5b0674a6a4eef280b
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.3.1":
-  version: 6.3.1
-  resolution: "@grafana/scenes@npm:6.3.1"
+"@grafana/scenes@npm:6.5.0":
+  version: 6.5.0
+  resolution: "@grafana/scenes@npm:6.5.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3520,7 +3511,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/98e3e96b9ce12ae67aa458819dc9eed1eabd1b7421e768074bd97a0fa2a0b1e080d4121b1ddd357ce41ccaf9252439163aae7e612f12cba878ee6dca34f73831
+  checksum: 10/ad8040a66c7d13fda7b4bddf9f32090ce4e71fa0d4e38e5f73260d3e99055b07ceaf550bf9b60e138674ab759cb027dec92decbc7e4ae753d54172e7f3c551a6
   languageName: node
   linkType: hard
 
@@ -17692,8 +17683,8 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:6.3.1"
-    "@grafana/scenes-react": "npm:6.3.1"
+    "@grafana/scenes": "npm:6.5.0"
+    "@grafana/scenes-react": "npm:6.5.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -30533,7 +30524,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:11.0.5, uuid@npm:^11.0.0, uuid@npm:^11.0.2":
+"uuid@npm:11.0.5":
   version: 11.0.5
   resolution: "uuid@npm:11.0.5"
   bin:
@@ -30551,7 +30542,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:^11.0.5":
+"uuid@npm:^11.0.0, uuid@npm:^11.0.2, uuid@npm:^11.0.5":
   version: 11.1.0
   resolution: "uuid@npm:11.1.0"
   bin:
