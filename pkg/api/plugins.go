@@ -609,8 +609,8 @@ func mdFilepath(mdFilename string) (string, error) {
 func OnCallPluginScopeResolver() (string, ac.ScopeAttributeResolver) {
 	prefix := "plugins:id:"
 	return prefix, accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
-		if initialScope == "plugins:id:grafana-oncall-app" {
-			return []string{initialScope, "plugins:id:grafana-irm-app"}, nil
+		if initialScope == "plugins:id:grafana-irm-app" {
+			return []string{initialScope, "plugins:id:grafana-oncall-app"}, nil
 		}
 		return []string{initialScope}, nil
 	})
