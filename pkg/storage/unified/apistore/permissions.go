@@ -23,7 +23,7 @@ func getPermissionCreator(ctx context.Context, key *resource.ResourceKey, grantP
 		return nil, fmt.Errorf("invalid permissions value. only * supported")
 	}
 	if access == nil {
-		return nil, fmt.Errorf("missing access control setup")
+		return nil, fmt.Errorf("missing access control service")
 	}
 	val, err := utils.MetaAccessor(obj)
 	if err != nil {
