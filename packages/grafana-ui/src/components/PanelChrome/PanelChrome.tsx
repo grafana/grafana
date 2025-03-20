@@ -143,6 +143,7 @@ export function PanelChrome({
   onFocus,
   onMouseMove,
   onMouseEnter,
+  onDragStart,
   showMenuAlways = false,
 }: PanelChromeProps) {
   const theme = useTheme2();
@@ -150,7 +151,7 @@ export function PanelChrome({
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
-  const pointerDownPos = useRef<{ screenX: number; screenY: number }>({ screenX: 0, screenY: 0 });
+  const pointerDownEvt = useRef<React.PointerEvent | undefined>();
 
   const hasHeader = !hoverHeader;
 
@@ -201,10 +202,12 @@ export function PanelChrome({
   const onPointerUp = (evt: React.PointerEvent) => {
     evt.stopPropagation();
 
-    const distance = Math.sqrt(
-      Math.pow(pointerDownPos.current.screenX - evt.screenX, 2) +
-        Math.pow(pointerDownPos.current.screenY - evt.screenY, 2)
+    const distance = Math.hypot(
+      pointerDownEvt.current?.screenX ?? 0 - evt.screenX,
+      pointerDownEvt.current?.screenY ?? 0 - evt.screenY
     );
+
+    pointerDownEvt.current = undefined;
 
     // If we are dragging some distance or clicking on elements that should cancel dragging (panel menu, etc)
     if (
@@ -219,7 +222,7 @@ export function PanelChrome({
 
   const onPointerDown = (evt: React.PointerEvent) => {
     evt.stopPropagation();
-    pointerDownPos.current = { screenX: evt.screenX, screenY: evt.screenY };
+    pointerDownEvt.current = evt;
   };
 
   const headerContent = (
@@ -347,6 +350,11 @@ export function PanelChrome({
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
           data-testid="header-container"
+          onPointerMove={() => {
+            if (pointerDownEvt.current) {
+              onDragStart?.(pointerDownEvt.current);
+            }
+          }}
           onPointerDown={onPointerDown}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}
