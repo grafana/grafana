@@ -20,7 +20,7 @@ func ValidatePath(path string) error {
 		return ErrPathTooLong
 	}
 
-	if strings.Split(path, "/") > MaxNestDepth {
+	if len(strings.Split(path, "/")) > MaxNestDepth {
 		return ErrPathTooDeep
 	}
 
