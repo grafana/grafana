@@ -28,7 +28,7 @@ const maxAllowedAlloc = maxAllowedAllocMB * 1024 * 1024
 const verbose = false
 
 // BenchmarkBleveQuery measures the time, mem, cpu to execute a search query
-// changes the the indexer settings can cause unforseen performance issues ( for example: using wildcard queries )
+// changes the the indexer settings can cause unforeseen performance issues ( for example: using wildcard queries )
 // this will fail if the stats exceed the "normal" thresholds
 func BenchmarkBleveQuery(b *testing.B) {
 	var memStatsStart runtime.MemStats
@@ -36,7 +36,13 @@ func BenchmarkBleveQuery(b *testing.B) {
 	runtime.ReadMemStats(&memStatsStart)
 
 	testIndex, testIndexDir := setupIndex()
-	defer os.RemoveAll(testIndexDir)
+	defer func() {
+		err := os.RemoveAll(testIndexDir)
+		if err != nil {
+			fmt.Printf("Error removing index directory: %v\n", err)
+		}
+	}()
+
 	runtime.ReadMemStats(&memStatsAfterIndex)
 
 	allocDiff := memStatsAfterIndex.Alloc - memStatsStart.Alloc
