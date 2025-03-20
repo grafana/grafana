@@ -122,6 +122,150 @@ func TestDSNodeAndCMDNodeExecution(t *testing.T) {
 	require.Equal(t, float64(4), *val)
 }
 
+func TestSQLExpressionsIsLossless(t *testing.T) {
+	// We'll need a context and time value for execution
+	ctx := context.Background()
+	now := time.Now()
+
+	// This data is in Numeric-Multi format
+	// The data itself is equivalent to this CSV (but across multiple frames)
+	// "Time","host","sparse_label","Value"
+	// 0,dummy_a,label_value_present,13
+	// 0,dummy_b,,17
+
+	// Importantly, one of the labels ("sparse_label") is sparse
+	// We test that conversion to SQL and back is lossless,
+	// and specifically that gaps in the sparse label are not converted to an empty string
+
+	// I (Sam) was able to query for data in this shape as follows:
+	// Prometheus data source query, Type: Instant, Format: Table,
+	//     sum by(host, sparse_label) (metric_name{host="dummy_a"})
+	//     or
+	//     sum by(host) (metric_name{host="dummy_b"})
+	input := data.Frames{
+		data.NewFrame("frame1",
+			data.NewField("ts", nil, []time.Time{time.Unix(0, 0)}),
+			data.NewField("value", data.Labels{"host": "dummy_a", "sparse_label": "label_value_present"}, []float64{13}),
+		),
+		data.NewFrame("frame1",
+			data.NewField("ts", nil, []time.Time{time.Unix(0, 0)}),
+			data.NewField("value", data.Labels{"host": "dummy_b"}, []float64{17}),
+		),
+	}
+
+	// Create a mock data service that returns predictable data when QueryData is called
+	mockDataResponse := &backend.QueryDataResponse{
+		Responses: backend.Responses{
+			"A": backend.DataResponse{
+				Frames: input,
+			},
+		},
+	}
+
+	mockDataService := &mockDataService{
+		response: mockDataResponse,
+	}
+
+	// Create a mock plugin context provider
+	pCtxProvider := &mockPluginContextProvider{}
+
+	// Create the service with our mocks
+	svc := &Service{
+		dataService:  mockDataService,
+		pCtxProvider: pCtxProvider,
+		tracer:       tracing.InitializeTracerForTest(),
+		metrics:      newMetrics(nil),
+		features:     featuremgmt.WithFeatures(),
+		converter: &ResultConverter{
+			Features: featuremgmt.WithFeatures(),
+			Tracer:   tracing.InitializeTracerForTest(),
+		},
+	}
+
+	// Create a DSNode
+	dsNode := &DSNode{
+		baseNode: baseNode{
+			id:    1,
+			refID: "A",
+		},
+		datasource: &datasources.DataSource{
+			OrgID: 1,
+			UID:   "test",
+			Type:  "test",
+		},
+		orgID:      1,
+		query:      json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+		queryType:  "",
+		intervalMS: 1000,
+		maxDP:      1000,
+		timeRange: AbsoluteTimeRange{
+			From: time.Time{},
+			To:   time.Time{},
+		},
+		request: Request{
+			OrgId: 1,
+			User:  &user.SignedInUser{},
+		},
+	}
+
+	// Create a SQL Expression CMDNode that depends on the DSNode
+	// Use the alerting format here to test that the SQL expression is lossless
+	sqlCommand, err := NewSQLCommand("B", "alerting", "SELECT * FROM A", 0)
+	require.NoError(t, err)
+
+	cmdNode := &CMDNode{
+		baseNode: baseNode{
+			id:    2,
+			refID: "B",
+		},
+		CMDType: TypeSQL,
+		Command: sqlCommand,
+	}
+
+	// Execute the DSNode
+	vars := make(mathexp.Vars)
+	dsResult, err := dsNode.Execute(ctx, now, vars, svc)
+	require.NoError(t, err)
+
+	// Store the DSNode result in vars
+	vars[dsNode.RefID()] = dsResult
+
+	// Execute the CMDNode with the DSNode result
+	cmdResult, err := cmdNode.Execute(ctx, now, vars, svc)
+	require.NoError(t, err)
+	require.NoError(t, cmdResult.Error)
+
+	// Check the results
+	// Result from SQL command with alerting format must include:
+	// "Value","host","sparse_label"
+	// 13,dummy_a,label_value_present
+	// 17,dummy_b,
+	// (It can optionally include the "Time" column, but it is not required)
+	// Check we have the expected number of values
+	require.Len(t, cmdResult.Values, 2)
+
+	// Convert values to Number type for checking
+	n1, ok := cmdResult.Values[0].(mathexp.Number)
+	require.True(t, ok, "Expected first value to be mathexp.Number")
+	n2, ok := cmdResult.Values[1].(mathexp.Number)
+	require.True(t, ok, "Expected second value to be mathexp.Number")
+
+	// Check first value
+	require.Equal(t, float64(13), *n1.GetFloat64Value())
+	labels1 := n1.GetLabels()
+	require.Equal(t, "dummy_a", labels1["host"])
+	require.Equal(t, "label_value_present", labels1["sparse_label"])
+
+	// Check second value
+	require.Equal(t, float64(17), *n2.GetFloat64Value())
+	labels2 := n2.GetLabels()
+	require.Equal(t, "dummy_b", labels2["host"])
+
+	// Verify sparse_label is not present in second value's labels
+	_, hasLabel := labels2["sparse_label"]
+	require.False(t, hasLabel, "sparse_label should not be present in second value's labels")
+}
+
 // Mock implementations
 
 type mockDataService struct {
