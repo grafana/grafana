@@ -363,8 +363,6 @@ var wireBasicSet = wire.NewSet(
 	loginattemptimpl.ProvideService,
 	wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)),
 	secretsMigrations.ProvideDataSourceMigrationService,
-	secretsMigrations.ProvideMigrateToPluginService,
-	secretsMigrations.ProvideMigrateFromPluginService,
 	secretsMigrations.ProvideSecretMigrationProvider,
 	wire.Bind(new(secretsMigrations.SecretMigrationProvider), new(*secretsMigrations.SecretMigrationProviderImpl)),
 	resourcepermissions.NewActionSetService,

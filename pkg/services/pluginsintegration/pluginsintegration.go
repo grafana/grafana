@@ -70,7 +70,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(pluginconfig.PluginRequestConfigProvider), new(*pluginconfig.RequestConfigProvider)),
 	pluginstore.ProvideService,
 	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
-	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	process.ProvideService,
 	wire.Bind(new(process.Manager), new(*process.Service)),

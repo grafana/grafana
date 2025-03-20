@@ -122,11 +122,7 @@ func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *dataso
 }
 
 func (s *FakeDataSourceService) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
-	if s.SimulatePluginFailure {
-		return nil, datasources.ErrDatasourceSecretsPluginUserFriendly{Err: "unknown error"}
-	}
-	values := make(map[string]string)
-	return values, nil
+	return make(map[string]string), nil
 }
 
 func (s *FakeDataSourceService) DecryptedValue(ctx context.Context, ds *datasources.DataSource, key string) (string, bool, error) {

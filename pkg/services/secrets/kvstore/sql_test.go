@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 type TestCase struct {
@@ -23,6 +24,10 @@ type TestCase struct {
 
 func (t *TestCase) Value() string {
 	return fmt.Sprintf("%d:%s:%s:%d", t.OrgId, t.Namespace, t.Type, t.Revision)
+}
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
 }
 
 func TestSecretsKVStoreSQL(t *testing.T) {
