@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -44,9 +43,6 @@ func ProvideKeeperMetadataStorage(db db.DB, features featuremgmt.FeatureToggles,
 }
 
 func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
-	// TODO LND REMOVE
-	logging.DefaultLogger.Info("--- LND: SQL CREATE executed")
-
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -90,9 +86,6 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 }
 
 func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error) {
-	// TODO LND REMOVE
-	logging.DefaultLogger.Info("--- LND: SQL READ executed")
-
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -147,9 +140,6 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 }
 
 func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
-	// TODO LND REMOVE
-	logging.DefaultLogger.Info("--- LND: SQL UPDATE executed")
-
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -216,9 +206,6 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 }
 
 func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	// TODO LND REMOVE
-	logging.DefaultLogger.Info("--- LND: SQL DELETE executed")
-
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
@@ -251,9 +238,6 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 }
 
 func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
-	// TODO LND REMOVE
-	logging.DefaultLogger.Info("--- LND: SQL LIST executed")
-
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -334,20 +318,20 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return nil
 	}
 
-	req := listByNameSecureValue{
+	reqSecValue := listByNameSecureValue{
 		SQLTemplate:      sqltemplate.New(s.dialect),
 		Namespace:        keeper.Namespace,
 		UsedSecureValues: usedSecureValues,
 	}
 
-	q, err := sqltemplate.Execute(sqlSecureValueListByName, req)
+	qSecValue, err := sqltemplate.Execute(sqlSecureValueListByName, reqSecValue)
 	if err != nil {
-		return fmt.Errorf("list template %q: %w", q, err)
+		return fmt.Errorf("list template %q: %w", qSecValue, err)
 	}
 
-	rows, err := s.db.Query(ctx, q, req.GetArgs()...)
+	rows, err := s.db.Query(ctx, qSecValue, reqSecValue.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("list template %q: %w", q, err)
+		return fmt.Errorf("list template %q: %w", qSecValue, err)
 	}
 
 	// TODO LND Only fetch the values we need
@@ -395,14 +379,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		keeperSecureValues[svRow.Keeper] = append(keeperSecureValues[svRow.Keeper], svRow.Name)
 	}
 
-	// TODO LND Replace with template query
-	// SELECT * FROM secret_keeper WHERE name IN (...) AND namespace = ? AND type != 'sql' FOR UPDATE;
-	//err = sess.Table(keeperCond.TableName()).ForUpdate().In("name", keeperNames).Where("type != ?", contracts.SQLKeeperType).Find(&thirdPartyKeepers, keeperCond)
-	//if err != nil {
-	//	return fmt.Errorf("check keepers type: %w", err)
-	//}
-
-	req2 := listByNameKeeper{
+	reqKeeper := listByNameKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   keeper.Namespace,
 		KeeperNames: keeperNames,
@@ -410,14 +387,14 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		ExcludeKeeperType: string(contracts.SQLKeeperType),
 	}
 
-	q2, err := sqltemplate.Execute(sqlKeeperListByName, req)
+	qKeeper, err := sqltemplate.Execute(sqlKeeperListByName, reqKeeper)
 	if err != nil {
-		return fmt.Errorf("list template %q: %w", q, err)
+		return fmt.Errorf("list template %q: %w", qKeeper, err)
 	}
 
-	rows2, err := s.db.Query(ctx, q2, req2.GetArgs()...)
+	rows2, err := s.db.Query(ctx, qKeeper, reqKeeper.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("execute list template %q: %w", q, err)
+		return fmt.Errorf("execute list template %q: %w", qKeeper, err)
 	}
 
 	// TODO LND Only fetch the values we need?
