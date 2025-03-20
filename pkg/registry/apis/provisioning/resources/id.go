@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 // sanitiseKubeName removes all characters that don't fulfil the DNS subdomain name rules: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
@@ -125,11 +126,13 @@ type Folder struct {
 }
 
 func ParseFolder(dirPath, repositoryName string) Folder {
+	// TODO: This should be done in save path
 	clean := strings.Trim(path.Clean(dirPath), "/")
 	return Folder{
 		Title: folderTitleFromPath(clean),
 		ID:    idFromPath(clean, repositoryName),
-		Path:  dirPath,
+		// TODO: should we trim the path here?
+		Path: dirPath,
 	}
 }
 
@@ -141,10 +144,11 @@ func RootFolder(repository *provisioning.Repository) string {
 }
 
 func ParentFolder(filePath string, repository *provisioning.Repository) string {
-	parent := path.Dir(filePath)
-	if parent == "." || parent == "/" {
+	parent := safepath.Dir(filePath)
+	if parent == "" {
 		return RootFolder(repository)
 	}
+
 	return ParseFolder(parent, repository.GetName()).ID
 }
 

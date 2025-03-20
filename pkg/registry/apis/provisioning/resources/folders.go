@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"path"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -37,18 +36,15 @@ func (fm *FolderManager) Client() dynamic.ResourceInterface {
 
 // EnsureFoldersExist creates the folder structure in the cluster.
 func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error) {
-	if filePath == "" || filePath == "/" || filePath == "." || filePath == "./" {
-		return "", fmt.Errorf("invald initial path")
-	}
-
 	cfg := fm.repo.Config()
 	parent = RootFolder(cfg)
 
 	dir := filePath
-	if !strings.HasSuffix(filePath, "/") {
-		dir = path.Dir(filePath)
+	if !safepath.IsDir(filePath) {
+		dir = safepath.Dir(filePath)
 	}
-	if dir == "." {
+
+	if dir == "" {
 		return parent, nil
 	}
 
@@ -57,6 +53,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return f.ID, nil
 	}
 
+	// TODO: Traverse using safepath.Walk
 	var traverse string
 	for i, part := range strings.Split(f.Path, "/") {
 		if i == 0 {
