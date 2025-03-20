@@ -219,7 +219,7 @@ func (o *Dashboard) Copy() resource.Object {
 }
 
 func (o *Dashboard) DeepCopyObject() runtime.Object {
-	return o.DeepCopy()
+	return o.Copy()
 }
 
 // Interface compliance compile-time check
