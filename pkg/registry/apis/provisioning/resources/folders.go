@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,32 +52,27 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return f.ID, nil
 	}
 
-	// TODO: Traverse using safepath.Walk
-	var traverse string
-	for i, part := range strings.Split(f.Path, "/") {
-		if i == 0 {
-			traverse = part
-		} else {
-			traverse, err = safepath.Join(traverse, part)
-			if err != nil {
-				return "", fmt.Errorf("unable to make path: %w", err)
-			}
-		}
-
+	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
 		if fm.lookup.In(f.ID) {
 			parent = f.ID
-			continue
+			return nil
 		}
 
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
-			return "", fmt.Errorf("ensure folder exists: %w", err)
+			return fmt.Errorf("ensure folder exists: %w", err)
 		}
+
 		fm.lookup.Add(f, parent)
 		parent = f.ID
+		return nil
+	})
+
+	if err != nil {
+		return "", err
 	}
 
-	return f.ID, err
+	return f.ID, nil
 }
 
 // EnsureFolderExists creates the folder if it doesn't exist.
