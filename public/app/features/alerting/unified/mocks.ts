@@ -56,7 +56,6 @@ import {
 
 import { DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
-import { SimpleConditionIdentifier } from './components/rule-editor/query-and-alert-condition/SimpleCondition';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 
@@ -772,30 +771,33 @@ export function mockDashboardDto(
   };
 }
 
-export const dataQuery: AlertQuery<AlertDataQuery | ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.queryId,
+export const mockDataQuery = (partial: Partial<AlertDataQuery> = {}): AlertQuery<AlertDataQuery> => ({
+  refId: partial?.refId ?? 'A',
   datasourceUid: 'abc123',
   queryType: '',
-  model: { refId: SimpleConditionIdentifier.queryId },
-};
+  model: { refId: 'A', ...partial },
+});
 
-export const reduceExpression: AlertQuery<ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.reducerId,
+export const mockReduceExpression = (partial: Partial<ExpressionQuery> = {}): AlertQuery<ExpressionQuery> => ({
+  refId: 'B',
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.reduce,
-    refId: SimpleConditionIdentifier.reducerId,
+    refId: 'B',
     settings: { mode: ReducerMode.Strict },
     reducer: ReducerID.last,
+    ...partial,
   },
-};
-export const thresholdExpression: AlertQuery<ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.thresholdId,
+});
+
+export const mockThresholdExpression = (partial: Partial<ExpressionQuery> = {}): AlertQuery<ExpressionQuery> => ({
+  refId: 'C',
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.threshold,
-    refId: SimpleConditionIdentifier.thresholdId,
+    refId: 'C',
+    ...partial,
   },
-};
+});
