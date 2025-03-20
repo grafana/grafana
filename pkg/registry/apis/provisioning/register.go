@@ -278,6 +278,14 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 				return authorizer.DecisionDeny, "viewer role is required", nil
 
+			case provisioning.JobResourceInfo.GetName(),
+				provisioning.HistoricJobResourceInfo.GetName():
+				// Jobs are shown on the configuration page.
+				if id.GetOrgRole().Includes(identity.RoleAdmin) {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "admin role is required", nil
+
 			default:
 				// We haven't bothered with this kind yet.
 				if id.GetIsGrafanaAdmin() {
