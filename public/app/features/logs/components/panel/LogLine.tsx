@@ -176,36 +176,36 @@ export const getStyles = (theme: GrafanaTheme2) => {
         },
       },
       '& .log-syntax-highlight': {
-        '.token.log-token-timestamp': {
+        '.log-token-timestamp': {
           color: theme.colors.text.disabled,
         },
-        '.token.log-token-string': {
+        '.log-token-string': {
           color: alpha(theme.colors.text.secondary, 0.75),
         },
-        '.token.log-token-duration': {
+        '.log-token-duration': {
           color: theme.colors.success.text,
         },
-        '.token.log-token-size': {
+        '.log-token-size': {
           color: theme.colors.success.text,
         },
-        '.token.log-token-uuid': {
+        '.log-token-uuid': {
           color: theme.colors.success.text,
         },
-        '.token.log-token-key': {
+        '.log-token-key': {
           color: colors.parsedField,
           opacity: 0.9,
           fontWeight: theme.typography.fontWeightMedium,
         },
-        '.token.log-token-json-key': {
+        '.log-token-json-key': {
           color: colors.parsedField,
           opacity: 0.9,
           fontWeight: theme.typography.fontWeightMedium,
         },
-        '.token.log-token-label': {
+        '.log-token-label': {
           color: colors.metadata,
           fontWeight: theme.typography.fontWeightBold,
         },
-        '.token.log-token-method': {
+        '.log-token-method': {
           color: theme.colors.info.shade,
         },
       },
