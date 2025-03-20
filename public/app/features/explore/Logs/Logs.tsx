@@ -225,7 +225,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
-  const prevLogsQueries = usePrevious(logsQueries);
 
   const tableHeight = getLogsTableHeight();
   const styles = getStyles(theme, wrapLogMessage, tableHeight);
