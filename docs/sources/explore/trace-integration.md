@@ -93,7 +93,7 @@ Span details include span attributes, resource attributes, events, and links.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-span-attributes.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span attributes" >}}
 
-**Resource attributes**: Key-value pairs that describe the environment or entity that is producing the trace. They capture static information about the origin of traces, like the application name or the service version.
+**Resource attributes** are key-value pairs that describe the environment or entity that is producing the trace. They capture static information about the origin of traces, like the application name or the service version.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-resource-attributes.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span resource attributes" >}}
 
