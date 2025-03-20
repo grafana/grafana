@@ -366,7 +366,6 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		if err != nil {
 			return fmt.Errorf("error reading secret value row: %w", err)
 		}
-
 		secureValueRows = append(secureValueRows, &row)
 	}
 
@@ -396,14 +395,46 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		keeperSecureValues[svRow.Keeper] = append(keeperSecureValues[svRow.Keeper], svRow.Name)
 	}
 
-	keeperCond := &keeperDB{Namespace: keeper.Namespace}
-	thirdPartyKeepers := make([]*keeperDB, 0)
-
 	// TODO LND Replace with template query
 	// SELECT * FROM secret_keeper WHERE name IN (...) AND namespace = ? AND type != 'sql' FOR UPDATE;
-	err = sess.Table(keeperCond.TableName()).ForUpdate().In("name", keeperNames).Where("type != ?", contracts.SQLKeeperType).Find(&thirdPartyKeepers, keeperCond)
+	//err = sess.Table(keeperCond.TableName()).ForUpdate().In("name", keeperNames).Where("type != ?", contracts.SQLKeeperType).Find(&thirdPartyKeepers, keeperCond)
+	//if err != nil {
+	//	return fmt.Errorf("check keepers type: %w", err)
+	//}
+
+	req2 := listByNameKeeper{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   keeper.Namespace,
+		KeeperNames: keeperNames,
+		// TODO LND add comment Why do we do this
+		ExcludeKeeperType: string(contracts.SQLKeeperType),
+	}
+
+	q2, err := sqltemplate.Execute(sqlKeeperListByName, req)
 	if err != nil {
-		return fmt.Errorf("check keepers type: %w", err)
+		return fmt.Errorf("list template %q: %w", q, err)
+	}
+
+	rows2, err := s.db.Query(ctx, q2, req2.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("execute list template %q: %w", q, err)
+	}
+
+	// TODO LND Only fetch the values we need?
+	thirdPartyKeepers := make([]*keeperDB, 0)
+	for rows.Next() {
+		row := keeperDB{}
+		err = rows2.Scan(&row.GUID,
+			&row.Name, &row.Namespace, &row.Annotations,
+			&row.Labels,
+			&row.Created, &row.CreatedBy,
+			&row.Updated, &row.UpdatedBy,
+			&row.Title, &row.Type, &row.Payload,
+		)
+		if err != nil {
+			return fmt.Errorf("error reading keeper row: %w", err)
+		}
+		thirdPartyKeepers = append(thirdPartyKeepers, &row)
 	}
 
 	// Found secureValueNames that are referenced by third-party keepers.

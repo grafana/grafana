@@ -73,7 +73,7 @@ type listByNameSecureValue struct {
 type listByNameKeeper struct {
 	sqltemplate.SQLTemplate
 	Namespace         string
-	ThirdPartyKeepers []string
+	KeeperNames       []string
 	ExcludeKeeperType string
 }
 
