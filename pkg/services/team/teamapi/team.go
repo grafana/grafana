@@ -251,7 +251,7 @@ func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return prefapi.GetPreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, c.SignedInUser.GetOrgID(), 0, teamId, tapi.Features)
+	return prefapi.GetPreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, c.SignedInUser.GetOrgID(), 0, teamId, tapi.features)
 }
 
 // swagger:route PUT /teams/{team_id}/preferences teams updateTeamPreferences
@@ -274,7 +274,7 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, c.SignedInUser.GetOrgID(), 0, teamId, &dtoCmd, tapi.Features)
+	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, c.SignedInUser.GetOrgID(), 0, teamId, &dtoCmd, tapi.features)
 }
 
 // swagger:parameters updateTeamPreferences
