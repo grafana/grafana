@@ -38,7 +38,9 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 	}
 
 	switch opts.ResourceVersionMatch {
-	case "", metav1.ResourceVersionMatchNotOlderThan:
+	case "":
+		req.VersionMatch = resource.ResourceVersionMatch_Unset
+	case metav1.ResourceVersionMatchNotOlderThan:
 		req.VersionMatch = resource.ResourceVersionMatch_NotOlderThan
 	case metav1.ResourceVersionMatchExact:
 		req.VersionMatch = resource.ResourceVersionMatch_Exact

@@ -544,9 +544,10 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 }
 
 type listIter struct {
-	rows   db.Rows
-	offset int64
-	listRV int64
+	rows    db.Rows
+	offset  int64
+	listRV  int64
+	sortAsc bool
 
 	// any error
 	err error
@@ -561,11 +562,11 @@ type listIter struct {
 
 // ContinueToken implements resource.ListIterator.
 func (l *listIter) ContinueToken() string {
-	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
+	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
 }
 
 func (l *listIter) ContinueTokenWithCurrentRV() string {
-	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset}.String()
+	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
 }
 
 func (l *listIter) Error() error {
@@ -615,7 +616,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 		return 0, fmt.Errorf("only works for the 'latest' resource version")
 	}
 
-	iter := &listIter{}
+	iter := &listIter{sortAsc: false}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
@@ -650,7 +651,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	// Get the RV
-	iter := &listIter{listRV: req.ResourceVersion}
+	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
@@ -700,13 +701,18 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	return iter.listRV, err
 }
 
-// listLatest fetches the resources from the resource table.
+// getHistory fetches the resources from the resource table.
 func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	listReq := sqlGetHistoryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Key:         req.Options.Key,
 		Trash:       req.Source == resource.ListRequest_TRASH,
 	}
+
+	// We are assuming that users want history in ascending order
+	// when they are using NotOlderThan matching, and descending order
+	// for Unset (default) and Exact matching.
+	listReq.SortAscending = req.VersionMatch == resource.ResourceVersionMatch_NotOlderThan
 
 	iter := &listIter{}
 	if req.NextPageToken != "" {
@@ -715,7 +721,9 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 			return 0, fmt.Errorf("get continue token: %w", err)
 		}
 		listReq.StartRV = continueToken.ResourceVersion
+		listReq.SortAscending = continueToken.SortAscending
 	}
+	iter.sortAsc = listReq.SortAscending
 
 	// Set ExactRV when using Exact matching
 	if req.VersionMatch == resource.ResourceVersionMatch_Exact {

@@ -218,8 +218,9 @@ message ListOptions {
 }
 
 enum ResourceVersionMatch {
-  NotOlderThan = 0;
-  Exact = 1;
+  Unset = 0;
+  NotOlderThan = 1;
+  Exact = 2;
 }
 
 message ListRequest {
