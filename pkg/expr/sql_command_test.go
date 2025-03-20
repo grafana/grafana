@@ -34,6 +34,21 @@ func TestNewCommand(t *testing.T) {
 	}
 }
 
+func TestExecute(t *testing.T) {
+	cmd, err := NewSQLCommand("a", "", "select a from foo, bar", 0)
+	if err != nil {
+		t.Fail()
+		return
+	}
+
+	ctx := context.Background()
+	_, err = cmd.Execute(ctx, time.Now(), nil, &testTracer{})
+	if err != nil {
+		t.Fail()
+		return
+	}
+}
+
 // Helper function for creating test data
 func createFrameWithRowsAndCols(rows int, cols int) *data.Frame {
 	frame := data.NewFrame("dummy")
