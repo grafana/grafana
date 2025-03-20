@@ -507,17 +507,6 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		res, err = dbutil.QueryRow(ctx, tx, sr, readReq)
-		// if not found, look for latest deleted version (if requested)
-		if errors.Is(err, sql.ErrNoRows) && req.IncludeDeleted {
-			sr = sqlResourceHistoryRead
-			readReq2 := &sqlResourceReadRequest{
-				SQLTemplate: sqltemplate.New(b.dialect),
-				Request:     req,
-				Response:    NewReadResponse(),
-			}
-			res, err = dbutil.QueryRow(ctx, tx, sr, readReq2)
-			return err
-		}
 		return err
 	})
 
