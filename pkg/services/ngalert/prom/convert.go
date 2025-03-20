@@ -199,7 +199,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	var err error
 
 	isRecordingRule := rule.Record != ""
-	query, err = p.createQuery(rule.Expr, isRecordingRule)
+	query, err = p.createQuery(rule.Expr, isRecordingRule, promGroup)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
@@ -265,8 +265,16 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 //
 // This is needed to ensure that we keep the Prometheus behaviour, where any returned result
 // is considered alerting, and only when the query returns no data is the alert treated as normal.
-func (p *Converter) createQuery(expr string, isRecordingRule bool) ([]models.AlertQuery, error) {
-	queryNode, err := createQueryNode(p.cfg.DatasourceUID, p.cfg.DatasourceType, expr, *p.cfg.FromTimeRange, *p.cfg.EvaluationOffset)
+func (p *Converter) createQuery(expr string, isRecordingRule bool, promGroup PrometheusRuleGroup) ([]models.AlertQuery, error) {
+	// If evaluation offset is set on the group level, use that, otherwise use the global evaluation offset.
+	var evaluationOffset time.Duration
+	if promGroup.QueryOffset != nil {
+		evaluationOffset = time.Duration(*promGroup.QueryOffset)
+	} else {
+		evaluationOffset = *p.cfg.EvaluationOffset
+	}
+
+	queryNode, err := createQueryNode(p.cfg.DatasourceUID, p.cfg.DatasourceType, expr, *p.cfg.FromTimeRange, evaluationOffset)
 	if err != nil {
 		return nil, err
 	}

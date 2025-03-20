@@ -12654,6 +12654,9 @@
         "isPaused": {
           "type": "boolean"
         },
+        "keepFiringFor": {
+          "$ref": "#/definitions/Duration"
+        },
         "labels": {
           "type": "object",
           "additionalProperties": {
@@ -12923,6 +12926,10 @@
         },
         "health": {
           "type": "string"
+        },
+        "keepFiringFor": {
+          "type": "number",
+          "format": "double"
         },
         "labels": {
           "$ref": "#/definitions/Labels"
@@ -18688,7 +18695,20 @@
         "Interval": {
           "$ref": "#/definitions/Duration"
         },
+        "Labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "Name": {
+          "type": "string"
+        },
+        "QueryOffset": {
           "type": "string"
         },
         "Rules": {
@@ -18803,6 +18823,10 @@
         "isPaused": {
           "type": "boolean",
           "example": false
+        },
+        "keep_firing_for": {
+          "type": "string",
+          "format": "duration"
         },
         "labels": {
           "type": "object",
@@ -22869,7 +22893,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",

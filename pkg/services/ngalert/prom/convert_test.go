@@ -36,8 +36,9 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			orgID:     1,
 			namespace: "some-namespace-uid",
 			promGroup: PrometheusRuleGroup{
-				Name:     "test-group-1",
-				Interval: prommodel.Duration(10 * time.Second),
+				Name:        "test-group-1",
+				Interval:    prommodel.Duration(10 * time.Second),
+				QueryOffset: util.Pointer(prommodel.Duration(1 * time.Minute)),
 				Rules: []PrometheusRule{
 					{
 						Alert: "alert-1",
@@ -124,16 +125,13 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:      "rule group with query_offset is not supported",
+			name:      "query_offset must be >= 0",
 			orgID:     1,
 			namespace: "namespaceUID",
 			promGroup: PrometheusRuleGroup{
-				Name:     "test-group-1",
-				Interval: prommodel.Duration(10 * time.Second),
-				QueryOffset: func() *prommodel.Duration {
-					d := prommodel.Duration(30 * time.Second)
-					return &d
-				}(),
+				Name:        "test-group-1",
+				Interval:    prommodel.Duration(10 * time.Second),
+				QueryOffset: util.Pointer(prommodel.Duration(-1)),
 				Rules: []PrometheusRule{
 					{
 						Alert: "alert-1",
@@ -142,7 +140,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				},
 			},
 			expectError: true,
-			errorMsg:    "query_offset is not supported",
+			errorMsg:    "query_offset must be >= 0",
 		},
 		{
 			name:      "rule group with limit is not supported",
@@ -275,8 +273,13 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				if tc.config.EvaluationOffset != nil {
 					evalOffset = *tc.config.EvaluationOffset
 				}
+				if tc.promGroup.QueryOffset != nil {
+					// group-level offset takes precedence
+					evalOffset = time.Duration(*tc.promGroup.QueryOffset)
+				}
+
 				require.Equal(t, models.Duration(evalOffset), grafanaRule.Data[0].RelativeTimeRange.To)
-				require.Equal(t, models.Duration(evalOffset+10*time.Minute), grafanaRule.Data[0].RelativeTimeRange.From)
+				require.Equal(t, models.Duration(10*time.Minute+evalOffset), grafanaRule.Data[0].RelativeTimeRange.From)
 
 				originalRuleDefinition, err := yaml.Marshal(promRule)
 				require.NoError(t, err)
