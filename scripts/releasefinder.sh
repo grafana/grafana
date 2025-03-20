@@ -103,7 +103,20 @@ done
 # Print previous releases if they exist
 if [ ${#direct_tags[@]} -gt 0 ] || [ ${#included_tags[@]} -gt 0 ]; then
     echo "This commit has been included in these PREVIOUS on-prem releases:"
-    printf "  - %s\n" "${direct_tags[@]}" "${included_tags[@]}" | sort -V
+    # Get all tags sorted
+    all_tags=($(printf "%s\n" "${direct_tags[@]}" "${included_tags[@]}" | sort -V))
+    # Get the first release
+    first_release="${all_tags[0]}"
+    # Print all tags with annotation for the first release
+    for tag in "${all_tags[@]}"; do
+        if [ "$tag" = "$first_release" ]; then
+            echo "  - $tag (first release)"
+        else
+            echo "  - $tag"
+        fi
+    done
+    echo
+    echo "Note: This code may have been backported to previous release branches. Please check the original PR for backport information."
     echo
 fi
 
@@ -122,12 +135,3 @@ else
     done | sort -V
 fi
 echo
-
-# Find first release
-if [ ${#direct_tags[@]} -gt 0 ]; then
-    first_release=$(printf "%s\n" "${direct_tags[@]}" | sort -V | head -n1)
-    echo "This code was first released in version: $first_release"
-    echo "Note: This code may have been backported to previous release branches. Please check the original PR for backport information."
-else
-    echo "This code has not been released yet"
-fi 
