@@ -39,7 +39,8 @@ func isJSONContentType(r *http.Request) bool {
 	return strings.HasPrefix(contentType, contentTypeJSON)
 }
 
-// unmarshalJSON creates a size-limited JSON decoder
+// unmarshalJSON unmarshals the request body into the provided interface
+// it also checks the Content-Type and limits the size of the request body
 func unmarshalJSON(r *http.Request, maxSize int64, v interface{}) error {
 	if !isJSONContentType(r) {
 		return fmt.Errorf("content type is not JSON: %s", r.Header.Get("Content-Type"))
