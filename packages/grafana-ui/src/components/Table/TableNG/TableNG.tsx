@@ -94,7 +94,7 @@ export function TableNG(props: TableNGProps) {
   const calcsRef = useRef<string[]>([]);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
 
-  const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
+  const textWrap = fieldConfig?.defaults?.custom?.cellOptions?.wrapText ?? false;
 
   const theme = useTheme2();
   const styles = useStyles2(getStyles, textWrap);
