@@ -1,22 +1,42 @@
-import { Combobox, InlineField, Stack } from '@grafana/ui';
+import { capitalize } from 'lodash';
+import React, { useEffect } from 'react';
+
+import {
+  Button,
+  Combobox,
+  ComboboxOption,
+  Field,
+  InlineSwitch,
+  Input,
+  Label,
+  Stack,
+  Switch,
+  Tooltip,
+} from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
+import {
+  AutoGridMinColumnWidth,
+  AutoGridMinRowHeight,
+  ResponsiveGridLayoutManager,
+} from './ResponsiveGridLayoutManager';
 
 export function getEditOptions(layoutManager: ResponsiveGridLayoutManager): OptionsPaneItemDescriptor[] {
   const options: OptionsPaneItemDescriptor[] = [];
 
   options.push(
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.responsive-layout.options.columns', 'Columns'),
+      title: 'Column options',
+      skipField: true,
       render: () => <GridLayoutColumns layoutManager={layoutManager} />,
     })
   );
 
   options.push(
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.responsive-layout.options.rows', 'Row height'),
+      title: 'Row height options',
+      skipField: true,
       render: () => <GridLayoutRows layoutManager={layoutManager} />,
     })
   );
@@ -26,82 +46,211 @@ export function getEditOptions(layoutManager: ResponsiveGridLayoutManager): Opti
 
 function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLayoutManager }) {
   const { maxColumnCount, minColumnWidth } = layoutManager.useState();
+  const [inputRef, setInputRef] = React.useState<HTMLInputElement | null>(null);
+  const [focusInput, setFocusInput] = React.useState(false);
+  const [customMinWidthError, setCustomMinWidthError] = React.useState(false);
 
-  const colOptions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map((value) => ({ label: value, value }));
-  const minWidthOptions = ['64', '128', '256', '384', '512', '768', '1024'].map((value) => ({
-    label: String(value),
+  useEffect(() => {
+    if (focusInput && inputRef) {
+      inputRef.focus();
+      setFocusInput(false);
+    }
+  }, [focusInput, inputRef]);
+
+  const minWidthOptions: Array<ComboboxOption<AutoGridMinColumnWidth>> = [
+    'narrow' as const,
+    'standard' as const,
+    'wide' as const,
+    'custom' as const,
+  ].map((value) => ({
+    label: capitalize(value),
     value,
   }));
 
+  const isStandardMinWidth = typeof minColumnWidth === 'string';
+
+  const minWidthLabel = isStandardMinWidth
+    ? t('dashboard.responsive-layout.options.min-width', 'Min column width')
+    : t('dashboard.responsive-layout.options.min-width-custom', 'Custom min width');
+  const colOptions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map((value) => ({ label: value, value }));
+
+  const onCustomMinWidthChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const pixels = parseInt(e.target.value, 10);
+    if (isNaN(pixels) || pixels < 50 || pixels > 2000) {
+      setCustomMinWidthError(true);
+      return;
+    } else if (customMinWidthError) {
+      setCustomMinWidthError(false);
+    }
+
+    layoutManager.onMinColumnWidthChanged(pixels);
+  };
+
+  const onNamedMinWidthChanged = (value: ComboboxOption<AutoGridMinColumnWidth>) => {
+    if (value.value === 'custom') {
+      setFocusInput(true);
+    }
+    layoutManager.onMinColumnWidthChanged(value.value);
+  };
+
+  const onClearCustomMinWidth = () => {
+    if (customMinWidthError) {
+      setCustomMinWidthError(false);
+    }
+
+    layoutManager.onMinColumnWidthChanged('standard');
+  };
+
   return (
-    <Stack gap={1} wrap={true}>
-      <InlineField label={t('dashboard.responsive-layout.options.max-columns', 'Max count')} labelWidth={12}>
+    <Stack gap={2} wrap={true}>
+      <Field
+        label={minWidthLabel}
+        invalid={customMinWidthError}
+        error={
+          customMinWidthError
+            ? t('dashboard.responsive-layout.options.min-width-error', 'A number between 50 and 2000 is required')
+            : undefined
+        }
+      >
+        {isStandardMinWidth ? (
+          <Combobox options={minWidthOptions} value={minColumnWidth} onChange={onNamedMinWidthChanged} width={18} />
+        ) : (
+          <Input
+            defaultValue={minColumnWidth}
+            onBlur={onCustomMinWidthChanged}
+            ref={(ref) => setInputRef(ref)}
+            width={18}
+            type="number"
+            min={50}
+            max={2000}
+            invalid={customMinWidthError}
+            suffix={
+              <Button
+                size="sm"
+                fill="text"
+                icon="times"
+                tooltip={t(
+                  'dashboard.responsive-layout.options.min-width-custom-clear',
+                  'Back to standard min column width'
+                )}
+                onClick={onClearCustomMinWidth}
+              >
+                Clear
+              </Button>
+            }
+          />
+        )}
+      </Field>
+      <Field label={t('dashboard.responsive-layout.options.max-columns', 'Max columns')}>
         <Combobox
           options={colOptions}
           value={String(maxColumnCount)}
+          width={13}
           onChange={({ value }) => layoutManager.onMaxColumnCountChanged(value)}
-          width={'auto'}
-          minWidth={7}
         />
-      </InlineField>
-      <InlineField
-        label={t('dashboard.responsive-layout.options.min-width', 'Min width')}
-        grow={true}
-        tooltip={t(
-          'dashboard.responsive-layout.options.min-width-tooltip',
-          'Controls how narrow a column can be on smaller screens'
-        )}
-        labelWidth={13}
-      >
-        <Combobox
-          options={minWidthOptions}
-          value={minColumnWidth}
-          onChange={({ value }) => layoutManager.onMinColumnWidthChanged(value)}
-          width={'auto'}
-          minWidth={7}
-        />
-      </InlineField>
+      </Field>
     </Stack>
   );
 }
 
 function GridLayoutRows({ layoutManager }: { layoutManager: ResponsiveGridLayoutManager }) {
-  const { minRowHeight, maxRowHeight } = layoutManager.useState();
+  const { minRowHeight, heightFill } = layoutManager.useState();
+  const [inputRef, setInputRef] = React.useState<HTMLInputElement | null>(null);
+  const [focusInput, setFocusInput] = React.useState(false);
+  const [customMinWidthError, setCustomMinWidthError] = React.useState(false);
 
-  const maxHeightOptions = ['auto', '64', '128', '256', '384', '512', '768', '1024'].map((value) => ({
-    label: String(value),
+  useEffect(() => {
+    if (focusInput && inputRef) {
+      inputRef.focus();
+      setFocusInput(false);
+    }
+  }, [focusInput, inputRef]);
+
+  const minWidthOptions: Array<ComboboxOption<AutoGridMinRowHeight>> = [
+    'short' as const,
+    'standard' as const,
+    'tall' as const,
+    'custom' as const,
+  ].map((value) => ({
+    label: capitalize(value),
     value,
   }));
 
-  const minHeightOptions = ['128', '256', '384', '512', '768', '1024'].map((value) => ({
-    label: String(value),
-    value,
-  }));
+  const isStandardHeight = typeof minRowHeight === 'string';
+  const rowHeightLabel = minRowHeight
+    ? t('dashboard.responsive-layout.options.min-height', 'Row height')
+    : t('dashboard.responsive-layout.options.min-height-custom', 'Custom row height');
+
+  const onCustomHeightChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const pixels = parseInt(e.target.value, 10);
+    if (isNaN(pixels) || pixels < 50 || pixels > 2000) {
+      setCustomMinWidthError(true);
+      return;
+    } else if (customMinWidthError) {
+      setCustomMinWidthError(false);
+    }
+
+    layoutManager.onMinRowHeightChanged(pixels);
+  };
+
+  const onNamedMinHeightChanged = (value: ComboboxOption<AutoGridMinRowHeight>) => {
+    if (value.value === 'custom') {
+      setFocusInput(true);
+    }
+    layoutManager.onMinRowHeightChanged(value.value);
+  };
+
+  const onClearCustomRowHeight = () => {
+    if (customMinWidthError) {
+      setCustomMinWidthError(false);
+    }
+
+    layoutManager.onMinRowHeightChanged('standard');
+  };
 
   return (
-    <Stack gap={1} wrap={true}>
-      <InlineField label={t('dashboard.responsive-layout.options.max-height', 'Max height')} labelWidth={12}>
-        <Combobox
-          options={maxHeightOptions}
-          value={String(maxRowHeight)}
-          onChange={({ value }) => layoutManager.onMaxRowHeightChanged(value)}
-          width={'auto'}
-          minWidth={7}
-        />
-      </InlineField>
-      <InlineField
-        label={t('dashboard.responsive-layout.options.min-height', 'Min height')}
-        grow={true}
-        labelWidth={13}
+    <Stack gap={2} wrap={true}>
+      <Field
+        label={rowHeightLabel}
+        invalid={customMinWidthError}
+        error={
+          customMinWidthError
+            ? t('dashboard.responsive-layout.options.min-height-error', 'A number between 50 and 2000 is required')
+            : undefined
+        }
       >
-        <Combobox
-          options={minHeightOptions}
-          value={minRowHeight}
-          onChange={({ value }) => layoutManager.onMinRowHeightChanged(value)}
-          width={'auto'}
-          minWidth={7}
-        />
-      </InlineField>
+        {isStandardHeight ? (
+          <Combobox options={minWidthOptions} value={minRowHeight} onChange={onNamedMinHeightChanged} width={18} />
+        ) : (
+          <Input
+            defaultValue={minRowHeight}
+            onBlur={onCustomHeightChanged}
+            ref={(ref) => setInputRef(ref)}
+            width={18}
+            type="number"
+            min={50}
+            max={2000}
+            invalid={customMinWidthError}
+            suffix={
+              <Button
+                size="sm"
+                fill="text"
+                icon="times"
+                tooltip={t(
+                  'dashboard.responsive-layout.options.min-width-custom-clear',
+                  'Back to standard min column width'
+                )}
+                onClick={onClearCustomRowHeight}
+              >
+                Clear
+              </Button>
+            }
+          />
+        )}
+      </Field>
+      <Field label={t('dashboard.responsive-layout.options.height-fill', 'Fill screen')}>
+        <InlineSwitch value={heightFill} onChange={() => layoutManager.onHeightFillChanged(!heightFill)} />
+      </Field>
     </Stack>
   );
 }

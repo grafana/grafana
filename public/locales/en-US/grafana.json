@@ -1451,11 +1451,11 @@
       "name": "Auto grid",
       "options": {
         "columns": "Columns",
-        "max-columns": "Max count",
+        "max-columns": "Max columns",
         "max-height": "Max height",
         "min-height": "Min height",
-        "min-width": "Min width",
-        "min-width-tooltip": "Controls how narrow a column can be on smaller screens",
+        "min-width": "Min column width",
+        "min-width-custom": "Custom min width",
         "rows": "Row height"
       }
     },

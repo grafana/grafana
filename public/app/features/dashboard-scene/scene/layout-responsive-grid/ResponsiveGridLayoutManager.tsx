@@ -17,16 +17,17 @@ import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: ResponsiveGridLayout;
   maxColumnCount: string;
-  minColumnWidth: string;
-  minRowHeight: string;
-  maxRowHeight: string;
+  minRowHeight: AutoGridMinRowHeight;
+  minColumnWidth: AutoGridMinColumnWidth;
+  heightFill: boolean;
 }
 
-export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = '3';
-export const AUTO_GRID_DEFAULT_MIN_COLUMN_WIDTH = '384';
+export type AutoGridMinColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
+export type AutoGridMinRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
 
-export const AUTO_GRID_DEFAULT_MAX_ROW_HEIGHT = 'auto';
-export const AUTO_GRID_DEFAULT_MIN_ROW_HEIGHT = '256';
+export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = '3';
+export const AUTO_GRID_DEFAULT_MIN_COLUMN_WIDTH = 'standard';
+export const AUTO_GRID_DEFAULT_MIN_ROW_HEIGHT = 'standard';
 
 export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
@@ -55,19 +56,19 @@ export class ResponsiveGridLayoutManager
     const maxColumnCount = state.maxColumnCount ?? AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT;
     const minColumnWidth = state.minColumnWidth ?? AUTO_GRID_DEFAULT_MIN_COLUMN_WIDTH;
     const minRowHeight = state.minRowHeight ?? AUTO_GRID_DEFAULT_MIN_ROW_HEIGHT;
-    const maxRowHeight = state.maxRowHeight ?? AUTO_GRID_DEFAULT_MAX_ROW_HEIGHT;
+    const heightFill = state.heightFill ?? false;
 
     super({
       ...state,
       maxColumnCount,
       minColumnWidth,
       minRowHeight,
-      maxRowHeight,
+      heightFill,
       layout:
         state.layout ??
         new ResponsiveGridLayout({
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, minColumnWidth),
-          autoRows: getAutoRowsTemplate(minRowHeight, maxRowHeight),
+          autoRows: getAutoRowsTemplate(minRowHeight, heightFill),
         }),
     });
 
@@ -170,24 +171,32 @@ export class ResponsiveGridLayoutManager
     });
   }
 
-  public onMinColumnWidthChanged(minColumnWidth: string) {
+  public onMinColumnWidthChanged(minColumnWidth: AutoGridMinColumnWidth) {
+    if (minColumnWidth === 'custom') {
+      minColumnWidth = getNamedColumWidthInPixels(this.state.minColumnWidth);
+    }
+
     this.setState({ minColumnWidth: minColumnWidth });
     this.state.layout.setState({
       templateColumns: getTemplateColumnsTemplate(this.state.maxColumnCount, this.state.minColumnWidth),
     });
   }
 
-  public onMaxRowHeightChanged(maxRowHeight: string) {
-    this.setState({ maxRowHeight });
+  public onHeightFillChanged(heightFill: boolean) {
+    this.setState({ heightFill });
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(this.state.minRowHeight, maxRowHeight),
+      autoRows: getAutoRowsTemplate(this.state.minRowHeight, heightFill),
     });
   }
 
-  public onMinRowHeightChanged(minRowHeight: string) {
+  public onMinRowHeightChanged(minRowHeight: AutoGridMinRowHeight) {
+    if (minRowHeight === 'custom') {
+      minRowHeight = getNamedHeightInPixels(this.state.minRowHeight);
+    }
+
     this.setState({ minRowHeight });
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(minRowHeight, this.state.maxRowHeight),
+      autoRows: getAutoRowsTemplate(minRowHeight, this.state.heightFill),
     });
   }
 
@@ -214,11 +223,46 @@ function ResponsiveGridLayoutManagerRenderer({ model }: SceneComponentProps<Resp
   return <model.state.layout.Component model={model.state.layout} />;
 }
 
-function getTemplateColumnsTemplate(maxColumnCount: string, minColumnWidth: string) {
-  return `repeat(auto-fit, minmax(min(max(100% / ${maxColumnCount} - ${GRID_CELL_VMARGIN}px, ${minColumnWidth}px), 100%), 1fr))`;
+function getTemplateColumnsTemplate(maxColumnCount: string, minColumnWidth: AutoGridMinColumnWidth) {
+  return `repeat(auto-fit, minmax(min(max(100% / ${maxColumnCount} - ${GRID_CELL_VMARGIN}px, ${getNamedColumWidthInPixels(minColumnWidth)}px), 100%), 1fr))`;
 }
 
-function getAutoRowsTemplate(minRowHeight: string, maxRowHeight: string) {
-  const maxRowHeightValue = maxRowHeight === 'auto' ? 'auto' : `${maxRowHeight}px`;
-  return `minmax(${minRowHeight}px, ${maxRowHeightValue})`;
+function getNamedColumWidthInPixels(minColumnWidth: AutoGridMinColumnWidth) {
+  if (typeof minColumnWidth === 'number') {
+    return minColumnWidth;
+  }
+
+  switch (minColumnWidth) {
+    case 'narrow':
+      return 192;
+    case 'wide':
+      return 768;
+    case 'custom':
+    case 'standard':
+    default:
+      return 448;
+  }
+}
+
+function getNamedHeightInPixels(minRowHeight: AutoGridMinRowHeight) {
+  if (typeof minRowHeight === 'number') {
+    return minRowHeight;
+  }
+
+  switch (minRowHeight) {
+    case 'short':
+      return 128;
+    case 'tall':
+      return 512;
+    case 'custom':
+    case 'standard':
+    default:
+      return 320;
+  }
+}
+
+function getAutoRowsTemplate(minRowHeight: AutoGridMinRowHeight, heightFill: boolean) {
+  const minRowHeightPixels = getNamedHeightInPixels(minRowHeight);
+  const maxRowHeightValue = heightFill ? 'auto' : `${minRowHeightPixels}px`;
+  return `minmax(${minRowHeightPixels}px, ${maxRowHeightValue})`;
 }
