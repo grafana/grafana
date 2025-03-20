@@ -17,7 +17,6 @@ import (
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -216,11 +215,11 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("calculate generation", func(t *testing.T) {
-		dash := &dashboard.Dashboard{
+		dash := &v0alpha1.Dashboard{
 			ObjectMeta: v1.ObjectMeta{
 				Name: "test",
 			},
-			Spec: dashboard.DashboardSpec{
+			Spec: v0alpha1.DashboardSpec{
 				Object: map[string]interface{}{
 					"hello": "world",
 				},
@@ -228,12 +227,17 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		}
 		out := getPreparedObject(t, ctx, s, dash, nil)
 		require.Equal(t, int64(1), out.GetGeneration())
+		require.NotEmpty(t, out.GetAnnotation(utils.AnnoKeyCreatedBy))
+		require.Equal(t, "", out.GetAnnotation(utils.AnnoKeyUpdatedBy))
+		require.Equal(t, "", out.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 
 		t.Run("increment when the spec changes", func(t *testing.T) {
 			b := dash.DeepCopy()
 			b.Spec.Object["x"] = "y"
 			out = getPreparedObject(t, ctx, s, b, dash)
 			require.Equal(t, int64(2), out.GetGeneration())
+			require.NotEmpty(t, out.GetAnnotation(utils.AnnoKeyUpdatedBy))
+			require.NotEmpty(t, out.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 		})
 
 		t.Run("increment when the folder changes", func(t *testing.T) {
@@ -261,8 +265,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			b.Labels = map[string]string{
 				"a": "b",
 			}
-			b.Status = dashboard.DashboardStatus{
-				Conversion: &dashboard.DashboardConversionStatus{
+			b.Status = v0alpha1.DashboardStatus{
+				Conversion: &v0alpha1.DashboardConversionStatus{
 					Failed: true,
 				},
 			}
