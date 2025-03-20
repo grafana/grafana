@@ -1,0 +1,3 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1,CheckReport,Failures
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1,CheckReportFailure,Links
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1,CheckTypeSpec,Steps
