@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
@@ -447,6 +448,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	if err != nil {
 		return err
 	}
+	ctx = request.WithNamespace(ctx, namespace)
 	logger = logger.WithContext(ctx)
 
 	if obj.DeletionTimestamp != nil {
