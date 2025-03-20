@@ -32,8 +32,8 @@ var (
 )
 
 var managedGrpcErrors = []errutil.Base{
-	plugins.ErrGrpcResourceExhaustedBase,
-	plugins.ErrGrpcPluginConnectionIssueBase,
+	plugins.ErrPluginGrpcResourceExhaustedBase,
+	plugins.ErrPluginGrpcConnectionTerminatedBase,
 }
 
 type Service struct {

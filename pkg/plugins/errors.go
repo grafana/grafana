@@ -38,13 +38,13 @@ var (
 
 	// ErrGrpcResourceExhaustedBase error returned when a plugin response is larger than the grpc limit.
 	// Exposed as a base error to wrap it with plugin resource exhausted errors.
-	ErrGrpcResourceExhaustedBase = errutil.Internal("plugin.resourceExhausted",
+	ErrPluginGrpcResourceExhaustedBase = errutil.Internal("plugin.resourceExhausted",
 		errutil.WithPublicMessage("The response is too large. Please try to reduce the time range or narrow down your query to return fewer data points."),
 		errutil.WithDownstream())
 
 	// ErrGrpcPluginConnectionIssueBase error returned when a plugin connection issue occurs.
 	// Exposed as a base error to wrap it with plugin connection issue errors.
-	ErrGrpcPluginConnectionIssueBase = errutil.Internal("plugin.connectionIssue",
+	ErrPluginGrpcConnectionTerminatedBase = errutil.Internal("plugin.connectionTerminated",
 		errutil.WithPublicMessage("Data source became unavailable during request. Please try again."),
 		errutil.WithDownstream())
 )
