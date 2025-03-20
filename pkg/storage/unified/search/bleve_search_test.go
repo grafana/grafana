@@ -253,7 +253,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		require.Equal(t, int64(1), res.TotalHits)
 
 		// can search for a term with a hyphen
-		query = newQueryByTitle("Hello-world")
+		query = newQueryByTitle("hello-world")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), res.TotalHits)
