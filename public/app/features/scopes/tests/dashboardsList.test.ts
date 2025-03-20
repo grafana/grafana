@@ -1,4 +1,4 @@
-import {config, locationService} from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { ScopesService } from '../ScopesService';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';

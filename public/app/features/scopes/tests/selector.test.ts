@@ -1,4 +1,4 @@
-import {config, locationService} from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { ScopesService } from '../ScopesService';
