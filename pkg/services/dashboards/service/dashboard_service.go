@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
-	"github.com/grafana/grafana/pkg/util/retryer"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/maps"
@@ -22,6 +20,9 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/selection"
+
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
+	"github.com/grafana/grafana/pkg/util/retryer"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
@@ -1618,6 +1619,15 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	obj, err := LegacySaveCommandToUnstructured(cmd, dr.k8sclient.GetNamespace(orgID))
 	if err != nil {
 		return nil, err
+	}
+
+	// Grant permissions for items created at the root folder
+	if cmd.FolderUID == "" {
+		user, _ := claims.AuthInfoFrom(ctx)
+		if user != nil && user.GetIdentityType() == claims.TypeUser {
+			meta, _ := utils.MetaAccessor(obj)
+			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "*")
+		}
 	}
 
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
