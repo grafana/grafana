@@ -1,4 +1,4 @@
-import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -11,10 +11,11 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
+import { ResponsiveGridLayout } from './ResponsiveGridLayout';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
-  layout: SceneCSSGridLayout;
+  layout: ResponsiveGridLayout;
   maxColumnCount: string;
   minColumnWidth: string;
   minRowHeight: string;
@@ -64,7 +65,7 @@ export class ResponsiveGridLayoutManager
       maxRowHeight,
       layout:
         state.layout ??
-        new SceneCSSGridLayout({
+        new ResponsiveGridLayout({
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, minColumnWidth),
           autoRows: getAutoRowsTemplate(minRowHeight, maxRowHeight),
         }),
