@@ -157,8 +157,9 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	var err error
+	var grantPermisions string
 	req := &resource.CreateRequest{}
-	req.Value, err = s.prepareObjectForStorage(ctx, obj)
+	req.Value, grantPermisions, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return err
 	}
@@ -166,6 +167,12 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	if err != nil {
 		return err
 	}
+	if grantPermisions != "" {
+		if err := canGrantPermissionsOnCreate(ctx, grantPermisions, obj); err != nil {
+			return err
+		}
+	}
+
 	rsp, err := s.store.Create(ctx, req)
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
@@ -194,6 +201,11 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 				panic(err)
 			}
 		})
+	}
+
+	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
+	if grantPermisions != "" {
+		return grantPermissionsAfterCreate(ctx, meta, grantPermisions)
 	}
 
 	return nil
@@ -448,7 +460,6 @@ func (s *Storage) GuaranteedUpdate(
 		res         storage.ResponseMeta
 		updatedObj  runtime.Object
 		existingObj runtime.Object
-		created     bool
 		err         error
 	)
 	req := &resource.UpdateRequest{}
@@ -480,43 +491,45 @@ func (s *Storage) GuaranteedUpdate(
 			}
 		}
 
-		created = true
+		// Not found (should we create or error?)
+		if len(rsp.Value) == 0 {
+			if !ignoreNotFound {
+				return apierrors.NewNotFound(s.gr, req.Key.Name)
+			}
+			return s.Create(ctx, key, updatedObj, updatedObj, uint64(0))
+		}
+
 		existingObj = s.newFunc()
-		if len(rsp.Value) > 0 {
-			created = false
-			_, err = s.convertToObject(rsp.Value, existingObj)
+		_, err = s.convertToObject(rsp.Value, existingObj)
+		if err != nil {
+			return err
+		}
+
+		mmm, err := utils.MetaAccessor(existingObj)
+		if err != nil {
+			return err
+		}
+		mmm.SetResourceVersionInt64(rsp.ResourceVersion)
+		res.ResourceVersion = uint64(rsp.ResourceVersion)
+
+		if rest.IsDualWriteUpdate(ctx) {
+			// Ignore the RV when updating legacy values
+			mmm.SetResourceVersion("")
+		} else {
+			if err := preconditions.Check(key, existingObj); err != nil {
+				if attempt >= MaxUpdateAttempts {
+					return fmt.Errorf("precondition failed: %w", err)
+				}
+				continue
+			}
+		}
+
+		// restore the full original object before tryUpdate
+		if s.opts.LargeObjectSupport != nil && mmm.GetBlob() != nil {
+			err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, mmm)
 			if err != nil {
 				return err
 			}
-
-			mmm, err := utils.MetaAccessor(existingObj)
-			if err != nil {
-				return err
-			}
-			mmm.SetResourceVersionInt64(rsp.ResourceVersion)
-			res.ResourceVersion = uint64(rsp.ResourceVersion)
-
-			if rest.IsDualWriteUpdate(ctx) {
-				// Ignore the RV when updating legacy values
-				mmm.SetResourceVersion("")
-			} else {
-				if err := preconditions.Check(key, existingObj); err != nil {
-					if attempt >= MaxUpdateAttempts {
-						return fmt.Errorf("precondition failed: %w", err)
-					}
-					continue
-				}
-			}
-
-			// restore the full original object before tryUpdate
-			if s.opts.LargeObjectSupport != nil && mmm.GetBlob() != nil {
-				err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, mmm)
-				if err != nil {
-					return err
-				}
-			}
-		} else if !ignoreNotFound {
-			return apierrors.NewNotFound(s.gr, req.Key.Name)
 		}
 
 		updatedObj, _, err = tryUpdate(existingObj.DeepCopyObject(), res)
@@ -545,41 +558,19 @@ func (s *Storage) GuaranteedUpdate(
 		return nil
 	}
 
-	var (
-		value []byte
-		rv    int64
-	)
-	if created {
-		value, err = s.prepareObjectForStorage(ctx, updatedObj)
-		if err != nil {
-			return err
-		}
-		rsp2, err := s.store.Create(ctx, &resource.CreateRequest{
-			Key:   req.Key,
-			Value: value,
-		})
-		if err != nil {
-			return resource.GetError(resource.AsErrorResult(err))
-		}
-		if rsp2.Error != nil {
-			return resource.GetError(rsp2.Error)
-		}
-		rv = rsp2.ResourceVersion
-	} else {
-		value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
-		if err != nil {
-			return err
-		}
-		req.Value = value
-		rsp2, err := s.store.Update(ctx, req)
-		if err != nil {
-			return resource.GetError(resource.AsErrorResult(err))
-		}
-		if rsp2.Error != nil {
-			return resource.GetError(rsp2.Error)
-		}
-		rv = rsp2.ResourceVersion
+	value, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
+	if err != nil {
+		return err
 	}
+	req.Value = value
+	rsp2, err := s.store.Update(ctx, req)
+	if err != nil {
+		return resource.GetError(resource.AsErrorResult(err))
+	}
+	if rsp2.Error != nil {
+		return resource.GetError(rsp2.Error)
+	}
+	rv := rsp2.ResourceVersion
 
 	if _, err := s.convertToObject(value, destination); err != nil {
 		return err
