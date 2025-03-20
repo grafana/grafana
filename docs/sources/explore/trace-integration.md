@@ -87,13 +87,21 @@ For more information about spans and traces, refer to [Introduction to tracing](
 
 Span details include:
 
-- **Span attributes** - Key/value pairs that provides context for spans. For example, if the span deals with calling another service via HTTP, an attribute could include the HTTP URL (maybe as the span attribute key `http.url`) and the HTTP status code returned (as the span attribute `http.status_code`).
+- **Span attributes**: Key-value pairs that provide metadata about a specific span. They give context to the operation being performed, such as information about the request, response, or any relevant operational details. For example, if the span deals with calling another service via HTTP, an attribute could include the HTTP URL (maybe as the span attribute key `http.url`) and the HTTP status code returned (as the span attribute `http.status_code`).
 
-- **Resource attributes** - Key/value pairs that describe the context of how the span was collected.
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-span-attributes.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span attributes" >}}
 
-Refer to [Span and resource attributes](/docs/tempo/<TEMPO_VERSION>/operations/best-practices/#span-and-resource-attributes) for more detail.
+- **Resource attributes**: Key-value pairs that describe the environment or entity that is producing the trace. They capture static information about the origin of traces, like the application name or the service version.
 
-{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-details.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span details" >}}
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-resource-attributes.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span resource attributes" >}}
+
+Span attributes are specific to a particular operation, while resource attributes are associated with the whole trace or the entire service emitting the spans. Refer to [Span and resource attributes](/docs/tempo/<TEMPO_VERSION>/operations/best-practices/#span-and-resource-attributes) for more detail.
+
+- **Events**: Log-like records attached to a span that represent an occurrence during its execution. They record notable moments or occurrences within the span’s lifecycle, such as errors, warnings, or checkpoints. If an error occurs during an operation, an event can be added to the span to indicate what went wrong and when. Events include a timestamp, name, and key-value pairs attributes that provide additional context or details about the event.
+
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-events.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span events" >}}
+
+- **Links**: Relationships between spans that are not in a direct parent-child relationship. They represent associations between spans that happen concurrently or across separate trace trees, linking traces that originated from separate sources but are logically connected, such as background job processing initiated from a web request. You might use links when a trace passes through an asynchronous queue or when correlating traces from different services.
 
 ### Span filters
 
