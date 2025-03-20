@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -72,7 +73,12 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		}
 
 		repo = buffered // send all writes to the buffered repo
-		defer buffered.Remove(ctx)
+		defer func() {
+			if err := buffered.Remove(ctx); err != nil {
+				logging.FromContext(ctx).Error("failed to remove cloned repository after export", "err", err)
+			}
+		}()
+
 		options.Branch = "" // :( the branch is now baked into the repo
 	}
 

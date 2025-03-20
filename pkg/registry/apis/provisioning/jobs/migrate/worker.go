@@ -108,8 +108,13 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
 		}
+
 		repo = buffered // send all writes to the buffered repo
-		defer buffered.Remove(ctx)
+		defer func() {
+			if err := buffered.Remove(ctx); err != nil {
+				logging.FromContext(ctx).Error("failed to remove cloned repository after migrate", "err", err)
+			}
+		}()
 	}
 
 	rw, ok := repo.(repository.ReaderWriter)
