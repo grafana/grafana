@@ -42,9 +42,9 @@ var (
 		errutil.WithPublicMessage("The response is too large. Please try to reduce the time range or narrow down your query to return fewer data points."),
 		errutil.WithDownstream())
 
-	// ErrPluginGrpcConnectionTerminatedBase error returned when a plugin connection issue occurs.
+	// ErrPluginGrpcConnectionUnavailableBase error returned when a plugin connection issue occurs.
 	// Exposed as a base error to wrap it with plugin connection issue errors.
-	ErrPluginGrpcConnectionTerminatedBase = errutil.Internal("plugin.connectionTerminated",
+	ErrPluginGrpcConnectionUnavailableBase = errutil.Internal("plugin.connectionUnavailable",
 		errutil.WithPublicMessage("Data source became unavailable during request. Please try again."),
 		errutil.WithDownstream())
 )

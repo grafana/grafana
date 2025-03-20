@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -31,9 +30,12 @@ var (
 	errNilSender  = errors.New("sender cannot be nil")
 )
 
-var managedGrpcErrors = []errutil.Base{
+// passthroughErrors contains a list of errors that should be returned directly to the caller without wrapping
+var passthroughErrors = []error{
+	plugins.ErrPluginUnavailable,
+	plugins.ErrMethodNotImplemented,
 	plugins.ErrPluginGrpcResourceExhaustedBase,
-	plugins.ErrPluginGrpcConnectionTerminatedBase,
+	plugins.ErrPluginGrpcConnectionUnavailableBase,
 }
 
 type Service struct {
@@ -58,20 +60,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	resp, err := p.QueryData(ctx, req)
 	if err != nil {
-		// Check if the error is a managed grpc error
-		// and if it is, return the error as is
-		for _, e := range managedGrpcErrors {
+		for _, e := range passthroughErrors {
 			if errors.Is(err, e) {
 				return nil, err
 			}
-		}
-
-		if errors.Is(err, plugins.ErrMethodNotImplemented) {
-			return nil, err
-		}
-
-		if errors.Is(err, plugins.ErrPluginUnavailable) {
-			return nil, err
 		}
 
 		if errors.Is(err, context.Canceled) {
