@@ -59,6 +59,12 @@ echo
 echo "Commit details:"
 echo "  Author: $(git log -1 --format="%an <%ae>" "$COMMIT_HASH")"
 echo "  Date: $(git log -1 --format="%ad" --date=iso "$COMMIT_HASH")"
+
+# Extract original PR number and create link
+PR_NUMBER=$(git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep -o '#[0-9]\+' | head -n1 | tr -d '#')
+if [ ! -z "$PR_NUMBER" ]; then
+    echo "  PR: #$PR_NUMBER (https://github.com/grafana/grafana/pull/$PR_NUMBER)"
+fi
 echo
 
 # Arrays to store results
