@@ -186,6 +186,8 @@ func (d *jobDriver) processJob(ctx context.Context, job *provisioning.Job) error
 			return apifmt.Errorf("worker failed to process job: %w", err)
 		}
 
+		job.Status = recorder.Complete(ctx, err)
+
 		return nil
 	}
 
