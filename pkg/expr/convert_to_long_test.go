@@ -233,3 +233,115 @@ func TestConvertTimeSeriesMultiToLong(t *testing.T) {
 		}
 	})
 }
+
+func TestSparseLabelsInNumericMultiToFullLong(t *testing.T) {
+	// Create input frames with a sparse label pattern identical to our integration test
+	times := []time.Time{
+		time.Unix(0, 0),
+	}
+
+	input := data.Frames{
+		data.NewFrame("frame1",
+			data.NewField("ts", nil, times),
+			data.NewField("value", data.Labels{"host": "dummy_a", "sparse_label": "label_value_present"}, []float64{13}),
+		),
+		data.NewFrame("frame1",
+			data.NewField("ts", nil, times),
+			data.NewField("value", data.Labels{"host": "dummy_b"}, []float64{17}),
+		),
+	}
+
+	expected := data.NewFrame("numeric_full_long",
+		data.NewField("ts", nil, []time.Time{
+			time.Unix(0, 0), // foo
+			time.Unix(0, 0), // bar
+		}),
+		data.NewField("val", nil, []float64{
+			13, 17,
+		}),
+		data.NewField("host", nil, []*string{
+			stringPtr("dummy_a"), stringPtr("dummy_b"),
+		}),
+		data.NewField("sparse_label", nil, []*string{
+			stringPtr("label_value_present"), nil,
+		}),
+	)
+	expected.Meta = &data.FrameMeta{Type: data.FrameTypeNumericLong}
+
+	output, err := convertNumericMultiToFullLong(input)
+	require.NoError(t, err)
+	require.Len(t, output, 1)
+
+	if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "Sparse label values mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// Helper function to get string pointer
+func stringPtr(s string) *string {
+	return &s
+}
+
+// func TestSparseLabelsInTimeSeriesMultiToFullLong(t *testing.T) {
+// 	// Create input frames with a sparse label pattern identical to our integration test
+// 	times := []time.Time{
+// 		time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
+// 	}
+
+// 	frame1 := data.NewFrame("frame1",
+// 		data.NewField("ts", nil, times),
+// 		data.NewField("value", data.Labels{"host": "dummy_a", "sparse_label": "label_value_present"}, []float64{13}),
+// 	)
+// 	frame1.Meta = &data.FrameMeta{
+// 		Type: data.FrameTypeTimeSeriesMulti,
+// 	}
+
+// 	frame2 := data.NewFrame("frame1",
+// 		data.NewField("ts", nil, times),
+// 		data.NewField("value", data.Labels{"host": "dummy_b"}, []float64{17}),
+// 	)
+// 	frame2.Meta = &data.FrameMeta{
+// 		Type: data.FrameTypeTimeSeriesMulti,
+// 	}
+
+// 	input := data.Frames{frame1, frame2}
+
+// 	// Convert to Full Long
+// 	result, err := ConvertToFullLong(input)
+// 	require.NoError(t, err)
+// 	require.Len(t, result, 1, "Expected one frame after conversion")
+
+// 	// The result should be a TimeSeriesLong frame
+// 	require.NotNil(t, result[0].Meta, "Result frame should have metadata")
+// 	require.Equal(t, data.FrameTypeTimeSeriesLong, result[0].Meta.Type, "Result should be TimeSeriesLong type")
+
+// 	// Verify we have the expected fields
+// 	require.GreaterOrEqual(t, len(result[0].Fields), 4, "Expected at least 4 fields in result")
+
+// 	// Find the sparse_label field
+// 	var sparseLabelField *data.Field
+// 	for _, field := range result[0].Fields {
+// 		if field.Name == "sparse_label" {
+// 			sparseLabelField = field
+// 			break
+// 		}
+// 	}
+
+// 	require.NotNil(t, sparseLabelField, "Could not find sparse_label field in result")
+
+// 	// Check that one row has the sparse label value and the other doesn't
+// 	hasLabelValue := false
+// 	hasEmptyOrNil := false
+
+// 	for i := 0; i < sparseLabelField.Len(); i++ {
+// 		val := sparseLabelField.At(i)
+// 		if val == "label_value_present" {
+// 			hasLabelValue = true
+// 		} else if val == nil || val == "" {
+// 			hasEmptyOrNil = true
+// 		}
+// 	}
+
+// 	require.True(t, hasLabelValue, "At least one row should have sparse_label value")
+// 	require.True(t, hasEmptyOrNil, "At least one row should have empty or nil sparse_label")
+// }
