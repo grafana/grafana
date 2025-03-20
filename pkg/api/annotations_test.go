@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -382,10 +381,6 @@ func TestAPI_Annotations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			// Don't need access to dashboards if annotationPermissionUpdate is enabled
-			if len(tt.featureFlags) == 0 {
-				setUpRBACGuardian(t)
-			}
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				repo := annotationstest.NewFakeAnnotationsRepo()
@@ -517,13 +512,4 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 			}
 		})
 	}
-}
-
-func setUpRBACGuardian(t *testing.T) {
-	origNewGuardian := guardian.New
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
-
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanEditValue: true, CanViewValue: true})
 }
