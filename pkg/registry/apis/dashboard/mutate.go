@@ -43,10 +43,16 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
-		// do not error here if the migrations fail - until we have all the
-		// migrations implemented, we want to be able to bypass the requirement
-		// in the validation
-		_ = migration.Migrate(v.Spec.Object, schemaversion.LATEST_VERSION)
+
+		// do not error here if the migrations fail
+		err = migration.Migrate(v.Spec.Object, schemaversion.LATEST_VERSION)
+		if err != nil {
+			v.Status.Conversion = &dashboardV1.DashboardConversionStatus{
+				Failed: true,
+				Error:  err.Error(),
+			}
+		}
+
 	case *dashboardV2.Dashboard:
 		// Noop for V2
 	default:
