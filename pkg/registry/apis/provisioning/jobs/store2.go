@@ -143,8 +143,9 @@ func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback fun
 		}
 		job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
 
-		// TODO: Assumption: the resource version will be updated for us here.
-		// TODO: Assumption: Unified Storage has properly implemented resource versions.
+		// This relies on the resource version being updated for us.
+		// If the resource version we pass in via the current job is not the same as the one currently in the store, it will fail with Conflict.
+		// This is the desired behavior, as it ensures that claims are atomic.
 		updated, _, err := s.jobStore.Update(ctx,
 			job.GetName(),                       // name
 			rest.DefaultUpdatedObjectInfo(&job), // objInfo
@@ -153,8 +154,7 @@ func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback fun
 			false,                               // forceAllowCreate
 			&metav1.UpdateOptions{},             // options
 		)
-		if apierrors.IsConflict(err) || // TODO: Assumption: Unified Storage has properly implemented conflicts on updates.
-			errors.Is(err, errWouldCreate) {
+		if apierrors.IsConflict(err) || errors.Is(err, errWouldCreate) {
 			// On conflict: another worker claimed the job before us.
 			// On would create: the job was completed and deleted before we could claim it.
 			// We'll just move on to the next job.
@@ -194,7 +194,6 @@ func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback fun
 			// Rollback the claim.
 			delete(refetchedJob.Labels, LabelJobClaim)
 
-			// TODO: Assumption: the resource version will be updated for us here.
 			timeoutCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
 			_, _, err = s.jobStore.Update(timeoutCtx,
 				refetchedJob.GetName(),                      // name
@@ -354,8 +353,6 @@ func (s *store2) cleanupClaims(ctx context.Context) error {
 		delete(job.Labels, LabelJobClaim)
 		job.Status.State = provisioning.JobStatePending
 
-		// TODO: Assumption: the resource version will be updated for us here.
-		// TODO: Assumption: Unified Storage has properly implemented resource versions.
 		timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		_, _, err := s.jobStore.Update(timeoutCtx,
 			job.GetName(),                       // name
@@ -365,9 +362,8 @@ func (s *store2) cleanupClaims(ctx context.Context) error {
 			false,                               // forceAllowCreate
 			&metav1.UpdateOptions{},             // options
 		)
-		cancel()                        // we have no response body to read, so just cancel immediately
-		if apierrors.IsConflict(err) || // TODO: Assumption: Unified Storage has properly implemented conflicts on updates.
-			errors.Is(err, errWouldCreate) {
+		cancel() // we have no response body to read, so just cancel immediately
+		if apierrors.IsConflict(err) || errors.Is(err, errWouldCreate) {
 			continue
 		}
 		if err != nil {

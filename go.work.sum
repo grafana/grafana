@@ -1008,6 +1008,7 @@ github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e74
 github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d/go.mod h1:HQprw3MmiYj5OUV9CZnkwA1FKDZBmYACuAB3oDvUOmI=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d/go.mod h1:DjJe5osrW/BKrzN9hAAOSElNWutj1bcriExa7iDP7kA=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d/go.mod h1:1sq0guad+G4SUTlBgx7SXfhnzy7D86K/LcVOtiQCiMA=
+github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a/go.mod h1:K/fP4kODJmABug5b90PhACUZD6Xh/veEz2b1VRKNyuA=
 github.com/grafana/grafana/pkg/build v0.0.0-20250220114259-be81314e2118/go.mod h1:STVpVboMYeBAfyn6Zw6XHhTHqUxzMy7pzRiVgk1l0W0=
 github.com/grafana/grafana/pkg/build v0.0.0-20250227105625-8f465f124924/go.mod h1:Vw0LdoMma64VgIMVpRY3i0D156jddgUGjTQBOcyeF3k=
 github.com/grafana/grafana/pkg/build v0.0.0-20250227163402-d78c646f93bb/go.mod h1:Vw0LdoMma64VgIMVpRY3i0D156jddgUGjTQBOcyeF3k=
