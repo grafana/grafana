@@ -5,6 +5,13 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
+  push:
+    branches:
+      - main
+      - release-*.*.*
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
