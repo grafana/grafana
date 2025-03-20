@@ -280,11 +280,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 
-	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
-		storage[dashboards.StoragePath("restore")] = NewRestoreConnector(b.unified, gr)
-		storage[dashboards.StoragePath("latest")] = NewLatestConnector(b.unified, gr)
-	}
-
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 		storage[dashboards.StoragePath()].(rest.Getter),
