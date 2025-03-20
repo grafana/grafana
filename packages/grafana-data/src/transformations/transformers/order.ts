@@ -11,6 +11,17 @@ export interface OrderFieldsTransformerOptions {
   indexByName: Record<string, number>;
 }
 
+export enum FieldOrdering {
+  Manual = 'manual',
+  Auto = 'auto',
+}
+
+export enum Order {
+  Off = 'off',
+  Asc = 'asc',
+  Desc = 'desc',
+}
+
 export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerOptions> = {
   id: DataTransformerID.order,
   name: 'Order fields by name',
