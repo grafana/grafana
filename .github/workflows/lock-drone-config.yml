@@ -1,0 +1,62 @@
+name: Protect drone.yml
+
+on:
+  pull_request:
+    paths:
+      - ".drone.yml"
+
+permissions:
+  pull-requests: read
+  contents: read
+  checks: write
+
+jobs:
+  enforce-protection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR author or approver's team membership
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const allowedTeam = "grafana-maintainers"; // Change to your team slug
+            const org = context.repo.owner;
+            const prNumber = context.payload.pull_request.number;
+            const prAuthor = context.payload.pull_request.user.login;
+
+            console.log(`Checking PR author: ${prAuthor}`);
+
+            // Fetch team members
+            const { data: teamMembers } = await github.rest.teams.listMembersInOrg({
+              org: org,
+              team_slug: allowedTeam,
+            });
+
+            const allowedUsers = teamMembers.map(member => member.login);
+            
+            if (allowedUsers.includes(prAuthor)) {
+              console.log(`✅ PR author ${prAuthor} is authorized.`);
+              return;
+            }
+
+            console.log(`❌ PR author ${prAuthor} is NOT authorized. Checking reviewers...`);
+
+            // Fetch approved reviews
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: org,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            const approvingUsers = reviews
+              .filter(review => review.state === "APPROVED")
+              .map(review => review.user.login);
+
+            if (approvingUsers.some(user => allowedUsers.includes(user))) {
+              console.log(`✅ PR has an approval from an authorized reviewer.`);
+              return;
+            }
+
+            console.log(`❌ No authorized approvers found. Blocking PR.`);
+            process.exit(1);
+
