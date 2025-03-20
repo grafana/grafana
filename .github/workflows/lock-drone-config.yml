@@ -19,7 +19,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const allowedTeam = "grafana-maintainers"; // Change to your team slug
+            const allowedTeam = "grafana-developer-enablement-squad";
             const org = context.repo.owner;
             const prNumber = context.payload.pull_request.number;
             const prAuthor = context.payload.pull_request.user.login;
