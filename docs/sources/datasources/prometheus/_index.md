@@ -80,22 +80,28 @@ refs:
 
 # Prometheus data source
 
-Prometheus is an open-source database that uses a telemetry collector agent to scrape and store metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?](ref:intro-to-prometheus).
+Prometheus is an open source database that uses a telemetry collector agent to scrape and store metrics used for monitoring and alerting. Grafana provides native support for Prometheus. If you are just getting started with Prometheus, see [What is Prometheus?](ref:intro-to-prometheus).
 
-Grafana provides native support for Prometheus.
+{{% admonition type="tip" %}}
 For instructions on downloading Prometheus see [Get started with Grafana and Prometheus](ref:get-started-prometheus).
+
+If you’re ready to start visualizing your metrics, check out our Prometheus Learning Journeys:
+
+- [Connect to a Prometheus data source in Grafana Cloud](https://www.grafana.com/docs/learning-journeys/prometheus/) to visualize your metrics directly from where they are stored.
+- [Send metrics to Grafana Cloud using Prometheus remote write](https://www.grafana.com/docs/learning-journeys/prom-remote-write/) to explore Grafana Cloud without making significant changes to your existing configuration.
+  {{% /admonition %}}
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:administration-documentation).
 Only users with the organization `administrator` role can add data sources and edit existing data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Prometheus data source, you can [configure it](ref:configure-prometheus-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards](ref:build-dashboards), use [Explore](ref:explore), and [annotate visualizations](ref:annotate-visualizations).
+Once you've added the Prometheus data source, you can [configure it](ref:configure-prometheus-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards), use [Explore](ref:explore), and [annotate visualizations](ref:annotate-visualizations).
 
 The following guides will help you get started with the Prometheus data source:
 
 - [Configure the Prometheus data source](ref:configure-prometheus-data-source)
-- [Prometheus query editor]({{< relref "./query-editor" >}})
-- [Template variables]({{< relref "./template-variables" >}})
+- [Prometheus query editor](query-editor/)
+- [Template variables](template-variables/)
 
 ## Prometheus API
 

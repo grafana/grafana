@@ -18,7 +18,7 @@ title: Folder HTTP API
 
 # Folder API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Identifier (id) vs unique identifier (uid)
 
@@ -40,7 +40,7 @@ that the authenticated user has permission to view.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+See note in the [introduction](#folder-api) for an explanation.
 
 | Action         | Scope       |
 | -------------- | ----------- |
@@ -83,7 +83,7 @@ Will return the folder given the folder uid.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+See note in the [introduction](#folder-api) for an explanation.
 
 | Action         | Scope       |
 | -------------- | ----------- |
@@ -141,7 +141,7 @@ Creates a new folder.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+See note in the [introduction](#folder-api) for an explanation.
 
 `folders:create` allows creating folders and subfolders. If granted with scope `folders:uid:general`, allows creating root level folders. Otherwise, allows creating subfolders under the specified folders.
 
@@ -167,7 +167,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **uid** – Optional [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
+- **uid** – Optional [unique identifier](#identifier-id-vs-unique-identifier-uid).
 - **title** – The title of the folder.
 - **parentUid** - Optional field, the unique identifier of the parent folder under which the folder should be created. Requires nested folders to be enabled.
 
@@ -215,7 +215,7 @@ Updates an existing folder identified by uid.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+See note in the [introduction](#folder-api) for an explanation.
 
 | Action          | Scope       |
 | --------------- | ----------- |
@@ -302,11 +302,11 @@ Content-Length: 97
 
 Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
 
-If [Grafana Alerting]({{< relref "/docs/grafana/latest/alerting" >}}) is enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana alerts. However, if this parameter is set to `true` then it will delete any Grafana alerts under this folder.
+If [Grafana Alerting](/docs/grafana/latest/alerting/) is enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana alerts. However, if this parameter is set to `true` then it will delete any Grafana alerts under this folder.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+See note in the [introduction](#folder-api) for an explanation.
 
 | Action           | Scope       |
 | ---------------- | ----------- |
@@ -352,7 +352,7 @@ This is relevant only if nested folders are enabled.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+See note in the [introduction](#folder-api) for an explanation.
 
 If moving the folder under another folder:
 
@@ -367,7 +367,7 @@ If moving the folder under root:
 
 JSON body schema:
 
-- **parentUid** – Optional [unique identifier]({{< relref "#identifier-id-vs-unique-identifier-uid" >}}) of the new parent folder. If this is empty, then the folder is moved under the root.
+- **parentUid** – Optional [unique identifier](#identifier-id-vs-unique-identifier-uid) of the new parent folder. If this is empty, then the folder is moved under the root.
 
 **Example Request**:
 

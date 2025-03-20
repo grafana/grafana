@@ -23,9 +23,9 @@ title: Datasource Permissions HTTP API
 
 # Data Source Permissions API
 
-> The Data Source Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
+> The Data Source Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise](/docs/grafana/latest/introduction/grafana-enterprise/).
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 This API can be used to list, add and remove permissions for a data source.
 
@@ -39,7 +39,7 @@ Gets all existing permissions for the data source with the given `uid`.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+See note in the [introduction](#data-source-permissions-api) for an explanation.
 
 | Action                       | Scope                                                                                      |
 | ---------------------------- | ------------------------------------------------------------------------------------------ |
@@ -134,7 +134,7 @@ To remove a permission, set the `permission` field to an empty string.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+See note in the [introduction](#data-source-permissions-api) for an explanation.
 
 | Action                        | Scope                                                                                      |
 | ----------------------------- | ------------------------------------------------------------------------------------------ |
@@ -206,7 +206,7 @@ To remove a permission, set the `permission` field to an empty string.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+See note in the [introduction](#data-source-permissions-api) for an explanation.
 
 | Action                        | Scope                                                                                      |
 | ----------------------------- | ------------------------------------------------------------------------------------------ |
@@ -280,7 +280,7 @@ To remove a permission, set the `permission` field to an empty string.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+See note in the [introduction](#data-source-permissions-api) for an explanation.
 
 | Action                        | Scope                                                                                      |
 | ----------------------------- | ------------------------------------------------------------------------------------------ |
