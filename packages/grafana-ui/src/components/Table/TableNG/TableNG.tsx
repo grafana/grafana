@@ -616,6 +616,7 @@ export function mapFrameToDataGrid({
       cellClass: styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
         const { row, rowIdx } = props;
+        const cellType = field.config?.custom?.cellOptions.type;
         const value = row[key];
         // Cell level rendering here
         return (
@@ -640,7 +641,8 @@ export function mapFrameToDataGrid({
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
                 textWrap,
-                cellInspect
+                cellInspect,
+                cellType
               )
             }
             setIsInspecting={setIsInspecting}
