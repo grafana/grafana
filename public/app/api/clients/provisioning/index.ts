@@ -29,7 +29,9 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
         url: `/historicjobs`,
         params: queryArg,
       });
-      endpoint.onCacheEntryAdded = createOnCacheEntryAdded<JobSpec, JobStatus, HistoricJob, HistoricJobList>('historicjobs');
+      endpoint.onCacheEntryAdded = createOnCacheEntryAdded<JobSpec, JobStatus, HistoricJob, HistoricJobList>(
+        'historicjobs'
+      );
     },
     listRepository(endpoint) {
       endpoint.query = ({ watch, ...queryArg }) => ({

@@ -196,14 +196,15 @@ function JobsCard({ typ, text, jobs: [jobs, query] }: JobsCardProps) {
     description = <EmptyState typ={typ} />;
   } else {
     const jobColumns = useMemo(() => getJobColumns(), []);
-    description =
+    description = (
       <InteractiveTable
         data={jobs}
         columns={jobColumns}
         getRowId={(item) => `${item.metadata?.name}`}
         renderExpandedRow={(row) => <ExpandedRow row={row} />}
         pageSize={10}
-      />;
+      />
+    );
   }
   return (
     <Card>
@@ -218,7 +219,7 @@ export function RecentJobs({ repo }: Props) {
   //   Gut feeling is that current jobs are far more important to show than historic ones.
 
   return (
-    <Stack direction={"column"} gap={1}>
+    <Stack direction={'column'} gap={1}>
       <JobsCard
         typ="active jobs"
         text="Active jobs"
