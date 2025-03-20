@@ -271,6 +271,8 @@ func (s *store2) UpdateStatus(ctx context.Context, job *provisioning.Job) (*prov
 // Complete marks a job as completed and moves it to the historic job store.
 // When in the historic store, there is no more claim on the job.
 func (s *store2) Complete(ctx context.Context, job *provisioning.Job) error {
+	logger := logging.FromContext(ctx).With("namespace", job.GetNamespace(), "job", job.GetName())
+
 	// We need to delete the job from the job store and create it in the historic job store.
 	// We are fine with the job being lost if the historic job store fails to create it.
 	//
@@ -280,6 +282,7 @@ func (s *store2) Complete(ctx context.Context, job *provisioning.Job) error {
 	if err != nil {
 		return apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
+	logger.Debug("deleted job from job store")
 
 	// We need to remove the claim label before moving the job to the historic job store.
 	if job.Labels == nil {
@@ -303,9 +306,11 @@ func (s *store2) Complete(ctx context.Context, job *provisioning.Job) error {
 	historic, err := s.historicJobStore.Create(ctx, historicJob, nil, &metav1.CreateOptions{})
 	if err != nil {
 		// We're not going to return this as it is not critical. Not ideal, but not critical.
-		logging.FromContext(ctx).Warn("failed to create historic job", "historic_job", *historicJob, "error", err)
+		logger.Warn("failed to create historic job", "historic_job", *historicJob, "error", err)
 		return nil
 	}
+	logger.Debug("created historic job", "historic_job", *historicJob)
+
 	if hj, ok := historic.(*provisioning.HistoricJob); ok {
 		hj.Status = job.Status
 		_, _, err = s.historicJobStatusStore.Update(ctx,
@@ -320,8 +325,11 @@ func (s *store2) Complete(ctx context.Context, job *provisioning.Job) error {
 			// We're not going to return this as it is not critical. Not ideal, but not critical.
 			logging.FromContext(ctx).Warn("failed to update historic job status", "historic_job", *hj, "error", err)
 		}
+
+		logger.Debug("updated historic job's status", "hj", *hj)
 	}
 
+	logger.Debug("job completion done")
 	return nil
 }
 

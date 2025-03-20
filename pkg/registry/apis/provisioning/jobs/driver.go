@@ -164,6 +164,7 @@ func (d *jobDriver) drive(ctx context.Context) error {
 	if err := d.store.Complete(ctx, job); err != nil {
 		return apifmt.Errorf("failed to complete job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
+	logger.Debug("job completed")
 
 	return nil
 }

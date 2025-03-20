@@ -26,6 +26,7 @@ import (
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -44,6 +45,7 @@ type provisioningTestHelper struct {
 
 	Repositories *apis.K8sResourceClient
 	Jobs         *apis.K8sResourceClient
+	HistoricJobs *apis.K8sResourceClient
 	Folders      *apis.K8sResourceClient
 	Dashboards   *apis.K8sResourceClient
 	AdminREST    *rest.RESTClient
@@ -52,36 +54,58 @@ type provisioningTestHelper struct {
 
 func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, jobName string) {
 	t.Helper()
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		job, err := h.Jobs.Resource.Get(ctx, jobName, metav1.GetOptions{})
-		if assert.NoError(collect, err) {
-			state, _, err := unstructured.NestedString(job.Object, "status", "state")
+	if !assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+		jobs, err := h.HistoricJobs.Resource.List(ctx, metav1.ListOptions{
+			LabelSelector: jobs.LabelJobOriginalName + "=" + jobName,
+		})
+		if assert.NoError(collect, err) && assert.NotEmpty(collect, jobs.Items, "no historic jobs found yet") {
+			for _, job := range jobs.Items {
+				state, _, err := unstructured.NestedString(job.Object, "status", "state")
 
-			assert.NoError(collect, err)
-			require.NotEqual(t, string(provisioning.JobStateError), state, "job failed: %v", job.Object) // use t here: fail fast on errors.
-			assert.Equal(collect, string(provisioning.JobStateSuccess), state)                           // use collect here: continue to check if the job is working on syncing.
+				// We can fail fast once the job is here: HistoricJobs are immutable.
+				require.NoError(t, err, "historic job '%s' has no state?", jobName)
+				require.Equal(t, string(provisioning.JobStateSuccess), state, "historic job '%s' was not successful", jobName)
+			}
 		}
-	}, time.Second*5, time.Millisecond*20)
+	}, time.Second*5, time.Millisecond*20) {
+		// We also want to add the job details to the error when it fails.
+		job, err := h.Jobs.Resource.Get(ctx, jobName, metav1.GetOptions{})
+		if err != nil {
+			t.Logf("failed to get job details for further help: %v", err)
+		} else {
+			t.Logf("job details: %+v", job.Object)
+		}
+		t.FailNow()
+	}
 }
 
 func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 	t.Helper()
+
+	// First, we wait for all jobs for the repository to disappear (i.e. complete/fail).
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		list, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
-		if assert.NoError(collect, err) {
+		if assert.NoError(collect, err, "failed to list active jobs") {
 			for _, elem := range list.Items {
-				state := mustNestedString(elem.Object, "status", "state")
+				// TODO: Use the spec field of the job.
 				if elem.GetLabels()["repository"] == repoName {
-					if state == string(provisioning.JobStateSuccess) {
-						continue // doesn't matter
-					}
-					require.NotEqual(t, provisioning.JobStateError, state, "no jobs may error, but %s did", elem.GetName())
-					collect.Errorf("there are still remaining github-example jobs: %v", elem)
+					collect.Errorf("there are still remaining jobs for %s: %+v", repoName, elem)
 					return
 				}
 			}
 		}
 	}, time.Second*5, time.Millisecond*20)
+
+	// Then, as all jobs are now historic jobs, we make sure they are successful.
+	list, err := h.HistoricJobs.Resource.List(context.Background(), metav1.ListOptions{})
+	require.NoError(t, err, "failed to list historic jobs")
+
+	for _, elem := range list.Items {
+		// TODO: Use the spec field of the job.
+		if elem.GetLabels()["repository"] == repoName {
+			require.Equal(t, string(provisioning.JobStateSuccess), mustNestedString(elem.Object, "status", "state"), "job %s failed: %+v", elem.GetName(), elem.Object)
+		}
+	}
 }
 
 // RenderObject reads the filePath and renders it as a template with the given values.
@@ -178,6 +202,11 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Namespace: "default", // actually org1
 		GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
 	})
+	historicJobs := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR:       provisioning.HistoricJobResourceInfo.GroupVersionResource(),
+	})
 	folders := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
@@ -224,6 +253,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		AdminREST:    restClient,
 		ViewerREST:   viewerClient,
 		Jobs:         jobs,
+		HistoricJobs: historicJobs,
 		Folders:      folders,
 		Dashboards:   dashboards,
 	}
