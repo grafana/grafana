@@ -692,9 +692,6 @@ func (m *MockClient) Update(ctx context.Context, in *resource.UpdateRequest, opt
 func (m *MockClient) Read(ctx context.Context, in *resource.ReadRequest, opts ...grpc.CallOption) (*resource.ReadResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) Restore(ctx context.Context, in *resource.RestoreRequest, opts ...grpc.CallOption) (*resource.RestoreResponse, error) {
-	return nil, nil
-}
 func (m *MockClient) GetBlob(ctx context.Context, in *resource.GetBlobRequest, opts ...grpc.CallOption) (*resource.GetBlobResponse, error) {
 	return nil, nil
 }

@@ -2406,18 +2406,6 @@
     },
     {
       "metadata": {
-        "name": "kubernetesRestore",
-        "resourceVersion": "1735880498698",
-        "creationTimestamp": "2025-01-03T14:48:47Z"
-      },
-      "spec": {
-        "description": "Allow restoring objects in k8s",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad"
-      }
-    },
-    {
-      "metadata": {
         "name": "kubernetesSnapshots",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-12-05T22:31:49Z"
