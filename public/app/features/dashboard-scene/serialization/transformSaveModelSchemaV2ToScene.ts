@@ -48,6 +48,7 @@ import {
   AnnoKeyDashboardIsSnapshot,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
+import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardMeta } from 'app/types';
 
@@ -64,6 +65,7 @@ import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { layoutSerializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
+import { geVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
@@ -292,7 +294,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       value: variable.spec.current?.value ?? '',
       text: variable.spec.current?.text ?? '',
       query: getDataQueryForVariable(variable),
-      datasource: variable.spec.datasource,
+      datasource: geVariableDataSource(variable),
       sort: transformSortVariableToEnumV1(variable.spec.sort),
       refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
       regex: variable.spec.regex,
