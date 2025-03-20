@@ -59,7 +59,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "non-existent-value")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "could not get secure value")
+		require.Equal(t, err.Error(), "not found")
 		require.Empty(t, exposed)
 	})
 
@@ -93,7 +93,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unauthorized to decrypt")
+		require.Equal(t, err.Error(), "not authorized")
 		require.Empty(t, exposed)
 	})
 
@@ -158,7 +158,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unauthorized to decrypt")
+		require.Equal(t, err.Error(), "not authorized")
 		require.Empty(t, exposed)
 	})
 
@@ -189,7 +189,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unauthorized to decrypt")
+		require.Equal(t, err.Error(), "not authorized")
 		require.Empty(t, exposed)
 	})
 
@@ -220,7 +220,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unauthorized to decrypt")
+		require.Equal(t, err.Error(), "not authorized")
 		require.Empty(t, exposed)
 	})
 
@@ -251,7 +251,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unauthorized to decrypt")
+		require.Equal(t, err.Error(), "not authorized")
 		require.Empty(t, exposed)
 	})
 
