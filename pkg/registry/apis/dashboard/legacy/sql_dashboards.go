@@ -428,6 +428,11 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 		return nil, created, err
 	}
 
+	// Run the conversion at read time
+	if dash.Status.Conversion.Failed {
+		apiVersion = "v0alpha1"
+	}
+
 	return &dashboards.SaveDashboardCommand{
 		OrgID:      orgId,
 		Message:    meta.GetMessage(),
