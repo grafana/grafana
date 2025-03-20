@@ -218,7 +218,7 @@ func (s *JWT) extractGroups(claims map[string]any) ([]string, error) {
 	return util.SearchJSONForStringSliceAttr(s.cfg.JWTAuth.GroupsAttributePath, claims)
 }
 
-// This code was copied from the social_base.go file
+// This code was copied from the social_base.go file and was adapted to match with the JWT structure
 func (s *JWT) extractOrgs(claims map[string]any) ([]string, error) {
 	if s.cfg.JWTAuth.OrgAttributePath == "" {
 		return []string{}, nil
