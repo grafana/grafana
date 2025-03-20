@@ -175,6 +175,7 @@ func TestAuthenticateJWT(t *testing.T) {
 					"name":               "Eai Doe",
 					"roles":              "None",
 					"groups":             []string{"foo", "bar"},
+					"orgs":               []string{"org1", "org2"},
 				}, nil
 			},
 			cfg: &setting.Cfg{
@@ -188,7 +189,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					RoleAttributeStrict:     true,
 					RoleAttributePath:       "roles",
 					GroupsAttributePath:     "groups[]",
-					OrgMapping:              []string{"foo:Org4:Editor", "bar:Org5:Viewer"},
+					OrgAttributePath:        "orgs[]",
+					OrgMapping:              []string{"org1:Org4:Editor", "org2:Org5:Viewer"},
 				},
 			},
 		},
@@ -228,6 +230,7 @@ func TestAuthenticateJWT(t *testing.T) {
 					"name":               "Eai Doe",
 					"roles":              []string{"Invalid"},
 					"groups":             []string{"foo", "bar"},
+					"orgs":               []string{"org1", "org2"},
 				}, nil
 			},
 			cfg: &setting.Cfg{
@@ -241,7 +244,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					RoleAttributeStrict:     true,
 					RoleAttributePath:       "roles",
 					GroupsAttributePath:     "groups[]",
-					OrgMapping:              []string{"foo:Org4:Editor", "bar:Org5:Viewer"},
+					OrgAttributePath:        "orgs[]",
+					OrgMapping:              []string{"org1:Org4:Editor", "org2:Org5:Viewer"},
 				},
 			},
 		},
