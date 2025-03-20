@@ -8,7 +8,6 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -101,14 +100,6 @@ func TestByteLimitedTransport_RoundTrip(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestByteLimitedTransport_NewReceivePackSession(t *testing.T) {
-	blt := NewByteLimitedTransport(nil, 1000)
-	session, err := blt.NewReceivePackSession(&transport.Endpoint{}, nil)
-	assert.Error(t, err)
-	assert.Nil(t, session)
-	assert.Contains(t, err.Error(), "receive pack not supported")
 }
 
 func TestByteLimitedReader_Close(t *testing.T) {

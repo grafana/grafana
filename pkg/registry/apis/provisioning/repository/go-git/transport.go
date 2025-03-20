@@ -5,8 +5,6 @@ import (
 	"io"
 	"net/http"
 	"sync/atomic"
-
-	"github.com/go-git/go-git/v5/plumbing/transport"
 )
 
 var errBytesLimitExceeded = fmt.Errorf("bytes limit exceeded")
@@ -70,9 +68,4 @@ func (r *byteLimitedReader) Read(p []byte) (int, error) {
 
 func (r *byteLimitedReader) Close() error {
 	return r.reader.Close()
-}
-
-// NewReceivePackSession implements transport.Transport
-func (b *ByteLimitedTransport) NewReceivePackSession(ep *transport.Endpoint, auth transport.AuthMethod) (transport.ReceivePackSession, error) {
-	return nil, fmt.Errorf("receive pack not supported")
 }
