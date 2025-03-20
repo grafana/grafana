@@ -119,8 +119,7 @@ func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
 
 								clean := sqltemplate.RemoveEmptyLines(got)
 
-								// TODO LND revert this change
-								update := true
+								update := false
 								fname := fmt.Sprintf("%s--%s-%s.sql", dialect.DialectName(), tname, input.Name)
 								fpath := filepath.Join(setup.RootDir, fname)
 

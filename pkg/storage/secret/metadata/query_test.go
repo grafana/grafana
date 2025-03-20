@@ -84,6 +84,27 @@ func TestKeeperQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlKeeperListByName: {
+				{
+					Name: "list",
+					Data: listByNameKeeper{
+						SQLTemplate:       mocks.NewTestingSQLTemplate(),
+						Namespace:         "ns",
+						KeeperNames:       []string{"a", "b"},
+						ExcludeKeeperType: "sql",
+					},
+				},
+			},
+			sqlSecureValueListByName: {
+				{
+					Name: "list",
+					Data: listByNameSecureValue{
+						SQLTemplate:      mocks.NewTestingSQLTemplate(),
+						Namespace:        "ns",
+						UsedSecureValues: []string{"a", "b"},
+					},
+				},
+			},
 		},
 	})
 }
