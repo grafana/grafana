@@ -2450,6 +2450,121 @@ describe('when migrating time_options in timepicker', () => {
   });
 });
 
+describe('when migrating table panels at schema version 24', () => {
+  let model: DashboardModel;
+
+  beforeEach(() => {
+    config.featureToggles.autoMigrateOldPanels = true;
+  });
+
+  afterEach(() => {
+    config.featureToggles.autoMigrateOldPanels = false;
+    model = new DashboardModel({
+      panels: [],
+      schemaVersion: 23,
+    });
+  });
+
+  it('should migrate Angular table to table and set autoMigrateFrom', () => {
+    model = new DashboardModel({
+      panels: [
+        {
+          id: 1,
+          type: 'table',
+          // @ts-expect-error
+          legend: true,
+          styles: [{ thresholds: ['10', '20', '30'] }, { thresholds: ['100', '200', '300'] }],
+          targets: [{ refId: 'A' }, {}],
+        },
+      ],
+      schemaVersion: 23,
+    });
+
+    // Verify the panel was migrated to table, yes this is intentional
+    // when autoMigrateOldPanels is enabled, we should migrate to table
+    // and add the autoMigrateFrom property
+    expect(model.panels[0].type).toBe('table');
+    // Verify autoMigrateFrom was set
+    expect(model.panels[0].autoMigrateFrom).toBe('table-old');
+  });
+
+  it('should  migrate Angular table to table-old when autoMigrateOldPanels is disabled ', () => {
+    config.featureToggles.autoMigrateOldPanels = false;
+    model = new DashboardModel({
+      panels: [
+        {
+          id: 1,
+          type: 'table',
+          // @ts-expect-error
+          legend: true,
+          styles: [{ thresholds: ['10', '20', '30'] }, { thresholds: ['100', '200', '300'] }],
+          targets: [{ refId: 'A' }, {}],
+        },
+      ],
+      schemaVersion: 23,
+    });
+
+    // Verify the panel was migrated to table, yes this is intentional
+    // when autoMigrateOldPanels is enabled, we should migrate to table
+    // and add the autoMigrateFrom property
+    expect(model.panels[0].type).toBe('table-old');
+    // Verify autoMigrateFrom was set
+    expect(model.panels[0].autoMigrateFrom).toBe(undefined);
+  });
+
+  it('should not migrate Angular table without styles', () => {
+    model = new DashboardModel({
+      panels: [
+        {
+          id: 1,
+          type: 'table',
+          // No styles property
+        },
+      ],
+      schemaVersion: 23,
+    });
+
+    // Verify the panel was not migrated
+    expect(model.panels[0].type).toBe('table');
+    expect(model.panels[0].autoMigrateFrom).toBeUndefined();
+  });
+
+  it('should not migrate React table (table2)', () => {
+    model = new DashboardModel({
+      panels: [
+        {
+          id: 1,
+          type: 'table2',
+        },
+      ],
+      schemaVersion: 23,
+    });
+
+    // Verify the panel was not migrated
+    expect(model.panels[0].type).toBe('table2');
+    expect(model.panels[0].autoMigrateFrom).toBeUndefined();
+  });
+
+  it('should not migrate non-table panels when autoMigrateOldPanels is disabled', () => {
+    // disable autoMigrateOldPanels
+    config.featureToggles.autoMigrateOldPanels = false;
+    model = new DashboardModel({
+      panels: [
+        {
+          id: 1,
+          type: 'grafana-worldmap-panel',
+          title: 'world map panel',
+        },
+      ],
+      schemaVersion: 23,
+    });
+
+    // Verify the panel was not migrated
+    expect(model.panels[0].type).toBe('grafana-worldmap-panel');
+    expect(model.panels[0].autoMigrateFrom).toBeUndefined();
+  });
+});
+
 function createRow(options: any, panelDescriptions: any[]) {
   const PANEL_HEIGHT_STEP = GRID_CELL_HEIGHT + GRID_CELL_VMARGIN;
   const { collapse, showTitle, title, repeat, repeatIteration } = options;
