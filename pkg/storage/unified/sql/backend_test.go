@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
@@ -455,4 +456,132 @@ func TestBackend_restore(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "update history uid")
 	})
+}
+
+func TestBackend_getHistory(t *testing.T) {
+	t.Parallel()
+
+	// Common setup
+	key := &resource.ResourceKey{
+		Namespace: "ns",
+		Group:     "gr",
+		Resource:  "rs",
+		Name:      "nm",
+	}
+	rv1, rv2, rv3 := int64(100), int64(200), int64(300)
+	cols := []string{"resource_version", "namespace", "name", "folder", "value"}
+
+	tests := []struct {
+		name              string
+		versionMatch      resource.ResourceVersionMatch
+		resourceVersion   int64
+		expectedVersions  []int64
+		expectedListRv    int64
+		expectedRowsCount int
+		expectedErr       string
+	}{
+		{
+			name:              "with ResourceVersionMatch_NotOlderThan",
+			versionMatch:      resource.ResourceVersionMatch_NotOlderThan,
+			resourceVersion:   rv2,
+			expectedVersions:  []int64{rv3, rv2},
+			expectedListRv:    rv3,
+			expectedRowsCount: 2,
+		},
+		{
+			name:              "with ResourceVersionMatch_Exact",
+			versionMatch:      resource.ResourceVersionMatch_Exact,
+			resourceVersion:   rv2,
+			expectedVersions:  []int64{rv2},
+			expectedListRv:    rv3,
+			expectedRowsCount: 1,
+		},
+		{
+			name:              "without version matcher",
+			versionMatch:      resource.ResourceVersionMatch_NotOlderThan,
+			expectedVersions:  []int64{rv3, rv2, rv1},
+			expectedListRv:    rv3,
+			expectedRowsCount: 3,
+		},
+		{
+			name:            "error with ResourceVersionMatch_Exact and ResourceVersion <= 0",
+			versionMatch:    resource.ResourceVersionMatch_Exact,
+			resourceVersion: 0,
+			expectedErr:     "expecting an explicit resource version query when using Exact matching",
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			b, ctx := setupBackendTest(t)
+
+			// Build request with appropriate matcher
+			req := &resource.ListRequest{
+				Options:         &resource.ListOptions{Key: key},
+				ResourceVersion: tc.resourceVersion,
+				VersionMatch:    tc.versionMatch,
+				Source:          resource.ListRequest_HISTORY,
+			}
+
+			// Set up mock expectations only if we don't expect an error
+			if tc.expectedErr == "" {
+				// Build expected values map
+				expectedValues := make(map[int64]string)
+				for _, rv := range tc.expectedVersions {
+					expectedValues[rv] = fmt.Sprintf("rv-%d", rv)
+				}
+
+				// Callback that tracks returned items
+				callback := func(iter resource.ListIterator) error {
+					count := 0
+					for iter.Next() {
+						count++
+						currentRV := iter.ResourceVersion()
+						expectedValue, ok := expectedValues[currentRV]
+						require.True(t, ok, "Got unexpected RV: %d", currentRV)
+						require.Equal(t, expectedValue, string(iter.Value()))
+					}
+					require.Equal(t, tc.expectedRowsCount, count)
+					return nil
+				}
+
+				b.SQLMock.ExpectBegin()
+
+				// Expect fetch latest RV call
+				latestRVRows := sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).
+					AddRow(rv3, 0)
+				b.SQLMock.ExpectQuery("SELECT .* FROM resource_version").WillReturnRows(latestRVRows)
+
+				// Expect history query
+				historyRows := sqlmock.NewRows(cols)
+				for _, rv := range tc.expectedVersions {
+					historyRows.AddRow(
+						rv,                               // resource_version
+						"ns",                             // namespace
+						"nm",                             // name
+						"folder",                         // folder
+						[]byte(fmt.Sprintf("rv-%d", rv)), // value
+					)
+				}
+				b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").WillReturnRows(historyRows)
+				b.SQLMock.ExpectCommit()
+
+				// Execute the test
+				listRv, err := b.getHistory(ctx, req, callback)
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedListRv, listRv)
+			} else {
+				// For error cases, we use a simple empty callback
+				callback := func(iter resource.ListIterator) error { return nil }
+
+				// Execute the test expecting an error
+				listRv, err := b.getHistory(ctx, req, callback)
+				require.Zero(t, listRv)
+				require.Error(t, err)
+				require.ErrorContains(t, err, tc.expectedErr)
+			}
+		})
+	}
 }

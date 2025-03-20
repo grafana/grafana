@@ -1998,6 +1998,8 @@ func TestFolderServiceGetFolder(t *testing.T) {
 			fldr, err := tc.svc.Get(context.Background(), &q)
 			require.NoError(t, err)
 			require.Equal(t, f.UID, fldr.UID)
+			require.Equal(t, f.CreatedBy, fldr.CreatedBy)
+			require.Equal(t, f.UpdatedBy, fldr.CreatedBy)
 
 			require.Equal(t, tc.expectedFullpath, fldr.Fullpath)
 		})
