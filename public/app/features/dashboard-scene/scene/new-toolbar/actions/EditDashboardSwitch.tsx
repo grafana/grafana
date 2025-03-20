@@ -2,8 +2,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from 'app/core/internationalization';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
-import { ToolbarSwitch } from '../ToolbarSwitch';
 import { ToolbarActionProps } from '../types';
+
+import { ToolbarSwitch } from './ToolbarSwitch';
 
 export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => (
   <ToolbarSwitch

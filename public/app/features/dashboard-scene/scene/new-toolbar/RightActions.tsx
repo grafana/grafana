@@ -14,7 +14,6 @@ import { DiscardPanelButton } from './actions/DiscardPanelButton';
 import { EditDashboardSwitch } from './actions/EditDashboardSwitch';
 import { EditSchemaV2Button } from './actions/EditSchemaV2Button';
 import { ExportDashboardButton } from './actions/ExportDashboardButton';
-import { HiddenElementsSwitch } from './actions/HiddenElementsSwitch';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
 import { PlayListNextButton } from './actions/PlayListNextButton';
 import { PlayListPreviousButton } from './actions/PlayListPreviousButton';
@@ -68,12 +67,6 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             component: PlayListNextButton,
             group: 'playlist',
             condition: showPlayButtons,
-          },
-          {
-            key: 'hidden-elements-switch',
-            component: HiddenElementsSwitch,
-            group: 'hidden-elements',
-            condition: isEditingAndShowingDashboard,
           },
           {
             key: 'back-to-dashboard-button',
