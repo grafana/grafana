@@ -105,7 +105,7 @@ func (c *renderConnector) Connect(
 				},
 			})
 		}
-	}), 60*time.Second), nil
+	}), 20*time.Second), nil
 }
 
 // validBlobID ensures the ID is valid for a blob.
