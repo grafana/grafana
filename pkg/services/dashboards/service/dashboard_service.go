@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -42,7 +43,6 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -412,14 +412,24 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if isParentFolderChanged {
-		// Check that the user is allowed to add a dashboard to the folder
-		guardian, err := guardian.NewByDashboard(ctx, dash, dto.OrgID, dto.User)
-		if err != nil {
-			return nil, err
+		if canCreate, err := dr.canCreateDashboard(ctx, dto.User, dash); err != nil || !canCreate {
+			if err != nil {
+				return nil, err
+			}
+			return nil, dashboards.ErrDashboardUpdateAccessDenied
 		}
+	}
+
+	if dash.ID == 0 {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		// nolint:staticcheck
-		if canSave, err := guardian.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canSave {
+		if canCreate, err := dr.canCreateDashboard(ctx, dto.User, dash); err != nil || !canCreate {
+			if err != nil {
+				return nil, err
+			}
+			return nil, dashboards.ErrDashboardUpdateAccessDenied
+		}
+	} else {
+		if canSave, err := dr.canSaveDashboard(ctx, dto.User, dash); err != nil || !canSave {
 			if err != nil {
 				return nil, err
 			}
@@ -435,29 +445,6 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 		if provisionedData != nil {
 			return nil, dashboards.ErrDashboardCannotSaveProvisionedDashboard
-		}
-	}
-
-	guard, err := getGuardianForSavePermissionCheck(ctx, dash, dto.User)
-	if err != nil {
-		return nil, err
-	}
-
-	if dash.ID == 0 {
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		// nolint:staticcheck
-		if canCreate, err := guard.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canCreate {
-			if err != nil {
-				return nil, err
-			}
-			return nil, dashboards.ErrDashboardUpdateAccessDenied
-		}
-	} else {
-		if canSave, err := guard.CanSave(); err != nil || !canSave {
-			if err != nil {
-				return nil, err
-			}
-			return nil, dashboards.ErrDashboardUpdateAccessDenied
 		}
 	}
 
@@ -560,11 +547,36 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 	return isParentFolderChanged, nil
 }
 
+func (dr *DashboardServiceImpl) canSaveDashboard(ctx context.Context, user identity.Requester, dash *dashboards.Dashboard) (bool, error) {
+	action := dashboards.ActionDashboardsWrite
+	if dash.IsFolder {
+		action = dashboards.ActionFoldersWrite
+	}
+	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID)
+	if dash.IsFolder {
+		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.UID)
+	}
+	return dr.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
+}
+
+func (dr *DashboardServiceImpl) canCreateDashboard(ctx context.Context, user identity.Requester, dash *dashboards.Dashboard) (bool, error) {
+	action := dashboards.ActionDashboardsCreate
+	if dash.IsFolder {
+		action = dashboards.ActionFoldersCreate
+	}
+	scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.FolderUID)
+	if dash.FolderUID == "" {
+		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
+	}
+	return dr.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
+}
+
 // waitForSearchQuery waits for the search query to return the expected number of hits.
 // Since US doesn't offer search-after-write guarantees, we can use this to wait after writes until the indexer is up to date.
 func (dr *DashboardServiceImpl) waitForSearchQuery(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, maxRetries int, expectedHits int64) error {
 	return retryer.Retry(func() (retryer.RetrySignal, error) {
 		results, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
+		dr.log.Debug("waitForSearchQuery", "dashboardUIDs", strings.Join(query.DashboardUIDs, ","), "total_hits", results.TotalHits, "err", err)
 		if err != nil {
 			return retryer.FuncError, err
 		}
@@ -594,6 +606,7 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 			if err != nil {
 				return err
 			}
+			dr.log.Debug("Found dashboards to be deleted", "orgId", org.ID, "count", len(foundDashs))
 
 			// delete them
 			var deletedUids []string
@@ -603,56 +616,18 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 				}
 				deletedUids = append(deletedUids, foundDash.DashboardUID)
 			}
-			// wait for deleted dashboards to be removed from the index
-			err = dr.waitForSearchQuery(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: org.ID, DashboardUIDs: deletedUids}, 5, 0)
-			if err != nil {
-				return err
+			if len(deletedUids) > 0 {
+				// wait for deleted dashboards to be removed from the index
+				err = dr.waitForSearchQuery(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: org.ID, DashboardUIDs: deletedUids}, 5, 0)
+				if err != nil {
+					return err
+				}
 			}
 		}
 		return nil
 	}
 
 	return dr.dashboardStore.DeleteOrphanedProvisionedDashboards(ctx, cmd)
-}
-
-// getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
-// It replaces deleted Dashboard.GetDashboardIdForSavePermissionCheck()
-func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user identity.Requester) (guardian.DashboardGuardian, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.service.getGuardianForSavePermissionCheck")
-	defer span.End()
-
-	newDashboard := d.ID == 0
-
-	if newDashboard {
-		// if it's a new dashboard/folder check the parent folder permissions
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		guard, err := guardian.NewByFolder(ctx, &folder.Folder{
-			ID:    d.FolderID, // nolint:staticcheck
-			OrgID: d.OrgID,
-		}, d.OrgID, user)
-		if err != nil {
-			return nil, err
-		}
-		return guard, nil
-	}
-
-	if d.IsFolder {
-		guard, err := guardian.NewByFolder(ctx, &folder.Folder{
-			ID:    d.ID, // nolint:staticcheck
-			UID:   d.UID,
-			OrgID: d.OrgID,
-		}, d.OrgID, user)
-		if err != nil {
-			return nil, err
-		}
-		return guard, nil
-	}
-
-	guard, err := guardian.NewByDashboard(ctx, d, d.OrgID, user)
-	if err != nil {
-		return nil, err
-	}
-	return guard, nil
 }
 
 func validateDashboardRefreshInterval(minRefreshInterval string, dash *dashboards.Dashboard) error {
@@ -1295,6 +1270,14 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				Tags:        hit.Tags,
 			}
 
+			if hit.Field != nil && query.Sort.Name != "" {
+				fieldName, _, err := legacysearcher.ParseSortName(query.Sort.Name)
+				if err != nil {
+					return nil, err
+				}
+				result.SortMeta = hit.Field.GetNestedInt64(fieldName)
+			}
+
 			if hit.Resource == folderv0alpha1.RESOURCE {
 				result.IsFolder = true
 			}
@@ -1840,12 +1823,12 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.Federated = []*resource.ResourceKey{federate}
 	}
 
-	// technically, there exists the ability to register multiple ways of sorting using the legacy database
-	// see RegisterSortOption in pkg/services/search/sorting.go
-	// however, it doesn't look like we are taking advantage of that. And since by default the legacy
-	// sql will sort by title ascending, we only really need to handle the "alpha-desc" case
-	if query.Sort.Name == "alpha-desc" {
-		request.SortBy = append(request.SortBy, &resource.ResourceSearchRequest_Sort{Field: resource.SEARCH_FIELD_TITLE, Desc: true})
+	if query.Sort.Name != "" {
+		sortName, isDesc, err := legacysearcher.ParseSortName(query.Sort.Name)
+		if err != nil {
+			return dashboardv0alpha1.SearchResults{}, err
+		}
+		request.SortBy = append(request.SortBy, &resource.ResourceSearchRequest_Sort{Field: sortName, Desc: isDesc})
 	}
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)

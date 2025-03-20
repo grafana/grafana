@@ -82,7 +82,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { canKeepDisplayedFields, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 
 interface Props extends Themeable2 {
   width: number;
@@ -225,7 +225,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
-  const prevLogsQueries = usePrevious(logsQueries);
 
   const tableHeight = getLogsTableHeight();
   const styles = getStyles(theme, wrapLogMessage, tableHeight);
@@ -408,20 +407,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       visualisationType,
     ]
   );
-
-  useEffect(() => {
-    if (!prevLogsQueries) {
-      // Initial load, ignore
-      return;
-    }
-    if (!canKeepDisplayedFields(logsQueries, prevLogsQueries)) {
-      setDisplayedFields([]);
-      updatePanelState({
-        ...panelState?.logs,
-        displayedFields: [],
-      });
-    }
-  }, [logsQueries, panelState?.logs, prevLogsQueries, updatePanelState]);
 
   // actions
   const onLogRowHover = useCallback(

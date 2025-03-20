@@ -264,6 +264,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							Namespace: "nn",
 							Group:     "gg",
 							Resource:  "rr",
+							Name:      "na",
 						},
 						HistoryLimit: 100,
 					},
