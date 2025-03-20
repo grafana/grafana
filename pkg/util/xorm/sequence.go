@@ -3,7 +3,6 @@ package xorm
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"sync"
 )
@@ -59,9 +58,12 @@ func (sg *sequenceGenerator) Next(ctx context.Context, table, column string) (in
 
 	// If we've used all values in the current batch, get a new batch
 	if state.nextValue > state.lastValueInBatch {
-		if err := sg.getBatch(ctx, key, state); err != nil {
+		start, end, err := sg.allocateNewBatch(ctx, key)
+		if err != nil {
 			return 0, err
 		}
+		state.nextValue = start
+		state.lastValueInBatch = end
 	}
 
 	// Return the next value from the batch
@@ -70,55 +72,70 @@ func (sg *sequenceGenerator) Next(ctx context.Context, table, column string) (in
 	return val, nil
 }
 
-func (sg *sequenceGenerator) getBatch(ctx context.Context, key string, state *batchState) error {
+// allocateNewBatch retrieves a new batch of sequence values from the database.
+// It returns the start and end values of the new batch on success.
+func (sg *sequenceGenerator) allocateNewBatch(ctx context.Context, key string) (start, end int64, err error) {
 	tx, err := sg.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 
-	// TODO: "FOR UPDATE". (Somehow this doesn't seem to be supported in Spanner emulator?)
-	r, err := tx.QueryContext(ctx, "SELECT next_value FROM "+sg.sequencesTable+" WHERE name = ?", key)
+	// Query the current sequence value
+	rows, err := tx.QueryContext(ctx, "SELECT next_value FROM "+sg.sequencesTable+" WHERE name = ?", key)
 	if err != nil {
-		err2 := tx.Rollback()
-		return errors.Join(err, err2)
+		return 0, 0, err
 	}
-	defer r.Close()
+	defer rows.Close()
 
-	// Sequence doesn't exist yet. Return 1, and put batch size + 1 into the table.
-	if !r.Next() {
-		if err := r.Err(); err != nil {
-			return errors.Join(err, tx.Rollback())
+	// Handle case where sequence doesn't exist yet
+	if !rows.Next() {
+		if err := rows.Err(); err != nil {
+			return 0, 0, err
 		}
 
-		// Start with 1 and allocate a batch
-		state.nextValue = 1
-		state.lastValueInBatch = sg.batchSize
+		// This is a new sequence - start from 1 and allocate a batch
+		batchEnd := sg.batchSize
+		nextBatchStart := batchEnd + 1
 
-		// Insert the next batch start value (batchSize + 1)
-		_, err := tx.ExecContext(ctx, "INSERT INTO "+sg.sequencesTable+" (name, next_value) VALUES(?, ?)", key, sg.batchSize+1)
+		// Insert the next batch start value
+		_, err = tx.ExecContext(ctx,
+			"INSERT INTO "+sg.sequencesTable+" (name, next_value) VALUES(?, ?)",
+			key, nextBatchStart)
 		if err != nil {
-			return errors.Join(err, tx.Rollback())
+			return 0, 0, err
 		}
 
-		return tx.Commit()
+		// Commit the transaction
+		if err = tx.Commit(); err != nil {
+			return 0, 0, err
+		}
+
+		return 1, batchEnd, nil
 	}
 
-	var nextBatchStart int64
-	if err := r.Scan(&nextBatchStart); err != nil {
-		return errors.Join(err, tx.Rollback())
+	// Sequence exists - read current value and allocate next batch
+	var batchStart int64
+	if err = rows.Scan(&batchStart); err != nil {
+		return 0, 0, err
 	}
 
-	// Update the next batch start value in the database
-	_, err = tx.ExecContext(ctx, "UPDATE "+sg.sequencesTable+" SET next_value = ? WHERE name = ?", nextBatchStart+sg.batchSize, key)
+	batchEnd := batchStart + sg.batchSize - 1
+	nextBatchStart := batchEnd + 1
+
+	// Update the next batch start value
+	_, err = tx.ExecContext(ctx,
+		"UPDATE "+sg.sequencesTable+" SET next_value = ? WHERE name = ?",
+		nextBatchStart, key)
 	if err != nil {
-		return errors.Join(err, tx.Rollback())
+		return 0, 0, err
 	}
 
-	// Set our current batch range
-	state.nextValue = nextBatchStart
-	state.lastValueInBatch = nextBatchStart + sg.batchSize - 1
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return 0, 0, err
+	}
 
-	return tx.Commit()
+	return batchStart, batchEnd, nil
 }
 
 // SetBatchSize allows changing the batch size
