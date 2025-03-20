@@ -42,9 +42,8 @@ const getPresence = async (address: LiveChannelAddress) => {
   return await centrifuge.getPresence(address);
 };
 
-const publish = async (address: LiveChannelAddress, data: unknown, options?: LivePublishOptions) => {
-  return await centrifuge.publish(address, data, options);
-};
+const publish = (address: LiveChannelAddress, data: unknown, options?: LivePublishOptions) =>
+  centrifuge.publish(address, data, options);
 
 const workObj = {
   initialize,

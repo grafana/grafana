@@ -97,6 +97,7 @@ export class GrafanaLiveService implements GrafanaLiveSrv {
     if (options?.useSocket) {
       return this.deps.centrifugeSrv.publish(address, data);
     }
+
     return this.deps.backendSrv.post(`api/live/publish`, {
       channel: toLiveChannelId(address), // orgId is from user
       data,
