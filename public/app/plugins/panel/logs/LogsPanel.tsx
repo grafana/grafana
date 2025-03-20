@@ -143,7 +143,7 @@ export const LogsPanel = ({
   const [panelData, setPanelData] = useState(data);
   const dataSourcesMap = useDatasourcesFromTargets(panelData.request?.targets);
   // Prevents the scroll position to change when new data from infinite scrolling is received
-  const keepScrollPositionRef = useRef(false);
+  const keepScrollPositionRef = useRef<null | 'infinite-scroll' | 'user'>(null);
   let closeCallback = useRef<() => void>();
   const { eventBus, onAddAdHocFilter } = usePanelContext();
 
@@ -290,7 +290,8 @@ export const LogsPanel = ({
 
   useLayoutEffect(() => {
     if (!logsContainerRef.current || !scrollElement || keepScrollPositionRef.current) {
-      keepScrollPositionRef.current = false;
+      keepScrollPositionRef.current =
+        keepScrollPositionRef.current === 'infinite-scroll' ? null : keepScrollPositionRef.current;
       return;
     }
     /**
@@ -370,6 +371,30 @@ export const LogsPanel = ({
     }
   }, [options.displayedFields]);
 
+  // Respect the scroll position when refreshing the panel
+  useEffect(() => {
+    function handleScroll() {
+      if (!scrollElement) {
+        return;
+      }
+      // Signal to keep the user scroll position
+      keepScrollPositionRef.current = 'user';
+      const atTheBottom = scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight === 0;
+      // Except when the user resets the scroll to the original position depending on the sort direction
+      if (scrollElement.scrollTop === 0 && !isAscending) {
+        keepScrollPositionRef.current = null;
+      } else if (atTheBottom && isAscending) {
+        keepScrollPositionRef.current = null;
+      }
+    }
+    scrollElement?.addEventListener('scroll', handleScroll);
+    scrollElement?.addEventListener('wheel', handleScroll);
+    return () => {
+      scrollElement?.removeEventListener('scroll', handleScroll);
+      scrollElement?.removeEventListener('wheel', handleScroll);
+    };
+  }, [isAscending, scrollElement]);
+
   const loadMoreLogs = useCallback(
     async (scrollRange: AbsoluteTimeRange) => {
       if (!data.request || !config.featureToggles.logsInfiniteScrolling || loadingRef.current) {
@@ -391,7 +416,7 @@ export const LogsPanel = ({
         loadingRef.current = false;
       }
 
-      keepScrollPositionRef.current = true;
+      keepScrollPositionRef.current = 'infinite-scroll';
       setPanelData({
         ...panelData,
         series: newSeries,
