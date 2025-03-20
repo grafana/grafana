@@ -1,4 +1,4 @@
-type UseTranslateHook = () => (id: string, defaultMessage: string, values?: Record<string, unknown>) => string;
+import { type UseTranslateHook, type TransProps, type TransType } from '@grafana/data';
 
 /**
  * Provides a i18next-compatible translation function.
@@ -18,4 +18,38 @@ export let useTranslate: UseTranslateHook = () => {
 
 export function setUseTranslateHook(hook: UseTranslateHook) {
   useTranslate = hook;
+}
+
+let trans: TransType | undefined;
+
+/**
+ * Sets the Trans component that will be used for translations throughout the application.
+ * This function should only be called once during application initialization.
+ *
+ * @param transComponent - The Trans component function to use for translations
+ * @throws {Error} If called multiple times outside of test environment
+ */
+export function setTransComponent(transComponent: TransType) {
+  // We allow overriding the trans component in tests
+  if (trans && process.env.NODE_ENV !== 'test') {
+    throw new Error('setTransComponent() function should only be called once, when Grafana is starting.');
+  }
+
+  trans = transComponent;
+}
+
+/**
+ * A React component for handling translations with support for interpolation and pluralization.
+ * This component must be initialized using setTransComponent before use.
+ *
+ * @param props - The translation props including the i18nKey and any interpolation values
+ * @returns A React element containing the translated content
+ * @throws {Error} If the Trans component hasn't been initialized
+ */
+export function Trans(props: TransProps): React.ReactElement {
+  if (!trans) {
+    throw new Error('Trans component not set. Use setTransComponent to set the Trans component.');
+  }
+
+  return trans(props);
 }

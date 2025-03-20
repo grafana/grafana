@@ -3,6 +3,9 @@ import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetec
 import { ReactElement } from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
+import { TransProps } from '@grafana/data';
+import { setTransComponent, setUseTranslateHook } from '@grafana/runtime/src/unstable';
+
 import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES } from './constants';
 import { loadTranslations } from './loadTranslations';
 
@@ -59,6 +62,9 @@ export async function initializeI18n(language: string): Promise<{ language: stri
 
   tFunc = i18n.getFixedT(null, NAMESPACES);
 
+  setUseTranslateHook(useTranslateInternal);
+  setTransComponent(Trans);
+
   return {
     language: i18nInstance.resolvedLanguage,
   };
@@ -67,13 +73,6 @@ export async function initializeI18n(language: string): Promise<{ language: stri
 export function changeLanguage(locale: string) {
   const validLocale = VALID_LANGUAGES.includes(locale) ? locale : undefined;
   return i18n.changeLanguage(validLocale);
-}
-
-type I18NextTransType = typeof I18NextTrans;
-type I18NextTransProps = Parameters<I18NextTransType>[0];
-
-interface TransProps extends I18NextTransProps {
-  i18nKey: string;
 }
 
 export const Trans = (props: TransProps): ReactElement => {

@@ -87,7 +87,13 @@ module.exports = [
               message: 'Use Stack component instead.',
             },
             {
-              group: ['@grafana/ui/src/*', '@grafana/runtime/src/*', '@grafana/data/src/*'],
+              group: [
+                '@grafana/ui/src/*',
+                '@grafana/runtime/src/*',
+                '!@grafana/runtime/src/unstable',
+                '@grafana/data/src/*',
+                '!@grafana/data/src/unstable',
+              ],
               message: 'Import from the public export instead.',
             },
           ],
