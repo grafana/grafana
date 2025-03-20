@@ -151,6 +151,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // Test column structure
@@ -201,6 +202,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       expect(columns).toHaveLength(3);
@@ -220,6 +222,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // Default width
@@ -236,6 +239,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       const messageColumn = columns[2];
@@ -253,6 +257,7 @@ describe('TableNG utils', () => {
         calcsRef: { current: ['3', '', ''] },
         options,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // First column should show count
@@ -319,6 +324,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // First column should be expander
@@ -336,6 +342,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // Should only have expander + Time + Value (not Nested frames column)
@@ -353,6 +360,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: { ...mockOptions, expandedRows },
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // Get the rendered content of first row's expander cell
