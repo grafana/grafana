@@ -122,7 +122,13 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 			id.IsGrafanaAdmin = &grafanaAdmin
 		}
 
-		id.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, id.Groups, role)
+		externalOrgs, err := s.extractOrgs(claims)
+		if err != nil {
+			s.log.Warn("Failed to extract orgs", "err", err)
+			return nil, err
+		}
+
+		id.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, role)
 		if s.cfg.JWTAuth.RoleAttributeStrict && len(id.OrgRoles) == 0 {
 			return nil, errJWTInvalidRole.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
@@ -210,4 +216,13 @@ func (s *JWT) extractGroups(claims map[string]any) ([]string, error) {
 	}
 
 	return util.SearchJSONForStringSliceAttr(s.cfg.JWTAuth.GroupsAttributePath, claims)
+}
+
+// This code was copied from the social_base.go file
+func (s *JWT) extractOrgs(claims map[string]any) ([]string, error) {
+	if s.cfg.JWTAuth.OrgAttributePath == "" {
+		return []string{}, nil
+	}
+
+	return util.SearchJSONForStringSliceAttr(s.cfg.JWTAuth.OrgAttributePath, claims)
 }

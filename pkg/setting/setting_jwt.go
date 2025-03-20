@@ -27,6 +27,7 @@ type AuthJWTSettings struct {
 	RoleAttributePath       string
 	RoleAttributeStrict     bool
 	OrgMapping              []string
+	OrgAttributePath        string
 	AllowAssignGrafanaAdmin bool
 	SkipOrgRoleSync         bool
 	GroupsAttributePath     string
@@ -76,6 +77,7 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.EmailAttributePath = valueAsString(authJWT, "email_attribute_path", "")
 	jwtSettings.UsernameAttributePath = valueAsString(authJWT, "username_attribute_path", "")
 	jwtSettings.TlsSkipVerify = authJWT.Key("tls_skip_verify_insecure").MustBool(false)
+	jwtSettings.OrgAttributePath = valueAsString(authJWT, "org_attribute_path", "")
 	jwtSettings.OrgMapping = util.SplitString(valueAsString(authJWT, "org_mapping", ""))
 
 	cfg.JWTAuth = jwtSettings
