@@ -17,7 +17,7 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20250224151205-5ef97131cc82
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250314071911-14e2784e6979
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250317130411-3f270d1de043
 	github.com/stretchr/testify v1.10.0

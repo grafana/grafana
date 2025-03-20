@@ -21,7 +21,7 @@ type exportJob struct {
 	progress   jobs.JobProgressRecorder
 	folderTree *resources.FolderTree
 
-	prefix         string // from options (now clean+safe)
+	path           string // from options (now clean+safe)
 	ref            string // from options (only git)
 	keepIdentifier bool
 }
@@ -32,9 +32,9 @@ func newExportJob(ctx context.Context,
 	clients *resources.ResourceClients,
 	progress jobs.JobProgressRecorder,
 ) *exportJob {
-	prefix := options.Prefix
-	if prefix != "" {
-		prefix = safepath.Clean(prefix)
+	path := options.Path
+	if path != "" {
+		path = safepath.Clean(path)
 	}
 	return &exportJob{
 		namespace:      target.Config().Namespace,
@@ -42,7 +42,7 @@ func newExportJob(ctx context.Context,
 		client:         clients,
 		logger:         logging.FromContext(ctx),
 		progress:       progress,
-		prefix:         prefix,
+		path:           path,
 		ref:            options.Branch,
 		keepIdentifier: options.Identifier,
 		folderTree:     resources.NewEmptyFolderTree(),

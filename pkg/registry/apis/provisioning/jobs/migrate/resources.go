@@ -185,13 +185,6 @@ func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured
 			return result
 		}
 	}
-	if j.options.Prefix != "" {
-		fileName, err = safepath.Join(j.options.Prefix, fileName)
-		if err != nil {
-			result.Error = fmt.Errorf("error adding path prefix: %w", err)
-			return result
-		}
-	}
 
 	err = j.target.Write(ctx, fileName, "", body, commitMessage)
 	if err != nil {

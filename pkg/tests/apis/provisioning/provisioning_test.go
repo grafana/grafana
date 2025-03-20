@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	gh "github.com/google/go-github/v69/github"
@@ -17,6 +18,8 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
@@ -81,15 +84,36 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	}
 
 	// Viewer can see settings listing
-	settings := &provisioning.RepositoryViewList{}
-	rsp := helper.ViewerREST.Get().
-		Namespace("default").
-		Suffix("settings").
-		Do(context.Background())
-	require.NoError(t, rsp.Error())
-	err := rsp.Into(settings)
-	require.NoError(t, err)
-	require.Len(t, settings.Items, len(inputFiles))
+	t.Run("viewer has access to list", func(t *testing.T) {
+		settings := &provisioning.RepositoryViewList{}
+		rsp := helper.ViewerREST.Get().
+			Namespace("default").
+			Suffix("settings").
+			Do(context.Background())
+		require.NoError(t, rsp.Error())
+		err := rsp.Into(settings)
+		require.NoError(t, err)
+		require.Len(t, settings.Items, len(inputFiles))
+	})
+
+	t.Run("Repositories are reported in stats", func(t *testing.T) {
+		report := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{
+			Method: http.MethodGet,
+			Path:   "/api/admin/usage-report-preview",
+			User:   helper.K8sTestHelper.Org1.Admin,
+		}, &usagestats.Report{})
+
+		stats := map[string]any{}
+		for k, v := range report.Result.Metrics {
+			if strings.HasPrefix(k, "stats.repository.") {
+				stats[k] = v
+			}
+		}
+		require.Equal(t, map[string]any{
+			"stats.repository.github.count": 1.0,
+			"stats.repository.local.count":  1.0,
+		}, stats)
+	})
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
@@ -165,6 +189,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 		Body(asJSON(provisioning.SyncJobOptions{
 			Incremental: false,
 		})).
+		SetHeader("Content-Type", "application/json").
 		Do(ctx)
 
 	obj, err := result.Get()
@@ -212,6 +237,7 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 		Name(repo).
 		SubResource("files", "all-panels.json").
 		Body(helper.LoadFile("testdata/all-panels.json")).
+		SetHeader("Content-Type", "application/json").
 		Do(ctx)
 	require.NoError(t, result.Error(), "expecting to be able to create file")
 
@@ -222,6 +248,7 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 		Name(repo).
 		SubResource("files", "test", "..", "..", "all-panels.json").
 		Body(helper.LoadFile("testdata/all-panels.json")).
+		SetHeader("Content-Type", "application/json").
 		Do(ctx)
 	require.Error(t, result.Error(), "invalid path should return error")
 
@@ -268,6 +295,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 		Resource("repositories").
 		Name(repo).
 		SubResource("sync").
+		SetHeader("Content-Type", "application/json").
 		Body(asJSON(provisioning.SyncJobOptions{
 			Incremental: false,
 		})).
@@ -323,7 +351,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		SubResource("export").
 		Body(asJSON(&provisioning.ExportJobOptions{
 			Folder:     "",   // export entire instance
-			Prefix:     "",   // no prefix necessary for testing
+			Path:       "",   // no prefix necessary for testing
 			Identifier: true, // doesn't _really_ matter, but handy for debugging.
 		})).
 		Do(ctx)

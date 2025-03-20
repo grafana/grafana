@@ -10,17 +10,9 @@ import { SyncRepository } from './SyncRepository';
 
 interface RepositoryActionsProps {
   repository: Repository;
-  showMigrateButton?: boolean;
-  onExportClick?: () => void;
-  onMigrateClick?: () => void;
 }
 
-export function RepositoryActions({
-  repository,
-  showMigrateButton,
-  onExportClick,
-  onMigrateClick,
-}: RepositoryActionsProps) {
+export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const name = repository.metadata?.name ?? '';
   const repoHref = getRepoHref(repository.spec?.github);
 
@@ -33,15 +25,6 @@ export function RepositoryActions({
         </Button>
       )}
       <SyncRepository repository={repository} />
-      {showMigrateButton ? (
-        <Button variant="secondary" icon="cloud-upload" onClick={onMigrateClick}>
-          Migrate
-        </Button>
-      ) : (
-        <Button variant="secondary" icon="cloud-upload" onClick={onExportClick}>
-          Push
-        </Button>
-      )}
       <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
         Settings
       </LinkButton>

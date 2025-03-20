@@ -3,6 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, ComboboxOption, Field, Input, SecretInput, Stack } from '@grafana/ui';
 
+import { getWorkflowOptions } from '../Config/ConfigForm';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 
 import { WizardFormData } from './types';
@@ -34,7 +35,10 @@ export function ConnectStep() {
         onChange={(value) => {
           const repoType = value?.value;
           setValue('repository.type', repoType);
-          setValue('repository.workflows', repoType === 'github' ? ['branch', 'write'] : ['write']);
+          setValue(
+            'repository.workflows',
+            getWorkflowOptions(repoType).map((v) => v.value)
+          );
         }}
       />
 

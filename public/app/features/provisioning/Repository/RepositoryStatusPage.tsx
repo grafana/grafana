@@ -12,8 +12,6 @@ import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 import { FilesView } from '../File/FilesView';
 import { PROVISIONING_URL } from '../constants';
 
-import { ExportToRepository } from './ExportToRepository';
-import { MigrateToRepository } from './MigrateToRepository';
 import { RepositoryActions } from './RepositoryActions';
 import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
@@ -32,8 +30,6 @@ const tabInfo: SelectableValue<TabSelection> = [
 
 export default function RepositoryStatusPage() {
   const { name = '' } = useParams();
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [showMigrateModal, setShowMigrateModal] = useState(false);
 
   const query = useListRepositoryQuery({
     fieldSelector: `metadata.name=${name}`,
@@ -54,16 +50,7 @@ export default function RepositoryStatusPage() {
         text: data?.spec?.title ?? 'Repository Status',
         subTitle: data?.spec?.description,
       }}
-      actions={
-        data && (
-          <RepositoryActions
-            repository={data}
-            showMigrateButton={settings.data?.legacyStorage}
-            onExportClick={() => setShowExportModal(true)}
-            onMigrateClick={() => setShowMigrateModal(true)}
-          />
-        )
-      }
+      actions={data && <RepositoryActions repository={data} />}
     >
       <Page.Contents isLoading={query.isLoading}>
         {settings.data?.legacyStorage && (
@@ -101,17 +88,6 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Resources && <RepositoryResources repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}
                 </TabContent>
-
-                {showExportModal && (
-                  <Modal isOpen={true} title="Export to Repository" onDismiss={() => setShowExportModal(false)}>
-                    <ExportToRepository repo={data} />
-                  </Modal>
-                )}
-                {showMigrateModal && (
-                  <Modal isOpen={true} title="Migrate to Repository" onDismiss={() => setShowMigrateModal(false)}>
-                    <MigrateToRepository repo={data} />
-                  </Modal>
-                )}
               </>
             ) : (
               <div>not found</div>

@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -116,7 +115,13 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
 		}
+
 		repo = buffered // send all writes to the buffered repo
+		defer func() {
+			if err := buffered.Remove(ctx); err != nil {
+				logging.FromContext(ctx).Error("failed to remove cloned repository after migrate", "err", err)
+			}
+		}()
 	}
 
 	rw, ok := repo.(repository.ReaderWriter)
@@ -293,10 +298,6 @@ func newMigrationJob(ctx context.Context,
 	legacyMigrator legacy.LegacyMigrator,
 	progress jobs.JobProgressRecorder,
 ) (*migrationJob, error) {
-	if options.Prefix != "" {
-		options.Prefix = safepath.Clean(options.Prefix)
-	}
-
 	return &migrationJob{
 		namespace:  target.Config().Namespace,
 		target:     target,
