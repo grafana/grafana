@@ -3,11 +3,11 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { config } from '@grafana/runtime/src';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui/src';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { CombinedRule } from '../../../../../types/unified-alerting';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
-import { isGrafanaRulerRule } from '../../utils/rules';
+import { rulerRuleType } from '../../utils/rules';
 
 interface RuleConfigStatusProps {
   rule: CombinedRule;
@@ -15,7 +15,7 @@ interface RuleConfigStatusProps {
 
 export function RuleConfigStatus({ rule }: RuleConfigStatusProps) {
   const styles = useStyles2(getStyles);
-  const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
+  const isGrafanaManagedRule = rulerRuleType.grafana.rule(rule.rulerRule);
 
   const exceedsLimit = useMemo(() => {
     return isGrafanaManagedRule ? checkEvaluationIntervalGlobalLimit(rule.group.interval).exceedsLimit : false;

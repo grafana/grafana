@@ -15,7 +15,7 @@ title: Configure security hardening
 Security hardening enables you to apply additional security, which can help stop certain vulnerabilities from being exploited by a malicious attacker.
 
 {{% admonition type="note" %}}
-These settings are available in the [grafana.ini configuration file]({{< relref "../../configure-grafana#configuration-file-location" >}}). To apply changes to the configuration file, restart the Grafana server.
+These settings are available in the [grafana.ini configuration file](../../configure-grafana/#configuration-file-location). To apply changes to the configuration file, restart the Grafana server.
 {{% /admonition %}}
 
 ## Additional security for cookies
@@ -116,6 +116,18 @@ Example:
 ```toml
 # mask the Grafana version number for unauthenticated users
 hide_version = true
+```
+
+### Enable auth for metrics
+
+By default, metrics from Grafana itself can be accessed without authentication. This can lead to inadvertent information leakage.
+
+To enable basic authentication for the metrics endpoint:
+
+```toml
+# If both are set, basic auth will be required for the metrics endpoints
+basic_auth_username =
+basic_auth_password =
 ```
 
 ### Enforce domain verification
