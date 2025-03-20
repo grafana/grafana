@@ -224,7 +224,7 @@ Payload:
 }
 ```
 
-Config:
+Configuration:
 
 ```ini
 role_attribute_path = role
@@ -251,7 +251,7 @@ Payload:
 }
 ```
 
-Config:
+Configuration:
 
 ```ini
 role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
@@ -261,11 +261,11 @@ role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(in
 
 The JWT integration uses the external users' groups in the `org_mapping` configuration to map organizations and roles based on the JWT token group membership.
 
-In this example, the user has been granted the role of a `Viewer` in the `org_foo` organization, and the role of an `Editor` in the `org_bar` and `org_baz` orgs.
+In this example, the user has been granted the role of a `Viewer` in the `org_foo` organization, and the role of an `Editor` in the `org_bar` and `org_baz` organizations.
 
 The external user is part of the following Google groups: `group-1` and `group-2`.
 
-Config:
+Configuration:
 
 ```ini
 org_mapping = group-1:org_foo:Viewer group-2:org_bar:Editor *:org_baz:Editor
