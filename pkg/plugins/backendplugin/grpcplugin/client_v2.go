@@ -192,7 +192,7 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 		}
 
 		if status.Code(err) == codes.Unavailable {
-			return nil, plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("%v", err).WithSupportContact()
+			return nil, plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("%v", err)
 		}
 
 		if status.Code(err) == codes.ResourceExhausted {
