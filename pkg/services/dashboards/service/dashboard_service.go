@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
-	"github.com/grafana/grafana/pkg/util/retryer"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/maps"
@@ -22,6 +20,9 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/selection"
+
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
+	"github.com/grafana/grafana/pkg/util/retryer"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
@@ -1622,35 +1623,13 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
-	out, err := dr.createOrUpdateDash(ctx, obj, orgID)
+	// Update will create if not exists (upsert!)
+	out, err := dr.k8sclient.Update(ctx, obj, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	return out, nil
-}
-
-func (dr *DashboardServiceImpl) createOrUpdateDash(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {
-	var out *unstructured.Unstructured
-	current, err := dr.k8sclient.Get(ctx, obj.GetName(), orgID, v1.GetOptions{})
-	if current == nil || err != nil {
-		out, err = dr.k8sclient.Create(ctx, obj, orgID)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		out, err = dr.k8sclient.Update(ctx, obj, orgID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	finalDash, err := dr.UnstructuredToLegacyDashboard(ctx, out, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	return finalDash, nil
+	return dr.UnstructuredToLegacyDashboard(ctx, out, orgID)
 }
 
 func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context, orgID int64) error {
