@@ -45,6 +45,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	titleWordMapping := bleve.NewTextFieldMapping()
 	titleWordMapping.Analyzer = standard.Name
 	titleWordMapping.Store = true
+	// NOTE: this causes 3 title fields in the response
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleWordMapping, titleSearchMapping, titlePhraseMapping)
 
 	descriptionMapping := &mapping.FieldMapping{
