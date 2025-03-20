@@ -76,6 +76,8 @@ func (r *Runner) Run(ctx context.Context) error {
 	lastCreated, err := r.checkLastCreated(ctx)
 	if err != nil {
 		r.log.Error("Error getting last check creation time", "error", err)
+		// Wait for interval to create the next scheduled check
+		lastCreated = time.Now()
 	} else {
 		// do an initial creation if necessary
 		if lastCreated.IsZero() {
