@@ -46,7 +46,7 @@ func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 	// If we allow the unified read to fail, we can do it in the background.
 	if d.errorIsOK {
 		go func() {
-			ctxBg, cancel := context.WithTimeout(context.Background(), backgroundReqTimeout)
+			ctxBg, cancel := context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout)
 			defer cancel()
 			if _, err := d.unified.Get(ctxBg, name, options); err != nil {
 				d.log.Error("failed background GET to unified", "err", err)
@@ -76,7 +76,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 	// If we allow the unified list to fail, we can do it in the background and return.
 	if d.errorIsOK {
 		go func() {
-			ctxBg, cancel := context.WithTimeout(context.Background(), backgroundReqTimeout)
+			ctxBg, cancel := context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout)
 			defer cancel()
 			if _, err := d.unified.List(ctxBg, options); err != nil {
 				d.log.Error("failed background LIST to unified", "err", err)
@@ -140,7 +140,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	} else if d.errorIsOK {
 		// If we don't use unified as the primary store and errors are okay, let's create it in the background.
 		go func() {
-			ctxBg, cancel := context.WithTimeout(context.Background(), backgroundReqTimeout)
+			ctxBg, cancel := context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout)
 			defer cancel()
 			if _, err := d.unified.Create(ctxBg, createdCopy, createValidation, options); err != nil {
 				log.Error("unable to create object in unified storage", "err", err)
@@ -186,7 +186,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	} else if d.errorIsOK {
 		// If errors are okay and unified is not primary, we can just run it as background operation.
 		go func() {
-			ctxBg, cancel := context.WithTimeout(context.Background(), backgroundReqTimeout)
+			ctxBg, cancel := context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout)
 			defer cancel()
 			_, _, err := d.unified.Delete(ctxBg, name, deleteValidation, options)
 			if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
@@ -227,7 +227,7 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	} else if d.errorIsOK {
 		// If unified is not primary, but errors are okay, we can just run in the background.
 		go func() {
-			ctxBg, cancel := context.WithTimeout(context.Background(), backgroundReqTimeout)
+			ctxBg, cancel := context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout)
 			defer cancel()
 			if _, _, err := d.unified.Update(ctxBg, name, objInfo, createValidation, updateValidation, forceAllowCreate, options); err != nil {
 				log.Error("failed background UPDATE to unified storage", "err", err)
@@ -264,7 +264,7 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 	} else if d.errorIsOK {
 		// If unified storage is not the primary store and errors are okay, we can just run it in the background.
 		go func() {
-			ctxBg, cancel := context.WithTimeout(context.Background(), backgroundReqTimeout)
+			ctxBg, cancel := context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout)
 			defer cancel()
 			if _, err := d.unified.DeleteCollection(ctxBg, deleteValidation, options, listOptions); err != nil {
 				log.Error("failed background DELETE collection to unified storage", "err", err)
