@@ -51,6 +51,12 @@ import {
   shouldTextOverflow,
 } from './utils';
 
+function getContentWidth(element: HTMLElement) {
+  const styles = getComputedStyle(element);
+
+  return element.clientWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight);
+}
+
 export function TableNG(props: TableNGProps) {
   const {
     cellHeight,
@@ -83,6 +89,8 @@ export function TableNG(props: TableNGProps) {
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
+  // Create a dedicated state for header length
+  const [headersLength, setHeaderLength] = useState(0);
 
   /* ------------------------------- Local refs ------------------------------- */
   const crossFilterOrder = useRef<string[]>([]);
@@ -172,12 +180,52 @@ export function TableNG(props: TableNGProps) {
   const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create a map of column key to column type
-  const columnTypes = useMemo(() => {
-    return props.data.fields.reduce((acc, field) => {
-      acc[field.name] = field.type;
-      return acc;
-    }, {} as ColumnTypes);
+  const columnTypes = useMemo(
+    () => props.data.fields.reduce((acc, { name, type }) => ({ ...acc, [name]: type }), {} as ColumnTypes),
+    [props.data.fields]
+  );
+
+  // Create a map of column key to text wrap
+  const textWraps = useMemo(
+    () =>
+      props.data.fields.reduce(
+        (acc, { name, config }) => ({ ...acc, [name]: config?.custom?.wrapText ?? false }),
+        {} as { [key: string]: boolean }
+      ),
+    [props.data.fields]
+  );
+
+  // Create a function to get column widths for text wrapping calculations
+  const getColumnWidths = useCallback(() => {
+    const widths: Record<string, number> = {};
+
+    // Set default widths from field config if they exist
+    props.data.fields.forEach(({ name, config }) => {
+      const configWidth = config?.custom?.width;
+      widths[name] = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH;
+    });
+
+    // Measure actual widths if available
+    Object.keys(headerCellRefs.current).forEach((key) => {
+      const headerCell = headerCellRefs.current[key];
+      if (headerCell) {
+        widths[key] = getContentWidth(headerCell);
+      }
+    });
+
+    return widths;
   }, [props.data.fields]);
+
+  // Clean up fieldsData to simplify
+  const fieldsData = useMemo(
+    () => ({
+      headersLength,
+      textWraps,
+      columnTypes,
+      columnWidths: getColumnWidths(),
+    }),
+    [textWraps, columnTypes, getColumnWidths, headersLength]
+  );
 
   const getDisplayedValue = (row: TableRow, key: string) => {
     const field = props.data.fields.find((field) => field.name === key)!;
@@ -359,10 +407,38 @@ export function TableNG(props: TableNGProps) {
     [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  // This effect needed to set header cells refs before row height calculation
+  // Helper to check header availability
+  const detectHeadersLength = useCallback(() => {
+    return Object.keys(headerCellRefs.current).length;
+  }, []);
+
+  // Layout effect to detect headers and update dependent states
   useLayoutEffect(() => {
-    setReadyForRowHeightCalc(Object.keys(headerCellRefs.current).length > 0);
-  }, [columns]);
+    // Skip if no fields
+    if (props.data.fields.length === 0) {
+      return;
+    }
+
+    const updateHeaderStates = () => {
+      const count = detectHeadersLength();
+      if (count > 0) {
+        setHeaderLength(count);
+        setReadyForRowHeightCalc(true);
+        return true;
+      }
+      return false;
+    };
+
+    // Try immediate check
+    if (updateHeaderStates()) {
+      return; // Headers found, no need for delayed check
+    }
+
+    // Set up delayed check if immediate check failed
+    // Note: setTimeout inside useLayoutEffect will run after the browser paint
+    const timer = setTimeout(updateHeaderStates, 50);
+    return () => clearTimeout(timer);
+  }, [detectHeadersLength, props.data.fields.length, columns]);
 
   const renderMenuItems = () => {
     return (
@@ -387,17 +463,9 @@ export function TableNG(props: TableNGProps) {
         const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
         return defaultRowHeight * (row.data?.length ?? 0 + headerCount); // TODO this probably isn't very robust
       }
-      return getRowHeight(
-        row,
-        columnTypes,
-        headerCellRefs,
-        osContext,
-        defaultLineHeight,
-        defaultRowHeight,
-        TABLE.CELL_PADDING
-      );
+      return getRowHeight(row, osContext, defaultLineHeight, defaultRowHeight, TABLE.CELL_PADDING, fieldsData);
     },
-    [expandedRows, defaultRowHeight, columnTypes, headerCellRefs, osContext, defaultLineHeight]
+    [expandedRows, osContext, defaultLineHeight, defaultRowHeight, fieldsData]
   );
 
   return (

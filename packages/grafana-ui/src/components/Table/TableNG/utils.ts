@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { split } from 'canvas-hypertxt';
 import { Property } from 'csstype';
 import React from 'react';
 import { SortColumn, SortDirection } from 'react-data-grid';
@@ -41,6 +42,7 @@ import {
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
+// NOTE: This is now a fallback in case canvas-hypertxt fails
 export function getCellHeight(
   text: string,
   cellWidth: number, // width of the cell without padding
@@ -97,6 +99,45 @@ export function getCellHeight(
   return defaultRowHeight;
 }
 
+function calculateCellHeight(
+  text: string,
+  cellWidth: number,
+  osContext: OffscreenCanvasRenderingContext2D | null,
+  lineHeight: number,
+  defaultRowHeight: number,
+  padding = 0
+) {
+  // Early return for invalid inputs or empty text
+  if (!osContext || !text || typeof text !== 'string' || cellWidth <= 0) {
+    return defaultRowHeight;
+  }
+
+  // Ensure we have a valid width to work with
+  const effectiveCellWidth = Math.max(cellWidth, 20); // Minimum width to work with
+  const TOTAL_PADDING = padding * 2;
+
+  // Set the font for measurement
+  osContext.font = '14px sans-serif'; // Adjust to match your table's font
+
+  try {
+    // Try canvas-hypertxt first for better performance
+    const lines = split(
+      // Cast to any to avoid type issues
+      osContext as any,
+      text,
+      osContext.font,
+      effectiveCellWidth,
+      true
+    );
+
+    const totalHeight = lines.length * lineHeight + TOTAL_PADDING;
+    return Math.max(totalHeight, defaultRowHeight);
+  } catch (error) {
+    // Silent fallback - if canvas-hypertxt fails, use the proven getCellHeight implementation
+    return getCellHeight(text, effectiveCellWidth, osContext, lineHeight, defaultRowHeight, padding);
+  }
+}
+
 export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellHeight | undefined): number {
   const bodyFontSize = theme.typography.fontSize;
   const lineHeight = theme.typography.body.lineHeight;
@@ -119,31 +160,35 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellH
  */
 export function getRowHeight(
   row: TableRow,
-  columnTypes: ColumnTypes,
-  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
   osContext: OffscreenCanvasRenderingContext2D | null,
   lineHeight: number,
   defaultRowHeight: number,
-  padding: number
+  padding: number,
+  fieldsData: {
+    headersLength: number;
+    textWraps: { [key: string]: boolean };
+    columnTypes: ColumnTypes;
+    columnWidths: Record<string, number>;
+  }
 ): number {
-  /**
-   * 0. loop through all cells in row
-   * 1. find text cell in row
-   * 2. find width of text cell
-   * 3. calculate height based on width and text length
-   * 4. return biggest height
-   */
+  // Early exit if context is not available
+  if (!osContext || fieldsData.headersLength === 0) {
+    return defaultRowHeight;
+  }
 
   let biggestHeight = defaultRowHeight;
 
   for (const key in row) {
-    if (isTextCell(key, columnTypes)) {
-      if (Object.keys(headerCellRefs.current).length === 0 || !headerCellRefs.current[key]) {
-        return biggestHeight;
-      }
-      const cellWidth = headerCellRefs.current[key].offsetWidth;
-      const cellText = String(row[key] ?? '');
-      const newCellHeight = getCellHeight(cellText, cellWidth, osContext, lineHeight, defaultRowHeight, padding);
+    if (fieldsData.columnTypes[key] === FieldType.string && fieldsData.textWraps[key]) {
+      const cellText = row[key] as string;
+      const newCellHeight = calculateCellHeight(
+        cellText,
+        fieldsData.columnWidths[key],
+        osContext,
+        lineHeight,
+        defaultRowHeight,
+        padding
+      );
 
       if (newCellHeight > biggestHeight) {
         biggestHeight = newCellHeight;

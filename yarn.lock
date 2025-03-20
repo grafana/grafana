@@ -18116,6 +18116,7 @@ __metadata:
     blob-polyfill: "npm:9.0.20240710"
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
+    canvas-hypertxt: "npm:^1.0.3"
     centrifuge: "npm:5.3.4"
     chance: "npm:^1.0.10"
     chrome-remote-interface: "npm:0.33.2"
