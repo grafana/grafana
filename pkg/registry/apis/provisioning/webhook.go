@@ -19,8 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-// Webhook endpoint max size (1MB)
-const webhookMaxBodySize = 1 * 1024 * 1024
+// Webhook endpoint max size (25MB)
+// See https://docs.github.com/en/webhooks/webhook-events-and-payloads
+const webhookMaxBodySize = 25 * 1024 * 1024
 
 // This only works for github right now
 type webhookConnector struct {
