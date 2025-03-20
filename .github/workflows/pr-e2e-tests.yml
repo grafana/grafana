@@ -22,7 +22,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: ./grafana
-      - run: dagger run go run ./cmd artifacts -a grafana:linux/amd64:targz --grafana-dir=./grafana --build-id=${{ github.run_number }} > out.txt
+      - run: echo "GRAFANA_GO_VERSION=$(grep "go 1." grafana/go.work |  cut -d\  -f2)" >> "$GITHUB_ENV"
+      - uses: dagger/dagger-for-github@v8.0.0
+        if: matrix.type == 'grafana'
+        with:
+          verb: run
+          dagger-flags: '--quiet'
+          args: go run ./cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir=grafana --go-version=${GRAFANA_GO_VERSION} > out.txt
       - run: mv $(cat out.txt) grafana.tar.gz
       - run: echo "artifact=grafana-e2e-${{github.run_number}}" >> "$GITHUB_OUTPUT"
         id: artifact
