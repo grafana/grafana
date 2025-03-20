@@ -75,14 +75,36 @@ func Clone(
 		return nil, fmt.Errorf("error decrypting token: %w", err)
 	}
 
-	err = os.MkdirAll(opts.Root, 0700)
-	if err != nil {
-		return nil, err
+	if err := os.MkdirAll(opts.Root, 0700); err != nil {
+		return nil, fmt.Errorf("create root dir: %w", err)
 	}
+
 	dir, err := mkdirTempClone(opts.Root, config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create temp clone dir: %w", err)
 	}
+
+	repo, worktree, err := clone(ctx, config, opts, decrypted, dir, progress)
+	if err != nil {
+		if err := os.RemoveAll(dir); err != nil {
+			return nil, fmt.Errorf("remove temp clone dir after clone failed: %w", err)
+		}
+
+		return nil, fmt.Errorf("clone: %w", err)
+	}
+
+	return &GoGitRepo{
+		config:            config,
+		opts:              opts,
+		tree:              worktree,
+		decryptedPassword: string(decrypted),
+		repo:              repo,
+		dir:               dir,
+	}, nil
+}
+
+func clone(ctx context.Context, config *provisioning.Repository, opts GoGitCloneOptions, decrypted []byte, dir string, progress io.Writer) (*git.Repository, *git.Worktree, error) {
+	gitcfg := config.Spec.GitHub
 	url := fmt.Sprintf("%s.git", gitcfg.URL)
 
 	branch := plumbing.NewBranchReferenceName(gitcfg.Branch)
@@ -103,7 +125,7 @@ func Clone(
 		if err == nil {
 			worktree, err := repo.Worktree()
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			err = worktree.Checkout(&git.CheckoutOptions{
 				Branch: branch,
@@ -111,40 +133,33 @@ func Clone(
 				Create: true,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("unable to create new branch: %w", err)
+				return nil, nil, fmt.Errorf("unable to create new branch: %w", err)
 			}
 		}
 	}
 	if err != nil {
-		return nil, fmt.Errorf("clone error %w", err)
+		return nil, nil, fmt.Errorf("clone error: %w", err)
 	}
 
 	rcfg, err := repo.Config()
 	if err != nil {
-		return nil, fmt.Errorf("error reading repository config %w", err)
+		return nil, nil, fmt.Errorf("error reading repository config %w", err)
 	}
 
 	origin := rcfg.Remotes["origin"]
 	if origin == nil {
-		return nil, fmt.Errorf("missing origin remote %w", err)
+		return nil, nil, fmt.Errorf("missing origin remote %w", err)
 	}
 	if url != origin.URLs[0] {
-		return nil, fmt.Errorf("unexpected remote (expected: %s, found: %s)", url, origin.URLs[0])
+		return nil, nil, fmt.Errorf("unexpected remote (expected: %s, found: %s)", url, origin.URLs[0])
 	}
 
 	worktree, err := repo.Worktree()
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("get worktree: %w", err)
 	}
 
-	return &GoGitRepo{
-		config:            config,
-		opts:              opts,
-		tree:              worktree,
-		decryptedPassword: string(decrypted),
-		repo:              repo,
-		dir:               dir,
-	}, nil
+	return repo, worktree, nil
 }
 
 func mkdirTempClone(root string, config *provisioning.Repository) (string, error) {
@@ -228,6 +243,10 @@ func (g *GoGitRepo) Push(ctx context.Context, progress io.Writer) error {
 		return nil // same as the target
 	}
 	return err
+}
+
+func (g *GoGitRepo) Remove(ctx context.Context) error {
+	return os.RemoveAll(g.dir)
 }
 
 // Config implements repository.Repository.
