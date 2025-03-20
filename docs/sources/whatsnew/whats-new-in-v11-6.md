@@ -18,8 +18,8 @@ posts:
       - docs/grafana-cloud/whats-new/2025-02-11-canvas-one-click-data-links-and-actions.md
       - docs/grafana-cloud/whats-new/2025-02-11-one-click-data-links-and-actions-in-visualizations.md
       - docs/grafana-cloud/whats-new/2025-02-14-actions-added-to-visualizations.md
-      - docs/grafana-cloud/whats-new/2025-02-19-better-time-region-control-with-cron-syntax.md
       - docs/grafana-cloud/whats-new/2025-02-26-new-actionscell-for-table-visualization.md
+      - docs/grafana-cloud/whats-new/2025-02-19-better-time-region-control-with-cron-syntax.md
       - docs/grafana-cloud/whats-new/2025-03-06-improved-performance-in-geomap-visualizations.md
       - docs/grafana-cloud/whats-new/2025-03-06-variables-supported-for-all-transformations.md
   - title: Alerting
