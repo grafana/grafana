@@ -18,11 +18,6 @@ func ExtractFilePath(urlPath, prefix string) (string, error) {
 	// Extract the file path after the prefix
 	filePath := strings.TrimPrefix(urlPath[idx+len(prefix):], "/")
 
-	// Empty path is valid and represents the root
-	if filePath == "" {
-		return "", nil
-	}
-
 	// Validate the path for any traversal attempts first
 	if err := safepath.ValidatePath(filePath); err != nil {
 		return "", err
