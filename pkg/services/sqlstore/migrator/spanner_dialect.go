@@ -147,6 +147,9 @@ func (s *SpannerDialect) TruncateDBTables(engine *xorm.Engine) error {
 		switch table.Name {
 		case "":
 			continue
+		case "autoincrement_sequences":
+			// Don't delete sequence number for migration_log.id column.
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE name <> 'migration_log:id'", s.Quote(table.Name)))
 		case "migration_log":
 			continue
 		case "dashboard_acl":
