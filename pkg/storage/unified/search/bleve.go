@@ -790,8 +790,8 @@ var textSortFields = map[string]string{
 const lowerCase = "phrase"
 
 // termField fields to use termQuery for filtering
-var termField = map[string]bool{
-	resource.SEARCH_FIELD_TITLE: true,
+var termFields = []string{
+	resource.SEARCH_FIELD_TITLE,
 }
 
 // Convert a "requirement" into a bleve query
@@ -861,7 +861,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 // newQuery will create a query that will match the value or the tokens of the value
 func newQuery(key string, value string, prefix string) query.Query {
 	delimiter, ok := hasTerms(value)
-	if termField[key] && ok {
+	if slices.Contains(termFields, key) && ok {
 		return newTermsQuery(key, value, delimiter, prefix)
 	}
 	q := bleve.NewMatchQuery(value)
