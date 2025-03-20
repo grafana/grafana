@@ -1,5 +1,6 @@
-SELECT
-  {{ .Ident "guid" }},
+{{/* this query is used to validate the keeper update or creation */}}
+
+SELECT {{ .Ident "guid" }},
   {{ .Ident "name" }},
   {{ .Ident "namespace" }},
   {{ .Ident "annotations" }},

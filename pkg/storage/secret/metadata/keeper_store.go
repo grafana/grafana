@@ -112,13 +112,16 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 
 		if res.Next() {
 			row := &keeperDB{}
-			err = res.Scan(&row.GUID,
+			err := res.Scan(&row.GUID,
 				&row.Name, &row.Namespace, &row.Annotations,
 				&row.Labels,
 				&row.Created, &row.CreatedBy,
 				&row.Updated, &row.UpdatedBy,
 				&row.Title, &row.Type, &row.Payload,
 			)
+			if err != nil {
+				return fmt.Errorf("failed to scan keeper row: %w", err)
+			}
 
 			keeper, err = row.toKubernetes()
 			if err != nil {

@@ -76,32 +76,3 @@ type listByNameKeeper struct {
 	KeeperNames       []string
 	ExcludeKeeperType string
 }
-
-/**
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
-func (r createKeeper) Validate() error {
-	return nil // TODO
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
-func (r readKeeper) Validate() error {
-	return nil // TODO
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
-func (r updateKeeper) Validate() error {
-	return nil // TODO
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
-func (r listKeeper) Validate() error {
-	return nil // TODO
-}
-
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
-func (r deleteKeeper) Validate() error {
-	return nil // TODO
-}
-
-*/
