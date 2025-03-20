@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from 'test/test-utils';
 
+import { PluginSignatureStatus } from '@grafana/data';
+
 import { CatalogPlugin } from '../types';
 
 import { PluginScreenshotCarousel } from './PluginScreenshotCarousel';
@@ -7,13 +9,6 @@ import { PluginScreenshotCarousel } from './PluginScreenshotCarousel';
 const mockPlugin: CatalogPlugin = {
   id: 'test-plugin',
   latestVersion: '1.0.0',
-  details: {
-    screenshots: [
-      { path: 'screenshot1.png', name: 'Dashboard Overview' },
-      { path: 'screenshot2.png', name: 'Settings Panel' },
-      { path: 'screenshot3.png', name: 'Visualization Example' },
-    ],
-  },
   description: 'Test plugin description',
   downloads: 1000,
   hasUpdate: false,
@@ -35,7 +30,17 @@ const mockPlugin: CatalogPlugin = {
   isPublished: true,
   name: 'Test Plugin',
   orgName: 'Test Org',
+  signature: PluginSignatureStatus.valid,
+  popularity: 100,
+  publishedAt: '2021-01-01',
+  updatedAt: '2021-01-01',
 };
+
+const mockScreenshots = [
+  { path: 'screenshot1.png', name: 'Dashboard Overview' },
+  { path: 'screenshot2.png', name: 'Settings Panel' },
+  { path: 'screenshot3.png', name: 'Visualization Example' },
+];
 
 describe('PluginScreenshotCarousel', () => {
   beforeEach(() => {
@@ -43,10 +48,10 @@ describe('PluginScreenshotCarousel', () => {
   });
 
   it('should render the grid of screenshots', () => {
-    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockPlugin.details?.screenshots} />);
+    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockScreenshots} />);
 
     const images = screen.getAllByRole('img');
-    expect(images).toHaveLength(mockPlugin.details?.screenshots?.length);
+    expect(images).toHaveLength(mockScreenshots.length);
 
     expect(screen.getByText('Dashboard Overview')).toBeInTheDocument();
     expect(screen.getByText('Settings Panel')).toBeInTheDocument();
@@ -54,19 +59,19 @@ describe('PluginScreenshotCarousel', () => {
   });
 
   it('should open fullscreen preview when a screenshot is clicked', () => {
-    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockPlugin.details?.screenshots} />);
+    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockScreenshots} />);
     const thumbnails = screen.getAllByRole('img');
     fireEvent.click(thumbnails[0]);
 
     const closeButton = screen.getByLabelText('Close');
     expect(closeButton).toBeInTheDocument();
 
-    expect(screen.getByLabelText('previous')).toBeInTheDocument();
-    expect(screen.getByLabelText('next')).toBeInTheDocument();
+    expect(screen.getByLabelText('Previous')).toBeInTheDocument();
+    expect(screen.getByLabelText('Next')).toBeInTheDocument();
   });
 
   it('should close preview when close button is clicked', () => {
-    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockPlugin.details?.screenshots} />);
+    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockScreenshots} />);
 
     const thumbnails = screen.getAllByRole('img');
     fireEvent.click(thumbnails[0]);
@@ -78,18 +83,18 @@ describe('PluginScreenshotCarousel', () => {
   });
 
   it('should navigate to next image when next button is clicked', () => {
-    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockPlugin.details?.screenshots} />);
+    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockScreenshots} />);
 
     const thumbnails = screen.getAllByRole('img');
     fireEvent.click(thumbnails[0]);
 
-    const fullScreenImage = screen.getAllByRole('img')[mockPlugin.details?.screenshots.length]; // Get the fullscreen image
+    const fullScreenImage = screen.getAllByRole('img')[mockScreenshots.length]; // Get the fullscreen image
     expect(fullScreenImage).toHaveAttribute(
       'src',
       '/api/gnet/plugins/test-plugin/versions/1.0.0/images/screenshot1.png'
     );
 
-    const nextButton = screen.getByLabelText('next');
+    const nextButton = screen.getByLabelText('Next');
     fireEvent.click(nextButton);
 
     expect(fullScreenImage).toHaveAttribute(
@@ -99,21 +104,21 @@ describe('PluginScreenshotCarousel', () => {
   });
 
   it('should navigate to previous image when previous button is clicked', () => {
-    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockPlugin.details?.screenshots} />);
+    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockScreenshots} />);
 
     const thumbnails = screen.getAllByRole('img');
     fireEvent.click(thumbnails[0]);
-    const nextButton = screen.getByLabelText('next');
+    const nextButton = screen.getByLabelText('Next');
     fireEvent.click(nextButton);
     fireEvent.click(nextButton);
 
-    const fullScreenImage = screen.getAllByRole('img')[mockPlugin.details?.screenshots.length];
+    const fullScreenImage = screen.getAllByRole('img')[mockScreenshots.length];
     expect(fullScreenImage).toHaveAttribute(
       'src',
       '/api/gnet/plugins/test-plugin/versions/1.0.0/images/screenshot3.png'
     );
 
-    const previousButton = screen.getByLabelText('previous');
+    const previousButton = screen.getByLabelText('Previous');
     fireEvent.click(previousButton);
 
     expect(fullScreenImage).toHaveAttribute(
@@ -123,7 +128,7 @@ describe('PluginScreenshotCarousel', () => {
   });
 
   it('should handle keyboard navigation', () => {
-    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockPlugin.details?.screenshots} />);
+    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockScreenshots} />);
 
     const thumbnails = screen.getAllByRole('img');
     fireEvent.click(thumbnails[0]);
@@ -132,7 +137,7 @@ describe('PluginScreenshotCarousel', () => {
 
     fireEvent.keyDown(container, { key: 'ArrowRight' });
 
-    const fullScreenImage = screen.getAllByRole('img')[mockPlugin.details?.screenshots.length];
+    const fullScreenImage = screen.getAllByRole('img')[mockScreenshots.length];
     expect(fullScreenImage).toHaveAttribute(
       'src',
       '/api/gnet/plugins/test-plugin/versions/1.0.0/images/screenshot2.png'
@@ -151,7 +156,7 @@ describe('PluginScreenshotCarousel', () => {
   });
 
   it('should filter out images that fail to load', () => {
-    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockPlugin.details?.screenshots} />);
+    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockScreenshots} />);
 
     const images = screen.getAllByRole('img');
     fireEvent.error(images[0]);
@@ -167,7 +172,7 @@ describe('PluginScreenshotCarousel', () => {
   });
 
   it('should show a warning when all screenshots fail to load', () => {
-    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockPlugin.details?.screenshots} />);
+    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockScreenshots} />);
 
     const images = screen.getAllByRole('img');
     fireEvent.error(images[0]);
@@ -178,19 +183,19 @@ describe('PluginScreenshotCarousel', () => {
   });
 
   it('should close preview when clicking outside the image', () => {
-    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockPlugin.details?.screenshots} />);
+    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockScreenshots} />);
 
     const thumbnails = screen.getAllByRole('img');
     fireEvent.click(thumbnails[0]);
 
-    const backdrop = screen.getByLabelText('Close').parentElement;
+    const backdrop = screen.getByTestId('plugin-screenshot-full-screen');
     fireEvent.click(backdrop);
 
     expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
   });
 
   it('should not close preview when clicking on the image', () => {
-    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockPlugin.details?.screenshots} />);
+    render(<PluginScreenshotCarousel plugin={mockPlugin} screenshots={mockScreenshots} />);
 
     const thumbnails = screen.getAllByRole('img');
     fireEvent.click(thumbnails[0]);

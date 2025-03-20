@@ -3205,6 +3205,16 @@
       "message": "No playlists found"
     }
   },
+  "plugin": {
+    "details": {
+      "screenshots": {
+        "closeFullScreen": "Close",
+        "nextFullScreen": "Next",
+        "previousFullScreen": "Previous",
+        "warning": "Something went wrong loading screenshots"
+      }
+    }
+  },
   "plugins": {
     "catalog": {
       "no-updates-available": "No updates available",
