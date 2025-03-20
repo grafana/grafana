@@ -24,7 +24,11 @@ export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOption
   return useCallback(
     async function* (ruleSource: DataSourceRulesSourceIdentifier, groupLimit: number) {
       const getRuleSourceGroupsWithCache = async (fetchOptions: FetchGroupsOptions) => {
-        const response = await getGroups({ ruleSource: { uid: ruleSource.uid }, ...fetchOptions }).unwrap();
+        const response = await getGroups({
+          ruleSource: { uid: ruleSource.uid },
+          notificationOptions: { showErrorAlert: false },
+          ...fetchOptions,
+        }).unwrap();
 
         if (hookOptions.populateCache) {
           response.data.groups.forEach((group) => {

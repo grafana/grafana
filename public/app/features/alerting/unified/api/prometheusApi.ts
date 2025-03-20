@@ -2,7 +2,7 @@ import { GrafanaPromRuleGroupDTO, PromRuleDTO, PromRuleGroupDTO } from 'app/type
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import { alertingApi } from './alertingApi';
+import { WithNotificationOptions, alertingApi } from './alertingApi';
 import { normalizeRuleGroup } from './prometheus';
 
 export interface PromRulesResponse<TRuleGroup> {
@@ -15,7 +15,7 @@ export interface PromRulesResponse<TRuleGroup> {
   error?: string;
 }
 
-interface PromRulesOptions {
+type PromRulesOptions = WithNotificationOptions<{
   ruleSource: { uid: string };
   namespace?: string;
   groupName?: string;
@@ -23,7 +23,7 @@ interface PromRulesOptions {
   groupLimit?: number;
   excludeAlerts?: boolean;
   groupNextToken?: string;
-}
+}>;
 
 type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace'> & {
   folderUid?: string;
