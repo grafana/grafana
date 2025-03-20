@@ -44,7 +44,6 @@ func ProvideKeeperMetadataStorage(db db.DB, features featuremgmt.FeatureToggles,
 	}, nil
 }
 
-// TODO LND DONE! with warn
 func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
 	// TODO LND REMOVE
 	logging.DefaultLogger.Info("--- LND: SQL CREATE executed")
@@ -94,7 +93,6 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 	return createdKeeper, nil
 }
 
-// TODO LND DONE!
 func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error) {
 	// TODO LND REMOVE
 	logging.DefaultLogger.Info("--- LND: SQL READ executed")
@@ -152,7 +150,6 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 	return nil, contracts.ErrKeeperNotFound
 }
 
-// TODO LND DONE! with warn
 func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
 	// TODO LND REMOVE
 	logging.DefaultLogger.Info("--- LND: SQL UPDATE executed")
@@ -223,7 +220,6 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 	return keeper, nil
 }
 
-// TODO LND DONE!
 func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
 	// TODO LND REMOVE
 	logging.DefaultLogger.Info("--- LND: SQL DELETE executed")
@@ -259,7 +255,6 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 	return nil
 }
 
-// TODO LND DONE!
 func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
 	// TODO LND REMOVE
 	logging.DefaultLogger.Info("--- LND: SQL LIST executed")
