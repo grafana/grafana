@@ -169,7 +169,7 @@ describe('LokiQueryEditorSelector', () => {
 
     await screen.findByText('host.docker.internal:3000');
     expect(screen.getByText('Rate')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('$__auto')).toHaveValue('$__auto');
+    expect(screen.getByText('$__auto')).toBeInTheDocument();
   });
 
   it('renders the label browser button', async () => {
