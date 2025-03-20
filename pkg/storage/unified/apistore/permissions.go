@@ -31,7 +31,7 @@ func canGrantPermissionsOnCreate(ctx context.Context, grantPermisions string, ob
 		return errors.New("missing auth info")
 	}
 	if info.GetIdentityType() != authtypes.TypeUser {
-		return fmt.Errorf("only uses may grant themselvs permissions using the annotation")
+		return fmt.Errorf("only uses may grant themselves permissions using the annotation")
 	}
 	return nil
 }
@@ -48,7 +48,7 @@ func grantPermissionsAfterCreate(ctx context.Context, key *resource.ResourceKey,
 		return errors.New("missing auth info")
 	}
 	if auth.GetIdentityType() != authtypes.TypeUser {
-		return fmt.Errorf("only uses may grant themselvs permissions using the annotation")
+		return fmt.Errorf("only uses may grant themselves permissions using the annotation")
 	}
 
 	fmt.Printf("TODO!!! grant permissions!!!!: %s // %s", auth.GetUID(), key.SearchID())
