@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -308,9 +309,12 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		needsUpdate = true
 	}
 
-	// If the user is provisioned, we need to validate the authID
+	span.SetAttributes(
+		attribute.String("identity.ID", id.ID),
+		attribute.String("identity.ExternalUID", id.ExternalUID),
+	)
 	if usr.IsProvisioned {
-		s.log.Debug("User is provisioned", "id", id.Email)
+		s.log.Debug("User is provisioned", "id,UID", id.UID)
 		needsConnectionCreation = false
 		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
 		if err != nil {
@@ -320,7 +324,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 
 		// Validate the authID matches the identity authId and the userUniqueID
 		if id.ExternalUID != authInfo.ExternalUID {
-			s.log.Error("provisioned authID mistmatches identity authID", "provisioned_authID", authInfo.ExternalUID, "identity_authID", id.ExternalUID)
+			s.log.Error("mismatched externalUID", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
 			return errors.New("authID mistmatch") // TODO: assign an error
 		}
 	}
