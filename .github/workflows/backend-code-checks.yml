@@ -7,6 +7,13 @@ on:
       - '*.md'
       - 'docs/**'
       - 'latest.json'
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - 'latest.json'
 
 permissions:
   contents: read
@@ -44,8 +51,8 @@ jobs:
         
       - name: Generate and Validate OpenAPI Specs
         run: |
-          # For forks, we'll just run the basic swagger-gen without validation
-          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
+          # For PRs from forks, we'll just run the basic swagger-gen without validation
+          if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
             echo "PR is from a fork, skipping enterprise-based validation"
             make swagger-gen
             exit 0
@@ -54,7 +61,7 @@ jobs:
           # Clean and regenerate OpenAPI specs
           make swagger-clean && make openapi3-gen
           
-          # Check if the generated specs differ from what's in the PR
+          # Check if the generated specs differ from what's in the repository
           for f in public/api-merged.json public/openapi3.json; do git add $f; done
           if [ -z "$(git diff --name-only --cached)" ]; then
             echo "OpenAPI specs are up to date!"
