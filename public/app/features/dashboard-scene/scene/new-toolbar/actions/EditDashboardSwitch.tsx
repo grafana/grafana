@@ -7,15 +7,11 @@ import { ToolbarActionProps } from '../types';
 
 export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => (
   <ToolbarSwitch
-    icon="pen"
-    label={
-      dashboard.state.isEditing
-        ? t('dashboard.toolbar.new.edit-toggle.exit.label', 'Exit edit mode')
-        : t('dashboard.toolbar.new.edit-toggle.enter.label', 'Enter edit mode')
-    }
     checked={!!dashboard.state.isEditing}
+    icon="pen"
+    label={t('dashboard.toolbar.new.edit-toggle.enter.label', 'Enter edit mode')}
+    checkedLabel={t('dashboard.toolbar.new.edit-toggle.exit.label', 'Exit edit mode')}
     disabled={playlistSrv.state.isPlaying}
-    variant="blue"
     data-testid={selectors.components.NavToolbar.editDashboard.editButton}
     onClick={(evt) => {
       evt.preventDefault();
