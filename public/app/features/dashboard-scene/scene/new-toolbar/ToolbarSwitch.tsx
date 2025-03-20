@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { MouseEvent } from 'react';
-import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
@@ -10,8 +9,8 @@ interface Props {
   label: string;
   checked: boolean;
   checkedIcon?: IconName;
+  checkedLabel?: string;
   disabled?: boolean;
-  variant: 'blue' | 'yellow' | 'gray';
   'data-testId'?: string;
   onClick: (evt: MouseEvent<HTMLDivElement>) => void;
 }
@@ -21,20 +20,22 @@ export const ToolbarSwitch = ({
   label,
   checked,
   checkedIcon,
+  checkedLabel,
   disabled,
   onClick,
-  variant,
   'data-testId': dataTestId,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
+  const labelText = checked && checkedLabel ? checkedLabel : label;
+  const iconName = checked && checkedIcon ? checkedIcon : icon;
+
   return (
-    <Tooltip content={label}>
+    <Tooltip content={labelText}>
       <div
-        aria-label={label}
+        aria-label={labelText}
         role="button"
         className={cx({
-          [variant]: true,
           [styles.container]: true,
           [styles.containerChecked]: checked,
           [styles.containerDisabled]: disabled,
@@ -43,7 +44,7 @@ export const ToolbarSwitch = ({
         onClick={disabled ? undefined : onClick}
       >
         <div className={cx(styles.box, checked && styles.boxChecked)}>
-          <Icon name={checked && checkedIcon ? checkedIcon : icon} size="xs" />
+          <Icon name={iconName} size="xs" />
         </div>
       </div>
     </Tooltip>
@@ -72,34 +73,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   containerChecked: css({
-    '&.blue': {
-      backgroundColor: theme.colors.primary.main,
-      borderColor: theme.colors.primary.border,
+    backgroundColor: theme.colors.primary.main,
+    borderColor: 'transparent',
 
-      '&:hover': {
-        backgroundColor: theme.colors.primary.shade,
-        borderColor: theme.colors.primary.shade,
-      },
-    },
-
-    '&.yellow': {
-      backgroundColor: theme.colors.warning.main,
-      borderColor: theme.colors.warning.border,
-
-      '&:hover': {
-        backgroundColor: theme.colors.warning.shade,
-        borderColor: theme.colors.warning.shade,
-      },
-    },
-
-    '&.gray': {
-      backgroundColor: theme.colors.secondary.main,
-      borderColor: theme.colors.secondary.border,
-
-      '&:hover': {
-        backgroundColor: theme.colors.secondary.shade,
-        borderColor: theme.colors.secondary.shade,
-      },
+    '&:hover': {
+      backgroundColor: theme.colors.primary.shade,
+      borderColor: 'transparent',
     },
   }),
   containerDisabled: css({
@@ -108,9 +87,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderColor: theme.colors.border.weak,
   }),
   box: css({
-    backgroundColor: theme.isDark
-      ? theme.colors.background.secondary
-      : tinycolor2(theme.colors.background.secondary).darken(5).toRgbString(),
+    background: theme.colors.background.primary,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -118,15 +95,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: theme.spacing(2.5),
     borderRadius: theme.shape.radius.default,
     transform: 'translateX(0)',
+    position: 'relative',
 
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: 'all 0.2s ease-in-out',
     },
+
+    '&:after': css({
+      content: "''",
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.secondary.main,
+      border: `1px solid ${theme.colors.secondary.border}`,
+    }),
   }),
   boxChecked: css({
-    backgroundColor: theme.isDark
-      ? tinycolor2(theme.colors.background.secondary).darken(5).toRgbString()
-      : tinycolor2(theme.colors.background.secondary).lighten(5).toRgbString(),
     transform: `translateX(calc(100% - ${theme.spacing(0.25)}))`,
   }),
 });

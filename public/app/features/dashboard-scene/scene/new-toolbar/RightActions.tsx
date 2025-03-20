@@ -14,6 +14,7 @@ import { DiscardPanelButton } from './actions/DiscardPanelButton';
 import { EditDashboardSwitch } from './actions/EditDashboardSwitch';
 import { EditSchemaV2Button } from './actions/EditSchemaV2Button';
 import { ExportDashboardButton } from './actions/ExportDashboardButton';
+import { HiddenElementsSwitch } from './actions/HiddenElementsSwitch';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
 import { PlayListNextButton } from './actions/PlayListNextButton';
 import { PlayListPreviousButton } from './actions/PlayListPreviousButton';
@@ -21,7 +22,6 @@ import { PlayListStopButton } from './actions/PlayListStopButton';
 import { SaveDashboard } from './actions/SaveDashboard';
 import { SaveLibraryPanelButton } from './actions/SaveLibraryPanelButton';
 import { ShareDashboardButton } from './actions/ShareDashboardButton';
-import { ToggleHiddenElementsSwitch } from './actions/ToggleHiddenElementsSwitch';
 import { UnlinkLibraryPanelButton } from './actions/UnlinkLibraryPanelButton';
 import { renderActionElements } from './utils';
 
@@ -70,8 +70,8 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             condition: showPlayButtons,
           },
           {
-            key: 'toggle-hidden-elements-switch',
-            component: ToggleHiddenElementsSwitch,
+            key: 'hidden-elements-switch',
+            component: HiddenElementsSwitch,
             group: 'hidden-elements',
             condition: isEditingAndShowingDashboard,
           },
