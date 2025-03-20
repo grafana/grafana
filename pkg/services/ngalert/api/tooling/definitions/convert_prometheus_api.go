@@ -192,9 +192,12 @@ type PrometheusNamespace struct {
 
 // swagger:model
 type PrometheusRuleGroup struct {
-	Name     string           `yaml:"name"`
-	Interval model.Duration   `yaml:"interval"`
-	Rules    []PrometheusRule `yaml:"rules"`
+	Name        string            `yaml:"name"`
+	Interval    model.Duration    `yaml:"interval"`
+	QueryOffset *model.Duration   `yaml:"query_offset,omitempty"`
+	Limit       int               `yaml:"limit,omitempty"`
+	Rules       []PrometheusRule  `yaml:"rules"`
+	Labels      map[string]string `yaml:"labels,omitempty"`
 }
 
 // swagger:model

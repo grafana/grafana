@@ -25,12 +25,12 @@ type PrometheusRuleGroup struct {
 }
 
 func (g *PrometheusRuleGroup) Validate() error {
-	if g.QueryOffset != nil {
-		return ErrPrometheusRuleGroupValidationFailed.Errorf("query_offset is not supported")
-	}
-
 	if g.Limit != 0 {
 		return ErrPrometheusRuleGroupValidationFailed.Errorf("limit is not supported")
+	}
+
+	if g.QueryOffset != nil && *g.QueryOffset < prommodel.Duration(0) {
+		return ErrPrometheusRuleGroupValidationFailed.Errorf("query_offset must be >= 0")
 	}
 
 	for _, rule := range g.Rules {

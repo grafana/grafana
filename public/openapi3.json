@@ -2715,6 +2715,9 @@
           "isPaused": {
             "type": "boolean"
           },
+          "keepFiringFor": {
+            "$ref": "#/components/schemas/Duration"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
@@ -2974,6 +2977,10 @@
           },
           "health": {
             "type": "string"
+          },
+          "keepFiringFor": {
+            "format": "double",
+            "type": "number"
           },
           "labels": {
             "$ref": "#/components/schemas/Labels"
@@ -8750,7 +8757,20 @@
           "Interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "Labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "Limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "Name": {
+            "type": "string"
+          },
+          "QueryOffset": {
             "type": "string"
           },
           "Rules": {
@@ -8854,6 +8874,10 @@
           "isPaused": {
             "example": false,
             "type": "boolean"
+          },
+          "keep_firing_for": {
+            "format": "duration",
+            "type": "string"
           },
           "labels": {
             "additionalProperties": {
@@ -12930,7 +12954,6 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },

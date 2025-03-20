@@ -208,6 +208,9 @@
     "isPaused": {
      "type": "boolean"
     },
+    "keepFiringFor": {
+     "$ref": "#/definitions/Duration"
+    },
     "labels": {
      "additionalProperties": {
       "type": "string"
@@ -467,6 +470,10 @@
     },
     "health": {
      "type": "string"
+    },
+    "keepFiringFor": {
+     "format": "double",
+     "type": "number"
     },
     "labels": {
      "$ref": "#/definitions/Labels"
@@ -3012,7 +3019,20 @@
     "Interval": {
      "$ref": "#/definitions/Duration"
     },
+    "Labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Limit": {
+     "format": "int64",
+     "type": "integer"
+    },
     "Name": {
+     "type": "string"
+    },
+    "QueryOffset": {
      "type": "string"
     },
     "Rules": {
@@ -3116,6 +3136,10 @@
     "isPaused": {
      "example": false,
      "type": "boolean"
+    },
+    "keep_firing_for": {
+     "format": "duration",
+     "type": "string"
     },
     "labels": {
      "additionalProperties": {
