@@ -3,6 +3,7 @@ import { CSSProperties, useEffect, useRef } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
@@ -11,7 +12,6 @@ import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPinned } from './LogListContext';
 import { LogFieldDimension, LogListModel } from './processing';
 import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight } from './virtualization';
-import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 interface Props {
   displayedFields: string[];
