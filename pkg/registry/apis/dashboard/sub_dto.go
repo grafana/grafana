@@ -86,7 +86,7 @@ func (r *DTOConnector) ProducesObject(verb string) interface{} {
 }
 
 func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
+	_, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -125,17 +125,6 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		if req.URL.Query().Get("includeAccess") == "false" {
 			responder.Object(200, rawobj)
 			return
-		}
-
-		// Calculate access information -- needed to help smooth transition from /api/dashboard format
-		dto := &dashboards.Dashboard{
-			UID:   name,
-			OrgID: info.OrgID,
-			ID:    obj.GetDeprecatedInternalID(), // nolint:staticcheck
-		}
-		manager, ok := obj.GetManagerProperties()
-		if ok && manager.Kind == utils.ManagerKindPlugin {
-			dto.PluginID = manager.Identity
 		}
 
 		dashScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(name)
