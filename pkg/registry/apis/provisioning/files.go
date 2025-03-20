@@ -83,8 +83,8 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		isFolderPath := safepath.IsFolderPath(filePath)
-		if r.Method == http.MethodGet && (filePath == "" || isFolderPath) {
+		isDir := safepath.IsDir(filePath)
+		if r.Method == http.MethodGet && (filePath == "" || isDir) {
 			// TODO: Implement folder navigation
 			if len(filePath) > 0 {
 				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
@@ -122,7 +122,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			obj, err = s.doWrite(ctx, false, repo, filePath, ref, message, r)
 		case http.MethodPut:
 			// TODO: document in API specification
-			if isFolderPath {
+			if isDir {
 				err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 			} else {
 				obj, err = s.doWrite(ctx, true, repo, filePath, ref, message, r)

@@ -29,7 +29,7 @@ func ExtractFilePath(urlPath, prefix string) (string, error) {
 	}
 
 	// Only check file extension if it's not a folder path
-	if !safepath.IsFolderPath(filePath) && resources.ShouldIgnorePath(filePath) {
+	if !safepath.IsDir(filePath) && resources.ShouldIgnorePath(filePath) {
 		return "", apierrors.NewBadRequest("only yaml and json files supported")
 	}
 
