@@ -74,9 +74,6 @@ func (j *migrationJob) migrateLegacyFolders(ctx context.Context) error {
 
 	err = j.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
-		if j.options.Prefix != "" {
-			p = j.options.Prefix + "/" + p
-		}
 		logger = logger.With("path", p)
 
 		result := jobs.JobResourceResult{

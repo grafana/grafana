@@ -2,15 +2,13 @@ import { useEffect, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Alert, ConfirmModal, Modal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Alert, ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 
 import { FilesView } from './File/FilesView';
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
-import { ExportToRepository } from './Repository/ExportToRepository';
-import { MigrateToRepository } from './Repository/MigrateToRepository';
 import { RepositoryActions } from './Repository/RepositoryActions';
 import { RepositoryOverview } from './Repository/RepositoryOverview';
 import { RepositoryResources } from './Repository/RepositoryResources';
@@ -45,8 +43,6 @@ export default function HomePage() {
   const settings = useGetFrontendSettingsQuery();
   const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [showMigrateModal, setShowMigrateModal] = useState(false);
   const [instanceConnected] = checkSyncSettings(settings.data);
   const [activeTab, setActiveTab] = useState<TabSelection>(
     instanceConnected ? TabSelection.Overview : TabSelection.Repositories
@@ -110,16 +106,7 @@ export default function HomePage() {
     <Page
       navId="provisioning"
       subTitle="View and manage your configured repositories"
-      actions={
-        instanceConnected && items?.length ? (
-          <RepositoryActions
-            repository={items[0]}
-            showMigrateButton={settings.data?.legacyStorage}
-            onExportClick={() => setShowExportModal(true)}
-            onMigrateClick={() => setShowMigrateModal(true)}
-          />
-        ) : undefined
-      }
+      actions={instanceConnected && items?.length ? <RepositoryActions repository={items[0]} /> : undefined}
     >
       <Page.Contents isLoading={isLoading}>
         {settings.data?.legacyStorage && (
@@ -142,16 +129,6 @@ export default function HomePage() {
           onConfirm={onConfirmDelete}
           onDismiss={() => setShowDeleteModal(false)}
         />
-        {showExportModal && items?.length && (
-          <Modal isOpen={true} title="Export to Repository" onDismiss={() => setShowExportModal(false)}>
-            <ExportToRepository repo={items[0]} />
-          </Modal>
-        )}
-        {showMigrateModal && items?.length && (
-          <Modal isOpen={true} title="Migrate to Repository" onDismiss={() => setShowMigrateModal(false)}>
-            <MigrateToRepository repo={items[0]} />
-          </Modal>
-        )}
         <Stack direction="column" gap={2}>
           <TabsBar>
             {(instanceConnected ? connectedTabInfo : disconnectedTabInfo).map((t) => (

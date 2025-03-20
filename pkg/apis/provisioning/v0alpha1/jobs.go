@@ -104,18 +104,13 @@ type ExportJobOptions struct {
 	Branch string `json:"branch,omitempty"`
 
 	// Prefix in target file system
-	// TODO: rename to Path
-	Prefix string `json:"prefix,omitempty"`
+	Path string `json:"path,omitempty"`
 
 	// Include the identifier in the exported metadata
 	Identifier bool `json:"identifier"`
 }
 
 type MigrateJobOptions struct {
-	// Target file prefix
-	// TODO: remove as we know have path in the repository
-	Prefix string `json:"prefix,omitempty"`
-
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
 
