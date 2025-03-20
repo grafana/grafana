@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/secret"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -69,12 +68,9 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 
 	err = s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// Validate before inserting that any `secureValues` referenced exist and do not reference other third-party keepers.
-
-		/** TODO LND uncomment this when secret value is migrated to sqlx
 		if err := s.validateSecureValueReferences(sess, keeper); err != nil {
 			return err
 		}
-		*/
 
 		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
 			return fmt.Errorf("failed to insert row: %w", err)
@@ -163,11 +159,10 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 	err := s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// Validate before updating that any `secureValues` referenced exist and do not reference other third-party keepers.\
 
-		/** TODO LND uncomment this when secret value is migrated to sqlx
 		if err := s.validateSecureValueReferences(sess, newKeeper); err != nil {
 			return err
 		}
-		*/
+
 		var err error
 		oldKeeper, err = s.Read(ctx, xkube.Namespace(newKeeper.Namespace), newKeeper.Name)
 		if err != nil {
@@ -295,9 +290,6 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 	if err != nil {
 		return nil, fmt.Errorf("list template %q: %w", q, err)
 	}
-	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
-	}
 
 	keepers := make([]secretv0alpha1.Keeper, 0, len(keeperRows))
 
@@ -333,7 +325,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 }
 
 // validateSecureValueReferences checks that all secure values referenced by the keeper exist and are not referenced by other third-party keepers.
-func (s *keeperMetadataStorage) validateSecureValueReferences(sess *sqlstore.DBSession, keeper *secretv0alpha1.Keeper) error {
+func (s *keeperMetadataStorage) validateSecureValueReferences(sess *session.SessionTx, keeper *secretv0alpha1.Keeper) error {
 	usedSecureValues := extractSecureValues(keeper)
 
 	// No secure values are referenced, return early.
@@ -344,6 +336,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(sess *sqlstore.DBS
 	secureValueCond := &secureValueDB{Namespace: keeper.Namespace}
 	secureValueRows := make([]*secureValueDB, 0)
 
+	// TODO LND Replace with template query
 	// SELECT * FROM secret_secure_value WHERE name IN (...) AND namespace = ? FOR UPDATE;
 	err := sess.Table(secureValueCond.TableName()).ForUpdate().In("name", usedSecureValues).Find(&secureValueRows, secureValueCond)
 	if err != nil {
@@ -379,6 +372,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(sess *sqlstore.DBS
 	keeperCond := &keeperDB{Namespace: keeper.Namespace}
 	thirdPartyKeepers := make([]*keeperDB, 0)
 
+	// TODO LND Replace with template query
 	// SELECT * FROM secret_keeper WHERE name IN (...) AND namespace = ? AND type != 'sql' FOR UPDATE;
 	err = sess.Table(keeperCond.TableName()).ForUpdate().In("name", keeperNames).Where("type != ?", contracts.SQLKeeperType).Find(&thirdPartyKeepers, keeperCond)
 	if err != nil {
