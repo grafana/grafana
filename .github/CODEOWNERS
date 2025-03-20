@@ -768,6 +768,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend
 /.github/workflows/alerting-update-module.yml @grafana/alerting-backend
 /.github/workflows/auto-milestone.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/backend-unit-tests.yml @grafana/grafana-backend-group
 /.github/workflows/backport.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/bump-version.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/close-milestone.yml @grafana/grafana-developer-enablement-squad
@@ -798,7 +799,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-lint-build-docs.yml @grafana/docs-tooling
 /.github/workflows/pr-patch-check.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
-/.github/workflows/pr-backend-unit-tests.yml @grafana/grafana-backend-group
 /.github/workflows/pr-backend-coverage.yml @grafana/grafana-backend-group
 /.github/workflows/sync-mirror.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
