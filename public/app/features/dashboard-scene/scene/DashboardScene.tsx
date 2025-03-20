@@ -70,6 +70,9 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DropZonePlaceholder } from './layout-manager/DropZonePlaceholder';
+import { LayoutOrchestrator } from './layout-manager/LayoutOrchestrator';
+import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { LayoutParent } from './types/LayoutParent';
@@ -134,6 +137,8 @@ export interface DashboardSceneState extends SceneObjectState {
   /** options pane */
   editPane: DashboardEditPane;
   scopesBridge: SceneScopesBridge | undefined;
+  /** Manages dragging/dropping of layout items */
+  layoutOrchestrator: LayoutOrchestrator;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -174,6 +179,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   >;
 
+  private _layoutRestorer = new LayoutRestorer();
+
   public constructor(state: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
     super({
       title: 'Dashboard',
@@ -185,6 +192,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       ...state,
       editPane: new DashboardEditPane(),
       scopesBridge: config.featureToggles.scopeFilters ? new SceneScopesBridge({}) : undefined,
+      layoutOrchestrator: new LayoutOrchestrator({
+        placeholder: new DropZonePlaceholder({ top: 0, left: 0, width: 0, height: 0 }),
+      }),
     });
 
     this.serializer =
@@ -613,8 +623,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ body: layout });
-    layout.activateRepeaters?.();
+    this.setState({ body: this._layoutRestorer.getLayout(layout, this.state.body) });
+    this.state.body.activateRepeaters?.();
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -748,6 +758,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   isManagedRepository() {
+    if (!config.featureToggles.provisioning) {
+      return false;
+    }
     return Boolean(this.getManagerKind() === ManagerKind.Repo);
   }
 

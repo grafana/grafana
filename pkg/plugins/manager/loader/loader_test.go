@@ -90,6 +90,7 @@ func TestLoader_Load(t *testing.T) {
 							},
 							Links: []plugins.InfoLink{
 								{Name: "Raise issue", URL: "https://github.com/grafana/grafana/issues/new"},
+								{Name: "Documentation", URL: "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/"},
 							},
 						},
 						Includes: []*plugins.Includes{
