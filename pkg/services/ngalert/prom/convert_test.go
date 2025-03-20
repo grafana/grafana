@@ -179,6 +179,32 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name:      "when global query offset is set, it should be used",
+			orgID:     1,
+			namespace: "some-namespace-uid",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "cpu_usage > 80",
+						For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+						Labels: map[string]string{
+							"severity": "critical",
+						},
+						Annotations: map[string]string{
+							"summary": "CPU usage is critical",
+						},
+					},
+				},
+			},
+			config: Config{
+				EvaluationOffset: util.Pointer(5 * time.Minute),
+			},
+			expectError: false,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -244,8 +270,13 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 
 				require.Equal(t, expectedLabels, grafanaRule.Labels, tc.name)
 				require.Equal(t, promRule.Annotations, grafanaRule.Annotations, tc.name)
-				require.Equal(t, models.Duration(0*time.Minute), grafanaRule.Data[0].RelativeTimeRange.To)
-				require.Equal(t, models.Duration(10*time.Minute), grafanaRule.Data[0].RelativeTimeRange.From)
+
+				evalOffset := time.Duration(0)
+				if tc.config.EvaluationOffset != nil {
+					evalOffset = *tc.config.EvaluationOffset
+				}
+				require.Equal(t, models.Duration(evalOffset), grafanaRule.Data[0].RelativeTimeRange.To)
+				require.Equal(t, models.Duration(evalOffset+10*time.Minute), grafanaRule.Data[0].RelativeTimeRange.From)
 
 				originalRuleDefinition, err := yaml.Marshal(promRule)
 				require.NoError(t, err)
