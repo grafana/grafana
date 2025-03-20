@@ -308,9 +308,6 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	// TODO: validate key ?
 	switch event.Type {
 	case resource.WatchEvent_ADDED:
-		if event.ObjectOld != nil {
-			return b.restore(ctx, event)
-		}
 		return b.create(ctx, event)
 	case resource.WatchEvent_MODIFIED:
 		return b.update(ctx, event)
@@ -469,73 +466,6 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			resource:  event.Key.Resource,
 			name:      event.Key.Name,
 		})
-		return guid, nil
-	})
-
-	if err != nil {
-		return 0, err
-	}
-
-	b.notifier.send(ctx, &resource.WrittenEvent{
-		Type:            event.Type,
-		Key:             event.Key,
-		PreviousRV:      event.PreviousRV,
-		Value:           event.Value,
-		ResourceVersion: rv,
-		Folder:          folder,
-	})
-
-	return rv, nil
-}
-
-func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"Restore")
-	defer span.End()
-	guid := uuid.New().String()
-	folder := ""
-	if event.Object != nil {
-		folder = event.Object.GetFolder()
-	}
-	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
-		// 1. Re-create resource
-		// Note: we may want to replace the write event with a create event, tbd.
-		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			Folder:      folder,
-			GUID:        guid,
-		}); err != nil {
-			return guid, fmt.Errorf("insert into resource: %w", err)
-		}
-
-		// 2. Insert into resource history
-		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			Folder:      folder,
-			GUID:        guid,
-		}); err != nil {
-			return guid, fmt.Errorf("insert into resource history: %w", err)
-		}
-		_ = b.historyPruner.Add(pruningKey{
-			namespace: event.Key.Namespace,
-			group:     event.Key.Group,
-			resource:  event.Key.Resource,
-			name:      event.Key.Name,
-		})
-
-		// 3. Update all resource history entries with the new UID
-		// Note: we do not update any history entries that have a deletion timestamp included. This will become
-		// important once we start using finalizers, as the initial delete will show up as an update with a deletion timestamp included.
-		if _, err := dbutil.Exec(ctx, tx, sqlResoureceHistoryUpdateUid, sqlResourceHistoryUpdateRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			OldUID:      string(event.ObjectOld.GetUID()),
-			NewUID:      string(event.Object.GetUID()),
-		}); err != nil {
-			return guid, fmt.Errorf("update history uid: %w", err)
-		}
-
 		return guid, nil
 	})
 
