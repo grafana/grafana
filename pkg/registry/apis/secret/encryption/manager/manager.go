@@ -65,7 +65,7 @@ func ProvideEncryptionManager(
 	ttl := cfg.SecretsManagement.Encryption.DataKeysCacheTTL
 	currentProviderID := encryption.ProviderID(cfg.SecretsManagement.EncryptionProvider)
 
-	enc, err := service.NewEncryptionService(tracer, usageStats, cfg)
+	enc, err := service.NewEncryptionService(tracer, cfg, usageStats)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create encryption service: %w", err)
 	}
@@ -89,8 +89,7 @@ func ProvideEncryptionManager(
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
-	//TODO: how to register metrics in api server
-	// s.registerUsageMetrics()
+	s.registerUsageMetrics()
 
 	return s, nil
 }
@@ -119,35 +118,39 @@ func (s *EncryptionManager) InitProviders(extraProviders encryption.ProviderMap)
 	return
 }
 
-// func (s *EncryptionManager) registerUsageMetrics() {
-// 	s.usageStats.RegisterMetricsFunc(func(ctx context.Context) (map[string]any, error) {
-// 		usageMetrics := make(map[string]any)
+func (s *EncryptionManager) registerUsageMetrics() {
+	if s.usageStats == nil {
+		return
+	}
 
-// 		// Current provider
-// 		kind, err := s.currentProviderID.Kind()
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
+	s.usageStats.RegisterMetricsFunc(func(ctx context.Context) (map[string]any, error) {
+		usageMetrics := make(map[string]any)
 
-// 		// Count by kind
-// 		countByKind := make(map[string]int)
-// 		for id := range s.providers {
-// 			kind, err := id.Kind()
-// 			if err != nil {
-// 				return nil, err
-// 			}
+		// Current provider
+		kind, err := s.currentProviderID.Kind()
+		if err != nil {
+			return nil, err
+		}
+		usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
 
-// 			countByKind[kind]++
-// 		}
+		// Count by kind
+		countByKind := make(map[string]int)
+		for id := range s.providers {
+			kind, err := id.Kind()
+			if err != nil {
+				return nil, err
+			}
 
-// 		for kind, count := range countByKind {
-// 			usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
-// 		}
+			countByKind[kind]++
+		}
 
-// 		return usageMetrics, nil
-// 	})
-// }
+		for kind, count := range countByKind {
+			usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
+		}
+
+		return usageMetrics, nil
+	})
+}
 
 var b64 = base64.RawStdEncoding
 
