@@ -21,7 +21,7 @@ export function DashboardOutline({ editPane }: Props) {
   const dashboard = getDashboardSceneFor(editPane);
 
   return (
-    <Box padding={1} gap={0.5} display="flex" direction="column">
+    <Box padding={1} gap={0.25} display="flex" direction="column">
       <DashboardOutlineNode sceneObject={dashboard} expandable />
     </Box>
   );
@@ -40,34 +40,19 @@ function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneO
 
   return (
     <>
-      <Stack
-        direction="row"
-        gap={0.5}
-        alignItems="center"
-        role="presentation"
-        aria-expanded={expandable ? isExpanded : undefined}
-        aria-owns={expandable ? key : undefined}
+      <button
+        role="treeitem"
+        className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
+        onPointerDown={(evt) => {
+          onSelect?.(evt);
+          setIsExpanded(!isExpanded);
+        }}
       >
-        {expandable && (
-          <IconButton
-            name={isExpanded ? 'angle-down' : 'angle-right'}
-            onClick={() => setIsExpanded(!isExpanded)}
-            aria-label={
-              isExpanded
-                ? t('dashboard.outline.tree.item.collapse', 'Collapse item')
-                : t('dashboard.outline.tree.item.expand', 'Expand item')
-            }
-          />
-        )}
-        <button
-          role="treeitem"
-          className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
-          onPointerDown={(evt) => onSelect?.(evt)}
-        >
-          <Icon name={elementInfo.icon} />
-          <span>{elementInfo.instanceName}</span>
-        </button>
-      </Stack>
+        {expandable && <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />}
+        <Icon size="sm" name={elementInfo.icon} />
+        <span>{elementInfo.instanceName}</span>
+      </button>
+
       {expandable && isExpanded && (
         <div className={styles.container} role="group">
           {children.length > 0 ? (
@@ -94,7 +79,7 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       marginLeft: theme.spacing(1),
       paddingLeft: theme.spacing(1.5),
       borderLeft: `1px solid ${theme.colors.border.medium}`,
@@ -107,7 +92,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       overflow: 'hidden',
       '&:hover': {
         backgroundColor: theme.colors.action.hover,

@@ -1,23 +1,27 @@
 import { css, cx } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
+import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import {
+  Box,
+  Button,
   ElementSelectionContextItem,
   ElementSelectionContextState,
-  Tab,
-  TabsBar,
+  ScrollContainer,
   ToolbarButton,
+  useSplitter,
   useStyles2,
+  Text,
+  Icon,
 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardAddPane } from './DashboardAddPane';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { ElementSelection } from './ElementSelection';
@@ -198,11 +202,23 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     }
   }, [editPane, isCollapsed]);
 
-  const { selection, tab = 'configure' } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
-  const paneRef = useRef<HTMLDivElement>(null);
   const editableElement = useEditableElement(selection, editPane);
   const selectedObject = selection?.getFirstObject();
+  const [outlineCollapsed, setOutlineCollapsed] = useLocalStorage(
+    'grafana.dashboard.edit-pane.outline.collapsed',
+    false
+  );
+
+  // splitter for template and payload editor
+  const splitter = useSplitter({
+    direction: 'column',
+    handleSize: 'sm',
+    // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
+    initialSize: 0.7,
+    dragPosition: 'middle',
+  });
 
   if (!editableElement) {
     return null;
@@ -231,29 +247,46 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     );
   }
 
+  if (outlineCollapsed) {
+    splitter.primaryProps.style.flexGrow = 1;
+    splitter.primaryProps.style.minHeight = 'unset';
+    splitter.secondaryProps.style.flexGrow = 0;
+    splitter.secondaryProps.style.minHeight = 'min-content';
+  } else {
+    splitter.primaryProps.style.minHeight = 'unset';
+    splitter.secondaryProps.style.minHeight = 'unset';
+  }
+
   return (
-    <div className={styles.wrapper} ref={paneRef}>
-      <TabsBar className={styles.tabsbar}>
-        <Tab
-          active={tab === 'add'}
-          label={t('dashboard.editpane.add', 'Add')}
-          onChangeTab={() => editPane.onChangeTab('add')}
+    <div className={styles.wrapper}>
+      <div {...splitter.containerProps}>
+        <div {...splitter.primaryProps} className={cx(splitter.primaryProps.className, styles.paneContent)}>
+          <ScrollContainer showScrollIndicators={true}>
+            <ElementEditPane element={editableElement} key={selectedObject?.state.key} />
+          </ScrollContainer>
+        </div>
+        <div
+          {...splitter.splitterProps}
+          className={cx(splitter.splitterProps.className, styles.splitter)}
+          data-edit-pane-splitter={true}
         />
-        <Tab
-          active={tab === 'configure'}
-          label={t('dashboard.editpane.configure', 'Configure')}
-          onChangeTab={() => editPane.onChangeTab('configure')}
-        />
-        <Tab
-          active={tab === 'outline'}
-          label={t('dashboard.editpane.outline', 'Outline')}
-          onChangeTab={() => editPane.onChangeTab('outline')}
-        />
-      </TabsBar>
-      <div className={styles.tabContent}>
-        {tab === 'add' && <DashboardAddPane editPane={editPane} />}
-        {tab === 'configure' && <ElementEditPane element={editableElement} key={selectedObject?.state.key} />}
-        {tab === 'outline' && <DashboardOutline editPane={editPane} />}
+        <div {...splitter.secondaryProps} className={cx(splitter.primaryProps.className, styles.paneContent)}>
+          <div
+            role="button"
+            onClick={() => setOutlineCollapsed(!outlineCollapsed)}
+            className={styles.outlineCollapseButton}
+          >
+            <Text weight="medium">Outline</Text>
+            <Icon name="angle-up" />
+          </div>
+          {!outlineCollapsed && (
+            <div className={styles.outlineContainer}>
+              <ScrollContainer showScrollIndicators={true}>
+                <DashboardOutline editPane={editPane} />
+              </ScrollContainer>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -265,13 +298,18 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       flex: '1 1 0',
+      marginTop: theme.spacing(2),
     }),
-    tabContent: css({
+    paneContent: css({
+      overflow: 'hidden',
       display: 'flex',
-      flex: '1 1 0',
       flexDirection: 'column',
-      minHeight: 0,
-      overflow: 'auto',
+      background: theme.colors.background.primary,
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      '&:first-child': {
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
+      },
     }),
     rotate180: css({
       rotate: '180deg',
@@ -289,14 +327,33 @@ function getStyles(theme: GrafanaTheme2) {
     fixed: css({
       position: 'absolute !important',
     }),
+    splitter: css({
+      '&:after': {
+        display: 'none',
+      },
+    }),
     container: css({
       right: 0,
       background: theme.colors.background.primary,
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       zIndex: theme.zIndex.navbarFixed,
-      overflowX: 'hidden',
-      overflowY: 'scroll',
+      flexGrow: 1,
+    }),
+    outlineCollapseButton: css({
+      display: 'flex',
+      padding: theme.spacing(0.5, 2),
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+      },
+    }),
+    outlineContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      marginTop: theme.spacing(-1),
     }),
   };
 }

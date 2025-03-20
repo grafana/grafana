@@ -18,7 +18,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
     return {
       typeName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
       icon: 'apps',
-      instanceName: this.dashboard.state.title,
+      instanceName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
     };
   }
 
@@ -51,22 +51,23 @@ export class DashboardEditableElement implements EditableDashboardElement {
     return [dashboardOptions, layoutCategory];
   }
 
-  public renderActions(): ReactNode {
-    return (
-      <Button
-        variant="secondary"
-        onClick={() => this.dashboard.onOpenSettings()}
-        tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
-      >
-        <Stack direction="row" gap={1} justifyContent="space-between" alignItems={'center'}>
-          <span>
-            <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
-          </span>
-          <Icon name="sliders-v-alt" />
-        </Stack>
-      </Button>
-    );
-  }
+  // public renderActions(): ReactNode {
+  //   return (
+  //     <Button
+  //       variant="secondary"
+
+  //       onClick={() => this.dashboard.onOpenSettings()}
+  //       tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+  //     >
+  //       <Stack direction="row" gap={1} justifyContent="space-between" alignItems={'center'}>
+  //         <span>
+  //           <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
+  //         </span>
+  //         <Icon name="sliders-v-alt" />
+  //       </Stack>
+  //     </Button>
+  //   );
+  // }
 }
 
 export function DashboardTitleInput({ dashboard }: { dashboard: DashboardScene }) {
