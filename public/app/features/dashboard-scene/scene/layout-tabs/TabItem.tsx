@@ -4,6 +4,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { getDefaultVizPanel } from '../../utils/utils';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
@@ -30,6 +31,7 @@ export class TabItem
   });
 
   public readonly isEditableDashboardElement = true;
+  private _layoutRestorer = new LayoutRestorer();
 
   constructor(state?: Partial<TabItemState>) {
     super({
@@ -40,7 +42,11 @@ export class TabItem
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { typeId: 'tab', icon: 'tag-alt', name: sceneGraph.interpolate(this, this.state.title, undefined, 'text') };
+    return {
+      typeName: t('dashboard.edit-pane.elements.tab', 'Tab'),
+      instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
+      icon: 'tag-alt',
+    };
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -48,7 +54,7 @@ export class TabItem
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ layout });
+    this.setState({ layout: this._layoutRestorer.getLayout(layout, this.state.layout) });
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
@@ -62,6 +68,14 @@ export class TabItem
 
   public createMultiSelectedElement(items: SceneObject[]): TabItems {
     return new TabItems(items.filter((item) => item instanceof TabItem));
+  }
+
+  public onDuplicate(): void {
+    this._getParentLayout().duplicateTab(this);
+  }
+
+  public duplicate(): TabItem {
+    return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
   }
 
   public onAddPanel(panel = getDefaultVizPanel()) {

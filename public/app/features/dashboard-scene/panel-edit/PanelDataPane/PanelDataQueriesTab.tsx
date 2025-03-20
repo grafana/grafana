@@ -283,7 +283,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   };
 
   public isExpressionsSupported(dsSettings: DataSourceInstanceSettings): boolean {
-    return (dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
+    return (dsSettings.meta.backend || dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
   }
 
   public onAddExpressionClick = () => {
@@ -386,7 +386,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
                   openQueryLibraryDrawer(getDatasourceNames(datasource, queries), onSelectQueryFromLibrary)
                 }
                 variant="secondary"
-                data-testid={selectors.components.QueryTab.addQuery}
+                data-testid={selectors.components.QueryTab.addQueryFromLibrary}
               >
                 <Trans i18nKey={'dashboards.panel-queries.add-query-from-library'}>Add query from library</Trans>
               </Button>
