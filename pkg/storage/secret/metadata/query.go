@@ -15,11 +15,13 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlKeeperCreate          = mustTemplate("keeper_create.sql")
-	sqlKeeperRead            = mustTemplate("keeper_read.sql")
-	sqlKeeperUpdate          = mustTemplate("keeper_update.sql")
-	sqlKeeperList            = mustTemplate("keeper_list.sql")
-	sqlKeeperDelete          = mustTemplate("keeper_delete.sql")
+	sqlKeeperCreate = mustTemplate("keeper_create.sql")
+	sqlKeeperRead   = mustTemplate("keeper_read.sql")
+	sqlKeeperUpdate = mustTemplate("keeper_update.sql")
+	sqlKeeperList   = mustTemplate("keeper_list.sql")
+	sqlKeeperDelete = mustTemplate("keeper_delete.sql")
+
+	// TODO LND review query_test.go for this, implement
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
 )
@@ -31,9 +33,15 @@ func mustTemplate(filename string) *template.Template {
 	panic(fmt.Sprintf("template file not found: %s", filename))
 }
 
+// Create
 type createKeeper struct {
 	sqltemplate.SQLTemplate
 	Row *keeperDB
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+func (r createKeeper) Validate() error {
+	return nil // TODO
 }
 
 // Read
@@ -43,16 +51,31 @@ type readKeeper struct {
 	Name      string
 }
 
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+func (r readKeeper) Validate() error {
+	return nil // TODO
+}
+
 // Update
 type updateKeeper struct {
 	sqltemplate.SQLTemplate
 	Row *keeperDB
 }
 
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+func (r updateKeeper) Validate() error {
+	return nil // TODO
+}
+
 // List
 type listKeeper struct {
 	sqltemplate.SQLTemplate
 	Namespace string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+func (r listKeeper) Validate() error {
+	return nil // TODO
 }
 
 // Delete
@@ -62,11 +85,21 @@ type deleteKeeper struct {
 	Name      string
 }
 
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+func (r deleteKeeper) Validate() error {
+	return nil // TODO
+}
+
 // This is used at keeper store to validate create & update operations
 type listByNameSecureValue struct {
 	sqltemplate.SQLTemplate
 	Namespace        string
 	UsedSecureValues []string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+func (r listByNameSecureValue) Validate() error {
+	return nil // TODO
 }
 
 // This is used at keeper store to validate create & update operations
@@ -75,4 +108,9 @@ type listByNameKeeper struct {
 	Namespace         string
 	KeeperNames       []string
 	ExcludeKeeperType string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+func (r listByNameKeeper) Validate() error {
+	return nil // TODO
 }
