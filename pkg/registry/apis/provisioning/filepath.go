@@ -29,15 +29,9 @@ func ExtractFilePath(urlPath, prefix string) (string, error) {
 	}
 
 	// Only check file extension if it's not a folder path
-	if !IsFolderPath(filePath) && resources.ShouldIgnorePath(filePath) {
+	if !safepath.IsFolderPath(filePath) && resources.ShouldIgnorePath(filePath) {
 		return "", apierrors.NewBadRequest("only yaml and json files supported")
 	}
 
 	return filePath, nil
-}
-
-// IsFolderPath returns true if the filePath ends with a slash.
-// TODO: don't we have already a function somewhere for this?
-func IsFolderPath(filePath string) bool {
-	return strings.HasSuffix(filePath, "/")
 }

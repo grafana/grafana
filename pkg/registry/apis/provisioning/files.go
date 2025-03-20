@@ -18,6 +18,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 const (
@@ -82,7 +83,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		isFolderPath := IsFolderPath(filePath)
+		isFolderPath := safepath.IsFolderPath(filePath)
 		if r.Method == http.MethodGet && (filePath == "" || isFolderPath) {
 			// TODO: Implement folder navigation
 			if len(filePath) > 0 {

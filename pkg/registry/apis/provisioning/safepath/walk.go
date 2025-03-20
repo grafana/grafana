@@ -29,3 +29,8 @@ func Walk(ctx context.Context, p string, fn WalkFunc) error {
 
 	return nil
 }
+
+// IsFolderPath returns true if the filePath ends with a slash.
+func IsFolderPath(filePath string) bool {
+	return strings.HasSuffix(filePath, "/")
+}
