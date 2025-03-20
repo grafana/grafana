@@ -1575,6 +1575,10 @@
           "title": "Export",
           "tooltip": "Export as JSON"
         },
+        "hidden-elements": {
+          "checked": "Show hidden elements",
+          "unchecked": "Hide hidden elements"
+        },
         "mark-favorite": "Mark as favorite",
         "more-save-options": "More save options",
         "playlist-next": "Go to next dashboard",
@@ -1604,7 +1608,6 @@
             "yesText": "Save"
           }
         },
-        "toggle-hidden-elements": "Toggle hidden elements",
         "unlink-library-panel": "Unlink library panel",
         "unmark-favorite": "Unmark as favorite"
       },
