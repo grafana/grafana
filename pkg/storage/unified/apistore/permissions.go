@@ -9,49 +9,41 @@ import (
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func canGrantPermissionsOnCreate(ctx context.Context, grantPermisions string, obj runtime.Object) error {
+type permissionCreator = func(ctx context.Context) error
+
+func getPermissionCreator(ctx context.Context, key *resource.ResourceKey, grantPermisions string, obj runtime.Object, access accesscontrol.PermissionsService) (permissionCreator, error) {
 	if grantPermisions == "" {
-		return nil
+		return nil, nil
 	}
 	if grantPermisions != "*" {
-		return fmt.Errorf("invalid permissions value. only * supported")
+		return nil, fmt.Errorf("invalid permissions value. only * supported")
+	}
+	if access == nil {
+		return nil, fmt.Errorf("missing access control setup")
 	}
 	val, err := utils.MetaAccessor(obj)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if val.GetFolder() != "" {
-		return fmt.Errorf("granting create permissions only works for root folder objects")
-	}
-	info, ok := authtypes.AuthInfoFrom(ctx)
-	if !ok {
-		return errors.New("missing auth info")
-	}
-	if info.GetIdentityType() != authtypes.TypeUser {
-		return fmt.Errorf("only uses may grant themselves permissions using the annotation")
-	}
-	return nil
-}
-
-func grantPermissionsAfterCreate(ctx context.Context, key *resource.ResourceKey, obj utils.GrafanaMetaAccessor, permissions string) error {
-	if permissions != "*" {
-		return fmt.Errorf("invalid permissions value. only * supported")
-	}
-	if obj.GetFolder() != "" {
-		return fmt.Errorf("granting create permissions only works for root folder objects")
+		return nil, fmt.Errorf("granting create permissions only works for root folder objects")
 	}
 	auth, ok := authtypes.AuthInfoFrom(ctx)
 	if !ok {
-		return errors.New("missing auth info")
+		return nil, errors.New("missing auth info")
 	}
 	if auth.GetIdentityType() != authtypes.TypeUser {
-		return fmt.Errorf("only uses may grant themselves permissions using the annotation")
+		return nil, fmt.Errorf("only uses may grant themselves permissions using the annotation")
 	}
 
-	fmt.Printf("TODO!!! grant permissions!!!!: %s // %s", auth.GetUID(), key.SearchID())
+	return func(ctx context.Context) error {
 
-	return nil
+		fmt.Printf("TODO!!! grant permissions!!!!: %s // %s", auth.GetUID(), key.SearchID())
+
+		return nil
+	}, nil
 }

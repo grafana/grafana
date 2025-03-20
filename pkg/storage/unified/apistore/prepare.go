@@ -112,10 +112,6 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return nil, err
 	}
 
-	if obj.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
-		return nil, fmt.Errorf("%s annotation is not supported for update", utils.AnnoKeyGrantPermissions)
-	}
-
 	if previous.GetUID() == "" {
 		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
 	} else if obj.GetUID() != previous.GetUID() {
@@ -133,7 +129,8 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
-	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
+	obj.SetResourceVersion("")                           // removed from saved JSON because the RV is not yet calculated
+	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // Grant is ignored for update requests
 
 	// for dashboards, a mutation hook will set it if it didn't exist on the previous obj
 	// avoid setting it back to 0
