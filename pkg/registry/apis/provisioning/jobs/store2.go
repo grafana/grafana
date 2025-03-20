@@ -28,6 +28,8 @@ const (
 	LabelJobClaim = "provisioning.grafana.app/claim"
 	// LabelJobOriginalName contains the Job's name as a label. This allows for label selectors to find the archived version of a job.
 	LabelJobOriginalName = "provisioning.grafana.app/original-name"
+	// LabelRepository contains the repository name as a label. This allows for label selectors to find the archived version of a job.
+	LabelRepository = "provisioning.grafana.app/repository"
 )
 
 var (
@@ -291,6 +293,7 @@ func (s *store2) Complete(ctx context.Context, job *provisioning.Job) error {
 	delete(job.Labels, LabelJobClaim)
 	// We also need a new, unique name.
 	job.Labels[LabelJobOriginalName] = job.GetName()
+	job.Labels[LabelRepository] = job.Spec.Repository
 	job.GenerateName = job.Name + "-"
 	job.Name = ""
 	// We also reset the UID as this is not the same object.

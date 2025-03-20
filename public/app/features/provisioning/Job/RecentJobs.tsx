@@ -2,21 +2,22 @@ import { useMemo } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
 import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
-import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
+import { HistoricJob, Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { useRepositoryJobs } from '../hooks';
 import { formatTimestamp } from '../utils/time';
 
 import { JobSummary } from './JobSummary';
+import { useRepositoryHistoricalJobs } from '../hooks/useRepositoryHistoricalJobs';
 
 interface Props {
   repo: Repository;
 }
 
-type JobCell<T extends keyof Job = keyof Job> = {
+type JobCell = {
   row: {
-    original: Job;
+    original: Job | HistoricJob;
   };
 };
 
@@ -151,49 +152,84 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   );
 }
 
-function EmptyState() {
+interface EmptyStateProps {
+  typ: string;
+}
+
+function EmptyState({ typ }: EmptyStateProps) {
   return (
     <Stack direction={'column'} alignItems={'center'}>
-      <Text color="secondary">No recent events...</Text>
-      <Text variant="bodySmall" color="secondary">
-        Note: history is not maintained after system restart
-      </Text>
+      <Text color="secondary">No {typ}...</Text>
     </Stack>
   );
 }
 
-export function RecentJobs({ repo }: Props) {
-  const [items, query] = useRepositoryJobs({ name: repo.metadata?.name, watch: true });
-  const jobColumns = useMemo(() => getJobColumns(), []);
+function ErrorLoading(typ: string, error: any) {
+  return (
+    <Alert title={`Error loading ${typ}`} severity="error">
+      <pre>{JSON.stringify(error)}</pre>
+    </Alert>
+  );
+}
 
+function Loading() {
+  return (
+    <Stack direction={'column'} alignItems={'center'}>
+      <Spinner />
+    </Stack>
+  );
+}
+
+interface JobsCardProps {
+  typ: string;
+  text: string;
+  jobs: ReturnType<typeof useRepositoryJobs | typeof useRepositoryHistoricalJobs>;
+}
+
+function JobsCard({ typ, text, jobs: [jobs, query] }: JobsCardProps) {
+  let description: JSX.Element;
   if (query.isLoading) {
-    return <Spinner />;
+    description = Loading();
+  } else if (query.isError) {
+    description = ErrorLoading(typ, query.error);
+  } else if (!jobs?.length) {
+    description = <EmptyState typ={typ} />;
+  } else {
+    const jobColumns = useMemo(() => getJobColumns(), []);
+    description =
+      <InteractiveTable
+        data={jobs}
+        columns={jobColumns}
+        getRowId={(item) => `${item.metadata?.name}`}
+        renderExpandedRow={(row) => <ExpandedRow row={row} />}
+        pageSize={10}
+      />;
   }
-
-  if (query.isError) {
-    return (
-      <Alert title="Error loading jobs" severity="error">
-        <pre>{JSON.stringify(query.error)}</pre>
-      </Alert>
-    );
-  }
-
   return (
     <Card>
-      <Card.Heading>Recent jobs</Card.Heading>
-      <Card.Description>
-        {!items?.length ? (
-          <EmptyState />
-        ) : (
-          <InteractiveTable
-            data={items}
-            columns={jobColumns}
-            getRowId={(item) => `${item.metadata?.name}`}
-            renderExpandedRow={(row) => <ExpandedRow row={row} />}
-            pageSize={10}
-          />
-        )}
-      </Card.Description>
+      <Card.Heading>{text}</Card.Heading>
+      <Card.Description>{description}</Card.Description>
     </Card>
+  );
+}
+
+export function RecentJobs({ repo }: Props) {
+  // TODO: Decide on whether we want to wait on historic jobs to show the current ones.
+  //   Gut feeling is that current jobs are far more important to show than historic ones.
+
+  return (
+    <Stack direction={"column"} gap={1}>
+      <JobsCard
+        typ="active jobs"
+        text="Active jobs"
+        jobs={useRepositoryJobs({ name: repo.metadata?.name, watch: true })}
+      />
+
+      <JobsCard
+        typ="historic jobs"
+        text="Historic jobs"
+        jobs={useRepositoryHistoricalJobs({ repositoryName: repo.metadata?.name, watch: true })}
+      />
+    </Stack>
   );
 }
