@@ -14,21 +14,23 @@ title: Configure security hardening
 
 Security hardening enables you to apply additional security, which can help stop certain vulnerabilities from being exploited by a malicious attacker.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 These settings are available in the [grafana.ini configuration file](../../configure-grafana/#configuration-file-location). To apply changes to the configuration file, restart the Grafana server.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Additional security for cookies
 
 If Grafana uses HTTPS, you can further secure the cookie that the system uses to authenticate access to the web UI. By applying additional security to the cookie, you might mitigate certain attacks that result from an attacker obtaining the cookie value.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana must use HTTPS for the following configurations to work properly.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Add a secure attribute to cookies
 
 To provide mitigation against some MITM attacks, add the `Secure` attribute to the cookie that is used to authenticate users. This attribute forces users only to send the cookie over a valid HTTPS secure connection.
+
+This setting is configured in the `[security]` section of the `grafana.ini` file.
 
 Example:
 
@@ -40,6 +42,8 @@ cookie_secure = true
 ### Add a SameSite attribute to cookies
 
 To mitigate almost all CSRF-attacks, set the _cookie_samesite_ option to `strict`. This setting prevents clients from sending the cookie in requests that are made cross-site, but only from the site that creates the cookie.
+
+This setting is configured in the `[security]` section of the `grafana.ini` file.
 
 Example:
 
@@ -57,9 +61,12 @@ By setting the SameSite attribute to "strict," only the user clicks within a Gra
 You can further secure the cookie authentication by adding a [Cookie Prefix](https://googlechrome.github.io/samples/cookie-prefixes/). Cookies without a special prefix can be overwritten in a man-in-the-middle attack, even if the site uses HTTPS. A cookie prefix forces clients only to accept the cookie if certain criteria are met.
 Add a prefix to the current cookie name with either `__Secure-` or `__Host-` where the latter provides additional protection by only allowing the cookie to be created from the host that sent the Set-Cookie header.
 
+This setting is configured in the `[auth]` section of the `grafana.ini` file.
+
 Example:
 
 ```toml
+[auth]
 # Login cookie name
 login_cookie_name = __Host-grafana_session
 ```
@@ -71,6 +78,8 @@ Grafana includes a few additional headers that you can configure to help mitigat
 ### Add a Content Security Policy
 
 A content security policy (CSP) is an HTTP response header that controls how the web browser handles content, such as allowing inline scripts to execute or loading images from certain domains. The default CSP template is already configured to provide sufficient protection against some attacks. This makes it more difficult for attackers to execute arbitrary JavaScript if such a vulnerability is present.
+
+CSP settings are configured in the `[security]` section of the `grafana.ini` file.
 
 Example:
 
@@ -111,6 +120,8 @@ The Grafana server has several built-in security features that you can opt-in to
 
 If set to `true`, the Grafana server hides the running version number for unauthenticated users. Version numbers might reveal if you are running an outdated and vulnerable version of Grafana.
 
+This setting is configured in the `[anonymous.auth]` section of the `grafana.ini` file.
+
 Example:
 
 ```toml
@@ -120,9 +131,11 @@ hide_version = true
 
 ### Enable auth for metrics
 
-By default, metrics from Grafana itself can be accessed without authentication. This can lead to inadvertent information leakage.
+By default, metrics from Grafana itself can be accessed without authentication. This can lead to information leakage.
 
-To enable basic authentication for the metrics endpoint:
+This setting is configured in the `[metrics]` section of the `grafana.ini` file.
+
+Example:
 
 ```toml
 # If both are set, basic auth will be required for the metrics endpoints
@@ -133,6 +146,8 @@ basic_auth_password =
 ### Enforce domain verification
 
 If set to `true`, the Grafana server redirects requests that have a Host-header value that is mismatched to the actual domain. This might help to mitigate some DNS rebinding attacks.
+
+This setting is configured in the `[server]` section of the `grafana.ini` file.
 
 Example:
 
