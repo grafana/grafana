@@ -407,6 +407,7 @@ func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
 
 func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering) {
+		s.log.Warn("Tried to search for 'sharedwithme' dashboards with ", featuremgmt.FlagUnifiedStorageSearchPermissionFiltering, " disabled")
 		return []string{}, nil
 	}
 
