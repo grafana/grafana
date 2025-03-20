@@ -19,48 +19,61 @@ import { RowItem } from './RowItem';
 
 export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] {
   const { layout } = model.useState();
-  const rowOptions = useMemo(() => {
-    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
-      .addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.rows-layout.option.title', 'Title'),
-          render: () => <RowTitleInput row={model} />,
-        })
-      )
-      .addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.rows-layout.option.height', 'Height'),
-          render: () => <RowHeightSelect row={model} />,
-        })
-      );
 
-    editPaneHeaderOptions
-      .addItem(
+  const rowCategory = useMemo(
+    () =>
+      new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.rows-layout.row-options.row.title', 'Title'),
+            render: () => <RowTitleInput row={model} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.rows-layout.row-options.row.height', 'Height'),
+            render: () => <RowHeightSelect row={model} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.rows-layout.row-options.row.hide-header', 'Hide row header'),
+            render: () => <RowHeaderSwitch row={model} />,
+          })
+        ),
+    [model]
+  );
+
+  const repeatCategory = useMemo(
+    () =>
+      new OptionsPaneCategoryDescriptor({
+        title: t('dashboard.rows-layout.row-options.repeat.title', 'Repeat options'),
+        id: 'repeat-options',
+        isOpenDefault: false,
+      }).addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.rows-layout.option.repeat', 'Repeat for'),
+          title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat by variable'),
+          description: t(
+            'dashboard.rows-layout.row-options.repeat.variable.description',
+            'Repeat this row for each value in the selected variable.'
+          ),
           render: () => <RowRepeatSelect row={model} />,
         })
-      )
-      .addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.rows-layout.option.hide-header', 'Hide row header'),
-          render: () => <RowHeaderSwitch row={model} />,
-        })
-      );
-
-    return editPaneHeaderOptions;
-  }, [model]);
+      ),
+    [model]
+  );
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const conditionalRenderingOptions = useMemo(() => {
-    return useConditionalRenderingEditor(model.state.conditionalRendering);
-  }, [model]);
+  const editOptions = [rowCategory, layoutCategory, repeatCategory];
 
-  const editOptions = [rowOptions, layoutCategory];
+  const conditionalRenderingCategory = useMemo(
+    () => useConditionalRenderingEditor(model.state.conditionalRendering),
+    [model]
+  );
 
-  if (conditionalRenderingOptions) {
-    editOptions.push(conditionalRenderingOptions);
+  if (conditionalRenderingCategory) {
+    editOptions.push(conditionalRenderingCategory);
   }
 
   return editOptions;

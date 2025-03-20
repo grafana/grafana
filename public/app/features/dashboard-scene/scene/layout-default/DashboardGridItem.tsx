@@ -86,7 +86,7 @@ export class DashboardGridItem
     return this.state.variableName ? 'panel-repeater-grid-item' : '';
   }
 
-  public getOptions(): OptionsPaneCategoryDescriptor {
+  public getOptions(): OptionsPaneCategoryDescriptor[] {
     return getDashboardGridItemOptions(this);
   }
 
