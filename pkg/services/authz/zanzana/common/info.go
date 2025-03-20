@@ -20,6 +20,11 @@ var typedResources = map[string]typeInfo{
 		folderalpha1.FolderResourceInfo.GroupResource().Resource,
 		"",
 	): {Type: "folder", Relations: RelationsFolder},
+	FormatGroupResource(
+		"team.grafana.app",
+		"teams",
+		"",
+	): {Type: "team", Relations: RelationsFolder},
 }
 
 func getTypeInfo(group, resource string) (typeInfo, bool) {
@@ -134,7 +139,7 @@ func (r ResourceInfo) Type() string {
 }
 
 func (r ResourceInfo) Context() *structpb.Struct {
-	if !r.IsGeneric() && r.typ != TypeFolder {
+	if !r.IsGeneric() && r.typ != TypeFolder && r.typ != TypeTeam {
 		return nil
 	}
 
