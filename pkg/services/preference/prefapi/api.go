@@ -15,7 +15,7 @@ import (
 
 func UpdatePreferencesFor(ctx context.Context,
 	dashboardService dashboards.DashboardService, preferenceService pref.Service,
-	orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd) response.Response {
+	orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd, features featuremgmt.FeatureToggles) response.Response {
 	if dtoCmd.Theme != "" && !pref.IsValidThemeID(dtoCmd.Theme) {
 		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
@@ -42,13 +42,16 @@ func UpdatePreferencesFor(ctx context.Context,
 		TeamID:            teamId,
 		Theme:             dtoCmd.Theme,
 		Language:          dtoCmd.Language,
-		Locale:            dtoCmd.Locale,
 		Timezone:          dtoCmd.Timezone,
 		WeekStart:         dtoCmd.WeekStart,
 		HomeDashboardID:   dtoCmd.HomeDashboardID,
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
 		Navbar:            dtoCmd.Navbar,
+	}
+
+	if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) {
+		saveCmd.Locale = dtoCmd.Locale
 	}
 
 	if err := preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -60,7 +63,7 @@ func UpdatePreferencesFor(ctx context.Context,
 
 func GetPreferencesFor(ctx context.Context,
 	dashboardService dashboards.DashboardService, preferenceService pref.Service,
-	orgID, userID, teamID int64) response.Response {
+	orgID, userID, teamID int64, features featuremgmt.FeatureToggles) response.Response {
 	prefsQuery := pref.GetPreferenceQuery{UserID: userID, OrgID: orgID, TeamID: teamID}
 
 	preference, err := preferenceService.Get(ctx, &prefsQuery)
@@ -69,7 +72,6 @@ func GetPreferencesFor(ctx context.Context,
 	}
 
 	var dashboardUID string
-	var features featuremgmt.FeatureToggles
 	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
 	if preference.HomeDashboardID != 0 {
 		query := dashboards.GetDashboardQuery{ID: preference.HomeDashboardID, OrgID: orgID}
@@ -98,6 +100,7 @@ func GetPreferencesFor(ctx context.Context,
 		if preference.JSONData.Language != "" {
 			dto.Language = &preference.JSONData.Language
 		}
+
 		if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) {
 			if preference.JSONData.Locale != "" {
 				dto.Locale = &preference.JSONData.Locale

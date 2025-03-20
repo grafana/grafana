@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -147,7 +146,6 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 
 func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
 	var exists bool
-	var features featuremgmt.FeatureToggles
 	preference, err := s.store.Get(ctx, &pref.Preference{
 		OrgID:  cmd.OrgID,
 		UserID: cmd.UserID,
@@ -176,13 +174,11 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.JSONData.Language = *cmd.Language
 	}
 
-	if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) {
-		if cmd.Locale != nil {
-			if preference.JSONData == nil {
-				preference.JSONData = &pref.PreferenceJSONData{}
-			}
-			preference.JSONData.Locale = *cmd.Locale
+	if cmd.Locale != nil {
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferenceJSONData{}
 		}
+		preference.JSONData.Locale = *cmd.Locale
 	}
 
 	if cmd.Navbar != nil && cmd.Navbar.BookmarkUrls != nil {
@@ -275,12 +271,9 @@ func parseCookiePreferences(prefs []pref.CookieType) (map[string]struct{}, error
 }
 
 func preferenceData(cmd *pref.SavePreferenceCommand, ctx context.Context) (*pref.PreferenceJSONData, error) {
-	var features featuremgmt.FeatureToggles
 	jsonData := &pref.PreferenceJSONData{
 		Language: cmd.Language,
-	}
-	if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) && cmd.Locale != "" {
-		jsonData.Locale = cmd.Locale
+		Locale:   cmd.Locale,
 	}
 	if cmd.Navbar != nil {
 		jsonData.Navbar = *cmd.Navbar
