@@ -30,7 +30,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T> {
    */
   initialSaveModel?: I;
   metadata?: M;
-  initializeMapping(saveModel: T | undefined): void;
+  initializeElementMapping(saveModel: T | undefined): void;
   initializeDSReferencesMapping(saveModel: T | undefined): void;
   getSaveModel: (s: DashboardScene) => T;
   getSaveAsModel: (s: DashboardScene, options: SaveDashboardAsOptions) => T;
@@ -76,7 +76,7 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
     annotations: new Set<string>(), // annotation names as keys
   };
 
-  initializeMapping(saveModel: Dashboard | undefined) {
+  initializeElementMapping(saveModel: Dashboard | undefined) {
     this.elementPanelMap.clear();
 
     if (!saveModel || !saveModel.panels) {
@@ -218,7 +218,7 @@ export class V2DashboardSerializer
     return this.elementPanelMap;
   }
 
-  initializeMapping(saveModel: DashboardV2Spec | undefined) {
+  initializeElementMapping(saveModel: DashboardV2Spec | undefined) {
     this.elementPanelMap.clear();
 
     if (!saveModel || !saveModel.elements) {

@@ -392,7 +392,7 @@ describe('DashboardSceneSerializer', () => {
           ],
         };
 
-        serializer.initializeMapping(saveModel);
+        serializer.initializeElementMapping(saveModel);
         const mapping = serializer.getElementPanelMapping();
 
         expect(mapping.size).toBe(2);
@@ -401,10 +401,10 @@ describe('DashboardSceneSerializer', () => {
       });
 
       it('should handle empty or undefined panels in initializeMapping', () => {
-        serializer.initializeMapping(undefined);
+        serializer.initializeElementMapping(undefined);
         expect(serializer.getElementPanelMapping().size).toBe(0);
 
-        serializer.initializeMapping({
+        serializer.initializeElementMapping({
           title: 'hello',
           uid: 'my-uid',
           schemaVersion: 30,
@@ -424,7 +424,7 @@ describe('DashboardSceneSerializer', () => {
           ],
         };
 
-        serializer.initializeMapping(saveModel);
+        serializer.initializeElementMapping(saveModel);
 
         expect(serializer.getPanelIdForElement('panel-1')).toBe(1);
         expect(serializer.getPanelIdForElement('panel-2')).toBe(2);
@@ -441,7 +441,7 @@ describe('DashboardSceneSerializer', () => {
             { id: 2, title: 'Panel 2', type: 'text' },
           ],
         };
-        serializer.initializeMapping(saveModel);
+        serializer.initializeElementMapping(saveModel);
 
         expect(serializer.getElementIdForPanel(1)).toBe('panel-1');
         expect(serializer.getElementIdForPanel(2)).toBe('panel-2');
@@ -923,7 +923,7 @@ describe('DashboardSceneSerializer', () => {
       });
 
       it('should initialize panel mapping correctly', () => {
-        serializer.initializeMapping(saveModel);
+        serializer.initializeElementMapping(saveModel);
         const mapping = serializer.getElementPanelMapping();
 
         expect(mapping.size).toBe(2);
@@ -932,15 +932,15 @@ describe('DashboardSceneSerializer', () => {
       });
 
       it('should handle empty or undefined elements in initializeMapping', () => {
-        serializer.initializeMapping({} as DashboardV2Spec);
+        serializer.initializeElementMapping({} as DashboardV2Spec);
         expect(serializer.getElementPanelMapping().size).toBe(0);
 
-        serializer.initializeMapping({ elements: {} } as DashboardV2Spec);
+        serializer.initializeElementMapping({ elements: {} } as DashboardV2Spec);
         expect(serializer.getElementPanelMapping().size).toBe(0);
       });
 
       it('should get panel id for element correctly', () => {
-        serializer.initializeMapping(saveModel);
+        serializer.initializeElementMapping(saveModel);
 
         expect(serializer.getPanelIdForElement('element-panel-a')).toBe(1);
         expect(serializer.getPanelIdForElement('element-panel-b')).toBe(2);
@@ -948,7 +948,7 @@ describe('DashboardSceneSerializer', () => {
       });
 
       it('should get element id for panel correctly', () => {
-        serializer.initializeMapping(saveModel);
+        serializer.initializeElementMapping(saveModel);
 
         expect(serializer.getElementIdForPanel(1)).toBe('element-panel-a');
         expect(serializer.getElementIdForPanel(2)).toBe('element-panel-b');
