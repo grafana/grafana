@@ -697,7 +697,7 @@ export function mapFrameToDataGrid({
     });
   });
 
-  // set columns that are at minimum width
+  // INFO: This loop calculates the width for each column in less than a millisecond.
   let sharedWidth = availableWidth / fieldCountWithoutWidth;
   for (let i = fieldCountWithoutWidth; i > 0; i--) {
     for (const column of columns) {
@@ -709,13 +709,12 @@ export function mapFrameToDataGrid({
       }
     }
   }
-
   // divide up the rest of the space
   for (const column of columns) {
     if (!column.width) {
       column.width = sharedWidth;
     }
-    // IHOR: column min-width always 50
+    // INFO: column min-width always 50
     column.minWidth = COLUMN.MIN_WIDTH;
   }
 
