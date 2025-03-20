@@ -51,12 +51,6 @@ import {
   shouldTextOverflow,
 } from './utils';
 
-function getContentWidth(element: HTMLElement) {
-  const styles = getComputedStyle(element);
-
-  return element.clientWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight);
-}
-
 export function TableNG(props: TableNGProps) {
   const {
     cellHeight,
@@ -208,8 +202,8 @@ export function TableNG(props: TableNGProps) {
     // Measure actual widths if available
     Object.keys(headerCellRefs.current).forEach((key) => {
       const headerCell = headerCellRefs.current[key];
-      if (headerCell) {
-        widths[key] = getContentWidth(headerCell);
+      if (headerCell && headerCell.offsetWidth > 0) {
+        widths[key] = headerCell.offsetWidth;
       }
     });
 
@@ -463,7 +457,7 @@ export function TableNG(props: TableNGProps) {
         const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
         return defaultRowHeight * (row.data?.length ?? 0 + headerCount); // TODO this probably isn't very robust
       }
-      return getRowHeight(row, osContext, defaultLineHeight, defaultRowHeight, TABLE.CELL_PADDING, fieldsData);
+      return getRowHeight(row, osContext, defaultLineHeight, defaultRowHeight, TABLE.CELL_PADDING + 8, fieldsData);
     },
     [expandedRows, osContext, defaultLineHeight, defaultRowHeight, fieldsData]
   );
