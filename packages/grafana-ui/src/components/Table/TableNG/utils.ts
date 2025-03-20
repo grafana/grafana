@@ -210,7 +210,7 @@ export function getColumnMinWidth(field: Field, fieldConfig: TableNGProps['field
 
   return (
     overriddenMinWidth ??
-    field.config.custom.minWidth ??
+    field.config?.custom?.minWidth ??
     fieldConfig?.defaults?.custom?.minWidth ??
     COLUMN.DEFAULT_WIDTH
   );
