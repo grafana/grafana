@@ -6,6 +6,7 @@
 package apistore
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -538,20 +539,14 @@ func (s *Storage) GuaranteedUpdate(
 		break
 	}
 
-	unchanged, err := isUnchanged(s.codec, existingBytes, updatedObj)
+	req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 	if err != nil {
 		return err
 	}
 
 	var rv uint64
-	if unchanged {
-		req.Value = existingBytes
-	} else {
-		req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
-		if err != nil {
-			return err
-		}
-
+	// Only update (for real) if the bytes have changed
+	if !bytes.Equal(req.Value, existingBytes) {
 		updateResponse, err := s.store.Update(ctx, req)
 		if err != nil {
 			return resource.GetError(resource.AsErrorResult(err))
@@ -559,7 +554,6 @@ func (s *Storage) GuaranteedUpdate(
 		if updateResponse.Error != nil {
 			return resource.GetError(updateResponse.Error)
 		}
-
 		rv = uint64(updateResponse.ResourceVersion)
 	}
 
