@@ -686,7 +686,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveModel?: Dashboard | DashboardV2Spec,
     meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   ): void {
-    this.serializer.initializeMapping(saveModel);
+    this.serializer.initializeElementMapping(saveModel);
+    this.serializer.initializeDSReferencesMapping(saveModel);
     const sortedModel = sortedDeepCloneWithoutNulls(saveModel);
     this.serializer.initialSaveModel = sortedModel;
     this.serializer.metadata = meta;
