@@ -246,10 +246,10 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
-  const panelDsReferences = getPanelDsReferences(vizPanel);
+  const autoAssignedPanelDSRef = getAutoAssignedPanelDSRef(vizPanel);
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
-      const queryDatasource = getPersistedDSForQuery(query, queryRunner, panelDsReferences);
+      const queryDatasource = getPersistedDSForQuery(query, queryRunner, autoAssignedPanelDSRef);
       const dataQuery: DataQueryKind = {
         kind: getDataQueryKind(query),
         spec: omit(query, 'datasource', 'refId', 'hide'),
@@ -597,7 +597,7 @@ function validateRowsLayout(layout: unknown) {
  * the refIds are the ones which did not have a datasource set
  * @returns a set of panel queries refIds
  */
-function getPanelDsReferences(vizPanel: VizPanel) {
+function getAutoAssignedPanelDSRef(vizPanel: VizPanel) {
   const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
   const scene = getDashboardSceneFor(vizPanel);
   const elementMapReferences = scene.serializer.getDSReferencesMapping();
@@ -608,18 +608,21 @@ function getPanelDsReferences(vizPanel: VizPanel) {
 
 /**
  * Get the persisted datasource for a query
+ * When a query is created it could not have a datasource set
+ * we want to respect that and not overwrite it with the auto assigned datasources
+ * resolved in runtime
  * @param query
  * @param queryRunner
- * @param panelDsReferences
+ * @param autoAssignedPanelDsRef
  * @returns
  */
 function getPersistedDSForQuery(
   query: SceneDataQuery,
   queryRunner: SceneQueryRunner,
-  panelDsReferences: Set<string> | undefined
+  autoAssignedPanelDsRef: Set<string> | undefined
 ) {
   // if the query has a refId and it is in the panelDsReferences then it did NOT have a datasource
-  const hasMatchingRefId = panelDsReferences?.has(query.refId);
+  const hasMatchingRefId = autoAssignedPanelDsRef?.has(query.refId);
   if (hasMatchingRefId) {
     return undefined;
   }
