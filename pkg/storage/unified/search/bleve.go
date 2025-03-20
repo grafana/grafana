@@ -1123,7 +1123,7 @@ var hasTerms = func(v string) (string, bool) {
 	return "", false
 }
 
-// characters that will be used to determine if a value is split into tokens
+// TermCharacters characters that will be used to determine if a value is split into tokens
 var TermCharacters = []string{
 	" ", "-", "_", ".", ",", ":", ";", "?", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+",
 	"=", "{", "}", "[", "]", "|", "\\", "/", "<", ">", "~", "`",
