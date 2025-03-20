@@ -12,6 +12,7 @@ use (
 	./.citools/golangci-lint
 	./.citools/jb
 	./.citools/lefthook
+	./.citools/swagger
 	./apps/advisor
 	./apps/alerting/notifications
 	./apps/dashboard
