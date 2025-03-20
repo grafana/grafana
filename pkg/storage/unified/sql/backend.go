@@ -88,6 +88,7 @@ type pruningKey struct {
 	namespace string
 	group     string
 	resource  string
+	name      string
 }
 
 // Small abstraction to allow for different pruner implementations.
@@ -215,6 +216,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 						Namespace: key.namespace,
 						Group:     key.group,
 						Resource:  key.resource,
+						Name:      key.name,
 					},
 				})
 				if err != nil {
@@ -228,6 +230,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 					"namespace", key.namespace,
 					"group", key.group,
 					"resource", key.resource,
+					"name", key.name,
 					"rows", rows)
 				return nil
 			})
@@ -237,6 +240,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 				"namespace", key.namespace,
 				"group", key.group,
 				"resource", key.resource,
+				"name", key.name,
 				"error", err)
 		},
 		Reg: b.reg,
@@ -347,7 +351,12 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
+		_ = b.historyPruner.Add(pruningKey{
+			namespace: event.Key.Namespace,
+			group:     event.Key.Group,
+			resource:  event.Key.Resource,
+			name:      event.Key.Name,
+		})
 		if b.simulatedNetworkLatency > 0 {
 			time.Sleep(b.simulatedNetworkLatency)
 		}
@@ -401,7 +410,12 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
+		_ = b.historyPruner.Add(pruningKey{
+			namespace: event.Key.Namespace,
+			group:     event.Key.Group,
+			resource:  event.Key.Resource,
+			name:      event.Key.Name,
+		})
 		return guid, nil
 	})
 
@@ -449,7 +463,12 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
+		_ = b.historyPruner.Add(pruningKey{
+			namespace: event.Key.Namespace,
+			group:     event.Key.Group,
+			resource:  event.Key.Resource,
+			name:      event.Key.Name,
+		})
 		return guid, nil
 	})
 
@@ -498,7 +517,12 @@ func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
-		_ = b.historyPruner.Add(pruningKey{namespace: event.Key.Namespace, group: event.Key.Group, resource: event.Key.Resource})
+		_ = b.historyPruner.Add(pruningKey{
+			namespace: event.Key.Namespace,
+			group:     event.Key.Group,
+			resource:  event.Key.Resource,
+			name:      event.Key.Name,
+		})
 
 		// 3. Update all resource history entries with the new UID
 		// Note: we do not update any history entries that have a deletion timestamp included. This will become
@@ -772,6 +796,19 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 			return 0, fmt.Errorf("get continue token: %w", err)
 		}
 		listReq.StartRV = continueToken.ResourceVersion
+	}
+
+	// Set ExactRV when using Exact matching
+	if req.VersionMatch == resource.ResourceVersionMatch_Exact {
+		if req.ResourceVersion <= 0 {
+			return 0, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
+		}
+		listReq.ExactRV = req.ResourceVersion
+	}
+
+	// Set MinRV when using NotOlderThan matching to filter at the database level
+	if req.ResourceVersion > 0 && req.VersionMatch == resource.ResourceVersionMatch_NotOlderThan {
+		listReq.MinRV = req.ResourceVersion
 	}
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
