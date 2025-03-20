@@ -805,7 +805,7 @@ spec:
 							Example: &provisioning.ExportJobOptions{
 								Folder: "grafan-folder-ref",
 								Branch: "target-branch",
-								Prefix: "prefix/in/repo/tree",
+								Path:   "path/in/tree",
 							},
 						},
 					},
@@ -826,7 +826,6 @@ spec:
 							Schema: &optionsSchema,
 							Example: &provisioning.MigrateJobOptions{
 								History: true,
-								Prefix:  "prefix/in/repo/tree",
 							},
 						},
 					},

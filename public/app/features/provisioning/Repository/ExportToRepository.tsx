@@ -17,7 +17,7 @@ export function ExportToRepository({ repo }: Props) {
 
   const { register, formState, handleSubmit } = useForm<ExportJobOptions>({
     defaultValues: {
-      prefix: '',
+      path: '',
     },
   });
 
@@ -59,8 +59,8 @@ export function ExportToRepository({ repo }: Props) {
             <Input placeholder={repo.spec?.github?.branch} {...register('branch')} />
           </Field>
         )}
-        <Field label="Prefix">
-          <Input placeholder="Prefix in the remote system" {...register('prefix')} />
+        <Field label="Path">
+          <Input placeholder="Path in the remote system" {...register('path')} />
         </Field>
         <Field label="Identifier" description="Include the current identifier in exported metadata">
           <Switch {...register('identifier')} />

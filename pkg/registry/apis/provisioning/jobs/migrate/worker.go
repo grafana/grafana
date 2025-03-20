@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -282,10 +281,6 @@ func newMigrationJob(ctx context.Context,
 	legacyMigrator legacy.LegacyMigrator,
 	progress jobs.JobProgressRecorder,
 ) (*migrationJob, error) {
-	if options.Prefix != "" {
-		options.Prefix = safepath.Clean(options.Prefix)
-	}
-
 	return &migrationJob{
 		namespace:  target.Config().Namespace,
 		target:     target,

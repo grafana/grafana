@@ -347,7 +347,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		SubResource("export").
 		Body(asJSON(&provisioning.ExportJobOptions{
 			Folder:     "",   // export entire instance
-			Prefix:     "",   // no prefix necessary for testing
+			Path:       "",   // no prefix necessary for testing
 			Identifier: true, // doesn't _really_ matter, but handy for debugging.
 		})).
 		Do(ctx)

@@ -53,8 +53,8 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 
 	err = r.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
-		if r.prefix != "" {
-			p = r.prefix + "/" + p
+		if r.path != "" {
+			p = r.path + "/" + p
 		}
 		logger := logger.With("path", p)
 
