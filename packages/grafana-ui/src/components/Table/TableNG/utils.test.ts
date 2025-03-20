@@ -226,7 +226,7 @@ describe('TableNG utils', () => {
       });
 
       // Default width
-      expect(columns[0].width).toBe('auto');
+      expect(columns[0].width).toBe(350);
       // Explicit width from field config
       expect(columns[1].width).toBe(100);
       // Default width with min width
