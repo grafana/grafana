@@ -55,8 +55,8 @@ export function getDynamicActions(
   }, []);
 }
 
-export function useIsManaged(dashboard: DashboardScene): boolean {
+export function useIsManagedRepository(dashboard: DashboardScene): boolean {
   const folderRepo = useSelector((state) => selectFolderRepository(state, dashboard.state.meta.folderUid));
 
-  return Boolean(dashboard.isManaged() || folderRepo);
+  return Boolean(dashboard.isManagedRepository() || folderRepo);
 }
