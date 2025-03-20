@@ -124,7 +124,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     url,
   } = plugin;
 
-  const isDisabled = !!error || isDisabledSecretsPlugin(typeCode);
+  const isDisabled = !!error;
   return {
     description,
     downloads,
@@ -178,7 +178,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     angularDetected,
   } = plugin;
 
-  const isDisabled = !!error || isDisabledSecretsPlugin(type);
+  const isDisabled = !!error;
   return {
     description,
     downloads: 0,
@@ -218,7 +218,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   const installedVersion = local?.info.version;
   const id = remote?.slug || local?.id || '';
   const type = local?.type || remote?.typeCode;
-  const isDisabled = !!error || isDisabledSecretsPlugin(type);
+  const isDisabled = !!error;
   const keywords = remote?.keywords || local?.info.keywords || [];
 
   let logos = {
@@ -370,7 +370,6 @@ export const hasInstallControlWarning = (
   const isCompatible = Boolean(latestCompatibleVersion);
   return (
     plugin.type === PluginType.renderer ||
-    plugin.type === PluginType.secretsmanager ||
     (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
     plugin.isDev ||
     (!hasPermission && !isExternallyManaged) ||
@@ -401,10 +400,6 @@ export function isPreinstalledPlugin(id: string): { found: boolean; withVersion:
 
   const plugin = pluginCatalogPreinstalledPlugins?.find((p) => p.id === id);
   return { found: !!plugin?.id, withVersion: !!plugin?.version };
-}
-
-function isDisabledSecretsPlugin(type?: PluginType): boolean {
-  return type === PluginType.secretsmanager && !config.secretsManagerPluginEnabled;
 }
 
 export function isLocalCorePlugin(local?: LocalPlugin): boolean {
@@ -469,7 +464,6 @@ export function isPluginUpdatable(plugin: CatalogPlugin) {
 export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
   if (
     !isPluginModifiable(plugin) ||
-    plugin.type === PluginType.secretsmanager ||
     (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
     !plugin.isPublished ||
     plugin.isDisabled ||
