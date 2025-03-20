@@ -208,10 +208,6 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return nil, err
 	}
 
-	if !isJSONContentType(req) {
-		return nil, fmt.Errorf("invalid content type: %s", req.Header.Get("Content-Type"))
-	}
-
 	writer, ok := repo.(repository.ReaderWriter)
 	if !ok {
 		return nil, apierrors.NewBadRequest("repository does not support read-writing")
