@@ -17,6 +17,8 @@ import {
   SceneVariableSet,
   TextBoxVariable,
   VizPanel,
+  SceneDataQuery,
+  SceneQueryRunner,
 } from '@grafana/scenes';
 import {
   DashboardCursorSync as DashboardCursorSyncV1,
@@ -48,7 +50,38 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
-import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import { getPersistedDSForQuery, transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+
+// Mock dependencies
+jest.mock('../utils/dashboardSceneGraph', () => {
+  const original = jest.requireActual('../utils/dashboardSceneGraph');
+  return {
+    ...original,
+    dashboardSceneGraph: {
+      ...original.dashboardSceneGraph,
+      getElementIdentifierForVizPanel: jest.fn().mockImplementation((panel) => {
+        // Return the panel key if it exists, otherwise use panel-1 as default
+        return panel?.state?.key || 'panel-1';
+      }),
+    },
+  };
+});
+
+jest.mock('../utils/utils', () => {
+  const original = jest.requireActual('../utils/utils');
+  return {
+    ...original,
+    getDashboardSceneFor: jest.fn().mockImplementation(() => ({
+      serializer: {
+        getDSReferencesMapping: jest.fn().mockReturnValue({
+          panels: new Map([['panel-1', new Set(['A'])]]),
+          variables: new Set(),
+          annotations: new Set(),
+        }),
+      },
+    })),
+  };
+});
 
 function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {
   return new DashboardScene(state);
@@ -100,7 +133,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // The intention is to have a complete dashboard scene
     // with all the possible properties set
     dashboardScene = setupDashboardScene({
-      $data: new DashboardDataLayerSet({ annotationLayers }),
+      $data: new DashboardDataLayerSet({ annotationLayers: createAnnotationLayers() }),
       id: 1,
       title: 'Test Dashboard',
       description: 'Test Description',
@@ -377,6 +410,84 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // check annotation layer 3 with no datasource has the default datasource defined as type
     expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
   });
+
+  describe('getPersistedDSForQuery', () => {
+    it('should respect datasource reference mapping when determining query datasource', () => {
+      // Setup test data
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+        // No datasource defined originally
+      };
+      const queryWithDS: SceneDataQuery = {
+        refId: 'B',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
+      };
+
+      // Mock query runner with runtime-resolved datasource
+      const queryRunner = new SceneQueryRunner({
+        queries: [queryWithoutDS, queryWithDS],
+        datasource: { uid: 'default-ds', type: 'default' },
+      });
+
+      // Get a reference to the DS references mapping
+      const dsReferencesMap = new Set(['A']);
+
+      // Test the query without DS originally - should return undefined
+      const resultA = getPersistedDSForQuery(queryWithoutDS, queryRunner, dsReferencesMap);
+      expect(resultA).toBeUndefined();
+
+      // Test the query with DS originally - should return the original datasource
+      const resultB = getPersistedDSForQuery(queryWithDS, queryRunner, dsReferencesMap);
+      expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+      // Test a query with no DS originally but not in the mapping - should get the runner's datasource
+      const queryNotInMapping: SceneDataQuery = {
+        refId: 'C',
+        // No datasource, but not in mapping
+      };
+      const resultC = getPersistedDSForQuery(queryNotInMapping, queryRunner, dsReferencesMap);
+      expect(resultC).toEqual({ uid: 'default-ds', type: 'default' });
+    });
+  });
+
+  describe('getDatasourceForQueries', () => {
+    it('should respect datasource reference mapping when determining which queries should have datasources saved', () => {
+      // Setup test data
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+        // No datasource defined originally
+      };
+      const queryWithDS: SceneDataQuery = {
+        refId: 'B',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
+      };
+
+      // Mock query runner with runtime-resolved datasource
+      const queryRunner = new SceneQueryRunner({
+        queries: [queryWithoutDS, queryWithDS],
+        datasource: { uid: 'default-ds', type: 'default' },
+      });
+
+      // Get a reference to the DS references mapping
+      const dsReferencesMap = new Set(['A']);
+
+      // Test the query without DS originally - should return undefined
+      const resultA = getPersistedDSForQuery(queryWithoutDS, queryRunner, dsReferencesMap);
+      expect(resultA).toBeUndefined();
+
+      // Test the query with DS originally - should return the original datasource
+      const resultB = getPersistedDSForQuery(queryWithDS, queryRunner, dsReferencesMap);
+      expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+      // Test a query with no DS originally but not in the mapping - should get the runner's datasource
+      const queryNotInMapping: SceneDataQuery = {
+        refId: 'C',
+        // No datasource, but not in mapping
+      };
+      const resultC = getPersistedDSForQuery(queryNotInMapping, queryRunner, dsReferencesMap);
+      expect(resultC).toEqual({ uid: 'default-ds', type: 'default' });
+    });
+  });
 });
 
 function getMinimalSceneState(body: DashboardLayoutManager): Partial<DashboardSceneState> {
@@ -571,49 +682,50 @@ describe('dynamic layouts', () => {
   });
 });
 
-const annotationLayer1 = new DashboardAnnotationsDataLayer({
-  key: 'layer1',
-  query: {
-    datasource: {
-      type: 'grafana',
-      uid: '-- Grafana --',
-    },
-    name: 'query1',
-    enable: true,
-    iconColor: 'red',
-  },
-  name: 'layer1',
-  isEnabled: true,
-  isHidden: false,
-});
-
-const annotationLayer2 = new DashboardAnnotationsDataLayer({
-  key: 'layer2',
-  query: {
-    datasource: {
-      type: 'prometheus',
-      uid: 'abcdef',
-    },
-    name: 'query2',
-    enable: true,
-    iconColor: 'blue',
-  },
-  name: 'layer2',
-  isEnabled: true,
-  isHidden: true,
-});
-
-// this could happen if a dahboard was created from code and the datasource was not defined
-const annotationLayer3NoDsDefined = new DashboardAnnotationsDataLayer({
-  key: 'layer3',
-  query: {
-    name: 'query3',
-    enable: true,
-    iconColor: 'green',
-  },
-  name: 'layer3',
-  isEnabled: true,
-  isHidden: true,
-});
-
-const annotationLayers = [annotationLayer1, annotationLayer2, annotationLayer3NoDsDefined];
+// Instead of reusing annotation layer objects, create a factory function to generate new ones each time
+function createAnnotationLayers() {
+  return [
+    new DashboardAnnotationsDataLayer({
+      key: 'layer1',
+      query: {
+        datasource: {
+          type: 'grafana',
+          uid: '-- Grafana --',
+        },
+        name: 'query1',
+        enable: true,
+        iconColor: 'red',
+      },
+      name: 'layer1',
+      isEnabled: true,
+      isHidden: false,
+    }),
+    new DashboardAnnotationsDataLayer({
+      key: 'layer2',
+      query: {
+        datasource: {
+          type: 'prometheus',
+          uid: 'abcdef',
+        },
+        name: 'query2',
+        enable: true,
+        iconColor: 'blue',
+      },
+      name: 'layer2',
+      isEnabled: true,
+      isHidden: true,
+    }),
+    // this could happen if a dahboard was created from code and the datasource was not defined
+    new DashboardAnnotationsDataLayer({
+      key: 'layer3',
+      query: {
+        name: 'query3',
+        enable: true,
+        iconColor: 'green',
+      },
+      name: 'layer3',
+      isEnabled: true,
+      isHidden: true,
+    }),
+  ];
+}
