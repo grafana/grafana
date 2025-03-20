@@ -29,10 +29,10 @@
 //  
 //  
 //  Frame[1] {
-//      "type": "timeseries-long",
+//      "type": "table",
 //      "typeVersion": [
 //          0,
-//          1
+//          0
 //      ],
 //      "custom": {
 //          "resultType": "matrix"
@@ -4782,10 +4782,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-long",
+          "type": "table",
           "typeVersion": [
             0,
-            1
+            0
           ],
           "custom": {
             "resultType": "matrix"

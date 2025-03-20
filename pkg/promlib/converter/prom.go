@@ -704,7 +704,8 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 	// https://grafana.github.io/dataplane/timeseries#time-series-long-format-timeserieslong-sql-like
 	if opt.FormatTable {
 		frame := newFrame(tempTimes, labels, tempValues, resultType)
-		frame.Meta.Type = data.FrameTypeTimeSeriesLong
+		frame.Meta.Type = data.FrameTypeTable
+		frame.Meta.TypeVersion = data.FrameTypeVersion{0, 0}
 		rsp.Frames = append(rsp.Frames, frame)
 	}
 
