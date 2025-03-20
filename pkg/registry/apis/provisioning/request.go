@@ -1,14 +1,12 @@
 package provisioning
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
-	"time"
 )
 
 const (
@@ -39,20 +37,6 @@ func readBody(r *http.Request, maxSize int64) ([]byte, error) {
 func isJSONContentType(r *http.Request) bool {
 	contentType := r.Header.Get("Content-Type")
 	return strings.HasPrefix(contentType, contentTypeJSON)
-}
-
-// withTimeout adds a timeout context to the request
-func withTimeout(h http.Handler, timeout time.Duration) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), timeout)
-		defer cancel()
-		h.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// withTimeoutFunc adds a timeout context to the request
-func withTimeoutFunc(f func(w http.ResponseWriter, r *http.Request), timeout time.Duration) func(w http.ResponseWriter, r *http.Request) {
-	return withTimeout(http.HandlerFunc(f), timeout).ServeHTTP
 }
 
 // unmarshalJSON creates a size-limited JSON decoder
