@@ -391,18 +391,36 @@ describe('TableNG utils', () => {
 
   describe('getFooterItemNG', () => {
     const rows = [
-      { Value: 1, Text: 'a', __depth: 0, __index: 0 },
-      { Value: 2, Text: 'b', __depth: 0, __index: 1 },
-      { Value: 3, Text: 'c', __depth: 0, __index: 2 },
+      { Field1: 1, Text: 'a', __depth: 0, __index: 0 },
+      { Field1: 2, Text: 'b', __depth: 0, __index: 1 },
+      { Field1: 3, Text: 'c', __depth: 0, __index: 2 },
+      { Field2: 3, Text: 'd', __depth: 0, __index: 3 },
+      { Field2: 10, Text: 'e', __depth: 0, __index: 4 },
     ];
 
     const numericField: Field = {
-      name: 'Value',
+      name: 'Field1',
       type: FieldType.number,
       values: [1, 2, 3],
       config: {
         custom: {},
       },
+      display: (value: unknown) => ({
+        text: String(value),
+        numeric: Number(value),
+        color: undefined,
+        prefix: undefined,
+        suffix: undefined,
+      }),
+      state: {},
+      getLinks: undefined,
+    };
+
+    const numericField2: Field = {
+      name: 'Field2',
+      type: FieldType.number,
+      values: [3, 10],
+      config: { custom: {} },
       display: (value: unknown) => ({
         text: String(value),
         numeric: Number(value),
@@ -469,6 +487,23 @@ describe('TableNG utils', () => {
         reducer: undefined,
       });
       expect(result).toBe('');
+    });
+
+    it('should correctly calculate sum for numeric fields based on selected fields', () => {
+      const numericField1Result = getFooterItemNG(rows, numericField, {
+        show: true,
+        reducer: ['sum'],
+        fields: ['Field1'],
+      });
+
+      const numericField2Result = getFooterItemNG(rows, numericField2, {
+        show: true,
+        reducer: ['sum'],
+        fields: ['Field2'],
+      });
+
+      expect(numericField1Result).toBe('6'); // 1 + 2 + 3
+      expect(numericField2Result).toBe('13'); // 3 + 10
     });
   });
 
