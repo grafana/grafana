@@ -1,4 +1,5 @@
 import { isEqual } from 'lodash';
+import { createRef } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -20,7 +21,8 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
+import { Point, Rect } from '../layout-manager/utils';
+import { DashboardLayoutItem, IntermediateLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
@@ -51,6 +53,8 @@ export class DashboardGridItem
   private _prevRepeatValues?: VariableValueSingle[];
 
   private _gridSizeSub: Unsubscribable | undefined;
+
+  public containerRef = createRef<HTMLElement>();
 
   public constructor(state: DashboardGridItemState) {
     super(state);
@@ -244,5 +248,17 @@ export class DashboardGridItem
 
   public isRepeated(): boolean {
     return this.state.variableName !== undefined;
+  }
+
+  public toIntermediate(): IntermediateLayoutItem {
+    throw new Error('Method not implemented.');
+  }
+
+  public distanceToPoint?(point: Point): number {
+    throw new Error('Method not implemented.');
+  }
+
+  public boundingBox?(): Rect | undefined {
+    throw new Error('Method not implemented.');
   }
 }

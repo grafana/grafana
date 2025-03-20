@@ -561,6 +561,10 @@ export interface FeatureToggles {
   */
   onPremToCloudMigrations?: boolean;
   /**
+  * Enable the secrets management API and services under app platform
+  */
+  secretsManagementAppPlatform?: boolean;
+  /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   */
   alertingSaveStatePeriodic?: boolean;
@@ -822,6 +826,7 @@ export interface FeatureToggles {
   managedDualWriter?: boolean;
   /**
   * Enables SRI checks for plugin assets
+  * @default false
   */
   pluginsSriChecks?: boolean;
   /**

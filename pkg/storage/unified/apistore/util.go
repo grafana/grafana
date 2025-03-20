@@ -31,6 +31,25 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 		NextPageToken: predicate.Continue,
 	}
 
+	if opts.ResourceVersion != "" {
+		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return nil, predicate, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+		req.ResourceVersion = rv
+	}
+
+	switch opts.ResourceVersionMatch {
+	case "", metav1.ResourceVersionMatchNotOlderThan:
+		req.VersionMatch = resource.ResourceVersionMatch_NotOlderThan
+	case metav1.ResourceVersionMatchExact:
+		req.VersionMatch = resource.ResourceVersionMatch_Exact
+	default:
+		return nil, predicate, apierrors.NewBadRequest(
+			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
+		)
+	}
+
 	if opts.Predicate.Label != nil && !opts.Predicate.Label.Empty() {
 		requirements, selectable := opts.Predicate.Label.Requirements()
 		if !selectable {
@@ -89,25 +108,6 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 			}
 			req.Options.Labels = append(req.Options.Labels, requirement)
 		}
-	}
-
-	if opts.ResourceVersion != "" {
-		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
-		if err != nil {
-			return nil, predicate, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
-		}
-		req.ResourceVersion = rv
-	}
-
-	switch opts.ResourceVersionMatch {
-	case "", metav1.ResourceVersionMatchNotOlderThan:
-		req.VersionMatch = resource.ResourceVersionMatch_NotOlderThan
-	case metav1.ResourceVersionMatchExact:
-		req.VersionMatch = resource.ResourceVersionMatch_Exact
-	default:
-		return nil, predicate, apierrors.NewBadRequest(
-			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
-		)
 	}
 
 	return req, predicate, nil
