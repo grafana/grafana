@@ -113,16 +113,11 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 	return req, predicate, nil
 }
 
-func isUnchanged(codec runtime.Codec, obj runtime.Object, newObj runtime.Object) (bool, error) {
-	buf := new(bytes.Buffer)
-	if err := codec.Encode(obj, buf); err != nil {
-		return false, err
-	}
-
+func isUnchanged(codec runtime.Codec, buf []byte, newObj runtime.Object) (bool, error) {
 	newBuf := new(bytes.Buffer)
 	if err := codec.Encode(newObj, newBuf); err != nil {
 		return false, err
 	}
 
-	return bytes.Equal(buf.Bytes(), newBuf.Bytes()), nil
+	return bytes.Equal(buf, newBuf.Bytes()), nil
 }
