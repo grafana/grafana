@@ -68,13 +68,6 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
         setValue('migrate.history', true);
         setValue('migrate.identifier', true);
       }
-
-      if (option.target === 'instance') {
-        const timestamp = Date.now();
-        setValue('repository.title', `instance-${timestamp}`);
-      } else if (option.target === 'folder') {
-        setValue('repository.title', '');
-      }
       onOptionSelect(option.operation === 'migrate');
     },
     [setValue, onOptionSelect]
