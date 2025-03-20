@@ -65,7 +65,7 @@ func ProvideEncryptionManager(
 	ttl := cfg.SecretsManagement.Encryption.DataKeysCacheTTL
 	currentProviderID := encryption.ProviderID(cfg.SecretsManagement.EncryptionProvider)
 
-	enc, err := service.NewEncryptionService(tracer, cfg, usageStats)
+	enc, err := service.NewEncryptionService(tracer, usageStats, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create encryption service: %w", err)
 	}
@@ -119,10 +119,6 @@ func (s *EncryptionManager) InitProviders(extraProviders encryption.ProviderMap)
 }
 
 func (s *EncryptionManager) registerUsageMetrics() {
-	if s.usageStats == nil {
-		return
-	}
-
 	s.usageStats.RegisterMetricsFunc(func(ctx context.Context) (map[string]any, error) {
 		usageMetrics := make(map[string]any)
 

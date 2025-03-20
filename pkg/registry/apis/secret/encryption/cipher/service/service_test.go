@@ -30,7 +30,7 @@ func Test_Service(t *testing.T) {
 		},
 	}
 
-	svc, err := NewEncryptionService(tracing.InitializeTracerForTest(), settings, usageStats)
+	svc, err := NewEncryptionService(tracing.InitializeTracerForTest(), usageStats, settings)
 	require.NoError(t, err)
 
 	t.Run("decrypt empty payload should return error", func(t *testing.T) {

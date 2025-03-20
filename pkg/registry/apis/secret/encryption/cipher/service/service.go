@@ -36,8 +36,8 @@ type Service struct {
 
 func NewEncryptionService(
 	tracer tracing.Tracer,
-	cfg *setting.Cfg,
 	usageMetrics usagestats.Service,
+	cfg *setting.Cfg,
 ) (*Service, error) {
 	if cfg.SecretsManagement.SecretKey == "" {
 		return nil, fmt.Errorf("`[secrets_manager]secret_key` is not set")
@@ -91,10 +91,6 @@ func (s *Service) checkEncryptionAlgorithm(algorithm string) error {
 }
 
 func (s *Service) registerUsageMetrics() {
-	if s.usageMetrics == nil {
-		return
-	}
-
 	s.usageMetrics.RegisterMetricsFunc(func(context.Context) (map[string]any, error) {
 		algorithm := s.cfg.SecretsManagement.Encryption.Algorithm
 
