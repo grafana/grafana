@@ -10,12 +10,14 @@ import (
 	"golang.org/x/exp/rand"
 	"k8s.io/apimachinery/pkg/api/apitesting"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -212,4 +214,82 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1)) // nolint:staticcheck
 	})
+
+	t.Run("calculate generation", func(t *testing.T) {
+		dash := &dashboard.Dashboard{
+			ObjectMeta: v1.ObjectMeta{
+				Name: "test",
+			},
+			Spec: dashboard.DashboardSpec{
+				Object: map[string]interface{}{
+					"hello": "world",
+				},
+			},
+		}
+		out := getPreparedObject(t, ctx, s, dash, nil)
+		require.Equal(t, int64(1), out.GetGeneration())
+
+		t.Run("increment when the spec changes", func(t *testing.T) {
+			b := dash.DeepCopy()
+			b.Spec.Object["x"] = "y"
+			out = getPreparedObject(t, ctx, s, b, dash)
+			require.Equal(t, int64(2), out.GetGeneration())
+		})
+
+		t.Run("increment when the folder changes", func(t *testing.T) {
+			b := dash.DeepCopy()
+			b.Annotations = map[string]string{
+				utils.AnnoKeyFolder: "abc",
+			}
+			out = getPreparedObject(t, ctx, s, b, dash)
+			require.Equal(t, int64(2), out.GetGeneration())
+		})
+
+		t.Run("increment when deleted", func(t *testing.T) {
+			now := v1.Now()
+			b := dash.DeepCopy()
+			b.DeletionTimestamp = &now
+			out = getPreparedObject(t, ctx, s, b, dash)
+			require.Equal(t, int64(2), out.GetGeneration())
+		})
+
+		t.Run("keep when status, labels, or annotations change", func(t *testing.T) {
+			b := dash.DeepCopy()
+			b.Annotations = map[string]string{
+				"x": "hello",
+			}
+			b.Labels = map[string]string{
+				"a": "b",
+			}
+			b.Status = dashboard.DashboardStatus{
+				Conversion: &dashboard.DashboardConversionStatus{
+					Failed: true,
+				},
+			}
+			out = getPreparedObject(t, ctx, s, b, dash)
+			require.Equal(t, int64(1), out.GetGeneration()) // still 1
+		})
+	})
+}
+
+func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtime.Object, old runtime.Object) utils.GrafanaMetaAccessor {
+	t.Helper()
+
+	var raw []byte
+	var err error
+
+	if old == nil {
+		raw, err = s.prepareObjectForStorage(ctx, obj)
+	} else {
+		raw, err = s.prepareObjectForUpdate(ctx, obj, old)
+	}
+	require.NoError(t, err)
+
+	out := &unstructured.Unstructured{}
+	err = out.UnmarshalJSON(raw)
+	require.NoError(t, err)
+
+	meta, err := utils.MetaAccessor(out)
+	require.NoError(t, err)
+	return meta
 }

@@ -143,6 +143,8 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 			return nil, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 		}
 		// TODO: check that we can move the folder?
+	} else if obj.GetDeletionTimestamp() != nil && previous.GetDeletionTimestamp() == nil {
+		changed = true // bump generation when deleted
 	} else {
 		spec, e1 := obj.GetSpec()
 		oldSpec, e2 := previous.GetSpec()
