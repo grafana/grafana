@@ -342,6 +342,7 @@ function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
     name: 'Range',
     type: 'string',
     placeholder: '$__auto',
+    options: ['$__auto'],  
     description:
       'Use the default value "$__auto". Change the "step" value in the query options to change the bucket size.',
   };
