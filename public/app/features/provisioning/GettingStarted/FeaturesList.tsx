@@ -1,8 +1,7 @@
 import { Stack, Text, Box, LinkButton, Icon } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning';
 
-import { CONNECT_URL } from '../constants';
-import { checkSyncSettings } from '../utils/checkSyncSettings';
+import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 
 interface FeatureItemProps {
   children: React.ReactNode;
@@ -40,16 +39,9 @@ export const FeaturesList = ({
       );
     }
 
-    const [instanceConnected, maxReposReached] = checkSyncSettings(settings);
-    if (instanceConnected || maxReposReached) {
-      return null;
-    }
-
     return (
       <Stack direction="row" alignItems="center" gap={2}>
-        <LinkButton size="md" icon="plus" href={CONNECT_URL}>
-          Connect Grafana to repository
-        </LinkButton>
+        <ConnectRepositoryButton settings={settings} />
       </Stack>
     );
   };

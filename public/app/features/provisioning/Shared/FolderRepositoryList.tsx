@@ -1,27 +1,26 @@
 import { useState } from 'react';
 
-import { EmptySearchResult, FilterInput, LinkButton, Stack } from '@grafana/ui';
-import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
+import { EmptySearchResult, FilterInput, Stack } from '@grafana/ui';
+import { Repository, RepositoryViewList } from 'app/api/clients/provisioning';
 
 import { RepositoryCard } from '../Repository/RepositoryCard';
-import { CONNECT_URL } from '../constants';
-import { checkSyncSettings } from '../utils/checkSyncSettings';
 
-export function FolderRepositoryList({ items }: { items: Repository[] }) {
+import { ConnectRepositoryButton } from './ConnectRepositoryButton';
+
+interface Props {
+  items: Repository[];
+  settings?: RepositoryViewList;
+}
+
+export function FolderRepositoryList({ items, settings }: Props) {
   const [query, setQuery] = useState('');
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
-  const settings = useGetFrontendSettingsQuery();
-  const [instanceConnected, maxReposReached] = checkSyncSettings(settings.data);
 
   return (
     <Stack direction={'column'} gap={3}>
       <Stack gap={2}>
         <FilterInput placeholder="Search" value={query} onChange={setQuery} />
-        {!instanceConnected && !maxReposReached && (
-          <LinkButton href={CONNECT_URL} variant="primary" icon={'plus'}>
-            Connect to repository
-          </LinkButton>
-        )}
+        <ConnectRepositoryButton settings={settings} />
       </Stack>
       <Stack direction={'column'}>
         {!!filteredItems.length ? (

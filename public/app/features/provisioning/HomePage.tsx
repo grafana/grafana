@@ -75,7 +75,7 @@ export default function HomePage() {
     if (!instanceConnected) {
       switch (activeTab) {
         case TabSelection.Repositories:
-          return <FolderRepositoryList items={items ?? []} />;
+          return <FolderRepositoryList items={items ?? []} settings={settings.data} />;
         case TabSelection.GettingStarted:
           return <GettingStarted />;
         default:
