@@ -243,20 +243,22 @@ func TestSparseLabelsInNumericMultiToFullLong(t *testing.T) {
 	input := data.Frames{
 		data.NewFrame("frame1",
 			data.NewField("ts", nil, times),
-			data.NewField("value", data.Labels{"host": "dummy_a", "sparse_label": "label_value_present"}, []float64{13}),
+			data.NewField("cpu", data.Labels{"host": "dummy_a", "sparse_label": "label_value_present"}, []float64{13}),
 		),
 		data.NewFrame("frame1",
 			data.NewField("ts", nil, times),
-			data.NewField("value", data.Labels{"host": "dummy_b"}, []float64{17}),
+			data.NewField("cpu", data.Labels{"host": "dummy_b"}, []float64{17}),
 		),
 	}
 
 	expected := data.NewFrame("numeric_full_long",
-		data.NewField("ts", nil, []time.Time{
-			time.Unix(0, 0), // foo
-			time.Unix(0, 0), // bar
+		// TODO: Consider a different name. `__field__`? `__name__`? `__field_name__`?
+		// TODO: Maybe preserve the time column too? At least allow it to be optional?
+		// This test forces that we remove it, which is too much.
+		data.NewField("__metric__", nil, []string{
+			"cpu", "cpu",
 		}),
-		data.NewField("val", nil, []float64{
+		data.NewField("value", nil, []float64{
 			13, 17,
 		}),
 		data.NewField("host", nil, []*string{

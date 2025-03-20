@@ -56,7 +56,7 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 		metricCol   []string
 		valueCol    []float64
 		labelKeys   []string
-		labelValues = make(map[string][]string)
+		labelValues = make(map[string][]*string)
 	)
 
 	labelKeySet := map[string]struct{}{}
@@ -77,7 +77,7 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 
 	for k := range labelKeySet {
 		labelKeys = append(labelKeys, k)
-		labelValues[k] = make([]string, 0, len(valueCol))
+		labelValues[k] = make([]*string, 0, len(valueCol))
 	}
 	sort.Strings(labelKeys)
 
@@ -86,13 +86,13 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 			continue
 		}
 		for _, k := range labelKeys {
-			val := ""
+			var ptr *string
 			if field.Labels != nil {
 				if v, ok := field.Labels[k]; ok {
-					val = v
+					ptr = &v
 				}
 			}
-			labelValues[k] = append(labelValues[k], val)
+			labelValues[k] = append(labelValues[k], ptr)
 		}
 	}
 
