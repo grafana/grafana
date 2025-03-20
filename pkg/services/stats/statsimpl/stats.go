@@ -166,8 +166,8 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		}
 		// currently not supported when dashboards are in unified storage
 		if !ss.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-			sb.Write(`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`, dialect.BooleanStr(false))
-			sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanStr(false))
+			sb.Write(`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`, dialect.BooleanValue(false))
+			sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanValue(false))
 		}
 
 		sb.Write(ss.roleCounterSQL(ctx))

@@ -1,9 +1,11 @@
-import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig, SceneObject } from '@grafana/scenes';
+import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getDefaultVizPanel } from '../../utils/utils';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
@@ -21,6 +23,7 @@ export interface RowItemState extends SceneObjectState {
   isCollapsed?: boolean;
   isHeaderHidden?: boolean;
   height?: 'expand' | 'min';
+  conditionalRendering?: ConditionalRendering;
 }
 
 export class RowItem
@@ -34,13 +37,27 @@ export class RowItem
   });
 
   public readonly isEditableDashboardElement = true;
+  private _layoutRestorer = new LayoutRestorer();
 
   public constructor(state?: Partial<RowItemState>) {
     super({
       ...state,
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
+      conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
     });
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    const deactivate = this.state.conditionalRendering?.activate();
+
+    return () => {
+      if (deactivate) {
+        deactivate();
+      }
+    };
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
@@ -56,7 +73,7 @@ export class RowItem
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ layout });
+    this.setState({ layout: this._layoutRestorer.getLayout(layout, this.state.layout) });
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {

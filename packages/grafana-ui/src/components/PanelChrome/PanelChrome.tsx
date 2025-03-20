@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, PointerEvent, ReactElement, ReactNode, useId, useRef, useState } from 'react';
+import { CSSProperties, ReactElement, ReactNode, useId, useRef, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
@@ -151,7 +151,7 @@ export function PanelChrome({
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
-  const pointerDownEvt = useRef<PointerEvent | null>(null);
+  const pointerDownEvt = useRef<React.PointerEvent | undefined>();
 
   const hasHeader = !hoverHeader;
 
@@ -195,6 +195,35 @@ export function PanelChrome({
   }
 
   const testid = typeof title === 'string' ? selectors.components.Panels.Panel.title(title) : 'Panel';
+
+  // Handle drag & selection events
+  // Mainly the tricky bit of differentiating between dragging and selecting
+
+  const onPointerUp = (evt: React.PointerEvent) => {
+    evt.stopPropagation();
+
+    const distance = Math.hypot(
+      pointerDownEvt.current?.screenX ?? 0 - evt.screenX,
+      pointerDownEvt.current?.screenY ?? 0 - evt.screenY
+    );
+
+    pointerDownEvt.current = undefined;
+
+    // If we are dragging some distance or clicking on elements that should cancel dragging (panel menu, etc)
+    if (
+      distance > 10 ||
+      (dragClassCancel && evt.target instanceof HTMLElement && evt.target.closest(`.${dragClassCancel}`))
+    ) {
+      return;
+    }
+
+    onSelect?.(evt);
+  };
+
+  const onPointerDown = (evt: React.PointerEvent) => {
+    evt.stopPropagation();
+    pointerDownEvt.current = evt;
+  };
 
   const headerContent = (
     <>
@@ -321,30 +350,15 @@ export function PanelChrome({
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
           data-testid="header-container"
-          onPointerDown={(evt) => {
-            evt.stopPropagation();
-            pointerDownEvt.current = evt;
-          }}
           onPointerMove={() => {
             if (pointerDownEvt.current) {
               onDragStart?.(pointerDownEvt.current);
-              pointerDownEvt.current = null;
             }
           }}
+          onPointerDown={onPointerDown}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}
-          onPointerUp={(evt) => {
-            evt.stopPropagation();
-            if (
-              pointerDownEvt.current &&
-              dragClassCancel &&
-              evt.target instanceof HTMLElement &&
-              !evt.target.closest(`.${dragClassCancel}`)
-            ) {
-              onSelect?.(pointerDownEvt.current);
-              pointerDownEvt.current = null;
-            }
-          }}
+          onPointerUp={onPointerUp}
         >
           {statusMessage && (
             <div className={dragClassCancel}>
