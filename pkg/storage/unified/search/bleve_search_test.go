@@ -220,6 +220,11 @@ func TestCanSearchByTitle(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), res.TotalHits)
+
+		query = newQueryByTitle("what\"s")
+		res, err = index.Search(context.Background(), nil, query, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), res.TotalHits)
 	})
 
 	t.Run("title search will match document", func(t *testing.T) {
