@@ -21,9 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
-	"github.com/grafana/grafana/pkg/util/retryer"
-
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
@@ -35,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -58,6 +56,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/retryer"
 )
 
 var (
