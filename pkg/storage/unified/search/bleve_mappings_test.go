@@ -1,4 +1,4 @@
-package search
+package search_test
 
 import (
 	"fmt"
@@ -9,10 +9,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 func TestDocumentMapping(t *testing.T) {
-	mappings, err := getBleveMappings(nil)
+	mappings, err := search.GetBleveMappings(nil)
 	require.NoError(t, err)
 	data := resource.IndexableDocument{
 		Title:       "title",

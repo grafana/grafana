@@ -159,7 +159,7 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	var index bleve.Index
 
 	build := true
-	mapper, err := getBleveMappings(fields)
+	mapper, err := GetBleveMappings(fields)
 	if err != nil {
 		return nil, err
 	}
@@ -1107,7 +1107,7 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 
 // hasTerms - any value that will be split into multiple tokens
 var hasTerms = func(v string) (string, bool) {
-	for _, c := range termCharacters {
+	for _, c := range TermCharacters {
 		if strings.Contains(v, c) {
 			return c, true
 		}
@@ -1116,7 +1116,7 @@ var hasTerms = func(v string) (string, bool) {
 }
 
 // characters that will be used to determine if a value is split into tokens
-var termCharacters = []string{
+var TermCharacters = []string{
 	" ", "-", "_", ".", ",", ":", ";", "?", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+",
 	"=", "{", "}", "[", "]", "|", "\\", "/", "<", ">", "~", "`",
 	"'", "\"",

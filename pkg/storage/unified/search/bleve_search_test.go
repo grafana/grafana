@@ -1,4 +1,4 @@
-package search
+package search_test
 
 import (
 	"context"
@@ -16,7 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
+
+const threshold = 9999
 
 func TestCanSearchByTitle(t *testing.T) {
 	key := &resource.ResourceKey{
@@ -26,7 +29,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	}
 
 	t.Run("when query is empty, sort documents by title instead of search score", func(t *testing.T) {
-		index := newTestDashboardsIndex(t)
+		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
 		err := index.Write(&resource.IndexableDocument{
 			RV:   1,
 			Name: "name1",
@@ -61,7 +64,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("will boost phrase match query over match query results", func(t *testing.T) {
-		index := newTestDashboardsIndex(t)
+		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
 		err := index.Write(&resource.IndexableDocument{
 			RV:   1,
 			Name: "name1",
@@ -96,7 +99,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("will prioritize matches", func(t *testing.T) {
-		index := newTestDashboardsIndex(t)
+		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
 		err := index.Write(&resource.IndexableDocument{
 			RV:   1,
 			Name: "name1",
@@ -130,7 +133,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("will boost exact match query over match phrase query results", func(t *testing.T) {
-		index := newTestDashboardsIndex(t)
+		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
 		err := index.Write(&resource.IndexableDocument{
 			RV:   1,
 			Name: "name1",
@@ -165,7 +168,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("title with numbers will match document", func(t *testing.T) {
-		index := newTestDashboardsIndex(t)
+		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
 		err := index.Write(&resource.IndexableDocument{
 			RV:   1,
 			Name: "name1",
@@ -199,7 +202,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("title search will match document", func(t *testing.T) {
-		index := newTestDashboardsIndex(t)
+		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
 		err := index.Write(&resource.IndexableDocument{
 			RV:   1,
 			Name: "name1",
@@ -257,7 +260,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("title search will NOT match documents", func(t *testing.T) {
-		index := newTestDashboardsIndex(t)
+		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
 		err := index.Write(&resource.IndexableDocument{
 			RV:   1,
 			Name: "name1",
@@ -315,7 +318,7 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 
 	t.Run("title search with character will match one document", func(t *testing.T) {
-		index := newTestDashboardsIndex(t)
+		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
 		err := index.Write(&resource.IndexableDocument{
 			RV:   1,
 			Name: "name1",
@@ -329,7 +332,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		for i, v := range termCharacters {
+		for i, v := range search.TermCharacters {
 			err = index.Write(&resource.IndexableDocument{
 				RV:   int64(i),
 				Name: fmt.Sprintf("name%d", i),
@@ -344,7 +347,7 @@ func TestCanSearchByTitle(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		for i, v := range termCharacters {
+		for i, v := range search.TermCharacters {
 			title := fmt.Sprintf(`test foo%d%sbar`, i, v)
 			query := newQueryByTitle(title)
 			res, err := index.Search(context.Background(), nil, query, nil)
@@ -396,7 +399,7 @@ func newQueryByTitle(query string) *resource.ResourceSearchRequest {
 	}
 }
 
-func newTestDashboardsIndex(t *testing.T) resource.ResourceIndex {
+func newTestDashboardsIndex(t TB, threshold int64, size int64, batchSize int64, writer IndexWriter) (resource.ResourceIndex, string) {
 	key := &resource.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -405,17 +408,18 @@ func newTestDashboardsIndex(t *testing.T) resource.ResourceIndex {
 	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
 	require.NoError(t, err)
 
-	backend, err := NewBleveBackend(BleveOptions{
+	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          tmpdir,
-		FileThreshold: 9999, // use in-memory for tests
+		FileThreshold: threshold, // use in-memory for tests
+		BatchSize:     int(batchSize),
 	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
 	require.NoError(t, err)
 
 	rv := int64(10)
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 
-	info, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &DashboardDocumentBuilder{
+	info, err := search.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		return &search.DashboardDocumentBuilder{
 			Namespace:        namespace,
 			Blob:             blob,
 			Stats:            make(map[string]map[string]int64), // empty stats
@@ -428,10 +432,16 @@ func newTestDashboardsIndex(t *testing.T) resource.ResourceIndex {
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 2, rv, info.Fields, func(index resource.ResourceIndex) (int64, error) { return 0, nil })
+	}, size, rv, info.Fields, writer)
 	require.NoError(t, err)
 
-	return index
+	return index, tmpdir
+}
+
+type IndexWriter func(index resource.ResourceIndex) (int64, error)
+
+var noop IndexWriter = func(index resource.ResourceIndex) (int64, error) {
+	return 0, nil
 }
 
 // helper to check which tokens are generated by an analyzer
@@ -471,4 +481,16 @@ func debugIndexedTerms(index bleve.Index, field string) {
 			fmt.Println(term.Term)
 		}
 	}
+}
+
+// TB is an interface that works for both *testing.T and *testing.B
+type TB interface {
+	Log(args ...interface{})
+	Logf(format string, args ...interface{})
+	Error(args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fatal(args ...interface{})
+	Fatalf(format string, args ...interface{})
+	Helper()
+	FailNow()
 }
