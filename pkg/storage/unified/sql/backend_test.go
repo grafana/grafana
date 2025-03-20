@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
@@ -202,85 +203,6 @@ func TestBackend_IsHealthy(t *testing.T) {
 	require.ErrorIs(t, err, errTest)
 }
 
-// expectSuccessfulResourceVersionAtomicInc sets up expectations for calling
-// resourceVersionAtomicInc, where the returned RV will be 1.
-func expectSuccessfulResourceVersionAtomicInc(t *testing.T, b testBackend) {
-	b.QueryWithResult("select resource_version for update", 2, Rows{{12345, 23456}})
-	b.ExecWithResult("update resource_version set resource_version", 0, 0)
-}
-
-// expectUnsuccessfulResourceVersionAtomicInc sets up expectations for calling
-// resourceVersionAtomicInc, where the returned RV will be 1.
-func expectUnsuccessfulResourceVersionAtomicInc(t *testing.T, b testBackend, err error) {
-	b.QueryWithErr("select resource_version for update", errTest)
-}
-
-func TestResourceVersionAtomicInc(t *testing.T) {
-	t.Parallel()
-
-	t.Run("happy path - insert new row", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
-
-		v, err := b.resourceVersionAtomicInc(ctx, b.DB, resKey)
-		require.NoError(t, err)
-		require.Equal(t, int64(23456), v)
-	})
-
-	t.Run("happy path - update existing row", func(t *testing.T) {
-		t.Parallel()
-
-		b, ctx := setupBackendTest(t)
-
-		b.QueryWithResult("select resource_version for update", 2, Rows{{12345, 23456}})
-		b.ExecWithResult("update resource_version", 0, 1)
-
-		v, err := b.resourceVersionAtomicInc(ctx, b.DB, resKey)
-		require.NoError(t, err)
-		require.Equal(t, int64(23456), v)
-	})
-
-	t.Run("error getting current version", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-		b.QueryWithErr("select resource_version for update", errTest)
-
-		v, err := b.resourceVersionAtomicInc(ctx, b.DB, resKey)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "lock the resource version")
-	})
-
-	t.Run("error inserting new row", func(t *testing.T) {
-		t.Parallel()
-
-		b, ctx := setupBackendTest(t)
-
-		b.QueryWithResult("select resource_version", 0, Rows{})
-		b.ExecWithErr("insert resource_version", errTest)
-
-		v, err := b.resourceVersionAtomicInc(ctx, b.DB, resKey)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "insert into resource_version")
-	})
-
-	t.Run("error updating existing row", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.QueryWithResult("select resource_version for update", 2, Rows{{12345, 23456}})
-		b.ExecWithErr("update resource_version", errTest)
-
-		v, err := b.resourceVersionAtomicInc(ctx, b.DB, resKey)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "increase resource version")
-	})
-}
-
 func TestBackend_create(t *testing.T) {
 	t.Parallel()
 	meta, err := utils.MetaAccessor(&unstructured.Unstructured{
@@ -296,18 +218,15 @@ func TestBackend_create(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
-
 		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("insert resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
-		b.ExecWithResult("update resource_history", 0, 1)
-		b.ExecWithResult("update resource", 0, 1)
+		expectSuccessfulResourceVersionExec(t, b.TestDBProvider,
+			func() { b.ExecWithResult("insert resource", 0, 1) },
+			func() { b.ExecWithResult("insert resource_history", 0, 1) },
+		)
 		b.SQLMock.ExpectCommit()
-
 		v, err := b.create(ctx, event)
 		require.NoError(t, err)
-		require.Equal(t, int64(23456), v)
+		require.Equal(t, int64(200), v)
 	})
 
 	t.Run("error inserting into resource", func(t *testing.T) {
@@ -321,7 +240,7 @@ func TestBackend_create(t *testing.T) {
 		v, err := b.create(ctx, event)
 		require.Zero(t, v)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "insert into resource:")
+		require.ErrorContains(t, err, "insert into resource")
 	})
 
 	t.Run("error inserting into resource_history", func(t *testing.T) {
@@ -336,58 +255,7 @@ func TestBackend_create(t *testing.T) {
 		v, err := b.create(ctx, event)
 		require.Zero(t, v)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "insert into resource history:")
-	})
-
-	t.Run("error incrementing resource version", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("insert resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectUnsuccessfulResourceVersionAtomicInc(t, b, errTest)
-		b.SQLMock.ExpectRollback()
-
-		v, err := b.create(ctx, event)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "increment resource version")
-	})
-
-	t.Run("error updating resource_history", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("insert resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b)
-		b.ExecWithErr("update resource_history", errTest)
-		b.SQLMock.ExpectRollback()
-
-		v, err := b.create(ctx, event)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "update resource_history", 0, 1)
-	})
-
-	t.Run("error updating resource", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("insert resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b)
-		b.ExecWithResult("update resource_history", 0, 1)
-		b.ExecWithErr("update resource", errTest)
-		b.SQLMock.ExpectRollback()
-
-		v, err := b.create(ctx, event)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "update resource rv")
+		require.ErrorContains(t, err, "insert into resource history")
 	})
 }
 
@@ -409,16 +277,15 @@ func TestBackend_update(t *testing.T) {
 		b, ctx := setupBackendTest(t)
 
 		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("update resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b)
-		b.ExecWithResult("update resource_history", 0, 1)
-		b.ExecWithResult("update resource", 0, 1)
+		expectSuccessfulResourceVersionExec(t, b.TestDBProvider,
+			func() { b.ExecWithResult("update resource", 0, 1) },
+			func() { b.ExecWithResult("insert resource_history", 0, 1) },
+		)
 		b.SQLMock.ExpectCommit()
 
 		v, err := b.update(ctx, event)
 		require.NoError(t, err)
-		require.Equal(t, int64(23456), v)
+		require.Equal(t, int64(200), v)
 	})
 
 	t.Run("error in first update to resource", func(t *testing.T) {
@@ -432,7 +299,7 @@ func TestBackend_update(t *testing.T) {
 		v, err := b.update(ctx, event)
 		require.Zero(t, v)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "initial resource update")
+		require.ErrorContains(t, err, "resource update")
 	})
 
 	t.Run("error inserting into resource history", func(t *testing.T) {
@@ -448,57 +315,6 @@ func TestBackend_update(t *testing.T) {
 		require.Zero(t, v)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "insert into resource history")
-	})
-
-	t.Run("error incrementing rv", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("update resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectUnsuccessfulResourceVersionAtomicInc(t, b, errTest)
-		b.SQLMock.ExpectRollback()
-
-		v, err := b.update(ctx, event)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "increment resource version")
-	})
-
-	t.Run("error updating history rv", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("update resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
-		b.ExecWithErr("update resource_history", errTest)
-		b.SQLMock.ExpectRollback()
-
-		v, err := b.update(ctx, event)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "update history rv")
-	})
-
-	t.Run("error updating resource rv", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("update resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
-		b.ExecWithResult("update resource_history", 0, 1)
-		b.ExecWithErr("update resource", errTest)
-		b.SQLMock.ExpectRollback()
-
-		v, err := b.update(ctx, event)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "update resource rv")
 	})
 }
 
@@ -519,15 +335,15 @@ func TestBackend_delete(t *testing.T) {
 		b, ctx := setupBackendTest(t)
 
 		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("delete resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b)
-		b.ExecWithResult("update resource_history", 0, 1)
+		expectSuccessfulResourceVersionExec(t, b.TestDBProvider,
+			func() { b.ExecWithResult("delete resource", 0, 1) },
+			func() { b.ExecWithResult("insert resource_history", 0, 1) },
+		)
 		b.SQLMock.ExpectCommit()
 
 		v, err := b.delete(ctx, event)
 		require.NoError(t, err)
-		require.Equal(t, int64(23456), v)
+		require.Equal(t, int64(200), v)
 	})
 
 	t.Run("error deleting resource", func(t *testing.T) {
@@ -558,39 +374,6 @@ func TestBackend_delete(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "insert into resource history")
 	})
-
-	t.Run("error incrementing resource version", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("delete resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectUnsuccessfulResourceVersionAtomicInc(t, b, errTest)
-		b.SQLMock.ExpectCommit()
-
-		v, err := b.delete(ctx, event)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "increment resource version")
-	})
-
-	t.Run("error updating resource history", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("delete resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
-		b.ExecWithErr("update resource_history", errTest)
-		b.SQLMock.ExpectCommit()
-
-		v, err := b.delete(ctx, event)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "update history rv")
-	})
 }
 
 func TestBackend_restore(t *testing.T) {
@@ -617,17 +400,16 @@ func TestBackend_restore(t *testing.T) {
 		b, ctx := setupBackendTest(t)
 
 		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("insert resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b)
-		b.ExecWithResult("update resource_history", 0, 1)
-		b.ExecWithResult("update resource", 0, 1)
-		b.ExecWithResult("update resource_history", 0, 1)
+		expectSuccessfulResourceVersionExec(t, b.TestDBProvider,
+			func() { b.ExecWithResult("insert resource", 0, 1) },
+			func() { b.ExecWithResult("insert resource_history", 0, 1) },
+			func() { b.ExecWithResult("update resource_history", 0, 1) },
+		)
 		b.SQLMock.ExpectCommit()
 
 		v, err := b.restore(ctx, event)
 		require.NoError(t, err)
-		require.Equal(t, int64(23456), v)
+		require.Equal(t, int64(200), v)
 	})
 
 	t.Run("error restoring resource", func(t *testing.T) {
@@ -641,7 +423,7 @@ func TestBackend_restore(t *testing.T) {
 		v, err := b.restore(ctx, event)
 		require.Zero(t, v)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "insert into resource:")
+		require.ErrorContains(t, err, "insert into resource")
 	})
 
 	t.Run("error inserting into resource history", func(t *testing.T) {
@@ -659,57 +441,6 @@ func TestBackend_restore(t *testing.T) {
 		require.ErrorContains(t, err, "insert into resource history")
 	})
 
-	t.Run("error incrementing resource version", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("insert resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectUnsuccessfulResourceVersionAtomicInc(t, b, errTest)
-		b.SQLMock.ExpectRollback()
-
-		v, err := b.restore(ctx, event)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "increment resource version")
-	})
-
-	t.Run("error updating resource history", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("insert resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b)
-		b.ExecWithErr("update resource_history", errTest)
-		b.SQLMock.ExpectRollback()
-
-		v, err := b.restore(ctx, event)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "update history rv")
-	})
-
-	t.Run("error updating resource", func(t *testing.T) {
-		t.Parallel()
-		b, ctx := setupBackendTest(t)
-
-		b.SQLMock.ExpectBegin()
-		b.ExecWithResult("insert resource", 0, 1)
-		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b)
-		b.ExecWithResult("update resource_history", 0, 1)
-		b.ExecWithErr("update resource", errTest)
-		b.SQLMock.ExpectRollback()
-
-		v, err := b.restore(ctx, event)
-		require.Zero(t, v)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "update resource rv")
-	})
-
 	t.Run("error updating resource history uid", func(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
@@ -717,9 +448,6 @@ func TestBackend_restore(t *testing.T) {
 		b.SQLMock.ExpectBegin()
 		b.ExecWithResult("insert resource", 0, 1)
 		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b)
-		b.ExecWithResult("update resource_history", 0, 1)
-		b.ExecWithResult("update resource", 0, 1)
 		b.ExecWithErr("update resource_history", errTest)
 		b.SQLMock.ExpectRollback()
 
@@ -728,4 +456,132 @@ func TestBackend_restore(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "update history uid")
 	})
+}
+
+func TestBackend_getHistory(t *testing.T) {
+	t.Parallel()
+
+	// Common setup
+	key := &resource.ResourceKey{
+		Namespace: "ns",
+		Group:     "gr",
+		Resource:  "rs",
+		Name:      "nm",
+	}
+	rv1, rv2, rv3 := int64(100), int64(200), int64(300)
+	cols := []string{"resource_version", "namespace", "name", "folder", "value"}
+
+	tests := []struct {
+		name              string
+		versionMatch      resource.ResourceVersionMatch
+		resourceVersion   int64
+		expectedVersions  []int64
+		expectedListRv    int64
+		expectedRowsCount int
+		expectedErr       string
+	}{
+		{
+			name:              "with ResourceVersionMatch_NotOlderThan",
+			versionMatch:      resource.ResourceVersionMatch_NotOlderThan,
+			resourceVersion:   rv2,
+			expectedVersions:  []int64{rv3, rv2},
+			expectedListRv:    rv3,
+			expectedRowsCount: 2,
+		},
+		{
+			name:              "with ResourceVersionMatch_Exact",
+			versionMatch:      resource.ResourceVersionMatch_Exact,
+			resourceVersion:   rv2,
+			expectedVersions:  []int64{rv2},
+			expectedListRv:    rv3,
+			expectedRowsCount: 1,
+		},
+		{
+			name:              "without version matcher",
+			versionMatch:      resource.ResourceVersionMatch_NotOlderThan,
+			expectedVersions:  []int64{rv3, rv2, rv1},
+			expectedListRv:    rv3,
+			expectedRowsCount: 3,
+		},
+		{
+			name:            "error with ResourceVersionMatch_Exact and ResourceVersion <= 0",
+			versionMatch:    resource.ResourceVersionMatch_Exact,
+			resourceVersion: 0,
+			expectedErr:     "expecting an explicit resource version query when using Exact matching",
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			b, ctx := setupBackendTest(t)
+
+			// Build request with appropriate matcher
+			req := &resource.ListRequest{
+				Options:         &resource.ListOptions{Key: key},
+				ResourceVersion: tc.resourceVersion,
+				VersionMatch:    tc.versionMatch,
+				Source:          resource.ListRequest_HISTORY,
+			}
+
+			// Set up mock expectations only if we don't expect an error
+			if tc.expectedErr == "" {
+				// Build expected values map
+				expectedValues := make(map[int64]string)
+				for _, rv := range tc.expectedVersions {
+					expectedValues[rv] = fmt.Sprintf("rv-%d", rv)
+				}
+
+				// Callback that tracks returned items
+				callback := func(iter resource.ListIterator) error {
+					count := 0
+					for iter.Next() {
+						count++
+						currentRV := iter.ResourceVersion()
+						expectedValue, ok := expectedValues[currentRV]
+						require.True(t, ok, "Got unexpected RV: %d", currentRV)
+						require.Equal(t, expectedValue, string(iter.Value()))
+					}
+					require.Equal(t, tc.expectedRowsCount, count)
+					return nil
+				}
+
+				b.SQLMock.ExpectBegin()
+
+				// Expect fetch latest RV call
+				latestRVRows := sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).
+					AddRow(rv3, 0)
+				b.SQLMock.ExpectQuery("SELECT .* FROM resource_version").WillReturnRows(latestRVRows)
+
+				// Expect history query
+				historyRows := sqlmock.NewRows(cols)
+				for _, rv := range tc.expectedVersions {
+					historyRows.AddRow(
+						rv,                               // resource_version
+						"ns",                             // namespace
+						"nm",                             // name
+						"folder",                         // folder
+						[]byte(fmt.Sprintf("rv-%d", rv)), // value
+					)
+				}
+				b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").WillReturnRows(historyRows)
+				b.SQLMock.ExpectCommit()
+
+				// Execute the test
+				listRv, err := b.getHistory(ctx, req, callback)
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedListRv, listRv)
+			} else {
+				// For error cases, we use a simple empty callback
+				callback := func(iter resource.ListIterator) error { return nil }
+
+				// Execute the test expecting an error
+				listRv, err := b.getHistory(ctx, req, callback)
+				require.Zero(t, listRv)
+				require.Error(t, err)
+				require.ErrorContains(t, err, tc.expectedErr)
+			}
+		})
+	}
 }

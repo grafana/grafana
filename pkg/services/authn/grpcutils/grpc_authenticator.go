@@ -105,6 +105,10 @@ func FallbackUsed(ctx context.Context) bool {
 	return ctx.Value(contextFallbackKey{}) != nil
 }
 
+func WithFallback(ctx context.Context) context.Context {
+	return context.WithValue(ctx, contextFallbackKey{}, true)
+}
+
 func (f *authenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
 	ctx, span := f.tracer.Start(ctx, "grpcutils.AuthenticatorWithFallback.Authenticate")
 	defer span.End()
@@ -122,7 +126,7 @@ func (f *authenticatorWithFallback) Authenticate(ctx context.Context) (context.C
 	span.SetAttributes(attribute.Bool("fallback_used", true))
 	newCtx, err = f.fallback.Authenticate(ctx)
 	if newCtx != nil {
-		newCtx = context.WithValue(newCtx, contextFallbackKey{}, true)
+		newCtx = WithFallback(newCtx)
 	}
 	f.metrics.requestsTotal.WithLabelValues("true", fmt.Sprintf("%t", err == nil)).Inc()
 	return newCtx, err

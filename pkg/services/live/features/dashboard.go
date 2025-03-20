@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live/model"
-	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type actionType string
@@ -74,15 +73,6 @@ func (h *DashboardHandler) GetHandlerForPath(_ string) (model.ChannelHandler, er
 // OnSubscribe for now allows anyone to subscribe to any dashboard
 func (h *DashboardHandler) OnSubscribe(ctx context.Context, user identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	parts := strings.Split(e.Path, "/")
-	if parts[0] == "gitops" {
-		// gitops gets all changes for everything, so lets make sure it is an admin user
-		if !user.HasRole(org.RoleAdmin) {
-			return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
-		}
-		return model.SubscribeReply{
-			Presence: true,
-		}, backend.SubscribeStreamStatusOK, nil
-	}
 
 	// make sure can view this dashboard
 	if len(parts) == 2 && parts[0] == "uid" {
@@ -116,15 +106,6 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user identity.Reques
 // OnPublish is called when someone begins to edit a dashboard
 func (h *DashboardHandler) OnPublish(ctx context.Context, requester identity.Requester, e model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
 	parts := strings.Split(e.Path, "/")
-	if parts[0] == "gitops" {
-		// gitops gets all changes for everything, so lets make sure it is an admin user
-		if !requester.HasRole(org.RoleAdmin) {
-			return model.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
-		}
-
-		// Eventually this could broadcast a message back to the dashboard saying a pull request exists
-		return model.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("not implemented yet")
-	}
 
 	// make sure can view this dashboard
 	if len(parts) == 2 && parts[0] == "uid" {

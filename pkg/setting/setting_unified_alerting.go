@@ -112,6 +112,7 @@ type UnifiedAlertingSettings struct {
 	StateHistory                  UnifiedAlertingStateHistorySettings
 	RemoteAlertmanager            RemoteAlertmanagerSettings
 	RecordingRules                RecordingRuleSettings
+	PrometheusConversion          UnifiedAlertingPrometheusConversionSettings
 
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency    int
@@ -129,6 +130,9 @@ type UnifiedAlertingSettings struct {
 	// should be stored in the database for each alert_rule in an organization including the current one.
 	// 0 value means no limit
 	RuleVersionRecordLimit int
+
+	// DeletedRuleRetention defines the maximum duration to retain deleted alerting rules before permanent removal.
+	DeletedRuleRetention time.Duration
 }
 
 type RecordingRuleSettings struct {
@@ -160,6 +164,12 @@ type UnifiedAlertingScreenshotSettings struct {
 
 type UnifiedAlertingReservedLabelSettings struct {
 	DisabledLabels map[string]struct{}
+}
+
+// UnifiedAlertingPrometheusConversionSettings contains configuration for converting Prometheus rules to Grafana format
+type UnifiedAlertingPrometheusConversionSettings struct {
+	// RuleQueryOffset defines a time offset to apply to rule queries during conversion from Prometheus to Grafana format
+	RuleQueryOffset time.Duration
 }
 
 type UnifiedAlertingStateHistorySettings struct {
@@ -434,6 +444,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
 
+	prometheusConversion := iniFile.Section("unified_alerting.prometheus_conversion")
+	uaCfg.PrometheusConversion = UnifiedAlertingPrometheusConversionSettings{
+		RuleQueryOffset: prometheusConversion.Key("rule_query_offset").MustDuration(time.Minute),
+	}
+
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
 		Enabled:              rr.Key("enabled").MustBool(false),
@@ -475,6 +490,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.RuleVersionRecordLimit = ua.Key("rule_version_record_limit").MustInt(0)
 	if uaCfg.RuleVersionRecordLimit < 0 {
 		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
+	}
+
+	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(30 * 24 * time.Hour)
+	if uaCfg.DeletedRuleRetention < 0 {
+		return fmt.Errorf("setting 'deleted_rule_retention' is invalid, only 0 or a positive duration are allowed")
 	}
 
 	cfg.UnifiedAlerting = uaCfg
