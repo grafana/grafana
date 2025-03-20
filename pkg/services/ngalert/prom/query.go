@@ -43,7 +43,7 @@ func createQueryNode(datasourceUID, datasourceType, expr string, fromTimeRange, 
 		RefID:         queryRefID,
 		RelativeTimeRange: models.RelativeTimeRange{
 			From: models.Duration(fromTimeRange + evaluationOffset),
-			To:   models.Duration(0 + evaluationOffset),
+			To:   models.Duration(evaluationOffset),
 		},
 	}, nil
 }
