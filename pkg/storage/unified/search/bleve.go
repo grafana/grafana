@@ -860,12 +860,19 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 
 // newQuery will create a query that will match the value or the tokens of the value
 func newQuery(key string, value string, prefix string) query.Query {
+	if value == "*" {
+		return bleve.NewMatchAllQuery()
+	}
+	if strings.Contains(value, "*") {
+		// wildcard query is expensive - should be used with caution
+		return bleve.NewWildcardQuery(value)
+	}
 	delimiter, ok := hasTerms(value)
 	if slices.Contains(termFields, key) && ok {
 		return newTermsQuery(key, value, delimiter, prefix)
 	}
 	q := bleve.NewMatchQuery(value)
-	q.FieldVal = prefix + key
+	q.SetField(prefix + key)
 	return q
 }
 
@@ -876,7 +883,7 @@ func newTermsQuery(key string, value string, delimiter string, prefix string) qu
 	value = strings.TrimSuffix(value, " ")
 
 	q := bleve.NewTermQuery(value)
-	q.FieldVal = prefix + key
+	q.SetField(prefix + key)
 
 	cq := newMatchAllTokensQuery(tokens, key, prefix)
 	return bleve.NewDisjunctionQuery(q, cq)
@@ -889,12 +896,12 @@ func newMatchAllTokensQuery(tokens []string, key string, prefix string) query.Qu
 		_, ok := hasTerms(token)
 		if ok {
 			tq := bleve.NewTermQuery(token)
-			tq.FieldVal = prefix + key
+			tq.SetField(prefix + key)
 			cq.AddQuery(tq)
 			continue
 		}
 		mq := bleve.NewMatchQuery(token)
-		mq.FieldVal = prefix + key
+		mq.SetField(prefix + key)
 		cq.AddQuery(mq)
 	}
 	return cq
