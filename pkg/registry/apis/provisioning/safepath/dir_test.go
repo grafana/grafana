@@ -15,7 +15,7 @@ func TestIsFolderPath(t *testing.T) {
 		{
 			name:     "empty path",
 			filePath: "",
-			want:     false,
+			want:     true,
 		},
 		{
 			name:     "file path without extension",

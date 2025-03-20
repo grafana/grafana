@@ -58,7 +58,12 @@ func TestValidatePath(t *testing.T) {
 			path:    "path/to/file.min.js",
 			wantErr: nil,
 		},
-
+		// must be relative to the root
+		{
+			name:    "path with leading slash",
+			path:    "/path/to/file.json",
+			wantErr: ErrNotRelative,
+		},
 		// Length and depth limits
 		{
 			name:    "path too long",

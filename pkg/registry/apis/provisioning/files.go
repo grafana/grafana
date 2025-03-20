@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -84,7 +83,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		isDir := safepath.IsDir(filePath)
-		if r.Method == http.MethodGet && (filePath == "" || isDir) {
+		if r.Method == http.MethodGet && isDir {
 			// TODO: Implement folder navigation
 			if len(filePath) > 0 {
 				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
@@ -155,9 +154,6 @@ func (s *filesConnector) doRead(ctx context.Context, repo repository.Reader, pat
 	if err != nil {
 		return 0, nil, err
 	}
-	if strings.HasPrefix(info.Path, "/") {
-		return 0, nil, fmt.Errorf("repository path must be relative to the root")
-	}
 
 	parser, err := s.parsers.GetParser(ctx, repo)
 	if err != nil {
@@ -203,7 +199,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 	}
 
 	defer func() { _ = req.Body.Close() }()
-	if strings.HasSuffix(path, "/") {
+	if safepath.IsDir(path) {
 		return s.doCreateFolder(ctx, writer, path, ref, message, parser)
 	}
 
@@ -331,7 +327,7 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 	}
 
 	// TODO: Support deleting folders
-	if strings.HasSuffix(path, "/") {
+	if safepath.IsDir(path) {
 		return nil, fmt.Errorf("deleting folders (safely) is not yet supported")
 	}
 
