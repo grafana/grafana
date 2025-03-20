@@ -616,7 +616,7 @@ function getAutoAssignedPanelDSRef(vizPanel: VizPanel) {
  * @param autoAssignedPanelDsRef
  * @returns
  */
-function getPersistedDSForQuery(
+export function getPersistedDSForQuery(
   query: SceneDataQuery,
   queryRunner: SceneQueryRunner,
   autoAssignedPanelDsRef: Set<string> | undefined
