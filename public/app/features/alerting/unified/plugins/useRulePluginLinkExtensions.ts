@@ -25,12 +25,12 @@ export function useRulePluginLinkExtension(rule: Rule | undefined, groupIdentifi
   // This ref provides a stable reference to an empty array, which is used to avoid re-renders when the rule is undefined.
   const emptyResponse = useRef<PluginExtensionLink[]>([]);
 
+  const ruleExtensionPoint = useRuleExtensionPoint(rule, groupIdentifier);
+  const { links } = usePluginLinks(ruleExtensionPoint);
+
   if (!rule) {
     return emptyResponse.current;
   }
-
-  const ruleExtensionPoint = useRuleExtensionPoint(rule, groupIdentifier);
-  const { links } = usePluginLinks(ruleExtensionPoint);
 
   const ruleOrigin = getRulePluginOrigin(rule);
   const ruleType = rule.type;
@@ -64,8 +64,12 @@ interface EmptyExtensionPoint {
 
 type RuleExtensionPoint = AlertingRuleExtensionPoint | RecordingRuleExtensionPoint | EmptyExtensionPoint;
 
-function useRuleExtensionPoint(rule: Rule, groupIdentifier: RuleGroupIdentifierV2): RuleExtensionPoint {
+function useRuleExtensionPoint(rule: Rule | undefined, groupIdentifier: RuleGroupIdentifierV2): RuleExtensionPoint {
   return useMemo<RuleExtensionPoint>(() => {
+    if (!rule) {
+      return { extensionPointId: '' };
+    }
+
     const ruleType = rule.type;
     const { namespace, groupName } = groupIdentifier;
     const namespaceIdentifier = 'uid' in namespace ? namespace.uid : namespace.name;
