@@ -15,12 +15,13 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlKeeperCreate                   = mustTemplate("keeper_create.sql")
-	sqlKeeperRead                     = mustTemplate("keeper_read.sql")
-	sqlKeeperUpdate                   = mustTemplate("keeper_update.sql")
-	sqlKeeperList                     = mustTemplate("keeper_list.sql")
-	sqlKeeperDelete                   = mustTemplate("keeper_delete.sql")
-	sqlKeeperStoreSecureValueValidate = mustTemplate("secure_value_validate.sql")
+	sqlKeeperCreate          = mustTemplate("keeper_create.sql")
+	sqlKeeperRead            = mustTemplate("keeper_read.sql")
+	sqlKeeperUpdate          = mustTemplate("keeper_update.sql")
+	sqlKeeperList            = mustTemplate("keeper_list.sql")
+	sqlKeeperDelete          = mustTemplate("keeper_delete.sql")
+	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
+	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -59,6 +60,21 @@ type deleteKeeper struct {
 	sqltemplate.SQLTemplate
 	Namespace string
 	Name      string
+}
+
+// This is used at keeper store to validate create & update operations
+type listByNameSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace        string
+	UsedSecureValues []string
+}
+
+// This is used at keeper store to validate create & update operations
+type listByNameKeeper struct {
+	sqltemplate.SQLTemplate
+	Namespace         string
+	ThirdPartyKeepers []string
+	ExcludeKeeperType string
 }
 
 /**

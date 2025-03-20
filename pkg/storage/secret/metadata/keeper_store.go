@@ -68,7 +68,7 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 
 	err = s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// Validate before inserting that any `secureValues` referenced exist and do not reference other third-party keepers.
-		if err := s.validateSecureValueReferences(sess, keeper); err != nil {
+		if err := s.validateSecureValueReferences(ctx, sess, keeper); err != nil {
 			return err
 		}
 
@@ -159,7 +159,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 	err := s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// Validate before updating that any `secureValues` referenced exist and do not reference other third-party keepers.\
 
-		if err := s.validateSecureValueReferences(sess, newKeeper); err != nil {
+		if err := s.validateSecureValueReferences(ctx, sess, newKeeper); err != nil {
 			return err
 		}
 
@@ -284,14 +284,12 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		return nil, fmt.Errorf("list template %q: %w", q, err)
 	}
 
-	keeperRows := make([]*keeperDB, 0)
-
 	rows, err := s.db.Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("list template %q: %w", q, err)
 	}
 
-	keepers := make([]secretv0alpha1.Keeper, 0, len(keeperRows))
+	keepers := make([]secretv0alpha1.Keeper, 0)
 
 	for rows.Next() {
 		row := keeperDB{}
@@ -303,6 +301,9 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 			&row.Updated, &row.UpdatedBy,
 			&row.Title, &row.Type, &row.Payload,
 		)
+		if err != nil {
+			return nil, fmt.Errorf("error reading keeper row: %w", err)
+		}
 
 		// Check whether the user has permission to access this specific Keeper in the namespace.
 		if !hasPermissionFor(row.Name, "") {
@@ -325,7 +326,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 }
 
 // validateSecureValueReferences checks that all secure values referenced by the keeper exist and are not referenced by other third-party keepers.
-func (s *keeperMetadataStorage) validateSecureValueReferences(sess *session.SessionTx, keeper *secretv0alpha1.Keeper) error {
+func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Context, sess *session.SessionTx, keeper *secretv0alpha1.Keeper) error {
 	usedSecureValues := extractSecureValues(keeper)
 
 	// No secure values are referenced, return early.
@@ -333,14 +334,40 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(sess *session.Sess
 		return nil
 	}
 
-	secureValueCond := &secureValueDB{Namespace: keeper.Namespace}
-	secureValueRows := make([]*secureValueDB, 0)
+	req := listByNameSecureValue{
+		SQLTemplate:      sqltemplate.New(s.dialect),
+		Namespace:        keeper.Namespace,
+		UsedSecureValues: usedSecureValues,
+	}
 
-	// TODO LND Replace with template query
-	// SELECT * FROM secret_secure_value WHERE name IN (...) AND namespace = ? FOR UPDATE;
-	err := sess.Table(secureValueCond.TableName()).ForUpdate().In("name", usedSecureValues).Find(&secureValueRows, secureValueCond)
+	q, err := sqltemplate.Execute(sqlSecureValueListByName, req)
 	if err != nil {
-		return fmt.Errorf("check securevalues existence: %w", err)
+		return fmt.Errorf("list template %q: %w", q, err)
+	}
+
+	rows, err := s.db.Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("list template %q: %w", q, err)
+	}
+
+	// TODO LND Only fetch the values we need
+	secureValueRows := make([]*secureValueDB, 0)
+	for rows.Next() {
+		row := secureValueDB{}
+		err = rows.Scan(
+			&row.GUID,
+			&row.Name, &row.Namespace, &row.Annotations, &row.Labels,
+			&row.Created, &row.CreatedBy,
+			&row.Updated, &row.UpdatedBy,
+			&row.Phase, &row.Message,
+			&row.Title, &row.Keeper,
+			&row.Decrypters, &row.Ref, &row.ExternalID,
+		)
+		if err != nil {
+			return fmt.Errorf("error reading secret value row: %w", err)
+		}
+
+		secureValueRows = append(secureValueRows, &row)
 	}
 
 	// If not all secure values being referenced exist, return an error with the missing ones.
