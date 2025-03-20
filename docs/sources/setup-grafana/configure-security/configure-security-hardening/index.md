@@ -118,6 +118,18 @@ Example:
 hide_version = true
 ```
 
+### Enable auth for metrics
+
+By default, metrics from Grafana itself can be accessed without authentication. This can lead to inadvertent information leakage.
+
+To enable basic authentication for the metrics endpoint:
+
+```toml
+# If both are set, basic auth will be required for the metrics endpoints
+basic_auth_username =
+basic_auth_password =
+```
+
 ### Enforce domain verification
 
 If set to `true`, the Grafana server redirects requests that have a Host-header value that is mismatched to the actual domain. This might help to mitigate some DNS rebinding attacks.
