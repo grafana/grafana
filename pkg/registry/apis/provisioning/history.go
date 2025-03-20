@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -58,7 +59,7 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		return nil, err
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		versioned, ok := repo.(repository.Versioned)
 		if !ok {
 			responder.Error(apierrors.NewBadRequest("this repository does not support history"))
@@ -85,5 +86,5 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		}
 
 		responder.Object(http.StatusOK, &provisioning.HistoryList{Items: commits})
-	}), nil
+	}), 30*time.Second), nil
 }

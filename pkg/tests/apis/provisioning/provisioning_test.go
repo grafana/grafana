@@ -189,6 +189,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 		Body(asJSON(provisioning.SyncJobOptions{
 			Incremental: false,
 		})).
+		SetHeader("Content-Type", "application/json").
 		Do(ctx)
 
 	obj, err := result.Get()
@@ -236,6 +237,7 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 		Name(repo).
 		SubResource("files", "all-panels.json").
 		Body(helper.LoadFile("testdata/all-panels.json")).
+		SetHeader("Content-Type", "application/json").
 		Do(ctx)
 	require.NoError(t, result.Error(), "expecting to be able to create file")
 
@@ -246,6 +248,7 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 		Name(repo).
 		SubResource("files", "test", "..", "..", "all-panels.json").
 		Body(helper.LoadFile("testdata/all-panels.json")).
+		SetHeader("Content-Type", "application/json").
 		Do(ctx)
 	require.Error(t, result.Error(), "invalid path should return error")
 
@@ -292,6 +295,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 		Resource("repositories").
 		Name(repo).
 		SubResource("sync").
+		SetHeader("Content-Type", "application/json").
 		Body(asJSON(provisioning.SyncJobOptions{
 			Incremental: false,
 		})).
