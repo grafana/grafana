@@ -247,8 +247,8 @@ func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback fun
 }
 
 // Update saves the job back to the store.
-func (s *store2) UpdateStatus(ctx context.Context, job *provisioning.Job) error {
-	_, _, err := s.jobStatusStore.Update(ctx,
+func (s *store2) UpdateStatus(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+	obj, _, err := s.jobStatusStore.Update(ctx,
 		job.GetName(),                      // name
 		rest.DefaultUpdatedObjectInfo(job), // objInfo
 		failCreation,                       // createValidation
@@ -257,9 +257,15 @@ func (s *store2) UpdateStatus(ctx context.Context, job *provisioning.Job) error 
 		&metav1.UpdateOptions{},            // options
 	)
 	if err != nil {
-		return apifmt.Errorf("failed to update job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+		return nil, apifmt.Errorf("failed to update job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
-	return nil
+
+	updatedJob, ok := obj.(*provisioning.Job)
+	if !ok {
+		return nil, apifmt.Errorf("unexpected object type %T", obj)
+	}
+
+	return updatedJob, nil
 }
 
 // Complete marks a job as completed and moves it to the historic job store.
