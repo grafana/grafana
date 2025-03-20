@@ -112,6 +112,17 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
+		if filePath == "" {
+			responder.Error(apierrors.NewBadRequest("path is required"))
+			return
+		}
+
+		// TODO: Implement folder delete
+		if r.Method == http.MethodDelete && isDir {
+			responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
+			return
+		}
+
 		var obj *provisioning.ResourceWrapper
 		code := http.StatusOK
 		switch r.Method {
@@ -324,11 +335,6 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 	access, ok := repo.(repository.ReaderWriter)
 	if !ok {
 		return nil, fmt.Errorf("repository is not read+writeable")
-	}
-
-	// TODO: Support deleting folders
-	if safepath.IsDir(path) {
-		return nil, fmt.Errorf("deleting folders (safely) is not yet supported")
 	}
 
 	file, err := access.Read(ctx, path, ref)
