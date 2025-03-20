@@ -1439,6 +1439,15 @@
     },
     "responsive-layout": {
       "description": "Panels resize to fit and form uniform grids",
+      "item-options": {
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
+            "title": "Repeat by variable"
+          }
+        }
+      },
       "name": "Auto grid",
       "options": {
         "columns": "Columns",
@@ -1453,12 +1462,6 @@
     "rows-layout": {
       "description": "Collapsable panel groups with headings",
       "name": "Rows",
-      "option": {
-        "height": "Height",
-        "hide-header": "Hide row header",
-        "repeat": "Repeat for",
-        "title": "Title"
-      },
       "options": {
         "height-expand": "Expand",
         "height-min": "Min"
@@ -1482,6 +1485,18 @@
         }
       },
       "row-options": {
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this row for each value in the selected variable.",
+            "title": "Repeat by variable"
+          }
+        },
+        "row": {
+          "height": "Height",
+          "hide-header": "Hide row header",
+          "title": "Title"
+        },
         "title-option": "Title"
       }
     },

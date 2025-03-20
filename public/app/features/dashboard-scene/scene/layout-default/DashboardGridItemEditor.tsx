@@ -8,47 +8,44 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 
 import { DashboardGridItem } from './DashboardGridItem';
 
-export function getDashboardGridItemOptions(gridItem: DashboardGridItem): OptionsPaneCategoryDescriptor {
-  const category = new OptionsPaneCategoryDescriptor({
+export function getDashboardGridItemOptions(gridItem: DashboardGridItem): OptionsPaneCategoryDescriptor[] {
+  const repeatCategory = new OptionsPaneCategoryDescriptor({
     title: t('dashboard.default-layout.item-options.repeat.title', 'Repeat options'),
     id: 'Repeat options',
     isOpenDefault: false,
-  });
+  })
+    .addItem(
+      new OptionsPaneItemDescriptor({
+        title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
+        description: t(
+          'dashboard.default-layout.item-options.repeat.variable.description',
+          'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
+        ),
+        render: () => <RepeatByOption gridItem={gridItem} />,
+      })
+    )
+    .addItem(
+      new OptionsPaneItemDescriptor({
+        title: t('dashboard.default-layout.item-options.repeat.direction.title', 'Repeat direction'),
+        useShowIf: () => {
+          const { variableName } = gridItem.useState();
+          return Boolean(variableName);
+        },
+        render: () => <RepeatDirectionOption gridItem={gridItem} />,
+      })
+    )
+    .addItem(
+      new OptionsPaneItemDescriptor({
+        title: t('dashboard.default-layout.item-options.repeat.max', 'Max per row'),
+        useShowIf: () => {
+          const { variableName, repeatDirection } = gridItem.useState();
+          return Boolean(variableName) && repeatDirection === 'h';
+        },
+        render: () => <MaxPerRowOption gridItem={gridItem} />,
+      })
+    );
 
-  category.addItem(
-    new OptionsPaneItemDescriptor({
-      title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
-      description: t(
-        'dashboard.default-layout.item-options.repeat.variable.description',
-        'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
-      ),
-      render: () => <RepeatByOption gridItem={gridItem} />,
-    })
-  );
-
-  category.addItem(
-    new OptionsPaneItemDescriptor({
-      title: t('dashboard.default-layout.item-options.repeat.direction.title', 'Repeat direction'),
-      useShowIf: () => {
-        const { variableName } = gridItem.useState();
-        return Boolean(variableName);
-      },
-      render: () => <RepeatDirectionOption gridItem={gridItem} />,
-    })
-  );
-
-  category.addItem(
-    new OptionsPaneItemDescriptor({
-      title: t('dashboard.default-layout.item-options.repeat.max', 'Max per row'),
-      useShowIf: () => {
-        const { variableName, repeatDirection } = gridItem.useState();
-        return Boolean(variableName) && repeatDirection === 'h';
-      },
-      render: () => <MaxPerRowOption gridItem={gridItem} />,
-    })
-  );
-
-  return category;
+  return [repeatCategory];
 }
 
 interface OptionComponentProps {
