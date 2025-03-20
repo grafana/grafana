@@ -463,6 +463,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 				IsPaused: pauseAlertRules,
 			},
 			KeepOriginalRuleDefinition: util.Pointer(keepOriginalRuleDefinition),
+			EvaluationOffset:           &srv.cfg.PrometheusConversion.RuleQueryOffset,
 		},
 	)
 	if err != nil {
