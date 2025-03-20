@@ -30,7 +30,7 @@
       },
       {
         "name": "Raise issue",
-        "url": "https://github.com/grafana/tempo/issues/new"
+        "url": "https://github.com/grafana/grafana/issues/new"
       },
       {
         "name": "Documentation",
