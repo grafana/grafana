@@ -143,9 +143,13 @@ type grafanaMetaAccessor struct {
 // required fields are missing. Fields that are not required return the default
 // value and are a no-op if set.
 func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
+	if raw == nil {
+		return nil, fmt.Errorf("unable to read metadata from nil object")
+	}
+
 	obj, err := meta.Accessor(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to read metadata from: %T, %s", raw, err)
 	}
 
 	// reflection to find title and other non object properties
