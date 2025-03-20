@@ -15,10 +15,13 @@ jobs:
   build-grafana:
     name: Build & Package Grafana
     runs-on: ubuntu-latest-16-cores
-    container: grafana/grafana-build:main
     outputs:
       artifact: ${{ steps.artifact.outputs.artifact }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: 'grafana/grafana-build'
+          ref: 'main'
       - uses: actions/checkout@v4
         with:
           path: ./grafana
