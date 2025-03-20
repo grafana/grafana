@@ -261,6 +261,11 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add apiVersion for dashboard", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "api_version", Type: DB_Varchar, Length: 16, Nullable: true,
 	}))
+
+	mg.AddMigration("Add index for dashboard_uid on dashboard_tag table", NewAddIndexMigration(dashboardTagV1, &Index{
+		Cols: []string{"dashboard_uid"},
+		Type: IndexType,
+	}))
 }
 
 type FillDashbordUIDAndOrgIDMigration struct {
@@ -278,23 +283,23 @@ func (m *FillDashbordUIDAndOrgIDMigration) Exec(sess *xorm.Session, mg *Migrator
 func RunDashboardTagMigrations(sess *xorm.Session, driverName string) error {
 	// sqlite
 	sql := `UPDATE dashboard_tag
-	SET 
+	SET
     	dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = dashboard_tag.dashboard_id),
     	org_id = (SELECT org_id FROM dashboard WHERE dashboard.id = dashboard_tag.dashboard_id)
-	WHERE 
+	WHERE
     	(dashboard_uid IS NULL OR org_id IS NULL)
     	AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = dashboard_tag.dashboard_id);`
 	if driverName == Postgres {
-		sql = `UPDATE dashboard_tag 
-		SET dashboard_uid = dashboard.uid, 
+		sql = `UPDATE dashboard_tag
+		SET dashboard_uid = dashboard.uid,
 			org_id = dashboard.org_id
-		FROM dashboard 
+		FROM dashboard
 		WHERE dashboard_tag.dashboard_id = dashboard.id
 			AND (dashboard_tag.dashboard_uid IS NULL OR dashboard_tag.org_id IS NULL);`
 	} else if driverName == MySQL {
-		sql = `UPDATE dashboard_tag 
-		LEFT JOIN dashboard ON dashboard_tag.dashboard_id = dashboard.id 
-		SET dashboard_tag.dashboard_uid = dashboard.uid, 
+		sql = `UPDATE dashboard_tag
+		LEFT JOIN dashboard ON dashboard_tag.dashboard_id = dashboard.id
+		SET dashboard_tag.dashboard_uid = dashboard.uid,
 			dashboard_tag.org_id = dashboard.org_id
 		WHERE dashboard_tag.dashboard_uid IS NULL OR dashboard_tag.org_id IS NULL;`
 	}
