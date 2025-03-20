@@ -1,18 +1,7 @@
 import { capitalize } from 'lodash';
 import React, { useEffect } from 'react';
 
-import {
-  Button,
-  Combobox,
-  ComboboxOption,
-  Field,
-  InlineSwitch,
-  Input,
-  Label,
-  Stack,
-  Switch,
-  Tooltip,
-} from '@grafana/ui';
+import { Button, Combobox, ComboboxOption, Field, InlineSwitch, Input, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -102,7 +91,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
   };
 
   return (
-    <Stack gap={2} wrap={true}>
+    <Stack gap={2} justifyContent={'stretch'}>
       <Field
         label={minWidthLabel}
         invalid={customMinWidthError}
@@ -113,13 +102,12 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
         }
       >
         {isStandardMinWidth ? (
-          <Combobox options={minWidthOptions} value={minColumnWidth} onChange={onNamedMinWidthChanged} width={18} />
+          <Combobox options={minWidthOptions} value={minColumnWidth} onChange={onNamedMinWidthChanged} />
         ) : (
           <Input
             defaultValue={minColumnWidth}
             onBlur={onCustomMinWidthChanged}
             ref={(ref) => setInputRef(ref)}
-            width={18}
             type="number"
             min={50}
             max={2000}
@@ -145,7 +133,6 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
         <Combobox
           options={colOptions}
           value={String(maxColumnCount)}
-          width={13}
           onChange={({ value }) => layoutManager.onMaxColumnCountChanged(value)}
         />
       </Field>
