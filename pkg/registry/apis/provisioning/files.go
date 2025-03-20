@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"path"
 	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,6 +18,11 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+)
+
+const (
+	// Files endpoint max size for dashboards etc (5MB)
+	filesMaxBodySize = 5 * 1024 * 1024
 )
 
 type filesConnector struct {
@@ -65,26 +69,22 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, apierrors.NewBadRequest("repository does not support read")
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		ref := query.Get("ref")
 		message := query.Get("message")
 		logger := logger.With("url", r.URL.Path, "ref", ref, "message", message)
 		ctx := logging.Context(r.Context(), logger)
 
-		prefix := fmt.Sprintf("/%s/files", name)
-		idx := strings.Index(r.URL.Path, prefix)
-		if idx == -1 {
-			logger.Debug("failed to find a file path in the URL")
-			responder.Error(apierrors.NewBadRequest("invalid request path"))
+		filePath, err := ExtractFilePath(r.URL.Path, fmt.Sprintf("/%s/files/", name))
+		if err != nil {
+			responder.Error(err)
 			return
 		}
 
-		filePath := strings.TrimPrefix(r.URL.Path[idx+len(prefix):], "/")
-		// TODO: limit the path length and how nested
-		isFolderPath := strings.HasSuffix(filePath, "/")
-
+		isFolderPath := IsFolderPath(filePath)
 		if r.Method == http.MethodGet && (filePath == "" || isFolderPath) {
+			// TODO: Implement folder navigation
 			if len(filePath) > 0 {
 				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
 				return
@@ -112,33 +112,18 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		// TODO: document in API specification
-		if !isFolderPath {
-			switch path.Ext(filePath) {
-			case ".json", ".yaml", ".yml":
-				// ok
-			default:
-				logger.Debug("got a file extension that was not JSON or YAML", "extension", path.Ext(filePath))
-				responder.Error(apierrors.NewBadRequest("only yaml and json files supported"))
-				return
-			}
-		}
-
 		var obj *provisioning.ResourceWrapper
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
-			// TODO: limit file size
 			code, obj, err = s.doRead(ctx, reader, filePath, ref)
 		case http.MethodPost:
-			// TODO: limit file size
 			obj, err = s.doWrite(ctx, false, repo, filePath, ref, message, r)
 		case http.MethodPut:
 			// TODO: document in API specification
 			if isFolderPath {
 				err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 			} else {
-				// TODO: limit file size
 				obj, err = s.doWrite(ctx, true, repo, filePath, ref, message, r)
 			}
 		case http.MethodDelete:
@@ -161,7 +146,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 		logger.Debug("request resulted in valid object", "object", obj)
 		responder.Object(code, obj)
-	}), nil
+	}), 30*time.Second), nil
 }
 
 func (s *filesConnector) doRead(ctx context.Context, repo repository.Reader, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
@@ -221,7 +206,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return s.doCreateFolder(ctx, writer, path, ref, message, parser)
 	}
 
-	data, err := io.ReadAll(req.Body)
+	data, err := readBody(req, filesMaxBodySize)
 	if err != nil {
 		return nil, err
 	}
@@ -232,6 +217,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		Ref:  ref,
 	}
 
+	// TODO: improve parser to parse out of reader
 	parsed, err := parser.Parse(ctx, info, true)
 	if err != nil {
 		if errors.Is(err, resources.ErrUnableToReadResourceBytes) {

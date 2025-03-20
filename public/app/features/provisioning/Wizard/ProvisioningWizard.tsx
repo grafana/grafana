@@ -28,11 +28,6 @@ export function ProvisioningWizard() {
   const navigate = useNavigate();
   const values = getDefaultValues();
 
-  // Disable sync at the start of the wizard
-  values.sync.enabled = false;
-  // HACK: Set folder as default for now as instance will block
-  values.sync.target = 'folder';
-
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: values,
@@ -78,6 +73,18 @@ export function ProvisioningWizard() {
       const isValid = await methods.trigger('repository');
       if (!isValid) {
         return;
+      }
+
+      // Pick a name nice name based on type+settings
+      const current = methods.getValues();
+      switch (current.repository.type) {
+        case 'github':
+          const name = current.repository.url ?? 'github';
+          methods.setValue('repository.title', name.replace('https://github/', ''));
+          break;
+        case 'local':
+          methods.setValue('repository.title', current.repository.path ?? 'local');
+          break;
       }
     }
 

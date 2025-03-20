@@ -140,10 +140,10 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) j
 			return result
 		}
 	}
-	if r.prefix != "" {
-		fileName, err = safepath.Join(r.prefix, fileName)
+	if r.path != "" {
+		fileName, err = safepath.Join(r.path, fileName)
 		if err != nil {
-			result.Error = fmt.Errorf("error adding path prefix: %w", err)
+			result.Error = fmt.Errorf("error adding path: %w", err)
 			return result
 		}
 	}

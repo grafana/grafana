@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
+
+// Webhook endpoint max size (25MB)
+// See https://docs.github.com/en/webhooks/webhook-events-and-payloads
+const webhookMaxBodySize = 25 * 1024 * 1024
 
 // This only works for github right now
 type webhookConnector struct {
@@ -63,7 +68,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		return nil, err
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(r.Context()).With("logger", "webhook-connector", "repo", name)
 		ctx := logging.Context(r.Context(), logger)
 		if !s.webhooksEnabled {
@@ -76,6 +81,9 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			responder.Error(errors.NewBadRequest("the repository does not support webhooks"))
 			return
 		}
+
+		// Limit the webhook request body size
+		r.Body = http.MaxBytesReader(w, r.Body, webhookMaxBodySize)
 
 		rsp, err := hooks.Webhook(ctx, r)
 		if err != nil {
@@ -106,7 +114,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 		responder.Object(rsp.Code, rsp)
-	}), nil
+	}), 30*time.Second), nil
 }
 
 var (

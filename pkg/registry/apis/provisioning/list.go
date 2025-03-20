@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -47,7 +48,7 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// TODO: Add pagination to resource lister
 		rsp, err := s.lister.List(ctx, ns, name)
 		if err != nil {
@@ -55,7 +56,7 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 		} else {
 			responder.Object(200, rsp)
 		}
-	}), nil
+	}), 30*time.Second), nil
 }
 
 var (

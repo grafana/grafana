@@ -79,7 +79,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
   const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
-  const isManaged = Boolean(dashboard.isManaged() || folderRepo);
+  const isManaged = Boolean(dashboard.isManagedRepository() || folderRepo);
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -219,7 +219,7 @@ export function ToolbarActions({ dashboard }: Props) {
                   dashboard.onShowAddLibraryPanelDrawer();
                   DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
                 }}
-                disabled={dashboard.isManaged()}
+                disabled={dashboard.isManagedRepository()}
               />
               <Menu.Item
                 key="add-row"

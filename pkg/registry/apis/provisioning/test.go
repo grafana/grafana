@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"reflect"
 	"time"
@@ -45,8 +44,8 @@ func (*testConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
+	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := readBody(r, defaultMaxBodySize)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -102,7 +101,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 			return
 		}
 		responder.Object(rsp.Code, rsp)
-	}), nil
+	}), 30*time.Second), nil
 }
 
 // TODO: Move tester to a more suitable location out of the connector.

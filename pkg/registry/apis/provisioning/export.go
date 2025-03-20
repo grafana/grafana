@@ -2,8 +2,8 @@ package provisioning
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,12 +42,7 @@ func (*exportConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
-func (c *exportConnector) Connect(
-	ctx context.Context,
-	name string,
-	opts runtime.Object,
-	responder rest.Responder,
-) (http.Handler, error) {
+func (c *exportConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	repo, err := c.repoGetter.GetRepository(ctx, name)
 	if err != nil {
 		return nil, err
@@ -57,11 +52,10 @@ func (c *exportConnector) Connect(
 		return nil, err
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		options := &provisioning.ExportJobOptions{}
-		err := json.NewDecoder(r.Body).Decode(options)
-		if err != nil {
-			responder.Error(apierrors.NewBadRequest("error decoding ExportJobOptions from request"))
+		if err := unmarshalJSON(r, defaultMaxBodySize, options); err != nil {
+			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}
 		job, err := c.jobs.Insert(ctx, &provisioning.Job{
@@ -79,7 +73,7 @@ func (c *exportConnector) Connect(
 		} else {
 			responder.Object(http.StatusAccepted, job)
 		}
-	}), nil
+	}), 30*time.Second), nil
 }
 
 var (

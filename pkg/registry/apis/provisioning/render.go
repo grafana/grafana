@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,7 +51,7 @@ func (c *renderConnector) Connect(
 	responder rest.Responder,
 ) (http.Handler, error) {
 	namespace := request.NamespaceValue(ctx)
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		prefix := fmt.Sprintf("/%s/render", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
@@ -104,7 +105,7 @@ func (c *renderConnector) Connect(
 				},
 			})
 		}
-	}), nil
+	}), 20*time.Second), nil
 }
 
 // validBlobID ensures the ID is valid for a blob.

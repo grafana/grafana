@@ -58,8 +58,8 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
       workflows: ['branch', 'write'],
       path: 'grafana/',
       sync: {
-        enabled: true,
-        target: 'instance',
+        enabled: false,
+        target: 'folder',
         intervalSeconds: 60,
       },
     };
