@@ -23,11 +23,6 @@ export interface ScopesSelectorServiceState {
 }
 
 export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServiceState> {
-  /**
-   * When creating the service, make sure you call cleanUp() when you are done with it to avoid memory leaks.
-   * @param apiClient
-   * @param dashboardsService
-   */
   constructor(
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService
