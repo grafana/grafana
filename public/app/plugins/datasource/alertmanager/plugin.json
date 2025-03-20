@@ -46,8 +46,7 @@
     {
       "method": "GET",
       "path": "api/v1/alerts",
-      "reqRole": "Admin",
-      "reqAction": "alert.instances:read"
+      "reqRole": "Admin"
     }
   ],
   "info": {
