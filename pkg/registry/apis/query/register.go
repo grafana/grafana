@@ -127,7 +127,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	builder, err := NewQueryAPIBuilder(
 		features,
 		&CommonDataSourceClientSupplier{
-			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider),
+			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider, accessControl),
 		},
 		ar,
 		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
