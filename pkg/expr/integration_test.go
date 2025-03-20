@@ -145,16 +145,24 @@ func TestSQLExpressionsIsLossless(t *testing.T) {
 	times := []time.Time{
 		time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
 	}
-	input := data.Frames{
-		data.NewFrame("frame1",
-			data.NewField("ts", nil, times),
-			data.NewField("value", data.Labels{"host": "dummy_a", "sparse_label": "label_value_present"}, []float64{13}),
-		),
-		data.NewFrame("frame1",
-			data.NewField("ts", nil, times),
-			data.NewField("value", data.Labels{"host": "dummy_b"}, []float64{17}),
-		),
+	// Create frames with appropriate FrameMeta.Type
+	frame1 := data.NewFrame("frame1",
+		data.NewField("ts", nil, times),
+		data.NewField("value", data.Labels{"host": "dummy_a", "sparse_label": "label_value_present"}, []float64{13}),
+	)
+	frame1.Meta = &data.FrameMeta{
+		Type: data.FrameTypeNumericMulti,
 	}
+
+	frame2 := data.NewFrame("frame1",
+		data.NewField("ts", nil, times),
+		data.NewField("value", data.Labels{"host": "dummy_b"}, []float64{17}),
+	)
+	frame2.Meta = &data.FrameMeta{
+		Type: data.FrameTypeNumericMulti,
+	}
+
+	input := data.Frames{frame1, frame2}
 
 	// Create a mock data service that returns predictable data when QueryData is called
 	mockDataResponse := &backend.QueryDataResponse{
