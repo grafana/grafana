@@ -216,6 +216,19 @@ func TestCanSearchByTitle(t *testing.T) {
 		})
 		require.NoError(t, err)
 
+		err = index.Write(&resource.IndexableDocument{
+			RV:   2,
+			Name: "name2",
+			Key: &resource.ResourceKey{
+				Name:      "name2",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Title: "what\"s that",
+		})
+		require.NoError(t, err)
+
 		query := newQueryByTitle("what\"s up")
 		res, err := index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
@@ -224,7 +237,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		query = newQueryByTitle("what\"s")
 		res, err = index.Search(context.Background(), nil, query, nil)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), res.TotalHits)
+		require.Equal(t, int64(2), res.TotalHits)
 	})
 
 	t.Run("title search will match document", func(t *testing.T) {
