@@ -14,9 +14,7 @@ const mockDashboardDto: DashboardWithAccessInfo<DashboardDataDTO> = {
     name: 'dash-uid',
     resourceVersion: '1',
     creationTimestamp: '1',
-    annotations: {
-      [AnnoKeyFolder]: 'new-folder',
-    },
+    annotations: {},
   },
   spec: {
     title: 'test',
@@ -87,10 +85,13 @@ const saveDashboardResponse = {
     weekStart: '',
   },
 };
+
+const mockGet = jest.fn().mockResolvedValue(mockDashboardDto);
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
-    get: () => mockDashboardDto,
+    get: mockGet,
     put: jest.fn().mockResolvedValue(saveDashboardResponse),
     post: jest.fn().mockResolvedValue(saveDashboardResponse),
   }),
@@ -108,7 +109,15 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
 
 describe('v1 dashboard API', () => {
   it('should provide folder annotations', async () => {
-    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
+    mockGet.mockResolvedValueOnce({
+      ...mockDashboardDto,
+      metadata: {
+        ...mockDashboardDto.metadata,
+        annotations: { [AnnoKeyFolder]: 'new-folder' },
+      },
+    });
+
+    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValueOnce({
       id: 1,
       uid: 'new-folder',
       title: 'New Folder',
@@ -134,7 +143,16 @@ describe('v1 dashboard API', () => {
   });
 
   it('throws an error if folder is not found', async () => {
-    jest.spyOn(backendSrv, 'getFolderByUid').mockRejectedValue({ message: 'folder not found', status: 'not-found' });
+    mockGet.mockResolvedValueOnce({
+      ...mockDashboardDto,
+      metadata: {
+        ...mockDashboardDto.metadata,
+        annotations: { [AnnoKeyFolder]: 'new-folder' },
+      },
+    });
+    jest
+      .spyOn(backendSrv, 'getFolderByUid')
+      .mockRejectedValueOnce({ message: 'folder not found', status: 'not-found' });
 
     const api = new K8sDashboardAPI();
     await expect(api.getDashboardDTO('test')).rejects.toThrow('Failed to load folder');
@@ -239,6 +257,44 @@ describe('v1 dashboard API', () => {
         expect(result.version).toBe(0);
         expect(result.url).toBe('/grafana/d/adh59cn/new-dashboard-saved');
       });
+    });
+  });
+
+  describe('version error handling', () => {
+    it('should throw DashboardVersionError for v2alpha1 conversion error', async () => {
+      const mockDashboardWithError = {
+        ...mockDashboardDto,
+        status: {
+          conversion: {
+            failed: true,
+            error: 'backend conversion not yet implemented',
+            storedVersion: 'v2alpha1',
+          },
+        },
+      };
+
+      mockGet.mockResolvedValueOnce(mockDashboardWithError);
+
+      const api = new K8sDashboardAPI();
+      await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
+    });
+
+    it.each(['v0alpha1', 'v1alpha1'])('should not throw for %s conversion errors', async (correctStoredVersion) => {
+      const mockDashboardWithError = {
+        ...mockDashboardDto,
+        status: {
+          conversion: {
+            failed: true,
+            error: 'other-error',
+            storedVersion: correctStoredVersion,
+          },
+        },
+      };
+
+      jest.spyOn(backendSrv, 'get').mockResolvedValueOnce(mockDashboardWithError);
+
+      const api = new K8sDashboardAPI();
+      await expect(api.getDashboardDTO('test')).resolves.toBeDefined();
     });
   });
 });
