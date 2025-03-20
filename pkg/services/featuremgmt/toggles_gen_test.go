@@ -289,6 +289,15 @@ func generateTypeScript() string {
 export interface FeatureToggles {
 `
 	for _, flag := range standardFeatureFlags {
+		buf += "  /**\n"
+		buf += "  * " + flag.Description + "\n"
+		if flag.Stage == FeatureStageDeprecated {
+			buf += "  * @deprecated\n"
+		}
+		if flag.Expression != "" {
+			buf += "  * @default " + flag.Expression + "\n"
+		}
+		buf += "  */\n"
 		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
 	}
 

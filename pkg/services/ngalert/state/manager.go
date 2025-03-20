@@ -249,7 +249,7 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 		s.SetNormal(reason, startsAt, now)
 		// Set Resolved property so the scheduler knows to send a postable alert
 		// to Alertmanager.
-		if oldState == eval.Alerting || oldState == eval.Error || oldState == eval.NoData {
+		if oldState == eval.Alerting || oldState == eval.Error || oldState == eval.NoData || oldState == eval.Recovering {
 			s.ResolvedAt = &now
 		} else {
 			s.ResolvedAt = nil
@@ -510,6 +510,8 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 		return eval.NoData
 	case ngModels.InstanceStatePending:
 		return eval.Pending
+	case ngModels.InstanceStateRecovering:
+		return eval.Recovering
 	default:
 		return eval.Error
 	}
@@ -582,6 +584,7 @@ func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
 		case eval.Normal:
 		case eval.Pending:
 		case eval.Alerting:
+		case eval.Recovering:
 		case eval.Error:
 			status.Health = "error"
 		case eval.NoData:
