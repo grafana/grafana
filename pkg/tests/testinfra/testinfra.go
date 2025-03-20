@@ -104,7 +104,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil)
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -294,6 +294,13 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = alertingSect.NewKey("max_attempts", "3")
 	require.NoError(t, err)
+
+	if opts.EnableRecordingRules {
+		recordingRulesSect, err := cfg.NewSection("recording_rules")
+		require.NoError(t, err)
+		_, err = recordingRulesSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+	}
 
 	if opts.LicensePath != "" {
 		section, err := cfg.NewSection("enterprise")
@@ -488,9 +495,17 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_open_conn", "2")
+	if db.IsTestDBSpanner() {
+		_, err = dbSection.NewKey("max_open_conn", "20")
+	} else {
+		_, err = dbSection.NewKey("max_open_conn", "2")
+	}
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_idle_conn", "2")
+	if db.IsTestDBSpanner() {
+		_, err = dbSection.NewKey("max_idle_conn", "20")
+	} else {
+		_, err = dbSection.NewKey("max_idle_conn", "2")
+	}
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -537,6 +552,7 @@ type GrafanaOpts struct {
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
+	EnableRecordingRules                  bool
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
