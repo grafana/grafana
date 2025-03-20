@@ -254,10 +254,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // This way we can access up to date queries in runQueriesPreview without waiting for re-render
       const previousQueries = getValues('queries');
 
-      // @ts-ignore
-      const expressionQueries = previousQueries.filter<AlertQuery<ExpressionQuery>>((query) =>
-        isExpressionQuery(query.model)
-      );
+      const expressionQueries = previousQueries.filter<AlertQuery<ExpressionQuery>>(isExpressionQueryInAlert);
+
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
