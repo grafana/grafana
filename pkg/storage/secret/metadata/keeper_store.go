@@ -2,9 +2,11 @@ package metadata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -12,9 +14,21 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/storage/secret"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/labels"
 )
+
+// keeperMetadataStorage is the actual implementation of the keeper metadata storage.
+type keeperMetadataStorage struct {
+	db           *session.SessionDB
+	dialect      sqltemplate.Dialect
+	accessClient claims.AccessClient
+}
+
+var _ secret.KeeperMetadataStorage = (*keeperMetadataStorage)(nil)
 
 func ProvideKeeperMetadataStorage(db db.DB, features featuremgmt.FeatureToggles, accessClient claims.AccessClient) (contracts.KeeperMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
@@ -22,16 +36,19 @@ func ProvideKeeperMetadataStorage(db db.DB, features featuremgmt.FeatureToggles,
 		return &keeperMetadataStorage{}, nil
 	}
 
-	return &keeperMetadataStorage{db: db, accessClient: accessClient}, nil
+	return &keeperMetadataStorage{
+		// TODO LND is this ok or should we get a session for each operation?
+		db:           db.GetSqlxSession(),
+		dialect:      sqltemplate.DialectForDriver(string(db.GetDBType())),
+		accessClient: accessClient,
+	}, nil
 }
 
-// keeperMetadataStorage is the actual implementation of the keeper metadata storage.
-type keeperMetadataStorage struct {
-	db           db.DB
-	accessClient claims.AccessClient
-}
-
+// TODO LND DONE! with warn
 func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
+	// TODO LND REMOVE
+	logging.DefaultLogger.Info("--- LND: SQL CREATE executed")
+
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -42,13 +59,25 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 		return nil, fmt.Errorf("failed to create row: %w", err)
 	}
 
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	req := createKeeper{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Row:         row,
+	}
+	q, err := sqltemplate.Execute(sqlKeeperCreate, req)
+	if err != nil {
+		return nil, fmt.Errorf("read template %q: %w", q, err)
+	}
+
+	err = s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// Validate before inserting that any `secureValues` referenced exist and do not reference other third-party keepers.
+
+		/** TODO LND uncomment this when secret value is migrated to sqlx
 		if err := s.validateSecureValueReferences(sess, keeper); err != nil {
 			return err
 		}
+		*/
 
-		if _, err := sess.Insert(row); err != nil {
+		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
 			return fmt.Errorf("failed to insert row: %w", err)
 		}
 		return nil
@@ -65,21 +94,50 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 	return createdKeeper, nil
 }
 
+// TODO LND DONE!
 func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error) {
+	// TODO LND REMOVE
+	logging.DefaultLogger.Info("--- LND: SQL READ executed")
+
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	row := &keeperDB{Name: name, Namespace: namespace.String()}
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		found, err := sess.Get(row)
+	req := &readKeeper{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+	}
+	q, err := sqltemplate.Execute(sqlKeeperRead, req)
+	if err != nil {
+		return nil, fmt.Errorf("read template %q: %w", q, err)
+	}
+
+	var keeper *secretv0alpha1.Keeper
+	err = s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
+		res, err := sess.Query(ctx, q, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to get row: %w", err)
 		}
 
-		if !found {
-			return contracts.ErrKeeperNotFound
+		defer func() { _ = res.Close() }()
+
+		if res.Next() {
+			row := &keeperDB{}
+			err = res.Scan(&row.GUID,
+				&row.Name, &row.Namespace, &row.Annotations,
+				&row.Labels,
+				&row.Created, &row.CreatedBy,
+				&row.Updated, &row.UpdatedBy,
+				&row.Title, &row.Type, &row.Payload,
+			)
+
+			keeper, err = row.toKubernetes()
+			if err != nil {
+				return fmt.Errorf("failed to convert to kubernetes object: %w", err)
+			}
+			return nil
 		}
 
 		return nil
@@ -87,61 +145,77 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
-
-	keeper, err := row.toKubernetes()
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
+	if keeper != nil {
+		return keeper, nil
 	}
 
-	return keeper, nil
+	return nil, contracts.ErrKeeperNotFound
 }
 
+// TODO LND DONE! with warn
 func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
+	// TODO LND REMOVE
+	logging.DefaultLogger.Info("--- LND: SQL UPDATE executed")
+
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	currentRow := &keeperDB{Name: newKeeper.Name, Namespace: newKeeper.Namespace}
+	var oldKeeper *secretv0alpha1.Keeper
+	err := s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
+		// Validate before updating that any `secureValues` referenced exist and do not reference other third-party keepers.\
 
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// Validate before updating that any `secureValues` referenced exist and do not reference other third-party keepers.
+		/** TODO LND uncomment this when secret value is migrated to sqlx
 		if err := s.validateSecureValueReferences(sess, newKeeper); err != nil {
 			return err
 		}
-
-		found, err := sess.Get(currentRow)
+		*/
+		var err error
+		oldKeeper, err = s.Read(ctx, xkube.Namespace(newKeeper.Namespace), newKeeper.Name)
 		if err != nil {
+			if errors.Is(err, contracts.ErrKeeperNotFound) {
+				return err
+			}
 			return fmt.Errorf("failed to get row: %w", err)
 		}
 
-		if !found {
-			return contracts.ErrKeeperNotFound
-		}
-
 		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	newRow, err := toKeeperUpdateRow(currentRow, newKeeper, authInfo.GetUID())
+	oldKeeperRow, err := toKeeperRow(oldKeeper)
+	if err != nil {
+		return nil, fmt.Errorf("failed to map to row: %w", err)
+	}
+
+	newRow, err := toKeeperUpdateRow(oldKeeperRow, newKeeper, authInfo.GetUID())
 	if err != nil {
 		return nil, fmt.Errorf("failed to map into update row: %w", err)
 	}
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		cond := &keeperDB{Name: newKeeper.Name, Namespace: newKeeper.Namespace}
 
-		if _, err := sess.Update(newRow, cond); err != nil {
+	req := &updateKeeper{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Row:         newRow,
+	}
+	q, err := sqltemplate.Execute(sqlKeeperUpdate, req)
+	if err != nil {
+		return nil, fmt.Errorf("update template %q: %w", q, err)
+	}
+
+	err = s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
+		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
 			return fmt.Errorf("failed to update row: %w", err)
 		}
-
 		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
+	// TODO LND We are converting the new row(before the update operation) , should we query the db again??
 	keeper, err := newRow.toKubernetes()
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
@@ -149,15 +223,30 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 	return keeper, nil
 }
 
+// TODO LND DONE!
 func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
+	// TODO LND REMOVE
+	logging.DefaultLogger.Info("--- LND: SQL DELETE executed")
+
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
 	}
 
-	row := &keeperDB{Name: name, Namespace: namespace.String()}
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if _, err := sess.Delete(row); err != nil {
+	req := deleteKeeper{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+	}
+
+	q, err := sqltemplate.Execute(sqlKeeperDelete, req)
+	if err != nil {
+		return fmt.Errorf("delete template %q: %w", q, err)
+	}
+
+	err = s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
+		// should we check the result?
+		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
 			return fmt.Errorf("failed to delete row: %w", err)
 		}
 
@@ -170,7 +259,11 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 	return nil
 }
 
+// TODO LND DONE!
 func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
+	// TODO LND REMOVE
+	logging.DefaultLogger.Info("--- LND: SQL LIST executed")
+
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -191,24 +284,39 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		labelSelector = labels.Everything()
 	}
 
+	req := listKeeper{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+	}
+
+	q, err := sqltemplate.Execute(sqlKeeperList, req)
+	if err != nil {
+		return nil, fmt.Errorf("list template %q: %w", q, err)
+	}
+
 	keeperRows := make([]*keeperDB, 0)
 
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		cond := &keeperDB{Namespace: namespace.String()}
-
-		if err := sess.Find(&keeperRows, cond); err != nil {
-			return fmt.Errorf("failed to find rows: %w", err)
-		}
-
-		return nil
-	})
+	rows, err := s.db.Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("list template %q: %w", q, err)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
 	keepers := make([]secretv0alpha1.Keeper, 0, len(keeperRows))
 
-	for _, row := range keeperRows {
+	for rows.Next() {
+		row := keeperDB{}
+
+		err = rows.Scan(&row.GUID,
+			&row.Name, &row.Namespace, &row.Annotations,
+			&row.Labels,
+			&row.Created, &row.CreatedBy,
+			&row.Updated, &row.UpdatedBy,
+			&row.Title, &row.Type, &row.Payload,
+		)
+
 		// Check whether the user has permission to access this specific Keeper in the namespace.
 		if !hasPermissionFor(row.Name, "") {
 			continue
