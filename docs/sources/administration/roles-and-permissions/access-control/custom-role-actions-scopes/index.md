@@ -217,6 +217,8 @@ The following list contains role-based access control actions used by Cloud Acce
 Granting the `grafana-auth-app:write` permission is equivalent to assigning the Admin role to a user in Grafana, as it allows them to manage all stack service accounts. This provides significant privileges and should be assigned with caution.
 {{< /admonition >}}
 
+For more information on Cloud Access Policies and how to use them, see [Access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/).
+
 ### Grafana Alerting Notification action definitions
 
 To use these permissions, enable the `alertingApiServer` feature toggle.

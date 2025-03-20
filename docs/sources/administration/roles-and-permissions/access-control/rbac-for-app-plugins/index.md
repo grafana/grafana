@@ -29,6 +29,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+  cloud-access-policies-action-definitions:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/#cloud-access-policies-action-definitions
 ---
 
 # RBAC for app plugins
