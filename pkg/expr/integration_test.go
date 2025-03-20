@@ -142,13 +142,16 @@ func TestSQLExpressionsIsLossless(t *testing.T) {
 	//     sum by(host, sparse_label) (metric_name{host="dummy_a"})
 	//     or
 	//     sum by(host) (metric_name{host="dummy_b"})
+	times := []time.Time{
+		time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
 	input := data.Frames{
 		data.NewFrame("frame1",
-			data.NewField("ts", nil, []time.Time{time.Unix(0, 0)}),
+			data.NewField("ts", nil, times),
 			data.NewField("value", data.Labels{"host": "dummy_a", "sparse_label": "label_value_present"}, []float64{13}),
 		),
 		data.NewFrame("frame1",
-			data.NewField("ts", nil, []time.Time{time.Unix(0, 0)}),
+			data.NewField("ts", nil, times),
 			data.NewField("value", data.Labels{"host": "dummy_b"}, []float64{17}),
 		),
 	}
