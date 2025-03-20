@@ -446,7 +446,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	prometheusConversion := iniFile.Section("unified_alerting.prometheus_conversion")
 	uaCfg.PrometheusConversion = UnifiedAlertingPrometheusConversionSettings{
-		RuleQueryOffset: prometheusConversion.Key("rule_query_offset").MustDuration(0),
+		RuleQueryOffset: prometheusConversion.Key("rule_query_offset").MustDuration(time.Minute),
 	}
 
 	rr := iniFile.Section("recording_rules")
