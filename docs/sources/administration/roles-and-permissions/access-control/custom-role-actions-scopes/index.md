@@ -209,9 +209,9 @@ The following list contains role-based access control actions used by Grafana Ad
 
 The following list contains role-based access control actions used by Cloud Access Policies.
 
-| Action                  | Applicable scopes | Description                                          |
-| ----------------------- | ----------------- | ---------------------------------------------------- |
-| `grafana-auth-app:write` | None             | Create, read, update, and delete access policies for Grafana Cloud. |
+| Action                   | Applicable scopes | Description                                                         |
+| ------------------------ | ----------------- | ------------------------------------------------------------------- |
+| `grafana-auth-app:write` | None              | Create, read, update, and delete access policies for Grafana Cloud. |
 
 {{< admonition type="warning" >}}
 Granting the `grafana-auth-app:write` permission is equivalent to assigning the Admin role to a user in Grafana, as it allows them to manage all stack service accounts. This provides significant privileges and should be assigned with caution.
