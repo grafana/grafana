@@ -958,6 +958,147 @@ describe('DashboardSceneSerializer', () => {
     });
   });
 
+  describe('Datasource References Mapping', () => {
+    describe('V2DashboardSerializer', () => {
+      let serializer: V2DashboardSerializer;
+
+      beforeEach(() => {
+        serializer = new V2DashboardSerializer();
+      });
+
+      it('should initialize datasource references mapping correctly for panels with undefined datasources', () => {
+        const saveModel: DashboardV2Spec = {
+          ...defaultDashboardV2Spec(),
+          title: 'Test Dashboard',
+          elements: {
+            'panel-1': {
+              kind: 'Panel',
+              spec: {
+                id: 1,
+                title: 'Panel 1',
+                description: '',
+                links: [],
+                vizConfig: {
+                  kind: 'timeseries',
+                  spec: {
+                    pluginVersion: '1.0.0',
+                    options: {},
+                    fieldConfig: { defaults: {}, overrides: [] },
+                  },
+                },
+                data: {
+                  kind: 'QueryGroup',
+                  spec: {
+                    queries: [
+                      {
+                        kind: 'PanelQuery',
+                        spec: {
+                          refId: 'A',
+                          hidden: false,
+                          // No datasource defined
+                          query: { kind: 'sql', spec: {} },
+                        },
+                      },
+                      {
+                        kind: 'PanelQuery',
+                        spec: {
+                          refId: 'B',
+                          hidden: false,
+                          datasource: { uid: 'datasource-1', type: 'prometheus' },
+                          query: { kind: 'prometheus', spec: {} },
+                        },
+                      },
+                    ],
+                    queryOptions: {},
+                    transformations: [],
+                  },
+                },
+              },
+            },
+            'panel-2': {
+              kind: 'Panel',
+              spec: {
+                id: 2,
+                title: 'Panel 2',
+                description: '',
+                links: [],
+                vizConfig: {
+                  kind: 'timeseries',
+                  spec: {
+                    pluginVersion: '1.0.0',
+                    options: {},
+                    fieldConfig: { defaults: {}, overrides: [] },
+                  },
+                },
+                data: {
+                  kind: 'QueryGroup',
+                  spec: {
+                    queries: [
+                      {
+                        kind: 'PanelQuery',
+                        spec: {
+                          refId: 'C',
+                          hidden: false,
+                          // No datasource defined
+                          query: { kind: 'sql', spec: {} },
+                        },
+                      },
+                    ],
+                    queryOptions: {},
+                    transformations: [],
+                  },
+                },
+              },
+            },
+          },
+        };
+
+        serializer.initializeElementMapping(saveModel);
+        serializer.initializeDSReferencesMapping(saveModel);
+
+        const dsReferencesMap = serializer.getDSReferencesMapping();
+
+        // Panel 1 should have refId A in the map (no datasource)
+        expect(dsReferencesMap.panels.has('panel-1')).toBe(true);
+        expect(dsReferencesMap.panels.get('panel-1')?.has('A')).toBe(true);
+        expect(dsReferencesMap.panels.get('panel-1')?.has('B')).toBe(false); // Has datasource defined
+
+        // Panel 2 should have refId C in the map
+        expect(dsReferencesMap.panels.has('panel-2')).toBe(true);
+        expect(dsReferencesMap.panels.get('panel-2')?.has('C')).toBe(true);
+      });
+
+      it('should handle empty or undefined elements in initializeDSReferencesMapping', () => {
+        serializer.initializeDSReferencesMapping(undefined);
+        expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
+
+        serializer.initializeDSReferencesMapping({} as DashboardV2Spec);
+        expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
+
+        serializer.initializeDSReferencesMapping({ elements: {} } as DashboardV2Spec);
+        expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
+      });
+    });
+
+    describe('V1DashboardSerializer', () => {
+      let serializer: V1DashboardSerializer;
+
+      beforeEach(() => {
+        serializer = new V1DashboardSerializer();
+      });
+
+      it('should return empty mapping object for V1 serializer', () => {
+        serializer.initializeDSReferencesMapping(undefined);
+        expect(serializer.getDSReferencesMapping()).toEqual({
+          panels: expect.any(Map),
+          variables: expect.any(Set),
+          annotations: expect.any(Set),
+        });
+        expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
+      });
+    });
+  });
+
   describe('onSaveComplete', () => {
     it('should set the initialSaveModel correctly', () => {
       const serializer = new V2DashboardSerializer();
