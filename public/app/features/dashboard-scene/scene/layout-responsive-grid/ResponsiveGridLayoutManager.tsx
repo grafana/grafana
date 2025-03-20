@@ -77,18 +77,14 @@ export class ResponsiveGridLayoutManager
       key: undefined,
       layout: this.state.layout.clone({
         key: undefined,
-        children: this.state.layout.state.children.map((child) => {
-          if (child instanceof ResponsiveGridItem) {
-            return child.clone({
-              key: undefined,
-              body: child.state.body.clone({
-                key: getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(child.state.body)),
-              }),
-            });
-          }
-
-          return child.clone({ key: undefined });
-        }),
+        children: this.state.layout.state.children.map((child) =>
+          child.clone({
+            key: undefined,
+            body: child.state.body.clone({
+              key: getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(child.state.body)),
+            }),
+          })
+        ),
       }),
     });
   }
