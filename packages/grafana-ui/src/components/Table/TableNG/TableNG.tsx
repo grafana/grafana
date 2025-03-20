@@ -731,8 +731,8 @@ export function myRowRenderer(
   );
 }
 
-function onRowHover(idx: number, panelContext: PanelContext, frame: DataFrame, enableSharedCrosshair: boolean) {
-  if (!panelContext || !enableSharedCrosshair) {
+export function onRowHover(idx: number, panelContext: PanelContext, frame: DataFrame, enableSharedCrosshair: boolean) {
+  if (!enableSharedCrosshair) {
     return;
   }
 
@@ -750,8 +750,9 @@ function onRowHover(idx: number, panelContext: PanelContext, frame: DataFrame, e
     })
   );
 }
-function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: boolean) {
-  if (!panelContext || !enableSharedCrosshair) {
+
+export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: boolean) {
+  if (!enableSharedCrosshair) {
     return;
   }
 
