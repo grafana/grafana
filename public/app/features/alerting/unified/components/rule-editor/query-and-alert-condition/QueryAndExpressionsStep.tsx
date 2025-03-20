@@ -77,9 +77,15 @@ import { useAlertQueryRunner } from './useAlertQueryRunner';
 interface Props {
   editingExistingRule: boolean;
   onDataChange: (error: string) => void;
+  /**
+   * The mode of the rule editor.
+   * - 'edit' standard rule editor mode
+   * - 'draft' non-saveable form mode used for exporting to provisioning formats
+   */
+  mode: 'edit' | 'draft';
 }
 
-export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: Props) => {
+export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mode }: Props) => {
   const {
     setValue,
     getValues,
@@ -515,12 +521,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 }}
               />
             </Field>
-            <SmartAlertTypeDetector
-              editingExistingRule={editingExistingRule}
-              queries={queries}
-              rulesSourcesWithRuler={rulesSourcesWithRuler}
-              onClickSwitch={onClickSwitch}
-            />
+            {mode === 'edit' && (
+              <SmartAlertTypeDetector
+                editingExistingRule={editingExistingRule}
+                queries={queries}
+                rulesSourcesWithRuler={rulesSourcesWithRuler}
+                onClickSwitch={onClickSwitch}
+              />
+            )}
           </Stack>
         )}
 
@@ -555,7 +563,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               </Tooltip>
             )}
             {/* We only show Switch for Grafana managed alerts */}
-            {isGrafanaAlertingType && !simplifiedQueryStep && (
+            {isGrafanaAlertingType && !simplifiedQueryStep && mode === 'edit' && (
               <SmartAlertTypeDetector
                 editingExistingRule={editingExistingRule}
                 rulesSourcesWithRuler={rulesSourcesWithRuler}

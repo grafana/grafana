@@ -100,7 +100,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
             {/* Step 1 */}
             <AlertRuleNameAndMetric />
             {/* Step 2 */}
-            <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} />
+            <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} mode="draft" />
             {/* Step 3-4-5 */}
             <GrafanaFolderAndLabelsStep />
 
