@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/dskit/services"
 
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
@@ -39,7 +38,6 @@ type service struct {
 
 	cfg       *setting.Cfg
 	features  featuremgmt.FeatureToggles
-	db        infraDB.DB
 	stopCh    chan struct{}
 	stoppedCh chan error
 
