@@ -16,8 +16,8 @@ SELECT
 FROM
   {{ .Ident "secret_keeper" }}
 WHERE 1 = 1 AND
-  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
-  {{ .Ident "name" }} IN {{ .ArgList .KeeperNames }} AND
-  {{ .Ident "type" }} != {{ .Arg .ExcludeKeeperType }}
+  {{ .Ident "namespace" }} =  {{ .Arg .Namespace }}       AND
+  {{ .Ident "name" }}      IN {{ .ArgList .KeeperNames }} AND
+  {{ .Ident "type" }}      != {{ .Arg .ExcludeKeeperType }}
 {{ .SelectFor "UPDATE" }}
 ;
