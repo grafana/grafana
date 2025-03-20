@@ -158,6 +158,8 @@ export function TableNG(props: TableNGProps) {
     // As we never actually visualize rendered content
     // from the offscreen canvas, only perform text measurements
     osContext = new OffscreenCanvas(256, 1024).getContext('2d');
+    // Set the font for measurement
+    osContext!.font = '14px sans-serif';
   }
 
   // Set font property using theme info

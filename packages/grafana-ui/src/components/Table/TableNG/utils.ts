@@ -26,7 +26,7 @@ import {
 } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../..';
-import { getTextColorForAlphaBackground } from '../../../utils';
+import { getTextColorForAlphaBackground, measureText } from '../../../utils';
 
 import { TABLE } from './constants';
 import {
@@ -107,35 +107,19 @@ function calculateCellHeight(
   defaultRowHeight: number,
   padding = 0
 ) {
-  // Early return for invalid inputs or empty text
-  if (!osContext || !text || typeof text !== 'string' || cellWidth <= 0) {
-    return defaultRowHeight;
-  }
-
-  // Ensure we have a valid width to work with
   const effectiveCellWidth = Math.max(cellWidth, 20); // Minimum width to work with
   const TOTAL_PADDING = padding * 2;
 
-  // Set the font for measurement
-  osContext.font = '14px sans-serif'; // Adjust to match your table's font
+  const lines = split(
+    osContext as unknown as CanvasRenderingContext2D,
+    text,
+    '14px sans-serif',
+    effectiveCellWidth,
+    true
+  );
 
-  try {
-    // Try canvas-hypertxt first for better performance
-    const lines = split(
-      // Cast to any to avoid type issues
-      osContext as any,
-      text,
-      osContext.font,
-      effectiveCellWidth,
-      true
-    );
-
-    const totalHeight = lines.length * lineHeight + TOTAL_PADDING;
-    return Math.max(totalHeight, defaultRowHeight);
-  } catch (error) {
-    // Silent fallback - if canvas-hypertxt fails, use the proven getCellHeight implementation
-    return getCellHeight(text, effectiveCellWidth, osContext, lineHeight, defaultRowHeight, padding);
-  }
+  const totalHeight = lines.length * lineHeight + TOTAL_PADDING;
+  return Math.max(totalHeight, defaultRowHeight);
 }
 
 export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellHeight | undefined): number {
@@ -154,6 +138,14 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellH
   return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
 }
 
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d')!;
+ctx.font = `14px sans-serif`;
+let txt =
+  "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has";
+const txtWidth = ctx.measureText(txt).width * devicePixelRatio;
+const avgCharWidth = txtWidth / txt.length;
+
 /**
  * getRowHeight determines cell height based on cell width + text length. Used
  * for when textWrap is enabled.
@@ -171,32 +163,35 @@ export function getRowHeight(
     columnWidths: Record<string, number>;
   }
 ): number {
-  // Early exit if context is not available
-  if (!osContext || fieldsData.headersLength === 0) {
-    return defaultRowHeight;
-  }
-
-  let biggestHeight = defaultRowHeight;
+  let maxLines = 1;
+  let maxLinesCol = '';
 
   for (const key in row) {
     if (fieldsData.columnTypes[key] === FieldType.string && fieldsData.textWraps[key]) {
       const cellText = row[key] as string;
-      const newCellHeight = calculateCellHeight(
-        cellText,
-        fieldsData.columnWidths[key],
+
+      if (cellText != null) {
+        const charsPerLine = fieldsData.columnWidths[key] / avgCharWidth;
+        const approxLines = cellText.length / charsPerLine;
+
+        if (approxLines > maxLines) {
+          maxLines = approxLines;
+          maxLinesCol = key;
+        }
+      }
+    }
+  }
+
+  return maxLinesCol === ''
+    ? defaultRowHeight
+    : calculateCellHeight(
+        row[maxLinesCol] as string,
+        fieldsData.columnWidths[maxLinesCol],
         osContext,
         lineHeight,
         defaultRowHeight,
         padding
       );
-
-      if (newCellHeight > biggestHeight) {
-        biggestHeight = newCellHeight;
-      }
-    }
-  }
-
-  return biggestHeight;
 }
 
 export function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
