@@ -17,10 +17,10 @@ import { PanelDataErrorView } from 'app/features/panel/components/PanelDataError
 
 import { dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 import { requestMoreLogs } from '../logs/LogsPanel';
-import { isOnNewLogsReceivedType } from '../logs/types';
 import { useDatasourcesFromTargets } from '../logs/useDatasourcesFromTargets';
 
 import { Options } from './panelcfg.gen';
+import { isCoreApp, isLogsGrammar, isOnLogOptionsChange, isOnNewLogsReceivedType } from './types';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -28,7 +28,18 @@ export const LogsPanel = ({
   data,
   timeZone,
   fieldConfig,
-  options: { dedupStrategy, enableInfiniteScrolling, onNewLogsReceived, showTime, sortOrder, wrapLogMessage },
+  options: {
+    dedupStrategy,
+    enableInfiniteScrolling,
+    grammar,
+    onLogOptionsChange,
+    onNewLogsReceived,
+    showControls,
+    showTime,
+    sortOrder,
+    syntaxHighlighting,
+    wrapLogMessage,
+  },
   id,
 }: LogsPanelProps) => {
   const style = useStyles2(getStyles);
@@ -39,7 +50,7 @@ export const LogsPanel = ({
   const keepScrollPositionRef = useRef(false);
   // Loading ref to prevent firing multiple requests
   const loadingRef = useRef(false);
-  const { eventBus } = usePanelContext();
+  const { app } = usePanelContext();
 
   const logs = useMemo(() => {
     const logsModel = panelData
@@ -100,15 +111,19 @@ export const LogsPanel = ({
     <div className={style.container} ref={(element: HTMLDivElement) => setLogsContainer(element)}>
       {logs.length > 0 && logsContainer && (
         <LogList
-          app={CoreApp.Dashboard}
+          app={isCoreApp(app) ? app : CoreApp.Dashboard}
           containerElement={logsContainer}
+          dedupStrategy={dedupStrategy}
           displayedFields={[]}
-          eventBus={eventBus}
+          grammar={isLogsGrammar(grammar) ? grammar : undefined}
           initialScrollPosition={initialScrollPosition}
           logs={logs}
           loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
+          onLogOptionsChange={isOnLogOptionsChange(onLogOptionsChange) ? onLogOptionsChange : undefined}
+          showControls={showControls}
           showTime={showTime}
           sortOrder={sortOrder}
+          syntaxHighlighting={syntaxHighlighting}
           timeRange={data.timeRange}
           timeZone={timeZone}
           wrapLogMessage={wrapLogMessage}

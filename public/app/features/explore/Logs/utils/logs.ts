@@ -10,6 +10,8 @@ export const SETTINGS_KEYS = {
   logContextWrapLogMessage: 'grafana.explore.logs.logContext.wrapLogMessage',
 };
 
+export const SETTING_KEY_ROOT = 'grafana.explore.logs';
+
 export const visualisationTypeKey = 'grafana.explore.logs.visualisationType';
 
 export const canKeepDisplayedFields = (logsQueries: DataQuery[] | undefined, prevLogsQueries: DataQuery[]): boolean => {

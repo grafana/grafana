@@ -1,4 +1,4 @@
-import Prism from 'prismjs';
+import Prism, { Grammar } from 'prismjs';
 
 import { dateTimeFormat, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
 
@@ -34,10 +34,11 @@ export interface PreProcessOptions {
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, timeZone }: PreProcessOptions
+  { escape, getFieldLinks, order, timeZone }: PreProcessOptions,
+  grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) => preProcessLog(log, { escape, getFieldLinks, timeZone }));
+  return orderedLogs.map((log) => preProcessLog(log, { escape, getFieldLinks, timeZone }, grammar));
 };
 
 interface PreProcessLogOptions {
@@ -45,7 +46,11 @@ interface PreProcessLogOptions {
   getFieldLinks?: GetFieldLinksFn;
   timeZone: string;
 }
-const preProcessLog = (log: LogRowModel, { escape, getFieldLinks, timeZone }: PreProcessLogOptions): LogListModel => {
+const preProcessLog = (
+  log: LogRowModel,
+  { escape, getFieldLinks, timeZone }: PreProcessLogOptions,
+  grammar?: Grammar
+): LogListModel => {
   let body = log.raw;
   const timestamp = dateTimeFormat(log.timeEpochMs, {
     timeZone,
@@ -64,7 +69,7 @@ const preProcessLog = (log: LogRowModel, { escape, getFieldLinks, timeZone }: Pr
     _highlightedBody: '',
     get highlightedBody() {
       if (!this._highlightedBody) {
-        this._highlightedBody = Prism.highlight(body, generateLogGrammar(this), 'lokiql');
+        this._highlightedBody = Prism.highlight(body, grammar ? grammar : generateLogGrammar(this), 'lokiql');
       }
       return this._highlightedBody;
     },
