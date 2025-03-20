@@ -20,13 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -50,16 +50,13 @@ func TestDashboardService(t *testing.T) {
 			log:                    log.New("test.logger"),
 			dashboardStore:         &fakeStore,
 			folderService:          folderSvc,
+			ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
 			features:               featuremgmt.WithFeatures(),
 			publicDashboardService: fakePublicDashboardService,
 		}
 		folderStore := foldertest.FakeFolderStore{}
 		folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(nil, dashboards.ErrFolderNotFound).Once()
 		service.folderStore = &folderStore
-
-		origNewDashboardGuardian := guardian.New
-		defer func() { guardian.New = origNewDashboardGuardian }()
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 		t.Run("Save dashboard validation", func(t *testing.T) {
 			dto := &dashboards.SaveDashboardDTO{}
@@ -1292,12 +1289,9 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 						UID: "general",
 					},
 				},
+				ac:  actest.FakeAccessControl{ExpectedEvaluate: true},
 				log: log.NewNopLogger(),
 			}
-
-			origNewDashboardGuardian := guardian.New
-			defer func() { guardian.New = origNewDashboardGuardian }()
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 			cmd := &folder.CreateFolderCommand{
 				Title: "foo",
@@ -1326,12 +1320,9 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 				UID: "general",
 			},
 		},
+		ac:  actest.FakeAccessControl{ExpectedEvaluate: true},
 		log: log.NewNopLogger(),
 	}
-
-	origNewDashboardGuardian := guardian.New
-	defer func() { guardian.New = origNewDashboardGuardian }()
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 	query := &dashboards.SaveDashboardDTO{
 		OrgID: 1,
@@ -1392,11 +1383,8 @@ func TestSaveDashboard(t *testing.T) {
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{},
 		},
+		ac: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
-
-	origNewDashboardGuardian := guardian.New
-	defer func() { guardian.New = origNewDashboardGuardian }()
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 	query := &dashboards.SaveDashboardDTO{
 		OrgID: 1,
