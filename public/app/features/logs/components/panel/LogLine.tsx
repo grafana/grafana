@@ -176,9 +176,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         },
       },
       '& .log-syntax-highlight': {
-        '.log-token-timestamp': {
-          color: theme.colors.text.disabled,
-        },
         '.log-token-string': {
           color: alpha(theme.colors.text.secondary, 0.75),
         },
