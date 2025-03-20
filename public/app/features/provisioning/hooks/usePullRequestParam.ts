@@ -1,4 +1,4 @@
-import { sanitizeUrl } from '@grafana/data';
+import { textUtil } from '@grafana/data';
 import { useUrlParams } from 'app/core/navigation/hooks';
 
 export const usePullRequestParam = () => {
@@ -9,5 +9,5 @@ export const usePullRequestParam = () => {
     return undefined;
   }
 
-  return sanitizeUrl(decodeURIComponent(prParam));
+  return textUtil.sanitizeUrl(decodeURIComponent(prParam));
 };
