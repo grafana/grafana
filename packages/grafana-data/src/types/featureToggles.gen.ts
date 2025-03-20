@@ -1069,4 +1069,9 @@ export interface FeatureToggles {
   * @default true
   */
   alertingRuleRecoverDeleted?: boolean;
+  /**
+  * Enables the UI functionality to delete permanently alert rules
+  * @default true
+  */
+  alertingDeletePermanently?: boolean;
 }

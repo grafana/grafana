@@ -58,10 +58,8 @@ const AlertRuleMenu = ({
     AlertRuleAction.DeletePermanently
   );
   const canDeletePermanently =
-    deletePermanentlySupported &&
-    deletePermanentlyAllowed &&
-    config.featureToggles.alertingRuleRecoverDeleted &&
-    config.featureToggles.alertRuleRestore;
+    deletePermanentlySupported && deletePermanentlyAllowed && config.featureToggles.alertRuleRestore; // soft delete is only available if the feature toggle is enabled
+  config.featureToggles.alertingDeletePermanently;
 
   const [duplicateSupported, duplicateAllowed] = useRulerRuleAbility(
     rulerRule,

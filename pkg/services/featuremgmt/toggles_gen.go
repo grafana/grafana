@@ -982,4 +982,8 @@ const (
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
+
+	// FlagAlertingDeletePermanently
+	// Enables the UI functionality to delete permanently alert rules
+	FlagAlertingDeletePermanently = "alertingDeletePermanently"
 )
