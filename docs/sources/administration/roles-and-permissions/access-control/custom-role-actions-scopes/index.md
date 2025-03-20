@@ -205,6 +205,18 @@ The following list contains role-based access control actions used by Grafana Ad
 | `grafana-adaptive-metrics-app.exemptions:read`       | None              | Read recommendation exemptions.                       |
 | `grafana-adaptive-metrics-app.exemptions:write`      | None              | Create, update, and delete recommendation exemptions. |
 
+### Cloud Access Policies action definitions
+
+The following list contains role-based access control actions used by Cloud Access Policies.
+
+| Action                  | Applicable scopes | Description                                          |
+| ----------------------- | ----------------- | ---------------------------------------------------- |
+| `grafana-auth-app:write` | None             | Create, read, update, and delete access policies for Grafana Cloud. |
+
+{{< admonition type="warning" >}}
+Granting the `grafana-auth-app:write` permission is equivalent to assigning the Admin role to a user in Grafana, as it allows them to manage all stack service accounts. This provides significant privileges and should be assigned with caution.
+{{< /admonition >}}
+
 ### Grafana Alerting Notification action definitions
 
 To use these permissions, enable the `alertingApiServer` feature toggle.
