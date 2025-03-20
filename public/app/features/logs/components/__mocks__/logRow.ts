@@ -19,7 +19,7 @@ export const createLogRow = (overrides?: Partial<LogRowModel>): LogRowModel => {
           type: FieldType.string,
           values: ['line1', 'line2'],
         },
-        { name: 'labels', type: FieldType.other, values: [{ app: 'app01' }, { app: 'app02' }] },
+        { name: 'labels', type: FieldType.other, values: [] },
       ],
     }),
     uid,
