@@ -295,7 +295,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
         return {
           url: path,
-          params: { ...params },
+          params,
           method: 'DELETE',
           notificationOptions: {
             successMessage,
