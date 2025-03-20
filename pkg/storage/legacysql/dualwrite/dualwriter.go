@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
@@ -29,35 +30,58 @@ type dualWriter struct {
 }
 
 func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	// Call get (send read traffic in cloud)
-	unifiedGet, unifiedErr := d.unified.Get(ctx, name, options)
+	// If we read from unified, we can just do that and return.
 	if d.readUnified {
-		return unifiedGet, unifiedErr
+		return d.unified.Get(ctx, name, options)
 	}
-
+	// If legacy is still our main store, lets first read from it.
 	legacyGet, err := d.legacy.Get(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
-
-	if unifiedErr != nil && !apierrors.IsNotFound(unifiedErr) && !d.errorIsOK {
-		return nil, unifiedErr // the unified error
+	// Once we have successfully read from legacy, we can check if we want to fail on a unified read.
+	// If we allow the unified read to fail, we can do it in the background.
+	if d.errorIsOK {
+		go func() {
+			if _, err := d.unified.Get(ctx, name, options); err != nil {
+				d.log.Error("failed background GET to unified", "err", err)
+			}
+		}()
+		return legacyGet, nil
+	}
+	// If it's not okay to fail, we have to check it in the foreground.
+	_, unifiedErr := d.unified.Get(ctx, name, options)
+	if unifiedErr != nil && !apierrors.IsNotFound(unifiedErr) {
+		return nil, unifiedErr
 	}
 	return legacyGet, nil
 }
 
 func (d *dualWriter) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	// Call list (send read traffic in cloud)
-	unifiedList, err := d.unified.List(ctx, options)
+	// If we read from unified, we can just do that and return.
 	if d.readUnified {
-		return unifiedList, err
+		return d.unified.List(ctx, options)
 	}
-
-	if err != nil && !d.errorIsOK {
+	// If legacy is still the main store, lets first read from it.
+	legacyList, err := d.legacy.List(ctx, options)
+	if err != nil {
 		return nil, err
 	}
-
-	return d.legacy.List(ctx, options)
+	// Once we have successfully listed from legacy, we can check if we want to fail on a unified list.
+	// If we allow the unified list to fail, we can do it in the background and return.
+	if d.errorIsOK {
+		go func() {
+			if _, err := d.unified.List(ctx, options); err != nil {
+				d.log.Error("failed background LIST to unified", "err", err)
+			}
+		}()
+		return legacyList, nil
+	}
+	// If it's not okay to fail, we have to check it in the foreground.
+	if _, err := d.unified.List(ctx, options); err != nil {
+		return nil, err
+	}
+	return legacyList, nil
 }
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
@@ -93,23 +117,41 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	accCreated.SetResourceVersion("")
 	accCreated.SetUID("")
 
-	storageObj, errObjectSt := d.unified.Create(ctx, createdCopy, createValidation, options)
-	if errObjectSt != nil {
-		log.Error("unable to create object in unified storage", "err", errObjectSt)
-		if d.errorIsOK {
-			return createdFromLegacy, nil
-		}
-
-		// if we cannot create in unistore, attempt to clean up legacy
-		_, _, err = d.legacy.Delete(ctx, accCreated.GetName(), nil, &metav1.DeleteOptions{})
-		if err != nil {
-			log.Error("unable to cleanup object in legacy storage", "err", err)
-		}
-		return nil, errObjectSt
-	}
-
+	// If unified storage is the primary storage, let's just create it in the foreground and return it.
 	if d.readUnified {
+		storageObj, errObjectSt := d.unified.Create(ctx, createdCopy, createValidation, options)
+		if errObjectSt != nil {
+			log.Error("unable to create object in unified storage", "err", errObjectSt)
+			// If we cannot create in unified storage, attempt to clean up legacy.
+			_, _, err = d.legacy.Delete(ctx, accCreated.GetName(), nil, &metav1.DeleteOptions{})
+			if err != nil {
+				log.Error("unable to cleanup object in legacy storage", "err", err)
+			}
+			return nil, errObjectSt
+		}
 		return storageObj, nil
+	} else if d.errorIsOK {
+		// If we don't use unified as the primary store and errors are okay, let's create it in the background.
+		go func() {
+			if _, err := d.unified.Create(ctx, createdCopy, createValidation, options); err != nil {
+				log.Error("unable to create object in unified storage", "err", err)
+			}
+		}()
+	} else {
+		// Otherwise let's create it in the foreground and return any error.
+		if _, err := d.unified.Create(ctx, createdCopy, createValidation, options); err != nil {
+			log.Error("unable to create object in unified storage", "err", err)
+			if d.errorIsOK {
+				return createdFromLegacy, nil
+			}
+
+			// If we cannot create in unified storage, attempt to clean up legacy.
+			_, _, errLegacy := d.legacy.Delete(ctx, accCreated.GetName(), nil, &metav1.DeleteOptions{})
+			if errLegacy != nil {
+				log.Error("unable to cleanup object in legacy storage", "err", errLegacy)
+			}
+			return nil, err
+		}
 	}
 	return createdFromLegacy, nil
 }
@@ -125,16 +167,27 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	if err != nil && (!d.readUnified || !d.errorIsOK && !apierrors.IsNotFound(err)) {
 		return nil, false, err
 	}
-
-	objFromStorage, asyncStorage, err := d.unified.Delete(ctx, name, deleteValidation, options)
+	// If unified storage is our primary store, just delete it and return
+	if d.readUnified {
+		objFromStorage, asyncStorage, err := d.unified.Delete(ctx, name, deleteValidation, options)
+		if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
+			return nil, false, err
+		}
+		return objFromStorage, asyncStorage, nil
+	} else if d.errorIsOK {
+		// If errors are okay and unified is not primary, we can just run it as background operation.
+		go func() {
+			_, _, err := d.unified.Delete(ctx, name, deleteValidation, options)
+			if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
+				d.log.Error("failed background DELETE in unified storage", "err", err)
+			}
+		}()
+	}
+	// Otherwise we just run it in the foreground and return an error if any might happen.
+	_, _, err = d.unified.Delete(ctx, name, deleteValidation, options)
 	if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
 		return nil, false, err
 	}
-
-	if d.readUnified {
-		return objFromStorage, asyncStorage, nil
-	}
-
 	return objFromLegacy, asyncLegacy, nil
 }
 
@@ -157,20 +210,22 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		log.With("object", objFromLegacy).Error("could not update in legacy storage", "err", err)
 		return nil, false, err
 	}
-
-	objFromStorage, created, err := d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if err != nil {
-		log.With("object", objFromStorage).Error("could not update in storage", "err", err)
-		if d.errorIsOK {
-			return objFromLegacy, createdLegacy, nil
-		}
+	// If unified storage is our primary store, just update it there and return.
+	if d.readUnified {
+		return d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	} else if d.errorIsOK {
+		// If unified is not primary, but errors are okay, we can just run in the background.
+		go func() {
+			if _, _, err := d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options); err != nil {
+				log.Error("failed background UPDATE to unified storage", "err", err)
+			}
+		}()
+		return objFromLegacy, createdLegacy, nil
+	}
+	// If we want to check unified errors just run it in foreground.
+	if _, _, err := d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options); err != nil {
 		return nil, false, err
 	}
-
-	if d.readUnified {
-		return objFromStorage, created, nil
-	}
-
 	return objFromLegacy, createdLegacy, nil
 }
 
@@ -190,19 +245,23 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 		return nil, err
 	}
 
-	deletedStorage, err := d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
-	if err != nil {
+	// If unified is the primary store, we can just delete it there and return.
+	if d.readUnified {
+		return d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	} else if d.errorIsOK {
+		// If unified storage is not the primary store and errors are okay, we can just run it in the background.
+		go func() {
+			if _, err := d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions); err != nil {
+				log.Error("failed background DELETE collection to unified storage", "err", err)
+			}
+		}()
+		return deletedLegacy, nil
+	}
+	// Otherwise we have to check the error and run it in the foreground.
+	if deletedStorage, err := d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions); err != nil {
 		log.With("deleted", deletedStorage).Error("failed to delete collection successfully from Storage", "err", err)
-		if d.errorIsOK {
-			return deletedLegacy, nil
-		}
 		return nil, err
 	}
-
-	if d.readUnified {
-		return deletedStorage, nil
-	}
-
 	return deletedLegacy, nil
 }
 

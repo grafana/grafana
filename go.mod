@@ -124,7 +124,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c //@grafana/identity-access-team
 	github.com/mocktools/go-smtp-mock/v2 v2.3.1 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.2 // @grafana/alerting-backend
-	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // @grafana/alerting-backend
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect; @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/olekukonko/tablewriter v0.0.5 // @grafana/grafana-backend-group
 	github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369 // @grafana/identity-access-team
@@ -208,7 +208,8 @@ require (
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250220163425-b4c4b9abbdc8 // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250220164708-c8d4ff28a450 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250314071911-14e2784e6979 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295 // @grafana/grafana-app-platform-squad
 
 	// This needs to be here for other projects that import grafana/grafana
@@ -562,8 +563,6 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0 // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.32.3 // indirect
-	github.com/onsi/ginkgo/v2 v2.22.0 // indirect
-	github.com/onsi/gomega v1.36.1 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 )
 

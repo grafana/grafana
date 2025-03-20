@@ -247,6 +247,8 @@ type sqlGetHistoryRequest struct {
 	Key     *resource.ResourceKey
 	Trash   bool  // only deleted items
 	StartRV int64 // from NextPageToken
+	MinRV   int64 // minimum resource version for NotOlderThan
+	ExactRV int64 // exact resource version for Exact
 }
 
 func (r sqlGetHistoryRequest) Validate() error {

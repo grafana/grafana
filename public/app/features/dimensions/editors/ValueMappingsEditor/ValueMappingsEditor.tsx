@@ -51,7 +51,7 @@ export const ValueMappingsEditor = memo((props: Props) => {
                 {row.type === MappingType.ValueToText && row.key}
                 {row.type === MappingType.RangeToText && (
                   <span>
-                    [{row.from} - {row.to}]
+                    [{row.from ?? '-∞'} - {row.to ?? '∞'}]
                   </span>
                 )}
                 {row.type === MappingType.RegexToText && row.pattern}
