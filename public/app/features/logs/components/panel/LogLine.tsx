@@ -11,6 +11,7 @@ import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPinned } from './LogListContext';
 import { LogFieldDimension, LogListModel } from './processing';
 import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight } from './virtualization';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 interface Props {
   displayedFields: string[];
@@ -153,7 +154,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     logLine: css({
-      color: theme.colors.text.secondary,
+      color: alpha(theme.colors.text.secondary, 0.75),
       display: 'flex',
       gap: theme.spacing(0.5),
       flexDirection: 'row',
@@ -179,10 +180,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
           color: theme.colors.text.disabled,
         },
         '.token.log-token-string': {
-          color: theme.colors.text.secondary,
-        },
-        '.token.log-token-number': {
-          color: theme.colors.success.text,
+          color: alpha(theme.colors.text.secondary, 0.75),
         },
         '.token.log-token-duration': {
           color: theme.colors.success.text,
@@ -192,9 +190,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         },
         '.token.log-token-uuid': {
           color: theme.colors.success.text,
-        },
-        '.token.log-token-url': {
-          color: theme.colors.primary.shade,
         },
         '.token.log-token-key': {
           color: colors.parsedField,
@@ -209,6 +204,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
         '.token.log-token-label': {
           color: colors.metadata,
           fontWeight: theme.typography.fontWeightBold,
+        },
+        '.token.log-token-method': {
+          color: theme.colors.info.shade,
         },
       },
     }),

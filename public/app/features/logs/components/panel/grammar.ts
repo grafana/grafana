@@ -9,10 +9,9 @@ export const logsGrammar: Grammar = {
   'log-token-json-key': /"(\b|\B)[\w-]+"(?=\s*:)/gi,
   'log-token-key': /(\b|\B)[\w_]+(?=\s*=)/gi,
   'log-token-size': /(?:\b|")\d+\.{0,1}\d*\s*[kKmMGgtTPp]*[bB]{1}(?:"|\b)/g,
-  'log-token-duration': /(?:\b|")\d+(\.\d+)?(ns|µs|ms|s|m|h|d)(?:\b|")/g,
+  'log-token-duration': /(?:\b)\d+(\.\d+)?(ns|µs|ms|s|m|h|d)(?:\b)/g,
+  'log-token-method': /\b(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|TRACE|CONNECT)\b/g,
   'log-token-string': /"(?!:)([^'"])*?"(?!:)/g,
-  'log-token-number': /\b-?(0x[\dA-Fa-f]+|\d*\.?\d+([Ee]-?\d+)?)\b/g,
-  'log-token-url': /(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)/i,
 };
 
 export const generateLogGrammar = (log: LogListModel) => {
