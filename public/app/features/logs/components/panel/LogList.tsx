@@ -20,10 +20,12 @@ import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
 import { GetRowContextQueryFn } from './LogLineMenu';
 import { LogListContext } from './LogListContext';
-import { preProcessLogs, LogListModel, calculateFieldDimensions, LogFieldDimension } from './processing';
+import { preProcessLogs, LogListModel } from './processing';
 import {
+  calculateFieldDimensions,
   getLogLineSize,
   init as initVirtualization,
+  LogFieldDimension,
   resetLogLineSizes,
   ScrollToLogsEvent,
   storeLogLineSize,

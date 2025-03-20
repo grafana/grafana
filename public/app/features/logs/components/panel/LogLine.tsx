@@ -10,8 +10,8 @@ import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPinned } from './LogListContext';
-import { LogFieldDimension, LogListModel } from './processing';
-import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight } from './virtualization';
+import { LogListModel } from './processing';
+import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight, LogFieldDimension } from './virtualization';
 
 interface Props {
   displayedFields: string[];
