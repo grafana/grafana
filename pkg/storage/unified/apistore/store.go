@@ -205,7 +205,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 
 	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
 	if grantPermisions != "" {
-		return grantPermissionsAfterCreate(ctx, meta, grantPermisions)
+		return grantPermissionsAfterCreate(ctx, req.Key, meta, grantPermisions)
 	}
 
 	return nil
