@@ -858,6 +858,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 	)
 }
 
+// newQuery will create a query that will match the value or the tokens of the value
 func newQuery(key string, value string, prefix string) query.Query {
 	delimiter, ok := hasTerms(value)
 	if termField[key] && ok {
