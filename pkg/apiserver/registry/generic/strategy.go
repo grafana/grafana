@@ -16,6 +16,8 @@ import (
 	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
 )
 
+// genericStrategy allows for writing objects with spec fields.
+// It ignores status fields, and does not allow for status updates.
 type genericStrategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
@@ -125,6 +127,8 @@ func (g *genericStrategy) WarningsOnUpdate(ctx context.Context, obj, old runtime
 	return nil
 }
 
+// genericStatusStrategy allows for writing objects with status fields, however may not create them.
+// It ignores spec and metadata fields, and does not allow for updates outside of the status field.
 type genericStatusStrategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
@@ -187,6 +191,95 @@ func (g *genericStatusStrategy) ValidateUpdate(ctx context.Context, obj, old run
 
 // WarningsOnUpdate returns warnings for the given update.
 func (g *genericStatusStrategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
+	return nil
+}
+
+// genericCompleteStrategy allows for writing objects with spec and status fields.
+// It does not ignore any fields, and allows for updates to both spec and status fields.
+// This is the same as having separate stores for spec and status fields.
+//
+// This can be applied to both the root object and status subresource in a Kubernetes REST API.
+type genericCompleteStrategy struct {
+	runtime.ObjectTyper
+	names.NameGenerator
+
+	gv schema.GroupVersion
+}
+
+// NewCompleteStrategy creates a new genericCompleteStrategy.
+func NewCompleteStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion) *genericCompleteStrategy {
+	return &genericCompleteStrategy{typer, names.SimpleNameGenerator, gv}
+}
+
+func (g *genericCompleteStrategy) NamespaceScoped() bool {
+	return true
+}
+
+func (g *genericCompleteStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
+	fields := map[fieldpath.APIVersion]*fieldpath.Set{
+		fieldpath.APIVersion(g.gv.String()): fieldpath.NewSet(),
+	}
+
+	return fields
+}
+
+func (g *genericCompleteStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return
+	}
+	meta.SetGeneration(1)
+}
+
+func (g *genericCompleteStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+	oldMeta, err := utils.MetaAccessor(old)
+	if err != nil {
+		return
+	}
+
+	newMeta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return
+	}
+
+	spec, err := newMeta.GetSpec()
+	if err != nil {
+		return
+	}
+
+	oldSpec, err := oldMeta.GetSpec()
+	if err != nil {
+		return
+	}
+
+	if !apiequality.Semantic.DeepEqual(spec, oldSpec) {
+		newMeta.SetGeneration(oldMeta.GetGeneration() + 1)
+	}
+}
+
+func (g *genericCompleteStrategy) AllowCreateOnUpdate() bool {
+	return true
+}
+
+func (g *genericCompleteStrategy) AllowUnconditionalUpdate() bool {
+	return true
+}
+
+func (g *genericCompleteStrategy) Canonicalize(obj runtime.Object) {}
+
+func (g *genericCompleteStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	return nil
+}
+
+func (g *genericCompleteStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return nil
+}
+
+func (g *genericCompleteStrategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
+	return nil
+}
+
+func (g *genericCompleteStrategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
 	return nil
 }
 

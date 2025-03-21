@@ -325,19 +325,17 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.getter = repositoryStorage
 
-	realJobStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
+	realJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
-	realJobStatusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, realJobStore)
 
-	historicJobStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
+	historicJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create historic job storage: %w", err)
 	}
-	historicJobStatusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, historicJobStore)
 
-	b.jobs, err = jobs.NewStore(realJobStore, realJobStatusStore, historicJobStore, historicJobStatusStore, time.Second*30)
+	b.jobs, err = jobs.NewStore(realJobStore, historicJobStore, time.Second*30)
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
@@ -345,9 +343,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage := map[string]rest.Storage{}
 	// Although we never interact with these resources via the API, we want them to be readable from the API.
 	storage[provisioning.JobResourceInfo.StoragePath()] = readonly.Wrap(realJobStore)
-	storage[provisioning.JobResourceInfo.StoragePath("status")] = readonly.Wrap(realJobStatusStore)
+	storage[provisioning.JobResourceInfo.StoragePath("status")] = readonly.Wrap(realJobStore)
 	storage[provisioning.HistoricJobResourceInfo.StoragePath()] = readonly.Wrap(historicJobStore)
-	storage[provisioning.HistoricJobResourceInfo.StoragePath("status")] = readonly.Wrap(historicJobStatusStore)
+	storage[provisioning.HistoricJobResourceInfo.StoragePath("status")] = readonly.Wrap(historicJobStore)
 
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
