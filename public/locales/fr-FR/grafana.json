@@ -1439,6 +1439,15 @@
     },
     "responsive-layout": {
       "description": "",
+      "item-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        }
+      },
       "name": "",
       "options": {
         "columns": "",
@@ -1453,12 +1462,6 @@
     "rows-layout": {
       "description": "",
       "name": "",
-      "option": {
-        "height": "",
-        "hide-header": "",
-        "repeat": "",
-        "title": ""
-      },
       "options": {
         "height-expand": "",
         "height-min": ""
@@ -1482,6 +1485,18 @@
         }
       },
       "row-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
+        "row": {
+          "height": "",
+          "hide-header": "",
+          "title": ""
+        },
         "title-option": ""
       }
     },
@@ -1522,7 +1537,6 @@
         "label": "",
         "tooltip": ""
       },
-      "edit-dashboard-v2-schema": "",
       "enter-edit-mode": {
         "label": "",
         "tooltip": ""
@@ -1533,6 +1547,66 @@
       },
       "mark-favorite": "Marquer comme favori",
       "more-save-options": "",
+      "new": {
+        "back-to-dashboard": "",
+        "dashboard-settings": {
+          "tooltip": ""
+        },
+        "discard-library-panel-changes": "",
+        "discard-panel": "",
+        "discard-panel-new": "",
+        "edit-dashboard-v2-schema": {
+          "tooltip": ""
+        },
+        "edit-toggle": {
+          "enter": {
+            "label": ""
+          },
+          "exit": {
+            "label": ""
+          }
+        },
+        "enter-edit-mode": {
+          "label": "",
+          "tooltip": ""
+        },
+        "export": {
+          "arrow": "",
+          "title": "",
+          "tooltip": ""
+        },
+        "mark-favorite": "",
+        "more-save-options": "",
+        "playlist-next": "",
+        "playlist-previous": "",
+        "playlist-stop": "",
+        "public-dashboard": "",
+        "save-dashboard": {
+          "label": "",
+          "tooltip": ""
+        },
+        "save-dashboard-copy": {
+          "label": "",
+          "tooltip": ""
+        },
+        "save-dashboard-short": "",
+        "save-library-panel": "",
+        "share": {
+          "arrow": "",
+          "title": "",
+          "tooltip": ""
+        },
+        "share-export": {
+          "modal": {
+            "noText": "",
+            "text": "",
+            "title": "",
+            "yesText": ""
+          }
+        },
+        "unlink-library-panel": "",
+        "unmark-favorite": ""
+      },
       "open-original": "Ouvrir le tableau de bord d'origine",
       "playlist-next": "Accéder au tableau de bord suivant",
       "playlist-previous": "Accéder au tableau de bord précédent",
@@ -1556,7 +1630,6 @@
         "tooltip": ""
       },
       "share-button": "Partager",
-      "show-hidden-elements": "",
       "switch-old-dashboard": "",
       "unlink-library-panel": "",
       "unmark-favorite": "Supprimer des favoris"
