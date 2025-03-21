@@ -123,7 +123,8 @@ fi
 # Print upcoming releases
 echo "This commit will be included in these UPCOMING on-prem releases:"
 if [ ${#release_branches[@]} -eq 0 ]; then
-    echo "  No upcoming releases"
+    echo "  This commit is not included in any upcoming release branches. YET!"
+    echo "  Most likely the `release-*` branch this will be included in has not yet been created."
 else
     for branch in "${release_branches[@]}"; do
         # Convert branch name to tag format (e.g., release-11.5.0 -> v11.5.0)
