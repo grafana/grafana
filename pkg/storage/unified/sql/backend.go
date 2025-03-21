@@ -650,6 +650,9 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"listAtRevision")
+	defer span.End()
+
 	// Get the RV
 	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
 	if req.NextPageToken != "" {
@@ -667,6 +670,10 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	if iter.listRV < 1 {
 		return 0, apierrors.NewBadRequest("expecting an explicit resource version query")
 	}
+
+	// The query below has the potential to be EXTREMELY slow if the resource_history table is big. May be helpful to know
+	// which stack is calling this.
+	b.log.Debug("listAtRevision", "ns", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "rv", iter.listRV)
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		limit := int64(0) // ignore limit
