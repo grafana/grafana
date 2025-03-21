@@ -648,6 +648,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	return &provisioning.WebhookResponse{
 		Code:    http.StatusAccepted, // Nothing needed
 		Message: fmt.Sprintf("pull request: %s", action),
+		JobName: fmt.Sprintf("%s-%s-%d", r.Config().GetName(), provisioning.JobActionPullRequest, pr.GetNumber()),
 		Job: &provisioning.JobSpec{
 			Repository: r.Config().GetName(),
 			Action:     provisioning.JobActionPullRequest,

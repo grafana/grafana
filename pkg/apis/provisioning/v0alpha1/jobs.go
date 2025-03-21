@@ -195,6 +195,9 @@ type WebhookResponse struct {
 	// Optional message
 	Message string `json:"added,omitempty"`
 
+	// JobName is the name of the job that will be created with the given spec.
+	JobName string `json:"jobName,omitempty"`
+
 	// Jobs to be processed
 	// When the response is 202 (Accepted) the queued jobs will be returned
 	Job *JobSpec `json:"job,omitempty"`

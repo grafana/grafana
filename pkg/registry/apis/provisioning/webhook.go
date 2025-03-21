@@ -95,11 +95,14 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 		if rsp.Job != nil {
+			if rsp.JobName == "" {
+				rsp.JobName = fmt.Sprintf("%s-%s", repo.Config().GetName(), rsp.Job.Action)
+			}
 			// Add the job to the job queue
 			job := &provisioning.Job{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: namespace,
-					Name:      fmt.Sprintf("%s-%s", repo.Config().GetName(), rsp.Job.Action),
+					Name:      rsp.JobName,
 					Labels: map[string]string{
 						"repository": name,
 					},
