@@ -1600,7 +1600,7 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 		user, _ := claims.AuthInfoFrom(ctx)
 		if user != nil && user.GetIdentityType() == claims.TypeUser {
 			meta, _ := utils.MetaAccessor(obj)
-			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "*")
+			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "default")
 		}
 	}
 

@@ -50,6 +50,16 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 	if err != nil {
 		return nil, err
 	}
+
+	// Grant default permissions for root folders
+	if cmd.ParentUID == "" {
+		user, _ := claims.AuthInfoFrom(ctx)
+		if user != nil && user.GetIdentityType() == claims.TypeUser {
+			meta, _ := utils.MetaAccessor(obj)
+			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "*")
+		}
+	}
+
 	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID)
 	if err != nil {
 		return nil, err
