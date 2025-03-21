@@ -50,6 +50,10 @@ var (
 		"user.sync.mismatched-externalUID",
 		errutil.WithPublicMessage("Mismatched externalUID"),
 	)
+	errEmptyExternalUID = errutil.Unauthorized(
+		"user.sync.empty-externalUID",
+		errutil.WithPublicMessage("Empty externalUID"),
+	)
 )
 
 var (
@@ -323,6 +327,11 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		if err != nil {
 			s.log.Error("Error getting auth info", "error", err)
 			return err
+		}
+
+		if id.ExternalUID == "" {
+			s.log.Error("externalUID is empty", "id", id.UID)
+			return errEmptyExternalUID.Errorf("externalUID is empty")
 		}
 
 		if id.ExternalUID != authInfo.ExternalUID {
