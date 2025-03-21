@@ -160,6 +160,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 
 	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
 		RequireDeprecatedInternalID: true,
+		EnableFolderSupport:         true,
 
 		// Will set default permissions for root folders
 		Permissions: b.dashboardPermissions.SetDefaultPermissions,

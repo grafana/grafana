@@ -49,8 +49,14 @@ type DefaultPermissionSetter = func(ctx context.Context, key *resource.ResourceK
 
 // Optional settings that apply to a single resource
 type StorageOptions struct {
+	// ????: should we constrain this to only dashboards for now?
+	// Not yet clear if this is a good general solution, or just a stop-gap
 	LargeObjectSupport LargeObjectSupport
 
+	// Allow writing objects with metadata.annotations[grafana.app/folder]
+	EnableFolderSupport bool
+
+	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
 
 	// Temporary fix to support adding default permissions AfterCreate
