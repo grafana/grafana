@@ -1,6 +1,7 @@
 import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
 
-import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
+import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
+import { config, getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import { getAPINamespace } from '../../api/utils';
@@ -19,20 +20,16 @@ import {
   K8sAPIGroupList,
   AnnoKeySavedFromUI,
   ResourceEvent,
+  GroupVersionResource,
 } from './types';
-
-export interface GroupVersionResource {
-  group: string;
-  version: string;
-  resource: string;
-}
 
 export class ScopedResourceClient<T = object, S = object, K = string> implements ResourceClient<T, S, K> {
   readonly url: string;
+  readonly gvr: GroupVersionResource;
 
   constructor(gvr: GroupVersionResource, namespaced = true) {
     const ns = namespaced ? `namespaces/${getAPINamespace()}/` : '';
-
+    this.gvr = gvr;
     this.url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
 
@@ -40,26 +37,40 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
   }
 
-  public watch(
-    params?: WatchOptions,
-    config?: Pick<BackendSrvRequest, 'data' | 'method'>
-  ): Observable<ResourceEvent<T, S, K>> {
-    const decoder = new TextDecoder();
-    const { name, ...rest } = params ?? {}; // name needs to be added to fieldSelector
+  public watch(params?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
     const requestParams = {
-      ...rest,
       watch: true,
       labelSelector: this.parseListOptionsSelector(params?.labelSelector),
       fieldSelector: this.parseListOptionsSelector(params?.fieldSelector),
     };
-    if (name) {
+    if (params?.name) {
       requestParams.fieldSelector = `metadata.name=${name}`;
     }
+
+    // For now, watch over live only supports provisioning
+    if (this.gvr.group === 'provisioning.grafana.app') {
+      let query = '';
+      if (requestParams.fieldSelector?.startsWith('metadata.name=')) {
+        query = requestParams.fieldSelector.substring('metadata.name'.length);
+      }
+      return getGrafanaLiveSrv()
+        .getStream<ResourceEvent<T, S, K>>({
+          scope: LiveChannelScope.Watch,
+          namespace: this.gvr.group,
+          path: `${this.gvr.version}/${this.gvr.resource}${query}/${config.bootData.user.uid}`,
+        })
+        .pipe(
+          filter((event) => isLiveChannelMessageEvent(event)),
+          map((event) => event.message)
+        );
+    }
+
+    const decoder = new TextDecoder();
     return getBackendSrv()
       .chunked({
         url: this.url,
         params: requestParams,
-        ...config,
+        method: 'GET',
       })
       .pipe(
         filter((response) => response.ok && response.data instanceof Uint8Array),
@@ -73,7 +84,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
           try {
             return JSON.parse(line);
           } catch (e) {
-            console.warn('Invalid JSON in watch stream:', e);
+            console.warn('Invalid JSON in watch stream:', e, line);
             return null;
           }
         }),

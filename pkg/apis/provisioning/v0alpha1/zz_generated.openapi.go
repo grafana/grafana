@@ -108,7 +108,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 							Format:      "",
 						},
 					},
-					"prefix": {
+					"path": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Prefix in target file system",
 							Type:        []string{"string"},
@@ -818,13 +818,6 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"prefix": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Target file prefix",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"history": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Preserve history (if possible)",
