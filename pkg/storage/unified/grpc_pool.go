@@ -63,7 +63,7 @@ func (opts *poolOpts) validate() error {
 	return nil
 }
 
-func newResourceClientWithPool(opts *poolOpts) (grpc.ClientConnInterface, error) {
+func newPooledConn(opts *poolOpts) (grpc.ClientConnInterface, error) {
 	if err := opts.validate(); err != nil {
 		return nil, fmt.Errorf("failed to validate connection pool options: %w", err)
 	}
