@@ -134,11 +134,11 @@ describe('ValueMappingsEditorModal', () => {
       );
       await selectOptionInTest(selectComponent, 'Range');
 
-      await userEvent.clear(screen.getByPlaceholderText('Range start'));
-      await userEvent.type(screen.getByPlaceholderText('Range start'), '10');
+      await userEvent.clear(screen.getByPlaceholderText('From'));
+      await userEvent.type(screen.getByPlaceholderText('From'), '10');
 
-      await userEvent.clear(screen.getByPlaceholderText('Range end'));
-      await userEvent.type(screen.getByPlaceholderText('Range end'), '20');
+      await userEvent.clear(screen.getByPlaceholderText('To'));
+      await userEvent.type(screen.getByPlaceholderText('To'), '20');
 
       await userEvent.clear(screen.getByPlaceholderText('Optional display text'));
       await userEvent.type(screen.getByPlaceholderText('Optional display text'), 'display');
