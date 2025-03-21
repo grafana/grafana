@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -18,6 +17,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 const (
@@ -76,14 +76,19 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		logger := logger.With("url", r.URL.Path, "ref", ref, "message", message)
 		ctx := logging.Context(r.Context(), logger)
 
-		filePath, err := ExtractFilePath(r.URL.Path, fmt.Sprintf("/%s/files/", name))
+		filePath, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files/", name))
 		if err != nil {
-			responder.Error(err)
+			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}
 
-		isFolderPath := IsFolderPath(filePath)
-		if r.Method == http.MethodGet && (filePath == "" || isFolderPath) {
+		if err := resources.IsPathSupported(filePath); err != nil {
+			responder.Error(apierrors.NewBadRequest(err.Error()))
+			return
+		}
+
+		isDir := safepath.IsDir(filePath)
+		if r.Method == http.MethodGet && isDir {
 			// TODO: Implement folder navigation
 			if len(filePath) > 0 {
 				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
@@ -112,6 +117,17 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
+		if filePath == "" {
+			responder.Error(apierrors.NewBadRequest("path is required"))
+			return
+		}
+
+		// TODO: Implement folder delete
+		if r.Method == http.MethodDelete && isDir {
+			responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
+			return
+		}
+
 		var obj *provisioning.ResourceWrapper
 		code := http.StatusOK
 		switch r.Method {
@@ -121,7 +137,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			obj, err = s.doWrite(ctx, false, repo, filePath, ref, message, r)
 		case http.MethodPut:
 			// TODO: document in API specification
-			if isFolderPath {
+			if isDir {
 				err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 			} else {
 				obj, err = s.doWrite(ctx, true, repo, filePath, ref, message, r)
@@ -153,9 +169,6 @@ func (s *filesConnector) doRead(ctx context.Context, repo repository.Reader, pat
 	info, err := repo.Read(ctx, path, ref)
 	if err != nil {
 		return 0, nil, err
-	}
-	if strings.HasPrefix(info.Path, "/") {
-		return 0, nil, fmt.Errorf("repository path must be relative to the root")
 	}
 
 	parser, err := s.parsers.GetParser(ctx, repo)
@@ -202,7 +215,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 	}
 
 	defer func() { _ = req.Body.Close() }()
-	if strings.HasSuffix(path, "/") {
+	if safepath.IsDir(path) {
 		return s.doCreateFolder(ctx, writer, path, ref, message, parser)
 	}
 
@@ -327,11 +340,6 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 	access, ok := repo.(repository.ReaderWriter)
 	if !ok {
 		return nil, fmt.Errorf("repository is not read+writeable")
-	}
-
-	// TODO: Support deleting folders
-	if strings.HasSuffix(path, "/") {
-		return nil, fmt.Errorf("deleting folders (safely) is not yet supported")
 	}
 
 	file, err := access.Read(ctx, path, ref)

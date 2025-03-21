@@ -179,11 +179,7 @@ func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured
 
 	fileName := slugify.Slugify(title) + ".json"
 	if fid.Path != "" {
-		fileName, err = safepath.Join(fid.Path, fileName)
-		if err != nil {
-			result.Error = fmt.Errorf("error adding file path: %w", err)
-			return result
-		}
+		fileName = safepath.Join(fid.Path, fileName)
 	}
 
 	err = j.target.Write(ctx, fileName, "", body, commitMessage)

@@ -92,8 +92,7 @@ func TestParseFolderID(t *testing.T) {
 	}{
 		{"Short, simple path", "hello/world", "world", "world-wik-hjayboohlsvzzr2ob3he8cs7ffk0jd"},
 		{"Capital letters and punctuation", "Hello, World!", "Hello, World!", "helloworld-sbcnvdmezf0jnvgfhpk5ewaoawbeg"},
-		{"Very long name", strings.Repeat("/hello/world", 200), "world", "world-hvogmduf-7llmahwaldpwlgfikarxzej5y"},
-		{"Leading, trailing, and unnecessary slashes", "/hello///world////", "world", "world-wik-hjayboohlsvzzr2ob3he8cs7ffk0jd"},
+		{"Very long name", strings.Repeat("/hello/world", 200), "world", "world-bc9jpbg6ctg-w-pexkul-f1ic-bwer5-3r"},
 	}
 
 	for _, c := range cases {

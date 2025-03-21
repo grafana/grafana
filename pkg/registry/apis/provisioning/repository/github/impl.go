@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/google/go-github/v69/github"
@@ -75,10 +74,6 @@ const (
 )
 
 func (r *githubClient) GetContents(ctx context.Context, owner, repository, path, ref string) (fileContents RepositoryContent, dirContents []RepositoryContent, err error) {
-	if strings.Contains(path, "..") {
-		return nil, nil, ErrPathTraversalDisallowed
-	}
-
 	// First try to get repository contents
 	opts := &github.RepositoryContentGetOptions{
 		Ref: ref,
@@ -125,13 +120,7 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, basePath,
 	var tree *github.Tree
 	var err error
 
-	basePath = safepath.Clean(basePath)
-	if basePath == "." || basePath == "/" {
-		basePath = ""
-	}
-
-	subPaths := strings.Split(basePath, "/")
-	subPaths = keepNonEmpty(subPaths)
+	subPaths := safepath.Split(basePath)
 	currentRef := ref
 
 	for {
@@ -211,10 +200,6 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, basePath,
 }
 
 func (r *githubClient) CreateFile(ctx context.Context, owner, repository, path, branch, message string, content []byte) error {
-	if strings.Contains(path, "..") {
-		return ErrPathTraversalDisallowed
-	}
-
 	if message == "" {
 		message = fmt.Sprintf("Create %s", path)
 	}
@@ -239,10 +224,6 @@ func (r *githubClient) CreateFile(ctx context.Context, owner, repository, path, 
 }
 
 func (r *githubClient) UpdateFile(ctx context.Context, owner, repository, path, branch, message, hash string, content []byte) error {
-	if strings.Contains(path, "..") {
-		return ErrPathTraversalDisallowed
-	}
-
 	if message == "" {
 		message = fmt.Sprintf("Update %s", path)
 	}
@@ -274,10 +255,6 @@ func (r *githubClient) UpdateFile(ctx context.Context, owner, repository, path, 
 }
 
 func (r *githubClient) DeleteFile(ctx context.Context, owner, repository, path, branch, message, hash string) error {
-	if strings.Contains(path, "..") {
-		return ErrPathTraversalDisallowed
-	}
-
 	if message == "" {
 		message = fmt.Sprintf("Delete %s", path)
 	}
@@ -725,16 +702,6 @@ func (c realRepositoryContent) GetSize() int64 {
 		}
 	}
 	return 0
-}
-
-func keepNonEmpty(strs []string) []string {
-	ret := make([]string, 0, len(strs))
-	for _, s := range strs {
-		if s != "" {
-			ret = append(ret, s)
-		}
-	}
-	return ret
 }
 
 // listOptions represents pagination parameters for list operations

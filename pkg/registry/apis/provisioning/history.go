@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 type historySubresource struct {
@@ -69,11 +70,17 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		query := r.URL.Query()
 		ref := query.Get("ref")
 
-		filePath, err := ExtractFilePath(r.URL.Path, fmt.Sprintf("/%s/history/", name))
+		filePath, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/history/", name))
 		if err != nil {
-			responder.Error(err)
+			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}
+
+		if err := resources.IsPathSupported(filePath); err != nil {
+			responder.Error(apierrors.NewBadRequest(err.Error()))
+			return
+		}
+
 		logger = logger.With("ref", ref, "path", filePath)
 		ctx = logging.Context(r.Context(), logger)
 

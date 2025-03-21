@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 // ExportJob holds all context for a running job
@@ -32,17 +31,13 @@ func newExportJob(ctx context.Context,
 	clients *resources.ResourceClients,
 	progress jobs.JobProgressRecorder,
 ) *exportJob {
-	path := options.Path
-	if path != "" {
-		path = safepath.Clean(path)
-	}
 	return &exportJob{
 		namespace:      target.Config().Namespace,
 		target:         target,
 		client:         clients,
 		logger:         logging.FromContext(ctx),
 		progress:       progress,
-		path:           path,
+		path:           options.Path,
 		ref:            options.Branch,
 		keepIdentifier: options.Identifier,
 		folderTree:     resources.NewEmptyFolderTree(),

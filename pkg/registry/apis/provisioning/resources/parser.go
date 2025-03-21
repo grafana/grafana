@@ -20,9 +20,15 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
+var (
+	ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
+	ErrPathTooDeep       = errors.New("the path is too deep")
+)
+
+const maxPathDepth = 8
 
 type ParserFactory struct {
 	ClientFactory *ClientFactory
@@ -113,8 +119,12 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		Repo: r.repo,
 	}
 
-	if ShouldIgnorePath(info.Path) && info.Path != "" {
-		return parsed, ErrUnableToReadResourceBytes
+	if err := IsPathSupported(info.Path); err != nil {
+		return parsed, err
+	}
+
+	if info.Path == "" {
+		return parsed, errors.New("path is required")
 	}
 
 	parsed.Obj, parsed.GVK, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
@@ -287,13 +297,22 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 	return wrap
 }
 
-// ShouldIgnorePath determines if the path given is worth looking at.
-// If this returns true, skip processing it.
-// JSON and YAML files are valid paths. Anything else isn't.
-func ShouldIgnorePath(p string) bool {
-	ext := path.Ext(p)
-	// .yaml is the official extension per the spec, but .yml is widespread, too. (even this repo uses the unofficial one a lot!)
-	return ext != ".yml" && ext != ".yaml" &&
-		// We only support YAML, but JSON is sometimes generated from other tools, and is a valid subset of YAML.
-		ext != ".json"
+func IsPathSupported(filePath string) error {
+	// Validate the path for any traversal attempts first
+	if err := safepath.IsSafe(filePath); err != nil {
+		return err
+	}
+
+	if safepath.Depth(filePath) > maxPathDepth {
+		return ErrPathTooDeep
+	}
+
+	// Only check file extension if it's not a folder path
+	if !safepath.IsDir(filePath) {
+		if ext := path.Ext(filePath); ext != ".yml" && ext != ".yaml" && ext != ".json" {
+			return errors.New("only YAML and JSON files supported")
+		}
+	}
+
+	return nil
 }
