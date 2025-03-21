@@ -30,7 +30,7 @@ func TestRunner_Run_NoErrorOnList(t *testing.T) {
 	runner := &Runner{
 		checkRegistry:      mockCheckService,
 		client:             mockClient,
-		log:                log.New("test"),
+		log:                log.NewNopLogger(),
 		evaluationInterval: 1 * time.Hour,
 	}
 
@@ -49,7 +49,7 @@ func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    log.New("test"),
+		log:    log.NewNopLogger(),
 	}
 
 	lastCreated, err := runner.checkLastCreated(context.Background())
@@ -74,7 +74,7 @@ func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
 	runner := &Runner{
 		checkRegistry: mockCheckService,
 		client:        mockClient,
-		log:           log.New("test"),
+		log:           log.NewNopLogger(),
 	}
 
 	err := runner.createChecks(context.Background())
@@ -98,7 +98,7 @@ func TestRunner_createChecks_Success(t *testing.T) {
 	runner := &Runner{
 		checkRegistry: mockCheckService,
 		client:        mockClient,
-		log:           log.New("test"),
+		log:           log.NewNopLogger(),
 	}
 
 	err := runner.createChecks(context.Background())
@@ -114,7 +114,7 @@ func TestRunner_cleanupChecks_ErrorOnList(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    log.New("test"),
+		log:    log.NewNopLogger(),
 	}
 
 	err := runner.cleanupChecks(context.Background())
@@ -135,7 +135,7 @@ func TestRunner_cleanupChecks_WithinMax(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    log.New("test"),
+		log:    log.NewNopLogger(),
 	}
 
 	err := runner.cleanupChecks(context.Background())
@@ -165,7 +165,7 @@ func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 	runner := &Runner{
 		client:     mockClient,
 		maxHistory: defaultMaxHistory,
-		log:        log.New("test"),
+		log:        log.NewNopLogger(),
 	}
 	err := runner.cleanupChecks(context.Background())
 	assert.ErrorContains(t, err, "delete error")
@@ -201,7 +201,7 @@ func TestRunner_cleanupChecks_Success(t *testing.T) {
 	runner := &Runner{
 		client:     mockClient,
 		maxHistory: defaultMaxHistory,
-		log:        log.New("test"),
+		log:        log.NewNopLogger(),
 	}
 	err := runner.cleanupChecks(context.Background())
 	assert.NoError(t, err)

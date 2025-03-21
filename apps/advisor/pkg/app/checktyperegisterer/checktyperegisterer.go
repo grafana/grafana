@@ -90,16 +90,18 @@ func (r *Runner) Run(ctx context.Context) error {
 					if err != nil {
 						// Ignore the error, it's probably due to a race condition
 						r.log.Error("Error updating check type", "error", err)
-					} else {
-						continue
 					}
+					return nil
 				}
 				r.log.Error("Error creating check type, retrying", "error", err, "attempt", i+1)
-				time.Sleep(r.retryDelay)
 				if i == r.retryAttempts-1 {
 					r.log.Error("Unable to register check type")
 				}
+				time.Sleep(r.retryDelay)
+				continue
 			}
+			r.log.Debug("Check type registered successfully", "check_type", t.ID())
+			return nil
 		}
 	}
 	return nil
