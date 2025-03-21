@@ -10,7 +10,9 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
@@ -498,6 +500,35 @@ func TestBackend_getHistory(t *testing.T) {
 				require.Zero(t, listRv)
 				require.Error(t, err)
 				require.ErrorContains(t, err, tc.expectedErr)
+			}
+		})
+	}
+}
+
+func Test_fetchLatestDeletionRV(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		x   db.ContextExecer
+		d   sqltemplate.Dialect
+		key *resource.ResourceKey
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    int64
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := fetchLatestDeletionRV(tt.args.ctx, tt.args.x, tt.args.d, tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("fetchLatestDeletionRV() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("fetchLatestDeletionRV() = %v, want %v", got, tt.want)
 			}
 		})
 	}
