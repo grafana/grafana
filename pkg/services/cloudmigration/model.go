@@ -192,6 +192,8 @@ type SnapshotResultQueryParams struct {
 	ErrorsOnly  bool
 }
 
+type ResourceTypes map[MigrateDataType]struct{}
+
 type GetSnapshotsQuery struct {
 	SnapshotUID string
 	OrgID       int64
