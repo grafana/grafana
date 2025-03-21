@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -49,8 +50,9 @@ func TestDashboardVersionService(t *testing.T) {
 		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
 		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
 
-		mockCli.On("GetUserFromMeta", mock.Anything, "user:1").Return(&user.User{ID: 1}, nil)
-		mockCli.On("Get", mock.Anything, "uid", int64(1), v1.GetOptions{ResourceVersion: "10"}, mock.Anything).Return(&unstructured.Unstructured{
+		creationTimestamp := time.Now().Add(time.Hour * -24).UTC()
+		updatedTimestamp := time.Now().UTC().Truncate(time.Second)
+		dash := &unstructured.Unstructured{
 			Object: map[string]any{
 				"metadata": map[string]any{
 					"name":            "uid",
@@ -66,7 +68,13 @@ func TestDashboardVersionService(t *testing.T) {
 				"spec": map[string]any{
 					"hello": "world",
 				},
-			}}, nil).Once()
+			}}
+		dash.SetCreationTimestamp(v1.NewTime(creationTimestamp))
+		obj, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		obj.SetUpdatedTimestamp(&updatedTimestamp)
+		mockCli.On("GetUserFromMeta", mock.Anything, "user:1").Return(&user.User{ID: 1}, nil)
+		mockCli.On("Get", mock.Anything, "uid", int64(1), v1.GetOptions{ResourceVersion: "10"}, mock.Anything).Return(dash, nil).Once()
 		res, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
 			DashboardID: 42,
 			OrgID:       1,
@@ -80,6 +88,7 @@ func TestDashboardVersionService(t *testing.T) {
 			DashboardID:   42,
 			DashboardUID:  "uid",
 			CreatedBy:     1,
+			Created:       updatedTimestamp,
 			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(10), "hello": "world"}),
 		})
 
