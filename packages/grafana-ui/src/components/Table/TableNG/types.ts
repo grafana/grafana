@@ -223,3 +223,8 @@ export type FrameToRowsConverter = (frame: DataFrame) => TableRow[];
 
 // Type for mapping column names to their field types
 export type ColumnTypes = Record<string, FieldType>;
+
+export interface ScrollPosition {
+  x: number;
+  y: number;
+}

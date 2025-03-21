@@ -71,19 +71,12 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
         );
     }, [panel]);
 
-    const layoutCategory = useMemo(() => {
-      if (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions) {
-        return layoutElement.getOptions();
-      }
-      return undefined;
-    }, [layoutElement]);
+    const layoutCategories = useMemo(
+      () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
+      [layoutElement]
+    );
 
-    const categories = [panelOptions];
-    if (layoutCategory) {
-      categories.push(layoutCategory);
-    }
-
-    return categories;
+    return [panelOptions, ...layoutCategories];
   }
 
   public onDelete() {
