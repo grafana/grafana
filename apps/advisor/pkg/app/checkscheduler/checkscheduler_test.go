@@ -16,28 +16,30 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestRunner_Run_NoErrorOnList(t *testing.T) {
-	mockCheckService := &MockCheckService{}
-	mockClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			return nil, errors.New("list error")
-		},
-		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
-			return &advisorv0alpha1.Check{}, nil
-		},
-	}
+func TestRunner_Run(t *testing.T) {
+	t.Run("does not crash when error on list", func(t *testing.T) {
+		mockCheckService := &MockCheckService{}
+		mockClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return nil, errors.New("list error")
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				return &advisorv0alpha1.Check{}, nil
+			},
+		}
 
-	runner := &Runner{
-		checkRegistry:      mockCheckService,
-		client:             mockClient,
-		log:                log.NewNopLogger(),
-		evaluationInterval: 1 * time.Hour,
-	}
+		runner := &Runner{
+			checkRegistry:      mockCheckService,
+			client:             mockClient,
+			log:                log.NewNopLogger(),
+			evaluationInterval: 1 * time.Hour,
+		}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	err := runner.Run(ctx)
-	assert.ErrorAs(t, err, &context.Canceled)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := runner.Run(ctx)
+		assert.ErrorAs(t, err, &context.Canceled)
+	})
 }
 
 func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
