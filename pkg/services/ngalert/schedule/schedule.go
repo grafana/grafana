@@ -109,6 +109,8 @@ type schedule struct {
 	tracer tracing.Tracer
 
 	recordingWriter RecordingWriter
+
+	enableSequences bool
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -129,6 +131,7 @@ type SchedulerCfg struct {
 	Log                    log.Logger
 	RecordingWriter        RecordingWriter
 	RuleStopReasonProvider AlertRuleStopReasonProvider
+	EnableSequences        bool
 }
 
 // NewScheduler returns a new scheduler.
@@ -159,6 +162,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		tracer:                 cfg.Tracer,
 		recordingWriter:        cfg.RecordingWriter,
 		ruleStopReasonProvider: cfg.RuleStopReasonProvider,
+		enableSequences:        cfg.EnableSequences,
 	}
 
 	return &sch
@@ -388,9 +392,18 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.log.Warn("Unable to obtain folder titles for some rules", "missingFolderUIDToRuleUID", missingFolder)
 	}
 
-	sequences := sch.buildSequences(readyToRun, sch.runJobFn)
+	// jitter the start time based on the base interval and total scheduled items
+	var step int64
+	if len(readyToRun) > 0 {
+		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
+	}
 
-	sch.runSequences(sequences, int64(len(readyToRun)))
+	if sch.enableSequences {
+		sequences := sch.buildSequences(readyToRun, sch.runJobFn)
+		sch.runSequences(sequences, step)
+	} else {
+		sch.runItems(readyToRun, step)
+	}
 
 	// Stop old routines for rules that got restarted.
 	for _, oldRoutine := range restartedRules {
@@ -426,19 +439,14 @@ func (sch *schedule) runJobFn(next readyToRunItem, prev ...readyToRunItem) func(
 	}
 }
 
-func (sch *schedule) runSequences(sequences []sequence, numItems int64) {
-	if len(sequences) == 0 {
-		return // Nothing to do
+func (sch *schedule) runItems(readyToRun []readyToRunItem, step int64) {
+	for i := range readyToRun {
+		time.AfterFunc(time.Duration(int64(i)*step), sch.runJobFn(readyToRun[i]))
 	}
+}
 
-	// jitter the start time based on the base interval and total scheduled items
-	var step int64
-	if numItems > 0 {
-		step = sch.baseInterval.Nanoseconds() / numItems
-	}
-
+func (sch *schedule) runSequences(sequences []sequence, step int64) {
 	for i := range sequences {
-		sequence := sequences[i]
-		time.AfterFunc(time.Duration(int64(i)*step), sch.runJobFn(readyToRunItem(sequence)))
+		time.AfterFunc(time.Duration(int64(i)*step), sch.runJobFn(readyToRunItem(sequences[i])))
 	}
 }

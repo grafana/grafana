@@ -437,6 +437,20 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleSequentialEvaluation",
+        "resourceVersion": "1742580089675",
+        "creationTimestamp": "2025-03-21T18:01:29Z"
+      },
+      "spec": {
+        "description": "Enables the alerting rule sequential evaluation feature",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
         "resourceVersion": "1740740039764",
         "creationTimestamp": "2025-01-16T14:08:12Z",
@@ -2278,11 +2292,14 @@
     {
       "metadata": {
         "name": "jitterAlertRulesWithinGroups",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-18T18:48:11Z"
+        "resourceVersion": "1742581260617",
+        "creationTimestamp": "2024-01-18T18:48:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-21 18:21:00.617577 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
+        "description": "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.",
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
