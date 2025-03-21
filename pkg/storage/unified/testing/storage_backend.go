@@ -516,7 +516,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 					Limit:           3,
 					Source:          resource.ListRequest_HISTORY,
 					ResourceVersion: rv1,
-					VersionMatch:    resource.ResourceVersionMatch_NotOlderThan,
+					VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
 					Options: &resource.ListOptions{
 						Key: baseKey,
 					},
@@ -533,7 +533,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 					Limit:           3,
 					Source:          resource.ListRequest_HISTORY,
 					ResourceVersion: 0,
-					VersionMatch:    resource.ResourceVersionMatch_NotOlderThan,
+					VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
 					Options: &resource.ListOptions{
 						Key: baseKey,
 					},
@@ -592,7 +592,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 				Limit:           3,
 				Source:          resource.ListRequest_HISTORY,
 				ResourceVersion: rv1,
-				VersionMatch:    resource.ResourceVersionMatch_NotOlderThan,
+				VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
 				Options:         &resource.ListOptions{Key: baseKey},
 			}
 			firstPageRes, err := server.List(ctx, firstRequest)
@@ -607,7 +607,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 				Limit:           3,
 				Source:          resource.ListRequest_HISTORY,
 				ResourceVersion: rv1,
-				VersionMatch:    resource.ResourceVersionMatch_NotOlderThan,
+				VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
 				NextPageToken:   continueToken.String(),
 				Options:         &resource.ListOptions{Key: baseKey},
 			})
@@ -700,7 +700,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 				Limit:           int64(page.pageSize),
 				Source:          resource.ListRequest_HISTORY,
 				ResourceVersion: 0,
-				VersionMatch:    resource.ResourceVersionMatch_NotOlderThan,
+				VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
 				Options: &resource.ListOptions{
 					Key: resourceKey,
 				},

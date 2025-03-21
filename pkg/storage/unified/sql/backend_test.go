@@ -391,7 +391,7 @@ func TestBackend_getHistory(t *testing.T) {
 
 	tests := []struct {
 		name              string
-		versionMatch      resource.ResourceVersionMatch
+		versionMatch      resource.ResourceVersionMatchV2
 		resourceVersion   int64
 		expectedVersions  []int64
 		expectedListRv    int64
@@ -400,7 +400,7 @@ func TestBackend_getHistory(t *testing.T) {
 	}{
 		{
 			name:              "with ResourceVersionMatch_NotOlderThan",
-			versionMatch:      resource.ResourceVersionMatch_NotOlderThan,
+			versionMatch:      resource.ResourceVersionMatchV2_NotOlderThan,
 			resourceVersion:   rv2,
 			expectedVersions:  []int64{rv2, rv3}, // Should be in ASC order due to NotOlderThan
 			expectedListRv:    rv3,
@@ -408,7 +408,7 @@ func TestBackend_getHistory(t *testing.T) {
 		},
 		{
 			name:              "with ResourceVersionMatch_NotOlderThan and ResourceVersion=0",
-			versionMatch:      resource.ResourceVersionMatch_NotOlderThan,
+			versionMatch:      resource.ResourceVersionMatchV2_NotOlderThan,
 			resourceVersion:   0,
 			expectedVersions:  []int64{rv1, rv2, rv3}, // Should be in ASC order due to NotOlderThan
 			expectedListRv:    rv3,
@@ -416,7 +416,7 @@ func TestBackend_getHistory(t *testing.T) {
 		},
 		{
 			name:              "with ResourceVersionMatch_Exact",
-			versionMatch:      resource.ResourceVersionMatch_Exact,
+			versionMatch:      resource.ResourceVersionMatchV2_Exact,
 			resourceVersion:   rv2,
 			expectedVersions:  []int64{rv2},
 			expectedListRv:    rv3,
@@ -430,7 +430,7 @@ func TestBackend_getHistory(t *testing.T) {
 		},
 		{
 			name:            "error with ResourceVersionMatch_Exact and ResourceVersion <= 0",
-			versionMatch:    resource.ResourceVersionMatch_Exact,
+			versionMatch:    resource.ResourceVersionMatchV2_Exact,
 			resourceVersion: 0,
 			expectedErr:     "expecting an explicit resource version query when using Exact matching",
 		},
@@ -446,7 +446,7 @@ func TestBackend_getHistory(t *testing.T) {
 			req := &resource.ListRequest{
 				Options:         &resource.ListOptions{Key: key},
 				ResourceVersion: tc.resourceVersion,
-				VersionMatch:    tc.versionMatch,
+				VersionMatchV2:  tc.versionMatch,
 				Source:          resource.ListRequest_HISTORY,
 			}
 
@@ -573,7 +573,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 			req := &resource.ListRequest{
 				Options:         &resource.ListOptions{Key: key},
 				ResourceVersion: initialRV,
-				VersionMatch:    resource.ResourceVersionMatch_NotOlderThan,
+				VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
 				Source:          resource.ListRequest_HISTORY,
 				Limit:           4,
 			}
@@ -613,7 +613,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 		req := &resource.ListRequest{
 			Options:         &resource.ListOptions{Key: key},
 			ResourceVersion: 0,
-			VersionMatch:    resource.ResourceVersionMatch_NotOlderThan,
+			VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
 			Source:          resource.ListRequest_HISTORY,
 			Limit:           4,
 		}
