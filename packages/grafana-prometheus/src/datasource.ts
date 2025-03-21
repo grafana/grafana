@@ -483,7 +483,7 @@ export class PrometheusDatasource
       return Promise.resolve([]);
     }
 
-    const timeRange = options?.range ?? this.languageProvider.timeRange ?? getDefaultTimeRange();
+    const timeRange = options?.range ?? getDefaultTimeRange();
 
     const scopedVars = {
       ...this.getIntervalVars(),
@@ -654,6 +654,10 @@ export class PrometheusDatasource
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
+    if (!options.timeRange) {
+      options.timeRange = getDefaultTimeRange();
+    }
+
     if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
       const suggestions = await this.languageProvider.fetchSuggestions(
         options.timeRange,
@@ -680,7 +684,10 @@ export class PrometheusDatasource
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
 
-    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr);
+    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(
+      options.timeRange,
+      expr
+    );
 
     // filter out already used labels
     return Object.keys(labelsIndex)
@@ -689,7 +696,11 @@ export class PrometheusDatasource
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
-  async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
+  async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>): Promise<MetricFindValue[]> {
+    if (!options.timeRange) {
+      options.timeRange = getDefaultTimeRange();
+    }
+
     const requestId = `[${this.uid}][${options.key}]`;
     if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
       return (
@@ -715,7 +726,7 @@ export class PrometheusDatasource
 
     if (this.hasLabelsMatchAPISupport()) {
       return (
-        await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, requestId, options.timeRange)
+        await this.languageProvider.fetchSeriesValuesWithMatch(options.timeRange, options.key, expr, requestId)
       ).map((v) => ({
         value: v,
         text: v,
