@@ -148,7 +148,7 @@ func TestSQLExpressionsIsLossless(t *testing.T) {
 	// Create frames with appropriate FrameMeta.Type
 	frame1 := data.NewFrame("frame1",
 		data.NewField("ts", nil, times),
-		data.NewField("value", data.Labels{"host": "dummy_a", "sparse_label": "label_value_present"}, []float64{13}),
+		data.NewField("cpu", data.Labels{"host": "dummy_a", "sparse_label": "label_value_present"}, []float64{13}),
 	)
 	frame1.Meta = &data.FrameMeta{
 		Type: data.FrameTypeNumericMulti,
@@ -156,7 +156,7 @@ func TestSQLExpressionsIsLossless(t *testing.T) {
 
 	frame2 := data.NewFrame("frame1",
 		data.NewField("ts", nil, times),
-		data.NewField("value", data.Labels{"host": "dummy_b"}, []float64{17}),
+		data.NewField("cpu", data.Labels{"host": "dummy_b"}, []float64{17}),
 	)
 	frame2.Meta = &data.FrameMeta{
 		Type: data.FrameTypeNumericMulti,
