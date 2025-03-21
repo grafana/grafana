@@ -198,31 +198,20 @@ export function shouldTextOverflow(
   defaultRowHeight: number,
   padding: number,
   textWrap: boolean,
-  cellInspect: boolean
+  cellInspect: boolean,
+  cellType: TableCellDisplayMode
 ): boolean {
-  if (textWrap || cellInspect) {
+  // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
+  // so we need to ensure we don't apply overflow hover states fo type image
+  if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || !isTextCell(key, columnTypes)) {
     return false;
   }
 
-  if (isTextCell(key, columnTypes)) {
-    const cellWidth = headerCellRefs.current[key].offsetWidth;
-    const cellText = String(row[key] ?? '');
-    const newCellHeight = getCellHeight(cellText, cellWidth, ctx, lineHeight, defaultRowHeight, padding);
+  const cellWidth = headerCellRefs.current[key].offsetWidth;
+  const cellText = String(row[key] ?? '');
+  const newCellHeight = getCellHeight(cellText, cellWidth, ctx, lineHeight, defaultRowHeight, padding);
 
-    if (newCellHeight > defaultRowHeight) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-export function getColumnWidth(field: Field, fieldConfig: TableNGProps['fieldConfig'], key: string): number {
-  const overrideWidth = fieldConfig?.overrides
-    ?.find(({ matcher: { id, options } }) => id === 'byName' && options === key)
-    ?.properties?.find(({ id }) => id === 'width')?.value;
-
-  return overrideWidth ?? field.config?.custom?.width ?? fieldConfig?.defaults?.custom?.width ?? 'auto';
+  return newCellHeight > defaultRowHeight;
 }
 
 export function getTextAlign(field?: Field): Property.JustifyContent {

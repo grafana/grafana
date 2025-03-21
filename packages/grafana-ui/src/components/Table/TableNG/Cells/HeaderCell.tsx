@@ -74,15 +74,11 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
     const headerCellParent = headerRef.current?.parentElement;
     if (headerCellParent) {
       // `lastElement` is an HTML element added by react-data-grid for resizing columns.
-      // We add a click event listener to `lastElement` to handle the end of the resize operation.
+      // We add event listeners to `lastElement` to handle the resize operation.
       const lastElement = headerCellParent.lastElementChild;
       if (lastElement) {
         const handleMouseUp = () => {
           let newWidth = headerCellParent.clientWidth;
-          const columnMinWidth = column.minWidth;
-          if (columnMinWidth && newWidth < columnMinWidth) {
-            newWidth = columnMinWidth;
-          }
           onColumnResize?.(column.key as string, newWidth);
         };
 

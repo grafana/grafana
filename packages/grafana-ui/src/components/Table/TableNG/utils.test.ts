@@ -31,7 +31,6 @@ import {
   getCellColors,
   getCellLinks,
   getCellOptions,
-  getColumnWidth,
   getComparator,
   getDefaultRowHeight,
   getFooterItemNG,
@@ -152,6 +151,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // Test column structure
@@ -202,6 +202,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       expect(columns).toHaveLength(3);
@@ -221,10 +222,11 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // Default width
-      expect(columns[0].width).toBe('auto');
+      expect(columns[0].width).toBe(350);
       // Explicit width from field config
       expect(columns[1].width).toBe(100);
       // Default width with min width
@@ -237,6 +239,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       const messageColumn = columns[2];
@@ -254,6 +257,7 @@ describe('TableNG utils', () => {
         calcsRef: { current: ['3', '', ''] },
         options,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // First column should show count
@@ -320,6 +324,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // First column should be expander
@@ -337,6 +342,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: mockOptions,
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // Should only have expander + Time + Value (not Nested frames column)
@@ -354,6 +360,7 @@ describe('TableNG utils', () => {
         calcsRef,
         options: { ...mockOptions, expandedRows },
         handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        availableWidth: mockOptions.width,
       });
 
       // Get the rendered content of first row's expander cell
@@ -1530,70 +1537,6 @@ describe('TableNG utils', () => {
 
       // Empty text should return default height
       expect(height).toBe(defaultRowHeight);
-    });
-  });
-
-  describe('getColumnWidth', () => {
-    // Create a basic field config source
-    const createFieldConfig = () => ({
-      defaults: {
-        custom: {},
-      },
-      overrides: [],
-    });
-
-    it('should return fixed width when specified in field config', () => {
-      const field: Field = {
-        name: 'test',
-        type: FieldType.string,
-        config: {
-          custom: {
-            width: 150, // Fixed width in pixels
-          },
-        },
-        values: [],
-      };
-
-      const fieldConfig = createFieldConfig();
-      const width = getColumnWidth(field, fieldConfig, 'auto');
-      expect(width).toBe(150);
-    });
-
-    it('should use default min width when not specified', () => {
-      const field: Field = {
-        name: 'test',
-        type: FieldType.string,
-        config: {
-          custom: {
-            width: 50, // Width smaller than default min width
-          },
-        },
-        values: [],
-      };
-
-      const fieldConfig = createFieldConfig();
-      const width = getColumnWidth(field, fieldConfig, 'auto');
-      // Should use default min width (likely COLUMN.MIN_WIDTH)
-      expect(width).toBeGreaterThanOrEqual(50);
-    });
-
-    it('should default to auto when no width is specified', () => {
-      const field: Field = {
-        name: 'test',
-        type: FieldType.string,
-        config: {
-          custom: {
-            // No width specified
-          },
-        },
-        values: [],
-      };
-
-      const fieldConfig = createFieldConfig();
-
-      // When width is not provided
-      const widthWithoutDefault = getColumnWidth(field, fieldConfig, '');
-      expect(widthWithoutDefault).toBe('auto');
     });
   });
 

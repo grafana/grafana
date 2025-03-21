@@ -1,11 +1,13 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
-import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn } from 'react-data-grid';
+import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {
   DataFrame,
+  DataHoverClearEvent,
+  DataHoverEvent,
   Field,
   fieldReducers,
   FieldType,
@@ -14,13 +16,14 @@ import {
   GrafanaTheme2,
   ReducerID,
 } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { Trans } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
-import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
+import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 
 import { HeaderCell } from './Cells/HeaderCell';
@@ -35,10 +38,11 @@ import {
   ColumnTypes,
   TableColumnResizeActionCallback,
   TableColumn,
+  TableFieldOptionsType,
+  ScrollPosition,
 } from './types';
 import {
   frameToRecords,
-  getColumnWidth,
   getComparator,
   getDefaultRowHeight,
   getFooterItemNG,
@@ -62,6 +66,8 @@ export function TableNG(props: TableNGProps) {
     noHeader,
     onColumnResize,
     width,
+    data,
+    enableSharedCrosshair,
   } = props;
 
   /* ------------------------------- Local state ------------------------------ */
@@ -83,6 +89,8 @@ export function TableNG(props: TableNGProps) {
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
+  const scrollPositionRef = useRef<ScrollPosition>({ x: 0, y: 0 });
+  const [hasScroll, setHasScroll] = useState(false);
 
   /* ------------------------------- Local refs ------------------------------- */
   const crossFilterOrder = useRef<string[]>([]);
@@ -95,6 +103,7 @@ export function TableNG(props: TableNGProps) {
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
 
   const theme = useTheme2();
+  const panelContext = usePanelContext();
 
   const isFooterVisible = Boolean(footerOptions?.show && footerOptions.reducer?.length);
   const isCountRowsSet = Boolean(
@@ -103,6 +112,7 @@ export function TableNG(props: TableNGProps) {
       footerOptions.reducer.length &&
       footerOptions.reducer[0] === ReducerID.count
   );
+  const tableRef = useRef<DataGridHandle | null>(null);
 
   /* --------------------------------- Effects -------------------------------- */
   useEffect(() => {
@@ -137,6 +147,18 @@ export function TableNG(props: TableNGProps) {
     const hasNestedFrames = getIsNestedTable(props.data);
     setIsNestedTable(hasNestedFrames);
   }, [props.data]);
+
+  useEffect(() => {
+    const el = tableRef.current;
+    if (el) {
+      const gridElement = el?.element;
+      if (gridElement) {
+        setHasScroll(
+          gridElement.scrollHeight > gridElement.clientHeight || gridElement.scrollWidth > gridElement.clientWidth
+        );
+      }
+    }
+  }, []);
 
   // TODO: this is a hack to force the column width to update when the fieldConfig changes
   const columnWidth = useMemo(() => {
@@ -400,8 +422,10 @@ export function TableNG(props: TableNGProps) {
           onCellExpand,
           onColumnResize: onColumnResize!,
         },
+        // Adjust table width to account for the scroll bar width
+        availableWidth: width - (hasScroll ? TABLE.SCROLL_BAR_WIDTH + TABLE.SCROLL_BAR_MARGIN : 0),
       }),
-    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
+    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions, width, hasScroll] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // This effect needed to set header cells refs before row height calculation
@@ -446,52 +470,71 @@ export function TableNG(props: TableNGProps) {
     [expandedRows, ctx, font, avgCharWidth, defaultLineHeight, defaultRowHeight, fieldsData]
   );
 
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLDivElement;
+    scrollPositionRef.current = {
+      x: target.scrollLeft,
+      y: target.scrollTop,
+    };
+  };
+
+  // Restore scroll position after re-renders
+  useEffect(() => {
+    if (tableRef.current?.element) {
+      tableRef.current.element.scrollLeft = scrollPositionRef.current.x;
+      tableRef.current.element.scrollTop = scrollPositionRef.current.y;
+    }
+  }, [revId]);
+
   return (
     <>
-      <ScrollContainer>
-        <DataGrid<TableRow, TableSummaryRow>
-          className={styles.dataGrid}
-          // Default to true, overridden to false for testing
-          enableVirtualization={enableVirtualization}
-          key={`DataGrid${revId}`}
-          rows={enablePagination ? paginatedRows : sortedRows}
-          columns={columns}
-          headerRowHeight={noHeader ? 0 : undefined}
-          defaultColumnOptions={{ sortable: true, resizable: true }}
-          rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
-          // TODO: This doesn't follow current table behavior
-          style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
-          renderers={{ renderRow: (key, props) => myRowRenderer(key, props, expandedRows) }}
-          onCellContextMenu={({ row, column }, event) => {
-            event.preventGridDefault();
-            // Do not show the default context menu
-            event.preventDefault();
+      <DataGrid<TableRow, TableSummaryRow>
+        ref={tableRef}
+        className={styles.dataGrid}
+        // Default to true, overridden to false for testing
+        enableVirtualization={enableVirtualization}
+        key={`DataGrid${revId}`}
+        rows={enablePagination ? paginatedRows : sortedRows}
+        columns={columns}
+        headerRowHeight={noHeader ? 0 : undefined}
+        defaultColumnOptions={{ sortable: true, resizable: true }}
+        rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
+        // TODO: This doesn't follow current table behavior
+        style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
+        renderers={{
+          renderRow: (key, props) =>
+            myRowRenderer(key, props, expandedRows, panelContext, data, enableSharedCrosshair ?? false),
+        }}
+        onScroll={handleScroll}
+        onCellContextMenu={({ row, column }, event) => {
+          event.preventGridDefault();
+          // Do not show the default context menu
+          event.preventDefault();
 
-            const cellValue = row[column.key];
-            setContextMenuProps({
-              // rowIdx: rows.indexOf(row),
-              value: String(cellValue ?? ''),
-              top: event.clientY,
-              left: event.clientX,
-            });
-            setIsContextMenuOpen(true);
-          }}
-          // sorting
-          sortColumns={sortColumns}
-          // footer
-          // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
-          bottomSummaryRows={isFooterVisible ? [{}] : undefined}
-          onColumnResize={() => {
-            // NOTE: This method is called continuously during the column resize drag operation,
-            // providing the current column width. There is no separate event for the end of the drag operation.
-            if (textWrap) {
-              // This is needed only when textWrap is enabled
-              // TODO: this is a hack to force rowHeight re-calculation
-              setResizeTrigger((prev) => prev + 1);
-            }
-          }}
-        />
-      </ScrollContainer>
+          const cellValue = row[column.key];
+          setContextMenuProps({
+            // rowIdx: rows.indexOf(row),
+            value: String(cellValue ?? ''),
+            top: event.clientY,
+            left: event.clientX,
+          });
+          setIsContextMenuOpen(true);
+        }}
+        // sorting
+        sortColumns={sortColumns}
+        // footer
+        // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
+        bottomSummaryRows={isFooterVisible ? [{}] : undefined}
+        onColumnResize={() => {
+          // NOTE: This method is called continuously during the column resize drag operation,
+          // providing the current column width. There is no separate event for the end of the drag operation.
+          if (textWrap) {
+            // This is needed only when textWrap is enabled
+            // TODO: this is a hack to force rowHeight re-calculation
+            setResizeTrigger((prev) => prev + 1);
+          }
+        }}
+      />
 
       {enablePagination && (
         <div className={styles.paginationContainer} ref={paginationWrapperRef}>
@@ -542,15 +585,16 @@ export function mapFrameToDataGrid({
   calcsRef,
   options,
   handlers,
+  availableWidth,
 }: {
   frame: DataFrame;
   calcsRef: React.MutableRefObject<string[]>;
   options: MapFrameToGridOptions;
   handlers: { onCellExpand: (rowIdx: number) => void; onColumnResize: TableColumnResizeActionCallback };
+  availableWidth: number;
 }): TableColumn[] {
   const {
     columnTypes,
-    columnWidth,
     crossFilterOrder,
     crossFilterRows,
     defaultLineHeight,
@@ -578,7 +622,6 @@ export function mapFrameToDataGrid({
   const columns: TableColumn[] = [];
   const hasNestedFrames = getIsNestedTable(frame);
 
-  const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || COLUMN.MIN_WIDTH;
   const cellInspect = fieldConfig?.defaults?.custom?.inspect ?? false;
   const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
 
@@ -621,6 +664,7 @@ export function mapFrameToDataGrid({
             calcsRef,
             options: { ...options },
             handlers: { onCellExpand, onColumnResize },
+            availableWidth: availableWidth - COLUMN.EXPANDER_WIDTH,
           });
           expandedRecords = frameToRecords(row.data);
         }
@@ -639,17 +683,27 @@ export function mapFrameToDataGrid({
       width: COLUMN.EXPANDER_WIDTH,
       minWidth: COLUMN.EXPANDER_WIDTH,
     });
+
+    availableWidth -= COLUMN.EXPANDER_WIDTH;
   }
 
+  let fieldCountWithoutWidth = 0;
   frame.fields.map((field, fieldIndex) => {
     if (field.type === FieldType.nestedFrames) {
       // Don't render nestedFrames type field
       return;
     }
+    const fieldTableOptions: TableFieldOptionsType = field.config.custom || {};
     const key = field.name;
-    const width = getColumnWidth(field, fieldConfig, key);
     const justifyColumnContent = getTextAlign(field);
     const footerStyles = getFooterStyles(justifyColumnContent);
+
+    // current/old table width logic calculations
+    if (fieldTableOptions.width) {
+      availableWidth -= fieldTableOptions.width;
+    } else {
+      fieldCountWithoutWidth++;
+    }
 
     // Add a column for each field
     columns.push({
@@ -659,6 +713,7 @@ export function mapFrameToDataGrid({
       cellClass: styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
         const { row, rowIdx } = props;
+        const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
         const value = row[key];
         // Cell level rendering here
         return (
@@ -683,7 +738,8 @@ export function mapFrameToDataGrid({
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
                 textWrap,
-                cellInspect
+                cellInspect,
+                cellType
               )
             }
             setIsInspecting={setIsInspecting}
@@ -697,7 +753,9 @@ export function mapFrameToDataGrid({
         if (isCountRowsSet && fieldIndex === 0) {
           return (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Count</span>
+              <span>
+                <Trans i18nKey="grafana-ui.table.count">Count</Trans>
+              </span>
               <span>{calcsRef.current[fieldIndex]}</span>
             </div>
           );
@@ -723,9 +781,32 @@ export function mapFrameToDataGrid({
           crossFilterRows={crossFilterRows}
         />
       ),
-      width: width ?? columnWidth,
-      minWidth: field.config?.custom?.minWidth ?? columnMinWidth,
+      width: fieldTableOptions.width,
+      minWidth: fieldTableOptions.minWidth || COLUMN.DEFAULT_WIDTH,
     });
+  });
+
+  // INFO: This loop calculates the width for each column in less than a millisecond.
+  let sharedWidth = availableWidth / fieldCountWithoutWidth;
+
+  // First pass: Assign minimum widths to columns that need it
+  columns.forEach((column) => {
+    if (!column.width && column.minWidth! > sharedWidth) {
+      column.width = column.minWidth;
+      availableWidth -= column.width!;
+      fieldCountWithoutWidth -= 1;
+    }
+  });
+
+  // Recalculate shared width after assigning minimum widths
+  sharedWidth = availableWidth / fieldCountWithoutWidth;
+
+  // Second pass: Assign shared width to remaining columns
+  columns.forEach((column) => {
+    if (!column.width) {
+      column.width = sharedWidth;
+    }
+    column.minWidth = COLUMN.MIN_WIDTH; // Ensure min-width is always set
   });
 
   return columns;
@@ -734,7 +815,10 @@ export function mapFrameToDataGrid({
 export function myRowRenderer(
   key: React.Key,
   props: RenderRowProps<TableRow, TableSummaryRow>,
-  expandedRows: number[]
+  expandedRows: number[],
+  panelContext: PanelContext,
+  data: DataFrame,
+  enableSharedCrosshair: boolean
 ): React.ReactNode {
   // Let's render row level things here!
   // i.e. we can look at row styles and such here
@@ -752,7 +836,42 @@ export function myRowRenderer(
     return <Row key={key} {...props} aria-expanded={isExpanded} />;
   }
 
-  return <Row key={key} {...props} />;
+  return (
+    <Row
+      key={key}
+      {...props}
+      onMouseEnter={() => onRowHover(rowIdx, panelContext, data, enableSharedCrosshair)}
+      onMouseLeave={() => onRowLeave(panelContext, enableSharedCrosshair)}
+    />
+  );
+}
+
+export function onRowHover(idx: number, panelContext: PanelContext, frame: DataFrame, enableSharedCrosshair: boolean) {
+  if (!enableSharedCrosshair) {
+    return;
+  }
+
+  const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
+
+  if (!timeField) {
+    return;
+  }
+
+  panelContext.eventBus.publish(
+    new DataHoverEvent({
+      point: {
+        time: timeField.values[idx],
+      },
+    })
+  );
+}
+
+export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: boolean) {
+  if (!enableSharedCrosshair) {
+    return;
+  }
+
+  panelContext.eventBus.publish(new DataHoverClearEvent());
 }
 
 const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
@@ -771,6 +890,10 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     '.rdg-cell': {
       borderInlineEnd: 'unset',
       borderRight: `1px solid ${theme.colors.border.medium}`,
+
+      '&:last-child': {
+        borderRight: 'none',
+      },
     },
 
     '.rdg-summary-row': {
@@ -793,6 +916,21 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
           borderRight: `3px solid ${theme.colors.text.link}`,
         },
       },
+    },
+
+    '::-webkit-scrollbar': {
+      width: TABLE.SCROLL_BAR_WIDTH,
+      height: TABLE.SCROLL_BAR_WIDTH,
+    },
+    '::-webkit-scrollbar-thumb': {
+      backgroundColor: 'rgba(204, 204, 220, 0.16)',
+      borderRadius: '4px',
+    },
+    '::-webkit-scrollbar-track': {
+      background: 'transparent',
+    },
+    '::-webkit-scrollbar-corner': {
+      backgroundColor: 'transparent',
     },
   }),
   menuItem: css({

@@ -170,7 +170,7 @@ export const SearchResultsTable = React.memo(
     if (!rows.length) {
       return (
         <div className={styles.noData}>
-          <Trans i18nKey="grafana-ui.table.no-values-label">No data</Trans>
+          <Trans i18nKey="grafana-ui.table.no-values-label">No values</Trans>
         </div>
       );
     }
