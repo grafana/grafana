@@ -194,6 +194,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		JwtHeaderName:                       hs.Cfg.JWTAuth.HeaderName,
 		JwtUrlLogin:                         hs.Cfg.JWTAuth.URLLogin,
 		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
+		LiveMessageSizeLimit:                hs.Cfg.LiveMessageSizeLimit,
 		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
 		VerifyEmailEnabled:                  hs.Cfg.VerifyEmailEnabled,
 		SigV4AuthEnabled:                    hs.Cfg.SigV4AuthEnabled,

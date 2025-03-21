@@ -6,13 +6,11 @@
 package apistore
 
 import (
-	"bytes"
 	"fmt"
 	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/storage"
 
@@ -111,18 +109,4 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 	}
 
 	return req, predicate, nil
-}
-
-func isUnchanged(codec runtime.Codec, obj runtime.Object, newObj runtime.Object) (bool, error) {
-	buf := new(bytes.Buffer)
-	if err := codec.Encode(obj, buf); err != nil {
-		return false, err
-	}
-
-	newBuf := new(bytes.Buffer)
-	if err := codec.Encode(newObj, newBuf); err != nil {
-		return false, err
-	}
-
-	return bytes.Equal(buf.Bytes(), newBuf.Bytes()), nil
 }

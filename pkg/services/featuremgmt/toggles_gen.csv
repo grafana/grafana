@@ -86,7 +86,6 @@ formatString,GA,@grafana/dataviz-squad,false,false,true
 kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
-kubernetesRestore,experimental,@grafana/grafana-app-platform-squad,false,false,false
 kubernetesClientDashboardsFolders,experimental,@grafana/grafana-app-platform-squad,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false
