@@ -58,6 +58,26 @@ func New(cfg app.Config) (app.Runnable, error) {
 	}, nil
 }
 
+func (r *Runner) createOrUpdate(ctx context.Context, obj resource.Object) error {
+	id := obj.GetStaticMetadata().Identifier()
+	_, err := r.client.Create(ctx, id, obj, resource.CreateOptions{})
+	if err != nil {
+		if errors.IsAlreadyExists(err) {
+			// Already exists, update
+			r.log.Debug("Check type already exists, updating", "identifier", id)
+			_, err = r.client.Update(ctx, id, obj, resource.UpdateOptions{})
+			if err != nil {
+				// Ignore the error, it's probably due to a race condition
+				r.log.Error("Error updating check type", "error", err)
+			}
+			return nil
+		}
+		return err
+	}
+	r.log.Debug("Check type registered successfully", "identifier", id)
+	return nil
+}
+
 func (r *Runner) Run(ctx context.Context) error {
 	for _, t := range r.checkRegistry.Checks() {
 		steps := t.Steps()
@@ -80,19 +100,9 @@ func (r *Runner) Run(ctx context.Context) error {
 				Steps: stepTypes,
 			},
 		}
-		id := obj.GetStaticMetadata().Identifier()
 		for i := 0; i < r.retryAttempts; i++ {
-			_, err := r.client.Create(ctx, id, obj, resource.CreateOptions{})
+			err := r.createOrUpdate(ctx, obj)
 			if err != nil {
-				if errors.IsAlreadyExists(err) {
-					// Already exists, update
-					_, err = r.client.Update(ctx, id, obj, resource.UpdateOptions{})
-					if err != nil {
-						// Ignore the error, it's probably due to a race condition
-						r.log.Error("Error updating check type", "error", err)
-					}
-					return nil
-				}
 				r.log.Error("Error creating check type, retrying", "error", err, "attempt", i+1)
 				if i == r.retryAttempts-1 {
 					r.log.Error("Unable to register check type")
@@ -102,7 +112,7 @@ func (r *Runner) Run(ctx context.Context) error {
 				continue
 			}
 			r.log.Debug("Check type registered successfully", "check_type", t.ID())
-			return nil
+			break
 		}
 	}
 	return nil
