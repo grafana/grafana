@@ -1127,31 +1127,14 @@ describe('TableNG', () => {
       const frame = createBasicDataFrame();
       frame.fields.forEach((field) => {
         if (field.config?.custom) {
-          field.config.custom.cellOptions = {
-            ...field.config.custom.cellOptions,
+          field.config.custom = {
+            ...field.config.custom,
             wrapText: true,
           };
         }
       });
 
-      const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={frame}
-          width={800}
-          height={600}
-          fieldConfig={{
-            defaults: {
-              custom: {
-                cellOptions: {
-                  wrapText: true,
-                },
-              },
-            },
-            overrides: [],
-          }}
-        />
-      );
+      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
 
       // Check for cells with wrap styling
       const cells = container.querySelectorAll('[role="gridcell"]');

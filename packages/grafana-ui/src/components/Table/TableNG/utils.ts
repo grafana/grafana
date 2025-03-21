@@ -99,7 +99,7 @@ export function getCellHeight(
   return defaultRowHeight;
 }
 
-function calculateCellHeight(
+export function calculateCellHeight(
   text: string,
   font: string,
   cellWidth: number,
