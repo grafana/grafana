@@ -72,6 +72,23 @@ export class ResponsiveGridLayoutManager
     this.publishEvent(new ObjectRemovedFromCanvasEvent(panel), true);
   }
 
+  public duplicate(): DashboardLayoutManager {
+    return this.clone({
+      key: undefined,
+      layout: this.state.layout.clone({
+        key: undefined,
+        children: this.state.layout.state.children.map((child) =>
+          child.clone({
+            key: undefined,
+            body: child.state.body.clone({
+              key: getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(child.state.body)),
+            }),
+          })
+        ),
+      }),
+    });
+  }
+
   public duplicatePanel(panel: VizPanel) {
     const gridItem = panel.parent;
     if (!(gridItem instanceof ResponsiveGridItem)) {

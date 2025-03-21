@@ -35,6 +35,7 @@ import {
   TableColumnResizeActionCallback,
   TableColumn,
   TableFieldOptionsType,
+  ScrollPosition,
 } from './types';
 import {
   frameToRecords,
@@ -83,6 +84,7 @@ export function TableNG(props: TableNGProps) {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
   const [hasScroll, setHasScroll] = useState(false);
+  const scrollPositionRef = useRef<ScrollPosition>({ x: 0, y: 0 });
 
   /* ------------------------------- Local refs ------------------------------- */
   const crossFilterOrder = useRef<string[]>([]);
@@ -95,7 +97,7 @@ export function TableNG(props: TableNGProps) {
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
   const tableRef = useRef<DataGridHandle | null>(null);
 
-  const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
+  const textWrap = fieldConfig?.defaults?.custom?.cellOptions?.wrapText ?? false;
 
   const theme = useTheme2();
   const styles = useStyles2(getStyles, textWrap);
@@ -369,7 +371,7 @@ export function TableNG(props: TableNGProps) {
           onColumnResize: onColumnResize!,
         },
         // Adjust table width to account for the scroll bar width
-        availableWidth: width - (hasScroll ? TABLE.SCROLL_BAR_WIDTH + 2 : 0),
+        availableWidth: width - (hasScroll ? TABLE.SCROLL_BAR_WIDTH + TABLE.SCROLL_BAR_MARGIN : 0),
       }),
     [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions, width, hasScroll] // eslint-disable-line react-hooks/exhaustive-deps
   );
@@ -415,6 +417,22 @@ export function TableNG(props: TableNGProps) {
     [expandedRows, defaultRowHeight, columnTypes, headerCellRefs, osContext, defaultLineHeight]
   );
 
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLDivElement;
+    scrollPositionRef.current = {
+      x: target.scrollLeft,
+      y: target.scrollTop,
+    };
+  };
+
+  // Restore scroll position after re-renders
+  useEffect(() => {
+    if (tableRef.current?.element) {
+      tableRef.current.element.scrollLeft = scrollPositionRef.current.x;
+      tableRef.current.element.scrollTop = scrollPositionRef.current.y;
+    }
+  }, [revId]);
+
   return (
     <>
       <DataGrid<TableRow, TableSummaryRow>
@@ -434,6 +452,7 @@ export function TableNG(props: TableNGProps) {
         // TODO: This doesn't follow current table behavior
         style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
         renderers={{ renderRow: (key, props) => myRowRenderer(key, props, expandedRows) }}
+        onScroll={handleScroll}
         onCellContextMenu={({ row, column }, event) => {
           event.preventGridDefault();
           // Do not show the default context menu
@@ -641,6 +660,7 @@ export function mapFrameToDataGrid({
       cellClass: styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
         const { row, rowIdx } = props;
+        const cellType = field.config?.custom?.cellOptions.type;
         const value = row[key];
         // Cell level rendering here
         return (
@@ -665,7 +685,8 @@ export function mapFrameToDataGrid({
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
                 textWrap,
-                cellInspect
+                cellInspect,
+                cellType
               )
             }
             setIsInspecting={setIsInspecting}
@@ -679,7 +700,9 @@ export function mapFrameToDataGrid({
         if (isCountRowsSet && fieldIndex === 0) {
           return (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Count</span>
+              <span>
+                <Trans i18nKey="grafana-ui.table.count">Count</Trans>
+              </span>
               <span>{calcsRef.current[fieldIndex]}</span>
             </div>
           );
