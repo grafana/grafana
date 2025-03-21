@@ -978,4 +978,8 @@ const (
 	// FlagUnifiedStorageHistoryPruner
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
+
+	// FlagLocalizationForPlugins
+	// Enables localization for plugins
+	FlagLocalizationForPlugins = "localizationForPlugins"
 )

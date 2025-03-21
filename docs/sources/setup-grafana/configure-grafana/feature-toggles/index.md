@@ -225,6 +225,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsCDNSyncLoader`                      | Load plugins from CDN synchronously                                                                                                                                                                                                                                               |
 | `assetSriChecks`                            | Enables SRI checks for Grafana JavaScript assets                                                                                                                                                                                                                                  |
 | `extraLanguages`                            | Enables additional languages                                                                                                                                                                                                                                                      |
+| `localizationForPlugins`                    | Enables localization for plugins                                                                                                                                                                                                                                                  |
 
 ## Development feature toggles
 

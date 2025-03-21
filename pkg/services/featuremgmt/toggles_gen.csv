@@ -242,3 +242,4 @@ extraLanguages,experimental,@grafana/grafana-frontend-platform,false,false,true
 noBackdropBlur,experimental,@grafana/grafana-frontend-platform,false,false,true
 alertingMigrationUI,experimental,@grafana/alerting-squad,false,false,true
 unifiedStorageHistoryPruner,experimental,@grafana/search-and-storage,false,false,false
+localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false

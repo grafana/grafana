@@ -1064,4 +1064,8 @@ export interface FeatureToggles {
   * Enables the unified storage history pruner
   */
   unifiedStorageHistoryPruner?: boolean;
+  /**
+  * Enables localization for plugins
+  */
+  localizationForPlugins?: boolean;
 }
