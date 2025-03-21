@@ -776,6 +776,9 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     '.rdg-cell': {
       borderInlineEnd: 'unset',
       borderRight: `1px solid ${theme.colors.border.medium}`,
+      '&:last-child': {
+        borderRight: 'none',
+      },
     },
 
     '.rdg-summary-row': {
