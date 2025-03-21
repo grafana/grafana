@@ -16,9 +16,6 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
       spec: {
         rows: layoutManager.state.rows.map((row) => {
           const layout = getLayout(row.state.layout);
-          if (layout.kind === 'RowsLayout') {
-            throw new Error('Nested RowsLayout is not supported');
-          }
           const rowKind: RowsLayoutRowKind = {
             kind: 'RowsLayoutRow',
             spec: {

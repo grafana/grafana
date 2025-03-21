@@ -99,6 +99,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
   }
 
+  public getSelection(): SceneObject | SceneObject[] | undefined {
+    return this.state.selection?.getSelection();
+  }
+
   public selectObject(obj: SceneObject, id: string, multi?: boolean) {
     const prevItem = this.state.selection?.getFirstObject();
     if (prevItem === obj && !multi) {
