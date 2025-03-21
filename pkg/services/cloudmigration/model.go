@@ -162,6 +162,8 @@ type CloudMigrationSessionListResponse struct {
 	Sessions []CloudMigrationSessionResponse
 }
 
+type ResourceTypes map[MigrateDataType]struct{}
+
 type GetSnapshotsQuery struct {
 	SnapshotUID string
 	OrgID       int64
