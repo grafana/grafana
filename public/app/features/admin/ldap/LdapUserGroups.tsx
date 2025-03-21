@@ -29,11 +29,17 @@ export const LdapUserGroups = ({ groups }: Props) => {
         cell: (props: CellProps<LdapRole, string | undefined>) =>
           props.value || (
             <>
-              <Trans i18nKey="admin.ldap-user-groups.no-org-found">
-                No match{' '}
-                <Tooltip content="No matching organizations found">
-                  <Icon name="info-circle" />
-                </Tooltip>
+              <Trans
+                i18nKey="admin.ldap-user-groups.no-org-found"
+                components={{
+                  InfoTooltip: (
+                    <Tooltip content="No matching organizations found">
+                      <Icon name="info-circle" />
+                    </Tooltip>
+                  ),
+                }}
+              >
+                No match {'<InfoTooltip />'}
               </Trans>
             </>
           ),
