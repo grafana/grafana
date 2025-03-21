@@ -42,10 +42,13 @@ func (t *Trie) Add(path string) error {
 			if i < len(segments)-1 && !existing.isDir {
 				return errors.New("segment is not a directory")
 			}
+
+			if i == len(segments)-1 && existing.isDir != IsDir(path) {
+				return errors.New("path is a file")
+			}
 		}
 
 		current = current.children[segment]
-
 		if i == len(segments)-1 {
 			current.isDir = IsDir(path)
 		} else {
