@@ -24,7 +24,7 @@ describe('ServiceChecks', () => {
         {wrapWithGrafanaContextMock(
           <ServiceChecks
             {...getRouteComponentProps({
-              match: { params: { service: '/service_1/' }, isExact: true, path: '', url: '' },
+              queryParams: { service: '/service_1/' },
             })}
           />
         )}
@@ -47,7 +47,7 @@ describe('ServiceChecks', () => {
         {wrapWithGrafanaContextMock(
           <ServiceChecks
             {...getRouteComponentProps({
-              match: { params: { service: '/service_1/' }, isExact: true, path: '', url: '' },
+              queryParams: { service: '/service_1/' },
             })}
           />
         )}

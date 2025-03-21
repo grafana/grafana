@@ -55,7 +55,7 @@ describe('AddBackupPage', () => {
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
-            match: { params: { type: '', id: '' }, isExact: true, path: '', url: '' },
+            queryParams: { type: '', id: '' },
           })}
         />
       </AddBackupPageWrapper>
@@ -78,7 +78,7 @@ describe('AddBackupPage', () => {
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
-            match: { params: { type: BackupType.SCHEDULED, id: '' }, isExact: true, path: '', url: '' },
+            queryParams: { type: BackupType.SCHEDULED, id: '' },
           })}
         />
       </AddBackupPageWrapper>
@@ -95,7 +95,7 @@ describe('AddBackupPage', () => {
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
-            match: { params: { type: BackupType.SCHEDULED, id: '' }, isExact: true, path: '', url: '' },
+            queryParams: { type: BackupType.SCHEDULED, id: '' },
           })}
         />
       </AddBackupPageWrapper>
@@ -110,7 +110,7 @@ describe('AddBackupPage', () => {
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
-            match: { params: { type: '', id: '' }, isExact: true, path: '', url: '' },
+            queryParams: { type: '', id: '' },
           })}
         />
       </AddBackupPageWrapper>
@@ -125,7 +125,7 @@ describe('AddBackupPage', () => {
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
-            match: { params: { type: BackupType.SCHEDULED, id: '' }, isExact: true, path: '', url: '' },
+            queryParams: { type: BackupType.SCHEDULED, id: '' },
           })}
         />
       </AddBackupPageWrapper>
@@ -140,7 +140,7 @@ describe('AddBackupPage', () => {
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
-            match: { params: { type: '', id: '' }, isExact: true, path: '', url: '' },
+            queryParams: { type: '', id: '' },
           })}
         />
       </AddBackupPageWrapper>
@@ -158,7 +158,7 @@ describe('AddBackupPage', () => {
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
-            match: { params: { type: BackupType.SCHEDULED, id: '' }, isExact: true, path: '', url: '' },
+            queryParams: { type: BackupType.SCHEDULED, id: '' },
           })}
         />
       </AddBackupPageWrapper>

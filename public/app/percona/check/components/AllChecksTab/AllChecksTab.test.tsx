@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { Router } from 'react-router';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { NavIndex, OrgRole } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
@@ -84,16 +85,13 @@ describe('AllChecksTab::', () => {
       >
         {wrapWithGrafanaContextMock(
           <Router history={locationService.getHistory()}>
-            <AllChecksTab
-              {...getRouteComponentProps({
-                match: {
-                  params: { category: 'configuration' },
-                  isExact: true,
-                  path: '/advisors/:category',
-                  url: '/advisors/configuration',
-                },
-              })}
-            />
+            <CompatRouter>
+              <AllChecksTab
+                {...getRouteComponentProps({
+                  queryParams: { category: 'configuration' },
+                })}
+              />
+            </CompatRouter>
           </Router>
         )}
       </Provider>
@@ -220,38 +218,33 @@ describe('AllChecksTab::', () => {
   });
 });
 
-const AllChecksTabTesting = () => {
-  return (
-    <Provider
-      store={configureStore({
-        percona: {
-          user: { isAuthorized: true, isPlatformUser: false },
-          settings: { result: { advisorEnabled: true, isConnectedToPortal: false } },
-          advisors: {
-            loading: false,
-            result: advisorsArray,
-          },
+const AllChecksTabTesting = () => (
+  <Provider
+    store={configureStore({
+      percona: {
+        user: { isAuthorized: true, isPlatformUser: false },
+        settings: { result: { advisorEnabled: true, isConnectedToPortal: false } },
+        advisors: {
+          loading: false,
+          result: advisorsArray,
         },
-        navIndex: navIndex,
-      } as StoreState)}
-    >
-      {wrapWithGrafanaContextMock(
-        <Router history={locationService.getHistory()}>
+      },
+      navIndex: navIndex,
+    } as StoreState)}
+  >
+    {wrapWithGrafanaContextMock(
+      <Router history={locationService.getHistory()}>
+        <CompatRouter>
           <AllChecksTab
             {...getRouteComponentProps({
-              match: {
-                params: { category: 'security' },
-                isExact: true,
-                path: '/advisors/:category',
-                url: '/advisors/security',
-              },
+              queryParams: { category: 'security' },
             })}
           />
-        </Router>
-      )}
-    </Provider>
-  );
-};
+        </CompatRouter>
+      </Router>
+    )}
+  </Provider>
+);
 
 const navIndex: NavIndex = {
   ['advisors-security']: {

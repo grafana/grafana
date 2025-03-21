@@ -5,7 +5,6 @@ import { config, locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { CheckService } from 'app/percona/check/Check.service';
 import { CheckDetails, Interval } from 'app/percona/check/types';
@@ -30,8 +29,8 @@ import { getStyles } from './AllChecksTab.styles';
 import { ChangeCheckIntervalModal } from './ChangeCheckIntervalModal';
 import { CheckActions } from './CheckActions/CheckActions';
 
-export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> = ({ match }) => {
-  const category = match.params.category;
+export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> = ({ queryParams }) => {
+  const category = String(queryParams.category);
   const navModel = usePerconaNavModel(`advisors-${category}`);
   const [runChecksPending, setRunChecksPending] = useState(false);
   const [checkIntervalModalVisible, setCheckIntervalModalVisible] = useState(false);
@@ -40,7 +39,6 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
   const { loading: advisorsPending } = useSelector(getAdvisors);
   const categorizedAdvisors = useSelector(getCategorizedAdvisors);
   const advisors = categorizedAdvisors[category];
-  const [queryParams] = useQueryParams();
 
   if (navModel.main.id === 'not-found') {
     locationService.push('/advisors');

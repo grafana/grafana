@@ -57,9 +57,9 @@ import {
 import { RetryModeSelector } from './RetryModeSelector';
 import { ScheduleSection } from './ScheduleSection/ScheduleSection';
 
-const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>> = ({ match }) => {
+const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>> = () => {
   const [queryParams, setQueryParams] = useQueryParams();
-  const scheduleMode: boolean = (queryParams['scheduled'] as boolean) || match.params.type === BackupType.SCHEDULED;
+  const scheduleMode: boolean = (queryParams['scheduled'] as boolean) || queryParams.type === BackupType.SCHEDULED;
   const [backup, setBackup] = useState<Backup | ScheduledBackup | null>(null);
   const [pending, setPending] = useState(false);
   const [advancedSectionOpen, setAdvancedSectionOpen] = useState(false);
@@ -96,7 +96,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
         backups = await BackupInventoryService.list(generateToken(LIST_ARTIFACTS_CANCEL_TOKEN));
       }
       for (const value of backups) {
-        if (value.id === match.params.id) {
+        if (value.id === queryParams.id) {
           backup = value;
           break;
         }

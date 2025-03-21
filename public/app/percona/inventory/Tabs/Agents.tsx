@@ -36,17 +36,17 @@ import { beautifyAgentType, getAgentStatusColor, getAgentStatusText, toAgentMode
 import { getTagsFromLabels } from './Services.utils';
 import { getStyles } from './Tabs.styles';
 
-export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: string }>> = ({ match }) => {
+export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: string }>> = ({ queryParams }) => {
   const [agentsLoading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<Agent[]>([]);
   const [selected, setSelectedRows] = useState<any[]>([]);
-  const nodeId = match.params.nodeId
-    ? match.params.nodeId === 'pmm-server'
-      ? 'pmm-server'
-      : match.params.nodeId
-    : undefined;
-  const navModel = usePerconaNavModel(match.params.serviceId ? 'inventory-services' : 'inventory-nodes');
+  const params = {
+    serviceId: String(queryParams.serviceId),
+    nodeId: String(queryParams.nodeId),
+  };
+  const nodeId = params.nodeId ? (params.nodeId === 'pmm-server' ? 'pmm-server' : params.nodeId) : undefined;
+  const navModel = usePerconaNavModel(params.serviceId ? 'inventory-services' : 'inventory-nodes');
   const [generateToken] = useCancelToken();
   const { isLoading: servicesLoading, services } = useSelector(getServices);
   const { isLoading: nodesLoading, nodes } = useSelector(getNodes);
@@ -57,7 +57,7 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
     [nodes]
   );
 
-  const service = services.find((s) => s.params.serviceId === match.params.serviceId);
+  const service = services.find((s) => s.params.serviceId === params.serviceId);
   const node = mappedNodes.find((s) => s.nodeId === nodeId);
   const flattenAgents = useMemo(() => data.map((value) => ({ type: value.type, ...value.params })), [data]);
 
@@ -117,7 +117,7 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
     setLoading(true);
     try {
       const { agents = [] } = await InventoryService.getAgents(
-        match.params.serviceId,
+        params.serviceId,
         nodeId,
         generateToken(GET_AGENTS_CANCEL_TOKEN)
       );
@@ -153,14 +153,14 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
   const deletionMsg = useMemo(() => Messages.agents.deleteConfirmation(selected.length), [selected]);
 
   useEffect(() => {
-    if (!service && match.params.serviceId) {
+    if (!service && params.serviceId) {
       dispatch(fetchServicesAction({ token: generateToken(GET_SERVICES_CANCEL_TOKEN) }));
     } else if (!node && nodeId) {
       dispatch(fetchNodesAction({ token: generateToken(GET_NODES_CANCEL_TOKEN) }));
     } else {
       loadData();
     }
-  }, [generateToken, loadData, service, nodeId, match.params.serviceId, node]);
+  }, [generateToken, loadData, service, nodeId, params.serviceId, node]);
 
   const removeAgents = useCallback(
     async (agents: Array<SelectedTableRows<FlattenAgent>>, forceMode: boolean) => {

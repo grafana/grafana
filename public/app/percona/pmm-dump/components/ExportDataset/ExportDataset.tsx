@@ -27,7 +27,7 @@ import { ExportDatasetProps } from './ExportDataset.types';
 
 const { Form } = withTypes<ExportDatasetProps>();
 
-const ExportDataset: FC<GrafanaRouteComponentProps<{ type: string; id: string }>> = ({ match }) => {
+const ExportDataset: FC<GrafanaRouteComponentProps<{ type: string; id: string }>> = () => {
   const styles = useStyles2(getStyles);
   const dispatch = useAppDispatch();
   const { isLoading, services: fetchedServices } = useSelector(getServices);
