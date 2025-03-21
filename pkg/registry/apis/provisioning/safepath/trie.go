@@ -23,7 +23,7 @@ func NewTrie() *Trie {
 
 // Add inserts a path into the trie
 func (t *Trie) Add(path string) error {
-	if path == "" {
+	if path == "" || path == "/" {
 		return nil
 	}
 
@@ -58,8 +58,8 @@ func (t *Trie) Add(path string) error {
 
 // Exists checks if a path exists in the trie
 func (t *Trie) Exists(path string) bool {
-	if path == "" {
-		return false
+	if path == "" || path == "/" {
+		return true
 	}
 
 	current := t.root
