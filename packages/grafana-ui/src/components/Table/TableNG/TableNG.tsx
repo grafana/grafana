@@ -149,25 +149,6 @@ export function TableNG(props: TableNGProps) {
     return fieldConfig?.defaults?.custom?.width || 'auto';
   }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Create off-screen canvas for measuring rows for virtualized rendering
-  // This line is like this because Jest doesn't have OffscreenCanvas mocked
-  // nor is it a part of the jest-canvas-mock package
-  let osContext = null;
-  if (window.OffscreenCanvas !== undefined) {
-    // The canvas size is defined arbitrarily
-    // As we never actually visualize rendered content
-    // from the offscreen canvas, only perform text measurements
-    osContext = new OffscreenCanvas(256, 1024).getContext('2d');
-    // Set the font for measurement
-    osContext!.font = '14px sans-serif';
-  }
-
-  // Set font property using theme info
-  // This will make text measurement accurate
-  if (osContext !== undefined && osContext !== null) {
-    osContext.font = `${theme.typography.fontSize}px ${theme.typography.body.fontFamily}`;
-  }
-
   const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
   const panelPaddingHeight = theme.components.panel.padding * theme.spacing.gridSize * 2;
@@ -367,6 +348,23 @@ export function TableNG(props: TableNGProps) {
     setResizeTrigger((prev) => prev + 1);
   };
 
+  const { ctx, avgCharWidth, font } = useMemo(() => {
+    const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    ctx.font = font;
+    let txt =
+      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
+    const txtWidth = ctx.measureText(txt).width * devicePixelRatio;
+    const avgCharWidth = txtWidth / txt.length;
+
+    return {
+      ctx,
+      font,
+      avgCharWidth,
+    };
+  }, [theme.typography.fontSize, theme.typography.fontFamily]);
+
   const columns = useMemo(
     () =>
       mapFrameToDataGrid({
@@ -383,7 +381,7 @@ export function TableNG(props: TableNGProps) {
           filter,
           headerCellRefs,
           isCountRowsSet,
-          osContext,
+          ctx,
           rows,
           setContextMenuProps,
           setFilter,
@@ -459,9 +457,18 @@ export function TableNG(props: TableNGProps) {
         const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
         return defaultRowHeight * (row.data?.length ?? 0 + headerCount); // TODO this probably isn't very robust
       }
-      return getRowHeight(row, osContext, defaultLineHeight, defaultRowHeight, TABLE.CELL_PADDING + 8, fieldsData);
+      return getRowHeight(
+        row,
+        ctx,
+        font,
+        avgCharWidth,
+        defaultLineHeight,
+        defaultRowHeight,
+        TABLE.CELL_PADDING + 8,
+        fieldsData
+      );
     },
-    [expandedRows, osContext, defaultLineHeight, defaultRowHeight, fieldsData]
+    [expandedRows, ctx, font, avgCharWidth, defaultLineHeight, defaultRowHeight, fieldsData]
   );
 
   return (
@@ -580,7 +587,7 @@ export function mapFrameToDataGrid({
     filter,
     headerCellRefs,
     isCountRowsSet,
-    osContext,
+    ctx,
     rows,
     setContextMenuProps,
     setFilter,
@@ -699,7 +706,7 @@ export function mapFrameToDataGrid({
                 row,
                 columnTypes,
                 headerCellRefs,
-                osContext,
+                ctx,
                 defaultLineHeight,
                 defaultRowHeight,
                 TABLE.CELL_PADDING,

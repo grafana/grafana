@@ -46,14 +46,14 @@ import {
 export function getCellHeight(
   text: string,
   cellWidth: number, // width of the cell without padding
-  osContext: OffscreenCanvasRenderingContext2D | null,
+  ctx: CanvasRenderingContext2D,
   lineHeight: number,
   defaultRowHeight: number,
   padding = 0
 ) {
   const PADDING = padding * 2;
 
-  if (osContext !== null && typeof text === 'string') {
+  if (typeof text === 'string') {
     const words = text.split(/\s/);
     const lines = [];
     let currentLine = '';
@@ -62,7 +62,7 @@ export function getCellHeight(
     for (let i = 0; i < words.length; i++) {
       const currentWord = words[i];
       // TODO: this method is not accurate
-      let lineWidth = osContext.measureText(currentLine + ' ' + currentWord).width;
+      let lineWidth = ctx.measureText(currentLine + ' ' + currentWord).width;
 
       // if line width is less than the cell width, add the word to the current line and continue
       // else add the current line to the lines array and start a new line with the current word
@@ -101,8 +101,9 @@ export function getCellHeight(
 
 function calculateCellHeight(
   text: string,
+  font: string,
   cellWidth: number,
-  osContext: OffscreenCanvasRenderingContext2D | null,
+  ctx: CanvasRenderingContext2D,
   lineHeight: number,
   defaultRowHeight: number,
   padding = 0
@@ -110,13 +111,7 @@ function calculateCellHeight(
   const effectiveCellWidth = Math.max(cellWidth, 20); // Minimum width to work with
   const TOTAL_PADDING = padding * 2;
 
-  const numLines = countMultiLines(
-    osContext as unknown as CanvasRenderingContext2D,
-    text,
-    '14px sans-serif',
-    effectiveCellWidth,
-    true
-  );
+  const numLines = countMultiLines(ctx, text, font, effectiveCellWidth, true);
 
   const totalHeight = numLines * lineHeight + TOTAL_PADDING;
   return Math.max(totalHeight, defaultRowHeight);
@@ -138,21 +133,15 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellH
   return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
 }
 
-const canvas = document.createElement('canvas');
-const ctx = canvas.getContext('2d')!;
-ctx.font = `14px sans-serif`;
-let txt =
-  "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has";
-const txtWidth = ctx.measureText(txt).width * devicePixelRatio;
-const avgCharWidth = txtWidth / txt.length;
-
 /**
  * getRowHeight determines cell height based on cell width + text length. Used
  * for when textWrap is enabled.
  */
 export function getRowHeight(
   row: TableRow,
-  osContext: OffscreenCanvasRenderingContext2D | null,
+  ctx: CanvasRenderingContext2D,
+  font: string,
+  avgCharWidth: number,
   lineHeight: number,
   defaultRowHeight: number,
   padding: number,
@@ -186,8 +175,9 @@ export function getRowHeight(
     ? defaultRowHeight
     : calculateCellHeight(
         row[maxLinesCol] as string,
+        font,
         fieldsData.columnWidths[maxLinesCol],
-        osContext,
+        ctx,
         lineHeight,
         defaultRowHeight,
         padding
@@ -203,7 +193,7 @@ export function shouldTextOverflow(
   row: TableRow,
   columnTypes: ColumnTypes,
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
-  osContext: OffscreenCanvasRenderingContext2D | null,
+  ctx: CanvasRenderingContext2D,
   lineHeight: number,
   defaultRowHeight: number,
   padding: number,
@@ -217,7 +207,7 @@ export function shouldTextOverflow(
   if (isTextCell(key, columnTypes)) {
     const cellWidth = headerCellRefs.current[key].offsetWidth;
     const cellText = String(row[key] ?? '');
-    const newCellHeight = getCellHeight(cellText, cellWidth, osContext, lineHeight, defaultRowHeight, padding);
+    const newCellHeight = getCellHeight(cellText, cellWidth, ctx, lineHeight, defaultRowHeight, padding);
 
     if (newCellHeight > defaultRowHeight) {
       return true;
@@ -528,7 +518,7 @@ export interface MapFrameToGridOptions extends TableNGProps {
   filter: FilterType;
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
   isCountRowsSet: boolean;
-  osContext: OffscreenCanvasRenderingContext2D | null;
+  ctx: CanvasRenderingContext2D;
   rows: TableRow[];
   setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
