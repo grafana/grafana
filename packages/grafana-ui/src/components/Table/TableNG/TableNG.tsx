@@ -79,12 +79,10 @@ export function TableNG(props: TableNGProps) {
   const [page, setPage] = useState(0);
   // This state will trigger re-render for recalculating row heights
   const [, setResizeTrigger] = useState(0);
-  const [, setReadyForRowHeightCalc] = useState(false);
+  const [readyForRowHeightCalc, setReadyForRowHeightCalc] = useState(false);
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
-  // Create a dedicated state for header length
-  const [headersLength, setHeaderLength] = useState(0);
 
   /* ------------------------------- Local refs ------------------------------- */
   const crossFilterOrder = useRef<string[]>([]);
@@ -182,16 +180,22 @@ export function TableNG(props: TableNGProps) {
       widths[name] = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH;
     });
 
-    // Measure actual widths if available
-    Object.keys(headerCellRefs.current).forEach((key) => {
-      const headerCell = headerCellRefs.current[key];
+    if (readyForRowHeightCalc) {
+      // Measure actual widths if available
+      Object.keys(headerCellRefs.current).forEach((key) => {
+        const headerCell = headerCellRefs.current[key];
 
-      if (headerCell.offsetWidth > 0) {
-        widths[key] = headerCell.offsetWidth;
-      }
-    });
+        if (headerCell.offsetWidth > 0) {
+          widths[key] = headerCell.offsetWidth;
+        }
+      });
+    }
 
     return widths;
+  }, [props.data.fields, readyForRowHeightCalc]);
+
+  const headersLength = useMemo(() => {
+    return props.data.fields.length;
   }, [props.data.fields]);
 
   // Clean up fieldsData to simplify
@@ -402,38 +406,10 @@ export function TableNG(props: TableNGProps) {
     [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  // Helper to check header availability
-  const detectHeadersLength = useCallback(() => {
-    return Object.keys(headerCellRefs.current).length;
-  }, []);
-
-  // Layout effect to detect headers and update dependent states
+  // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
-    // Skip if no fields
-    if (props.data.fields.length === 0) {
-      return;
-    }
-
-    const updateHeaderStates = () => {
-      const count = detectHeadersLength();
-      if (count > 0) {
-        setHeaderLength(count);
-        setReadyForRowHeightCalc(true);
-        return true;
-      }
-      return false;
-    };
-
-    // Try immediate check
-    if (updateHeaderStates()) {
-      return; // Headers found, no need for delayed check
-    }
-
-    // Set up delayed check if immediate check failed
-    // Note: setTimeout inside useLayoutEffect will run after the browser paint
-    const timer = setTimeout(updateHeaderStates, 50);
-    return () => clearTimeout(timer);
-  }, [detectHeadersLength, props.data.fields.length, columns]);
+    setReadyForRowHeightCalc(Object.keys(headerCellRefs.current).length === headersLength);
+  }, [headersLength]);
 
   const renderMenuItems = () => {
     return (
