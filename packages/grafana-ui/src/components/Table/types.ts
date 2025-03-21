@@ -83,6 +83,8 @@ export interface GrafanaTableState extends TableState {
   lastExpandedOrCollapsedIndex?: number;
 }
 
+// @PERCONA - ignore errors related to expandable rows
+// @ts-ignore
 export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
 
 export interface TableStateReducerProps {

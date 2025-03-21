@@ -15,11 +15,14 @@ export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, vo
       <IconButton
         tooltip="toggle row expanded"
         aria-controls={__rowID}
-        // @ts-expect-error react-table doesn't ship with useExpanded types and we can't use declaration merging without affecting the table viz
+        // @PERCONA - ignore errors related to expandable rows
+        // @ts-ignore
         name={row.isExpanded ? 'angle-down' : 'angle-right'}
-        // @ts-expect-error same as the line above
+        // @PERCONA - ignore errors related to expandable rows
+        // @ts-ignore
         aria-expanded={row.isExpanded}
-        // @ts-expect-error same as the line above
+        // @PERCONA - ignore errors related to expandable rows
+        // @ts-ignore
         {...row.getToggleRowExpandedProps()}
         size="lg"
       />
