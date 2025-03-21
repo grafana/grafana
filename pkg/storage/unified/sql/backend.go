@@ -544,9 +544,10 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 }
 
 type listIter struct {
-	rows   db.Rows
-	offset int64
-	listRV int64
+	rows    db.Rows
+	offset  int64
+	listRV  int64
+	sortAsc bool
 
 	// any error
 	err error
@@ -561,11 +562,11 @@ type listIter struct {
 
 // ContinueToken implements resource.ListIterator.
 func (l *listIter) ContinueToken() string {
-	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
+	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
 }
 
 func (l *listIter) ContinueTokenWithCurrentRV() string {
-	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset}.String()
+	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
 }
 
 func (l *listIter) Error() error {
@@ -615,7 +616,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 		return 0, fmt.Errorf("only works for the 'latest' resource version")
 	}
 
-	iter := &listIter{}
+	iter := &listIter{sortAsc: false}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
@@ -650,7 +651,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	// Get the RV
-	iter := &listIter{listRV: req.ResourceVersion}
+	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
@@ -700,13 +701,36 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	return iter.listRV, err
 }
 
-// listLatest fetches the resources from the resource table.
+// getHistory fetches the resources from the resource table.
 func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	// Backwards compatibility for ResourceVersionMatch
+	if req.VersionMatch != nil && req.GetVersionMatchV2() == resource.ResourceVersionMatchV2_UNKNOWN {
+		switch req.GetVersionMatch() {
+		case resource.ResourceVersionMatch_DEPRECATED_NotOlderThan:
+			// This is not a typo. The old implementation actually did behave like Unset.
+			req.VersionMatchV2 = resource.ResourceVersionMatchV2_Unset
+		case resource.ResourceVersionMatch_DEPRECATED_Exact:
+			req.VersionMatchV2 = resource.ResourceVersionMatchV2_Exact
+		default:
+			return 0, fmt.Errorf("unknown version match: %v", req.GetVersionMatch())
+		}
+
+		// Log the migration for debugging purposes
+		b.log.Debug("Old client request received, migrating from version_match to version_match_v2",
+			"oldValue", req.GetVersionMatch(),
+			"newValue", req.GetVersionMatchV2())
+	}
+
 	listReq := sqlGetHistoryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Key:         req.Options.Key,
 		Trash:       req.Source == resource.ListRequest_TRASH,
 	}
+
+	// We are assuming that users want history in ascending order
+	// when they are using NotOlderThan matching, and descending order
+	// for Unset (default) and Exact matching.
+	listReq.SortAscending = req.GetVersionMatchV2() == resource.ResourceVersionMatchV2_NotOlderThan
 
 	iter := &listIter{}
 	if req.NextPageToken != "" {
@@ -715,10 +739,12 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 			return 0, fmt.Errorf("get continue token: %w", err)
 		}
 		listReq.StartRV = continueToken.ResourceVersion
+		listReq.SortAscending = continueToken.SortAscending
 	}
+	iter.sortAsc = listReq.SortAscending
 
 	// Set ExactRV when using Exact matching
-	if req.VersionMatch == resource.ResourceVersionMatch_Exact {
+	if req.VersionMatchV2 == resource.ResourceVersionMatchV2_Exact {
 		if req.ResourceVersion <= 0 {
 			return 0, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
 		}
@@ -726,7 +752,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 	}
 
 	// Set MinRV when using NotOlderThan matching to filter at the database level
-	if req.ResourceVersion > 0 && req.VersionMatch == resource.ResourceVersionMatch_NotOlderThan {
+	if req.ResourceVersion > 0 && req.VersionMatchV2 == resource.ResourceVersionMatchV2_NotOlderThan {
 		listReq.MinRV = req.ResourceVersion
 	}
 

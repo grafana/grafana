@@ -753,10 +753,11 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 			rsp.Items = append(rsp.Items, item)
 			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
 				t := iter.ContinueToken()
-				if req.Source == ListRequest_HISTORY {
-					// history lists in desc order, so the continue token takes the
-					// final RV in the list, and then will start from there in the next page,
-					// rather than the lists first RV
+				if req.Source == ListRequest_HISTORY || req.Source == ListRequest_TRASH {
+					// For history lists, we need to use the current RV in the continue token
+					// to ensure consistent pagination. The order depends on VersionMatch:
+					// - NotOlderThan: ascending order (oldest to newest)
+					// - Unset: descending order (newest to oldest)
 					t = iter.ContinueTokenWithCurrentRV()
 				}
 				if iter.Next() {

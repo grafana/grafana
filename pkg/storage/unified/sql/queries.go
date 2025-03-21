@@ -243,11 +243,12 @@ func (r *sqlResourceHistoryDeleteRequest) Validate() error {
 
 type sqlGetHistoryRequest struct {
 	sqltemplate.SQLTemplate
-	Key     *resource.ResourceKey
-	Trash   bool  // only deleted items
-	StartRV int64 // from NextPageToken
-	MinRV   int64 // minimum resource version for NotOlderThan
-	ExactRV int64 // exact resource version for Exact
+	Key           *resource.ResourceKey
+	Trash         bool  // only deleted items
+	StartRV       int64 // from NextPageToken
+	MinRV         int64 // minimum resource version for NotOlderThan
+	ExactRV       int64 // exact resource version for Exact
+	SortAscending bool  // if true, sort by resource_version ASC, otherwise DESC
 }
 
 func (r sqlGetHistoryRequest) Validate() error {
