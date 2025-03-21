@@ -269,6 +269,14 @@ type CreateSnapshotRequest struct {
 	// UID of a session
 	// in: path
 	UID string `json:"uid"`
+
+	// in:body
+	// required:true
+	Body CreateSnapshotRequestDTO `json:"body"`
+}
+
+type CreateSnapshotRequestDTO struct {
+	ResourceTypes []MigrateDataType `json:"resourceTypes"`
 }
 
 // swagger:response createSnapshotResponse

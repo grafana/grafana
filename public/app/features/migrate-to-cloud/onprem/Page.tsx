@@ -17,6 +17,7 @@ import {
   useUploadSnapshotMutation,
   useGetLocalPluginListQuery,
 } from '../api';
+import { maybeAPIError } from '../api/errors';
 import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 
 import { DisconnectModal } from './DisconnectModal';
@@ -166,7 +167,26 @@ export const Page = () => {
 
   const handleCreateSnapshot = useCallback(() => {
     if (sessionUid) {
-      performCreateSnapshot({ uid: sessionUid });
+      performCreateSnapshot({
+        uid: sessionUid,
+        createSnapshotRequestDto: {
+          // TODO: For the moment, pass all resource types. Once we have a frontend for selecting resource types,
+          // we should pass the selected resource types instead.
+          resourceTypes: [
+            'DASHBOARD',
+            'DATASOURCE',
+            'FOLDER',
+            'LIBRARY_ELEMENT',
+            'ALERT_RULE',
+            'ALERT_RULE_GROUP',
+            'CONTACT_POINT',
+            'NOTIFICATION_POLICY',
+            'NOTIFICATION_TEMPLATE',
+            'MUTE_TIMING',
+            'PLUGIN',
+          ],
+        },
+      });
     }
   }, [performCreateSnapshot, sessionUid]);
 
@@ -322,12 +342,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
   }
 
   if (createSnapshotError) {
-    return {
-      severity: 'warning',
-      title: t('migrate-to-cloud.onprem.create-snapshot-error-title', 'Error creating snapshot'),
-      body: seeLogs,
-      error: createSnapshotError,
-    };
+    return handleCreateSnapshotError(createSnapshotError, seeLogs);
   }
 
   if (uploadSnapshotError) {
@@ -385,4 +400,52 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
   }
 
   return undefined;
+}
+
+function handleCreateSnapshotError(createSnapshotError: unknown, seeLogs: string): ErrorDescription | undefined {
+  const apiError = maybeAPIError(createSnapshotError);
+
+  let severity: AlertVariant = 'warning';
+  let body = null;
+
+  switch (apiError?.messageId) {
+    case 'cloudmigrations.emptyResourceTypes':
+      severity = 'error';
+      body = t(
+        'migrate-to-cloud.onprem.create-snapshot-error-empty-resource-types',
+        'You need to provide at least one resource type for snapshot creation'
+      );
+      break;
+
+    case 'cloudmigrations.unknownResourceType':
+      severity = 'error';
+      body = t(
+        'migrate-to-cloud.onprem.create-snapshot-error-unknown-resource-type',
+        'Unknown resource type. See the Grafana server logs for more details'
+      );
+      break;
+
+    case 'cloudmigrations.duplicateResourceType':
+      severity = 'error';
+      body = t(
+        'migrate-to-cloud.onprem.create-snapshot-error-duplicate-resource-type',
+        'Duplicate resource type. See the Grafana server logs for more details'
+      );
+      break;
+
+    case 'cloudmigrations.missingDependency':
+      severity = 'error';
+      body = t(
+        'migrate-to-cloud.onprem.create-snapshot-error-missing-dependency',
+        'Missing dependency. See the Grafana server logs for more details'
+      );
+      break;
+  }
+
+  return {
+    severity,
+    title: t('migrate-to-cloud.onprem.create-snapshot-error-title', 'Error creating snapshot'),
+    body: body || seeLogs,
+    error: createSnapshotError,
+  };
 }
