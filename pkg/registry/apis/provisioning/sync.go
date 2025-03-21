@@ -66,7 +66,7 @@ func (c *syncConnector) Connect(
 		job, err := c.jobs.Insert(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: cfg.Namespace,
-				Name:      fmt.Sprintf("%s:%s", cfg.Name, provisioning.JobActionSync),
+				Name:      fmt.Sprintf("%s-%s", cfg.Name, provisioning.JobActionSync),
 			},
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionSync,

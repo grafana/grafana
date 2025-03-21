@@ -99,7 +99,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			job := &provisioning.Job{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: namespace,
-					Name:      fmt.Sprintf("%s:%s", repo.Config().GetName(), rsp.Job.Action),
+					Name:      fmt.Sprintf("%s-%s", repo.Config().GetName(), rsp.Job.Action),
 					Labels: map[string]string{
 						"repository": name,
 					},

@@ -62,7 +62,7 @@ func (c *exportConnector) Connect(ctx context.Context, name string, opts runtime
 		job, err := c.jobs.Insert(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: cfg.Namespace,
-				Name:      fmt.Sprintf("%s:%s", cfg.Name, provisioning.JobActionExport),
+				Name:      fmt.Sprintf("%s-%s", cfg.Name, provisioning.JobActionExport),
 			},
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionExport,
