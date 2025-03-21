@@ -110,7 +110,7 @@ To configure GitHub authentication with Grafana, follow these steps:
    Review the list of other GitHub [configuration options](#configuration-options) and complete them, as necessary.
 
 1. [Configure role mapping](#configure-role-mapping).
-1. Optional: [Configure group synchronization](#configure-group-synchronization).
+1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
 1. Restart Grafana.
 
    You should now see a GitHub login button on the login page and be able to log in or sign up with your GitHub accounts.
@@ -216,14 +216,14 @@ allowed_domains = mycompany.com mycompany.org
 role_attribute_path = [login=='octocat'][0] && 'GrafanaAdmin' || 'Viewer'
 ```
 
-## Configure group synchronization
+## Configure team synchronization
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and Grafana Cloud.
 {{< /admonition >}}
 
-Grafana supports synchronization of teams from your GitHub organization with Grafana teams and roles. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.
-Teams and roles get synchronized when the user logs in.
+By using Team Sync, you can map teams from your GitHub organization to teams within Grafana. This will automatically assign users to the appropriate teams.
+Teams for each user are synchronized when the user logs in.
 
 GitHub teams can be referenced in two ways:
 
@@ -232,7 +232,7 @@ GitHub teams can be referenced in two ways:
 
 Examples: `https://github.com/orgs/grafana/teams/developers` or `@grafana/developers`.
 
-To learn more about group synchronization, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync).
+To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
 
 ## Configuration options
 
