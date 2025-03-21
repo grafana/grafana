@@ -11,7 +11,7 @@ import {
 } from './SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
-import { intrinsicsV1 } from './traceql/traceql';
+import { enumIntrinsics, intrinsicsV1 } from './traceql/traceql';
 import { Scope } from './types';
 
 // Limit maximum tags retrieved from the backend
@@ -227,7 +227,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
   };
 
   adHocValueHelper = (f: AdHocVariableFilter) => {
-    if (this.getIntrinsics().find((t) => t === f.key)) {
+    if (this.getIntrinsics().find((t) => t === f.key) && enumIntrinsics.includes(f.key)) {
       return f.value;
     }
     if (parseInt(f.value, 10).toString() === f.value) {

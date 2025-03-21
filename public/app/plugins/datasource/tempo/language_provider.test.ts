@@ -331,10 +331,16 @@ describe('Language_provider', () => {
         ).toBe('{footag="foovalue" && bartag=0}');
       });
 
-      it('a filter with intrinsic values', () => {
+      it('a filter with enum intrinsic values', () => {
         expect(lp.generateQueryFromFilters({ adhocFilters: [{ key: 'kind', operator: '=', value: 'server' }] })).toBe(
           '{kind=server}'
         );
+      });
+
+      it('a filter with non-enum intrinsic values', () => {
+        expect(
+          lp.generateQueryFromFilters({ adhocFilters: [{ key: 'name', operator: '=', value: 'my-server' }] })
+        ).toBe('{name="my-server"}');
       });
     });
   });
