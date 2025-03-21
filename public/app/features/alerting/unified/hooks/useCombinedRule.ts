@@ -197,16 +197,20 @@ export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<Ru
 
   return useMemo(() => {
     if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
-      return {
-        result: {
-          datasource: ruleIdentifier.ruleSourceName,
-          namespace: ruleIdentifier.namespace,
-          group: ruleIdentifier.groupName,
-          ruleName: ruleIdentifier.ruleName,
-          groupIdentifier: groupIdentifier.fromRuleIdentifier(ruleIdentifier),
-        } satisfies RuleLocation,
-        loading: false,
-      };
+      try {
+        return {
+          result: {
+            datasource: ruleIdentifier.ruleSourceName,
+            namespace: ruleIdentifier.namespace,
+            group: ruleIdentifier.groupName,
+            ruleName: ruleIdentifier.ruleName,
+            groupIdentifier: groupIdentifier.fromRuleIdentifier(ruleIdentifier),
+          } satisfies RuleLocation,
+          loading: false,
+        };
+      } catch (error) {
+        return { loading: false, error };
+      }
     }
 
     if (isGrafanaRuleIdentifier(ruleIdentifier)) {
