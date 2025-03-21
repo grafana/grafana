@@ -364,7 +364,8 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 	job, err := rc.jobs.Insert(ctx, &provisioning.Job{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: obj.Namespace,
-			Name:      fmt.Sprintf("%s-%s", obj.GetName(), provisioning.JobActionSync),
+			// Sync and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
+			Name: fmt.Sprintf("%s-syncmigrate", obj.GetName()),
 		},
 		Spec: provisioning.JobSpec{
 			Repository: obj.GetName(),
