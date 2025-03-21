@@ -43,7 +43,7 @@ export default function HomePage() {
   const settings = useGetFrontendSettingsQuery();
   const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [instanceConnected] = checkSyncSettings(settings.data);
+  const { instanceConnected } = checkSyncSettings(items);
   const [activeTab, setActiveTab] = useState<TabSelection>(
     instanceConnected ? TabSelection.Overview : TabSelection.Repositories
   );
@@ -63,7 +63,7 @@ export default function HomePage() {
 
   // Early return for onboarding
   if (!items?.length && !isLoading) {
-    return <GettingStartedPage />;
+    return <GettingStartedPage items={items ?? []} />;
   }
 
   const onConfirmDelete = () => {
@@ -77,7 +77,7 @@ export default function HomePage() {
         case TabSelection.Repositories:
           return <FolderRepositoryList items={items ?? []} />;
         case TabSelection.GettingStarted:
-          return <GettingStarted />;
+          return <GettingStarted items={items ?? []} />;
         default:
           return null;
       }
@@ -96,7 +96,7 @@ export default function HomePage() {
       case TabSelection.Files:
         return <FilesView repo={repo} />;
       case TabSelection.GettingStarted:
-        return <GettingStarted />;
+        return <GettingStarted items={items ?? []} />;
       default:
         return null;
     }

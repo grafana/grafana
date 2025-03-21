@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { useLocation } from 'react-router';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
-import { Alert, EmptyState, Modal, Spinner, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
+import { Alert, EmptyState, Spinner, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, useListRepositoryQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';

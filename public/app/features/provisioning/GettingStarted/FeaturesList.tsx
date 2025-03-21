@@ -1,7 +1,7 @@
 import { Stack, Text, Box, LinkButton, Icon } from '@grafana/ui';
-import { RepositoryViewList } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning';
 
-import { CONNECT_URL } from '../constants';
+import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 
 interface FeatureItemProps {
   children: React.ReactNode;
@@ -14,7 +14,7 @@ const FeatureItem = ({ children }: FeatureItemProps) => (
 );
 
 interface FeaturesListProps {
-  settings?: RepositoryViewList;
+  repos?: Repository[];
   hasPublicAccess: boolean;
   hasImageRenderer: boolean;
   hasRequiredFeatures: boolean;
@@ -22,7 +22,7 @@ interface FeaturesListProps {
 }
 
 export const FeaturesList = ({
-  settings,
+  repos,
   hasPublicAccess,
   hasImageRenderer,
   hasRequiredFeatures,
@@ -41,9 +41,7 @@ export const FeaturesList = ({
 
     return (
       <Stack direction="row" alignItems="center" gap={2}>
-        <LinkButton size="md" icon="plus" href={CONNECT_URL}>
-          Connect Grafana to repository
-        </LinkButton>
+        <ConnectRepositoryButton items={repos} />
       </Stack>
     );
   };
