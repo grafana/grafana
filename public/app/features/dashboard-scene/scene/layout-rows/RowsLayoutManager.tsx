@@ -1,7 +1,11 @@
 import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
-import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
+import {
+  NewObjectAddedToCanvasEvent,
+  ObjectRemovedFromCanvasEvent,
+  ObjectsReorderedOnCanvasEvent,
+} from '../../edit-pane/shared';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -69,6 +73,17 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     throw new Error('Method not implemented.');
+  }
+
+  public duplicate(): DashboardLayoutManager {
+    const newRows = this.state.rows.map((row) => row.duplicate());
+    return this.clone({ rows: newRows, key: undefined });
+  }
+
+  public duplicateRow(row: RowItem) {
+    const newRow = row.duplicate();
+    this.setState({ rows: [...this.state.rows, newRow] });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
   }
 
   public addNewRow(): RowItem {
@@ -150,6 +165,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     rows.splice(originalIndex, 1);
     rows.splice(moveToIndex, 0, row);
     this.setState({ rows });
+    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
   public moveRowDown(row: RowItem) {
@@ -171,6 +187,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     rows.splice(originalIndex, 1);
 
     this.setState({ rows });
+    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
   public isFirstRow(row: RowItem): boolean {

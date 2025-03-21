@@ -44,7 +44,7 @@ type Engine struct {
 	tagHandlers map[string]tagHandler
 
 	defaultContext    context.Context
-	sequenceGenerator *sequenceGenerator // If not nil, this generator is used to generate auto-increment values for inserts.
+	sequenceGenerator SequenceGenerator // If not nil, this generator is used to generate auto-increment values for inserts.
 }
 
 // CondDeleted returns the conditions whether a record is soft deleted.
@@ -239,9 +239,6 @@ func (engine *Engine) NewSession() *Session {
 
 // Close the engine
 func (engine *Engine) Close() error {
-	if engine.sequenceGenerator != nil {
-		engine.sequenceGenerator.close()
-	}
 	return engine.db.Close()
 }
 
