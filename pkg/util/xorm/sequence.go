@@ -19,6 +19,10 @@ func newSequenceGenerator(db *sql.DB) *sequenceGenerator {
 	}
 }
 
+func (sg *sequenceGenerator) Reset() {
+	// Nothing to do. This generator always uses state from DB.
+}
+
 func (sg *sequenceGenerator) Next(ctx context.Context, table, column string) (int64, error) {
 	// Current implementation fetches new value for each Next call.
 	key := fmt.Sprintf("%s:%s", table, column)

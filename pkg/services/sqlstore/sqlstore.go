@@ -628,6 +628,8 @@ func TestMain(m *testing.M) {
 	if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err
 	}
+	testSQLStore.engine.ResetSequenceGenerator()
+
 	if err := testSQLStore.Reset(); err != nil {
 		return nil, err
 	}
