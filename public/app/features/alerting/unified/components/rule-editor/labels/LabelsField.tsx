@@ -15,7 +15,7 @@ import { isRecordingRuleByType } from '../../../utils/rules';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
 import { AlertLabels } from '../../AlertLabels';
 import { NeedHelpInfo } from '../NeedHelpInfo';
-import { useAlertRuleSuggestions } from '../useAlertRuleSuggestions';
+import { useGetLabelsFromRuleRules, useGetNameSpacesByDatasourceName } from '../useAlertRuleSuggestions';
 
 import { AddButton, RemoveButton } from './LabelsButtons';
 
@@ -108,8 +108,10 @@ export function useCombinedLabels(
   labelsInSubform: Array<{ key: string; value: string }>,
   selectedKey: string
 ) {
+  // ------- Get ruler rules by data source
+  const { isLoading, rulerRules, promNamespaces } = useGetNameSpacesByDatasourceName(dataSourceName);
   // ------- Get labels keys and their values from existing alerts
-  const { isLoading, labels: labelsByKeyFromExisingAlerts } = useAlertRuleSuggestions(dataSourceName);
+  const { labels: labelsByKeyFromExisingAlerts } = useGetLabelsFromRuleRules(rulerRules, promNamespaces);
   // ------- Get only the keys from the ops labels, as we will fetch the values for the keys once the key is selected.
   const { loading: isLoadingLabels, labelsOpsKeys = [] } = useGetOpsLabelsKeys(
     !labelsPluginInstalled || loadingLabelsPlugin
