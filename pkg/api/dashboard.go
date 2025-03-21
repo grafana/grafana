@@ -151,9 +151,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 	deleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsDelete, dashScope)
 	canDelete, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, deleteEvaluator)
-	adminEvaluator := accesscontrol.EvalAll(
-		accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsRead, dashScope),
-		accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashScope))
+	adminEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashScope)
 	canAdmin, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, adminEvaluator)
 
 	isStarred, err := hs.isDashboardStarredByUser(c, dash.ID)
