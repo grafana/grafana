@@ -22,7 +22,7 @@ type pooledClientConn struct {
 func (pc *pooledClientConn) Invoke(ctx context.Context, method string, args interface{}, reply interface{}, opts ...grpc.CallOption) error {
 	conn, err := pc.pool.Get(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create grpc conn in pooled client: %w", err)
 	}
 	// Return connection to pool when done.
 	defer func() {
@@ -35,7 +35,7 @@ func (pc *pooledClientConn) Invoke(ctx context.Context, method string, args inte
 func (pc *pooledClientConn) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 	stream, err := pc.streamConn.NewStream(ctx, desc, method, opts...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create grpc stream in pooled client: %w", err)
 	}
 	return stream, nil
 }
@@ -65,15 +65,15 @@ func (opts *poolOpts) validate() error {
 
 func newPooledConn(opts *poolOpts) (grpc.ClientConnInterface, error) {
 	if err := opts.validate(); err != nil {
-		return nil, fmt.Errorf("failed to validate connection pool options: %w", err)
+		return nil, fmt.Errorf("failed to validate grpc connection pool options: %w", err)
 	}
 	pool, err := grpcpool.New(opts.factory, opts.initialCapacity, opts.maxCapacity, opts.idleTimeout)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create connection pool: %w", err)
+		return nil, fmt.Errorf("failed to create grpc connection pool: %w", err)
 	}
 	streamConn, err := opts.factory()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create streaming connection: %w", err)
+		return nil, fmt.Errorf("failed to create groc streaming connection: %w", err)
 	}
 	return &pooledClientConn{
 		pool:       pool,
