@@ -1781,26 +1781,6 @@
    ],
    "type": "object"
   },
-  "GettableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "GettableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -2932,23 +2912,6 @@
       "type": "string"
      },
      "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "PostableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
     }
    },
    "type": "object"
@@ -4473,55 +4436,6 @@
    "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
    "type": "object"
   },
-  "TimeIntervalItem": {
-   "properties": {
-    "days_of_month": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "location": {
-     "type": "string"
-    },
-    "months": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "times": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalTimeRange"
-     },
-     "type": "array"
-    },
-    "weekdays": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "years": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "TimeIntervalTimeRange": {
-   "properties": {
-    "end_time": {
-     "type": "string"
-    },
-    "start_time": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "TimeRange": {
    "description": "Redefining this to avoid an import cycle",
    "properties": {
@@ -4976,6 +4890,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -5100,7 +5015,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"
@@ -6541,36 +6455,6 @@
   "application/json"
  ],
  "responses": {
-  "GetAllIntervalsResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableTimeIntervals"
-    },
-    "type": "array"
-   }
-  },
-  "GetIntervalsByNameResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableTimeIntervals"
-   }
-  },
-  "GetReceiverResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableApiReceiver"
-   }
-  },
-  "GetReceiversResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableApiReceiver"
-    },
-    "type": "array"
-   }
-  },
   "GettableHistoricUserConfigs": {
    "description": "",
    "schema": {
