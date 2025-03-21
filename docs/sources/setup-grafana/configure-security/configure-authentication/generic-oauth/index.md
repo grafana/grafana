@@ -127,7 +127,7 @@ To integrate your OAuth2 provider with Grafana using our Generic OAuth authentic
    c. Enable the refresh token on the provider if required.
 
 1. [Configure role mapping](#configure-role-mapping).
-1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
+1. Optional: [Configure team synchronization](https://grafana.com/docs/grafana/<GRAFANA_VERSION/setup-grafana/configure-security/configure-team-sync/).
 1. Restart Grafana.
 
    You should now see a Generic OAuth login button on the login page and be able to log in or sign up with your OAuth2 provider.
