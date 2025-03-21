@@ -287,7 +287,7 @@ func TestListDashboardVersions(t *testing.T) {
 		require.Equal(t, 1, len(res.Versions))
 		require.EqualValues(t, &dashver.DashboardVersionResponse{
 			Versions: []*dashver.DashboardVersionDTO{{
-				ID:            12, // should take rv
+				ID:            5,
 				DashboardID:   42,
 				ParentVersion: 4,
 				Version:       5, // should take from spec
