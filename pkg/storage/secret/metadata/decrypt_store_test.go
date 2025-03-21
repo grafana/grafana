@@ -58,8 +58,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		decryptSvc, _ := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "non-existent-value")
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "could not get secure value")
+		require.ErrorIs(t, err, contracts.ErrDecryptNotFound)
 		require.Empty(t, exposed)
 	})
 
@@ -92,8 +91,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		createSecureValue(authCtx, t, svStorage, sv)
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unauthorized to decrypt")
+		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
 		require.Empty(t, exposed)
 	})
 
@@ -157,8 +155,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		createSecureValue(authCtx, t, svStorage, sv)
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unauthorized to decrypt")
+		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
 		require.Empty(t, exposed)
 	})
 
@@ -188,8 +185,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		createSecureValue(authCtx, t, svStorage, sv)
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unauthorized to decrypt")
+		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
 		require.Empty(t, exposed)
 	})
 
@@ -219,8 +215,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		createSecureValue(authCtx, t, svStorage, sv)
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unauthorized to decrypt")
+		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
 		require.Empty(t, exposed)
 	})
 
@@ -251,7 +246,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unauthorized to decrypt")
+		require.Equal(t, err.Error(), "not authorized")
 		require.Empty(t, exposed)
 	})
 
