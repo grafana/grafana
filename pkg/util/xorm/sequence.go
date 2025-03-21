@@ -33,7 +33,9 @@ func newSequenceGenerator(db *sql.DB) *sequenceGenerator {
 }
 
 func (sg *sequenceGenerator) Reset() {
-	// Nothing to do. This generator always uses state from DB.
+	sg.mu.Lock()
+	defer sg.mu.Unlock()
+	sg.batchStates = make(map[string]*batchState)
 }
 
 func (sg *sequenceGenerator) Next(ctx context.Context, table, column string) (int64, error) {
@@ -73,14 +75,14 @@ func (sg *sequenceGenerator) Next(ctx context.Context, table, column string) (in
 
 // allocateNewBatch retrieves a new batch of sequence values from the database.
 // It returns the start and end values of the new batch on success.
-func (sg *sequenceGenerator) allocateNewBatch(ctx context.Context, key string) (start, end int64, err error) {
+func (sg *sequenceGenerator) allocateNewBatch(ctx context.Context, key string) (start, end int64, retErr error) {
 	tx, err := sg.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return 0, 0, err
 	}
 
 	defer func() {
-		if err != nil {
+		if retErr != nil {
 			tx.Rollback()
 		}
 	}()
