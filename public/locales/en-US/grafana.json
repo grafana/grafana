@@ -583,12 +583,13 @@
       "validation-failed": "Failed to validate IRM integration name. Is the OnCall API available?"
     },
     "import-to-gma": {
-      "action-button": "Export",
+      "action-button": "Import",
       "datasource": {
         "label": "Datasource",
         "required-message": "Please select a datasource"
       },
-      "error": "Failed to export alert rules: {{error}}",
+      "error": "Failed to import alert rules: {{error}}",
+      "filters": "Filters",
       "group": {
         "description": "Type to search for an existing group or create a new one",
         "label": "Group"
@@ -597,22 +598,20 @@
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
       },
-      "optional-filters": "Optional filters",
       "optional-settings": "Optional settings",
-      "pageTitle": "Export alert rules from a datasource to Grafana-managed rules.",
+      "pageTitle": "Import alert rules from a datasource to Grafana-managed rules",
       "pause": {
         "label": "Pause alerting rules",
-        "tooltip": "Exported alerting rules will be paused."
+        "tooltip": "Imported alerting rules will be paused."
       },
       "pause-recording": {
         "label": "Pause recording rules",
-        "tooltip": "Exported recording rules will be paused."
+        "tooltip": "Imported recording rules will be paused."
       },
-      "success": "Successfully exported alert rules to Grafana-managed rules.",
+      "success": "Successfully imported alert rules to Grafana-managed rules.",
       "target-folder": {
         "label": "Target Folder (optional)"
-      },
-      "title": "Migrate your alert rules from a datasource into Grafana."
+      }
     },
     "list-view": {
       "empty": {
@@ -623,7 +622,7 @@
         "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
       },
       "import-to-gma-banner": {
-        "title": "You can migrate your Data source-managed alert rules to Grafana-managed rules by clicking the \"Export to Grafana-managed rules\" button."
+        "title": "You can now migrate your Data source-managed alert rules to Grafana-managed rules!"
       },
       "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
       "no-rules": "No rules found.",
@@ -656,6 +655,10 @@
       "description": "Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of time.",
       "save": "Save mute timing",
       "saving": "Saving mute timing"
+    },
+    "namespace-and-group-filter": {
+      "select-group": "Select group",
+      "select-namespace": "Select namespace"
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
@@ -862,11 +865,11 @@
         "description": "Check the data source configuration. Does the data source support Prometheus API?",
         "title": "Unable to load rules from this data source"
       },
-      "export-to-gma": "Export to Grafana-managed rules",
       "filter-view": {
         "no-more-results": "No more results – showing {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters."
       },
+      "migrate-to-gma": "Import Grafana-managed rules",
       "new-alert-rule": "New alert rule",
       "pagination": {
         "next-page": "next page",

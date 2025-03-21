@@ -1,9 +1,7 @@
-import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, Stack, VirtualizedSelect, useStyles2 } from '@grafana/ui';
+import { Combobox, ComboboxOption, Field, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSuggestions';
@@ -22,11 +20,10 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
     setValue,
   } = useFormContext<ImportFormValues>();
 
-  const style = useStyles2(getStyle);
   const namespace = watch('namespace');
   const { namespaceGroups, isLoading } = useGetNameSpacesByDatasourceName(rulesSourceName);
 
-  const namespaceOptions: Array<SelectableValue<string>> = useMemo(
+  const namespaceOptions: Array<ComboboxOption<string>> = useMemo(
     () =>
       Array.from(namespaceGroups.keys()).map((namespace) => ({
         label: namespace,
@@ -35,14 +32,21 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
     [namespaceGroups]
   );
 
-  const groupOptions: Array<SelectableValue<string>> = useMemo(
+  const groupOptions: Array<ComboboxOption<string>> = useMemo(
     () => (namespace && namespaceGroups.get(namespace)?.map((group) => ({ label: group, value: group }))) || [],
     [namespace, namespaceGroups]
   );
 
+  useEffect(() => {
+    // Reset namespace/group if datasource changes
+    setValue('namespace', '');
+    setValue('ruleGroup', '');
+  }, [rulesSourceName, setValue]);
+
   return (
     <Stack direction="row" gap={2}>
       <Field
+        htmlFor="namespace-picker"
         data-testid="namespace-picker"
         label={t('alerting.import-to-gma.namespace.label', 'Namespace')}
         // Disable translations as we don't intend to use this dropdown longterm,
@@ -54,16 +58,17 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
       >
         <Controller
           render={({ field: { onChange, ref, ...field } }) => (
-            <VirtualizedSelect
+            <Combobox
               {...field}
-              className={style.input}
               onChange={(value) => {
                 setValue('ruleGroup', ''); //reset if namespace changes
                 onChange(value.value);
               }}
+              id="namespace-picker"
+              placeholder={t('alerting.namespace-and-group-filter.select-namespace', 'Select namespace')}
               options={namespaceOptions}
               width={42}
-              isLoading={isLoading}
+              loading={isLoading}
               disabled={isLoading}
             />
           )}
@@ -72,6 +77,7 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
         />
       </Field>
       <Field
+        htmlFor="group-picker"
         data-testid="group-picker"
         label={t('alerting.import-to-gma.group.label', 'Group')}
         // Disable translations as we don't intend to use this dropdown longterm,
@@ -86,17 +92,17 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
       >
         <Controller
           render={({ field: { ref, ...field } }) => (
-            <VirtualizedSelect
+            <Combobox
               {...field}
-              allowCustomValue
               options={groupOptions}
               width={42}
               onChange={(value) => {
                 setValue('ruleGroup', value.value ?? '');
               }}
-              className={style.input}
-              isLoading={isLoading}
-              disabled={isLoading}
+              id="group-picker"
+              placeholder={t('alerting.namespace-and-group-filter.select-group', 'Select group')}
+              loading={isLoading}
+              disabled={isLoading || !namespace}
             />
           )}
           name="ruleGroup"
@@ -106,16 +112,3 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
     </Stack>
   );
 };
-
-const getStyle = (theme: GrafanaTheme2) => ({
-  input: css({
-    width: '330px !important',
-  }),
-  filterBox: css({
-    display: 'flex',
-    flexDirection: 'row',
-    paddingLeft: theme.spacing(1),
-    gap: theme.spacing(1),
-    marginTop: theme.spacing(1),
-  }),
-});
