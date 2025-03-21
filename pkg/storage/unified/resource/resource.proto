@@ -218,9 +218,11 @@ message ListOptions {
 }
 
 enum ResourceVersionMatch {
-  Unset = 0;
-  NotOlderThan = 1;
-  Exact = 2;
+  // Note that we should have Unset as 0 in accordance with protobuf best practice,
+  // but due to backwards compatibility reasons, the Unset value is at 2 now.
+  NotOlderThan = 0;
+  Exact = 1;
+  Unset = 2;
 }
 
 message ListRequest {
