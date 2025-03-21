@@ -172,24 +172,20 @@ export function CreateRecordingRuleButton() {
   return null;
 }
 
-export function MigrateToGMAButton() {
-  return <Trans i18nKey="alerting.rule-list.export-to-gma">Export to Grafana-managed rules</Trans>;
-}
-
-export function MigrationToGMABanner() {
+function MigrationToGMABanner() {
   const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
 
   return (
     <Alert
       title={t(
         'alerting.list-view.import-to-gma-banner.title',
-        'You can migrate your Data source-managed alert rules to Grafana-managed rules by clicking the "Export to Grafana-managed rules" button.'
+        'You can now migrate your Data source-managed alert rules to Grafana-managed rules!'
       )}
       severity="info"
       onRemove={() => {
         locationService.push(importUrl);
       }}
-      buttonContent={<MigrateToGMAButton />}
+      buttonContent={<Trans i18nKey="alerting.rule-list.migrate-to-gma">Import Grafana-managed rules</Trans>}
     />
   );
 }
