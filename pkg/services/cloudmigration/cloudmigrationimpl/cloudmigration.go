@@ -472,31 +472,32 @@ func (s *Service) DeleteSession(ctx context.Context, orgID int64, signedInUser *
 	return session, nil
 }
 
-func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, cmd cloudmigration.CreateSnapshotCommand) (*cloudmigration.CloudMigrationSnapshot, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.CreateSnapshot", trace.WithAttributes(
-		attribute.String("sessionUid", sessionUid),
+		attribute.String("sessionUid", cmd.SessionUID),
 	))
 	defer span.End()
 
+	if s.cfg.CloudMigration.SnapshotFolder == "" {
+		return nil, fmt.Errorf("snapshot folder is not set")
+	}
+
 	// fetch session for the gms auth token
-	session, err := s.store.GetMigrationSessionByUID(ctx, signedInUser.GetOrgID(), sessionUid)
+	session, err := s.store.GetMigrationSessionByUID(ctx, signedInUser.GetOrgID(), cmd.SessionUID)
 	if err != nil {
-		return nil, fmt.Errorf("fetching migration session for uid %s: %w", sessionUid, err)
+		return nil, fmt.Errorf("fetching migration session for uid %s: %w", cmd.SessionUID, err)
 	}
 
 	// query gms to establish new snapshot s.cfg.CloudMigration.StartSnapshotTimeout
 	initResp, err := s.gmsClient.StartSnapshot(ctx, *session)
 	if err != nil {
-		return nil, fmt.Errorf("initializing snapshot with GMS for session %s: %w", sessionUid, err)
+		return nil, fmt.Errorf("initializing snapshot with GMS for session %s: %w", cmd.SessionUID, err)
 	}
 
-	if s.cfg.CloudMigration.SnapshotFolder == "" {
-		return nil, fmt.Errorf("snapshot folder is not set")
-	}
 	// save snapshot to the db
 	snapshot := cloudmigration.CloudMigrationSnapshot{
 		UID:            util.GenerateShortUID(),
-		SessionUID:     sessionUid,
+		SessionUID:     cmd.SessionUID,
 		Status:         cloudmigration.SnapshotStatusCreating,
 		EncryptionKey:  initResp.EncryptionKey,
 		GMSSnapshotUID: initResp.SnapshotID,
@@ -512,7 +513,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 	// Update status to "creating" to ensure the frontend polls from now on
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:       uid,
-		SessionID: sessionUid,
+		SessionID: cmd.SessionUID,
 		Status:    cloudmigration.SnapshotStatusCreating,
 	}); err != nil {
 		return nil, err
@@ -546,7 +547,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 			// Update status to error with retries
 			if err := s.updateSnapshotWithRetries(asyncCtx, cloudmigration.UpdateSnapshotCmd{
 				UID:       snapshot.UID,
-				SessionID: sessionUid,
+				SessionID: cmd.SessionUID,
 				Status:    cloudmigration.SnapshotStatusError,
 			}); err != nil {
 				s.log.Error("critical failure during snapshot creation - please report any error logs")
