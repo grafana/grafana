@@ -816,29 +816,6 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 	return iter.listRV, err
 }
 
-// func (b *backend) readHistory(ctx context.Context, req *historyReadRequest) (int64, error) {
-// 	readReq := &sqlResourceHistoryReadRequest{
-// 		SQLTemplate: sqltemplate.New(b.dialect),
-// 		Request:     req,
-// 		Response:    NewReadResponse(),
-// 	}
-
-// 	var res *resource.ResourceWrapper
-// 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-// 		var err error
-// 		res, err = dbutil.QueryRow(ctx, tx, sqlResourceHistoryRead, readReq)
-// 		return err
-// 	})
-
-// 	if errors.Is(err, sql.ErrNoRows) {
-// 		return 0, nil
-// 	} else if err != nil {
-// 		return 0, err
-// 	}
-
-// 	return res.ResourceVersion, nil
-// }
-
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	return b.notifier.notify(ctx)
 }
