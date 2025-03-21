@@ -118,6 +118,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.                                |
 | `exploreMetricsUseExternalAppPlugin`  | Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin                                                                                                |
 | `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                                                       |
+| `azureMonitorLogsBuilderEditor`       | Enables the logs builder mode for the Azure Monitor data source                                                                                                                              |
 
 ## Experimental feature toggles
 
