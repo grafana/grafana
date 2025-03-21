@@ -80,6 +80,12 @@ func (sg *sequenceGenerator) allocateNewBatch(ctx context.Context, key string) (
 		return 0, 0, err
 	}
 
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
 	// Query the current sequence value
 	rows, err := tx.QueryContext(ctx, "SELECT next_value FROM "+sg.sequencesTable+" WHERE name = ?", key)
 	if err != nil {
@@ -89,7 +95,7 @@ func (sg *sequenceGenerator) allocateNewBatch(ctx context.Context, key string) (
 
 	// Handle case where sequence doesn't exist yet
 	if !rows.Next() {
-		if err := rows.Err(); err != nil {
+		if err = rows.Err(); err != nil {
 			return 0, 0, err
 		}
 
