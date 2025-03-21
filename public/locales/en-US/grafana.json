@@ -1451,12 +1451,12 @@
       "name": "Auto grid",
       "options": {
         "columns": "Columns",
-        "fixed": "Fixed: {{size}}px",
-        "min": "Min: {{size}}px",
-        "one-column": "1 column",
-        "rows": "Rows",
-        "three-columns": "3 columns",
-        "two-columns": "2 columns"
+        "max-columns": "Max columns",
+        "max-height": "Max height",
+        "min-height": "Min height",
+        "min-width": "Min column width",
+        "min-width-custom": "Custom min width",
+        "rows": "Row height"
       }
     },
     "rows-layout": {

@@ -18,6 +18,7 @@ export type JustifyContent =
   | 'space-between'
   | 'space-around'
   | 'space-evenly'
+  | 'stretch'
   | 'start'
   | 'end'
   | 'left'
