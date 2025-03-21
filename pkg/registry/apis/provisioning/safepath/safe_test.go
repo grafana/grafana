@@ -39,11 +39,6 @@ func TestIsSafe(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:    "path at max depth",
-			path:    strings.Repeat("dir/", MaxNestDepth-1),
-			wantErr: nil,
-		},
-		{
 			name:    "path at max length",
 			path:    strings.Repeat("a", MaxPathLength),
 			wantErr: nil,
@@ -70,12 +65,6 @@ func TestIsSafe(t *testing.T) {
 			path:    strings.Repeat("a/", 512) + "file", // Creates path > MaxPathLength
 			wantErr: ErrPathTooLong,
 		},
-		{
-			name:    "path too deep",
-			path:    strings.Repeat("dir/", MaxNestDepth) + "file",
-			wantErr: ErrPathTooDeep,
-		},
-
 		// Invalid characters and formats
 		{
 			name:    "invalid special character hash",

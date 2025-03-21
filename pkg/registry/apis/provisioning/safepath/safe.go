@@ -8,7 +8,6 @@ import (
 
 var (
 	ErrPathTooLong          = errors.New("path too long")
-	ErrPathTooDeep          = errors.New("path too deep")
 	ErrInvalidCharacters    = errors.New("path contains invalid characters")
 	ErrDoubleSlash          = errors.New("path contains double slashes")
 	ErrInvalidFormat        = errors.New("invalid path format")
@@ -20,7 +19,6 @@ var (
 
 const (
 	MaxPathLength = 1024 // Maximum allowed path length in characters
-	MaxNestDepth  = 8    // Maximum allowed directory nesting depth
 )
 
 // validPathPattern matches valid path characters:
@@ -60,11 +58,7 @@ func IsSafe(path string) error {
 		return ErrNotRelative
 	}
 
-	// Split path and check depth
-	parts := strings.Split(path, "/")
-	if len(parts) > MaxNestDepth {
-		return ErrPathTooDeep
-	}
+	parts := Split(path)
 
 	// Check for path traversal attempts first
 	for _, part := range parts {

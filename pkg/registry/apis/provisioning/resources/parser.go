@@ -23,7 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
+var (
+	ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
+	ErrPathTooDeep       = errors.New("the path is too deep")
+)
+
+const maxPathDepth = 8
 
 type ParserFactory struct {
 	ClientFactory *ClientFactory
@@ -296,6 +301,10 @@ func IsPathSupported(filePath string) error {
 	// Validate the path for any traversal attempts first
 	if err := safepath.IsSafe(filePath); err != nil {
 		return err
+	}
+
+	if safepath.Depth(filePath) > maxPathDepth {
+		return ErrPathTooDeep
 	}
 
 	// Only check file extension if it's not a folder path
