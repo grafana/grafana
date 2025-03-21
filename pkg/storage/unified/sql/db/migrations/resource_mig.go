@@ -155,6 +155,10 @@ func initResourceTables(mg *migrator.Migrator) string {
 	mg.AddMigration("Add generation to resource history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
 		Name: "generation", Type: migrator.DB_BigInt, Nullable: true,
 	}))
+	mg.AddMigration("Add generation index to resource", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Name: "generation_idx", // not unique
+		Cols: []string{"generation"},
+	}))
 
 	return marker
 }
