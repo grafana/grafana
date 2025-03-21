@@ -337,7 +337,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
             {/* Step 1 */}
             <AlertRuleNameAndMetric />
             {/* Step 2 */}
-            <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
+            <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} mode="edit" />
             {/* Step 3-4-5 */}
             {showDataSourceDependantStep && (
               <>

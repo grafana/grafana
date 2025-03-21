@@ -390,10 +390,6 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
-  * Allow restoring objects in k8s
-  */
-  kubernetesRestore?: boolean;
-  /**
   * Route the folder and dashboard service requests to k8s
   */
   kubernetesClientDashboardsFolders?: boolean;
@@ -826,6 +822,7 @@ export interface FeatureToggles {
   managedDualWriter?: boolean;
   /**
   * Enables SRI checks for plugin assets
+  * @default false
   */
   pluginsSriChecks?: boolean;
   /**
