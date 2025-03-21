@@ -485,8 +485,7 @@ The following `External Group ID`s would be valid for input in the desired team'
 - `admins_group`
 - `division_1`
 
-[Learn more about Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/
-)
+[Learn more about Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/)
 
 ### Configure role sync
 
