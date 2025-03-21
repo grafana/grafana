@@ -94,7 +94,7 @@ roles
 ```
 
 {{% admonition type="warning" %}}
-These scopes do not add group claims to the id_token. Without group claims, teamsync will not work. Teamsync is covered further down in this document.
+These scopes do not add group claims to the `id_token`. Without group claims, teamsync will not work. Teamsync is covered further down in this document.
 {{% /admonition %}}
 
 3. For role mapping to work with the example configuration above,
@@ -109,10 +109,10 @@ viewer
 ## Teamsync
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
-[Teamsync]({{< relref "../../configure-team-sync" >}}) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
+[Teamsync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
 
 To enable teamsync, you need to add a `groups` mapper to the client configuration in Keycloak.
 This will add the `groups` claim to the id_token. You can then use the `groups` claim to map groups to teams in Grafana.
