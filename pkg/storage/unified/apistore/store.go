@@ -47,7 +47,7 @@ var _ storage.Interface = (*Storage)(nil)
 
 // Optional settings that apply to a single resource
 type StorageOptions struct {
-	// ????: should we constrain this to only dashbaords for now?
+	// ????: should we constrain this to only dashboards for now?
 	// Not yet clear if this is a good general solution, or just a stop-gap
 	LargeObjectSupport LargeObjectSupport
 
