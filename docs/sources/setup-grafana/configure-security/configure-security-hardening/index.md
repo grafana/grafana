@@ -30,11 +30,10 @@ Grafana must use HTTPS for the following configurations to work properly.
 
 To provide mitigation against some MITM attacks, add the `Secure` attribute to the cookie that is used to authenticate users. This attribute forces users only to send the cookie over a valid HTTPS secure connection.
 
-This setting is configured in the `[security]` section of the `grafana.ini` file.
-
 Example:
 
 ```toml
+[security]
 # Set to true if you host Grafana behind HTTPS. The default value is false.
 cookie_secure = true
 ```
@@ -43,25 +42,22 @@ cookie_secure = true
 
 To mitigate almost all CSRF-attacks, set the _cookie_samesite_ option to `strict`. This setting prevents clients from sending the cookie in requests that are made cross-site, but only from the site that creates the cookie.
 
-This setting is configured in the `[security]` section of the `grafana.ini` file.
-
 Example:
 
 ```toml
+[security]
 # set cookie SameSite attribute. defaults to `lax`. can be set to "lax", "strict", "none" and "disabled"
 cookie_samesite = strict
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 By setting the SameSite attribute to "strict," only the user clicks within a Grafana instance work. The default option, "lax," does not produce this behavior.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Add a prefix to cookie names
 
 You can further secure the cookie authentication by adding a [Cookie Prefix](https://googlechrome.github.io/samples/cookie-prefixes/). Cookies without a special prefix can be overwritten in a man-in-the-middle attack, even if the site uses HTTPS. A cookie prefix forces clients only to accept the cookie if certain criteria are met.
 Add a prefix to the current cookie name with either `__Secure-` or `__Host-` where the latter provides additional protection by only allowing the cookie to be created from the host that sent the Set-Cookie header.
-
-This setting is configured in the `[auth]` section of the `grafana.ini` file.
 
 Example:
 
@@ -79,11 +75,10 @@ Grafana includes a few additional headers that you can configure to help mitigat
 
 A content security policy (CSP) is an HTTP response header that controls how the web browser handles content, such as allowing inline scripts to execute or loading images from certain domains. The default CSP template is already configured to provide sufficient protection against some attacks. This makes it more difficult for attackers to execute arbitrary JavaScript if such a vulnerability is present.
 
-CSP settings are configured in the `[security]` section of the `grafana.ini` file.
-
 Example:
 
 ```toml
+[security]
 # Enable adding the Content-Security-Policy header to your requests.
 # CSP enables you to control the resources the user agent can load and helps prevent XSS attacks.
 content_security_policy = true
@@ -120,11 +115,10 @@ The Grafana server has several built-in security features that you can opt-in to
 
 If set to `true`, the Grafana server hides the running version number for unauthenticated users. Version numbers might reveal if you are running an outdated and vulnerable version of Grafana.
 
-This setting is configured in the `[anonymous.auth]` section of the `grafana.ini` file.
-
 Example:
 
 ```toml
+[anonymous.auth]
 # mask the Grafana version number for unauthenticated users
 hide_version = true
 ```
@@ -133,11 +127,10 @@ hide_version = true
 
 By default, metrics from Grafana itself can be accessed without authentication. This can lead to information leakage.
 
-This setting is configured in the `[metrics]` section of the `grafana.ini` file.
-
 Example:
 
 ```toml
+[metrics]
 # If both are set, basic auth will be required for the metrics endpoints
 basic_auth_username =
 basic_auth_password =
@@ -147,11 +140,10 @@ basic_auth_password =
 
 If set to `true`, the Grafana server redirects requests that have a Host-header value that is mismatched to the actual domain. This might help to mitigate some DNS rebinding attacks.
 
-This setting is configured in the `[server]` section of the `grafana.ini` file.
-
 Example:
 
 ```toml
+[sever]
 # Redirect to correct domain if host header does not match domain
 # Prevents DNS rebinding attacks
 enforce_domain = true
