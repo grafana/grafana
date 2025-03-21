@@ -14,6 +14,7 @@ var (
 	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.sessionNotDeleted").Errorf("Session not deleted")
 	ErrTokenNotFound               = errutil.NotFound("cloudmigrations.tokenNotFound").Errorf("Token not found")
 	ErrSnapshotNotFound            = errutil.NotFound("cloudmigrations.snapshotNotFound").Errorf("Snapshot not found")
+	ErrEmptyResourceTypes          = errutil.BadRequest("cloudmigrations.emptyResourceTypes").Errorf("Resource types cannot be empty")
 )
 
 // CloudMigration domain structs
@@ -193,6 +194,10 @@ type SnapshotResultQueryParams struct {
 }
 
 type ResourceTypes map[MigrateDataType]struct{}
+
+type CreateSnapshotCommand struct {
+	ResourceTypes ResourceTypes
+}
 
 type GetSnapshotsQuery struct {
 	SnapshotUID string

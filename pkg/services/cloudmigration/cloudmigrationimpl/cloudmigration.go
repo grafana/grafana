@@ -13,6 +13,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -40,10 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // Service Define the cloudmigration.Service Implementation.
@@ -142,7 +143,7 @@ func ProvideService(
 		libraryElementsService: libraryElementsService,
 		ngAlert:                ngAlert,
 	}
-	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl)
+	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl, cloudmigration.ResourceDependency)
 
 	httpClientS3, err := httpClientProvider.New()
 	if err != nil {
