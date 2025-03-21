@@ -73,10 +73,7 @@ var (
 )
 
 const (
-	k8sDashboardCleanupInterval          = 30 * time.Second
-	k8sDashboardCleanupTimeout           = 22 * time.Second
-	k8sDashboardCleanupBatchSize         = 10
-	k8sDashboardKvNamespace              = "dashboard-service-cleanup"
+	k8sDashboardKvNamespace              = "k8s-dashboard-cleanup"
 	k8sDashboardKvLastResourceVersionKey = "last-resource-version"
 )
 
@@ -97,52 +94,41 @@ type DashboardServiceImpl struct {
 	serverLockService      *serverlock.ServerLockService
 	kvstore                kvstore.KVStore
 
-	dashboardPermissionsReady      chan struct{}
-	k8sDeletedDashboardsCleanupJob *k8sCleanupJob
+	dashboardPermissionsReady chan struct{}
 }
 
-type k8sCleanupJob struct {
-	stop chan struct{}
-}
-
-func (b *k8sCleanupJob) Stop() {
-	if b.stop != nil {
-		close(b.stop)
-	}
-}
-
-func (dr *DashboardServiceImpl) startK8sDeletedDashboardsCleanupJob() {
-	dr.k8sDeletedDashboardsCleanupJob = &k8sCleanupJob{
-		stop: make(chan struct{}),
-	}
-
+func (dr *DashboardServiceImpl) startK8sDeletedDashboardsCleanupJob(ctx context.Context) chan struct{} {
+	done := make(chan struct{})
 	go func() {
-		ticker := time.NewTicker(k8sDashboardCleanupInterval)
+		defer close(done)
+
+		ticker := time.NewTicker(dr.cfg.K8sDashboardCleanup.Interval)
 		defer ticker.Stop()
 
 		for {
 			select {
-			case <-dr.k8sDeletedDashboardsCleanupJob.stop:
+			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				if err := dr.executeCleanupWithLock(context.Background()); err != nil {
+				if err := dr.executeCleanupWithLock(ctx); err != nil {
 					dr.log.Error("Failed to execute k8s dashboard cleanup", "error", err)
 				}
 			}
 		}
 	}()
+	return done
 }
 
 func (dr *DashboardServiceImpl) executeCleanupWithLock(ctx context.Context) error {
 	// We're taking a leader-like locking approach here. By locking and executing, but never releasing the lock,
 	// we ensure that other instances of this service can't run in parallel and hence the cleanup will only happen once
-	// per k8sDashboardCleanupInterval by setting the maxInterval and having the time between executions be k8sDashboardCleanupInterval as well.
+	// per cleanup interval by setting the maxInterval and having the time between executions be the cleanup interval as well.
 	return dr.serverLockService.LockAndExecute(
 		ctx,
 		"k8s_dashboard_cleanup",
-		k8sDashboardCleanupInterval,
+		dr.cfg.K8sDashboardCleanup.Interval,
 		func(ctx context.Context) {
-			if err := dr.cleanupK8sDashboardResources(ctx, k8sDashboardCleanupBatchSize, k8sDashboardCleanupTimeout); err != nil {
+			if err := dr.cleanupK8sDashboardResources(ctx, dr.cfg.K8sDashboardCleanup.BatchSize, dr.cfg.K8sDashboardCleanup.Timeout); err != nil {
 				dr.log.Error("Failed to cleanup k8s dashboard resources", "error", err)
 			}
 		},
@@ -162,7 +148,7 @@ func (dr *DashboardServiceImpl) cleanupK8sDashboardResources(ctx context.Context
 	}
 
 	// Create a timeout context to ensure we complete before the lock expires
-	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
@@ -174,12 +160,12 @@ func (dr *DashboardServiceImpl) cleanupK8sDashboardResources(ctx context.Context
 	var errs []error
 	for _, org := range orgs {
 		// Check if we're approaching the timeout
-		if timeoutCtx.Err() != nil {
+		if ctx.Err() != nil {
 			dr.log.Info("Timeout reached during cleanup, stopping processing", "timeout", timeout)
 			break
 		}
 
-		orgErr := dr.cleanupOrganizationDashboards(timeoutCtx, org.ID, batchSize)
+		orgErr := dr.cleanupOrganizationK8sDashboards(ctx, org.ID, batchSize)
 		if orgErr != nil {
 			errs = append(errs, fmt.Errorf("org %d: %w", org.ID, orgErr))
 		}
@@ -192,18 +178,18 @@ func (dr *DashboardServiceImpl) cleanupK8sDashboardResources(ctx context.Context
 	return nil
 }
 
-// cleanupOrganizationDashboards handles cleanup for a single organization
-func (dr *DashboardServiceImpl) cleanupOrganizationDashboards(ctx context.Context, orgID int64, batchSize int64) error {
+// cleanupOrganizationK8sDashboards handles cleanup for a single organization's Kubernetes dashboards
+func (dr *DashboardServiceImpl) cleanupOrganizationK8sDashboards(ctx context.Context, orgID int64, batchSize int64) error {
 	dr.log.Debug("Running k8s dashboard resource cleanup for org", "orgID", orgID)
 
-	orgCtx, orgSpan := tracer.Start(ctx, "dashboards.service.cleanupK8sDashboardResources.org")
-	defer orgSpan.End()
-	orgSpan.SetAttributes(attribute.Int64("org_id", orgID))
+	ctx, span := tracer.Start(ctx, "dashboards.service.cleanupK8sDashboardResources.org")
+	defer span.End()
+	span.SetAttributes(attribute.Int64("org_id", orgID))
 
-	orgCleanupCtx, _ := identity.WithServiceIdentity(orgCtx, orgID)
+	ctx, _ = identity.WithServiceIdentity(ctx, orgID)
 
 	// Get the last processed resource version
-	lastResourceVersion, err := dr.getLastResourceVersion(orgCleanupCtx, orgID)
+	lastResourceVersion, err := dr.getLastResourceVersion(ctx, orgID)
 	if err != nil {
 		return err
 	}
@@ -220,7 +206,7 @@ func (dr *DashboardServiceImpl) cleanupOrganizationDashboards(ctx context.Contex
 		}
 
 		// List resources to be cleaned up
-		data, listErr, shouldContinue := dr.listResourcesToCleanup(orgCleanupCtx, orgID, lastResourceVersion, continueToken, batchSize)
+		data, listErr, shouldContinue := dr.listResourcesToCleanup(ctx, orgID, lastResourceVersion, continueToken, batchSize)
 		if listErr != nil {
 			errs = append(errs, fmt.Errorf("failed to list resources: %w", listErr))
 			break
@@ -245,7 +231,7 @@ func (dr *DashboardServiceImpl) cleanupOrganizationDashboards(ctx context.Contex
 		dr.log.Info("Processing dashboard cleanup batch", "orgID", orgID, "count", len(data.Items))
 
 		// Process the batch
-		processedItems, processingErrs := dr.processDashboardBatch(orgCleanupCtx, orgID, data.Items)
+		processedItems, processingErrs := dr.processDashboardBatch(ctx, orgID, data.Items)
 		if len(processingErrs) > 0 {
 			errs = append(errs, processingErrs...)
 		}
@@ -258,7 +244,7 @@ func (dr *DashboardServiceImpl) cleanupOrganizationDashboards(ctx context.Contex
 				dr.log.Info("Updating resource version after batch", "orgID", orgID,
 					"newResourceVersion", maxBatchResourceVersion, "oldResourceVersion", lastResourceVersion)
 
-				if updateErr := dr.kvstore.Set(orgCleanupCtx, orgID, k8sDashboardKvNamespace,
+				if updateErr := dr.kvstore.Set(ctx, orgID, k8sDashboardKvNamespace,
 					k8sDashboardKvLastResourceVersionKey, maxBatchResourceVersion); updateErr != nil {
 					errs = append(errs, fmt.Errorf("failed to update resource version: %w", updateErr))
 				}
@@ -361,11 +347,10 @@ func (dr *DashboardServiceImpl) processDashboardBatch(ctx context.Context, orgID
 
 // This gets auto-invoked when grafana starts, part of the BackgroundService interface
 func (dr *DashboardServiceImpl) Run(ctx context.Context) error {
-	dr.startK8sDeletedDashboardsCleanupJob()
+	cleanupBackgroundJobStopped := dr.startK8sDeletedDashboardsCleanupJob(ctx)
 	<-ctx.Done()
-	if dr.k8sDeletedDashboardsCleanupJob != nil {
-		dr.k8sDeletedDashboardsCleanupJob.Stop()
-	}
+	// Wait for cleanup job to finish
+	<-cleanupBackgroundJobStopped
 	return ctx.Err()
 }
 
