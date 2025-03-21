@@ -59,8 +59,9 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
                 ? {
                     width: item.cachedBoundingBox.right - item.cachedBoundingBox.left,
                     height: item.cachedBoundingBox.bottom - item.cachedBoundingBox.top,
+                    // adjust the panel position to mouse position
                     translate: `${-layoutOrchestrator.dragOffset.left}px ${-layoutOrchestrator.dragOffset.top}px`,
-                    // --x/y-pos are set in LayoutOrchestrator
+                    // adjust the panel position on the screen
                     transform: `translate(var(--x-pos), var(--y-pos))`,
                   }
                 : {}
@@ -106,7 +107,6 @@ const getStyles = (theme: GrafanaTheme2, state: ResponsiveGridLayoutState) => ({
     position: 'relative',
     width: '100%',
     height: '100%',
-    overflow: 'hidden',
   }),
   dragging: css({
     position: 'fixed',
