@@ -96,6 +96,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(0.5),
       overflow: 'hidden',
       '&:hover': {
+        color: theme.colors.text.primary,
         outline: `1px dashed ${theme.colors.border.strong}`,
         outlineOffset: '0px',
         backgroundColor: theme.colors.emphasize(theme.colors.background.canvas, 0.08),
