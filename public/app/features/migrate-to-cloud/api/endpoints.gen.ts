@@ -18,7 +18,11 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}` }),
     }),
     createSnapshot: build.mutation<CreateSnapshotApiResponse, CreateSnapshotApiArg>({
-      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}/snapshot`, method: 'POST' }),
+      query: (queryArg) => ({
+        url: `/cloudmigration/migration/${queryArg.uid}/snapshot`,
+        method: 'POST',
+        body: queryArg.createSnapshotRequestDto,
+      }),
     }),
     getSnapshot: build.query<GetSnapshotApiResponse, GetSnapshotApiArg>({
       query: (queryArg) => ({
@@ -90,6 +94,7 @@ export type CreateSnapshotApiResponse = /** status 200 (empty) */ CreateSnapshot
 export type CreateSnapshotApiArg = {
   /** UID of a session */
   uid: string;
+  createSnapshotRequestDto: CreateSnapshotRequestDto;
 };
 export type GetSnapshotApiResponse = /** status 200 (empty) */ GetSnapshotResponseDto;
 export type GetSnapshotApiArg = {
@@ -169,6 +174,21 @@ export type CloudMigrationSessionRequestDto = {
 };
 export type CreateSnapshotResponseDto = {
   uid?: string;
+};
+export type CreateSnapshotRequestDto = {
+  resourceTypes?: (
+    | 'DASHBOARD'
+    | 'DATASOURCE'
+    | 'FOLDER'
+    | 'LIBRARY_ELEMENT'
+    | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
+    | 'CONTACT_POINT'
+    | 'NOTIFICATION_POLICY'
+    | 'NOTIFICATION_TEMPLATE'
+    | 'MUTE_TIMING'
+    | 'PLUGIN'
+  )[];
 };
 export type MigrateDataResponseItemDto = {
   errorCode?:

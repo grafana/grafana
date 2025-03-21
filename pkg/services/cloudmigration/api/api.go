@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"go.opentelemetry.io/otel/codes"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -13,8 +15,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-
-	"go.opentelemetry.io/otel/codes"
 )
 
 type CloudMigrationAPI struct {
@@ -22,6 +22,7 @@ type CloudMigrationAPI struct {
 	routeRegister         routing.RouteRegister
 	log                   log.Logger
 	tracer                tracing.Tracer
+	resourceDependencyMap cloudmigration.DependencyMap
 }
 
 func RegisterApi(
@@ -29,12 +30,14 @@ func RegisterApi(
 	cms cloudmigration.Service,
 	tracer tracing.Tracer,
 	acHandler accesscontrol.AccessControl,
+	resourceDependencyMap cloudmigration.DependencyMap,
 ) *CloudMigrationAPI {
 	api := &CloudMigrationAPI{
 		log:                   log.New("cloudmigrations.api"),
 		routeRegister:         rr,
 		cloudMigrationService: cms,
 		tracer:                tracer,
+		resourceDependencyMap: resourceDependencyMap,
 	}
 	api.registerEndpoints(acHandler)
 	return api
@@ -315,12 +318,36 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 	defer span.End()
 
 	uid := web.Params(c.Req)[":uid"]
-
 	if err := util.ValidateUID(uid); err != nil {
 		span.SetStatus(codes.Error, "invalid session uid")
 		span.RecordError(err)
 
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
+	}
+
+	var cmd CreateSnapshotRequestDTO
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		span.SetStatus(codes.Error, "invalid request body")
+		span.RecordError(err)
+
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid request body", err)
+	}
+
+	if len(cmd.ResourceTypes) == 0 {
+		return response.ErrOrFallback(http.StatusBadRequest, "at least one resource type is required", cloudmigration.ErrEmptyResourceTypes)
+	}
+
+	rawResourceTypes := make([]cloudmigration.MigrateDataType, 0, len(cmd.ResourceTypes))
+	for _, t := range cmd.ResourceTypes {
+		rawResourceTypes = append(rawResourceTypes, cloudmigration.MigrateDataType(t))
+	}
+
+	_, err := cloudmigration.ResourceDependency.Parse(rawResourceTypes)
+	if err != nil {
+		span.SetStatus(codes.Error, "invalid resource types")
+		span.RecordError(err)
+
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid resource types", err)
 	}
 
 	ss, err := cma.cloudMigrationService.CreateSnapshot(ctx, c.SignedInUser, uid)
