@@ -190,7 +190,9 @@ To configure Generic OAuth to use a refresh token, set `use_refresh_token` confi
 1. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with additional scopes.
 1. Enable the refresh token on the provider.
 
-> **Note:** The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+{{< admonition type="note" >}}
+The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+{{< /admonition >}}
 
 ### Configure role mapping
 
@@ -312,15 +314,17 @@ org_mapping = org_foo:org_foo:Viewer org_bar:org_bar:Editor *:org_baz:Editor
 
 ## Configure team synchronization
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
+{{< /admonition >}}
 
 By using Team Sync, you can link your OAuth2 groups to teams within Grafana. This will automatically assign users to the appropriate teams.
 Teams for each user are synchronized when the user logs in.
 
 Generic OAuth groups can be referenced by group ID, such as `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
-For information on configuring OAuth2 groups with Grafana using the `groups_attribute_path` configuration option, refer to [configuration options]({{< relref "#configuration-options" >}}).
+For information on configuring OAuth2 groups with Grafana using the `groups_attribute_path` configuration option, refer to [configuration options](#configuration-options).
 
-To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
+To learn more about Team Sync, refer to [Configure team sync]([{{< relref "../../configure-team-sync" >}}](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/)).
 
 ### Team synchronization example
 
