@@ -39,7 +39,6 @@ var (
 	sqlResourceUpdateRV          = mustTemplate("resource_update_rv.sql")
 	sqlResourceHistoryRead       = mustTemplate("resource_history_read.sql")
 	sqlResourceHistoryUpdateRV   = mustTemplate("resource_history_update_rv.sql")
-	sqlResoureceHistoryUpdateUid = mustTemplate("resource_history_update_uid.sql")
 	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
 	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
@@ -248,6 +247,8 @@ type sqlGetHistoryRequest struct {
 	Key     *resource.ResourceKey
 	Trash   bool  // only deleted items
 	StartRV int64 // from NextPageToken
+	MinRV   int64 // minimum resource version for NotOlderThan
+	ExactRV int64 // exact resource version for Exact
 }
 
 func (r sqlGetHistoryRequest) Validate() error {
@@ -278,19 +279,6 @@ func (r *sqlPruneHistoryRequest) Validate() error {
 		return fmt.Errorf("missing resource")
 	}
 	return nil
-}
-
-// update resource history
-
-type sqlResourceHistoryUpdateRequest struct {
-	sqltemplate.SQLTemplate
-	WriteEvent resource.WriteEvent
-	OldUID     string
-	NewUID     string
-}
-
-func (r sqlResourceHistoryUpdateRequest) Validate() error {
-	return nil // TODO
 }
 
 type sqlResourceBlobInsertRequest struct {
