@@ -1,24 +1,47 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
+import { GrafanaTheme2, IconName, locationUtil } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 export interface ScopesNavigationTreeLinkProps {
   to: string;
   title: string;
-  icon: IconName;
 }
 
-export function ScopesNavigationTreeLink({ to, title, icon }: ScopesNavigationTreeLinkProps) {
+export function ScopesNavigationTreeLink({ to, title }: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
+  const linkIcon = useMemo(() => getLinkIcon(to), [to]);
 
   return (
     <Link to={to} className={styles.container} data-testid={`scopes-dashboards-${title}`} role="treeitem">
-      <Icon name={icon} className={styles.icon} /> {title}
+      <Icon name={linkIcon} className={styles.icon} /> {title}
     </Link>
   );
 }
+
+function getLinkIcon(to: string) {
+  // Strip base URL and normalize path
+  const normalizedPath = locationUtil.stripBaseFromUrl(to);
+  for (const [key, value] of linkMap.entries()) {
+    if (normalizedPath.startsWith(key)) {
+      return value;
+    }
+  }
+
+  return 'link';
+}
+
+const linkMap = new Map<string, IconName>([
+  ['http', 'external-link-alt'],
+  ['/d', 'apps'],
+  ['/explore/metrics', 'drilldown'],
+  ['/a/grafana-metricsdrilldown-app/', 'drilldown'],
+  ['/a/grafana-lokiexplore-app/', 'drilldown'],
+  ['/a/grafana-exploretraces-app/', 'drilldown'],
+  ['/a/grafana-pyroscope-app/', 'drilldown'],
+]);
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
