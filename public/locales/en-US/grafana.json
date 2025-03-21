@@ -598,6 +598,7 @@
         "label": "Namespace"
       },
       "optional-filters": "Optional filters",
+      "optional-settings": "Optional settings",
       "pageTitle": "Export alert rules from a datasource to Grafana-managed rules.",
       "pause": {
         "label": "Pause alerting rules",
