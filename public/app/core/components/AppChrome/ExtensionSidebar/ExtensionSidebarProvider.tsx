@@ -3,7 +3,7 @@ import { createContext, ReactNode, useContext, useEffect, useState } from 'react
 import { ComponentTypeWithExtensionMeta, store } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 
-export const EXTENSION_SIDEBAR_EXTENSION_POINT_ID = 'grafana/extension-sidebar/v0-beta';
+export const EXTENSION_SIDEBAR_EXTENSION_POINT_ID = 'grafana/extension-sidebar/v0-alpha';
 const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 const ENABLED_EXTENSION_SIDEBAR_PLUGINS = ['grafana-investigations-app'];
 
