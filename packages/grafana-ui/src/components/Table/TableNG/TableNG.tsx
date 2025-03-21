@@ -96,10 +96,7 @@ export function TableNG(props: TableNGProps) {
   const calcsRef = useRef<string[]>([]);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
 
-  const textWrap = fieldConfig?.defaults?.custom?.wrapText ?? false;
-
   const theme = useTheme2();
-  const styles = useStyles2(getStyles, textWrap);
 
   const isFooterVisible = Boolean(footerOptions?.show && footerOptions.reducer?.length);
   const isCountRowsSet = Boolean(
@@ -171,6 +168,9 @@ export function TableNG(props: TableNGProps) {
       ),
     [props.data.fields]
   );
+
+  const textWrap = useMemo(() => Object.values(textWraps).some(Boolean), [textWraps]);
+  const styles = useStyles2(getStyles, textWrap);
 
   // Create a function to get column widths for text wrapping calculations
   const getColumnWidths = useCallback(() => {
