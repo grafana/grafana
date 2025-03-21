@@ -33,7 +33,6 @@ export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: Sc
           key={navigation.title}
           to={urlUtil.renderUrl(navigation.url, queryParams)}
           title={navigation.title}
-          icon="link"
         />
       ))}
 
@@ -42,7 +41,6 @@ export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: Sc
           key={dashboard.dashboard}
           title={dashboard.dashboardTitle}
           to={urlUtil.renderUrl(`/d/${dashboard.dashboard}/`, queryParams)}
-          icon="apps"
         />
       ))}
     </div>
