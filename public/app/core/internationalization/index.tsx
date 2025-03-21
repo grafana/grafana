@@ -1,9 +1,9 @@
 import i18n, { InitOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
-import { ReactElement } from 'react';
+import { ReactElement, useMemo } from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { TransProps } from '@grafana/data';
+import { TransProps, usePluginContext } from '@grafana/data';
 import { setTransComponent, setUseTranslateHook } from '@grafana/runtime/src/unstable';
 
 import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES } from './constants';
@@ -130,5 +130,12 @@ export function getI18next() {
 // Perhaps in the future this will use useTranslation from react-i18next or something else
 // from context
 export function useTranslateInternal() {
-  return t;
+  const context = usePluginContext();
+  if (!context) {
+    return t;
+  }
+
+  const { meta } = context;
+  const pluginT = useMemo(() => i18nInstance.getFixedT(null, meta.id), [meta.id]);
+  return pluginT;
 }
