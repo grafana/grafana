@@ -45,7 +45,7 @@ func (s *NoopServiceImpl) DeleteSession(ctx context.Context, orgID int64, signed
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) CreateSnapshot(ctx context.Context, user *user.SignedInUser, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (s *NoopServiceImpl) CreateSnapshot(ctx context.Context, user *user.SignedInUser, cmd cloudmigration.CreateSnapshotCommand) (*cloudmigration.CloudMigrationSnapshot, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
