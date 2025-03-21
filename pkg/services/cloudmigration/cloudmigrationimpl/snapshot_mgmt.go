@@ -252,7 +252,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		folderHierarchy[cloudmigration.AlertRuleType][alertRule.UID] = alertRule.FolderUID
 	}
 
-	// Obtain the names of parent elements data types that have folders.
+	// Obtain the names of parent elements for data types that have folders.
 	parentNamesByType, err := s.getParentNames(ctx, signedInUser, folderHierarchy)
 	if err != nil {
 		s.log.Error("Failed to get parent folder names", "err", err)
