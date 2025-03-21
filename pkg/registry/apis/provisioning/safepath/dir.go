@@ -22,7 +22,9 @@ func Dir(filePath string) string {
 		return ""
 	}
 
-	dir := path.Dir(filePath)
+	// Trim trailing slash before getting the directory
+	cleanPath := strings.TrimSuffix(filePath, "/")
+	dir := path.Dir(cleanPath)
 	if dir == "." || dir == "/" {
 		return ""
 	}

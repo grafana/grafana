@@ -32,7 +32,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 		lookup[item.Path] = &item
 	}
 
-	keep := safepath.NewTree()
+	keep := safepath.NewTrie()
 	changes := make([]ResourceFileChange, 0, len(source))
 	for _, file := range source {
 		if !file.Blob {

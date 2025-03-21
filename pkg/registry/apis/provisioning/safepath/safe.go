@@ -74,11 +74,8 @@ func IsSafe(path string) error {
 		}
 	}
 
-	// Check path format
-	isDir := strings.HasSuffix(path, "/")
-
 	// If it's not a directory, it should have a filename component
-	if !isDir && len(parts) > 0 {
+	if !IsDir(path) && len(parts) > 0 {
 		filename := parts[len(parts)-1]
 		if filename == "" {
 			return ErrInvalidFormat

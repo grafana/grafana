@@ -1,26 +1,26 @@
 package safepath
 
-// node represents a single node in the trie
-type node struct {
-	children map[string]*node
+// trieNode represents a single node in the trie
+type trieNode struct {
+	children map[string]*trieNode
 	isPath   bool // marks if this node represents a complete path
 }
 
-// Tree implements a trie structure for path lookups
-type Tree struct {
-	root *node
+// Trie implements a trie structure for path lookups
+type Trie struct {
+	root *trieNode
 }
 
-func NewTree() *Tree {
-	return &Tree{
-		root: &node{
-			children: make(map[string]*node),
+func NewTrie() *Trie {
+	return &Trie{
+		root: &trieNode{
+			children: make(map[string]*trieNode),
 		},
 	}
 }
 
 // Add inserts a path into the trie
-func (t *Tree) Add(path string) {
+func (t *Trie) Add(path string) {
 	if path == "" {
 		return
 	}
@@ -31,11 +31,11 @@ func (t *Tree) Add(path string) {
 			continue
 		}
 		if current.children == nil {
-			current.children = make(map[string]*node)
+			current.children = make(map[string]*trieNode)
 		}
 		if _, exists := current.children[segment]; !exists {
-			current.children[segment] = &node{
-				children: make(map[string]*node),
+			current.children[segment] = &trieNode{
+				children: make(map[string]*trieNode),
 			}
 		}
 		current = current.children[segment]
@@ -44,7 +44,7 @@ func (t *Tree) Add(path string) {
 }
 
 // Exists checks if a path exists in the trie
-func (t *Tree) Exists(path string) bool {
+func (t *Trie) Exists(path string) bool {
 	if path == "" {
 		return false
 	}

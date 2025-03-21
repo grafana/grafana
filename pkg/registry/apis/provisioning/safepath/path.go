@@ -28,7 +28,6 @@ func Join(elem ...string) string {
 	}
 
 	joined := path.Join(elem...)
-
 	// Preserve trailing slash if the last element had one
 	if strings.HasSuffix(elem[len(elem)-1], "/") {
 		return joined + "/"
@@ -50,6 +49,13 @@ func Base(p string) string {
 // RemoveExt returns the path without the extension.
 // It should not remove the dot if the filename is e.g. `.gitignore`
 func RemoveExt(p string) string {
+	// Special case: if the file starts with a dot and has no other dots,
+	// it's a hidden file and should not have its "extension" removed
+	base := Base(p)
+	if strings.HasPrefix(base, ".") && strings.Count(base, ".") == 1 {
+		return p
+	}
+
 	ext := path.Ext(p)
 	if ext == "" {
 		return p
