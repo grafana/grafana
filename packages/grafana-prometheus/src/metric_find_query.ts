@@ -24,7 +24,6 @@ export class PrometheusMetricFindQuery {
   }
 
   process(timeRange: TimeRange): Promise<MetricFindValue[]> {
-    // this.range = timeRange;
     const labelNamesRegex = PrometheusLabelNamesRegex;
     const labelNamesRegexWithMatch = PrometheusLabelNamesRegexWithMatch;
     const labelValuesRegex = PrometheusLabelValuesRegex;
