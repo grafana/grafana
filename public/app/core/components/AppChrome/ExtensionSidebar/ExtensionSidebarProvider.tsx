@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState, useMemo } from 'react';
 
 import { ComponentTypeWithExtensionMeta, store } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
@@ -28,26 +28,35 @@ interface ExtensionSidebarContextProps {
 }
 
 export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarContextProps) => {
-  const { components } = usePluginComponents({
+  const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
+  const { components, isLoading } = usePluginComponents({
     extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
   });
+  const [dockedPluginId, setDockedPluginId] = useState<string | undefined>(undefined);
 
-  const componentsMap = new Map(
-    components
-      .filter((c) => ENABLED_EXTENSION_SIDEBAR_PLUGINS.includes(c.meta.pluginId))
-      .map((c) => [c.meta.pluginId, c])
+  const componentsMap = useMemo(
+    () =>
+      new Map(
+        components
+          .filter((c) => ENABLED_EXTENSION_SIDEBAR_PLUGINS.includes(c.meta.pluginId))
+          .map((c) => [c.meta.pluginId, c])
+      ),
+    [components]
   );
 
-  const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
-  const [dockedPluginId, setDockedPluginId] = useState<string | undefined>(
-    componentsMap.has(storedDockedPluginId) ? storedDockedPluginId : undefined
-  );
+  // update the initial docked plugin id when the components are loaded
+  useEffect(() => {
+    if (!isLoading) {
+      const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
+      setDockedPluginId(componentsMap.has(storedDockedPluginId) ? storedDockedPluginId : undefined);
+    }
+  }, [componentsMap, isLoading, storedDockedPluginId]);
 
   useEffect(() => {
-    if (dockedPluginId) {
+    if (dockedPluginId && !isLoading) {
       store.set(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, dockedPluginId);
     }
-  }, [dockedPluginId]);
+  }, [dockedPluginId, isLoading]);
 
   return (
     <ExtensionSidebarContext.Provider value={{ dockedPluginId, setDockedPluginId, components: componentsMap }}>
