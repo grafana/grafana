@@ -1012,7 +1012,7 @@ describe('TableNG utils', () => {
         width: text.length * 8,
       }),
     };
-    const osContext = mockContext as unknown as CanvasRenderingContext2D;
+    const ctx = mockContext as unknown as CanvasRenderingContext2D;
 
     const headerCellRefs = {
       current: {
@@ -1037,12 +1037,13 @@ describe('TableNG utils', () => {
         row,
         columnTypes,
         headerCellRefs,
-        osContext,
+        ctx,
         20, // lineHeight
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        false // cellInspect
+        false, // cellInspect,
+        TableCellDisplayMode.Auto
       );
 
       expect(result).toBe(true);
@@ -1062,12 +1063,13 @@ describe('TableNG utils', () => {
         row,
         columnTypes,
         headerCellRefs,
-        osContext,
+        ctx,
         20, // lineHeight
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        false // cellInspect
+        false, // cellInspect
+        TableCellDisplayMode.Auto
       );
 
       expect(result).toBe(false);
@@ -1086,12 +1088,13 @@ describe('TableNG utils', () => {
         row,
         columnTypes,
         headerCellRefs,
-        osContext,
+        ctx,
         20, // lineHeight
         40, // defaultRowHeight
         8, // padding
         true, // textWrap ENABLED
-        false // cellInspect
+        false, // cellInspect
+        TableCellDisplayMode.Auto
       );
 
       expect(result).toBe(false);
@@ -1110,12 +1113,13 @@ describe('TableNG utils', () => {
         row,
         columnTypes,
         headerCellRefs,
-        osContext,
+        ctx,
         20, // lineHeight
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        true // cellInspect ENABLED
+        true, // cellInspect ENABLED
+        TableCellDisplayMode.Auto
       );
 
       expect(result).toBe(false);
@@ -1151,6 +1155,7 @@ describe('TableNG utils', () => {
           textWraps: {},
           columnTypes: {},
           columnWidths: {},
+          fieldDisplayType: {},
         }
       );
 
@@ -1178,6 +1183,7 @@ describe('TableNG utils', () => {
           textWraps: { stringCol: true },
           columnTypes: { stringCol: FieldType.string, numberCol: FieldType.number },
           columnWidths: { stringCol: 100, numberCol: 100 },
+          fieldDisplayType: { stringCol: TableCellDisplayMode.Auto, numberCol: TableCellDisplayMode.Auto },
         }
       );
 
@@ -1205,6 +1211,7 @@ describe('TableNG utils', () => {
           textWraps: {},
           columnTypes: {},
           columnWidths: {},
+          fieldDisplayType: {},
         }
       );
 

@@ -150,13 +150,18 @@ export function getRowHeight(
     textWraps: { [key: string]: boolean };
     columnTypes: ColumnTypes;
     columnWidths: Record<string, number>;
+    fieldDisplayType: Record<string, TableCellDisplayMode>;
   }
 ): number {
   let maxLines = 1;
   let maxLinesCol = '';
 
   for (const key in row) {
-    if (fieldsData.columnTypes[key] === FieldType.string && fieldsData.textWraps[key]) {
+    if (
+      fieldsData.columnTypes[key] === FieldType.string &&
+      fieldsData.textWraps[key] &&
+      fieldsData.fieldDisplayType[key] !== TableCellDisplayMode.Image
+    ) {
       const cellText = row[key] as string;
 
       if (cellText != null) {
