@@ -107,6 +107,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	if gh.Token == "" && len(gh.EncryptedToken) == 0 {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
 	}
+	// TODO: Add safepath validation
 	if strings.Contains(gh.Path, "..") {
 		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Path, "path traversal disallowed"))
 	}
@@ -199,11 +200,7 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 		ref = r.config.Spec.GitHub.Branch
 	}
 
-	finalPath, err := r.path(filePath)
-	if err != nil {
-		return nil, err
-	}
-
+	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, filePath)
 	content, dirContent, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
@@ -281,22 +278,19 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 		return fmt.Errorf("create branch on create: %w", err)
 	}
 
-	finalPath, err := r.path(path)
-	if err != nil {
-		return err
-	}
+	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
 
 	// Create .keep file if it is a directory
-	if strings.HasSuffix(finalPath, "/") {
+	if safepath.IsDir(finalPath) {
 		if data != nil {
 			return apierrors.NewBadRequest("data cannot be provided for a directory")
 		}
 
-		finalPath = strings.TrimSuffix(finalPath, "/") + "/.keep"
+		finalPath = safepath.NormalJoin(finalPath, ".keep")
 		data = []byte{}
 	}
 
-	err = r.gh.CreateFile(ctx, r.owner, r.repo, finalPath, ref, comment, data)
+	err := r.gh.CreateFile(ctx, r.owner, r.repo, finalPath, ref, comment, data)
 	if errors.Is(err, pgh.ErrResourceAlreadyExists) {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -305,6 +299,7 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 			},
 		}
 	}
+
 	return err
 }
 
@@ -318,11 +313,7 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 		return fmt.Errorf("create branch on update: %w", err)
 	}
 
-	finalPath, err := r.path(path)
-	if err != nil {
-		return err
-	}
-
+	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
 	file, _, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
@@ -351,11 +342,7 @@ func (r *githubRepository) Write(ctx context.Context, path string, ref string, d
 		ref = r.config.Spec.GitHub.Branch
 	}
 	ctx, _ = r.logger(ctx, ref)
-
-	finalPath, err := r.path(path)
-	if err != nil {
-		return err
-	}
+	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
 
 	return writeWithReadThenCreateOrUpdate(ctx, r, finalPath, ref, data, message)
 }
@@ -370,20 +357,13 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 		return fmt.Errorf("create branch on delete: %w", err)
 	}
 
-	finalPath, err := r.path(path)
-	if err != nil {
-		return err
-	}
+	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
 
 	return r.deleteRecursively(ctx, finalPath, ref, comment)
 }
 
 func (r *githubRepository) deleteRecursively(ctx context.Context, path, ref, comment string) error {
-	finalPath, err := r.path(path)
-	if err != nil {
-		return err
-	}
-
+	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
 	file, contents, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
@@ -423,11 +403,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	finalPath, err := r.path(path)
-	if err != nil {
-		return nil, err
-	}
-
+	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
 	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
@@ -937,18 +913,4 @@ func (r *githubRepository) logger(ctx context.Context, ref string) (context.Cont
 	// We want to ensure we don't add multiple github_repository keys. With doesn't deduplicate the keys...
 	ctx = context.WithValue(ctx, containsGhKey, true)
 	return ctx, logger
-}
-
-// path returns a safe path for the given file, based out of the Prefix property.
-//
-// If the fpath does a path traversal that would be unsafe, a safepath.ErrUnsafePathTraversal error is returned.
-// This error is already a Kubernetes apierror (being a HTTP 400 Bad Request), so it can be returned directly.
-func (r *githubRepository) path(fpath string) (string, error) {
-	prefix := r.config.Spec.GitHub.Path
-	prefix = strings.Trim(prefix, "/")
-	if prefix == "" {
-		return fpath, nil
-	}
-
-	return safepath.JoinIncludingTrailing(prefix, fpath)
 }

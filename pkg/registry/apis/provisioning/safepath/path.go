@@ -79,6 +79,7 @@ func replaceOSSeparators(p string) string {
 
 // NormalJoin is like path.Join
 // TODO: Have a single join in this file
+// TOOD: this should keep the trailing slash
 func NormalJoin(elem ...string) string {
 	return path.Join(elem...)
 }
