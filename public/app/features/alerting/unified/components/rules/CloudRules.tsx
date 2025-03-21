@@ -56,7 +56,8 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
   const canViewCloudRules = viewExternalRuleSupported && viewExternalRuleAllowed;
 
   const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
-  const canMigrateToGMA = canCreateGrafanaRules && canViewCloudRules && config.featureToggles.alertingMigrationUI;
+  const canMigrateToGMA =
+    hasDataSourcesConfigured && canCreateGrafanaRules && canViewCloudRules && config.featureToggles.alertingMigrationUI;
 
   return (
     <section className={styles.wrapper}>

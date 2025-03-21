@@ -49,9 +49,6 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
         htmlFor="namespace-picker"
         data-testid="namespace-picker"
         label={t('alerting.import-to-gma.namespace.label', 'Namespace')}
-        // Disable translations as we don't intend to use this dropdown longterm,
-        // so avoiding us adding translations for the sake of it
-        // eslint-disable-next-line @grafana/no-untranslated-strings
         description={t('alerting.import-to-gma.namespace.description', 'Type to search for an existing namespace')}
         error={errors.namespace?.message}
         invalid={!!errors.namespace?.message}
@@ -80,9 +77,6 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
         htmlFor="group-picker"
         data-testid="group-picker"
         label={t('alerting.import-to-gma.group.label', 'Group')}
-        // Disable translations as we don't intend to use this dropdown longterm,
-        // so avoiding us adding translations for the sake of it
-        // eslint-disable-next-line @grafana/no-untranslated-strings
         description={t(
           'alerting.import-to-gma.group.description',
           'Type to search for an existing group or create a new one'
