@@ -67,6 +67,10 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 				res.JSONData.Language = p.JSONData.Language
 			}
 
+			if p.JSONData.Locale != "" {
+				res.JSONData.Locale = p.JSONData.Locale
+			}
+
 			if p.JSONData.QueryHistory.HomeTab != "" {
 				res.JSONData.QueryHistory.HomeTab = p.JSONData.QueryHistory.HomeTab
 			}
