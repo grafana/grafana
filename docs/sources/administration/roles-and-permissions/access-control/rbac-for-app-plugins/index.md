@@ -24,6 +24,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#grafana-adaptive-metrics-action-definitions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/#grafana-adaptive-metrics-action-definitions
+  cloud-access-policies-action-definitions:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#cloud-access-policies-action-definitions
   rbac-role-definitions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
@@ -62,7 +65,7 @@ The following list contains app plugins that have fine-grained RBAC support.
 
 | App plugin                                                                                                                                                                            | App plugin ID                  | App plugin permission documentation                                                                                                                                        |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/)                                                          | `grafana-auth-app`             | n/a                                                                                                                                                                        |
+| [Access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/)                                                          | `grafana-auth-app`             | [RBAC actions for Access Policies](ref:cloud-access-policies-action-definitions)                                                                                           |
 | [Adaptive metrics](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/reduce-costs/metrics-costs/control-metrics-usage-via-adaptive-metrics/adaptive-metrics-plugin/) | `grafana-adaptive-metrics-app` | [RBAC actions for Adaptive Metrics](ref:adaptive-metrics-permissions)                                                                                                      |
 | [Incident](https://grafana.com/docs/grafana-cloud/alerting-and-irm/irm/incident/)                                                                                                     | `grafana-incident-app`         | n/a                                                                                                                                                                        |
 | [OnCall](https://grafana.com/docs/grafana-cloud/alerting-and-irm/irm/oncall/)                                                                                                         | `grafana-oncall-app`           | [Configure RBAC for OnCall](https://grafana.com/docs/grafana-cloud/alerting-and-irm/irm/oncall/manage/user-and-team-management/#manage-users-and-teams-for-grafana-oncall) |
