@@ -127,7 +127,7 @@ To integrate your OAuth2 provider with Grafana using our Generic OAuth authentic
    c. Enable the refresh token on the provider if required.
 
 1. [Configure role mapping](#configure-role-mapping).
-1. Optional: [Configure group synchronization](#configure-group-synchronization).
+1. Optional: [Configure team synchronization](https://grafana.com/docs/grafana/<GRAFANA_VERSION/setup-grafana/configure-security/configure-team-sync/).
 1. Restart Grafana.
 
    You should now see a Generic OAuth login button on the login page and be able to log in or sign up with your OAuth2 provider.
@@ -190,7 +190,9 @@ To configure Generic OAuth to use a refresh token, set `use_refresh_token` confi
 1. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with additional scopes.
 1. Enable the refresh token on the provider.
 
-> **Note:** The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+{{< admonition type="note" >}}
+The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+{{< /admonition >}}
 
 ### Configure role mapping
 
@@ -310,21 +312,21 @@ org_attribute_path = roles
 org_mapping = org_foo:org_foo:Viewer org_bar:org_bar:Editor *:org_baz:Editor
 ```
 
-## Configure group synchronization
+## Configure team synchronization
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
 {{< /admonition >}}
 
-Grafana supports synchronization of OAuth2 groups with Grafana teams and roles. This allows automatically assigning users to the appropriate teams or automatically granting them the mapped roles.
-Teams and roles get synchronized when the user logs in.
+By using Team Sync, you can link your OAuth2 groups to teams within Grafana. This will automatically assign users to the appropriate teams.
+Teams for each user are synchronized when the user logs in.
 
 Generic OAuth groups can be referenced by group ID, such as `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
 For information on configuring OAuth2 groups with Grafana using the `groups_attribute_path` configuration option, refer to [configuration options](#configuration-options).
 
-To learn more about group synchronization, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync).
+To learn more about Team Sync, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
 
-#### Group attribute synchronization example
+### Team synchronization example
 
 Configuration:
 

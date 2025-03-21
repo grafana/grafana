@@ -169,7 +169,7 @@ To integrate your Okta OIDC provider with Grafana using our Okta OIDC integratio
 
 1. Optional: [Configure a refresh token](#configure-a-refresh-token).
 1. [Configure role mapping](#configure-role-mapping).
-1. Optional: [Configure group synchronization](#configure-group-synchronization-enterprise-only).
+1. Optional: [Configure team synchronization](#configure-team-synchronization-enterprise-only).
 1. Restart Grafana.
 
    You should now see a Okta OIDC login button on the login page and be able to log in or sign up with your OIDC provider.
@@ -243,18 +243,20 @@ org_attribute_path = groups
 org_mapping = ["Group 1:org_foo:Viewer", "Group 2:org_bar:Editor", "*:3:Editor"]
 ```
 
-### Configure group synchronization (Enterprise only)
+### Configure team synchronization (Enterprise only)
 
-{{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-{{< /admonition >}}
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](../../../../introduction/grafana-cloud).
+{{% /admonition %}}
 
-By using group synchronization, you can link your Okta groups to teams and roles within Grafana. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.
-Teams and roles get synchronized when the user logs in.
+By using Team Sync, you can link your Okta groups to teams within Grafana. This will automatically assign users to the appropriate teams.
+
+Map your Okta groups to teams in Grafana so that your users will automatically be added to
+the correct teams.
 
 Okta groups can be referenced by group names, like `Admins` or `Editors`.
 
-To learn more about how to configure group synchronization, refer to [Configure team sync](../../configure-team-sync/) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
+To learn more about Team Sync, refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
 
 ## Configuration options
 
