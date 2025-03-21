@@ -15,13 +15,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -41,7 +40,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 			hs.DashboardService = svc
 
 			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService, log.NewNopLogger())
+			hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(svc, nil))
 		})
 	}
 
@@ -378,6 +377,7 @@ func buildHttpServer(d dashboardsnapshots.Service, snapshotEnabled bool) *HTTPSe
 		Cfg: &setting.Cfg{
 			SnapshotEnabled: snapshotEnabled,
 		},
+		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 	return hs
 }
