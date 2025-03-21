@@ -57,7 +57,7 @@ func (t *FolderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 			ok = true
 			break
 		}
-		fid.Path = safepath.NormalJoin(t.folders[parent].Title, fid.Path)
+		fid.Path = safepath.Join(t.folders[parent].Title, fid.Path)
 		parent = t.tree[parent]
 	}
 	return fid, ok

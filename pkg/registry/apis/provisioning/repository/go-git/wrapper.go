@@ -256,7 +256,7 @@ func (g *GoGitRepo) Create(ctx context.Context, path string, ref string, data []
 
 // Write implements repository.Repository.
 func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []byte, message string) error {
-	fpath = safepath.NormalJoin(g.config.Spec.GitHub.Path, fpath)
+	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)
 	if err := verifyPathWithoutRef(fpath, ref); err != nil {
 		return err
 	}
@@ -311,7 +311,7 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 
 // Delete implements repository.Repository.
 func (g *GoGitRepo) Delete(ctx context.Context, path string, ref string, message string) error {
-	if _, err := g.tree.Remove(safepath.NormalJoin(g.config.Spec.GitHub.Path, path)); err != nil {
+	if _, err := g.tree.Remove(safepath.Join(g.config.Spec.GitHub.Path, path)); err != nil {
 		return err
 	}
 
@@ -320,7 +320,7 @@ func (g *GoGitRepo) Delete(ctx context.Context, path string, ref string, message
 
 // Read implements repository.Repository.
 func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*repository.FileInfo, error) {
-	readPath := safepath.NormalJoin(g.config.Spec.GitHub.Path, path)
+	readPath := safepath.Join(g.config.Spec.GitHub.Path, path)
 	stat, err := g.tree.Filesystem.Lstat(readPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to stat path '%s': %w", readPath, err)

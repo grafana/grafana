@@ -200,7 +200,7 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 		ref = r.config.Spec.GitHub.Branch
 	}
 
-	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, filePath)
+	finalPath := safepath.Join(r.config.Spec.GitHub.Path, filePath)
 	content, dirContent, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
@@ -278,7 +278,7 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 		return fmt.Errorf("create branch on create: %w", err)
 	}
 
-	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
+	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 
 	// Create .keep file if it is a directory
 	if safepath.IsDir(finalPath) {
@@ -286,7 +286,7 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 			return apierrors.NewBadRequest("data cannot be provided for a directory")
 		}
 
-		finalPath = safepath.NormalJoin(finalPath, ".keep")
+		finalPath = safepath.Join(finalPath, ".keep")
 		data = []byte{}
 	}
 
@@ -313,7 +313,7 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 		return fmt.Errorf("create branch on update: %w", err)
 	}
 
-	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
+	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 	file, _, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
@@ -342,7 +342,7 @@ func (r *githubRepository) Write(ctx context.Context, path string, ref string, d
 		ref = r.config.Spec.GitHub.Branch
 	}
 	ctx, _ = r.logger(ctx, ref)
-	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
+	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 
 	return writeWithReadThenCreateOrUpdate(ctx, r, finalPath, ref, data, message)
 }
@@ -357,13 +357,13 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 		return fmt.Errorf("create branch on delete: %w", err)
 	}
 
-	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
+	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 
 	return r.deleteRecursively(ctx, finalPath, ref, comment)
 }
 
 func (r *githubRepository) deleteRecursively(ctx context.Context, path, ref, comment string) error {
-	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
+	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 	file, contents, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
@@ -403,7 +403,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	finalPath := safepath.NormalJoin(r.config.Spec.GitHub.Path, path)
+	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {

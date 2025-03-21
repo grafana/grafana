@@ -60,11 +60,7 @@ func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
 
 	originalPath := p
 	if !path.IsAbs(p) {
-		var err error
-		p, err = safepath.Join(r.HomePath, p)
-		if err != nil {
-			return "", &InvalidLocalFolderError{originalPath, "the path could not be safely resolved"}
-		}
+		p = safepath.Join(r.HomePath, p)
 	} else {
 		p = safepath.Clean(p)
 	}
@@ -208,11 +204,7 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 		return nil, err
 	}
 
-	actualPath, err := safepath.Join(r.path, filePath)
-	if err != nil {
-		return nil, fmt.Errorf("join path: %w", err)
-	}
-
+	actualPath := safepath.Join(r.path, filePath)
 	info, err := os.Stat(actualPath)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrFileNotFound
@@ -316,7 +308,7 @@ func (r *localRepository) Create(ctx context.Context, fpath string, ref string, 
 		return err
 	}
 
-	fpath = safepath.NormalJoin(r.path, fpath)
+	fpath = safepath.Join(r.path, fpath)
 	_, err := os.Stat(fpath)
 	if !errors.Is(err, os.ErrNotExist) {
 		if err != nil {
@@ -349,7 +341,7 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 		return err
 	}
 
-	path = safepath.NormalJoin(r.path, path)
+	path = safepath.Join(r.path, path)
 	if safepath.IsDir(path) {
 		return apierrors.NewBadRequest("cannot update a directory")
 	}
@@ -365,7 +357,7 @@ func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []b
 		return err
 	}
 
-	fpath = safepath.NormalJoin(r.path, fpath)
+	fpath = safepath.Join(r.path, fpath)
 	if safepath.IsDir(fpath) {
 		return os.MkdirAll(fpath, 0700)
 	}
@@ -382,5 +374,5 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 		return err
 	}
 
-	return os.Remove(safepath.NormalJoin(r.path, path))
+	return os.Remove(safepath.Join(r.path, path))
 }
