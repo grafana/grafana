@@ -38,10 +38,12 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 	}
 
 	switch opts.ResourceVersionMatch {
-	case "", metav1.ResourceVersionMatchNotOlderThan:
-		req.VersionMatch = resource.ResourceVersionMatch_NotOlderThan
+	case "":
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_Unset
+	case metav1.ResourceVersionMatchNotOlderThan:
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_NotOlderThan
 	case metav1.ResourceVersionMatchExact:
-		req.VersionMatch = resource.ResourceVersionMatch_Exact
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_Exact
 	default:
 		return nil, predicate, apierrors.NewBadRequest(
 			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
