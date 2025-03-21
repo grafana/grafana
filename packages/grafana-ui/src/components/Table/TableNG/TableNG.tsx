@@ -79,7 +79,7 @@ export function TableNG(props: TableNGProps) {
   const [page, setPage] = useState(0);
   // This state will trigger re-render for recalculating row heights
   const [, setResizeTrigger] = useState(0);
-  const [_, setReadyForRowHeightCalc] = useState(false);
+  const [, setReadyForRowHeightCalc] = useState(false);
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
