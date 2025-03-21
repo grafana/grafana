@@ -408,21 +408,24 @@ configuring Azure AD authentication in Grafana.
 
 To ensure that the token size doesn't exceed HTTP header size limits,
 Entra ID limits the number of object IDs that it includes in the groups claim.
-If a user is member of more groups than the
-overage limit (200), then
-Entra ID does not emit the groups claim in the token and emits a group overage claim instead.
+If a user is member of more groups than the coverage limit (200), then Entra ID does not emit the groups claim in the token and emits a group overage claim instead.
 
 > More information in [Groups overage claim](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
 
 If Grafana receives a token with a group overage claim instead of a groups claim,
 Grafana attempts to retrieve the user's group membership by calling the included endpoint.
 
-To ensure this functionality works correctly, you must enable [`force_use_graph_api`](./#force-fetching-groups-from-microsoft-graph-api) in your configuration.
+The Entra ID `App registration` must include the following API permissions for group overage claim calls to succeed:
+
+| Permissions name       | Type      | Admin consent required | Status  |
+| ---------------------- | --------- | ---------------------- | ------- |
+| `GroupMember.Read.All` | Delegated | Yes                    | Granted |
+| `User.Read`            | Delegated | No                     | Granted |
+
+Admin consent is required for the `GroupMember.Read.All` permission. To grant admin consent, navigate to **API permissions** in the **App registration** and select **Grant admin consent for [your-organization]**.
 
 {{% admonition type="note" %}}
-The 'App registration' must include the `GroupMember.Read.All` API permission for group overage claim calls to succeed.
-
-Admin consent might be required for this permission.
+You can make Grafana always get group information from the Microsoft Graph API by turning on the [`force_use_graph_api`](./#force-fetching-groups-from-microsoft-graph-api) setting in the configuration.
 {{% /admonition %}}
 
 #### Configure the required Graph API permissions
@@ -433,6 +436,10 @@ Admin consent might be required for this permission.
 1. Select **Delegated permissions**.
 1. Under the **GroupMember** section, select **GroupMember.Read.All**.
 1. Click **Add permissions**.
+1. Select **Microsoft Graph** from the list of APIs.
+1. Select **Delegated permissions**..
+1. In the **Select permissions** pane, under the **User** section, select **User.Read**.
+1. Click the **Add permissions** button at the bottom of the page.
 
 {{% admonition type="note" %}}
 Admin consent may be required for this permission.

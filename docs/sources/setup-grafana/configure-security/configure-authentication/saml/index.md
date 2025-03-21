@@ -452,6 +452,18 @@ Group synchronization allows you to map user groups from an identity provider to
 To use SAML group synchronization, set [`assertion_attribute_groups`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_groups) to the attribute name where you store user groups.
 Then Grafana will use attribute values extracted from SAML assertion to add user to Grafana teams and grant them roles.
 
+{{% admonition type="warning" %}}
+Grafana requires the SAML groups attribute to be configured with distinct `AttributeValue` elements for each group. Do not include multiple groups within a single `AttributeValue` delimited by a comma or any other character. Failure to do so will prevent correct group parsing. Example:
+
+```xml
+<saml2:Attribute ...>
+    <saml2:AttributeValue ...>admins_group</saml2:AttributeValue>
+    <saml2:AttributeValue ...>division_1</saml2:AttributeValue>
+</saml2:Attribute>
+```
+
+{{% /admonition %}}
+
 {{% admonition type="note" %}}
 Team sync allows you sync users from SAML to Grafana teams, but you must create teams in Grafana before you can use this feature. It does not automatically create teams in Grafana.
 {{% /admonition %}}
