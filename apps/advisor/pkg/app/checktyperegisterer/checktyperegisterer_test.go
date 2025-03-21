@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/infra/log"
 	k8sErrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -117,7 +118,10 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 					createFunc: tt.createFunc,
 					updateFunc: tt.updateFunc,
 				},
-				namespace: "custom-namespace",
+				namespace:     "custom-namespace",
+				log:           log.New("test"),
+				retryAttempts: 1,
+				retryDelay:    0,
 			}
 			err := r.Run(context.Background())
 			if err != nil {
