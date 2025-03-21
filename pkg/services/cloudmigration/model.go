@@ -196,6 +196,7 @@ type SnapshotResultQueryParams struct {
 type ResourceTypes map[MigrateDataType]struct{}
 
 type CreateSnapshotCommand struct {
+	SessionUID    string
 	ResourceTypes ResourceTypes
 }
 
