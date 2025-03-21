@@ -97,7 +97,7 @@ func NamesFromHashedRepoPath(repo string, fpath string) (string, string) {
 	fpath = safepath.RemoveExt(fpath)
 	hasher := appendHashSuffix(fpath, repo)
 
-	return hasher(safepath.Base(fpath)), hasher(safepath.Dir(fpath))
+	return hasher(safepath.Base(fpath)), hasher(strings.Trim(safepath.Dir(fpath), "/"))
 }
 
 // Folder contains the data for a folder we use in provisioning.
@@ -113,6 +113,8 @@ type Folder struct {
 }
 
 func ParseFolder(dirPath, repositoryName string) Folder {
+	// We trim the trailing slash to avoid having a trailing slash in the ID.
+	dirPath = strings.TrimSuffix(dirPath, "/")
 	hasher := appendHashSuffix(dirPath, repositoryName)
 
 	return Folder{
