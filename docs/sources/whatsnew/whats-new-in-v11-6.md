@@ -7,10 +7,10 @@ keywords:
   - '11.6'
   - release notes
 labels:
-products:
-  - cloud
-  - enterprise
-  - oss
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v11.6
 posts:
   - title: Dashboards and visualizations
