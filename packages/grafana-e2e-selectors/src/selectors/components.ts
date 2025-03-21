@@ -590,6 +590,9 @@ export const versionedComponents = {
       '10.2.0': 'data-testid query-tab-add-query',
       [MIN_GRAFANA_VERSION]: 'Query editor add query button',
     },
+    addQueryFromLibrary: {
+      '11.5.0': 'data-testid query-tab-add-query-from-library',
+    },
     queryGroupTopSection: {
       '11.2.0': 'data-testid query group top section',
     },

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 )
 
@@ -27,6 +28,7 @@ func ProvideRegistryServiceSink(
 	_ *query.QueryAPIBuilder,
 	_ *notifications.NotificationsAPIBuilder,
 	_ *userstorage.UserStorageAPIBuilder,
+	_ *secret.SecretAPIBuilder,
 	_ *provisioning.APIBuilder,
 ) *Service {
 	return &Service{}

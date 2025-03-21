@@ -122,6 +122,7 @@ interface PromRuleDTOBase {
   evaluationTime?: number;
   lastEvaluation?: string;
   lastError?: string;
+  uid?: string;
 }
 
 export interface PromAlertingRuleDTO extends PromRuleDTOBase {
@@ -262,6 +263,7 @@ export interface PostableGrafanaRuleDefinition {
   record?: {
     metric: string;
     from: string;
+    target_datasource_uid?: string;
   };
   intervalSeconds?: number;
 }

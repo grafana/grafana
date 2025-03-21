@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -35,9 +37,6 @@ type DatasourceWriterConfig struct {
 	// This exists to cater for upgrading from old versions of Grafana, where rule
 	// definitions may not have a target data source specified.
 	DefaultDatasourceUID string
-
-	// RemoteWritePathSuffix is the path suffix for remote write, normally /push.
-	RemoteWritePathSuffix string
 }
 
 type DatasourceWriter struct {
@@ -78,6 +77,73 @@ func (w *DatasourceWriter) decrypt(ds *datasources.DataSource) (map[string]strin
 	return decryptedJsonData, err
 }
 
+func getPrometheusType(ds *datasources.DataSource) string {
+	if ds.JsonData == nil {
+		return ""
+	}
+	jsonData := ds.JsonData.Get("prometheusType")
+	if jsonData == nil {
+		return ""
+	}
+	str, err := jsonData.String()
+	if err != nil {
+		return ""
+	}
+	return str
+}
+
+func getRemoteWriteURL(ds *datasources.DataSource) (*url.URL, error) {
+	u, err := url.Parse(ds.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	if getPrometheusType(ds) == "Prometheus" {
+		return u.JoinPath("/api/v1/write"), nil
+	}
+
+	// All other cases assume Mimir/Cortex, as these systems are much more likely to be
+	// used as a remote write target, where as Prometheus does not recommend it.
+
+	// Mimir/Cortex are more complicated, as Grafana has to be configured with the
+	// base URL for where the Prometheus API is located, e.g. /api/prom or /prometheus.
+	//
+	// - For "legacy" routes, /push is located on the same level as /api/v1/query.
+	//
+	//   For example:
+	//     Grafana will be configured with <host>/api/prom
+	//     The query API is at /api/prom/api/v1/query
+	//     The push API is at /api/prom/push
+	//
+	// - For "new" routes, /push is located at the Mimir root, not Prometheus root.
+	//
+	//   For example:
+	//     Grafana will be configured with e.g. <host>/prometheus
+	//     The query API is at /prometheus/api/v1/query
+	//     But push API is at /push
+	//
+	// Unfortunately, the prefixes can also be configured,
+
+	cleanPath := path.Clean(u.Path)
+
+	// If the suffix is /api/prom, assume Mimir/Cortex with legacy routes.
+	if strings.HasSuffix(cleanPath, "/api/prom") {
+		u.Path = path.Join(u.Path, "/push")
+		return u, nil
+	}
+
+	// If the suffix is /prometheus, assume Mimir/Cortex with new routes.
+	if strings.HasSuffix(cleanPath, "/prometheus") {
+		u.Path = path.Join(path.Dir(u.Path), "/api/v1/push")
+		return u, nil
+	}
+
+	// The user has configured an unknown prefix, so fall back to taking
+	// the host as the Mimir root. This is less than ideal.
+	u.Path = "/api/v1/push"
+	return u, nil
+}
+
 func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID string) (*PrometheusWriter, error) {
 	ds, err := w.datasources.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 		UID:   dsUID,
@@ -101,12 +167,10 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		return nil, err
 	}
 
-	u, err := url.Parse(is.URL)
+	u, err := getRemoteWriteURL(ds)
 	if err != nil {
 		return nil, err
 	}
-
-	u = u.JoinPath(w.cfg.RemoteWritePathSuffix)
 
 	cfg := PrometheusWriterConfig{
 		URL: u.String(),
@@ -120,6 +184,15 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 	if err != nil {
 		return nil, err
 	}
+
+	w.l.Debug("Created Prometheus remote writer",
+		"datasource_uid", dsUID,
+		"type", ds.Type,
+		"prometheusType", getPrometheusType(ds),
+		"url", cfg.URL,
+		"tls", cfg.HTTPOptions.TLS != nil,
+		"basic_auth", cfg.HTTPOptions.BasicAuth != nil,
+		"timeout", cfg.Timeout)
 
 	return NewPrometheusWriter(
 		cfg,

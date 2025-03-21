@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -112,7 +113,8 @@ func ProvideRegistration(
 	}
 
 	if cfg.JWTAuth.Enabled {
-		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, cfg))
+		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
+		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, cfg))
 	}
 
 	if cfg.ExtJWTAuth.Enabled {
@@ -142,6 +144,7 @@ func ProvideRegistration(
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
+	authnSvc.RegisterPostLoginHook(rbacSync.ClearUserPermissionCacheHook, 170)
 
 	nsSync := sync.ProvideNamespaceSync(cfg)
 	authnSvc.RegisterPostAuthHook(nsSync.SyncNamespace, 150)
