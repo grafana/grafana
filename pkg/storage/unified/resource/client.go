@@ -14,6 +14,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -40,7 +41,7 @@ type resourceClient struct {
 	DiagnosticsClient
 }
 
-func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
+func NewLegacyResourceClient(channel grpc.ClientConnInterface) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
 		ResourceStoreClient:      NewResourceStoreClient(cc),
@@ -99,7 +100,7 @@ type RemoteResourceClientConfig struct {
 	AllowInsecure    bool
 }
 
-func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+func NewRemoteResourceClient(tracer tracing.Tracer, conn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
 	exchangeOpts := []authnlib.ExchangeClientOpts{}
 
 	if cfg.AllowInsecure {

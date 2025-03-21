@@ -1830,6 +1830,14 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},
+		{
+			Name:              "unifiedStorageGrpcConnectionPool",
+			Description:       "Enables the unified storage grpc connection pool",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
 	}
 )
 
