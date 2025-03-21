@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Box, Icon, IconButton, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Box, Icon, IconButton, Stack, styleMixins, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -90,12 +90,15 @@ function getStyles(theme: GrafanaTheme2) {
       background: 'transparent',
       padding: theme.spacing(0.25, 1),
       borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.secondary,
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
       overflow: 'hidden',
       '&:hover': {
-        backgroundColor: theme.colors.action.hover,
+        outline: `1px dashed ${theme.colors.border.strong}`,
+        outlineOffset: '0px',
+        backgroundColor: theme.colors.emphasize(theme.colors.background.canvas, 0.08),
       },
       '> span': {
         whiteSpace: 'nowrap',
@@ -104,7 +107,12 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     nodeButtonSelected: css({
-      color: theme.colors.primary.text,
+      color: theme.colors.text.primary,
+      outline: `1px dashed ${theme.colors.primary.border}`,
+      outlineOffset: '0px',
+      '&:hover': {
+        outline: `1px dashed ${theme.colors.primary.border}`,
+      },
     }),
     nodeButtonClone: css({
       color: theme.colors.text.secondary,
