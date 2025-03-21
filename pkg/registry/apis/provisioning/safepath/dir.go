@@ -29,3 +29,8 @@ func Dir(filePath string) string {
 
 	return dir + "/"
 }
+
+// InDir returns true if the filePath is a subdirectory of the given directory.
+func InDir(filePath, dir string) bool {
+	return strings.HasPrefix(filePath, dir)
+}

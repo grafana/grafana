@@ -70,7 +70,7 @@ func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
 	}
 
 	for _, permitted := range r.PermittedPrefixes {
-		if strings.HasPrefix(p, safepath.Clean(permitted)) {
+		if safepath.InDir(p, permitted) {
 			return p, nil
 		}
 	}
@@ -98,9 +98,14 @@ func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *l
 	}
 	if config.Spec.Local != nil {
 		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
-		if r.path != "" && !strings.HasSuffix(r.path, "/") {
+		if r.path != "" && !safepath.IsDir(r.path) {
 			r.path += "/"
 		}
+
+		for i, permitted := range r.resolver.PermittedPrefixes {
+			r.resolver.PermittedPrefixes[i] = safepath.Clean(permitted)
+		}
+
 	}
 	return r
 }
@@ -203,22 +208,21 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 		return nil, err
 	}
 
-	filePath, err := safepath.Join(r.path, filePath)
+	actualPath, err := safepath.Join(r.path, filePath)
 	if err != nil {
 		return nil, fmt.Errorf("join path: %w", err)
 	}
 
-	info, err := os.Stat(filePath)
+	info, err := os.Stat(actualPath)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrFileNotFound
 	} else if err != nil {
 		return nil, fmt.Errorf("stat file: %w", err)
 	}
 
-	path := strings.TrimPrefix(filePath, r.path)
 	if info.IsDir() {
 		return &FileInfo{
-			Path: path,
+			Path: filePath,
 			Modified: &metav1.Time{
 				Time: info.ModTime(),
 			},
@@ -226,18 +230,18 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 	}
 
 	//nolint:gosec
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(actualPath)
 	if err != nil {
 		return nil, fmt.Errorf("read file: %w", err)
 	}
 
-	hash, _, err := r.calculateFileHash(filePath)
+	hash, _, err := r.calculateFileHash(actualPath)
 	if err != nil {
 		return nil, fmt.Errorf("calculate hash of file: %w", err)
 	}
 
 	return &FileInfo{
-		Path: path,
+		Path: filePath,
 		Data: data,
 		Hash: hash,
 		Modified: &metav1.Time{
@@ -275,6 +279,7 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 				return fmt.Errorf("failed to read and calculate hash of path %s: %w", path, err)
 			}
 		}
+		// TODO: do folders have a trailing slash?
 		entries = append(entries, entry)
 		return err
 	})
@@ -284,7 +289,7 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 
 func (r *localRepository) calculateFileHash(path string) (string, int64, error) {
 	// Treats https://securego.io/docs/rules/g304.html
-	if !strings.HasPrefix(path, r.path) {
+	if !safepath.InDir(path, r.path) {
 		return "", 0, ErrFileNotFound
 	}
 
@@ -306,45 +311,37 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	return hex.EncodeToString(hasher.Sum(nil)), size, nil
 }
 
-func (r *localRepository) Create(ctx context.Context, sanitisedPath string, ref string, data []byte, comment string) error {
+func (r *localRepository) Create(ctx context.Context, fpath string, ref string, data []byte, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	// before sanitizing, check if the path is a directory
-	isDir := strings.HasSuffix(sanitisedPath, "/")
-	inputUnsafePath := sanitisedPath // do NOT use in path operations, only for responses!
-
-	sanitisedPath, err := safepath.Join(r.path, sanitisedPath)
-	if err != nil {
-		return fmt.Errorf("join path: %w", err)
-	}
-
-	_, err = os.Stat(sanitisedPath)
+	fpath = safepath.NormalJoin(r.path, fpath)
+	_, err := os.Stat(fpath)
 	if !errors.Is(err, os.ErrNotExist) {
 		if err != nil {
 			return apierrors.NewInternalError(fmt.Errorf("failed to check if file exists: %w", err))
 		}
-		return apierrors.NewAlreadyExists(provisioning.RepositoryResourceInfo.GroupResource(), inputUnsafePath)
+		return apierrors.NewAlreadyExists(provisioning.RepositoryResourceInfo.GroupResource(), fpath)
 	}
 
-	if isDir {
+	if safepath.IsDir(fpath) {
 		if data != nil {
 			return apierrors.NewBadRequest("data cannot be provided for a directory")
 		}
 
-		if err := os.MkdirAll(sanitisedPath, 0700); err != nil {
+		if err := os.MkdirAll(fpath, 0700); err != nil {
 			return apierrors.NewInternalError(fmt.Errorf("failed to create path: %w", err))
 		}
 
 		return nil
 	}
 
-	if err := os.MkdirAll(path.Dir(sanitisedPath), 0700); err != nil {
+	if err := os.MkdirAll(path.Dir(fpath), 0700); err != nil {
 		return apierrors.NewInternalError(fmt.Errorf("failed to create path: %w", err))
 	}
 
-	return os.WriteFile(sanitisedPath, data, 0600)
+	return os.WriteFile(fpath, data, 0600)
 }
 
 func (r *localRepository) Update(ctx context.Context, path string, ref string, data []byte, comment string) error {
@@ -352,12 +349,8 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 		return err
 	}
 
-	path, err := safepath.Join(r.path, path)
-	if err != nil {
-		return fmt.Errorf("join path: %w", err)
-	}
-
-	if strings.HasSuffix(path, "/") {
+	path = safepath.NormalJoin(r.path, path)
+	if safepath.IsDir(path) {
 		return apierrors.NewBadRequest("cannot update a directory")
 	}
 
@@ -372,12 +365,8 @@ func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []b
 		return err
 	}
 
-	fpath, err := safepath.Join(r.path, fpath)
-	if err != nil {
-		return fmt.Errorf("join path: %w", err)
-	}
-
-	if strings.HasSuffix(fpath, "/") {
+	fpath = safepath.NormalJoin(r.path, fpath)
+	if safepath.IsDir(fpath) {
 		return os.MkdirAll(fpath, 0700)
 	}
 
@@ -393,10 +382,5 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 		return err
 	}
 
-	path, err := safepath.Join(r.path, path)
-	if err != nil {
-		return err
-	}
-
-	return os.Remove(path)
+	return os.Remove(safepath.NormalJoin(r.path, path))
 }
