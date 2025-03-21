@@ -28,20 +28,16 @@ func TestRunner_Run_NoErrorOnList(t *testing.T) {
 	}
 
 	runner := &Runner{
-		checkRegistry: mockCheckService,
-		client:        mockClient,
-		log:           log.New("test"),
+		checkRegistry:      mockCheckService,
+		client:             mockClient,
+		log:                log.New("test"),
+		evaluationInterval: 1 * time.Hour,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	var err error
-	go func() {
-		err = runner.Run(ctx)
-	}()
-
-	time.Sleep(1 * time.Second)
 	cancel()
-	assert.NoError(t, err)
+	err := runner.Run(ctx)
+	assert.ErrorAs(t, err, &context.Canceled)
 }
 
 func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
