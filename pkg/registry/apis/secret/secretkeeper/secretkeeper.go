@@ -5,12 +5,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
-	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
 // Service is the interface for secret keeper services.
+// This exists because OSS and Enterprise have different amounts of keepers available.
 type Service interface {
 	GetKeepers() (map[contracts.KeeperType]contracts.Keeper, error)
 }
@@ -18,14 +17,14 @@ type Service interface {
 // OSSKeeperService is the OSS implementation of the Service interface.
 type OSSKeeperService struct {
 	tracer            tracing.Tracer
-	encryptionManager *manager.EncryptionManager
-	store             encryptionstorage.EncryptedValueStorage
+	encryptionManager contracts.EncryptionManager
+	store             contracts.EncryptedValueStorage
 }
 
 func ProvideService(
 	tracer tracing.Tracer,
-	store encryptionstorage.EncryptedValueStorage,
-	encryptionManager *manager.EncryptionManager,
+	store contracts.EncryptedValueStorage,
+	encryptionManager contracts.EncryptionManager,
 ) (OSSKeeperService, error) {
 	return OSSKeeperService{
 		tracer:            tracer,
