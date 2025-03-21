@@ -1,16 +1,12 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, Stack, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../../api/alertRuleApi';
-import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
-import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
-import { promNamespacesToNamespaceGroups, rulerRulesToNamespaceGroups } from '../rule-editor/useAlertRuleSuggestions';
+import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSuggestions';
 
 import { ImportFormValues } from './ImportFromDSRules';
 
@@ -123,41 +119,3 @@ const getStyle = (theme: GrafanaTheme2) => ({
     marginTop: theme.spacing(1),
   }),
 });
-
-function useGetNameSpacesByDatasourceName(rulesSourceName: string) {
-  const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
-  const { usePrometheusRuleNamespacesQuery, useLazyRulerRulesQuery } = alertRuleApi;
-  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
-  const emptyRulerConfig: RulerRulesConfigDTO = {};
-  const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery({ rulesSourceName });
-
-  // emptyRulerConfig is used to prevent from triggering  labels' useMemo all the time
-  // rulerRules = {} creates a new object and triggers useMemo to recalculate labels
-  const [fetchRulerRules, { data: rulerRules = emptyRulerConfig, isLoading: isRulerRulesLoading }] =
-    useLazyRulerRulesQuery();
-
-  const { data: promNamespaces = [], isLoading: isPrometheusRulesLoading } = usePrometheusRuleNamespacesQuery(
-    { ruleSourceName: rulesSourceName },
-    { skip: !prometheusRulesPrimary }
-  );
-
-  useEffect(() => {
-    if (features?.rulerConfig && !prometheusRulesPrimary) {
-      fetchRulerRules({ rulerConfig: features.rulerConfig });
-    }
-  }, [features?.rulerConfig, fetchRulerRules, prometheusRulesPrimary]);
-
-  const namespaceGroups = useMemo(() => {
-    if (isPrometheusRulesLoading || isRulerRulesLoading) {
-      return new Map<string, string[]>();
-    }
-
-    if (prometheusRulesPrimary) {
-      return promNamespacesToNamespaceGroups(promNamespaces);
-    }
-
-    return rulerRulesToNamespaceGroups(rulerRules);
-  }, [promNamespaces, rulerRules, isPrometheusRulesLoading, isRulerRulesLoading, prometheusRulesPrimary]);
-
-  return { namespaceGroups, isLoading: isPrometheusRulesLoading || isRulerRulesLoading || isFeaturesLoading };
-}

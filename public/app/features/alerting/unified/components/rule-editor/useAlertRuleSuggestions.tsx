@@ -13,7 +13,17 @@ const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const emptyRulerConfig: RulerRulesConfigDTO = {};
 
-export function useAlertRuleSuggestions(rulesSourceName: string) {
+export function useGetLabelsFromRuleRules(rulerRules: RulerRulesConfigDTO, promNamespaces: RuleNamespace[]) {
+  const labels = useMemo(() => {
+    return rulerRulesToLabels(rulerRules);
+  }, [rulerRules]);
+  if (prometheusRulesPrimary) {
+    return { labels: promNamespacesToLabels(promNamespaces) };
+  }
+
+  return { labels };
+}
+export function useGetNameSpacesByDatasourceName(rulesSourceName: string) {
   const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery({ rulesSourceName });
 
   // emptyRulerConfig is used to prevent from triggering  labels' useMemo all the time
@@ -44,19 +54,12 @@ export function useAlertRuleSuggestions(rulesSourceName: string) {
     return rulerRulesToNamespaceGroups(rulerRules);
   }, [promNamespaces, rulerRules, isPrometheusRulesLoading, isRulerRulesLoading]);
 
-  const labels = useMemo(() => {
-    if (isPrometheusRulesLoading || isRulerRulesLoading) {
-      return new Map<string, Set<string>>();
-    }
-
-    if (prometheusRulesPrimary) {
-      return promNamespacesToLabels(promNamespaces);
-    }
-
-    return rulerRulesToLabels(rulerRules);
-  }, [promNamespaces, rulerRules, isPrometheusRulesLoading, isRulerRulesLoading]);
-
-  return { namespaceGroups, labels, isLoading: isPrometheusRulesLoading || isRulerRulesLoading || isFeaturesLoading };
+  return {
+    namespaceGroups,
+    isLoading: isPrometheusRulesLoading || isRulerRulesLoading || isFeaturesLoading,
+    rulerRules,
+    promNamespaces,
+  };
 }
 
 export function promNamespacesToNamespaceGroups(promNamespaces: RuleNamespace[]) {
