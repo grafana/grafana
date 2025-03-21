@@ -265,8 +265,8 @@ kubernetesClientDashboardsFolders = true
 unifiedStorageSearch = true
 ; (optional) Allows you to sort dashboards by usage insights fields when using enterprise
 ; unifiedStorageSearchSprinkles = true
-; (optional) Will filter search results based on user permissions
-; unifiedStorageSearchPermissionFiltering = true
+; (optional) Will skip search results filter based on user permissions
+; unifiedStorageSearchPermissionFiltering = false
 ```
 
 The dashboard search page has been set up to search unified storage. Additionally, all legacy search calls (e.g. `/api/search`) will go to
