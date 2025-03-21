@@ -1,11 +1,10 @@
-import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Button, Collapse, InlineField, InlineSwitch, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, InlineField, InlineSwitch, Spinner, Stack, Text } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
@@ -43,18 +42,14 @@ const ImportFromDSRules = () => {
   const {
     register,
     handleSubmit,
-    clearErrors,
     watch,
     control,
     setValue,
     formState: { errors, isSubmitting },
   } = formAPI;
 
-  const styles = useStyles2(getStyles);
-
-  const targetFolder = watch('targetFolder');
+  const [targetFolder, selectedDatasourceName] = watch(['targetFolder', 'selectedDatasourceName']);
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
-  const selectedDatasourceName = watch('selectedDatasourceName');
 
   const onSubmit = async (data: ImportFormValues) => {
     try {
@@ -127,7 +122,12 @@ const ImportFromDSRules = () => {
               />
             </InlineField>
 
-            <Collapse label="Optional settings" isOpen={optionsShowing} onToggle={toggleOptions} collapsible={true}>
+            <Collapse
+              label={t('alerting.import-to-gma.optional-settings', 'Optional settings')}
+              isOpen={optionsShowing}
+              onToggle={toggleOptions}
+              collapsible={true}
+            >
               <Stack direction={'column'} gap={0}>
                 <InlineField
                   transparent={true}
@@ -189,14 +189,11 @@ const ImportFromDSRules = () => {
               </Stack>
             </Collapse>
 
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={isSubmitting || !watch('selectedDatasourceName')}
-              onClick={() => clearErrors()}
-            >
-              {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-              <Trans i18nKey="alerting.import-to-gma.action-button">Export</Trans>
+            <Button type="submit" variant="primary" disabled={isSubmitting || !selectedDatasourceName}>
+              <Stack direction="row" gap={2} alignItems="center">
+                {isSubmitting && <Spinner inline={true} />}
+                <Trans i18nKey="alerting.import-to-gma.action-button">Export</Trans>
+              </Stack>
             </Button>
           </form>
         </FormProvider>
@@ -206,9 +203,3 @@ const ImportFromDSRules = () => {
 };
 
 export default withPageErrorBoundary(ImportFromDSRules);
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  buttonSpinner: css({
-    marginRight: theme.spacing(1),
-  }),
-});
