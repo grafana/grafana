@@ -974,4 +974,8 @@ const (
 	// FlagUnifiedStorageHistoryPruner
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
+
+	// FlagUnifiedStorageGrpcConnectionPool
+	// Enables the unified storage grpc connection pool
+	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
 )
