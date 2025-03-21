@@ -106,7 +106,6 @@ const getStyles = (theme: GrafanaTheme2, state: ResponsiveGridLayoutState) => ({
     position: 'relative',
     width: '100%',
     height: '100%',
-    overflow: 'hidden',
   }),
   dragging: css({
     position: 'fixed',

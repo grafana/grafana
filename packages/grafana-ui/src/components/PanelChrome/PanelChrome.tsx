@@ -107,6 +107,12 @@ interface HoverHeader {
   hoverHeaderOffset?: number;
 }
 
+interface PointerEventConfig {
+  pointerDown: boolean;
+  dragStarted: boolean;
+  initialPosition: { x: number; y: number };
+}
+
 /**
  * @internal
  */
@@ -151,7 +157,11 @@ export function PanelChrome({
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
-  const pointerDownEvt = useRef<React.PointerEvent | undefined>();
+  const pointerEventConfig = useRef<PointerEventConfig>({
+    pointerDown: false,
+    dragStarted: false,
+    initialPosition: { x: 0, y: 0 },
+  });
 
   const hasHeader = !hoverHeader;
 
@@ -199,30 +209,64 @@ export function PanelChrome({
   // Handle drag & selection events
   // Mainly the tricky bit of differentiating between dragging and selecting
 
-  const onPointerUp = (evt: React.PointerEvent) => {
-    evt.stopPropagation();
-
-    const distance = Math.hypot(
-      pointerDownEvt.current?.screenX ?? 0 - evt.screenX,
-      pointerDownEvt.current?.screenY ?? 0 - evt.screenY
-    );
-
-    pointerDownEvt.current = undefined;
-
-    // If we are dragging some distance or clicking on elements that should cancel dragging (panel menu, etc)
-    if (
-      distance > 10 ||
-      (dragClassCancel && evt.target instanceof HTMLElement && evt.target.closest(`.${dragClassCancel}`))
-    ) {
-      return;
-    }
-
-    onSelect?.(evt);
+  const resetPointerEventConfig = () => {
+    pointerEventConfig.current = { pointerDown: false, dragStarted: false, initialPosition: { x: 0, y: 0 } };
   };
 
   const onPointerDown = (evt: React.PointerEvent) => {
+    // We ignore clicks on elements that should cancel dragging (panel menu, etc)
+    // Also reset the configuration
+    if (dragClassCancel && evt.target instanceof Element && evt.target.closest(`.${dragClassCancel}`)) {
+      resetPointerEventConfig();
+      return;
+    }
+
     evt.stopPropagation();
-    pointerDownEvt.current = evt;
+    pointerEventConfig.current = {
+      pointerDown: true,
+      dragStarted: false,
+      initialPosition: { x: evt.screenX, y: evt.screenY },
+    };
+  };
+
+  // When the pointer is moved, we need to trigger drag event if the pointer has moved more than a threshold
+  const onPointerMove = (evt: React.PointerEvent) => {
+    if (!pointerEventConfig.current.pointerDown || pointerEventConfig.current.dragStarted) {
+      return;
+    }
+
+    evt.stopPropagation();
+    if (
+      Math.sqrt(
+        Math.pow(pointerEventConfig.current.initialPosition.x - evt.screenX, 2) +
+          Math.pow(pointerEventConfig.current.initialPosition.y - evt.screenY, 2)
+      ) > 10
+    ) {
+      // Check if the distance between the initial position and the current position is greater than a threshold
+      pointerEventConfig.current = { ...pointerEventConfig.current, dragStarted: true };
+      onDragStart?.(evt);
+    }
+  };
+
+  // When the pointer is released, we need to:
+  // - trigger select event if drag did not start
+  // - reset the pointer event configuration
+  const onPointerUp = (evt: React.PointerEvent) => {
+    if (!pointerEventConfig.current.pointerDown || pointerEventConfig.current.dragStarted) {
+      resetPointerEventConfig();
+      return;
+    }
+
+    evt.stopPropagation();
+    onSelect?.(evt);
+    resetPointerEventConfig();
+  };
+
+  // Since we leave the header, we need to reset the pointer event configuration
+  // This prevents an issue where a user clicks on the header, moves the cursor outside, releases the button and then moves the mouse back
+  // The above behavior results in the panel being moved without any button being clicked
+  const onPointerLeave = () => {
+    resetPointerEventConfig();
   };
 
   const headerContent = (
@@ -350,15 +394,12 @@ export function PanelChrome({
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
           data-testid="header-container"
-          onPointerMove={() => {
-            if (pointerDownEvt.current) {
-              onDragStart?.(pointerDownEvt.current);
-            }
-          }}
           onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerLeave}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}
-          onPointerUp={onPointerUp}
         >
           {statusMessage && (
             <div className={dragClassCancel}>
