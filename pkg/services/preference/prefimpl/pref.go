@@ -101,7 +101,7 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 }
 
 func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
-	jsonData, err := preferenceData(cmd)
+	jsonData, err := preferenceData(cmd, ctx)
 	if err != nil {
 		return err
 	}
@@ -172,6 +172,13 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 			preference.JSONData = &pref.PreferenceJSONData{}
 		}
 		preference.JSONData.Language = *cmd.Language
+	}
+
+	if cmd.Locale != nil {
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferenceJSONData{}
+		}
+		preference.JSONData.Locale = *cmd.Locale
 	}
 
 	if cmd.Navbar != nil && cmd.Navbar.BookmarkUrls != nil {
@@ -263,11 +270,11 @@ func parseCookiePreferences(prefs []pref.CookieType) (map[string]struct{}, error
 	return m, nil
 }
 
-func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, error) {
+func preferenceData(cmd *pref.SavePreferenceCommand, ctx context.Context) (*pref.PreferenceJSONData, error) {
 	jsonData := &pref.PreferenceJSONData{
 		Language: cmd.Language,
+		Locale:   cmd.Locale,
 	}
-
 	if cmd.Navbar != nil {
 		jsonData.Navbar = *cmd.Navbar
 	}
