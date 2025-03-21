@@ -9,9 +9,9 @@ import (
 
 // batchState represents the state of a sequence batch
 type batchState struct {
+	mu               sync.Mutex
 	nextValue        int64
 	lastValueInBatch int64
-	mu               sync.Mutex
 }
 
 type sequenceGenerator struct {
@@ -19,9 +19,8 @@ type sequenceGenerator struct {
 	sequencesTable string
 	batchSize      int64
 
-	// Track sequence batches per key (table:column)
-	batchStates map[string]*batchState
 	mu          sync.Mutex
+	batchStates map[string]*batchState // Track sequence batches per key (table:column)
 }
 
 func newSequenceGenerator(db *sql.DB) *sequenceGenerator {
