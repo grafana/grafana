@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -67,6 +68,7 @@ func (c *migrateConnector) Connect(
 		job, err := c.jobs.Insert(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: cfg.Namespace,
+				Name:      fmt.Sprintf("%s:%s", cfg.Name, provisioning.JobActionMigrate),
 			},
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionMigrate,

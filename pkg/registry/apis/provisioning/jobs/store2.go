@@ -417,8 +417,7 @@ func (s *store2) cleanupClaims(ctx context.Context) error {
 // This saves it if it is a new job, or fails with ErrJobAlreadyExists if one with the same name already exists.
 func (s *store2) Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
 	if job.GetName() == "" && job.GetGenerateName() == "" {
-		// FIXME: This should be done before we call insert.
-		job.Name = string(job.Spec.Action) + "-" + job.Spec.Repository
+		return nil, apifmt.Errorf("job must have a name or a generate name")
 	}
 
 	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})
