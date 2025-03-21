@@ -2,10 +2,9 @@
 
 # This script finds which Grafana releases include a specific commit.
 # It checks both release branches and tags to determine:
-# 1. Which release branches contain the commit
-# 2. The first release tag that included the commit
-# 3. Which release tags include the commit
-# 4. The first release that included the commit
+# 1. Which previous releases include the commit
+# 2. Which upcoming releases will include the commit
+# 3. The first release that included the commit
 #
 # Usage: ./scripts/releasefinder.sh <commit-hash>
 # The commit hash can be either:
@@ -59,18 +58,14 @@ echo
 echo "Commit details:"
 echo "  Author: $(git log -1 --format="%an <%ae>" "$COMMIT_HASH")"
 echo "  Date: $(git log -1 --format="%ad" --date=iso "$COMMIT_HASH")"
-echo
 
-# Check for backport information
-echo "Backport information:"
-if git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep -q "cherry picked from commit"; then
-    ORIGINAL_COMMIT=$(git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep "cherry picked from commit" | sed 's/.*cherry picked from commit \([a-f0-9]*\).*/\1/')
-    echo "  This is a backport from commit: $ORIGINAL_COMMIT"
-    echo "  Original commit details:"
-    echo "    Author: $(git log -1 --format="%an <%ae>" "$ORIGINAL_COMMIT")"
-    echo "    Date: $(git log -1 --format="%ad" --date=iso "$ORIGINAL_COMMIT")"
-else
-    echo "  Not a backport"
+# Extract original PR number and create link
+PR_NUMBER=$(git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep -o '#[0-9]\+' | head -n1 | tr -d '#')
+if [ ! -z "$PR_NUMBER" ]; then
+    # Extract PR title (first line of commit message)
+    PR_TITLE=$(git log -1 --pretty=format:"%s" "$COMMIT_HASH")
+    echo "  PR: #$PR_NUMBER - $PR_TITLE"
+    echo "  Link: https://github.com/grafana/grafana/pull/$PR_NUMBER"
 fi
 echo
 
@@ -105,46 +100,39 @@ for tag in $(git tag | sort -V); do
     fi
 done
 
-# Print release branches
-echo "Included in release branches:"
+# Print previous releases if they exist
+if [ ${#direct_tags[@]} -gt 0 ] || [ ${#included_tags[@]} -gt 0 ]; then
+    echo "This commit has been included in these PREVIOUS on-prem releases:"
+    # Get all tags sorted
+    all_tags=($(printf "%s\n" "${direct_tags[@]}" "${included_tags[@]}" | sort -V))
+    # Get the first release
+    first_release="${all_tags[0]}"
+    # Print all tags with annotation for the first release
+    for tag in "${all_tags[@]}"; do
+        if [ "$tag" = "$first_release" ]; then
+            echo "  - $tag (first release)"
+        else
+            echo "  - $tag"
+        fi
+    done
+    echo
+    echo "Note: This code may have been backported to previous release branches. Please check the original PR for backport information."
+    echo
+fi
+
+# Print upcoming releases
 if [ ${#release_branches[@]} -eq 0 ]; then
-    echo "  None"
+    echo "  This commit is not yet included in any release branches."
+    echo "  The corresponding release branch has likely not been created yet."
 else
+    echo "This commit will be included in these UPCOMING on-prem releases:"
     for branch in "${release_branches[@]}"; do
         # Convert branch name to tag format (e.g., release-11.5.0 -> v11.5.0)
         tag_version="v${branch#release-}"
-        # Check if tag exists
-        if git tag | grep -q "^$tag_version$"; then
-            echo "  - $branch"
-        else
-            echo "  - $branch (release for this branch upcoming)"
+        # Only show branches that don't have a corresponding tag yet
+        if ! git tag | grep -q "^$tag_version$"; then
+            echo "  - $tag_version"
         fi
     done | sort -V
 fi
 echo
-
-# Print initial release tag
-echo "Initial release tag (the first release in which this commit was included):"
-if [ ${#direct_tags[@]} -eq 0 ]; then
-    echo "  None"
-else
-    printf "  - %s\n" "${direct_tags[@]}" | sort -V
-fi
-echo
-
-# Print included tags
-echo "Included in these release tags (the subsequent releases that included this commit):"
-if [ ${#included_tags[@]} -eq 0 ]; then
-    echo "  None"
-else
-    printf "  - %s\n" "${included_tags[@]}" | sort -V
-fi
-echo
-
-# Find first release
-if [ ${#direct_tags[@]} -gt 0 ]; then
-    first_release=$(printf "%s\n" "${direct_tags[@]}" | sort -V | head -n1)
-    echo "First included in release: $first_release"
-else
-    echo "Not included in any releases"
-fi 
