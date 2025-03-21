@@ -135,7 +135,10 @@ func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		features, acimpl.ProvideAccessControl(features), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
+		features, acimpl.ProvideAccessControl(features),
+		&dashboards.FakeDashboardService{},
+		annotationstest.NewFakeAnnotationsRepo(),
+		nil, nil)
 	require.NoError(t, err)
 	return gLive
 }
