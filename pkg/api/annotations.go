@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -278,7 +277,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 	}
 
 	if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		if canSave, err := hs.canSaveAnnotation(c, annotation); err != nil || !canSave {
+		if canSave, err := hs.canSaveAnnotation(c, hs.AccessControl, annotation); err != nil || !canSave {
 			return dashboardGuardianResponse(err)
 		}
 	}
@@ -336,7 +335,7 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 	}
 
 	if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		if canSave, err := hs.canSaveAnnotation(c, annotation); err != nil || !canSave {
+		if canSave, err := hs.canSaveAnnotation(c, hs.AccessControl, annotation); err != nil || !canSave {
 			return dashboardGuardianResponse(err)
 		}
 	}
@@ -502,7 +501,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 			return resp
 		}
 
-		if canSave, err := hs.canSaveAnnotation(c, annotation); err != nil || !canSave {
+		if canSave, err := hs.canSaveAnnotation(c, hs.AccessControl, annotation); err != nil || !canSave {
 			return dashboardGuardianResponse(err)
 		}
 	}
@@ -518,25 +517,17 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 	return response.Success("Annotation deleted")
 }
 
-func (hs *HTTPServer) canSaveAnnotation(c *contextmodel.ReqContext, annotation *annotations.ItemDTO) (bool, error) {
+func (hs *HTTPServer) canSaveAnnotation(c *contextmodel.ReqContext, ac accesscontrol.AccessControl, annotation *annotations.ItemDTO) (bool, error) {
 	if annotation.GetType() == annotations.Dashboard {
-		return canEditDashboard(c, annotation.DashboardID)
+		return canEditDashboard(c, ac, annotation.DashboardID)
 	} else {
 		return true, nil
 	}
 }
 
-func canEditDashboard(c *contextmodel.ReqContext, dashboardID int64) (bool, error) {
-	guard, err := guardian.New(c.Req.Context(), dashboardID, c.SignedInUser.GetOrgID(), c.SignedInUser)
-	if err != nil {
-		return false, err
-	}
-
-	if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
-		return false, err
-	}
-
-	return true, nil
+func canEditDashboard(c *contextmodel.ReqContext, ac accesscontrol.AccessControl, dashboardID int64) (bool, error) {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(dashboardID, 10)))
+	return ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 }
 
 func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *user.SignedInUser) (*annotations.ItemDTO, response.Response) {
@@ -680,7 +671,7 @@ func (hs *HTTPServer) canCreateAnnotation(c *contextmodel.ReqContext, dashboardI
 			return canSave, err
 		}
 
-		return canEditDashboard(c, dashboardId)
+		return canEditDashboard(c, hs.AccessControl, dashboardId)
 	} else { // organization annotations
 		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
 		return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
@@ -708,7 +699,7 @@ func (hs *HTTPServer) canMassDeleteAnnotations(c *contextmodel.ReqContext, dashb
 			return false, err
 		}
 
-		canSave, err = canEditDashboard(c, dashboardID)
+		canSave, err = canEditDashboard(c, hs.AccessControl, dashboardID)
 		if err != nil || !canSave {
 			return false, err
 		}

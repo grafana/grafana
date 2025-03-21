@@ -75,9 +75,21 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     throw new Error('Method not implemented.');
   }
 
+  public duplicate(): DashboardLayoutManager {
+    const newRows = this.state.rows.map((row) => row.duplicate());
+    return this.clone({ rows: newRows, key: undefined });
+  }
+
+  public duplicateRow(row: RowItem) {
+    const newRow = row.duplicate();
+    this.setState({ rows: [...this.state.rows, newRow] });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+  }
+
   public addNewRow(): RowItem {
     const row = new RowItem();
     this.setState({ rows: [...this.state.rows, row] });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
     return row;
   }
 
@@ -101,7 +113,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     });
   }
 
-  public addRowAbove(row: RowItem) {
+  public addRowAbove(row: RowItem): RowItem {
     const index = this.state.rows.indexOf(row);
     const newRow = new RowItem();
     const newRows = [...this.state.rows];
@@ -110,9 +122,11 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     this.setState({ rows: newRows });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+
+    return newRow;
   }
 
-  public addRowBelow(row: RowItem) {
+  public addRowBelow(row: RowItem): RowItem {
     const rows = this.state.rows;
     let index = rows.indexOf(row);
 
@@ -128,6 +142,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     this.setState({ rows: newRows });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+
+    return newRow;
   }
 
   public removeRow(row: RowItem) {
