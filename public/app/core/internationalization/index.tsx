@@ -3,8 +3,8 @@ import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetec
 import { ReactElement, useMemo } from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { TransProps, usePluginContext } from '@grafana/data';
-import { setTransComponent, setUseTranslateHook } from '@grafana/runtime/src/unstable';
+import { usePluginContext } from '@grafana/data';
+import { setTransComponent, setUseTranslateHook, TransProps } from '@grafana/runtime/src/unstable';
 
 import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES } from './constants';
 import { loadTranslations } from './loadTranslations';

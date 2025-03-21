@@ -10,3 +10,4 @@
  */
 
 export { useTranslate, setUseTranslateHook, setTransComponent, Trans } from './utils/i18n';
+export type { TransProps } from './types/i18n';

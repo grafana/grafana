@@ -1,4 +1,6 @@
-import { type UseTranslateHook, type TransProps, type TransType, usePluginContext } from '@grafana/data';
+import { usePluginContext } from '@grafana/data';
+
+import { type TransProps, type TransType, type UseTranslateHook } from '../types/i18n';
 
 /**
  * Provides a i18next-compatible translation function.

@@ -874,4 +874,3 @@ export {
   userHasAllPermissions,
   userHasAnyPermission,
 } from './rbac/rbac';
-export type { TransProps, TransType, UseTranslateHook } from './types/i18n';
