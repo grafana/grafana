@@ -1642,7 +1642,7 @@ function reportTempoQueryMetrics(
     datasourceType: 'tempo',
     app: options.app ?? '',
     grafana_version: config.buildInfo.version,
-    timeRangeSeconds: options.range.to.unix() - options.range.from.unix(),
+    timeRangeSeconds: options.range ? options.range.to.unix() - options.range.from.unix() : 0,
     timeRange: options.range.raw.from + ';' + options.range.raw.to,
     ...metrics,
   });
