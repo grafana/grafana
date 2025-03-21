@@ -86,6 +86,7 @@ type GrafanaMetaAccessor interface {
 	GetMessage() string
 	SetMessage(msg string)
 	SetAnnotation(key string, val string)
+	GetAnnotation(key string) string
 
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
@@ -190,6 +191,14 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 		anno[key] = val
 	}
 	m.obj.SetAnnotations(anno)
+}
+
+func (m *grafanaMetaAccessor) GetAnnotation(key string) string {
+	anno := m.obj.GetAnnotations()
+	if anno != nil {
+		return anno[key]
+	}
+	return ""
 }
 
 func (m *grafanaMetaAccessor) get(key string) string {
