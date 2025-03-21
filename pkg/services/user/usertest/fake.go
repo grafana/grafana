@@ -20,6 +20,7 @@ type FakeUserService struct {
 	UpdateFn            func(ctx context.Context, cmd *user.UpdateUserCommand) error
 	GetSignedInUserFn   func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 	CreateFn            func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error)
+	GetByLoginFn        func(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error)
 	BatchDisableUsersFn func(ctx context.Context, cmd *user.BatchDisableUsersCommand) error
 	GetByEmailFn        func(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error)
 
@@ -59,6 +60,9 @@ func (f *FakeUserService) GetByUID(ctx context.Context, query *user.GetUserByUID
 }
 
 func (f *FakeUserService) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	if f.GetByLoginFn != nil {
+		return f.GetByLoginFn(ctx, query)
+	}
 	return f.ExpectedUser, f.ExpectedError
 }
 
