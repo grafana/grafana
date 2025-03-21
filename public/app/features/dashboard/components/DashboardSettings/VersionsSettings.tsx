@@ -125,6 +125,13 @@ export class VersionsSettings extends PureComponent<Props, State> {
     }));
 
   isLastPage() {
+    if (config.featureToggles.kubernetesClientDashboardsFolders) {
+      return (
+        this.state.versions.find((rev) => rev.version === 1) ||
+        this.state.versions.length % this.limit !== 0 ||
+        this.continueToken === ''
+      );
+    }
     return this.state.versions.find((rev) => rev.version === 1) || this.state.versions.length % this.limit !== 0;
   }
 
