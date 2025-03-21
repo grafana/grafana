@@ -175,7 +175,8 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 
 		if status.Code(err) == codes.Unavailable {
 			connectionErr := plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("%v", err)
-			// Check if the plugin is running in a cloud environment
+			// Check if we have a stackID in the context and if so, add a contact support message
+			// stackID is set when Grafana is hosted
 			_, hasStackId := pluginmetrics.StackIDFromContext(ctx)
 			if hasStackId {
 				return nil,connectionErr.WithContactSupportMessage()
