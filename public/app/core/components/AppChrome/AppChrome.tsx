@@ -4,7 +4,7 @@ import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
-import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
+import { LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { Trans } from 'app/core/internationalization';
@@ -14,6 +14,8 @@ import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboard
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
+import { EXTENSION_SIDEBAR_WIDTH, ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
+import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
@@ -25,6 +27,7 @@ export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
+  const { dockedPluginId } = useExtensionSidebarContext();
   const state = chrome.useState();
   const theme = useTheme2();
   const scopes = useScopes();
@@ -120,11 +123,15 @@ export function AppChrome({ children }: Props) {
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+              [styles.pageContainerMenuDockedExtensionSidebar]: dockedPluginId !== undefined,
             })}
             id="pageContent"
           >
             {children}
           </main>
+          <div className={styles.sidebarContainer}>
+            <ExtensionSidebar />
+          </div>
         </div>
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
@@ -209,6 +216,15 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
         top: theme.spacing(1),
         zIndex: theme.zIndex.portal,
       },
+    }),
+    sidebarContainer: css({
+      position: 'fixed',
+      height: `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)`,
+      zIndex: 2,
+      right: 0,
+    }),
+    pageContainerMenuDockedExtensionSidebar: css({
+      maxWidth: `calc(100% - ${EXTENSION_SIDEBAR_WIDTH})`,
     }),
   };
 };
