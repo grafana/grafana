@@ -554,7 +554,7 @@ RowsLayoutRowSpec: {
 	collapsed:             bool
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               RowRepeatOptions
-	layout:                GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+	layout:                GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 }
 
 ResponsiveGridLayoutKind: {
@@ -595,7 +595,7 @@ TabsLayoutTabKind: {
 
 TabsLayoutTabSpec: {
 	title?: string
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
+	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
 }
 
 PanelSpec: {

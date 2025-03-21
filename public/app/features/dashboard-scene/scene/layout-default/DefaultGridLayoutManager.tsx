@@ -256,6 +256,7 @@ export class DefaultGridLayoutManager
 
     sceneGridLayout.setState({ children: [row, ...sceneGridLayout.state.children] });
 
+    this.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
     return row;
   }
 
