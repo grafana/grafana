@@ -13,7 +13,7 @@ import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
  *
  * If no more rules are left in the group it will remove the entire group instead of updating.
  */
-export function useDeleteRuleFromGroup() {
+export function useDeleteRuleFromGroup(deletePermanently?: boolean) {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
@@ -42,6 +42,7 @@ export function useDeleteRuleFromGroup() {
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
       notificationOptions: { successMessage },
+      deletePermanently,
     }).unwrap();
   });
 }
