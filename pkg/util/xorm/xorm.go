@@ -9,6 +9,7 @@ package xorm
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"reflect"
@@ -22,6 +23,8 @@ import (
 const (
 	// Version show the xorm's version
 	Version string = "0.8.0.1015"
+
+	Spanner = "spanner"
 )
 
 func regDrvsNDialects() bool {
@@ -97,7 +100,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	switch uri.DbType {
 	case core.SQLITE:
 		engine.DatabaseTZ = time.UTC
-	case "spanner":
+	case Spanner:
 		engine.DatabaseTZ = time.UTC
 		// We need to specify "Z" to indicate that timestamp is in UTC.
 		// Otherwise Spanner uses default America/Los_Angeles timezone.
@@ -114,9 +117,23 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 
 	runtime.SetFinalizer(engine, close)
 
-	if dialect.DBType() == "spanner" {
-		engine.sequenceGenerator = newSequenceGenerator(db.DB)
+	if ext, ok := dialect.(DialectExt); ok {
+		engine.sequenceGenerator, err = ext.CreateSequenceGenerator(db.DB)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create sequence generator: %w", err)
+		}
 	}
 
 	return engine, nil
+}
+
+type SequenceGenerator interface {
+	Next(ctx context.Context, table, column string) (int64, error)
+}
+
+type DialectExt interface {
+	core.Dialect
+
+	// CreateSequenceGenerator returns optional generator used to create AUTOINCREMENT ids for inserts.
+	CreateSequenceGenerator(db *sql.DB) (SequenceGenerator, error)
 }

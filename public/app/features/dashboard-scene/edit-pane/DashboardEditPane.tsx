@@ -21,7 +21,7 @@ import { DashboardAddPane } from './DashboardAddPane';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { ElementSelection } from './ElementSelection';
-import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from './shared';
+import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent, ObjectsReorderedOnCanvasEvent } from './shared';
 import { useEditableElement } from './useEditableElement';
 
 export interface DashboardEditPaneState extends SceneObjectState {
@@ -60,6 +60,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
         this.clearSelection();
       })
     );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(ObjectsReorderedOnCanvasEvent, ({ payload }) => {
+        if (this.state.tab === 'outline') {
+          this.forceRender();
+        }
+      })
+    );
   }
 
   public enableSelection() {
@@ -89,6 +97,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     if (obj) {
       this.selectObject(obj, element.id, multi);
     }
+  }
+
+  public getSelection(): SceneObject | SceneObject[] | undefined {
+    return this.state.selection?.getSelection();
   }
 
   public selectObject(obj: SceneObject, id: string, multi?: boolean) {
