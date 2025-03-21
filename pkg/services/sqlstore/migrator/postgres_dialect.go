@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+
 	"xorm.io/xorm"
 )
 
@@ -36,6 +37,10 @@ func (db *PostgresDialect) LikeStr() string {
 
 func (db *PostgresDialect) AutoIncrStr() string {
 	return ""
+}
+
+func (db *PostgresDialect) BooleanValue(value bool) any {
+	return value
 }
 
 func (db *PostgresDialect) BooleanStr(value bool) string {
@@ -136,7 +141,7 @@ func (db *PostgresDialect) CleanDB(engine *xorm.Engine) error {
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
 func (db *PostgresDialect) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.DBMetas()
+	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
 	}

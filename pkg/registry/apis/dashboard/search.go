@@ -21,8 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 
+	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -53,8 +53,8 @@ func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboa
 }
 
 func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SearchResults"].Schema
-	sortableFields := defs["github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableFields"].Schema
+	searchResults := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SearchResults"].Schema
+	sortableFields := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SortableFields"].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -407,6 +407,7 @@ func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
 
 func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering) {
+		s.log.Warn("Tried to search for 'sharedwithme' dashboards with ", featuremgmt.FlagUnifiedStorageSearchPermissionFiltering, " disabled")
 		return []string{}, nil
 	}
 
@@ -459,7 +460,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	if folderUidIdx == -1 {
-		return sharedDashboards, fmt.Errorf("Error retrieving folder information")
+		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
 	// populate list of unique folder UIDs in the list of dashboards user has read permissions

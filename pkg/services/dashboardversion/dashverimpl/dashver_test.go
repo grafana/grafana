@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -49,12 +50,14 @@ func TestDashboardVersionService(t *testing.T) {
 		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
 		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
 
-		mockCli.On("GetUserFromMeta", mock.Anything, "user:1").Return(&user.User{ID: 1}, nil)
-		mockCli.On("Get", mock.Anything, "uid", int64(1), v1.GetOptions{ResourceVersion: "10"}, mock.Anything).Return(&unstructured.Unstructured{
+		creationTimestamp := time.Now().Add(time.Hour * -24).UTC()
+		updatedTimestamp := time.Now().UTC().Truncate(time.Second)
+		dash := &unstructured.Unstructured{
 			Object: map[string]any{
 				"metadata": map[string]any{
 					"name":            "uid",
 					"resourceVersion": "12",
+					"generation":      int64(10),
 					"labels": map[string]any{
 						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
 					},
@@ -63,9 +66,15 @@ func TestDashboardVersionService(t *testing.T) {
 					},
 				},
 				"spec": map[string]any{
-					"version": int64(10),
+					"hello": "world",
 				},
-			}}, nil).Once()
+			}}
+		dash.SetCreationTimestamp(v1.NewTime(creationTimestamp))
+		obj, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		obj.SetUpdatedTimestamp(&updatedTimestamp)
+		mockCli.On("GetUserFromMeta", mock.Anything, "user:1").Return(&user.User{ID: 1}, nil)
+		mockCli.On("Get", mock.Anything, "uid", int64(1), v1.GetOptions{ResourceVersion: "10"}, mock.Anything).Return(dash, nil).Once()
 		res, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
 			DashboardID: 42,
 			OrgID:       1,
@@ -79,7 +88,8 @@ func TestDashboardVersionService(t *testing.T) {
 			DashboardID:   42,
 			DashboardUID:  "uid",
 			CreatedBy:     1,
-			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(10)}),
+			Created:       updatedTimestamp,
+			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(10), "hello": "world"}),
 		})
 
 		mockCli.On("GetUserFromMeta", mock.Anything, "user:2").Return(&user.User{ID: 2}, nil)
@@ -88,6 +98,7 @@ func TestDashboardVersionService(t *testing.T) {
 				"metadata": map[string]any{
 					"name":            "uid",
 					"resourceVersion": "11",
+					"generation":      int64(11),
 					"labels": map[string]any{
 						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
 					},
@@ -96,9 +107,7 @@ func TestDashboardVersionService(t *testing.T) {
 						utils.AnnoKeyUpdatedBy: "user:2", // if updated by is set, that is the version creator
 					},
 				},
-				"spec": map[string]any{
-					"version": int64(11),
-				},
+				"spec": map[string]any{},
 			}}, nil).Once()
 		res, err = dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
 			DashboardID: 42,
@@ -264,13 +273,12 @@ func TestListDashboardVersions(t *testing.T) {
 				"metadata": map[string]any{
 					"name":            "uid",
 					"resourceVersion": "12",
+					"generation":      int64(5),
 					"labels": map[string]any{
 						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
 					},
 				},
-				"spec": map[string]any{
-					"version": int64(5),
-				},
+				"spec": map[string]any{},
 			}}}}, nil).Once()
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, err)

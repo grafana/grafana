@@ -9,7 +9,10 @@ import (
 	"strings"
 
 	_ "github.com/googleapis/go-sql-spanner"
+	spannerdriver "github.com/googleapis/go-sql-spanner"
 	"xorm.io/core"
+
+	spannerext "github.com/grafana/grafana/pkg/extensions/spanner"
 )
 
 func init() {
@@ -369,4 +372,24 @@ func (s *spanner) GetIndexes(tableName string) (map[string]*core.Index, error) {
 		index.AddColumn(colName)
 	}
 	return indexes, res.Err()
+}
+
+func (s *spanner) CreateSequenceGenerator(db *sql.DB) (SequenceGenerator, error) {
+	dsn := s.DataSourceName()
+	connectorConfig, err := spannerdriver.ExtractConnectorConfig(dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	if spannerext.UsePlainText(connectorConfig) {
+		// Plain-text means we're either using spannertest or Spanner emulator.
+		// Switch to fake in-memory sequence number generator in that case.
+		//
+		// Using database-based sequence generator doesn't work with emulator, as emulator
+		// only supports single transaction. If there is already another transaction started
+		// generating new ID via database-based sequence generator would always fail.
+		return newInMemSequenceGenerator(), nil
+	}
+
+	return newSequenceGenerator(db), nil
 }
