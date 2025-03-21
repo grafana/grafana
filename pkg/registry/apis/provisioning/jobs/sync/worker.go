@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -262,9 +263,9 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		return fmt.Errorf("this should be empty")
 	}
 
-	// Do the longest paths first (important for delete)
+	// Do the deepest paths first (important for delete)
 	sort.Slice(changes, func(i, j int) bool {
-		return len(changes[i].Path) > len(changes[j].Path)
+		return safepath.Depth(changes[i].Path) > safepath.Depth(changes[j].Path)
 	})
 
 	r.progress.SetTotal(ctx, len(changes))
@@ -330,6 +331,15 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	for _, change := range diff {
 		if err := r.progress.TooManyErrors(); err != nil {
 			return err
+		}
+
+		// TODO: ignore files without valid paths?
+		if resources.ShouldIgnorePath(change.Path) {
+			r.progress.Record(ctx, jobs.JobResourceResult{
+				Path:   change.Path,
+				Action: repository.FileActionIgnored,
+			})
+			continue
 		}
 
 		switch change.Action {
@@ -407,11 +417,6 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 	result := jobs.JobResourceResult{
 		Path:   path,
 		Action: action,
-	}
-
-	if resources.ShouldIgnorePath(path) {
-		result.Action = repository.FileActionIgnored
-		return result
 	}
 
 	// Read the referenced file
