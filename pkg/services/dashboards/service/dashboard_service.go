@@ -21,9 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
-	"github.com/grafana/grafana/pkg/util/retryer"
-
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
@@ -983,6 +980,16 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 		return results, nil
 	}
 	return dr.dashboardStore.GetDashboardsByPluginID(ctx, query)
+}
+
+// (sometimes) called by the k8s storage engine after creating an object
+func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, key *resource.ResourceKey, id claims.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultPermissions")
+	defer span.End()
+
+	fmt.Printf("TODO!!!!! %v / %v / %v\n", key, id, obj.GetFolder())
+
+	return nil
 }
 
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {

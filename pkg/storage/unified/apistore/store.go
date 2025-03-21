@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"golang.org/x/exp/rand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -29,12 +30,10 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/bwmarrin/snowflake"
-
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -46,14 +45,16 @@ const (
 
 var _ storage.Interface = (*Storage)(nil)
 
+type DefaultPermissionSetter = func(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	LargeObjectSupport LargeObjectSupport
 
 	RequireDeprecatedInternalID bool
 
-	// Temporary fix to support creating permissions AfterCreate
-	Permissions accesscontrol.PermissionsService
+	// Temporary fix to support adding default permissions AfterCreate
+	Permissions DefaultPermissionSetter
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -161,9 +162,9 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	var err error
-	var grantPermisions string
+	var permisions string
 	req := &resource.CreateRequest{}
-	req.Value, grantPermisions, err = s.prepareObjectForStorage(ctx, obj)
+	req.Value, permisions, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return err
 	}
@@ -173,7 +174,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	permissions, err := getPermissionCreator(ctx, req.Key, grantPermisions, obj, s.opts.Permissions)
+	grantPermisions, err := afterCreatePermissionCreator(ctx, req.Key, permisions, obj, s.opts.Permissions)
 	if err != nil {
 		return err
 	}
@@ -209,8 +210,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
-	if permissions != nil {
-		return permissions(ctx)
+	if grantPermisions != nil {
+		return grantPermisions(ctx)
 	}
 
 	return nil

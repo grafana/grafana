@@ -9,21 +9,25 @@ import (
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type permissionCreator = func(ctx context.Context) error
+type permissionCreatorFunc = func(ctx context.Context) error
 
-func getPermissionCreator(ctx context.Context, key *resource.ResourceKey, grantPermisions string, obj runtime.Object, access accesscontrol.PermissionsService) (permissionCreator, error) {
+func afterCreatePermissionCreator(ctx context.Context,
+	key *resource.ResourceKey,
+	grantPermisions string,
+	obj runtime.Object,
+	setter DefaultPermissionSetter,
+) (permissionCreatorFunc, error) {
 	if grantPermisions == "" {
 		return nil, nil
 	}
-	if grantPermisions != "*" {
+	if grantPermisions != "default" {
 		return nil, fmt.Errorf("invalid permissions value. only * supported")
 	}
-	if access == nil {
-		return nil, fmt.Errorf("missing access control service")
+	if setter == nil {
+		return nil, fmt.Errorf("missing default prmission creator")
 	}
 	val, err := utils.MetaAccessor(obj)
 	if err != nil {
@@ -32,18 +36,20 @@ func getPermissionCreator(ctx context.Context, key *resource.ResourceKey, grantP
 	if val.GetFolder() != "" {
 		return nil, fmt.Errorf("granting create permissions only works for root folder objects")
 	}
+	if val.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
+		return nil, fmt.Errorf("managed resource may not grant permissions")
+	}
 	auth, ok := authtypes.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, errors.New("missing auth info")
 	}
-	if auth.GetIdentityType() != authtypes.TypeUser {
-		return nil, fmt.Errorf("only uses may grant themselves permissions using the annotation")
+
+	idtype := auth.GetIdentityType()
+	if !(idtype == authtypes.TypeUser || idtype == authtypes.TypeServiceAccount) {
+		return nil, fmt.Errorf("only uses or service accounts may grant themselves permissions using an annotation")
 	}
 
 	return func(ctx context.Context) error {
-
-		fmt.Printf("TODO!!! grant permissions!!!!: %s // %s", auth.GetUID(), key.SearchID())
-
-		return nil
+		return setter(ctx, key, auth, val)
 	}, nil
 }
