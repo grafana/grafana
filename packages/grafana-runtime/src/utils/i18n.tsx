@@ -20,7 +20,7 @@ export function setUseTranslateHook(hook: UseTranslateHook) {
   useTranslate = hook;
 }
 
-let trans: TransType | undefined;
+let TransComponent: TransType | undefined;
 
 /**
  * Sets the Trans component that will be used for translations throughout the application.
@@ -31,11 +31,11 @@ let trans: TransType | undefined;
  */
 export function setTransComponent(transComponent: TransType) {
   // We allow overriding the trans component in tests
-  if (trans && process.env.NODE_ENV !== 'test') {
+  if (TransComponent && process.env.NODE_ENV !== 'test') {
     throw new Error('setTransComponent() function should only be called once, when Grafana is starting.');
   }
 
-  trans = transComponent;
+  TransComponent = transComponent;
 }
 
 /**
@@ -47,9 +47,9 @@ export function setTransComponent(transComponent: TransType) {
  * @throws {Error} If the Trans component hasn't been initialized
  */
 export function Trans(props: TransProps): React.ReactElement {
-  if (!trans) {
+  if (!TransComponent) {
     throw new Error('Trans component not set. Use setTransComponent to set the Trans component.');
   }
 
-  return trans(props);
+  return <TransComponent {...props} />;
 }
