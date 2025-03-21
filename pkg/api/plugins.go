@@ -604,7 +604,7 @@ func mdFilepath(mdFilename string) (string, error) {
 }
 
 // OnCallPluginScopeResolver provides an ScopeAttributeResolver able to
-// resolve the oncall plugin scope to both the oncall and irm scopes.
+// resolve the grafana-irm-app plugin scope to both the oncall and irm scopes.
 func OnCallPluginScopeResolver() (string, ac.ScopeAttributeResolver) {
 	prefix := "plugins:id:"
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
