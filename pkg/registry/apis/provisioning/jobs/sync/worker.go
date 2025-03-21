@@ -204,6 +204,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 		if err := r.folders.EnsureFolderExists(ctx, resources.Folder{
 			ID:    rootFolder, // will not change if exists
 			Title: cfg.Spec.Title,
+			Path:  "", // at the root of the repository
 		}, ""); err != nil {
 			return fmt.Errorf("unable to create root folder: %w", err)
 		}

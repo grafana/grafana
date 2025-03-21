@@ -32,5 +32,10 @@ func Walk(ctx context.Context, p string, fn WalkFunc) error {
 
 // Depth returns the depth of the given path.
 func Depth(p string) int {
-	return len(strings.Split(p, "/"))
+	return len(Split(p))
+}
+
+// Split splits the given path into segments.
+func Split(p string) []string {
+	return strings.Split(p, "/")
 }
