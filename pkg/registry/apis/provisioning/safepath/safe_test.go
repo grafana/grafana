@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestValidatePath(t *testing.T) {
+func TestIsSafe(t *testing.T) {
 	tests := []struct {
 		name    string
 		path    string
@@ -243,9 +243,9 @@ func TestValidatePath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidatePath(tt.path)
+			err := IsSafe(tt.path)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("ValidatePath() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("IsSafe() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

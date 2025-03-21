@@ -19,7 +19,7 @@ func ExtractFilePath(urlPath, prefix string) (string, error) {
 	filePath := strings.TrimPrefix(urlPath[idx+len(prefix):], "/")
 
 	// Validate the path for any traversal attempts first
-	if err := safepath.ValidatePath(filePath); err != nil {
+	if err := safepath.IsSafe(filePath); err != nil {
 		return "", err
 	}
 

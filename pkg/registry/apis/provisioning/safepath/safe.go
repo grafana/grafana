@@ -30,7 +30,7 @@ const (
 // - Underscores and hyphens for file/folder names
 var validPathPattern = regexp.MustCompile(`^[a-zA-Z0-9/_.-]+$`)
 
-func ValidatePath(path string) error {
+func IsSafe(path string) error {
 	// Check path length
 	if len(path) > MaxPathLength {
 		return ErrPathTooLong
