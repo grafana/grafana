@@ -184,14 +184,6 @@ export function shouldTextOverflow(
   return newCellHeight > defaultRowHeight;
 }
 
-export function getColumnWidth(field: Field, fieldConfig: TableNGProps['fieldConfig'], key: string): number {
-  const overrideWidth = fieldConfig?.overrides
-    ?.find(({ matcher: { id, options } }) => id === 'byName' && options === key)
-    ?.properties?.find(({ id }) => id === 'width')?.value;
-
-  return overrideWidth ?? field.config?.custom?.width ?? fieldConfig?.defaults?.custom?.width ?? 'auto';
-}
-
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
     return 'flex-start';
