@@ -53,9 +53,8 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 			continue
 		}
 
-		// TODO: ignore if invalid path
 		// TODO: does this work with empty folders?
-		if !resources.ShouldIgnorePath(file.Path) {
+		if resources.IsPathSupported(file.Path) == nil {
 			changes = append(changes, ResourceFileChange{
 				Action: repository.FileActionCreated, // or previously ignored/failed
 				Path:   file.Path,

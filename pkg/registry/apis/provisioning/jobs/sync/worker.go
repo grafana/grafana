@@ -333,11 +333,11 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			return err
 		}
 
-		// TODO: ignore files without valid paths?
-		if resources.ShouldIgnorePath(change.Path) {
+		if err := resources.IsPathSupported(change.Path); err != nil {
 			r.progress.Record(ctx, jobs.JobResourceResult{
 				Path:   change.Path,
 				Action: repository.FileActionIgnored,
+				// TODO: add a message in the result on why it was ignored
 			})
 			continue
 		}
