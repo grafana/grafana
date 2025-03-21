@@ -119,7 +119,7 @@ To configure GitLab authentication with Grafana, follow these steps:
    a. Set `use_refresh_token` to `true` in `[auth.gitlab]` section in Grafana configuration file.
 
 1. [Configure role mapping](#configure-role-mapping).
-1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
+1. Optional: [Configure team synchronization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
 1. Restart Grafana.
 
    You should now see a GitLab login button on the login page and be able to log in or sign up with your GitLab accounts.
@@ -245,7 +245,7 @@ use_refresh_token = true
 ## Configure team synchronization
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
 By using Team Sync, you can map GitLab groups to teams within Grafana. This will automatically assign users to the appropriate teams.
@@ -255,7 +255,7 @@ GitLab groups are referenced by the group name. For example, `developers`. To re
 Note that in GitLab, the group or subgroup name does not always match its display name, especially if the display name contains spaces or special characters.
 Make sure you always use the group or subgroup name as it appears in the URL of the group or subgroup.
 
-To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
+To learn more about Team Sync, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
 
 ## Configuration options
 
