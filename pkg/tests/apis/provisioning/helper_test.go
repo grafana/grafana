@@ -60,10 +60,13 @@ func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 		})
 		if assert.NoError(collect, err) && assert.NotEmpty(collect, jobs.Items, "no historic jobs found yet") {
 			for _, job := range jobs.Items {
-				state, _, err := unstructured.NestedString(job.Object, "status", "state")
+				state := mustNestedString(job.Object, "status", "state")
+				if state == "" {
+					// The job hasn't gotten its state yet. We do two requests: one to insert the job, one to set the status.
+					assert.Fail(collect, "job '%s' has no state yet", jobName)
+				}
 
 				// We can fail fast once the job is here: HistoricJobs are immutable.
-				require.NoError(t, err, "historic job '%s' has no state?", jobName)
 				require.Equal(t, string(provisioning.JobStateSuccess), state, "historic job '%s' was not successful", jobName)
 			}
 		}
