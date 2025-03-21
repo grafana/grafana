@@ -327,11 +327,11 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 
 		if id.ExternalUID != authInfo.ExternalUID {
 			s.log.Error("mismatched externalUID", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
-			return errMismatchedExternalUID.Errorf("authID mistmatch")
+			return errMismatchedExternalUID.Errorf("externalUID mistmatch")
 		}
 	}
 
-	if needsUpdate {
+	if needsUpdate && !usr.IsProvisioned {
 		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", fmt.Sprintf("%v", updateCmd))
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
 			return err
