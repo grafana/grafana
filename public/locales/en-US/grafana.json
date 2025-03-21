@@ -2891,7 +2891,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Error cancelling creating snapshot",
+      "create-snapshot-error-duplicate-resource-type": "Duplicate resource type. See the Grafana server logs for more details",
+      "create-snapshot-error-empty-resource-types": "You need to provide at least one resource type for snapshot creation",
+      "create-snapshot-error-missing-dependency": "Missing dependency. See the Grafana server logs for more details",
       "create-snapshot-error-title": "Error creating snapshot",
+      "create-snapshot-error-unknown-resource-type": "Unknown resource type. See the Grafana server logs for more details",
       "disconnect-error-title": "Error disconnecting",
       "error-see-server-logs": "See the Grafana server logs for more details",
       "get-session-error-title": "Error loading migration configuration",
