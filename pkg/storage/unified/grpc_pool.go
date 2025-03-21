@@ -13,6 +13,9 @@ import (
 // pooledClientConn implements grpc.ClientConnInterface using a connection from a pool.
 type pooledClientConn struct {
 	pool *grpcpool.Pool
+	// For streaming we want to keep a single connection, as otherwise we saturate the pool.
+	// Streaming should only be used for watching.
+	streamConn grpc.ClientConnInterface
 }
 
 // Invoke implements the grpc.ClientConnInterface.Invoke method.
@@ -30,36 +33,11 @@ func (pc *pooledClientConn) Invoke(ctx context.Context, method string, args inte
 
 // NewStream implements the grpc.ClientConnInterface.NewStream method.
 func (pc *pooledClientConn) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-	conn, err := pc.pool.Get(ctx)
+	stream, err := pc.streamConn.NewStream(ctx, desc, method, opts...)
 	if err != nil {
 		return nil, err
 	}
-	stream, err := conn.ClientConn.NewStream(ctx, desc, method, opts...)
-	if err != nil {
-		_ = conn.Close()
-		return nil, err
-	}
-	return &pooledClientStream{
-		ClientStream: stream,
-		conn:         conn,
-	}, nil
-}
-
-// pooledClientStream wraps a grpc.ClientStream to close the connection when done.
-type pooledClientStream struct {
-	grpc.ClientStream
-	conn *grpcpool.ClientConn
-}
-
-// CloseSend closes the stream and returns the connection to the pool.
-func (ps *pooledClientStream) CloseSend() error {
-	if err := ps.ClientStream.CloseSend(); err != nil {
-		return err
-	}
-	if err := ps.conn.Close(); err != nil {
-		return err
-	}
-	return nil
+	return stream, nil
 }
 
 type poolOpts struct {
@@ -93,5 +71,12 @@ func newResourceClientWithPool(opts *poolOpts) (grpc.ClientConnInterface, error)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create connection pool: %w", err)
 	}
-	return &pooledClientConn{pool: pool}, nil
+	streamConn, err := opts.factory()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create streaming connection: %w", err)
+	}
+	return &pooledClientConn{
+		pool:       pool,
+		streamConn: streamConn,
+	}, nil
 }
