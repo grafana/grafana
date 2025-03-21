@@ -9,6 +9,7 @@ on:
       - "pkg/aggregator/apis/**"
       - "pkg/apimachinery/apis/**"
       - "hack/**"
+      - "apps/**"
       - "*.sum"
 
 jobs:
