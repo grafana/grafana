@@ -3,8 +3,6 @@ package generic
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -14,6 +12,8 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type genericStrategy struct {
@@ -80,20 +80,6 @@ func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime
 		_ = newMeta.SetStatus(nil)
 	} else {
 		_ = newMeta.SetStatus(status)
-	}
-
-	spec, err := newMeta.GetSpec()
-	if err != nil {
-		return
-	}
-
-	oldSpec, err := oldMeta.GetSpec()
-	if err != nil {
-		return
-	}
-
-	if !apiequality.Semantic.DeepEqual(spec, oldSpec) {
-		newMeta.SetGeneration(oldMeta.GetGeneration() + 1)
 	}
 }
 

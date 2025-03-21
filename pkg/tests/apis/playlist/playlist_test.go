@@ -10,11 +10,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -156,7 +158,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 	})
 
 	t.Run("with dual write (file, mode 5)", func(t *testing.T) {
-		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		helper := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
@@ -169,6 +171,33 @@ func TestIntegrationPlaylist(t *testing.T) {
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 		}))
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Editor,
+			GVR:  gvr,
+		})
+
+		// Folder support needs to be enabled explicitly for this resource
+		t.Run("ensure writing folders is an error", func(t *testing.T) {
+			// Create works without folder
+			obj := helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml")
+			out, err := client.Resource.Create(context.Background(), obj, metav1.CreateOptions{})
+			require.NoError(t, err)
+
+			meta, err := utils.MetaAccessor(out)
+			require.NoError(t, err)
+			require.Equal(t, int64(1), meta.GetGeneration())
+			require.Equal(t, helper.Org1.Editor.Identity.GetUID(), meta.GetCreatedBy())
+			require.Equal(t, "", meta.GetUpdatedBy())
+
+			meta, err = utils.MetaAccessor(obj)
+			require.NoError(t, err)
+			meta.SetFolder("FolderUID")
+
+			_, err = client.Resource.Create(context.Background(), obj, metav1.CreateOptions{})
+			require.Error(t, err)
+			require.True(t, apierrors.IsBadRequest(err))
+		})
 	})
 
 	t.Run("with dual write (unified storage, mode 0)", func(t *testing.T) {
