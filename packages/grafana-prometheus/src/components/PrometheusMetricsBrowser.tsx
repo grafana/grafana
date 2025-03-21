@@ -4,7 +4,7 @@ import { ChangeEvent } from 'react';
 import * as React from 'react';
 import { FixedSizeList } from 'react-window';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { getDefaultTimeRange, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   BrowserLabel as PromLabel,
@@ -409,11 +409,15 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     }
   };
 
+  getTimeRange = (): TimeRange => {
+    return this.props.timeRange ?? getDefaultTimeRange();
+  };
+
   async fetchValues(name: string, selector: string) {
     const { languageProvider } = this.props;
     this.updateLabelState(name, { loading: true }, `Fetching values for ${name}`);
     try {
-      let rawValues = await languageProvider.getLabelValues(name);
+      let rawValues = await languageProvider.getLabelValues(this.getTimeRange(), name);
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         this.updateLabelState(name, { loading: false });
@@ -444,7 +448,12 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       this.updateLabelState(lastFacetted, { loading: true }, `Facetting labels for ${selector}`);
     }
     try {
-      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true, this.state.seriesLimit);
+      const possibleLabels = await languageProvider.fetchSeriesLabels(
+        this.getTimeRange(),
+        selector,
+        true,
+        this.state.seriesLimit
+      );
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         if (lastFacetted) {
@@ -469,7 +478,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
   async validateSelector(selector: string) {
     const { languageProvider } = this.props;
     this.setState({ validationStatus: `Validating selector ${selector}`, error: '' });
-    const streams = await languageProvider.fetchSeries(selector);
+    const streams = await languageProvider.fetchSeries(this.getTimeRange(), selector);
     this.setState({ validationStatus: `Selector is valid (${streams.length} series found)` });
   }
 

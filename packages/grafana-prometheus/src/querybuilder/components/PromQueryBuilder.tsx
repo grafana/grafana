@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 import { memo, useState } from 'react';
 
-import { DataSourceApi, PanelData } from '@grafana/data';
+import { DataSourceApi, getDefaultTimeRange, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorRow } from '@grafana/plugin-ui';
 
@@ -43,7 +43,12 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
   return (
     <>
       <EditorRow>
-        <MetricsLabelsSection query={query} onChange={onChange} datasource={datasource} />
+        <MetricsLabelsSection
+          query={query}
+          onChange={onChange}
+          datasource={datasource}
+          timeRange={data?.timeRange ?? getDefaultTimeRange()}
+        />
       </EditorRow>
       {initHints.length ? (
         <div
