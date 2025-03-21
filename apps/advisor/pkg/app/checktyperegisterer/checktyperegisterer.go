@@ -96,8 +96,9 @@ func (r *Runner) Run(ctx context.Context) error {
 				r.log.Error("Error creating check type, retrying", "error", err, "attempt", i+1)
 				if i == r.retryAttempts-1 {
 					r.log.Error("Unable to register check type")
+				} else {
+					time.Sleep(r.retryDelay)
 				}
-				time.Sleep(r.retryDelay)
 				continue
 			}
 			r.log.Debug("Check type registered successfully", "check_type", t.ID())
