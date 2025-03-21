@@ -622,7 +622,7 @@
         "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
       },
       "import-to-gma-banner": {
-        "title": "You can now migrate your Data source-managed alert rules to Grafana-managed rules!"
+        "title": "You can now import your Data source-managed alert rules to Grafana-managed rules!"
       },
       "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
       "no-rules": "No rules found.",
@@ -869,7 +869,7 @@
         "no-more-results": "No more results – showing {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters."
       },
-      "migrate-to-gma": "Import Grafana-managed rules",
+      "migrate-to-gma": "Import to Grafana-managed rules",
       "new-alert-rule": "New alert rule",
       "pagination": {
         "next-page": "next page",

@@ -179,13 +179,13 @@ function MigrationToGMABanner() {
     <Alert
       title={t(
         'alerting.list-view.import-to-gma-banner.title',
-        'You can now migrate your Data source-managed alert rules to Grafana-managed rules!'
+        'You can now import your Data source-managed alert rules to Grafana-managed rules!'
       )}
       severity="info"
       onRemove={() => {
         locationService.push(importUrl);
       }}
-      buttonContent={<Trans i18nKey="alerting.rule-list.migrate-to-gma">Import Grafana-managed rules</Trans>}
+      buttonContent={<Trans i18nKey="alerting.rule-list.migrate-to-gma">Import to Grafana-managed rules</Trans>}
     />
   );
 }
