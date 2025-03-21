@@ -185,7 +185,8 @@ export function TableNG(props: TableNGProps) {
     // Measure actual widths if available
     Object.keys(headerCellRefs.current).forEach((key) => {
       const headerCell = headerCellRefs.current[key];
-      if (headerCell && headerCell.offsetWidth > 0) {
+
+      if (headerCell.offsetWidth > 0) {
         widths[key] = headerCell.offsetWidth;
       }
     });
