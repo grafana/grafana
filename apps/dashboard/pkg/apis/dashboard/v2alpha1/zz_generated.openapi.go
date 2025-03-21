@@ -54,8 +54,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutItemKindOrGridLayoutRowKind":                                                                                                                               schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutItemKindOrGridLayoutRowKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutItemSpec":                                                                                                                                                  schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutItemSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKind":                                                                                                                                                      schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutKind(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind":                                                                                                            schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind":                                                                                                            schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind":                                                                                            schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind":                                                                                            schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutRowKind":                                                                                                                                                   schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutRowKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutRowSpec":                                                                                                                                                   schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutRowSpec(ref),
@@ -1935,7 +1934,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutKind(ref common.Refer
 	}
 }
 
-func schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1956,40 +1955,16 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutKindOrResponsiveGridL
 							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabsLayoutKind"),
 						},
 					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardResponsiveGridLayoutKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabsLayoutKind"},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2alpha1_DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"GridLayoutKind": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKind"),
-						},
-					},
 					"RowsLayoutKind": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardRowsLayoutKind"),
 						},
 					},
-					"ResponsiveGridLayoutKind": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardResponsiveGridLayoutKind"),
-						},
-					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardResponsiveGridLayoutKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardRowsLayoutKind"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardResponsiveGridLayoutKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardRowsLayoutKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabsLayoutKind"},
 	}
 }
 
@@ -3597,7 +3572,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutRowSpec(ref common.Re
 					},
 					"layout": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind"),
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind"),
 						},
 					},
 				},
@@ -3605,7 +3580,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutRowSpec(ref common.Re
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingGroupKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardRowRepeatOptions"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingGroupKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardRowRepeatOptions"},
 	}
 }
 
@@ -3987,7 +3962,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutTabSpec(ref common.Re
 					},
 					"layout": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind"),
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind"),
 						},
 					},
 				},
@@ -3995,7 +3970,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutTabSpec(ref common.Re
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind"},
 	}
 }
 
