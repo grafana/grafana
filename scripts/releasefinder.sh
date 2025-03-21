@@ -121,11 +121,11 @@ if [ ${#direct_tags[@]} -gt 0 ] || [ ${#included_tags[@]} -gt 0 ]; then
 fi
 
 # Print upcoming releases
-echo "This commit will be included in these UPCOMING on-prem releases:"
 if [ ${#release_branches[@]} -eq 0 ]; then
-    echo "  This commit is not included in any upcoming release branches. YET!"
-    echo "  Most likely the `release-*` branch this will be included in has not yet been created."
+    echo "  This commit is not yet included in any release branches."
+    echo "  The corresponding release branch has likely not been created yet."
 else
+    echo "This commit will be included in these UPCOMING on-prem releases:"
     for branch in "${release_branches[@]}"; do
         # Convert branch name to tag format (e.g., release-11.5.0 -> v11.5.0)
         tag_version="v${branch#release-}"
