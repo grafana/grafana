@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
@@ -37,8 +38,10 @@ type Options struct {
 	Cfg      *setting.Cfg
 	Features featuremgmt.FeatureToggles
 	DB       infraDB.DB
+	Authzc   types.AccessClient
 	Tracer   tracing.Tracer
 	Reg      prometheus.Registerer
+	Docs     resource.DocumentBuilderSupplier
 }
 
 type clientMetrics struct {
