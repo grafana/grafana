@@ -95,3 +95,80 @@ For users who don't yet exist in Grafana:
 ### Role management
 
 SCIM handles user synchronization but not role assignments. Role management is handled through [Role Sync](../../configure-authentication/saml#configure-role-sync), and any role changes take effect during user authentication.
+
+## Team provisioning with SCIM
+
+SCIM provides automated team management capabilities that go beyond what Team Sync offers. While Team Sync only maps identity provider groups to existing Grafana teams, SCIM can automatically create and delete teams based on group changes in the identity provider.
+
+For detailed configuration steps specific to the identity provider, see:
+  - [Configure SCIM with Azure AD](../configure-scim-azure/)
+  - [Configure SCIM with Okta](../configure-scim-okta/)
+
+### SCIM vs Team Sync
+{{< admonition type="warning" >}}
+Do not enable both SCIM and Team Sync simultaneously as these methods can conflict with each other.
+{{< /admonition >}}
+
+Choose one synchronization method:
+- If you enable SCIM, disable Team Sync and use SCIM for team management
+- If you prefer Team Sync, do not enable SCIM provisioning
+
+### Key differences
+SCIM Group Sync provides several advantages over Team Sync:
+
+- **Automatic team creation:** SCIM automatically creates Grafana teams when new groups are added to the identity provider
+- **Automatic team deletion:** SCIM removes teams when their corresponding groups are deleted from the identity provider
+- **Real-time updates:** Team memberships are updated immediately when group assignments change
+- **Simplified management:** No need to manually create teams in Grafana before mapping them
+
+### How team synchronization works
+SCIM manages teams through the following process:
+
+Group assignment:
+- User is assigned to groups in the identity provider
+- SCIM detects group membership changes
+
+Team creation and mapping:
+- Creates Grafana teams for new identity provider groups
+- Maps users to appropriate teams
+- Removes users from teams when group membership changes
+
+Team membership maintenance:
+- Continuously syncs team memberships
+- Removes users from teams when removed from groups
+- Updates team memberships when groups change
+
+### Migrating from Team Sync to SCIM
+When transitioning from Team Sync to SCIM, consider the following important points:
+
+{{< admonition type="warning" >}}
+Team names must be unique in Grafana. You cannot have two teams with the same name, even if one is managed by Team Sync and the other by SCIM.
+{{< /admonition >}}
+
+#### Existing teams and permissions
+When migrating from Team Sync to SCIM:
+
+- Existing teams must be deleted before SCIM can create new teams with the same names
+- Team memberships will be managed by SCIM after migration
+- Team permissions must be manually reassigned through Terraform, Grafana API or Grafana UI
+- Document current team permissions before migration
+- Plan the migration to minimize service disruption
+
+#### Migration process
+
+While SCIM manages team memberships automatically, team permissions must be managed separately through your existing provisioning methods.
+
+1. Document current team structure:
+   - List all existing teams
+   - Record current team memberships
+   - Document team permissions and access levels
+
+2. Prepare for migration:
+   - Disable Team Sync
+   - Delete existing teams (after documenting their configuration)
+   - Enable SCIM
+
+3. Restore team permissions:
+   - Use your preferred method (Terraform, API, or UI) to reassign permissions
+   - Verify access levels are correctly restored
+   - Test team access for key users
