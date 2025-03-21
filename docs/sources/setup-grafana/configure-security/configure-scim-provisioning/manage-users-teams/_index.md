@@ -36,14 +36,16 @@ With SCIM, you can:
 SCIM provisioning works in conjunction with existing user management methods in Grafana. While SCIM automates user provisioning from the identity provider, users can still be created through SAML just-in-time provisioning when they log in, manually through the Grafana UI, or via automation tools like Terraform and the Grafana API. For the most consistent user management experience, we recommend centralizing user provisioning through SCIM.
 
 For detailed configuration steps specific to the identity provider, see:
-  - [Configure SCIM with Azure AD](../configure-scim-azure/)
-  - [Configure SCIM with Okta](../configure-scim-okta/)
+
+- [Configure SCIM with Azure AD](../configure-scim-azure/)
+- [Configure SCIM with Okta](../configure-scim-okta/)
 
 ### How SCIM identifies users
 
 SCIM uses two identifiers to establish and maintain user identity between the identity provider and Grafana:
 
 1. Email address:
+
    - Used for initial user matching
    - Can change over time
    - Included in SAML NameID
@@ -72,10 +74,12 @@ For users who already exist in the Grafana instance:
 To prevent conflicts and maintain consistent user management, disable or restrict other provisioning methods when implementing SCIM. This ensures that all new users are created through SCIM and prevents duplicate or conflicting user records.
 
 - SAML Just-in-Time (JIT) provisioning:
+
   - Disable `allow_sign_up` in SAML settings to prevent automatic user creation
   - Existing JIT-provisioned users will continue to work but should be migrated to SCIM
 
 - Terraform or API provisioning:
+
   - Stop creating new users through these methods
   - Existing users will continue to work but should be migrated to SCIM
   - Consider removing or archiving Terraform user creation resources
@@ -101,19 +105,23 @@ SCIM handles user synchronization but not role assignments. Role management is h
 SCIM provides automated team management capabilities that go beyond what Team Sync offers. While Team Sync only maps identity provider groups to existing Grafana teams, SCIM can automatically create and delete teams based on group changes in the identity provider.
 
 For detailed configuration steps specific to the identity provider, see:
-  - [Configure SCIM with Azure AD](../configure-scim-azure/)
-  - [Configure SCIM with Okta](../configure-scim-okta/)
+
+- [Configure SCIM with Azure AD](../configure-scim-azure/)
+- [Configure SCIM with Okta](../configure-scim-okta/)
 
 ### SCIM vs Team Sync
+
 {{< admonition type="warning" >}}
 Do not enable both SCIM and Team Sync simultaneously as these methods can conflict with each other.
 {{< /admonition >}}
 
 Choose one synchronization method:
+
 - If you enable SCIM, disable Team Sync and use SCIM for team management
 - If you prefer Team Sync, do not enable SCIM provisioning
 
 ### Key differences
+
 SCIM Group Sync provides several advantages over Team Sync:
 
 - **Automatic team creation:** SCIM automatically creates Grafana teams when new groups are added to the identity provider
@@ -122,23 +130,28 @@ SCIM Group Sync provides several advantages over Team Sync:
 - **Simplified management:** No need to manually create teams in Grafana before mapping them
 
 ### How team synchronization works
+
 SCIM manages teams through the following process:
 
 Group assignment:
+
 - User is assigned to groups in the identity provider
 - SCIM detects group membership changes
 
 Team creation and mapping:
+
 - Creates Grafana teams for new identity provider groups
 - Maps users to appropriate teams
 - Removes users from teams when group membership changes
 
 Team membership maintenance:
+
 - Continuously syncs team memberships
 - Removes users from teams when removed from groups
 - Updates team memberships when groups change
 
 ### Migrating from Team Sync to SCIM
+
 When transitioning from Team Sync to SCIM, consider the following important points:
 
 {{< admonition type="warning" >}}
@@ -146,6 +159,7 @@ Team names must be unique in Grafana. You cannot have two teams with the same na
 {{< /admonition >}}
 
 #### Existing teams and permissions
+
 When migrating from Team Sync to SCIM:
 
 - Existing teams must be deleted before SCIM can create new teams with the same names
@@ -159,11 +173,13 @@ When migrating from Team Sync to SCIM:
 While SCIM manages team memberships automatically, team permissions must be managed separately through your existing provisioning methods.
 
 1. Document current team structure:
+
    - List all existing teams
    - Record current team memberships
    - Document team permissions and access levels
 
 2. Prepare for migration:
+
    - Disable Team Sync
    - Delete existing teams (after documenting their configuration)
    - Enable SCIM
