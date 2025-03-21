@@ -6,7 +6,8 @@ import { useRulesAccess } from '../../utils/accessControlHooks';
 
 const RecordingRulesButtons = () => {
   const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
-  const grafanaRecordingRulesEnabled = config.featureToggles.grafanaManagedRecordingRules;
+  const grafanaRecordingRulesEnabled =
+    config.featureToggles.grafanaManagedRecordingRules && config.unifiedAlerting.recordingRulesEnabled;
   const canCreateAll = canCreateGrafanaRules && canCreateCloudRules && grafanaRecordingRulesEnabled;
 
   // User can create Grafana and DS-managed recording rules, show a dropdown
