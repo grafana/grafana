@@ -357,7 +357,7 @@ export function TableNG(props: TableNGProps) {
         },
         availableWidth: width,
       }),
-    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
+    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions, width] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // This effect needed to set header cells refs before row height calculation
