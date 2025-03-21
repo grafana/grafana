@@ -447,7 +447,7 @@ auto_login = true
 
 ### Configure team sync
 
-To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
+To use SAML Team sync, set [`assertion_attribute_groups`](../../../configure-grafana/enterprise-configuration#assertion_attribute_groups) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
 {{% admonition type="note" %}}
 Teamsync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
@@ -485,7 +485,8 @@ The following `External Group ID`s would be valid for input in the desired team'
 - `admins_group`
 - `division_1`
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+[Learn more about Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/
+)
 
 ### Configure role sync
 
