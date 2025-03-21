@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"cmp"
 	"slices"
 	"strings"
 
@@ -16,28 +17,6 @@ type groupKey struct {
 	folderTitle string
 	folderUID   string
 	groupName   string
-}
-
-func cmp(a, b groupKey) int {
-	if a.folderTitle < b.folderTitle {
-		return -1
-	}
-	if a.folderTitle > b.folderTitle {
-		return 1
-	}
-	if a.folderUID < b.folderUID {
-		return -1
-	}
-	if a.folderUID > b.folderUID {
-		return 1
-	}
-	if a.groupName < b.groupName {
-		return -1
-	}
-	if a.groupName > b.groupName {
-		return 1
-	}
-	return 0
 }
 
 // buildSequences organizes rules into evaluation sequences where rules in the same group
@@ -69,7 +48,13 @@ func (sch *schedule) buildSequences(items []readyToRunItem, runJobFn func(next r
 	}
 
 	// Step 2: Sort group keys to ensure consistent ordering
-	slices.SortFunc(keys, cmp)
+	slices.SortFunc(keys, func(a, b groupKey) int {
+		return cmp.Or(
+			cmp.Compare(a.folderTitle, b.folderTitle),
+			cmp.Compare(a.folderUID, b.folderUID),
+			cmp.Compare(a.groupName, b.groupName),
+		)
+	})
 
 	// Step 3: Build evaluation sequences for each group
 	result := make([]sequence, 0, len(items))

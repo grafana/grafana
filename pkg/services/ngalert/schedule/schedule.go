@@ -420,6 +420,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	return readyToRun, registeredDefinitions, updatedRules
 }
 
+// runJobFn sends the scheduled evaluation to the evaluation routine, optionally with a previous item to log the trigger source.
 func (sch *schedule) runJobFn(next readyToRunItem, prev ...readyToRunItem) func() {
 	return func() {
 		if len(prev) > 0 {
