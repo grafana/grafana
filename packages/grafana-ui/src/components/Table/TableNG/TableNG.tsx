@@ -1,7 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
-import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn } from 'react-data-grid';
+import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {
@@ -35,6 +35,7 @@ import {
   ColumnTypes,
   TableColumnResizeActionCallback,
   TableColumn,
+  ScrollPosition,
 } from './types';
 import {
   frameToRecords,
@@ -83,6 +84,8 @@ export function TableNG(props: TableNGProps) {
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
+  const scrollPositionRef = useRef<ScrollPosition>({ x: 0, y: 0 });
+  const dataGridRef = useRef<DataGridHandle>(null);
 
   /* ------------------------------- Local refs ------------------------------- */
   const crossFilterOrder = useRef<string[]>([]);
@@ -400,10 +403,27 @@ export function TableNG(props: TableNGProps) {
     [expandedRows, defaultRowHeight, columnTypes, headerCellRefs, osContext, defaultLineHeight]
   );
 
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLDivElement;
+    scrollPositionRef.current = {
+      x: target.scrollLeft,
+      y: target.scrollTop,
+    };
+  };
+
+  // Restore scroll position after re-renders
+  useEffect(() => {
+    if (dataGridRef.current?.element) {
+      dataGridRef.current.element.scrollLeft = scrollPositionRef.current.x;
+      dataGridRef.current.element.scrollTop = scrollPositionRef.current.y;
+    }
+  }, [revId]);
+
   return (
     <>
       <ScrollContainer>
         <DataGrid<TableRow, TableSummaryRow>
+          ref={dataGridRef}
           className={styles.dataGrid}
           // Default to true, overridden to false for testing
           enableVirtualization={enableVirtualization}
@@ -419,6 +439,7 @@ export function TableNG(props: TableNGProps) {
           // TODO: This doesn't follow current table behavior
           style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
           renderers={{ renderRow: (key, props) => myRowRenderer(key, props, expandedRows) }}
+          onScroll={handleScroll}
           onCellContextMenu={({ row, column }, event) => {
             event.preventGridDefault();
             // Do not show the default context menu
@@ -656,7 +677,9 @@ export function mapFrameToDataGrid({
         if (isCountRowsSet && fieldIndex === 0) {
           return (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Count</span>
+              <span>
+                <Trans i18nKey="grafana-ui.table.count">Count</Trans>
+              </span>
               <span>{calcsRef.current[fieldIndex]}</span>
             </div>
           );

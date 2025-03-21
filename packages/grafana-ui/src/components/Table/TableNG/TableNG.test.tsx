@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 
 import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
@@ -1351,6 +1351,48 @@ describe('TableNG', () => {
 
       // Expected color is red
       expect(computedStyle.color).toBe('rgb(255, 0, 0)');
+    });
+  });
+
+  describe('scroll position persistence', () => {
+    it('should persist scroll position after revId change', () => {
+      const data = createBasicDataFrame();
+      const { rerender } = render(<TableNG data={data} width={300} height={200} enableVirtualization={false} />);
+
+      // Find the DataGrid element
+      const dataGrid = screen.getByRole('grid');
+
+      // Simulate scrolling
+      act(() => {
+        fireEvent.scroll(dataGrid, {
+          target: {
+            scrollLeft: 100,
+            scrollTop: 50,
+          },
+        });
+      });
+
+      // Rerender with the same data but different fieldConfig to trigger revId change
+      rerender(
+        <TableNG
+          data={data}
+          width={300}
+          height={200}
+          enableVirtualization={false}
+          fieldConfig={{
+            defaults: {
+              custom: {
+                width: 200, // Different width to trigger revId change
+              },
+            },
+            overrides: [],
+          }}
+        />
+      );
+
+      // Verify scroll position was restored
+      expect(dataGrid.scrollLeft).toBe(100);
+      expect(dataGrid.scrollTop).toBe(50);
     });
   });
 });
