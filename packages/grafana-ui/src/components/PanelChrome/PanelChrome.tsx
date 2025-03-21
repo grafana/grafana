@@ -107,10 +107,15 @@ interface HoverHeader {
   hoverHeaderOffset?: number;
 }
 
+interface Point {
+  x: number;
+  y: number;
+}
+
 interface PointerEventConfig {
   pointerDown: boolean;
   dragStarted: boolean;
-  initialPosition: { x: number; y: number };
+  initialPosition: Point;
 }
 
 /**
@@ -236,14 +241,10 @@ export function PanelChrome({
     }
 
     evt.stopPropagation();
-    if (
-      Math.sqrt(
-        Math.pow(pointerEventConfig.current.initialPosition.x - evt.screenX, 2) +
-          Math.pow(pointerEventConfig.current.initialPosition.y - evt.screenY, 2)
-      ) > 10
-    ) {
-      // Check if the distance between the initial position and the current position is greater than a threshold
-      pointerEventConfig.current = { ...pointerEventConfig.current, dragStarted: true };
+    const distance = pointDistance(pointerEventConfig.current.initialPosition, { x: evt.screenX, y: evt.screenY });
+    const thresholdDistance = 10;
+    if (distance > thresholdDistance) {
+      pointerEventConfig.current.dragStarted = true;
       onDragStart?.(evt);
     }
   };
@@ -631,3 +632,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+function pointDistance(a: Point, b: Point) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
