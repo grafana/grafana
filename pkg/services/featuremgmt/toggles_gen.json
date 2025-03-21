@@ -4205,6 +4205,20 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageGrpcConnectionPool",
+        "resourceVersion": "1742549790491",
+        "creationTimestamp": "2025-03-21T09:36:30Z"
+      },
+      "spec": {
+        "description": "Enables the unified storage grpc connection pool",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageHistoryPruner",
         "resourceVersion": "1742163088045",
         "creationTimestamp": "2025-03-16T22:11:28Z"
