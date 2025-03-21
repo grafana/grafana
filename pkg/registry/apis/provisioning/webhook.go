@@ -26,7 +26,7 @@ const webhookMaxBodySize = 25 * 1024 * 1024
 // This only works for github right now
 type webhookConnector struct {
 	getter          RepoGetter
-	jobs            jobs.JobQueue
+	jobs            jobs.Queue
 	webhooksEnabled bool
 }
 
@@ -57,7 +57,7 @@ func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, _, err := identity.WithProvisioningIdentitiy(ctx, namespace)
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 				},
 				Spec: *rsp.Job,
 			}
-			job, err := s.jobs.Add(ctx, job)
+			job, err := s.jobs.Insert(ctx, job)
 			if err != nil {
 				responder.Error(err)
 				return

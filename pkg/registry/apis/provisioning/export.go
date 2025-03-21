@@ -17,7 +17,7 @@ import (
 
 type exportConnector struct {
 	repoGetter RepoGetter
-	jobs       jobs.JobQueue
+	jobs       jobs.Queue
 }
 
 func (*exportConnector) New() runtime.Object {
@@ -58,8 +58,7 @@ func (c *exportConnector) Connect(ctx context.Context, name string, opts runtime
 			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}
-
-		job, err := c.jobs.Add(ctx, &provisioning.Job{
+		job, err := c.jobs.Insert(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: cfg.Namespace,
 			},

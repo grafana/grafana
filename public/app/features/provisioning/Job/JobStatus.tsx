@@ -2,12 +2,13 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect } from 'react';
 
 import { Alert, ControlledCollapse, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
-import { useGetRepositoryQuery, useListJobQuery } from 'app/api/clients/provisioning';
+import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
 
 import ProgressBar from '../Shared/ProgressBar';
 import { getRepoHref } from '../utils/git';
 
 import { JobSummary } from './JobSummary';
+import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 
 export interface JobStatusProps {
   name: string;
@@ -17,14 +18,20 @@ export interface JobStatusProps {
 }
 
 export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange }: JobStatusProps) {
-  const jobQuery = useListJobQuery({ watch: true, fieldSelector: `metadata.name=${name}` });
-  const job = jobQuery.data?.items?.[0];
+  const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({ jobName: name, watch: true });
+  const job = jobs?.[0];
 
   useEffect(() => {
     if (onRunningChange) {
-      onRunningChange(jobQuery.isLoading || !job || job.status?.state === 'working' || job.status?.state === 'pending');
+      onRunningChange(
+        activeQuery.isLoading ||
+          historicQuery.isLoading ||
+          !job ||
+          job.status?.state === 'working' ||
+          job.status?.state === 'pending'
+      );
     }
-  }, [jobQuery.isLoading, job, onRunningChange, onErrorChange]);
+  }, [activeQuery.isLoading, historicQuery.isLoading, job, onRunningChange, onErrorChange]);
 
   useEffect(() => {
     if (onStatusChange && job?.status?.state === 'success') {
@@ -41,7 +48,7 @@ export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange
     }
   }, [job, onStatusChange, onErrorChange, onRunningChange]);
 
-  if (!name || jobQuery.isLoading || !job) {
+  if (!name || activeQuery.isLoading || historicQuery.isLoading || !job) {
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
         <Spinner size={24} />

@@ -30,6 +30,7 @@ import (
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
@@ -80,14 +81,17 @@ type APIBuilder struct {
 	parsers           *resources.ParserFactory
 	ghFactory         *github.Factory
 	clonedir          string // where repo clones are managed
-	jobs              jobs.JobQueue
-	tester            *RepositoryTester
-	resourceLister    resources.ResourceLister
-	repositoryLister  listers.RepositoryLister
-	legacyMigrator    legacy.LegacyMigrator
-	storageStatus     dualwrite.Service
-	unified           resource.ResourceClient
-	secrets           secrets.Service
+	jobs              interface {
+		jobs.Queue
+		jobs.Store
+	}
+	tester           *RepositoryTester
+	resourceLister   resources.ResourceLister
+	repositoryLister listers.RepositoryLister
+	legacyMigrator   legacy.LegacyMigrator
+	storageStatus    dualwrite.Service
+	unified          resource.ResourceClient
+	secrets          secrets.Service
 }
 
 // NewAPIBuilder creates an API builder.
@@ -274,6 +278,14 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 				return authorizer.DecisionDeny, "viewer role is required", nil
 
+			case provisioning.JobResourceInfo.GetName(),
+				provisioning.HistoricJobResourceInfo.GetName():
+				// Jobs are shown on the configuration page.
+				if id.GetOrgRole().Includes(identity.RoleAdmin) {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "admin role is required", nil
+
 			default:
 				// We haven't bothered with this kind yet.
 				if id.GetIsGrafanaAdmin() {
@@ -310,21 +322,35 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
+	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.getter = repositoryStorage
 
-	// FIXME: Make job queue store the jobs somewhere persistent.
-	jobStore := jobs.NewJobStore(50, b) // in memory, for now...
-	b.jobs = jobStore
+	realJobStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return fmt.Errorf("failed to create job storage: %w", err)
+	}
+	realJobStatusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, realJobStore)
 
-	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
+	historicJobStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return fmt.Errorf("failed to create historic job storage: %w", err)
+	}
+	historicJobStatusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, historicJobStore)
+
+	b.jobs, err = jobs.NewStore(realJobStore, realJobStatusStore, historicJobStore, historicJobStatusStore, time.Second*30)
+	if err != nil {
+		return fmt.Errorf("failed to create job store: %w", err)
+	}
 
 	storage := map[string]rest.Storage{}
+	// Although we never interact with these resources via the API, we want them to be readable from the API.
+	storage[provisioning.JobResourceInfo.StoragePath()] = readonly.Wrap(realJobStore)
+	storage[provisioning.HistoricJobResourceInfo.StoragePath()] = readonly.Wrap(historicJobStore)
 
-	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
+	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	// TODO: Do not set private fields directly, use factory methods.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter:          b,
@@ -545,9 +571,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.resourceLister,
 				b.storageStatus,
 			)
-			b.jobs.Register(exportWorker)
-			b.jobs.Register(syncWorker)
-			b.jobs.Register(migrate.NewMigrationWorker(
+			migrationWorker := migrate.NewMigrationWorker(
 				b.legacyMigrator,
 				b.parsers,
 				b.storageStatus,
@@ -556,7 +580,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				exportWorker,
 				syncWorker,
 				b.clonedir,
-			))
+			)
 
 			// Pull request worker
 			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
@@ -565,7 +589,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return fmt.Errorf("create pull request worker: %w", err)
 			}
-			b.jobs.Register(pullRequestWorker)
+
+			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b,
+				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
+			go driver.Run(postStartHookCtx.Context)
 
 			repoController, err := controller.NewRepositoryController(
 				c.ProvisioningV0alpha1(),
@@ -1030,7 +1057,7 @@ func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (rep
 	status := repo.Config().Status.Health
 	if !status.Healthy {
 		if timeSince(status.Checked) > time.Second*25 {
-			ctx, _, err = identity.WithProvisioningIdentitiy(ctx, repo.Config().Namespace)
+			ctx, _, err = identity.WithProvisioningIdentity(ctx, repo.Config().Namespace)
 			if err != nil {
 				return nil, err // The status
 			}

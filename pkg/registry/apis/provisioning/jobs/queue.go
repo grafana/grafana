@@ -11,22 +11,6 @@ type RepoGetter interface {
 	GetRepository(ctx context.Context, name string) (repository.Repository, error)
 }
 
-// Basic job queue infrastructure
-type JobQueue interface {
-	// Add a new Job to the Queue.  The status must be empty
-	Add(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
-
-	// Get the next job we should process
-	Next(ctx context.Context) *provisioning.Job
-
-	// Update the status on a given job
-	// This is only valid if current job is not finished
-	Update(ctx context.Context, namespace string, name string, status provisioning.JobStatus) error
-
-	// Register a worker (inline for now)
-	Register(worker Worker)
-}
-
 type JobProgressRecorder interface {
 	Record(ctx context.Context, result JobResourceResult)
 	ResetResults()

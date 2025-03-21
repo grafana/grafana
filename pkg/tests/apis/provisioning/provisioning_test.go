@@ -349,6 +349,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		Resource("repositories").
 		Name(repo).
 		SubResource("export").
+		SetHeader("Content-Type", "application/json").
 		Body(asJSON(&provisioning.ExportJobOptions{
 			Folder:     "",   // export entire instance
 			Path:       "",   // no prefix necessary for testing

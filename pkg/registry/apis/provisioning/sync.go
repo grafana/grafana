@@ -17,7 +17,7 @@ import (
 // TODO: should we have merge migrate and sync connectors and have a single repository job connector?
 type syncConnector struct {
 	repoGetter RepoGetter
-	jobs       jobs.JobQueue
+	jobs       jobs.Queue
 }
 
 func (*syncConnector) New() runtime.Object {
@@ -62,7 +62,7 @@ func (c *syncConnector) Connect(
 			return
 		}
 
-		job, err := c.jobs.Add(ctx, &provisioning.Job{
+		job, err := c.jobs.Insert(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: cfg.Namespace,
 			},
