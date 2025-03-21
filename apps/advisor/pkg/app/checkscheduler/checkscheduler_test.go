@@ -16,7 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestRunner_Run_ErrorOnList(t *testing.T) {
+func TestRunner_Run_NoErrorOnList(t *testing.T) {
 	mockCheckService := &MockCheckService{}
 	mockClient := &MockClient{
 		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
@@ -33,8 +33,15 @@ func TestRunner_Run_ErrorOnList(t *testing.T) {
 		log:           log.New("test"),
 	}
 
-	err := runner.Run(context.Background())
-	assert.Error(t, err)
+	ctx, cancel := context.WithCancel(context.Background())
+	var err error
+	go func() {
+		err = runner.Run(ctx)
+	}()
+
+	time.Sleep(1 * time.Second)
+	cancel()
+	assert.NoError(t, err)
 }
 
 func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
