@@ -32,6 +32,7 @@ func newExportJob(ctx context.Context,
 	clients *resources.ResourceClients,
 	progress jobs.JobProgressRecorder,
 ) *exportJob {
+	// TODO: do we validate the export path? it should already be clean and safe at this point
 	path := options.Path
 	if path != "" {
 		path = safepath.Clean(path)

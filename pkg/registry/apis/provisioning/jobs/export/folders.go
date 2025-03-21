@@ -52,6 +52,7 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 	r.progress.SetMessage(ctx, "write folders")
 
 	err = r.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
+		// TODO: It's funny that we have to do this here. Why folder doesn't have the slash?
 		p := folder.Path + "/"
 		if r.path != "" {
 			p = r.path + "/" + p

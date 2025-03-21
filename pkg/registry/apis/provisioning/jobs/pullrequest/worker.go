@@ -98,6 +98,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 			Path: f.Path,
 		}
 
+		// TODO: we should ignore if the path is invalid
 		if resources.ShouldIgnorePath(f.Path) {
 			result.Action = repository.FileActionIgnored
 			progress.Record(ctx, result)

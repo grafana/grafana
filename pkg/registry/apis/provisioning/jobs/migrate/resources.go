@@ -179,6 +179,7 @@ func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured
 
 	fileName := slugify.Slugify(title) + ".json"
 	if fid.Path != "" {
+		// TODO: why could this fail at this point?
 		fileName, err = safepath.Join(fid.Path, fileName)
 		if err != nil {
 			result.Error = fmt.Errorf("error adding file path: %w", err)
