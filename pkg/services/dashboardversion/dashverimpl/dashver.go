@@ -308,6 +308,10 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 			createdBy = updatedBy
 		}
 	}
+	created := obj.GetCreationTimestamp().Time
+	if updated, err := obj.GetUpdatedTimestamp(); err == nil && updated != nil {
+		created = *updated
+	}
 
 	id, err := obj.GetResourceVersionInt64()
 	if err != nil {
@@ -323,7 +327,7 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 		ID:            id,
 		DashboardID:   obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		DashboardUID:  uid,
-		Created:       obj.GetCreationTimestamp().Time,
+		Created:       created,
 		CreatedBy:     createdBy.ID,
 		Message:       obj.GetMessage(),
 		RestoredFrom:  restoreVer,
