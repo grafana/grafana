@@ -364,6 +364,7 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 	job, err := rc.jobs.Insert(ctx, &provisioning.Job{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: obj.Namespace,
+			Name:      fmt.Sprintf("%s:%s", obj.GetName(), provisioning.JobActionSync),
 		},
 		Spec: provisioning.JobSpec{
 			Repository: obj.GetName(),
