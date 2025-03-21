@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { split } from 'canvas-hypertxt';
 import { Property } from 'csstype';
 import React from 'react';
 import { SortColumn, SortDirection } from 'react-data-grid';
@@ -26,8 +25,9 @@ import {
 } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../..';
-import { getTextColorForAlphaBackground, measureText } from '../../../utils';
+import { getTextColorForAlphaBackground } from '../../../utils';
 
+import { countMultiLines } from './canvas-hypertxt-mod';
 import { TABLE } from './constants';
 import {
   CellColors,
@@ -110,7 +110,7 @@ function calculateCellHeight(
   const effectiveCellWidth = Math.max(cellWidth, 20); // Minimum width to work with
   const TOTAL_PADDING = padding * 2;
 
-  const lines = split(
+  const numLines = countMultiLines(
     osContext as unknown as CanvasRenderingContext2D,
     text,
     '14px sans-serif',
@@ -118,7 +118,7 @@ function calculateCellHeight(
     true
   );
 
-  const totalHeight = lines.length * lineHeight + TOTAL_PADDING;
+  const totalHeight = numLines * lineHeight + TOTAL_PADDING;
   return Math.max(totalHeight, defaultRowHeight);
 }
 
