@@ -314,7 +314,7 @@ export const Table = memo((props: Props) => {
         const matcher = getFieldMatcher(override.matcher);
         if (matcher(field, data, [data])) {
           for (const property of override.properties) {
-            if (property.id === 'custom.cellOptions' && property.value.wrapText) {
+            if (property.id === 'custom.wrapText' && property.value) {
               textWrapField = field;
             }
           }

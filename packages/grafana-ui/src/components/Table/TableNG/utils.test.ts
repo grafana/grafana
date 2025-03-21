@@ -23,12 +23,12 @@ import { mapFrameToDataGrid, myRowRenderer } from './TableNG';
 import { COLUMN, TABLE } from './constants';
 import { TableColumn } from './types';
 import {
+  calculateCellHeight,
   convertRGBAToHex,
   extractPixelValue,
   frameToRecords,
   getAlignmentFactor,
   getCellColors,
-  getCellHeight,
   getCellLinks,
   getCellOptions,
   getComparator,
@@ -100,6 +100,7 @@ const crossFilterRows = { current: {} };
 const sortColumnsRef = { current: [] };
 
 const mockOptions = {
+  ctx: null as unknown as CanvasRenderingContext2D,
   osContext: null,
   rows: [],
   setContextMenuProps: () => {},
@@ -1011,7 +1012,7 @@ describe('TableNG utils', () => {
         width: text.length * 8,
       }),
     };
-    const osContext = mockContext as unknown as OffscreenCanvasRenderingContext2D;
+    const ctx = mockContext as unknown as CanvasRenderingContext2D;
 
     const headerCellRefs = {
       current: {
@@ -1036,12 +1037,13 @@ describe('TableNG utils', () => {
         row,
         columnTypes,
         headerCellRefs,
-        osContext,
+        ctx,
         20, // lineHeight
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        false // cellInspect
+        false, // cellInspect,
+        TableCellDisplayMode.Auto
       );
 
       expect(result).toBe(true);
@@ -1061,12 +1063,13 @@ describe('TableNG utils', () => {
         row,
         columnTypes,
         headerCellRefs,
-        osContext,
+        ctx,
         20, // lineHeight
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        false // cellInspect
+        false, // cellInspect
+        TableCellDisplayMode.Auto
       );
 
       expect(result).toBe(false);
@@ -1085,12 +1088,13 @@ describe('TableNG utils', () => {
         row,
         columnTypes,
         headerCellRefs,
-        osContext,
+        ctx,
         20, // lineHeight
         40, // defaultRowHeight
         8, // padding
         true, // textWrap ENABLED
-        false // cellInspect
+        false, // cellInspect
+        TableCellDisplayMode.Auto
       );
 
       expect(result).toBe(false);
@@ -1109,12 +1113,13 @@ describe('TableNG utils', () => {
         row,
         columnTypes,
         headerCellRefs,
-        osContext,
+        ctx,
         20, // lineHeight
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        true // cellInspect ENABLED
+        true, // cellInspect ENABLED
+        TableCellDisplayMode.Auto
       );
 
       expect(result).toBe(false);
@@ -1128,14 +1133,7 @@ describe('TableNG utils', () => {
         width: text.length * 8,
       }),
     };
-    const osContext = mockContext as unknown as OffscreenCanvasRenderingContext2D;
-
-    const headerCellRefs = {
-      current: {
-        stringCol: { offsetWidth: 100 },
-        numberCol: { offsetWidth: 100 },
-      } as unknown as Record<string, HTMLDivElement>,
-    };
+    const osContext = mockContext as unknown as CanvasRenderingContext2D;
 
     it('should return default height when no text cells present', () => {
       const row = {
@@ -1143,16 +1141,22 @@ describe('TableNG utils', () => {
         __index: 0,
         numberCol: 123,
       };
-      const columnTypes = { numberCol: FieldType.number };
 
       const height = getRowHeight(
         row,
-        columnTypes,
-        headerCellRefs,
         osContext,
+        '14px sans-serif',
+        8, // avgCharWidth
         20, // lineHeight
         40, // defaultRowHeight
-        8 // padding
+        8, // padding,
+        {
+          headersLength: 0,
+          textWraps: {},
+          columnTypes: {},
+          columnWidths: {},
+          fieldDisplayType: {},
+        }
       );
 
       expect(height).toBe(40);
@@ -1165,15 +1169,26 @@ describe('TableNG utils', () => {
         stringCol: 'This is a very long text that should wrap',
         numberCol: 123,
       };
-      const columnTypes = {
-        stringCol: FieldType.string,
-        numberCol: FieldType.number,
-      };
 
-      const height = getRowHeight(row, columnTypes, headerCellRefs, osContext, 20, 40, 8);
+      const height = getRowHeight(
+        row,
+        osContext,
+        '14px sans-serif',
+        8, // avgCharWidth
+        20, // lineHeight
+        40, // defaultRowHeight
+        8, // padding,
+        {
+          headersLength: 0,
+          textWraps: { stringCol: true },
+          columnTypes: { stringCol: FieldType.string, numberCol: FieldType.number },
+          columnWidths: { stringCol: 100, numberCol: 100 },
+          fieldDisplayType: { stringCol: TableCellDisplayMode.Auto, numberCol: TableCellDisplayMode.Auto },
+        }
+      );
 
       expect(height).toBeGreaterThan(40);
-      expect(height).toBe(112);
+      expect(height).toBe(96);
     });
 
     it('should handle empty header cell refs', () => {
@@ -1182,10 +1197,23 @@ describe('TableNG utils', () => {
         __index: 0,
         stringCol: 'Some text',
       };
-      const columnTypes = { stringCol: FieldType.string };
-      const emptyRefs = { current: {} } as unknown as React.MutableRefObject<Record<string, HTMLDivElement>>;
 
-      const height = getRowHeight(row, columnTypes, emptyRefs, osContext, 20, 40, 8);
+      const height = getRowHeight(
+        row,
+        osContext,
+        '14px sans-serif',
+        8, // avgCharWidth
+        20, // lineHeight
+        40, // defaultRowHeight
+        8, // padding,
+        {
+          headersLength: 0,
+          textWraps: {},
+          columnTypes: {},
+          columnWidths: {},
+          fieldDisplayType: {},
+        }
+      );
 
       expect(height).toBe(40);
     });
@@ -1465,8 +1493,8 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('getCellHeight', () => {
-    // Create a mock OffscreenCanvasRenderingContext2D
+  describe('calculateCellHeight', () => {
+    // Create a mock CanvasRenderingContext2D
     const createMockContext = () => {
       return {
         measureText: jest.fn((text) => {
@@ -1474,14 +1502,8 @@ describe('TableNG utils', () => {
           // This is a simplification - real browser would be more complex
           return { width: text.length * 8 }; // Assume 8px per character
         }),
-      } as unknown as OffscreenCanvasRenderingContext2D;
+      } as unknown as CanvasRenderingContext2D;
     };
-
-    it('should return default row height when osContext is null', () => {
-      const defaultRowHeight = 40;
-      const height = getCellHeight('Some text', 100, null, 20, defaultRowHeight);
-      expect(height).toBe(defaultRowHeight);
-    });
 
     it('should return default row height for text that fits in one line', () => {
       const mockContext = createMockContext();
@@ -1489,7 +1511,7 @@ describe('TableNG utils', () => {
       const cellWidth = 100; // 100px width
       const text = 'Short'; // 5 chars * 8px = 40px, fits in cellWidth
 
-      const height = getCellHeight(text, cellWidth, mockContext, 20, defaultRowHeight);
+      const height = calculateCellHeight(text, '14px sans-serif', cellWidth, mockContext, 20, defaultRowHeight);
 
       // Since text fits in one line, should return default height
       expect(height).toBe(defaultRowHeight);
@@ -1504,38 +1526,21 @@ describe('TableNG utils', () => {
       // This text is long enough to wrap to multiple lines
       const text = 'This is a very long text that will definitely need to wrap to multiple lines in our table cell';
 
-      const height = getCellHeight(text, cellWidth, mockContext, lineHeight, defaultRowHeight);
+      const height = calculateCellHeight(text, '14px sans-serif', cellWidth, mockContext, lineHeight, defaultRowHeight);
 
       // Should be greater than default height since text wraps
       expect(height).toBeGreaterThan(defaultRowHeight);
-      expect(height).toBe(180);
+      expect(height).toBe(220);
       // Height should be a multiple of line height plus padding
       expect(height % lineHeight).toBe(0);
       expect(mockContext.measureText).toHaveBeenCalled();
-    });
-
-    it('should account for padding when calculating height', () => {
-      const mockContext = createMockContext();
-      const defaultRowHeight = 40;
-      const lineHeight = 20;
-      const cellWidth = 100;
-      const padding = 10;
-      const text = 'This is a very long text that will wrap to multiple lines';
-
-      const heightWithoutPadding = getCellHeight(text, cellWidth, mockContext, lineHeight, defaultRowHeight);
-      const heightWithPadding = getCellHeight(text, cellWidth, mockContext, lineHeight, defaultRowHeight, padding);
-
-      // Height with padding should be greater than without padding
-      expect(heightWithPadding).toBeGreaterThan(heightWithoutPadding);
-      // The difference should be related to the padding (padding is applied twice in the function)
-      expect(heightWithPadding - heightWithoutPadding).toBe(padding * 2 * 2);
     });
 
     it('should handle empty text', () => {
       const mockContext = createMockContext();
       const defaultRowHeight = 40;
 
-      const height = getCellHeight('', 100, mockContext, 20, defaultRowHeight);
+      const height = calculateCellHeight('', '14px sans-serif', 100, mockContext, 20, defaultRowHeight);
 
       // Empty text should return default height
       expect(height).toBe(defaultRowHeight);

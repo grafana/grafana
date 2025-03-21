@@ -19,7 +19,7 @@ import {
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
-import { Trans } from '../../../utils/i18n';
+import { Trans, t } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
@@ -102,10 +102,7 @@ export function TableNG(props: TableNGProps) {
   const calcsRef = useRef<string[]>([]);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
 
-  const textWrap = fieldConfig?.defaults?.custom?.cellOptions?.wrapText ?? false;
-
   const theme = useTheme2();
-  const styles = useStyles2(getStyles, textWrap);
   const panelContext = usePanelContext();
 
   const isFooterVisible = Boolean(footerOptions?.show && footerOptions.reducer?.length);
@@ -169,23 +166,6 @@ export function TableNG(props: TableNGProps) {
     return fieldConfig?.defaults?.custom?.width || 'auto';
   }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Create off-screen canvas for measuring rows for virtualized rendering
-  // This line is like this because Jest doesn't have OffscreenCanvas mocked
-  // nor is it a part of the jest-canvas-mock package
-  let osContext = null;
-  if (window.OffscreenCanvas !== undefined) {
-    // The canvas size is defined arbitrarily
-    // As we never actually visualize rendered content
-    // from the offscreen canvas, only perform text measurements
-    osContext = new OffscreenCanvas(256, 1024).getContext('2d');
-  }
-
-  // Set font property using theme info
-  // This will make text measurement accurate
-  if (osContext !== undefined && osContext !== null) {
-    osContext.font = `${theme.typography.fontSize}px ${theme.typography.body.fontFamily}`;
-  }
-
   const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
   const panelPaddingHeight = theme.components.panel.padding * theme.spacing.gridSize * 2;
@@ -194,12 +174,73 @@ export function TableNG(props: TableNGProps) {
   const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create a map of column key to column type
-  const columnTypes = useMemo(() => {
-    return props.data.fields.reduce((acc, field) => {
-      acc[field.name] = field.type;
-      return acc;
-    }, {} as ColumnTypes);
+  const columnTypes = useMemo(
+    () => props.data.fields.reduce((acc, { name, type }) => ({ ...acc, [name]: type }), {} as ColumnTypes),
+    [props.data.fields]
+  );
+
+  // Create a map of column key to text wrap
+  const textWraps = useMemo(
+    () =>
+      props.data.fields.reduce(
+        (acc, { name, config }) => ({ ...acc, [name]: config?.custom?.wrapText ?? false }),
+        {} as { [key: string]: boolean }
+      ),
+    [props.data.fields]
+  );
+
+  const textWrap = useMemo(() => Object.values(textWraps).some(Boolean), [textWraps]);
+  const styles = useStyles2(getStyles, textWrap);
+
+  // Create a function to get column widths for text wrapping calculations
+  const getColumnWidths = useCallback(() => {
+    const widths: Record<string, number> = {};
+
+    // Set default widths from field config if they exist
+    props.data.fields.forEach(({ name, config }) => {
+      const configWidth = config?.custom?.width;
+      widths[name] = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH - TABLE.CELL_PADDING * 2;
+    });
+
+    // Measure actual widths if available
+    Object.keys(headerCellRefs.current).forEach((key) => {
+      const headerCell = headerCellRefs.current[key];
+
+      if (headerCell.offsetWidth > 0) {
+        widths[key] = headerCell.offsetWidth;
+      }
+    });
+
+    return widths;
   }, [props.data.fields]);
+
+  const headersLength = useMemo(() => {
+    return props.data.fields.length;
+  }, [props.data.fields]);
+
+  const fieldDisplayType = useMemo(() => {
+    return props.data.fields.reduce(
+      (acc, { config, name }) => {
+        if (config?.custom?.cellOptions?.type) {
+          acc[name] = config.custom.cellOptions.type;
+        }
+        return acc;
+      },
+      {} as Record<string, TableCellDisplayMode>
+    );
+  }, [props.data.fields]);
+
+  // Clean up fieldsData to simplify
+  const fieldsData = useMemo(
+    () => ({
+      headersLength,
+      textWraps,
+      columnTypes,
+      fieldDisplayType,
+      columnWidths: getColumnWidths(),
+    }),
+    [textWraps, columnTypes, getColumnWidths, headersLength, fieldDisplayType]
+  );
 
   const getDisplayedValue = (row: TableRow, key: string) => {
     const field = props.data.fields.find((field) => field.name === key)!;
@@ -345,6 +386,23 @@ export function TableNG(props: TableNGProps) {
     setResizeTrigger((prev) => prev + 1);
   };
 
+  const { ctx, avgCharWidth, font } = useMemo(() => {
+    const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    ctx.font = font;
+    let txt =
+      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
+    const txtWidth = ctx.measureText(txt).width * devicePixelRatio;
+    const avgCharWidth = txtWidth / txt.length;
+
+    return {
+      ctx,
+      font,
+      avgCharWidth,
+    };
+  }, [theme.typography.fontSize, theme.typography.fontFamily]);
+
   const columns = useMemo(
     () =>
       mapFrameToDataGrid({
@@ -361,7 +419,7 @@ export function TableNG(props: TableNGProps) {
           filter,
           headerCellRefs,
           isCountRowsSet,
-          osContext,
+          ctx,
           rows,
           setContextMenuProps,
           setFilter,
@@ -413,15 +471,16 @@ export function TableNG(props: TableNGProps) {
       }
       return getRowHeight(
         row,
-        columnTypes,
-        headerCellRefs,
-        osContext,
+        ctx,
+        font,
+        avgCharWidth,
         defaultLineHeight,
         defaultRowHeight,
-        TABLE.CELL_PADDING
+        TABLE.CELL_PADDING * 2,
+        fieldsData
       );
     },
-    [expandedRows, defaultRowHeight, columnTypes, headerCellRefs, osContext, defaultLineHeight]
+    [expandedRows, ctx, font, avgCharWidth, defaultLineHeight, defaultRowHeight, fieldsData]
   );
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
@@ -451,10 +510,7 @@ export function TableNG(props: TableNGProps) {
         rows={enablePagination ? paginatedRows : sortedRows}
         columns={columns}
         headerRowHeight={noHeader ? 0 : undefined}
-        defaultColumnOptions={{
-          sortable: true,
-          resizable: true,
-        }}
+        defaultColumnOptions={{ sortable: true, resizable: true }}
         rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
         // TODO: This doesn't follow current table behavior
         style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
@@ -560,7 +616,7 @@ export function mapFrameToDataGrid({
     filter,
     headerCellRefs,
     isCountRowsSet,
-    osContext,
+    ctx,
     rows,
     setContextMenuProps,
     setFilter,
@@ -690,7 +746,7 @@ export function mapFrameToDataGrid({
                 row,
                 columnTypes,
                 headerCellRefs,
-                osContext,
+                ctx,
                 defaultLineHeight,
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
@@ -710,9 +766,7 @@ export function mapFrameToDataGrid({
         if (isCountRowsSet && fieldIndex === 0) {
           return (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>
-                <Trans i18nKey="grafana-ui.table.count">Count</Trans>
-              </span>
+              <span>{t('grafana-ui.table.count', 'Count')}</span>
               <span>{calcsRef.current[fieldIndex]}</span>
             </div>
           );

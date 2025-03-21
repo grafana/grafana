@@ -79,6 +79,20 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           shouldApply: () => true,
         })
         .addBooleanSwitch({
+          path: 'wrapText',
+          name: 'Wrap text',
+          description: 'Wrap text to the width of the column',
+          defaultValue: false,
+          category: cellCategory,
+          showIf: (cfg) => {
+            return (
+              cfg.cellOptions.type === TableCellDisplayMode.Auto ||
+              cfg.cellOptions.type === TableCellDisplayMode.ColorText ||
+              cfg.cellOptions.type === TableCellDisplayMode.ColorBackground
+            );
+          },
+        })
+        .addBooleanSwitch({
           path: 'inspect',
           name: 'Cell value inspect',
           description: 'Enable cell value inspection in a modal window',

@@ -20,9 +20,39 @@ import { Options } from './panelcfg.gen';
  * a saved table configuration exists.
  */
 export const tableMigrationHandler = (panel: PanelModel<Options>): Partial<Options> => {
+  const pluginVersion = panel?.pluginVersion ?? '';
+
   // Table was saved as an angular table, lets just swap to the 'table-old' panel
   if (!panel.pluginVersion && 'columns' in panel) {
     console.log('Was angular table', panel);
+  }
+
+  if (parseFloat(pluginVersion) <= 11.6) {
+    if (panel.fieldConfig.defaults.custom?.cellOptions?.wrapText !== undefined) {
+      panel.fieldConfig = {
+        defaults: {
+          ...panel.fieldConfig.defaults,
+          custom: {
+            ...panel.fieldConfig.defaults.custom,
+            wrapText: panel.fieldConfig.defaults.custom.cellOptions.wrapText,
+          },
+        },
+        overrides: panel.fieldConfig.overrides.map((override) => {
+          override.properties.forEach((prop) => {
+            if (prop.id === 'custom.cellOptions' && prop.value?.wrapText !== undefined) {
+              override.properties.push({
+                id: 'custom.wrapText',
+                value: prop.value.wrapText,
+              });
+              delete prop.value.wrapText;
+            }
+          });
+          return override;
+        }),
+      };
+
+      delete panel.fieldConfig.defaults.custom.cellOptions.wrapText;
+    }
   }
 
   // Nothing changed
