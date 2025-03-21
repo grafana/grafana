@@ -25,6 +25,9 @@ type JobProgressRecorder interface {
 
 type Worker interface {
 	IsSupported(ctx context.Context, job provisioning.Job) bool
+	// Process the job. The job status should be updated as the job progresses.
+	//
+	// The job spec and metadata MUST not be modified in the storage layer while this is running. All updates go via the progress type.
 	Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress JobProgressRecorder) error
 }
 

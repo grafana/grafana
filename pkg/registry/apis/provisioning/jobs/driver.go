@@ -36,7 +36,7 @@ type Store interface {
 	InsertNotifications() chan struct{}
 
 	// Update saves the job back to the store.
-	UpdateStatus(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
+	Update(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
 }
 
 var _ Store = (*persistentStore)(nil)
@@ -200,9 +200,9 @@ func (d *jobDriver) onProgress(job *provisioning.Job) ProgressFn {
 		logging.FromContext(ctx).Debug("job progress", "status", status)
 		job.Status = status
 
-		updated, err := d.store.UpdateStatus(ctx, job)
+		updated, err := d.store.Update(ctx, job)
 		if err != nil {
-			return apifmt.Errorf("failed to update job status: %w", err)
+			return apifmt.Errorf("failed to update job: %w", err)
 		}
 
 		*job = *updated
