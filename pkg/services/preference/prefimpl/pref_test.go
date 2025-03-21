@@ -92,6 +92,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			WeekStart:       &weekStartOne,
 			JSONData: &pref.PreferenceJSONData{
 				Language: "en-GB",
+				Locale:   "en-US",
 			},
 		},
 		pref.Preference{
@@ -103,6 +104,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			WeekStart:       &weekStartTwo,
 			JSONData: &pref.PreferenceJSONData{
 				Language: "en-AU",
+				Locale:   "es-ES",
 			},
 		},
 	)
@@ -118,6 +120,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			HomeDashboardID: 4,
 			JSONData: &pref.PreferenceJSONData{
 				Language: "en-AU",
+				Locale:   "es-ES",
 			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
@@ -137,6 +140,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			HomeDashboardID: 1,
 			JSONData: &pref.PreferenceJSONData{
 				Language: "en-GB",
+				Locale:   "en-US",
 			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
@@ -156,6 +160,9 @@ func TestGetDefaults_JSONData(t *testing.T) {
 	orgPreferencesJsonData := pref.PreferenceJSONData{}
 	orgPreferencesWithLanguageJsonData := pref.PreferenceJSONData{
 		Language: "en-GB",
+	}
+	orgPreferencesWithLocaleJsonData := pref.PreferenceJSONData{
+		Locale: "en-US",
 	}
 	team2PreferencesJsonData := pref.PreferenceJSONData{}
 	team1PreferencesJsonData := pref.PreferenceJSONData{}
@@ -212,6 +219,36 @@ func TestGetDefaults_JSONData(t *testing.T) {
 			WeekStart: &weekStart,
 			JSONData: &pref.PreferenceJSONData{
 				Language:     "en-GB",
+				QueryHistory: queryPreference,
+			},
+		}, preference)
+	})
+
+	t.Run("user JSONData with missing locale does not override org preference", func(t *testing.T) {
+		prefService := &Service{
+			store:    newFake(),
+			defaults: prefsFromConfig(setting.NewCfg()),
+		}
+
+		insertPrefs(t, prefService.store,
+			pref.Preference{
+				OrgID:    1,
+				JSONData: &orgPreferencesWithLocaleJsonData,
+			},
+			pref.Preference{
+				OrgID:    1,
+				UserID:   1,
+				JSONData: &userPreferencesJsonData,
+			},
+		)
+
+		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 1}
+		preference, err := prefService.GetWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, &pref.Preference{
+			WeekStart: &weekStart,
+			JSONData: &pref.PreferenceJSONData{
+				Locale:       "en-US",
 				QueryHistory: queryPreference,
 			},
 		}, preference)
