@@ -202,7 +202,8 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
   const canCompare = model.versions.filter((version) => version.checked).length === 2;
   const showButtons = model.versions.length > 1;
   const hasMore = model.versions.length >= model.limit;
-  const isLastPage = model.versions.find((rev) => rev.version === 1);
+  // older versions may have been cleaned up in the db, so also check if the last page is less than the limit, if so, we are at the end
+  const isLastPage = model.versions.find((rev) => rev.version === 1) || model.versions.length % model.limit !== 0;
 
   const viewModeCompare = (
     <>

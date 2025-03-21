@@ -125,7 +125,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     }));
 
   isLastPage() {
-    return this.state.versions.find((rev) => rev.version === 1);
+    return this.state.versions.find((rev) => rev.version === 1) || this.state.versions.length % this.limit !== 0;
   }
 
   onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {

@@ -170,6 +170,24 @@ describe('VersionSettings', () => {
     });
   });
 
+  test('does not show more button when receiving partial page without version 1', async () => {
+    // Mock a partial page response (less than VERSIONS_FETCH_LIMIT)
+    // @ts-ignore
+    historySrv.getHistoryList.mockResolvedValueOnce({
+      continueToken: '',
+      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT - 5),
+    });
+
+    setup();
+
+    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+    // Verify that show more button is not present since we got a partial page
+    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
+    // Verify that compare button is still present
+    expect(screen.getByRole('button', { name: /compare versions/i })).toBeInTheDocument();
+  });
+
   test('selecting two versions and clicking compare button should render compare view', async () => {
     // @ts-ignore
     historySrv.getHistoryList.mockResolvedValue({

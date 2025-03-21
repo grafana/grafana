@@ -108,6 +108,45 @@ describe('VersionsEditView', () => {
 
       expect(versionsView.state.isNewLatest).toBe(true);
     });
+
+    it('should correctly identify last page when partial page is returned without version 1', async () => {
+      jest.mocked(historySrv.getHistoryList).mockResolvedValueOnce({
+        continueToken: '',
+        versions: [
+          {
+            id: 4,
+            dashboardId: 1,
+            dashboardUID: '_U4zObQMz',
+            parentVersion: 3,
+            restoredFrom: 0,
+            version: 4,
+            created: '2017-02-22T17:43:01-08:00',
+            createdBy: 'admin',
+            message: '',
+            checked: false,
+          },
+          {
+            id: 3,
+            dashboardId: 1,
+            dashboardUID: '_U4zObQMz',
+            parentVersion: 1,
+            restoredFrom: 1,
+            version: 3,
+            created: '2017-02-22T17:43:01-08:00',
+            createdBy: 'admin',
+            message: '',
+            checked: false,
+          },
+        ],
+      });
+
+      versionsView.reset();
+      versionsView.fetchVersions();
+      await new Promise(process.nextTick);
+
+      expect(versionsView.versions.length).toBeLessThan(VERSIONS_FETCH_LIMIT);
+      expect(versionsView.versions.find((rev) => rev.version === 1)).toBeUndefined();
+    });
   });
 });
 
