@@ -113,7 +113,8 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		Repo: r.repo,
 	}
 
-	if ShouldIgnorePath(info.Path) && info.Path != "" {
+	// TODO: where should this live?
+	if ShouldIgnorePath(info.Path) && info.Path == "" {
 		return parsed, ErrUnableToReadResourceBytes
 	}
 
@@ -290,6 +291,7 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 // ShouldIgnorePath determines if the path given is worth looking at.
 // If this returns true, skip processing it.
 // JSON and YAML files are valid paths. Anything else isn't.
+// TODO: where should this live?
 func ShouldIgnorePath(p string) bool {
 	ext := path.Ext(p)
 	// .yaml is the official extension per the spec, but .yml is widespread, too. (even this repo uses the unofficial one a lot!)

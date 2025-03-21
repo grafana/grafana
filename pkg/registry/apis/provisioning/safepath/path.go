@@ -76,3 +76,31 @@ func replaceOSSeparators(p string) string {
 	}
 	return strings.ReplaceAll(p, string(osSeparator), "/")
 }
+
+// NormalJoin is like path.Join
+// TODO: Have a single join in this file
+func NormalJoin(elem ...string) string {
+	return path.Join(elem...)
+}
+
+// Base returns the last element of the path.
+func Base(p string) string {
+	b := path.Base(p)
+	if b == "." || b == "/" {
+		return ""
+	}
+
+	return b
+}
+
+// TODO: clean paths
+
+// RemoveExt returns the path without the extension.
+// It should not remove the dot if the filename is e.g. `.gitignore`
+func RemoveExt(p string) string {
+	ext := path.Ext(p)
+	if ext == "" {
+		return p
+	}
+	return p[0 : len(p)-len(ext)]
+}

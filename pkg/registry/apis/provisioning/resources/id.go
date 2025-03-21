@@ -3,7 +3,6 @@ package resources
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"path"
 	"strings"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -93,24 +92,12 @@ func appendHashSuffix(hashKey, repositoryName string) func(string) string {
 }
 
 // Will pick a name based on the hashed repository and path
-func NamesFromHashedRepoPath(repo string, fpath string) (objectName string, folderName string) {
-	fpath = strings.Trim(fpath, "/") // remove trailing and leading slashes
-	fpath = path.Clean(fpath)        // get rid of path traversals etc
-
+func NamesFromHashedRepoPath(repo string, fpath string) (string, string) {
 	// Remove the extension: we don't want the extension to impact the ID. This lets the user change between all supported formats.
-	idx := strings.LastIndex(fpath, ".")
-	if idx > 0 { // we don't want to remove the dot if the filename is e.g. `.gitignore`
-		fpath = fpath[0:idx]
-	}
-
+	fpath = safepath.RemoveExt(fpath)
 	hasher := appendHashSuffix(fpath, repo)
-	objectName = hasher(path.Base(fpath))
 
-	idx = strings.LastIndex(fpath, "/")
-	if idx > 0 {
-		folderName = hasher(fpath[0:idx])
-	}
-	return
+	return hasher(safepath.Base(fpath)), hasher(safepath.Dir(fpath))
 }
 
 // Folder contains the data for a folder we use in provisioning.
@@ -126,13 +113,12 @@ type Folder struct {
 }
 
 func ParseFolder(dirPath, repositoryName string) Folder {
-	// TODO: This should be done in save path
-	clean := strings.Trim(path.Clean(dirPath), "/")
+	hasher := appendHashSuffix(dirPath, repositoryName)
+
 	return Folder{
-		Title: folderTitleFromPath(clean),
-		ID:    idFromPath(clean, repositoryName),
-		// TODO: should we trim the path here?
-		Path: dirPath,
+		Title: safepath.Base(dirPath),
+		ID:    hasher(sanitiseKubeName(safepath.Base(dirPath))),
+		Path:  dirPath,
 	}
 }
 
@@ -140,6 +126,7 @@ func RootFolder(repository *provisioning.Repository) string {
 	if repository.Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
 		return repository.Name // a folder with the same identifier as the repository
 	}
+
 	return ""
 }
 
@@ -150,30 +137,4 @@ func ParentFolder(filePath string, repository *provisioning.Repository) string {
 	}
 
 	return ParseFolder(parent, repository.GetName()).ID
-}
-
-func folderTitleFromPath(cleanDirPath string) string {
-	titleIdx := strings.LastIndex(cleanDirPath, "/")
-	title := cleanDirPath
-	if titleIdx != -1 {
-		title = title[titleIdx+1:]
-	}
-	return title
-}
-
-func idFromPath(cleanDirPath, repositoryName string) string {
-	suffixer := appendHashSuffix(cleanDirPath, repositoryName)
-
-	kubernetesName := stringAfterLastSep(cleanDirPath, "/")
-	kubernetesName = sanitiseKubeName(kubernetesName)
-
-	return suffixer(kubernetesName)
-}
-
-func stringAfterLastSep(s, sep string) string {
-	idx := strings.LastIndex(s, sep)
-	if idx == -1 {
-		return s
-	}
-	return s[idx+1:]
 }

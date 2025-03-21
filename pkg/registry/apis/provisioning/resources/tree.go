@@ -3,15 +3,14 @@ package resources
 import (
 	"context"
 	"fmt"
-	"path"
 	"sort"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 // FolderTree contains the entire set of folders (at a given snapshot in time) of the Grafana instance.
@@ -58,7 +57,7 @@ func (t *FolderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 			ok = true
 			break
 		}
-		fid.Path = path.Join(t.folders[parent].Title, fid.Path)
+		fid.Path = safepath.NormalJoin(t.folders[parent].Title, fid.Path)
 		parent = t.tree[parent]
 	}
 	return fid, ok
@@ -80,7 +79,7 @@ func (t *FolderTree) Walk(ctx context.Context, fn WalkFunc) error {
 
 	// sort by depth of the paths
 	sort.Slice(toWalk, func(i, j int) bool {
-		return len(strings.Split(toWalk[i].Path, "/")) < len(strings.Split(toWalk[j].Path, "/"))
+		return safepath.Depth(toWalk[i].Path) < safepath.Depth(toWalk[j].Path)
 	})
 
 	for _, folder := range toWalk {
