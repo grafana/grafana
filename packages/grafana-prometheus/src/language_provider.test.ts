@@ -110,6 +110,8 @@ describe('Language completion provider', () => {
   });
 
   describe('getSeriesLabels', () => {
+    const timeRange = getMockTimeRange();
+
     it('should call labels endpoint', () => {
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
@@ -120,7 +122,7 @@ describe('Language completion provider', () => {
 
       const labelName = 'job';
       const labelValue = 'grafana';
-      getSeriesLabels(`{${labelName}="${labelValue}"}`, [
+      getSeriesLabels(timeRange, `{${labelName}="${labelValue}"}`, [
         {
           name: labelName,
           value: labelValue,
@@ -151,7 +153,7 @@ describe('Language completion provider', () => {
 
       const labelName = 'job';
       const labelValue = 'grafana';
-      getSeriesLabels(`{${labelName}="${labelValue}"}`, [
+      getSeriesLabels(timeRange, `{${labelName}="${labelValue}"}`, [
         {
           name: labelName,
           value: labelValue,
@@ -186,7 +188,7 @@ describe('Language completion provider', () => {
 
       const labelName = 'job';
       const labelValue = 'grafana';
-      getSeriesLabels(`{${labelName}="${labelValue}"}`, [
+      getSeriesLabels(timeRange, `{${labelName}="${labelValue}"}`, [
         {
           name: labelName,
           value: labelValue,
@@ -217,13 +219,15 @@ describe('Language completion provider', () => {
   });
 
   describe('getSeriesValues', () => {
+    const timeRange = getMockTimeRange();
+
     it('should call old series endpoint and should use match[] parameter', () => {
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
       } as PrometheusDatasource);
       const getSeriesValues = languageProvider.getSeriesValues;
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      getSeriesValues('job', '{job="grafana"}');
+      getSeriesValues(timeRange, 'job', '{job="grafana"}');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/series',
@@ -246,7 +250,7 @@ describe('Language completion provider', () => {
       const requestSpy = jest.spyOn(languageProvider, 'request');
       const labelName = 'job';
       const labelValue = 'grafana';
-      getSeriesValues(labelName, `{${labelName}="${labelValue}"}`);
+      getSeriesValues(timeRange, labelName, `{${labelName}="${labelValue}"}`);
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         `/api/v1/label/${labelName}/values`,
@@ -267,7 +271,7 @@ describe('Language completion provider', () => {
       } as PrometheusDatasource);
       const getSeriesValues = languageProvider.getSeriesValues;
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      getSeriesValues('job', '{instance="$instance", job="grafana"}');
+      getSeriesValues(timeRange, 'job', '{instance="$instance", job="grafana"}');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/series',
@@ -288,7 +292,7 @@ describe('Language completion provider', () => {
       const timeRange = getMockTimeRange();
       await languageProvider.start(timeRange);
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      await languageProvider.fetchSeries('{job="grafana"}');
+      await languageProvider.fetchSeries(timeRange, '{job="grafana"}');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/series',
@@ -311,7 +315,7 @@ describe('Language completion provider', () => {
       } as PrometheusDatasource);
       const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      fetchSeriesLabels('$metric');
+      fetchSeriesLabels(getMockTimeRange(), '$metric');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/series',
@@ -332,7 +336,7 @@ describe('Language completion provider', () => {
       } as PrometheusDatasource);
       const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      fetchSeriesLabels('metric-with-limit', undefined, 'none');
+      fetchSeriesLabels(getMockTimeRange(), 'metric-with-limit', undefined, 'none');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/series',
@@ -353,7 +357,7 @@ describe('Language completion provider', () => {
       } as PrometheusDatasource);
       const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      fetchSeriesLabels('metric-without-limit', false, 'none');
+      fetchSeriesLabels(getMockTimeRange(), 'metric-without-limit', false, 'none');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/series',
@@ -619,7 +623,7 @@ describe('Language completion provider', () => {
       } as PrometheusDatasource);
       const fetchLabelValues = languageProvider.fetchLabelValues;
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      fetchLabelValues('$job');
+      fetchLabelValues(getMockTimeRange(), '$job');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/label/interpolated_job/values',
@@ -639,7 +643,7 @@ describe('Language completion provider', () => {
       } as PrometheusDatasource);
       const fetchLabelValues = languageProvider.fetchLabelValues;
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      fetchLabelValues('"http.status:sum"');
+      fetchLabelValues(getMockTimeRange(), '"http.status:sum"');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/label/U__http_2e_status:sum/values',
@@ -661,7 +665,7 @@ describe('Language completion provider', () => {
       } as PrometheusDatasource);
       const fetchSeriesValuesWithMatch = languageProvider.fetchSeriesValuesWithMatch;
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      fetchSeriesValuesWithMatch('"http.status:sum"', '{__name__="a_utf8_http_requests_total"}');
+      fetchSeriesValuesWithMatch(getMockTimeRange(), '"http.status:sum"', '{__name__="a_utf8_http_requests_total"}');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/label/U__http_2e_status:sum/values',
@@ -681,7 +685,7 @@ describe('Language completion provider', () => {
       } as PrometheusDatasource);
       const fetchSeriesValuesWithMatch = languageProvider.fetchSeriesValuesWithMatch;
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      fetchSeriesValuesWithMatch('"http_status_sum"', '{__name__="a_utf8_http_requests_total"}');
+      fetchSeriesValuesWithMatch(getMockTimeRange(), '"http_status_sum"', '{__name__="a_utf8_http_requests_total"}');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/label/http_status_sum/values',

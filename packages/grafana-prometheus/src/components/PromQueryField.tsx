@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import { PureComponent, ReactNode } from 'react';
 
 import {
+  getDefaultTimeRange,
   isDataFrame,
   LocalStorageValueProvider,
   QueryEditorProps,
@@ -249,6 +250,7 @@ class PromQueryFieldClass extends PureComponent<PromQueryFieldProps, PromQueryFi
                     initialValue={query.expr ?? ''}
                     placeholder="Enter a PromQL query…"
                     datasource={datasource}
+                    timeRange={this.props.range ?? getDefaultTimeRange()}
                   />
                 </div>
               </div>
