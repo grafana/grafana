@@ -1,6 +1,7 @@
 package safepath
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,84 +13,84 @@ func TestTrie(t *testing.T) {
 		pathsToAdd    []string
 		pathsToCheck  []string
 		expectedExist []bool
-		expectError   bool
+		expectedError error
 	}{
 		{
 			name:          "empty trie",
 			pathsToAdd:    []string{},
 			pathsToCheck:  []string{"test", "test/"},
 			expectedExist: []bool{false, false},
-			expectError:   false,
+			expectedError: nil,
 		},
 		{
 			name:          "single file",
 			pathsToAdd:    []string{"test.json"},
 			pathsToCheck:  []string{"test.json", "test.json/"},
 			expectedExist: []bool{true, false},
-			expectError:   false,
+			expectedError: nil,
 		},
 		{
 			name:          "single directory",
 			pathsToAdd:    []string{"test/"},
 			pathsToCheck:  []string{"test", "test/"},
 			expectedExist: []bool{false, true},
-			expectError:   false,
+			expectedError: nil,
 		},
 		{
 			name:          "nested structure",
 			pathsToAdd:    []string{"folder/", "folder/file.txt", "folder/subfolder/", "folder/subfolder/test.json"},
 			pathsToCheck:  []string{"folder/", "folder/file.txt", "folder/file.txt/", "folder/subfolder/", "folder/subfolder/test.json", "folder/subfolder/test.json/"},
 			expectedExist: []bool{true, true, false, true, true, false},
-			expectError:   false,
+			expectedError: nil,
 		},
 		{
 			name:          "partial paths",
 			pathsToAdd:    []string{"a/b/c/d/"},
 			pathsToCheck:  []string{"a/", "a/b/", "a/b/c/", "a/b/c/d/"},
 			expectedExist: []bool{true, true, true, true},
-			expectError:   false,
+			expectedError: nil,
 		},
 		{
 			name:          "file in middle of path",
 			pathsToAdd:    []string{"a/file.txt", "a/file.txt/b/"},
 			pathsToCheck:  []string{},
 			expectedExist: []bool{},
-			expectError:   true,
+			expectedError: fmt.Errorf("path %q exists but is not a directory", "a/file.txt"),
 		},
 		{
 			name:          "empty path",
 			pathsToAdd:    []string{""},
 			pathsToCheck:  []string{""},
 			expectedExist: []bool{true},
-			expectError:   false,
+			expectedError: nil,
 		},
 		{
 			name:          "root directory",
 			pathsToAdd:    []string{"/"},
 			pathsToCheck:  []string{"/", ""},
 			expectedExist: []bool{true, true},
-			expectError:   false,
+			expectedError: nil,
 		},
 		{
 			name:          "duplicate paths",
 			pathsToAdd:    []string{"test/", "test/"},
 			pathsToCheck:  []string{"test/"},
 			expectedExist: []bool{true},
-			expectError:   false,
+			expectedError: nil,
 		},
 		{
 			name:          "file to directory conversion not allowed",
 			pathsToAdd:    []string{"test.txt", "test.txt/file.txt"},
 			pathsToCheck:  []string{},
 			expectedExist: []bool{},
-			expectError:   true,
+			expectedError: fmt.Errorf("path %q exists but is not a directory", "test.txt"),
 		},
 		{
 			name:          "directory to file conversion not allowed",
 			pathsToAdd:    []string{"test/", "test"},
 			pathsToCheck:  []string{},
 			expectedExist: []bool{},
-			expectError:   true,
+			expectedError: fmt.Errorf("path %q exists but is not a file", "test"),
 		},
 	}
 
@@ -107,8 +108,9 @@ func TestTrie(t *testing.T) {
 				}
 			}
 
-			if tt.expectError {
+			if tt.expectedError != nil {
 				require.Error(t, lastErr)
+				require.Equal(t, tt.expectedError.Error(), lastErr.Error())
 				return
 			}
 			require.NoError(t, lastErr)
