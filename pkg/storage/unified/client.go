@@ -118,7 +118,7 @@ func newClient(opts options.StorageOptions,
 		}
 
 		// Create a connection to the gRPC server.
-		conn, err := GrpcConn(opts.Address, reg)
+		conn, err := NewResourceClientWithPool(opts.Address, reg)
 		if err != nil {
 			return nil, err
 		}
@@ -144,7 +144,7 @@ func newClient(opts options.StorageOptions,
 	}
 }
 
-func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceClient, error) {
+func newResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return resource.NewLegacyResourceClient(conn), nil
 	}
