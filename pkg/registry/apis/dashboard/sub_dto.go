@@ -139,9 +139,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		writeEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashScope)
 		access.CanSave, _ = r.accessControl.Evaluate(ctx, user, writeEvaluator)
 		access.CanEdit = access.CanSave
-		adminEvaluator := accesscontrol.EvalAll(
-			accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsRead, dashScope),
-			accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashScope))
+		adminEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashScope)
 		access.CanAdmin, _ = r.accessControl.Evaluate(ctx, user, adminEvaluator)
 		deleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsDelete, dashScope)
 		access.CanDelete, _ = r.accessControl.Evaluate(ctx, user, deleteEvaluator)
