@@ -15,7 +15,7 @@ services:
       - 80:8080
       - 443:8443
     environment:
-      - GF_APP_MODE=development
+      - GF_DEFAULT_APP_MODE=development
       - PMM_DEBUG=1
       - PMM_DEV_PORTAL_URL=https://portal-dev.percona.com
       - PMM_DEV_PERCONA_PLATFORM_ADDRESS=https://check-dev.percona.com:443
