@@ -95,20 +95,10 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 		if rsp.Job != nil {
-			if rsp.JobName == "" {
-				switch rsp.Job.Action {
-				case provisioning.JobActionSync, provisioning.JobActionMigrate:
-					// Sync and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
-					rsp.JobName = fmt.Sprintf("%s-syncmigrate", repo.Config().GetName())
-				default:
-					rsp.JobName = fmt.Sprintf("%s-%s", repo.Config().GetName(), rsp.Job.Action)
-				}
-			}
 			// Add the job to the job queue
 			job := &provisioning.Job{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: namespace,
-					Name:      rsp.JobName,
 					Labels: map[string]string{
 						"repository": name,
 					},

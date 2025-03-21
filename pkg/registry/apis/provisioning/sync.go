@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -66,8 +65,6 @@ func (c *syncConnector) Connect(
 		job, err := c.jobs.Insert(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: cfg.Namespace,
-				// Sync and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
-				Name: fmt.Sprintf("%s-syncmigrate", cfg.GetName()),
 			},
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionSync,

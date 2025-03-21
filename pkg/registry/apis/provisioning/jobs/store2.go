@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -414,11 +415,11 @@ func (s *store2) cleanupClaims(ctx context.Context) error {
 
 // Insert adds a new job to the queue.
 //
-// This saves it if it is a new job, or fails with ErrJobAlreadyExists if one with the same name already exists.
+// The job name is not honoured. It will be overwritten with a name that fits the job.
+//
+// This saves it if it is a new job, or fails with `apierrors.IsAlreadyExists(err) == true` if one already exists.
 func (s *store2) Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
-	if job.GetName() == "" && job.GetGenerateName() == "" {
-		return nil, apifmt.Errorf("job must have a name or a generate name")
-	}
+	s.generateJobName(job) // Side-effect: updates the job's name.
 
 	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
@@ -444,4 +445,22 @@ func (s *store2) Insert(ctx context.Context, job *provisioning.Job) (*provisioni
 
 func (s *store2) InsertNotifications() chan struct{} {
 	return s.notifications
+}
+
+// generateJobName creates and updates the job's name to one that fits it.
+func (s *store2) generateJobName(job *provisioning.Job) {
+	switch job.Spec.Action {
+	case provisioning.JobActionMigrate, provisioning.JobActionSync:
+		// Sync and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
+		job.Name = job.Spec.Repository + "-syncmigrate"
+	case provisioning.JobActionPullRequest:
+		var pr int
+		if job.Spec.PullRequest != nil {
+			pr = job.Spec.PullRequest.PR
+		}
+		// There may be multiple pull requests at the same time. They need different names.
+		job.Name = fmt.Sprintf("%s-pr-%d", job.Spec.Repository, pr)
+	default:
+		job.Name = fmt.Sprintf("%s-%s", job.Spec.Repository, job.Spec.Action)
+	}
 }
