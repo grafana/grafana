@@ -336,7 +336,7 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 	}
 
 	out := dashver.DashboardVersionDTO{
-		ID:            int64(dashVersion),
+		ID:            dashVersion,
 		DashboardID:   obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		DashboardUID:  uid,
 		Created:       created,
