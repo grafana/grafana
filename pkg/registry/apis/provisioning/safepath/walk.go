@@ -37,5 +37,5 @@ func Depth(p string) int {
 
 // Split splits the given path into segments.
 func Split(p string) []string {
-	return strings.Split(p, "/")
+	return strings.Split(strings.Trim(p, "/"), "/")
 }

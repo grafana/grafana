@@ -48,7 +48,11 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 					Existing: check,
 				})
 			}
-			keep.Add(file.Path)
+
+			if err := keep.Add(file.Path); err != nil {
+				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+			}
+
 			delete(lookup, file.Path)
 			continue
 		}
