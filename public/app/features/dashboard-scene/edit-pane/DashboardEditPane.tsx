@@ -210,14 +210,18 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     'grafana.dashboard.edit-pane.outline.collapsed',
     false
   );
+  const [outlinePaneSize = 0.4, setOutlinePaneSize] = useLocalStorage('grafana.dashboard.edit-pane.outline.size', 0.4);
 
   // splitter for template and payload editor
   const splitter = useSplitter({
     direction: 'column',
     handleSize: 'sm',
     // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
-    initialSize: 0.7,
+    initialSize: 1 - outlinePaneSize,
     dragPosition: 'middle',
+    onSizeChanged: (size) => {
+      setOutlinePaneSize(1 - size);
+    },
   });
 
   if (!editableElement) {
@@ -299,17 +303,14 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flex: '1 1 0',
       marginTop: theme.spacing(2),
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.primary,
     }),
     paneContent: css({
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
-      background: theme.colors.background.primary,
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      '&:first-child': {
-        borderBottom: `1px solid ${theme.colors.border.weak}`,
-      },
     }),
     rotate180: css({
       rotate: '180deg',
@@ -343,17 +344,20 @@ function getStyles(theme: GrafanaTheme2) {
     outlineCollapseButton: css({
       display: 'flex',
       padding: theme.spacing(0.5, 2),
+      gap: theme.spacing(1),
       justifyContent: 'space-between',
       alignItems: 'center',
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.secondary,
+
       '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+        background: theme.colors.action.hover,
       },
     }),
     outlineContainer: css({
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
-      marginTop: theme.spacing(-1),
     }),
   };
 }

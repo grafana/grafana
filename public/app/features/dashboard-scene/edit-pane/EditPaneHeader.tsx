@@ -20,7 +20,7 @@ export function EditPaneHeader({ element }: EditPaneHeaderProps) {
 
   return (
     <div className={styles.wrapper}>
-      <Text variant="h5">{elementInfo.typeName}</Text>
+      <Text>{elementInfo.typeName}</Text>
       <Stack direction="row" gap={1}>
         {element.renderActions && element.renderActions()}
         {(onCopy || onDelete) && (
