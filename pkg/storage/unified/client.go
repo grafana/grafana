@@ -183,7 +183,6 @@ func newResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features
 
 // grpcConn creates a new gRPC connection to the provided address.
 func grpcConn(address string, metrics *clientMetrics) (*grpc.ClientConn, error) {
-
 	// Report gRPC status code errors as labels.
 	unary, stream := instrument(metrics.requestDuration, middleware.ReportGRPCStatusOption)
 
