@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
-	"github.com/grafana/grafana/pkg/util/retryer"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/maps"
@@ -34,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -56,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/retryer"
 )
 
 var (
@@ -757,7 +757,7 @@ func (dr *DashboardServiceImpl) saveDashboard(ctx context.Context, cmd *dashboar
 
 func (dr *DashboardServiceImpl) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return dr.getDashboardThroughK8s(ctx, &dashboards.GetDashboardQuery{OrgID: orgID, UID: uid, IncludeDeleted: true})
+		return dr.getDashboardThroughK8s(ctx, &dashboards.GetDashboardQuery{OrgID: orgID, UID: uid})
 	}
 
 	return dr.dashboardStore.GetSoftDeletedDashboard(ctx, orgID, uid)
@@ -1520,12 +1520,6 @@ func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (i
 // -----------------------------------------------------------------------------------------
 
 func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
-	// if including deleted dashboards for restore, use the /latest subresource
-	subresource := ""
-	if query.IncludeDeleted && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
-		subresource = "latest"
-	}
-
 	// get uid if not passed in
 	if query.UID == "" {
 		result, err := dr.GetDashboardUIDByID(ctx, &dashboards.GetDashboardRefByIDQuery{
@@ -1538,7 +1532,7 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 		query.UID = result.UID
 	}
 
-	out, err := dr.k8sclient.Get(ctx, query.UID, query.OrgID, v1.GetOptions{}, subresource)
+	out, err := dr.k8sclient.Get(ctx, query.UID, query.OrgID, v1.GetOptions{}, "")
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if err != nil || out == nil {
@@ -1576,12 +1570,13 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 	meta.SetManagerProperties(m)
 	meta.SetSourceProperties(s)
 
-	out, err := dr.createOrUpdateDash(ctx, obj, cmd.OrgID)
+	// Update will create if not exists (upsert!)
+	out, err := dr.k8sclient.Update(ctx, obj, cmd.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
-	return out, nil
+	return dr.UnstructuredToLegacyDashboard(ctx, out, cmd.OrgID)
 }
 
 func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd *dashboards.SaveDashboardCommand, orgID int64) (*dashboards.Dashboard, error) {
@@ -1592,35 +1587,13 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
-	out, err := dr.createOrUpdateDash(ctx, obj, orgID)
+	// Update will create if not exists (upsert!)
+	out, err := dr.k8sclient.Update(ctx, obj, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	return out, nil
-}
-
-func (dr *DashboardServiceImpl) createOrUpdateDash(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {
-	var out *unstructured.Unstructured
-	current, err := dr.k8sclient.Get(ctx, obj.GetName(), orgID, v1.GetOptions{})
-	if current == nil || err != nil {
-		out, err = dr.k8sclient.Create(ctx, obj, orgID)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		out, err = dr.k8sclient.Update(ctx, obj, orgID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	finalDash, err := dr.UnstructuredToLegacyDashboard(ctx, out, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	return finalDash, nil
+	return dr.UnstructuredToLegacyDashboard(ctx, out, orgID)
 }
 
 func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context, orgID int64) error {
