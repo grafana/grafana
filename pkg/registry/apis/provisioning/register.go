@@ -345,9 +345,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage := map[string]rest.Storage{}
 	// Although we never interact with these resources via the API, we want them to be readable from the API.
 	storage[provisioning.JobResourceInfo.StoragePath()] = readonly.Wrap(realJobStore)
-	storage[provisioning.JobResourceInfo.StoragePath("status")] = readonly.Wrap(realJobStatusStore)
 	storage[provisioning.HistoricJobResourceInfo.StoragePath()] = readonly.Wrap(historicJobStore)
-	storage[provisioning.HistoricJobResourceInfo.StoragePath("status")] = readonly.Wrap(historicJobStatusStore)
 
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
