@@ -88,7 +88,7 @@ To learn more about these features, refer to [Enterprise features](https://grafa
 
 ## Guidance and help
 
-{{< guide name="whichgrafana" >}}
+{{< guide name="whichgrafana" title="Which Grafana is right for you?" text="Answer a few questions and Grot will help you decide." >}}
 
 ## Learn
 
