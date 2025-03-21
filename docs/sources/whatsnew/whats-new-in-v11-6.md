@@ -41,7 +41,7 @@ weight: -48
 
 # What’s new in Grafana v11.6
 
-Welcome to Grafana 11.6! This minor release includes a number of dashboarding features that are now generally available including one-click data links and actions, Cron syntax support for annotations, and WebGL-powered geomaps for better performance. We've also fully migrated from API keys to service accounts in Grafana for better security. Read on to learn more about version history for Grafana Managed Alerts, label-based access control(LBAC) for Mimir metrics, and more in Grafana v11.6.
+Welcome to Grafana 11.6! This minor release includes a number of dashboarding features that are now generally available including one-click data links and actions, Cron syntax support for annotations, and WebGL-powered geomaps for better performance. We've also fully migrated from API keys to service accounts in Grafana for better security. Read on to learn more about version history for Grafana Managed Alerts, label-based access control (LBAC) for Mimir metrics, and more in Grafana v11.6.
 
 {{< youtube id=iF7yxO4nUXQ >}}
 
