@@ -1121,7 +1121,7 @@
                     "type": "boolean",
                     "default": false
                   },
-                  "prefix": {
+                  "path": {
                     "description": "Prefix in target file system",
                     "type": "string"
                   }
@@ -1130,7 +1130,7 @@
               "example": {
                 "folder": "grafan-folder-ref",
                 "branch": "target-branch",
-                "prefix": "prefix/in/repo/tree",
+                "path": "path/in/tree",
                 "identifier": false
               }
             }
@@ -1780,15 +1780,10 @@
                     "description": "Include the identifier in the exported metadata",
                     "type": "boolean",
                     "default": false
-                  },
-                  "prefix": {
-                    "description": "Target file prefix",
-                    "type": "string"
                   }
                 }
               },
               "example": {
-                "prefix": "prefix/in/repo/tree",
                 "history": true,
                 "identifier": false
               }
@@ -2567,7 +2562,7 @@
             "type": "boolean",
             "default": false
           },
-          "prefix": {
+          "path": {
             "description": "Prefix in target file system",
             "type": "string"
           }
@@ -3035,10 +3030,6 @@
             "description": "Include the identifier in the exported metadata",
             "type": "boolean",
             "default": false
-          },
-          "prefix": {
-            "description": "Target file prefix",
-            "type": "string"
           }
         }
       },
