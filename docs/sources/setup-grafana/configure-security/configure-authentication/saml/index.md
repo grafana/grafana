@@ -445,12 +445,9 @@ This setting is ignored if multiple auth providers are configured to use auto lo
 auto_login = true
 ```
 
-### Configure group synchronization
+### Configure team sync
 
-Group synchronization allows you to map user groups from an identity provider to Grafana teams and roles.
-
-To use SAML group synchronization, set [`assertion_attribute_groups`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_groups) to the attribute name where you store user groups.
-Then Grafana will use attribute values extracted from SAML assertion to add user to Grafana teams and grant them roles.
+To use SAML Team sync, set [`assertion_attribute_groups`](../../../configure-grafana/enterprise-configuration#assertion_attribute_groups) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
 {{% admonition type="warning" %}}
 Grafana requires the SAML groups attribute to be configured with distinct `AttributeValue` elements for each group. Do not include multiple groups within a single `AttributeValue` delimited by a comma or any other character. Failure to do so will prevent correct group parsing. Example:
@@ -465,7 +462,7 @@ Grafana requires the SAML groups attribute to be configured with distinct `Attri
 {{% /admonition %}}
 
 {{% admonition type="note" %}}
-Team sync allows you sync users from SAML to Grafana teams, but you must create teams in Grafana before you can use this feature. It does not automatically create teams in Grafana.
+Teamsync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
 {{% /admonition %}}
 
 Given the following partial SAML assertion:
@@ -495,12 +492,12 @@ The configuration would look like this:
 assertion_attribute_groups = groups
 ```
 
-The following `External Group ID`s would be valid for configuring team sync or role sync in Grafana:
+The following `External Group ID`s would be valid for input in the desired team's _External group sync_ tab:
 
 - `admins_group`
 - `division_1`
 
-To learn more about how to configure group synchronization, refer to [Configure team sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync/) and [Configure group attribute sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
+[Learn more about Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/)
 
 ### Configure role sync
 
