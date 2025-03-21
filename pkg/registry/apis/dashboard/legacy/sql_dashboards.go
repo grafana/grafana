@@ -404,6 +404,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 		})
 		if old != nil {
 			dash.Spec.Set("id", old.ID)
+			dash.Spec.Set("version", float64(old.Version))
 		} else {
 			dash.Spec.Remove("id") // existing of "id" makes it an update
 			created = true

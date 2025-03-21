@@ -169,6 +169,7 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 	mockStore.On("GetDashboard", mock.Anything, mock.Anything).Return(
 		&dashboards.Dashboard{
 			ID:         1234,
+			Version:    2,
 			APIVersion: "dashboard.grafana.app/v0alpha1",
 		}, nil).Once()
 	cmd, created, err = access.buildSaveDashboardCommand(ctx, 1, dash)
@@ -176,8 +177,9 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 	require.Equal(t, false, created)
 	require.NotNil(t, cmd)
 	require.Equal(t, "test-dash", cmd.Dashboard.Get("uid").MustString())
-	require.Equal(t, cmd.Dashboard.Get("id").MustInt64(), int64(1234)) // should set to existing ID
-	require.Equal(t, cmd.APIVersion, "v0alpha1")                       // should trim prefix
+	require.Equal(t, cmd.Dashboard.Get("id").MustInt64(), int64(1234))       // should set to existing ID
+	require.Equal(t, cmd.Dashboard.Get("version").MustFloat64(), float64(2)) // version must be set - otherwise seen as a new dashboard in NewDashboardFromJson
+	require.Equal(t, cmd.APIVersion, "v0alpha1")                             // should trim prefix
 	require.Equal(t, cmd.OrgID, int64(1))
 	require.True(t, cmd.Overwrite)
 }
