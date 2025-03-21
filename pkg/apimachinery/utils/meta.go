@@ -30,6 +30,9 @@ const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-conf
 // resoures in the "root" folder.  This annotation is not saved and invalud for update.
 const AnnoKeyGrantPermissions = "grafana.app/grant-permissions"
 
+// AnnoGrantPermissionsDefault is the value that should be sent with AnnoKeyGrantPermissions
+const AnnoGrantPermissionsDefault = "default"
+
 // DeletedGeneration is set on Resources that have been (soft) deleted
 const DeletedGeneration = int64(-999)
 

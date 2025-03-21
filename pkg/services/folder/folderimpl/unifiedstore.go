@@ -56,7 +56,7 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 		user, _ := claims.AuthInfoFrom(ctx)
 		if user != nil && user.GetIdentityType() == claims.TypeUser {
 			meta, _ := utils.MetaAccessor(obj)
-			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "*")
+			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 		}
 	}
 

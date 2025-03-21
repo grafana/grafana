@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -987,7 +988,12 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, key *
 	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultPermissions")
 	defer span.End()
 
-	fmt.Printf("TODO!!!!! %v / %v / %v\n", key, id, obj.GetFolder())
+	logger := logging.FromContext(ctx)
+
+	logger.Info("TODO!!!!! check default permissions",
+		"key", key.SearchID(),
+		"user", id.GetUID(),
+		"folder", obj.GetFolder())
 
 	return nil
 }
@@ -1600,7 +1606,7 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 		user, _ := claims.AuthInfoFrom(ctx)
 		if user != nil && user.GetIdentityType() == claims.TypeUser {
 			meta, _ := utils.MetaAccessor(obj)
-			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "default")
+			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 		}
 	}
 

@@ -23,8 +23,8 @@ func afterCreatePermissionCreator(ctx context.Context,
 	if grantPermisions == "" {
 		return nil, nil
 	}
-	if grantPermisions != "default" {
-		return nil, fmt.Errorf("invalid permissions value. only * supported")
+	if grantPermisions != utils.AnnoGrantPermissionsDefault {
+		return nil, fmt.Errorf("invalid permissions value. only '%s' supported", utils.AnnoGrantPermissionsDefault)
 	}
 	if setter == nil {
 		return nil, fmt.Errorf("missing default prmission creator")
