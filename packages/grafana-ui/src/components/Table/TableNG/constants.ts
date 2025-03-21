@@ -1,5 +1,3 @@
-import { getScrollbarWidth } from '../../../utils/scrollbar';
-
 /** Column width and sizing configuration */
 export const COLUMN = {
   DEFAULT_WIDTH: 150,
@@ -13,5 +11,6 @@ export const TABLE = {
   CELL_PADDING: 6,
   MAX_CELL_HEIGHT: 48,
   PAGINATION_LIMIT: 750,
-  SCROLL_BAR_WIDTH: getScrollbarWidth(),
+  SCROLL_BAR_WIDTH: 8,
+  SCROLL_BAR_MARGIN: 2,
 };

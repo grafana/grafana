@@ -20,7 +20,6 @@ import { Trans } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
-import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 
 import { HeaderCell } from './Cells/HeaderCell';
@@ -85,7 +84,7 @@ export function TableNG(props: TableNGProps) {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
   const scrollPositionRef = useRef<ScrollPosition>({ x: 0, y: 0 });
-  const dataGridRef = useRef<DataGridHandle>(null);
+  const [hasScroll, setHasScroll] = useState(false);
 
   /* ------------------------------- Local refs ------------------------------- */
   const crossFilterOrder = useRef<string[]>([]);
@@ -109,6 +108,7 @@ export function TableNG(props: TableNGProps) {
       footerOptions.reducer.length &&
       footerOptions.reducer[0] === ReducerID.count
   );
+  const tableRef = useRef<DataGridHandle | null>(null);
 
   /* --------------------------------- Effects -------------------------------- */
   useEffect(() => {
@@ -143,6 +143,18 @@ export function TableNG(props: TableNGProps) {
     const hasNestedFrames = getIsNestedTable(props.data);
     setIsNestedTable(hasNestedFrames);
   }, [props.data]);
+
+  useEffect(() => {
+    const el = tableRef.current;
+    if (el) {
+      const gridElement = el?.element;
+      if (gridElement) {
+        setHasScroll(
+          gridElement.scrollHeight > gridElement.clientHeight || gridElement.scrollWidth > gridElement.clientWidth
+        );
+      }
+    }
+  }, []);
 
   // TODO: this is a hack to force the column width to update when the fieldConfig changes
   const columnWidth = useMemo(() => {
@@ -358,9 +370,10 @@ export function TableNG(props: TableNGProps) {
           onCellExpand,
           onColumnResize: onColumnResize!,
         },
-        availableWidth: width,
+        // Adjust table width to account for the scroll bar width
+        availableWidth: width - (hasScroll ? TABLE.SCROLL_BAR_WIDTH + TABLE.SCROLL_BAR_MARGIN : 0),
       }),
-    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions, width] // eslint-disable-line react-hooks/exhaustive-deps
+    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions, width, hasScroll] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // This effect needed to set header cells refs before row height calculation
@@ -414,63 +427,61 @@ export function TableNG(props: TableNGProps) {
 
   // Restore scroll position after re-renders
   useEffect(() => {
-    if (dataGridRef.current?.element) {
-      dataGridRef.current.element.scrollLeft = scrollPositionRef.current.x;
-      dataGridRef.current.element.scrollTop = scrollPositionRef.current.y;
+    if (tableRef.current?.element) {
+      tableRef.current.element.scrollLeft = scrollPositionRef.current.x;
+      tableRef.current.element.scrollTop = scrollPositionRef.current.y;
     }
   }, [revId]);
 
   return (
     <>
-      <ScrollContainer>
-        <DataGrid<TableRow, TableSummaryRow>
-          ref={dataGridRef}
-          className={styles.dataGrid}
-          // Default to true, overridden to false for testing
-          enableVirtualization={enableVirtualization}
-          key={`DataGrid${revId}`}
-          rows={enablePagination ? paginatedRows : sortedRows}
-          columns={columns}
-          headerRowHeight={noHeader ? 0 : undefined}
-          defaultColumnOptions={{
-            sortable: true,
-            resizable: true,
-          }}
-          rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
-          // TODO: This doesn't follow current table behavior
-          style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
-          renderers={{ renderRow: (key, props) => myRowRenderer(key, props, expandedRows) }}
-          onScroll={handleScroll}
-          onCellContextMenu={({ row, column }, event) => {
-            event.preventGridDefault();
-            // Do not show the default context menu
-            event.preventDefault();
+      <DataGrid<TableRow, TableSummaryRow>
+        ref={tableRef}
+        className={styles.dataGrid}
+        // Default to true, overridden to false for testing
+        enableVirtualization={enableVirtualization}
+        key={`DataGrid${revId}`}
+        rows={enablePagination ? paginatedRows : sortedRows}
+        columns={columns}
+        headerRowHeight={noHeader ? 0 : undefined}
+        defaultColumnOptions={{
+          sortable: true,
+          resizable: true,
+        }}
+        rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
+        // TODO: This doesn't follow current table behavior
+        style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
+        renderers={{ renderRow: (key, props) => myRowRenderer(key, props, expandedRows) }}
+        onScroll={handleScroll}
+        onCellContextMenu={({ row, column }, event) => {
+          event.preventGridDefault();
+          // Do not show the default context menu
+          event.preventDefault();
 
-            const cellValue = row[column.key];
-            setContextMenuProps({
-              // rowIdx: rows.indexOf(row),
-              value: String(cellValue ?? ''),
-              top: event.clientY,
-              left: event.clientX,
-            });
-            setIsContextMenuOpen(true);
-          }}
-          // sorting
-          sortColumns={sortColumns}
-          // footer
-          // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
-          bottomSummaryRows={isFooterVisible ? [{}] : undefined}
-          onColumnResize={() => {
-            // NOTE: This method is called continuously during the column resize drag operation,
-            // providing the current column width. There is no separate event for the end of the drag operation.
-            if (textWrap) {
-              // This is needed only when textWrap is enabled
-              // TODO: this is a hack to force rowHeight re-calculation
-              setResizeTrigger((prev) => prev + 1);
-            }
-          }}
-        />
-      </ScrollContainer>
+          const cellValue = row[column.key];
+          setContextMenuProps({
+            // rowIdx: rows.indexOf(row),
+            value: String(cellValue ?? ''),
+            top: event.clientY,
+            left: event.clientX,
+          });
+          setIsContextMenuOpen(true);
+        }}
+        // sorting
+        sortColumns={sortColumns}
+        // footer
+        // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
+        bottomSummaryRows={isFooterVisible ? [{}] : undefined}
+        onColumnResize={() => {
+          // NOTE: This method is called continuously during the column resize drag operation,
+          // providing the current column width. There is no separate event for the end of the drag operation.
+          if (textWrap) {
+            // This is needed only when textWrap is enabled
+            // TODO: this is a hack to force rowHeight re-calculation
+            setResizeTrigger((prev) => prev + 1);
+          }
+        }}
+      />
 
       {enablePagination && (
         <div className={styles.paginationContainer} ref={paginationWrapperRef}>
@@ -788,6 +799,10 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     '.rdg-cell': {
       borderInlineEnd: 'unset',
       borderRight: `1px solid ${theme.colors.border.medium}`,
+
+      '&:last-child': {
+        borderRight: 'none',
+      },
     },
 
     '.rdg-summary-row': {
@@ -810,6 +825,21 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
           borderRight: `3px solid ${theme.colors.text.link}`,
         },
       },
+    },
+
+    '::-webkit-scrollbar': {
+      width: TABLE.SCROLL_BAR_WIDTH,
+      height: TABLE.SCROLL_BAR_WIDTH,
+    },
+    '::-webkit-scrollbar-thumb': {
+      backgroundColor: 'rgba(204, 204, 220, 0.16)',
+      borderRadius: '4px',
+    },
+    '::-webkit-scrollbar-track': {
+      background: 'transparent',
+    },
+    '::-webkit-scrollbar-corner': {
+      backgroundColor: 'transparent',
     },
   }),
   menuItem: css({
