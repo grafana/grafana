@@ -19,7 +19,7 @@ import {
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
-import { Trans } from '../../../utils/i18n';
+import { Trans, t } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
@@ -218,15 +218,28 @@ export function TableNG(props: TableNGProps) {
     return props.data.fields.length;
   }, [props.data.fields]);
 
+  const fieldDisplayType = useMemo(() => {
+    return props.data.fields.reduce(
+      (acc, { config, name }) => {
+        if (config?.custom?.cellOptions?.type) {
+          acc[name] = config.custom.cellOptions.type;
+        }
+        return acc;
+      },
+      {} as Record<string, TableCellDisplayMode>
+    );
+  }, [props.data.fields]);
+
   // Clean up fieldsData to simplify
   const fieldsData = useMemo(
     () => ({
       headersLength,
       textWraps,
       columnTypes,
+      fieldDisplayType,
       columnWidths: getColumnWidths(),
     }),
-    [textWraps, columnTypes, getColumnWidths, headersLength]
+    [textWraps, columnTypes, getColumnWidths, headersLength, fieldDisplayType]
   );
 
   const getDisplayedValue = (row: TableRow, key: string) => {
@@ -753,9 +766,7 @@ export function mapFrameToDataGrid({
         if (isCountRowsSet && fieldIndex === 0) {
           return (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>
-                <Trans i18nKey="grafana-ui.table.count">Count</Trans>
-              </span>
+              <span>{t('grafana-ui.table.count', 'Count')}</span>
               <span>{calcsRef.current[fieldIndex]}</span>
             </div>
           );
