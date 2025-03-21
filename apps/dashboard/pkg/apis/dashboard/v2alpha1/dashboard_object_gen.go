@@ -219,6 +219,7 @@ func (o *Dashboard) Copy() resource.Object {
 }
 
 func (o *Dashboard) DeepCopyObject() runtime.Object {
+	// This really should be deep copy. If the generator tries to change it to o.Copy() it needs to be manually changed back to o.DeepCopy() and this comment added back.
 	return o.DeepCopy()
 }
 
