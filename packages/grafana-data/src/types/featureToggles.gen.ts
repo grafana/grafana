@@ -818,7 +818,6 @@ export interface FeatureToggles {
   unifiedStorageSearchSprinkles?: boolean;
   /**
   * Enable permission filtering on unified storage search
-  * @deprecated
   * @default true
   */
   unifiedStorageSearchPermissionFiltering?: boolean;
