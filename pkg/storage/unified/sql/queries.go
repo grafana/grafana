@@ -190,6 +190,29 @@ func (r sqlResourceListRequest) Validate() error {
 	return nil // TODO
 }
 
+type historyReadRequest struct {
+	Key             *resource.ResourceKey
+	EventType       resource.WatchEvent_Type
+	ResourceVersion int64
+}
+
+type sqlResourceHistoryReadRequest struct {
+	sqltemplate.SQLTemplate
+	Request  *historyReadRequest
+	Response *resource.BackendReadResponse
+}
+
+func (r sqlResourceHistoryReadRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r sqlResourceHistoryReadRequest) Results() (*resource.ResourceWrapper, error) {
+	return &resource.ResourceWrapper{
+		ResourceVersion: r.Response.ResourceVersion,
+		Value:           r.Response.Value,
+	}, nil
+}
+
 type historyListRequest struct {
 	ResourceVersion, Limit, Offset int64
 	Folder                         string
