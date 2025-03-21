@@ -13,7 +13,12 @@ import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, NotFoundError } from './MessageRows';
 import { itemToString } from './filter';
-import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
+import {
+  getComboboxStyles,
+  MENU_ITEM_PADDING,
+  MENU_OPTION_HEIGHT,
+  MENU_OPTION_HEIGHT_DESCRIPTION,
+} from './getComboboxStyles';
 import { ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
@@ -258,11 +263,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         rowVirtualizer.scrollToIndex(highlightedIndex);
       }
     },
-    onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
+    onStateChange: ({ inputValue: newInputValue = '', type, selectedItem: newSelectedItem }) => {
       switch (type) {
         case useCombobox.stateChangeTypes.InputChange:
-          updateOptions(newInputValue ?? '');
-
+          updateOptions(newInputValue);
           break;
         default:
           break;
@@ -270,32 +274,23 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
     stateReducer(state, actionAndChanges) {
       let { changes } = actionAndChanges;
-      const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
-      const menuBeingClosed = state.isOpen === true && changes.isOpen === false;
+      const menuBeingOpened = !state.isOpen && changes.isOpen;
+      const menuBeingClosed = state.isOpen && !changes.isOpen;
 
       // Reset the input value when the menu is opened. If the menu is opened due to an input change
       // then make sure we keep that.
       // This will trigger onInputValueChange to load async options
       if (menuBeingOpened && changes.inputValue === state.inputValue) {
-        changes = {
-          ...changes,
-          inputValue: '',
-        };
+        changes.inputValue = '';
       }
 
       if (menuBeingClosed) {
         // Flush the selected item to the input when the menu is closed
         if (changes.selectedItem) {
-          changes = {
-            ...changes,
-            inputValue: itemToString(changes.selectedItem),
-          };
+          changes.inputValue = itemToString(changes.selectedItem);
         } else if (changes.inputValue !== '') {
           // Otherwise if no selected value, clear any search from the input
-          changes = {
-            ...changes,
-            inputValue: '',
-          };
+          changes.inputValue = '';
         }
       }
 
@@ -422,6 +417,14 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                           })}
                         >
                           <div className={styles.optionBody}>
+                            {item.imgUrl && (
+                              <img
+                                className={styles.icon}
+                                height={virtualRow.size - 2 * MENU_ITEM_PADDING}
+                                width={virtualRow.size - 2 * MENU_ITEM_PADDING}
+                                src={item.imgUrl}
+                              />
+                            )}
                             <span className={styles.optionLabel}>{item.label ?? item.value}</span>
                             {item.description && <span className={styles.optionDescription}>{item.description}</span>}
                           </div>
