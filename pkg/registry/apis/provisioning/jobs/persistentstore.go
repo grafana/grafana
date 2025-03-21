@@ -61,7 +61,7 @@ type Queue interface {
 	Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
 }
 
-var _ Queue = (*store2)(nil)
+var _ Queue = (*persistentStore)(nil)
 
 type jobStorage interface {
 	rest.Creater
@@ -70,11 +70,11 @@ type jobStorage interface {
 	rest.GracefulDeleter
 }
 
-// store2 is a job queue abstraction.
+// persistentStore is a job queue abstraction.
 // It calls out to a real storage implementation to store the jobs, and a separate storage for historic jobs that have been completed.
-// When store2 claims a job, it will update the status of it. This does a ResourceVersion check to ensure it is atomic; if the job has been claimed by another worker, the claim will fail.
+// When persistentStore claims a job, it will update the status of it. This does a ResourceVersion check to ensure it is atomic; if the job has been claimed by another worker, the claim will fail.
 // When a job is completed, it is moved to the historic job store by first deleting it from the job store and then creating it in the historic job store. We are fine with the job being lost if the historic job store fails to create it.
-type store2 struct {
+type persistentStore struct {
 	jobStore               jobStorage
 	jobStatusStore         rest.Updater
 	historicJobStore       rest.Creater
@@ -92,16 +92,16 @@ type store2 struct {
 	notifications chan struct{}
 }
 
-func NewStore2(
+func NewStore(
 	jobStore jobStorage, jobStatusStore rest.Updater,
 	historicJobStore rest.Creater, historicJobStatusStore rest.Updater,
 	expiry time.Duration,
-) (*store2, error) {
+) (*persistentStore, error) {
 	if expiry <= 0 {
 		expiry = time.Second * 30
 	}
 
-	return &store2{
+	return &persistentStore{
 		jobStore:               jobStore,
 		jobStatusStore:         jobStatusStore,
 		historicJobStore:       historicJobStore,
@@ -120,7 +120,7 @@ func NewStore2(
 //
 // If err is not nil, the job and rollback values are always nil.
 // The err may be ErrNoJobs if there are no jobs to claim.
-func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error) {
+func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error) {
 	requirement, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
 	if err != nil {
 		return nil, nil, apifmt.Errorf("could not create requirement: %w", err)
@@ -250,7 +250,7 @@ func (s *store2) Claim(ctx context.Context) (job *provisioning.Job, rollback fun
 }
 
 // Update saves the job back to the store.
-func (s *store2) UpdateStatus(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+func (s *persistentStore) UpdateStatus(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
 	obj, _, err := s.jobStatusStore.Update(ctx,
 		job.GetName(),                      // name
 		rest.DefaultUpdatedObjectInfo(job), // objInfo
@@ -273,7 +273,7 @@ func (s *store2) UpdateStatus(ctx context.Context, job *provisioning.Job) (*prov
 
 // Complete marks a job as completed and moves it to the historic job store.
 // When in the historic store, there is no more claim on the job.
-func (s *store2) Complete(ctx context.Context, job *provisioning.Job) error {
+func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) error {
 	logger := logging.FromContext(ctx).With("namespace", job.GetNamespace(), "job", job.GetName())
 
 	// We need to delete the job from the job store and create it in the historic job store.
@@ -339,7 +339,7 @@ func (s *store2) Complete(ctx context.Context, job *provisioning.Job) error {
 
 // Cleanup should be called periodically to clean up abandoned jobs.
 // An abandoned job is one that has been claimed by a worker, but the worker has not updated the job in a while.
-func (s *store2) Cleanup(ctx context.Context) error {
+func (s *persistentStore) Cleanup(ctx context.Context) error {
 	if err := s.cleanupClaims(ctx); err != nil {
 		return apifmt.Errorf("failed to clean up claims: %w", err)
 	}
@@ -351,7 +351,7 @@ func (s *store2) Cleanup(ctx context.Context) error {
 // Any claim that is older than the expiry time will have their claims removed.
 //
 // This is only necessary because Kubernetes does not support logical OR in label selectors.
-func (s *store2) cleanupClaims(ctx context.Context) error {
+func (s *persistentStore) cleanupClaims(ctx context.Context) error {
 	// We will list all jobs that have been claimed but not updated in a while.
 	// We will then remove the claim from them.
 	// We will not care about the result of the update, as the job may have been completed in the meantime.
@@ -418,7 +418,7 @@ func (s *store2) cleanupClaims(ctx context.Context) error {
 // The job name is not honoured. It will be overwritten with a name that fits the job.
 //
 // This saves it if it is a new job, or fails with `apierrors.IsAlreadyExists(err) == true` if one already exists.
-func (s *store2) Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+func (s *persistentStore) Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
 	s.generateJobName(job) // Side-effect: updates the job's name.
 
 	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})
@@ -443,12 +443,12 @@ func (s *store2) Insert(ctx context.Context, job *provisioning.Job) (*provisioni
 	return created, nil
 }
 
-func (s *store2) InsertNotifications() chan struct{} {
+func (s *persistentStore) InsertNotifications() chan struct{} {
 	return s.notifications
 }
 
 // generateJobName creates and updates the job's name to one that fits it.
-func (s *store2) generateJobName(job *provisioning.Job) {
+func (s *persistentStore) generateJobName(job *provisioning.Job) {
 	switch job.Spec.Action {
 	case provisioning.JobActionMigrate, provisioning.JobActionSync:
 		// Sync and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).

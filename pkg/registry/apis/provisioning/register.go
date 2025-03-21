@@ -337,7 +337,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 	historicJobStatusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, historicJobStore)
 
-	b.jobs, err = jobs.NewStore2(realJobStore, realJobStatusStore, historicJobStore, historicJobStatusStore, time.Second*30)
+	b.jobs, err = jobs.NewStore(realJobStore, realJobStatusStore, historicJobStore, historicJobStatusStore, time.Second*30)
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}

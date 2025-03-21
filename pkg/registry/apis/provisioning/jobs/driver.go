@@ -39,7 +39,7 @@ type Store interface {
 	UpdateStatus(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
 }
 
-var _ Store = (*store2)(nil)
+var _ Store = (*persistentStore)(nil)
 
 // jobDriver drives jobs to completion and manages the job queue.
 // There may be multiple jobDrivers running in parallel.
