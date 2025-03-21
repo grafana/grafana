@@ -342,7 +342,7 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 		rawResourceTypes = append(rawResourceTypes, cloudmigration.MigrateDataType(t))
 	}
 
-	_, err := cloudmigration.ResourceDependency.Parse(rawResourceTypes)
+	resourceTypes, err := cloudmigration.ResourceDependency.Parse(rawResourceTypes)
 	if err != nil {
 		span.SetStatus(codes.Error, "invalid resource types")
 		span.RecordError(err)
@@ -350,7 +350,10 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid resource types", err)
 	}
 
-	ss, err := cma.cloudMigrationService.CreateSnapshot(ctx, c.SignedInUser, uid)
+	ss, err := cma.cloudMigrationService.CreateSnapshot(ctx, c.SignedInUser, cloudmigration.CreateSnapshotCommand{
+		SessionUID:    uid,
+		ResourceTypes: resourceTypes,
+	})
 	if err != nil {
 		span.SetStatus(codes.Error, "error creating snapshot")
 		span.RecordError(err)
