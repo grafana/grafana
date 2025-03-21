@@ -125,7 +125,7 @@ func newClient(opts options.StorageOptions,
 		// Create either a connection pool or a single connection.
 		// The connection pool __can__ be useful when connection to
 		// server side load balancers like kube-proxy.
-		if features.IsEnabledGlobally(featuremgmt.FlagGrpcServer) {
+		if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageGrpcConnectionPool) {
 			conn, err = newResourceClientWithPool(&poolOpts{
 				initialCapacity: 3,
 				maxCapacity:     6,
