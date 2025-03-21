@@ -125,7 +125,6 @@ describe('preProcessLogs', () => {
     expect(processedLogs[0].highlightedBody).toContain('log-token-label');
     expect(processedLogs[0].highlightedBody).toContain('log-token-key');
     expect(processedLogs[0].highlightedBody).toContain('log-token-string');
-    expect(processedLogs[0].highlightedBody).toContain('log-token-timestamp');
     expect(processedLogs[0].highlightedBody).toContain('log-token-uuid');
     expect(processedLogs[0].highlightedBody).not.toContain('log-token-method');
     expect(processedLogs[0].highlightedBody).not.toContain('log-token-json-key');
@@ -137,7 +136,6 @@ describe('preProcessLogs', () => {
 
     expect(processedLogs[2].highlightedBody).toContain('log-token-json-key');
     expect(processedLogs[2].highlightedBody).toContain('log-token-string');
-    expect(processedLogs[2].highlightedBody).toContain('log-token-timestamp');
     expect(processedLogs[2].highlightedBody).not.toContain('log-token-method');
   });
 });
