@@ -6,6 +6,8 @@ import { useMeasure } from 'react-use';
 
 import {
   DataFrame,
+  DataHoverClearEvent,
+  DataHoverEvent,
   Field,
   fieldReducers,
   FieldType,
@@ -20,6 +22,7 @@ import { Trans } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
+import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 
 import { HeaderCell } from './Cells/HeaderCell';
@@ -62,6 +65,8 @@ export function TableNG(props: TableNGProps) {
     noHeader,
     onColumnResize,
     width,
+    data,
+    enableSharedCrosshair,
   } = props;
 
   /* ------------------------------- Local state ------------------------------ */
@@ -100,6 +105,7 @@ export function TableNG(props: TableNGProps) {
 
   const theme = useTheme2();
   const styles = useStyles2(getStyles, textWrap);
+  const panelContext = usePanelContext();
 
   const isFooterVisible = Boolean(footerOptions?.show && footerOptions.reducer?.length);
   const isCountRowsSet = Boolean(
@@ -451,7 +457,10 @@ export function TableNG(props: TableNGProps) {
         rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
         // TODO: This doesn't follow current table behavior
         style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
-        renderers={{ renderRow: (key, props) => myRowRenderer(key, props, expandedRows) }}
+        renderers={{
+          renderRow: (key, props) =>
+            myRowRenderer(key, props, expandedRows, panelContext, data, enableSharedCrosshair ?? false),
+        }}
         onScroll={handleScroll}
         onCellContextMenu={({ row, column }, event) => {
           event.preventGridDefault();
@@ -762,7 +771,10 @@ export function mapFrameToDataGrid({
 export function myRowRenderer(
   key: React.Key,
   props: RenderRowProps<TableRow, TableSummaryRow>,
-  expandedRows: number[]
+  expandedRows: number[],
+  panelContext: PanelContext,
+  data: DataFrame,
+  enableSharedCrosshair: boolean
 ): React.ReactNode {
   // Let's render row level things here!
   // i.e. we can look at row styles and such here
@@ -780,7 +792,42 @@ export function myRowRenderer(
     return <Row key={key} {...props} aria-expanded={isExpanded} />;
   }
 
-  return <Row key={key} {...props} />;
+  return (
+    <Row
+      key={key}
+      {...props}
+      onMouseEnter={() => onRowHover(rowIdx, panelContext, data, enableSharedCrosshair)}
+      onMouseLeave={() => onRowLeave(panelContext, enableSharedCrosshair)}
+    />
+  );
+}
+
+export function onRowHover(idx: number, panelContext: PanelContext, frame: DataFrame, enableSharedCrosshair: boolean) {
+  if (!enableSharedCrosshair) {
+    return;
+  }
+
+  const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
+
+  if (!timeField) {
+    return;
+  }
+
+  panelContext.eventBus.publish(
+    new DataHoverEvent({
+      point: {
+        time: timeField.values[idx],
+      },
+    })
+  );
+}
+
+export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: boolean) {
+  if (!enableSharedCrosshair) {
+    return;
+  }
+
+  panelContext.eventBus.publish(new DataHoverClearEvent());
 }
 
 const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({

@@ -1,9 +1,11 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 
-import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame, EventBus } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { TableNG } from './TableNG';
+import { PanelContext } from '../../PanelChrome';
+
+import { TableNG, onRowHover, onRowLeave } from './TableNG';
 
 // Create a basic data frame for testing
 const createBasicDataFrame = (): DataFrame => {
@@ -232,6 +234,43 @@ const createSortingTestDataFrame = (): DataFrame => {
         }),
         state: {},
         getLinks: () => [],
+      },
+    ],
+  });
+
+  return applyFieldOverrides({
+    data: [frame],
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    replaceVariables: (value) => value,
+    timeZone: 'utc',
+    theme: createTheme(),
+  })[0];
+};
+
+// Create a data frame with time field for testing crosshair sharing functionality
+const createTimeDataFrame = (): DataFrame => {
+  const frame = toDataFrame({
+    name: 'TimeTestData',
+    length: 3,
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        values: [
+          new Date('2024-03-20T10:00:00Z').getTime(),
+          new Date('2024-03-20T10:01:00Z').getTime(),
+          new Date('2024-03-20T10:02:00Z').getTime(),
+        ],
+        config: { custom: {} },
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        values: [1, 2, 3],
+        config: { custom: {} },
       },
     ],
   });
@@ -1354,6 +1393,93 @@ describe('TableNG', () => {
     });
   });
 
+  describe('Row hover functionality for shared crosshair', () => {
+    const mockEventBus: EventBus = {
+      publish: jest.fn(),
+      getStream: jest.fn(),
+      subscribe: jest.fn(),
+      removeAllListeners: jest.fn(),
+      newScopedBus: jest.fn(),
+    };
+
+    const mockPanelContext: PanelContext = {
+      eventsScope: 'test',
+      eventBus: mockEventBus,
+      onSeriesColorChange: jest.fn(),
+      onToggleSeriesVisibility: jest.fn(),
+      canAddAnnotations: jest.fn(),
+      canEditAnnotations: jest.fn(),
+      canDeleteAnnotations: jest.fn(),
+      onAnnotationCreate: jest.fn(),
+      onAnnotationUpdate: jest.fn(),
+      onAnnotationDelete: jest.fn(),
+      onSelectRange: jest.fn(),
+      onAddAdHocFilter: jest.fn(),
+      canEditThresholds: false,
+      showThresholds: false,
+      onThresholdsChange: jest.fn(),
+      instanceState: {},
+      onInstanceStateChange: jest.fn(),
+      onToggleLegendSort: jest.fn(),
+      onUpdateData: jest.fn(),
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should publish DataHoverEvent when hovering over a row with time field', () => {
+      const frame = createTimeDataFrame();
+      const idx = 1;
+
+      onRowHover(idx, mockPanelContext, frame, true);
+
+      expect(mockEventBus.publish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: {
+            point: {
+              time: new Date('2024-03-20T10:01:00Z').getTime(),
+            },
+          },
+          type: 'data-hover',
+        })
+      );
+    });
+
+    it('should not publish DataHoverEvent when enableSharedCrosshair is false', () => {
+      const frame = createTimeDataFrame();
+      const idx = 1;
+
+      onRowHover(idx, mockPanelContext, frame, false);
+
+      expect(mockEventBus.publish).not.toHaveBeenCalled();
+    });
+
+    it('should not publish DataHoverEvent when time field is not present', () => {
+      const frame = createBasicDataFrame();
+      const idx = 1;
+
+      onRowHover(idx, mockPanelContext, frame, true);
+
+      expect(mockEventBus.publish).not.toHaveBeenCalled();
+    });
+
+    it('should publish DataHoverClearEvent when leaving a row', () => {
+      onRowLeave(mockPanelContext, true);
+
+      expect(mockEventBus.publish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'data-hover-clear',
+        })
+      );
+    });
+
+    it('should not publish DataHoverClearEvent when enableSharedCrosshair is false', () => {
+      onRowLeave(mockPanelContext, false);
+
+      expect(mockEventBus.publish).not.toHaveBeenCalled();
+    });
+  });
   describe('scroll position persistence', () => {
     it('should persist scroll position after revId change', () => {
       const data = createBasicDataFrame();
