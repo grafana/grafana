@@ -869,7 +869,7 @@ The interval string must include a unit suffix (ms, s, m, h), e.g. 30s or 1m.
 #### `batch_size`
 
 Number of deleted dashboards to process in each batch during the cleanup process.
-Default: `10`, Minimum: `5`, Maximum: `1000`.
+Default: `10`, Minimum: `5`, Maximum: `200`.
 
 Increasing this value allows processing more dashboards in each cleanup cycle but may impact system performance.
 
