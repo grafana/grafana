@@ -2589,20 +2589,37 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 		sqlStore, _ := sqlstore.InitTestDB(t)
 		lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
 
+		cfg := setting.NewCfg()
+		cfg.K8sDashboardCleanup = setting.K8sDashboardCleanupSettings{
+			Interval:  30 * time.Second,
+			Timeout:   25 * time.Second,
+			BatchSize: 10,
+		}
+
 		service := &DashboardServiceImpl{
-			cfg:               setting.NewCfg(),
+			cfg:               cfg,
 			log:               log.New("test.logger"),
 			features:          featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 			serverLockService: lockService,
 		}
 
-		// Start job
-		service.startK8sDeletedDashboardsCleanupJob()
-		require.NotNil(t, service.k8sDeletedDashboardsCleanupJob)
-		require.NotNil(t, service.k8sDeletedDashboardsCleanupJob.stop)
+		// Create a test context that can be canceled
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-		// Stop job
-		service.k8sDeletedDashboardsCleanupJob.Stop()
+		// Start job with the context
+		done := service.startK8sDeletedDashboardsCleanupJob(ctx)
+
+		// Cancel context to verify graceful shutdown
+		cancel()
+
+		// Wait for goroutine to exit instead of using sleep
+		select {
+		case <-done:
+			// Job exited successfully
+		case <-time.After(time.Second):
+			t.Fatal("Cleanup job didn't exit within timeout")
+		}
 	})
 }
 
