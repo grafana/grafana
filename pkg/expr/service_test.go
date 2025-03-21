@@ -99,6 +99,88 @@ func TestService(t *testing.T) {
 	}
 }
 
+func TestService_ConvertToFullLong_doesNotConvertMissingLabelToEmptyString(t *testing.T) {
+	// Represents a Prom query, Type: Instant, Format: Table, where one of the labels is sparse
+	// Dataplane type currently Multi (although we plan to move it to Long)
+	// example Prometheus query to force a sparse label:
+	//     sum by(host, sparse_label) (metric_name{host="dummy_a"})
+	//     or
+	//     sum by(host) (metric_name{host="dummy_b"})
+	// example output data:
+	//     "Time","host","sparse_label","Value"
+	//     0,dummy_a,label_value_present,13
+	//     0,dummy_b,,17
+
+	times := []time.Time{
+		time.Unix(0, 0),
+	}
+
+	input := data.Frames{
+		data.NewFrame("frame1",
+			data.NewField("ts", nil, times),
+			data.NewField("value", data.Labels{"host": "dummy_a", "sparse_label": "label_value_present"}, []float64{13}),
+		),
+		data.NewFrame("frame1",
+			data.NewField("ts", nil, times),
+			data.NewField("value", data.Labels{"host": "dummy_b"}, []float64{17}),
+		),
+	}
+
+	// expected := data.NewFrame("result",
+	// 	data.NewField("ts", nil, []time.Time{}),
+	// 	data.NewField("host", nil, []string{}),
+	// 	data.NewField("sparse_label", nil, []string{}),
+	// 	data.NewField("value", nil, []float64{}),
+	// )
+
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: input},
+	}
+
+	// Select all rows where sparse_label is an empty string
+	// We want no rows to be returned, as we want the value to be NULL instead
+	// sqlQuery := "SELECT * FROM A WHERE sparse_label = \"\""
+
+	queries := []Query{
+		{
+			RefID: "A",
+			DataSource: &datasources.DataSource{
+				OrgID: 1,
+				UID:   "test",
+				Type:  "test",
+			},
+			JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange: AbsoluteTimeRange{
+				From: time.Time{},
+				To:   time.Time{},
+			},
+		},
+		{
+			RefID:      "B",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "SELECT * FROM A" }`),
+			TimeRange: AbsoluteTimeRange{
+				From: time.Time{},
+				To:   time.Time{},
+			},
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+
+	// Enable SQL expressions feature flag for this test
+	s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+	s.converter.Features = s.features
+
+	pl, err := s.BuildPipeline(req)
+	require.NoError(t, err)
+
+	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	require.NoError(t, err)
+
+	require.Equal(t, 0, len(res.Responses["B"].Frames))
+}
+
 func TestDSQueryError(t *testing.T) {
 	resp := map[string]backend.DataResponse{
 		"A": {Error: fmt.Errorf("womp womp")},

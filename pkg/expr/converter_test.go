@@ -28,7 +28,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 	t.Run("should add name label if no labels and specific data source", func(t *testing.T) {
 		supported := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA}
 		t.Run("when only field name is specified", func(t *testing.T) {
-			t.Run("use value field names if one frame - many series", func(t *testing.T) {
+			t.Run("use value field names if one frame - many series (ie. Wide format)", func(t *testing.T) {
 				supported := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA}
 
 				frames := []*data.Frame{
@@ -42,6 +42,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 					t.Run(dtype, func(t *testing.T) {
 						resultType, res, err := converter.Convert(context.Background(), dtype, frames)
 						require.NoError(t, err)
+						// What actually is a "single frame series"?
 						assert.Equal(t, "single frame series", resultType)
 						require.Len(t, res.Values, 2)
 
@@ -118,4 +119,36 @@ func TestConvertDataFramesToResults(t *testing.T) {
 			}
 		})
 	})
+}
+
+func TestNumericFullLongToNumberSetWithSparseLabels(t *testing.T) {
+	// Create a frame with a numeric column and string columns, one of which has sparse values
+	frame := data.NewFrame("test",
+		data.NewField("value", nil, []float64{13, 17}),
+		data.NewField("host", nil, []*string{stringPtr("dummy_a"), stringPtr("dummy_b")}),
+		data.NewField("sparse_label", nil, []*string{
+			stringPtr("label_value_present"),
+			nil, // This label is not present for the second row
+		}),
+	)
+
+	// Run the NumericFullLongToNumberSet function
+	numbers, err := NumericFullLongToNumberSet(frame)
+	require.NoError(t, err)
+	require.Len(t, numbers, 2)
+
+	// Check the first row - should have both labels
+	require.Equal(t, float64(13), *numbers[0].GetFloat64Value())
+	labels1 := numbers[0].GetLabels()
+	require.Equal(t, "dummy_a", labels1["host"])
+	require.Equal(t, "label_value_present", labels1["sparse_label"])
+
+	// Check the second row - should only have the 'host' label
+	require.Equal(t, float64(17), *numbers[1].GetFloat64Value())
+	labels2 := numbers[1].GetLabels()
+	require.Equal(t, "dummy_b", labels2["host"])
+
+	// Verify sparse_label is not present in second row's labels
+	_, hasLabel := labels2["sparse_label"]
+	require.False(t, hasLabel, "sparse_label should not be present in second row's labels")
 }

@@ -243,6 +243,47 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 	return numbers, nil
 }
 
+func NumericFullLongToNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
+	numericField := 0
+	stringFieldIdxs := []int{}
+	stringFieldNames := []string{}
+	for i, field := range frame.Fields {
+		fType := field.Type()
+		switch {
+		case fType.Numeric():
+			numericField = i
+		case fType == data.FieldTypeString || fType == data.FieldTypeNullableString:
+			stringFieldIdxs = append(stringFieldIdxs, i)
+			stringFieldNames = append(stringFieldNames, field.Name)
+		}
+	}
+	numbers := make([]mathexp.Number, frame.Rows())
+
+	for rowIdx := 0; rowIdx < frame.Rows(); rowIdx++ {
+		val, _ := frame.FloatAt(numericField, rowIdx)
+		var labels data.Labels
+		for i := 0; i < len(stringFieldIdxs); i++ {
+			if i == 0 {
+				labels = make(data.Labels)
+			}
+			key := stringFieldNames[i] // TODO check for duplicate string column names
+			val, _ := frame.ConcreteAt(stringFieldIdxs[i], rowIdx)
+			if val != nil {
+				labels[key] = val.(string) // TODO check assertion / return error
+			}
+		}
+
+		n := mathexp.NewNumber(frame.Fields[numericField].Name, labels)
+
+		// The new value fields' configs gets pointed to the one in the original frame
+		n.Frame.Fields[0].Config = frame.Fields[numericField].Config
+		n.SetValue(&val)
+
+		numbers[rowIdx] = n
+	}
+	return numbers, nil
+}
+
 // WideToMany converts a data package wide type Frame to one or multiple Series. A series
 // is created for each value type column of wide frame.
 //
