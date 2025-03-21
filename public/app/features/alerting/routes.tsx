@@ -1,3 +1,5 @@
+import { Navigate } from 'react-router-dom-v5-compat';
+
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
@@ -208,6 +210,19 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "HistoryPage" */ 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistoryPage'
           )
       ),
+    },
+    {
+      path: '/alerting/trash/',
+      roles: () => ['Admin'],
+      component:
+        config.featureToggles.alertRuleRestore && config.featureToggles.alertingRuleRecoverDeleted
+          ? SafeDynamicImport(
+              () =>
+                import(
+                  /* webpackChunkName: "TrashPage" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
+                )
+            )
+          : () => <Navigate replace to="/alerting/list" />,
     },
     {
       path: '/alerting/new/:type?',

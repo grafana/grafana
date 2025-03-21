@@ -974,4 +974,8 @@ const (
 	// FlagUnifiedStorageHistoryPruner
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
+
+	// FlagAlertingRuleRecoverDeleted
+	// Enables the UI functionality to recover and view deleted alert rules
+	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
 )

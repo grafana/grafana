@@ -283,7 +283,11 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     deleteRuleGroupFromNamespace: build.mutation<
       RulerRuleGroupDTO,
-      WithNotificationOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
+      WithNotificationOptions<{
+        rulerConfig: RulerDataSourceConfig;
+        namespace: string;
+        group: string;
+      }>
     >({
       query: ({ rulerConfig, namespace, group, notificationOptions }) => {
         const successMessage = t('alerting.rule-groups.delete.success', 'Successfully deleted rule group');
@@ -412,6 +416,12 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         responseType: 'text',
       }),
       keepUnusedDataFor: 0,
+    }),
+    getDeletedRules: build.query<RulerRulesConfigDTO, {}>({
+      query: () => ({
+        url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rules/`,
+        params: { deleted: 'true' },
+      }),
     }),
   }),
 });

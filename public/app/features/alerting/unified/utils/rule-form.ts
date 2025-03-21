@@ -32,6 +32,7 @@ import {
   Labels,
   PostableRuleGrafanaRuleDTO,
   RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
@@ -362,6 +363,59 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     } else {
       throw new Error('Unexpected type of rule for cloud rules source');
     }
+  }
+}
+
+export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace: string): RuleFormValues {
+  const defaultFormValues = getDefaultFormValues();
+
+  const ga = rule.grafana_alert;
+  const duration = rule.for;
+  const annotations = rule.annotations;
+  const labels = rule.labels;
+  if (rulerRuleType.grafana.rule(rule)) {
+    // grafana recording rule
+    return {
+      ...defaultFormValues,
+      name: ga.title,
+      type: RuleFormType.grafanaRecording,
+      group: ga.rule_group,
+      // evaluateEvery: ga. || defaultFormValues.evaluateEvery, // todo ???
+      queries: ga.data,
+      condition: ga.condition,
+      annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
+      labels: listifyLabelsOrAnnotations(rule.labels, true),
+      folder: { title: namespace, uid: ga.namespace_uid },
+      isPaused: ga.is_paused,
+      metric: ga.record?.metric,
+    };
+  }
+  // grafana alerting rule
+  const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
+  if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
+    return {
+      ...defaultFormValues,
+      name: ga.title,
+      type: RuleFormType.grafana,
+      group: ga.rule_group,
+      // evaluateEvery: group.interval || defaultFormValues.evaluateEvery, // todo ????
+      evaluateFor: duration || '0',
+      noDataState: ga.no_data_state,
+      execErrState: ga.exec_err_state,
+      queries: ga.data,
+      condition: ga.condition,
+      annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(annotations, false)),
+      labels: listifyLabelsOrAnnotations(labels, true),
+      folder: { title: namespace, uid: ga.namespace_uid },
+      isPaused: ga.is_paused,
+
+      contactPoints: routingSettings,
+      manualRouting: Boolean(routingSettings),
+
+      editorSettings: getEditorSettingsFromDTO(ga),
+    };
+  } else {
+    throw new Error('Unexpected type of rule for grafana rules source');
   }
 }
 

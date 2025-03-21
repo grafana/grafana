@@ -1060,4 +1060,9 @@ export interface FeatureToggles {
   * Enables the unified storage history pruner
   */
   unifiedStorageHistoryPruner?: boolean;
+  /**
+  * Enables the UI functionality to recover and view deleted alert rules
+  * @default true
+  */
+  alertingRuleRecoverDeleted?: boolean;
 }

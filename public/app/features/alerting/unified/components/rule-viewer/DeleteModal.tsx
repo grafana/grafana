@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { EditableRuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
@@ -25,6 +25,8 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<DeleteRuleInfo>();
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const { waitForRemoval } = usePrometheusConsistencyCheck();
+  const isSoftDeleteEnabled =
+    config.featureToggles.alertRuleRestore && config.featureToggles.alertingRuleRecoverDeleted;
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);
@@ -69,14 +71,18 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
       <ConfirmModal
         isOpen={Boolean(ruleToDelete)}
         title="Delete rule"
-        body="Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
+        body={
+          isSoftDeleteEnabled
+            ? 'Are you sure you want to delete this rule? This rule will be recoverable from the trash page.'
+            : 'Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?'
+        }
         confirmText="Yes, delete"
         icon="exclamation-triangle"
         onConfirm={deleteRule}
         onDismiss={dismissModal}
       />
     ),
-    [ruleToDelete, deleteRule, dismissModal]
+    [ruleToDelete, deleteRule, dismissModal, isSoftDeleteEnabled]
   );
 
   return [modal, showModal, dismissModal];
