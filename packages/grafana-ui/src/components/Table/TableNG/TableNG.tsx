@@ -79,7 +79,7 @@ export function TableNG(props: TableNGProps) {
   const [page, setPage] = useState(0);
   // This state will trigger re-render for recalculating row heights
   const [, setResizeTrigger] = useState(0);
-  const [readyForRowHeightCalc, setReadyForRowHeightCalc] = useState(false);
+  const [_, setReadyForRowHeightCalc] = useState(false);
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
@@ -177,22 +177,20 @@ export function TableNG(props: TableNGProps) {
     // Set default widths from field config if they exist
     props.data.fields.forEach(({ name, config }) => {
       const configWidth = config?.custom?.width;
-      widths[name] = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH;
+      widths[name] = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH - TABLE.CELL_PADDING * 2;
     });
 
-    if (readyForRowHeightCalc) {
-      // Measure actual widths if available
-      Object.keys(headerCellRefs.current).forEach((key) => {
-        const headerCell = headerCellRefs.current[key];
+    // Measure actual widths if available
+    Object.keys(headerCellRefs.current).forEach((key) => {
+      const headerCell = headerCellRefs.current[key];
 
-        if (headerCell.offsetWidth > 0) {
-          widths[key] = headerCell.offsetWidth;
-        }
-      });
-    }
+      if (headerCell.offsetWidth > 0) {
+        widths[key] = headerCell.offsetWidth;
+      }
+    });
 
     return widths;
-  }, [props.data.fields, readyForRowHeightCalc]);
+  }, [props.data.fields]);
 
   const headersLength = useMemo(() => {
     return props.data.fields.length;
@@ -408,8 +406,8 @@ export function TableNG(props: TableNGProps) {
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
-    setReadyForRowHeightCalc(Object.keys(headerCellRefs.current).length === headersLength);
-  }, [headersLength]);
+    setReadyForRowHeightCalc(Object.keys(headerCellRefs.current).length > 0);
+  }, [columns]);
 
   const renderMenuItems = () => {
     return (
@@ -441,7 +439,7 @@ export function TableNG(props: TableNGProps) {
         avgCharWidth,
         defaultLineHeight,
         defaultRowHeight,
-        TABLE.CELL_PADDING + 8,
+        TABLE.CELL_PADDING * 2,
         fieldsData
       );
     },
@@ -459,10 +457,7 @@ export function TableNG(props: TableNGProps) {
           rows={enablePagination ? paginatedRows : sortedRows}
           columns={columns}
           headerRowHeight={noHeader ? 0 : undefined}
-          defaultColumnOptions={{
-            sortable: true,
-            resizable: true,
-          }}
+          defaultColumnOptions={{ sortable: true, resizable: true }}
           rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
           // TODO: This doesn't follow current table behavior
           style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
