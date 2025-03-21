@@ -179,7 +179,7 @@ export class ShareLink extends PureComponent<Props, State> {
             title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
             bottomSpacing={0}
           >
-            <Trans id="share-modal.link.render-instructions">
+            <Trans i18nKey="share-modal.link.render-instructions">
               {/* @PERCONA */}
               {/* We modified this text and link */}
               To render a panel image, you must install the&nbsp;

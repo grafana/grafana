@@ -29,7 +29,6 @@ import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
 import { EvaluationGroupQuickPick } from '../rule-editor/EvaluationGroupQuickPick';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
-import { checkForPathSeparator } from '../rule-editor/util';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -301,11 +300,6 @@ export function EditRuleGroupModal(props: ModalProps): React.ReactElement {
                     readOnly={intervalEditOnly || isGrafanaManagedGroup}
                     {...register('namespaceName', {
                       required: 'Namespace name is required.',
-                      validate: {
-                        // for Grafana-managed we do not validate the name of the folder because we use the UID anyway
-                        pathSeparator: (namespaceName) =>
-                          isGrafanaManagedGroup ? true : checkForPathSeparator(namespaceName),
-                      },
                     })}
                   />
                 </Field>
@@ -338,9 +332,6 @@ export function EditRuleGroupModal(props: ModalProps): React.ReactElement {
                 readOnly={intervalEditOnly}
                 {...register('groupName', {
                   required: 'Evaluation group name is required.',
-                  validate: {
-                    pathSeparator: (namespace) => checkForPathSeparator(namespace),
-                  },
                 })}
               />
             </Field>
