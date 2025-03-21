@@ -716,7 +716,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 		}
 
 		// Log the migration for debugging purposes
-		b.log.Info("Old client request received, migrating from version_match to version_match_v2",
+		b.log.Debug("Old client request received, migrating from version_match to version_match_v2",
 			"oldValue", req.GetVersionMatch(),
 			"newValue", req.GetVersionMatchV2())
 	}
