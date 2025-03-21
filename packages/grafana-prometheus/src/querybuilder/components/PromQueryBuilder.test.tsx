@@ -89,7 +89,7 @@ describe('PromQueryBuilder', () => {
   it('tries to load metrics without labels', async () => {
     const { languageProvider, container } = setup();
     await openMetricSelect(container);
-      await waitFor(() => expect(languageProvider.getLabelValues).toHaveBeenCalledWith(expect.anything(), '__name__'));
+    await waitFor(() => expect(languageProvider.getLabelValues).toHaveBeenCalledWith(expect.anything(), '__name__'));
   });
 
   it('tries to load metrics with labels', async () => {
