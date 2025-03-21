@@ -657,12 +657,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "kubernetesRestore",
-			Description: "Allow restoring objects in k8s",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:        "kubernetesClientDashboardsFolders",
 			Description: "Route the folder and dashboard service requests to k8s",
 			Stage:       FeatureStageExperimental,
@@ -1831,6 +1825,14 @@ var (
 		{
 			Name:              "unifiedStorageHistoryPruner",
 			Description:       "Enables the unified storage history pruner",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "unifiedStorageGrpcConnectionPool",
+			Description:       "Enables the unified storage grpc connection pool",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,

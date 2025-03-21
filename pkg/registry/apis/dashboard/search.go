@@ -459,7 +459,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	if folderUidIdx == -1 {
-		return sharedDashboards, fmt.Errorf("Error retrieving folder information")
+		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
 	// populate list of unique folder UIDs in the list of dashboards user has read permissions
