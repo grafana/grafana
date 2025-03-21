@@ -31,7 +31,6 @@ import {
   getCellHeight,
   getCellLinks,
   getCellOptions,
-  getColumnWidth,
   getComparator,
   getDefaultRowHeight,
   getFooterItemNG,
@@ -1505,70 +1504,6 @@ describe('TableNG utils', () => {
 
       // Empty text should return default height
       expect(height).toBe(defaultRowHeight);
-    });
-  });
-
-  describe('getColumnWidth', () => {
-    // Create a basic field config source
-    const createFieldConfig = () => ({
-      defaults: {
-        custom: {},
-      },
-      overrides: [],
-    });
-
-    it('should return fixed width when specified in field config', () => {
-      const field: Field = {
-        name: 'test',
-        type: FieldType.string,
-        config: {
-          custom: {
-            width: 150, // Fixed width in pixels
-          },
-        },
-        values: [],
-      };
-
-      const fieldConfig = createFieldConfig();
-      const width = getColumnWidth(field, fieldConfig, 'auto');
-      expect(width).toBe(150);
-    });
-
-    it('should use default min width when not specified', () => {
-      const field: Field = {
-        name: 'test',
-        type: FieldType.string,
-        config: {
-          custom: {
-            width: 50, // Width smaller than default min width
-          },
-        },
-        values: [],
-      };
-
-      const fieldConfig = createFieldConfig();
-      const width = getColumnWidth(field, fieldConfig, 'auto');
-      // Should use default min width (likely COLUMN.MIN_WIDTH)
-      expect(width).toBeGreaterThanOrEqual(50);
-    });
-
-    it('should default to auto when no width is specified', () => {
-      const field: Field = {
-        name: 'test',
-        type: FieldType.string,
-        config: {
-          custom: {
-            // No width specified
-          },
-        },
-        values: [],
-      };
-
-      const fieldConfig = createFieldConfig();
-
-      // When width is not provided
-      const widthWithoutDefault = getColumnWidth(field, fieldConfig, '');
-      expect(widthWithoutDefault).toBe('auto');
     });
   });
 

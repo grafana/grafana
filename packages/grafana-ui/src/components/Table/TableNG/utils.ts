@@ -27,7 +27,7 @@ import {
 import { TableCellInspectorMode } from '../..';
 import { getTextColorForAlphaBackground } from '../../../utils';
 
-import { TABLE, COLUMN } from './constants';
+import { TABLE } from './constants';
 import {
   CellColors,
   TableRow,
@@ -185,35 +185,6 @@ export function shouldTextOverflow(
   }
 
   return false;
-}
-
-export function getColumnWidth(field: Field, fieldConfig: TableNGProps['fieldConfig'], key: string): number | string {
-  const override = fieldConfig?.overrides
-    ?.find(({ matcher: { id, options } }) => id === 'byName' && options === key)
-    ?.properties?.find(({ id }) => id === 'custom.width');
-
-  const overrideWidth = override?.value ?? (override ? 'auto' : undefined);
-
-  return overrideWidth ?? field.config?.custom?.width ?? fieldConfig?.defaults?.custom?.width ?? 'auto';
-}
-
-export function getColumnMinWidth(field: Field, fieldConfig: TableNGProps['fieldConfig'], key: string): number {
-  // The 'minWidth' is applied only when:
-  // - The field's 'width' is overridden or set to 'auto' by default.
-  // Otherwise, the current or overridden 'width' is used.
-
-  const override = fieldConfig?.overrides
-    ?.find(({ matcher: { id, options } }) => id === 'byName' && options === key)
-    ?.properties?.find(({ id }) => id === 'custom.minWidth');
-
-  const overriddenMinWidth = override?.value ?? (override ? COLUMN.DEFAULT_WIDTH : undefined);
-
-  return (
-    overriddenMinWidth ??
-    field.config?.custom?.minWidth ??
-    fieldConfig?.defaults?.custom?.minWidth ??
-    COLUMN.DEFAULT_WIDTH
-  );
 }
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
