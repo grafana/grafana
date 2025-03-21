@@ -3,6 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Field, Input, Select } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { FolderSelector } from 'app/features/alerting/unified/components/rule-editor/FolderSelector';
 import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
 import { durationValidationPattern, parseDurationToMilliseconds } from 'app/features/alerting/unified/utils/time';
 import {
@@ -16,7 +17,7 @@ import { useDispatch, useSelector } from 'app/types';
 import { TemplatedAlertFormValues } from '../../types';
 
 import { AdvancedRuleSection } from './AdvancedRuleSection/AdvancedRuleSection';
-import { EvaluateEvery } from './EvaluateEvery/EvaluateEvery';
+import EvaluationGroup from './EvaluationGroup/EvaluationGroup';
 import TemplateFiltersField from './TemplateFiltersField';
 import { SEVERITY_OPTIONS } from './TemplateForm.constants';
 import { Messages } from './TemplateForm.messages';
@@ -214,10 +215,9 @@ export const TemplateForm: FC = () => {
         />
       </Field>
 
-      {/* @TODO */}
-      {/* <FolderAndGroup enableProvisionedGroups /> */}
+      <FolderSelector />
 
-      <EvaluateEvery />
+      <EvaluationGroup />
 
       <TemplateFiltersField />
 
