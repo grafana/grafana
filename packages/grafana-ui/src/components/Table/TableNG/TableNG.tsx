@@ -16,6 +16,7 @@ import {
   GrafanaTheme2,
   ReducerID,
 } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { Trans } from '../../../utils/i18n';
@@ -669,7 +670,7 @@ export function mapFrameToDataGrid({
       cellClass: styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
         const { row, rowIdx } = props;
-        const cellType = field.config?.custom?.cellOptions.type;
+        const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
         const value = row[key];
         // Cell level rendering here
         return (
