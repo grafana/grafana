@@ -273,9 +273,10 @@ var (
 		{
 			Name:         "prometheusRunQueriesInParallel",
 			Description:  "Enables running Prometheus queries in parallel",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false,
 			Owner:        grafanaOSSBigTent,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "lokiLogsDataplane",
@@ -375,14 +376,14 @@ var (
 		{
 			Name:         "frontendSandboxMonitorOnly",
 			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:         "pluginsDetailsRightPanel",
 			Description:  "Enables right panel for the plugins details page",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
@@ -654,12 +655,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:        "kubernetesRestore",
-			Description: "Allow restoring objects in k8s",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
 		},
 		{
 			Name:        "kubernetesClientDashboardsFolders",
@@ -949,6 +944,12 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true",
+		},
+		{
+			Name:        "secretsManagementAppPlatform",
+			Description: "Enable the secrets management API and services under app platform",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
 			Name:         "alertingSaveStatePeriodic",
@@ -1414,8 +1415,9 @@ var (
 		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "false", // disabled by default
 		},
 		{
 			Name:        "unifiedStorageBigObjectsSupport",
@@ -1817,6 +1819,14 @@ var (
 			FrontendOnly:      true,
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "unifiedStorageHistoryPruner",
+			Description:       "Enables the unified storage history pruner",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},

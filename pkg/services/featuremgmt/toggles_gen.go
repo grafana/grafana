@@ -355,10 +355,6 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
-	// FlagKubernetesRestore
-	// Allow restoring objects in k8s
-	FlagKubernetesRestore = "kubernetesRestore"
-
 	// FlagKubernetesClientDashboardsFolders
 	// Route the folder and dashboard service requests to k8s
 	FlagKubernetesClientDashboardsFolders = "kubernetesClientDashboardsFolders"
@@ -510,6 +506,10 @@ const (
 	// FlagOnPremToCloudMigrations
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
+
+	// FlagSecretsManagementAppPlatform
+	// Enable the secrets management API and services under app platform
+	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
 
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
@@ -970,4 +970,8 @@ const (
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
+
+	// FlagUnifiedStorageHistoryPruner
+	// Enables the unified storage history pruner
+	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
 )

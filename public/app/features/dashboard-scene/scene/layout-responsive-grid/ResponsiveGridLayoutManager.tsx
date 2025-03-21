@@ -1,4 +1,4 @@
-import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -10,10 +10,11 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
+import { ResponsiveGridLayout } from './ResponsiveGridLayout';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
-  layout: SceneCSSGridLayout;
+  layout: ResponsiveGridLayout;
 }
 
 export class ResponsiveGridLayoutManager
@@ -26,15 +27,15 @@ export class ResponsiveGridLayoutManager
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
-      return t('dashboard.responsive-layout.name', 'Auto');
+      return t('dashboard.responsive-layout.name', 'Auto grid');
     },
     get description() {
-      return t('dashboard.responsive-layout.description', 'Automatically positions panels into a grid.');
+      return t('dashboard.responsive-layout.description', 'Panels resize to fit and form uniform grids');
     },
     id: 'responsive-grid',
     createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
-
     kind: 'ResponsiveGridLayout',
+    isGridLayout: true,
   };
 
   public readonly descriptor = ResponsiveGridLayoutManager.descriptor;
@@ -69,6 +70,23 @@ export class ResponsiveGridLayoutManager
     const element = panel.parent;
     this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
     this.publishEvent(new ObjectRemovedFromCanvasEvent(panel), true);
+  }
+
+  public duplicate(): DashboardLayoutManager {
+    return this.clone({
+      key: undefined,
+      layout: this.state.layout.clone({
+        key: undefined,
+        children: this.state.layout.state.children.map((child) =>
+          child.clone({
+            key: undefined,
+            body: child.state.body.clone({
+              key: getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(child.state.body)),
+            }),
+          })
+        ),
+      }),
+    });
   }
 
   public duplicatePanel(panel: VizPanel) {
@@ -149,7 +167,7 @@ export class ResponsiveGridLayoutManager
 
   public static createEmpty(): ResponsiveGridLayoutManager {
     return new ResponsiveGridLayoutManager({
-      layout: new SceneCSSGridLayout({
+      layout: new ResponsiveGridLayout({
         children: [],
         templateColumns: ResponsiveGridLayoutManager.defaultCSS.templateColumns,
         autoRows: ResponsiveGridLayoutManager.defaultCSS.autoRows,
