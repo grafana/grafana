@@ -436,8 +436,8 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	dashSvc := &dashboards.FakeDashboardService{}
 	rootDash := &dashboards.Dashboard{ID: 1, OrgID: 1, UID: rootDashUID}
 	folderDash := &dashboards.Dashboard{ID: 2, OrgID: 1, UID: folderDashUID, FolderUID: folderUID}
-	dashSvc.On("GetDashboard", context.Background(), &dashboards.GetDashboardQuery{ID: rootDash.ID, OrgID: 1}).Return(rootDash, nil)
-	dashSvc.On("GetDashboard", context.Background(), &dashboards.GetDashboardQuery{ID: folderDash.ID, OrgID: 1}).Return(folderDash, nil)
+	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{ID: rootDash.ID, OrgID: 1}).Return(rootDash, nil)
+	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{ID: folderDash.ID, OrgID: 1}).Return(folderDash, nil)
 
 	rootDashboardAnnotation := annotations.Item{ID: 1, DashboardID: rootDash.ID}
 	folderDashboardAnnotation := annotations.Item{ID: 3, DashboardID: folderDash.ID}
