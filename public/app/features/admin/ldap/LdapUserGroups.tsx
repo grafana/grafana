@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Tooltip, Icon, InteractiveTable, type CellProps, Column } from '@grafana/ui';
+import { Tooltip, Icon, InteractiveTable, type CellProps, Column, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { LdapRole } from 'app/types';
 
@@ -28,14 +28,12 @@ export const LdapUserGroups = ({ groups }: Props) => {
         header: 'Role',
         cell: (props: CellProps<LdapRole, string | undefined>) =>
           props.value || (
-            <>
-              <Trans i18nKey="admin.ldap-user-groups.no-org-found">
-                No match{' '}
-                <Tooltip content="No matching organizations found">
-                  <Icon name="info-circle" />
-                </Tooltip>
-              </Trans>
-            </>
+            <Stack alignItems="center" wrap>
+              <Trans i18nKey="admin.ldap-user-groups.no-org-found">No match</Trans>
+              <Tooltip content="No matching organizations found">
+                <Icon name="info-circle" />
+              </Tooltip>
+            </Stack>
           ),
       },
     ],
