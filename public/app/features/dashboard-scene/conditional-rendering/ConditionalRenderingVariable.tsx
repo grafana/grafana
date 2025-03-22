@@ -1,29 +1,28 @@
 import { css } from '@emotion/css';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@grafana/scenes';
 import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { Combobox, ComboboxOption, Field, Input, Stack, useStyles2 } from '@grafana/ui';
+import { IconButton, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
+import { showConditionalRenderingVariableEditor } from './ConditionalRenderingVariableEditor';
+import { DeleteConditionButton } from './DeleteConditionButton';
 import { handleDeleteNonGroupCondition } from './shared';
 
-export type VariableConditionValue = {
+export type VariableConditionValueOperator = '=' | '!=';
+
+export interface VariableConditionValue {
   name: string;
-  operator: '=' | '!=';
+  operator: VariableConditionValueOperator;
   value: string;
-};
+}
 
 type ConditionalRenderingVariableState = ConditionalRenderingBaseState<VariableConditionValue>;
 
 export class ConditionalRenderingVariable extends ConditionalRenderingBase<ConditionalRenderingVariableState> {
-  public get title(): string {
-    return t('dashboard.conditional-rendering.variable.label', 'Variable');
-  }
-
   protected _variableDependency = new VariableDependencyConfig(this, {
     onAnyVariableChanged: (v) => {
       if (v.state.name === this.state.value.name) {
@@ -75,64 +74,85 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
 }
 
 function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<ConditionalRenderingVariable>) {
-  const variables = useMemo(() => sceneGraph.getVariables(model), [model]);
-  const variableNames = useMemo(
-    () => variables.state.variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name })),
-    [variables.state.variables]
-  );
-  const operatorOptions: Array<ComboboxOption<'=' | '!='>> = useMemo(
-    () => [
-      { value: '=', description: t('dashboard.conditional-rendering.variable.operator.equals', 'Equals') },
-      { value: '!=', description: t('dashboard.conditional-rendering.variable.operator.not-equal', 'Not equal') },
-    ],
-    []
-  );
-  const { value } = model.useState();
-
   const styles = useStyles2(getStyles);
+  const {
+    value: { name, operator, value },
+  } = model.useState();
 
   return (
-    <Stack direction="column">
-      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
-      <Stack direction="column">
-        <Stack direction="row" gap={0.5} grow={1}>
-          <Field
-            label={t('dashboard.conditional-rendering.variable.select-variable', 'Select variable')}
-            className={styles.variableNameSelect}
-          >
-            <Combobox
-              options={variableNames}
-              value={value.name}
-              onChange={(option) => model.setStateAndNotify({ value: { ...value, name: option.value } })}
-            />
-          </Field>
-          <Field
-            label={t('dashboard.conditional-rendering.variable.select-operator', 'Operator')}
-            className={styles.operatorSelect}
-          >
-            <Combobox
-              options={operatorOptions}
-              value={value.operator}
-              onChange={(option) => model.setStateAndNotify({ value: { ...value, operator: option.value } })}
-            />
-          </Field>
-        </Stack>
-        <Field label={t('dashboard.conditional-rendering.variable.value-input', 'Value')}>
-          <Input
-            value={value.value}
-            onChange={(e) => model.setStateAndNotify({ value: { ...value, value: e.currentTarget.value } })}
-          />
-        </Field>
-      </Stack>
-    </Stack>
+    <div className={styles.card}>
+      <div className={styles.cardLeft}>
+        <div>{operator}</div>
+        <div className={styles.values}>
+          <div className={styles.value}>
+            {t('dashboard.conditional-rendering.variable.card.name', 'Variable: {{name}}', { name })}
+          </div>
+          <div className={styles.value}>
+            {t('dashboard.conditional-rendering.variable.card.value', 'Value: {{value}}', { value })}
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.cardRight}>
+        <IconButton
+          name="pen"
+          aria-label={t('dashboard.conditional-rendering.variable.card.edit', 'Edit')}
+          onClick={() =>
+            showConditionalRenderingVariableEditor(model, {
+              defaultValues: { name, operator, value },
+              onSave: (name: string, operator: VariableConditionValueOperator, value: string) => {
+                model.setStateAndNotify({ value: { name, operator, value } });
+              },
+            })
+          }
+        />
+
+        <DeleteConditionButton model={model} />
+      </div>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  variableNameSelect: css({
-    flexGrow: 1,
+  card: css({
+    backgroundColor: theme.colors.background.elevated,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing(1),
+    gap: theme.spacing(2),
+    flex: 1,
+    color: theme.colors.text.secondary,
   }),
-  operatorSelect: css({
-    width: theme.spacing(12),
+  cardLeft: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: theme.spacing(1.5),
+    flex: 1,
+    minWidth: 0,
+  }),
+  cardRight: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: theme.spacing(1),
+    minWidth: 0,
+  }),
+  values: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+    minWidth: 0,
+    flex: 1,
+  }),
+  value: css({
+    textOverflow: 'ellipsis',
+    wordBreak: 'break-all',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
   }),
 });

@@ -2,6 +2,7 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana
 import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
+import { ConditionalRenderingConditions } from './shared';
 
 export interface ConditionalRenderingState extends SceneObjectState {
   rootGroup: ConditionalRenderingGroup;
@@ -18,7 +19,7 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
 
   private _activationHandler() {
     // This ensures that all children are activated when conditional rendering is activated
-    // We need this in order to allow children to subscribe to variable changes etc.
+    // We need this to allow children to subscribe to variable changes, etc.
     this.forEachChild((child) => {
       if (!child.isActive) {
         this._subs.add(child.activate());
@@ -32,6 +33,10 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
 
   public notifyChange() {
     this.parent?.forceRender();
+  }
+
+  public addItem(item: ConditionalRenderingConditions) {
+    this.state.rootGroup.addItem(item);
   }
 
   public static createEmpty(): ConditionalRendering {

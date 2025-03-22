@@ -1,16 +1,17 @@
-import { ReactNode, useMemo } from 'react';
+import { css } from '@emotion/css';
+import { ReactNode } from 'react';
 
-import { PanelData, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { SceneComponentProps, SceneDataProvider, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { RadioButtonGroup, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Stack, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { RowItem } from '../scene/layout-rows/RowItem';
 
-import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
+import { DeleteConditionButton } from './DeleteConditionButton';
 import { handleDeleteNonGroupCondition } from './shared';
 
 export type DataConditionValue = boolean;
@@ -18,10 +19,6 @@ export type DataConditionValue = boolean;
 type ConditionalRenderingDataState = ConditionalRenderingBaseState<DataConditionValue>;
 
 export class ConditionalRenderingData extends ConditionalRenderingBase<ConditionalRenderingDataState> {
-  public get title(): string {
-    return t('dashboard.conditional-rendering.data.label', 'Data');
-  }
-
   public constructor(state: ConditionalRenderingDataState) {
     super(state);
 
@@ -125,25 +122,22 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
 }
 
 function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<ConditionalRenderingData>) {
-  const { value } = model.useState();
-
-  const enableConditionOptions: Array<SelectableValue<true | false>> = useMemo(
-    () => [
-      { label: t('dashboard.conditional-rendering.data.enable', 'Enable'), value: true },
-      { label: t('dashboard.conditional-rendering.data.disable', 'Disable'), value: false },
-    ],
-    []
-  );
+  const styles = useStyles2(getStyles);
 
   return (
-    <Stack direction="column">
-      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
-      <RadioButtonGroup
-        fullWidth
-        options={enableConditionOptions}
-        value={value}
-        onChange={(value) => model.setStateAndNotify({ value: value })}
-      />
+    <Stack direction="row" justifyContent="space-between" alignItems="center">
+      <p className={styles.text}>
+        <Trans i18nKey="dashboard.conditional-rendering.data.text">Show when has data</Trans>
+      </p>
+      <DeleteConditionButton model={model} />
     </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  text: css({
+    ...theme.typography.bodySmall,
+    fontStyle: 'italic',
+    margin: 0,
+  }),
+});

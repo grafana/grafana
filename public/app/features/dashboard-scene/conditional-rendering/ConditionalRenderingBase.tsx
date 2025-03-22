@@ -11,9 +11,7 @@ export interface ConditionalRenderingBaseState<V = ConditionValues> extends Scen
   value: V;
 }
 
-export abstract class ConditionalRenderingBase<
-  S extends ConditionalRenderingBaseState<ConditionValues>,
-> extends SceneObjectBase<S> {
+export abstract class ConditionalRenderingBase<S extends ConditionalRenderingBaseState> extends SceneObjectBase<S> {
   public static Component = ConditionalRenderingBaseRenderer;
 
   public constructor(state: S) {
@@ -25,15 +23,13 @@ export abstract class ConditionalRenderingBase<
   private _baseActivationHandler() {
     // Similarly to the ConditionalRendering activation handler,
     // this ensures that all children are activated when conditional rendering is activated
-    // We need this in order to allow children to subscribe to variable changes etc.
+    // We need this to allow children to subscribe to variable changes, etc.
     this.forEachChild((child) => {
       if (!child.isActive) {
         this._subs.add(child.activate());
       }
     });
   }
-
-  public abstract readonly title: string;
 
   public abstract serialize(): ConditionalRenderingKindTypes;
 
