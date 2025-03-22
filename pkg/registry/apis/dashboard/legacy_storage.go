@@ -39,6 +39,10 @@ func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Sch
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client,
 		defaultOpts.StorageConfig.Config,
 	)
+	optsGetter.RegisterOptions(dash.GroupResource(), apistore.StorageOptions{
+		EnableFolderSupport:         true,
+		RequireDeprecatedInternalID: true,
+	})
 
 	store, err := grafanaregistry.NewRegistryStore(scheme, dash, optsGetter)
 	return &storeWrapper{
