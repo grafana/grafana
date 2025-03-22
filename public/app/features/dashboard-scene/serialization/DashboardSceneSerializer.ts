@@ -264,6 +264,16 @@ export class V2DashboardSerializer
         }
       }
     });
+
+    // initialize variables
+    if (saveModel?.variables) {
+      for (const variable of saveModel.variables) {
+        // for query variables that dont have a ds defined add them to the list
+        if (variable.kind === 'QueryVariable' && !variable.spec.datasource) {
+          this.defaultDsReferencesMap.variables.add(variable.spec.name);
+        }
+      }
+    }
   }
 
   getDSReferencesMapping() {

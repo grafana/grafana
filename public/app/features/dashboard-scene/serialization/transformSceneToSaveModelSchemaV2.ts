@@ -5,9 +5,12 @@ import { config } from '@grafana/runtime';
 import {
   behaviors,
   dataLayers,
+  QueryVariable,
   SceneDataQuery,
   SceneDataTransformer,
   SceneQueryRunner,
+  SceneVariable,
+  SceneVariables,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
@@ -601,9 +604,15 @@ function getAutoAssignedPanelDSRef(vizPanel: VizPanel) {
   const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
   const scene = getDashboardSceneFor(vizPanel);
   const elementMapReferences = scene.serializer.getDSReferencesMapping();
-
   const panelQueries = elementMapReferences.panels.get(elementKey);
   return panelQueries;
+}
+
+export function getAutoAssignedVariablesDSRef(set: SceneVariables) {
+  const scene = getDashboardSceneFor(set);
+  const elementMapReferences = scene.serializer.getDSReferencesMapping();
+  const variables = elementMapReferences.variables;
+  return variables;
 }
 
 /**
@@ -628,4 +637,15 @@ export function getPersistedDSForQuery(
   }
 
   return query.datasource || queryRunner?.state?.datasource;
+}
+
+export function getPersistedDSForVariable(variable: QueryVariable, autoAssignedVariableDsRef: Set<string> | undefined) {
+  const variableState = variable.state;
+  const hasMatchingRefId = autoAssignedVariableDsRef?.has(variableState.name);
+
+  if (hasMatchingRefId) {
+    return undefined;
+  }
+
+  return variableState.datasource || {};
 }
