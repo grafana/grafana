@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -46,7 +47,7 @@ func (s *featuresStorage) New() runtime.Object {
 func (s *featuresStorage) Destroy() {}
 
 func (s *featuresStorage) NamespaceScoped() bool {
-	return false
+	return true
 }
 
 func (s *featuresStorage) GetSingularName() string {
