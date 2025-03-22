@@ -136,7 +136,6 @@ const getStyles = (
 
   return {
     wrapper: css({
-      flexGrow: 1,
       marginBottom: theme.spacing(bottomSpacing ?? 2),
       marginTop: theme.spacing(topSpacing ?? 0),
       position: 'relative',
