@@ -12,7 +12,8 @@ import { SingleStatBaseOptions, SortOrder, VizOrientation } from '@grafana/schem
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
-  includeFieldMatcher = true
+  includeFieldMatcher = true,
+  includeValueOrderSort = false
 ) {
   const valueOptionsCategory = ['Value options'];
 
@@ -86,19 +87,25 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
       defaultValue: '',
     });
 
+    const options = includeValueOrderSort
+      ? [
+          { value: SortOrder.Value, label: 'Value' },
+          { value: SortOrder.FieldOrder, label: 'Field Order' },
+        ]
+      : [{ value: SortOrder.None, label: 'None' }];
+
+    options.push({ value: SortOrder.Ascending, label: 'Ascending' });
+    options.push({ value: SortOrder.Descending, label: 'Descending' });
+
     builder.addRadio({
       path: 'reduceOptions.sort',
       name: 'Sort',
       description: 'Sort by field display name',
       category: valueOptionsCategory,
       settings: {
-        options: [
-          { value: SortOrder.None, label: 'None' },
-          { value: SortOrder.Ascending, label: 'Ascending' },
-          { value: SortOrder.Descending, label: 'Descending' },
-        ],
+        options,
       },
-      defaultValue: SortOrder.None,
+      defaultValue: includeValueOrderSort ? SortOrder.Value : SortOrder.None,
     });
   }
 }

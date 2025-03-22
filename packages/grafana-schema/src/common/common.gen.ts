@@ -609,7 +609,9 @@ export enum TooltipDisplayMode {
 export enum SortOrder {
   Ascending = 'asc',
   Descending = 'desc',
+  FieldOrder = 'fieldOrder',
   None = 'none',
+  Value = 'value',
 }
 
 /**

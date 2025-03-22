@@ -86,7 +86,7 @@ export function getDisplayValuesAndLinks(
     });
   }
 
-  if (sortOrder && sortOrder !== SortOrder.None) {
+  if (sortOrder === SortOrder.Ascending || sortOrder === SortOrder.Descending) {
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
   }
 

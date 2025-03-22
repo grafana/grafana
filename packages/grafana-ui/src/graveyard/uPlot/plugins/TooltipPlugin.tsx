@@ -222,7 +222,7 @@ export const TooltipPlugin = ({
         });
       }
 
-      if (sortOrder !== SortOrder.None) {
+      if (sortOrder === SortOrder.Ascending || sortOrder === SortOrder.Descending) {
         // create sort reference series array, as Array.sort() mutates the original array
         const sortRef = [...series];
         const sortFn = arrayUtils.sortValues(sortOrder);

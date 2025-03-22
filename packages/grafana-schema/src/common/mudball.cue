@@ -217,7 +217,7 @@ VizTextDisplayOptions: {
 TooltipDisplayMode: "single" | "multi" | "none" @cuetsy(kind="enum")
 
 // TODO docs
-SortOrder: "asc" | "desc" | "none" @cuetsy(kind="enum",memberNames="Ascending|Descending|None")
+SortOrder: "asc" | "desc" | "none" | "value" | "fieldOrder" @cuetsy(kind="enum",memberNames="Ascending|Descending|None|Value|FieldOrder")
 
 // TODO docs
 GraphFieldConfig: {
