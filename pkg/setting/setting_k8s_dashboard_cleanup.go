@@ -20,12 +20,12 @@ const (
 )
 
 func (cfg *Cfg) readK8sDashboardCleanupSettings() {
-	section := cfg.Raw.Section("k8s_dashboard_cleanup")
+	section := cfg.Raw.Section("dashboard_cleanup")
 
 	// Read interval setting with validation
 	cleanupInterval := section.Key("interval").MustDuration(defaultK8sDashboardCleanupInterval)
 	if cleanupInterval < minK8sDashboardCleanupInterval {
-		cfg.Logger.Warn("[k8s_dashboard_cleanup.interval] is too low; the minimum allowed (10s) is enforced")
+		cfg.Logger.Warn("[dashboard_cleanup.interval] is too low; the minimum allowed (10s) is enforced")
 		cleanupInterval = minK8sDashboardCleanupInterval
 	}
 
@@ -38,10 +38,10 @@ func (cfg *Cfg) readK8sDashboardCleanupSettings() {
 	// Read batch size with validation
 	batchSize := section.Key("batch_size").MustInt64(defaultK8sDashboardCleanupBatchSize)
 	if batchSize < minK8sDashboardCleanupBatchSize {
-		cfg.Logger.Warn("[k8s_dashboard_cleanup.batch_size] is too low; the minimum allowed (5) is enforced")
+		cfg.Logger.Warn("[dashboard_cleanup.batch_size] is too low; the minimum allowed (5) is enforced")
 		batchSize = minK8sDashboardCleanupBatchSize
 	} else if batchSize > maxK8sDashboardCleanupBatchSize {
-		cfg.Logger.Warn("[k8s_dashboard_cleanup.batch_size] is too high; the maximum allowed (1000) is enforced")
+		cfg.Logger.Warn("[dashboard_cleanup.batch_size] is too high; the maximum allowed (1000) is enforced")
 		batchSize = maxK8sDashboardCleanupBatchSize
 	}
 

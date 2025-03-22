@@ -73,7 +73,7 @@ var (
 )
 
 const (
-	k8sDashboardKvNamespace              = "k8s-dashboard-cleanup"
+	k8sDashboardKvNamespace              = "dashboard-cleanup"
 	k8sDashboardKvLastResourceVersionKey = "last-resource-version"
 )
 
@@ -125,7 +125,7 @@ func (dr *DashboardServiceImpl) executeCleanupWithLock(ctx context.Context) erro
 	// per cleanup interval by setting the maxInterval and having the time between executions be the cleanup interval as well.
 	return dr.serverLockService.LockAndExecute(
 		ctx,
-		"k8s_dashboard_cleanup",
+		k8sDashboardKvNamespace,
 		dr.cfg.K8sDashboardCleanup.Interval,
 		func(ctx context.Context) {
 			if err := dr.cleanupK8sDashboardResources(ctx, dr.cfg.K8sDashboardCleanup.BatchSize, dr.cfg.K8sDashboardCleanup.Timeout); err != nil {
