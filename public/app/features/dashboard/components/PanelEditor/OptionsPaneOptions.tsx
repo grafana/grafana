@@ -163,7 +163,7 @@ export function renderSearchHits(
         id="Found options"
         title={`Matched ${optionHits.length}/${totalCount} options`}
         key="Normal options"
-        forceOpen={1}
+        forceOpen={true}
       >
         {optionHits.map((hit) => hit.render(searchQuery))}
       </OptionsPaneCategory>

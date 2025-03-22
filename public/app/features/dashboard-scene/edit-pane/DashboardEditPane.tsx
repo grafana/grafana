@@ -238,13 +238,14 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
             icon="arrow-to-right"
             onClick={onToggleCollapse}
             variant="canvas"
+            narrow={true}
             className={styles.rotate180}
             aria-label={t('dashboard.edit-pane.open', 'Open options pane')}
           />
         </div>
 
         {openOverlay && (
-          <Resizable className={cx(styles.fixed, styles.container)} defaultSize={{ height: '100%', width: '20vw' }}>
+          <Resizable className={styles.overlayWrapper} defaultSize={{ height: '100%', width: '300px' }}>
             <ElementEditPane element={editableElement} key={selectedObject?.state.key} editPane={editPane} />
           </Resizable>
         )}
@@ -274,9 +275,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     <div className={styles.wrapper}>
       <div {...splitter.containerProps}>
         <div {...splitter.primaryProps} className={cx(splitter.primaryProps.className, styles.paneContent)}>
-          <ScrollContainer showScrollIndicators={true}>
-            <ElementEditPane element={editableElement} key={selectedObject?.state.key} editPane={editPane} />
-          </ScrollContainer>
+          <ElementEditPane element={editableElement} key={selectedObject?.state.key} editPane={editPane} />
         </div>
         <div
           {...splitter.splitterProps}
@@ -316,6 +315,18 @@ function getStyles(theme: GrafanaTheme2) {
       borderTop: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
     }),
+    overlayWrapper: css({
+      right: 0,
+      bottom: 0,
+      top: theme.spacing(2),
+      position: 'absolute !important' as 'absolute',
+      background: theme.colors.background.primary,
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      boxShadow: theme.shadows.z3,
+      zIndex: theme.zIndex.navbarFixed,
+      flexGrow: 1,
+    }),
     paneContent: css({
       overflow: 'hidden',
       display: 'flex',
@@ -331,24 +342,12 @@ function getStyles(theme: GrafanaTheme2) {
     expandOptionsWrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(2, 1),
-    }),
-    // @ts-expect-error csstype doesn't allow !important. see https://github.com/frenic/csstype/issues/114
-    fixed: css({
-      position: 'absolute !important',
+      padding: theme.spacing(2, 1, 2, 0),
     }),
     splitter: css({
       '&:after': {
         display: 'none',
       },
-    }),
-    container: css({
-      right: 0,
-      background: theme.colors.background.primary,
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      boxShadow: theme.shadows.z3,
-      zIndex: theme.zIndex.navbarFixed,
-      flexGrow: 1,
     }),
     outlineCollapseButton: css({
       display: 'flex',

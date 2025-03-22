@@ -48,7 +48,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
       collapsed: isCollapsed,
 
       paneOptions: {
-        collapseBelowPixels: 250,
+        collapseBelowPixels: 150,
         snapOpenToPixels: 400,
       },
     });
@@ -160,6 +160,8 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       scrollbarWidth: 'thin',
       // The fixed controls headers is otherwise rendered over the selection outlinem, Maybe there is an other solution
       paddingTop: '2px',
+      // Because the edit pane splitter handle area adds padding we can reduce it here
+      paddingRight: theme.spacing(1),
     }),
     editPane: css({
       flexDirection: 'column',

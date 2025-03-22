@@ -51,23 +51,23 @@ export class DashboardEditableElement implements EditableDashboardElement {
     return [dashboardOptions, layoutCategory];
   }
 
-  // public renderActions(): ReactNode {
-  //   return (
-  //     <Button
-  //       variant="secondary"
-
-  //       onClick={() => this.dashboard.onOpenSettings()}
-  //       tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
-  //     >
-  //       <Stack direction="row" gap={1} justifyContent="space-between" alignItems={'center'}>
-  //         <span>
-  //           <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
-  //         </span>
-  //         <Icon name="sliders-v-alt" />
-  //       </Stack>
-  //     </Button>
-  //   );
-  // }
+  public renderActions(): ReactNode {
+    return (
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => this.dashboard.onOpenSettings()}
+        tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+      >
+        <Stack direction="row" gap={1} justifyContent="space-between" alignItems={'center'}>
+          <span>
+            <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
+          </span>
+          <Icon name="sliders-v-alt" />
+        </Stack>
+      </Button>
+    );
+  }
 }
 
 export function DashboardTitleInput({ dashboard }: { dashboard: DashboardScene }) {

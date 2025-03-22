@@ -16,7 +16,7 @@ export interface OptionsPaneCategoryProps {
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   isOpenDefault?: boolean;
   itemsCount?: number;
-  forceOpen?: number;
+  forceOpen?: boolean;
   className?: string;
   isNested?: boolean;
   children: ReactNode;
@@ -42,7 +42,8 @@ export const OptionsPaneCategory = React.memo(
       isExpanded: isOpenDefault,
     });
 
-    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? isOpenDefault);
+    const isExpandedInitialValue = forceOpen || (savedState?.isExpanded ?? isOpenDefault);
+    const [isExpanded, setIsExpanded] = useState(isExpandedInitialValue);
     const ref = useRef<HTMLDivElement>(null);
     const [queryParams, updateQueryParams] = useQueryParams();
     const isOpenFromUrl = queryParams[CATEGORY_PARAM_NAME] === id;
@@ -61,13 +62,6 @@ export const OptionsPaneCategory = React.memo(
       updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id }, true);
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
-
-      // Scroll newly opened sections into view
-      if (!isExpanded) {
-        setTimeout(() => {
-          ref.current?.scrollIntoView();
-        }, 200);
-      }
     }, [updateQueryParams, isExpanded, id, setSavedState]);
 
     if (!renderTitle) {
