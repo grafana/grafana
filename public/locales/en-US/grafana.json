@@ -672,6 +672,14 @@
       "description-target-data-source": "The Prometheus data source to store the recording rule in",
       "label-target-data-source": "Target data source"
     },
+    "rule-editor": {
+      "gen-ai": {
+        "description-tip-title": "Improve your alert rule description",
+        "description-tooltip": "Generate a description for this alert rule",
+        "summary-tip-title": "Improve your alert rule summary",
+        "summary-tooltip": "Generate a summary for this alert rule"
+      }
+    },
     "rule-form": {
       "annotations": {
         "description1": "Annotations add additional information to alerts, helping alert responders identify and address potential issues.",
