@@ -25,6 +25,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	trace "go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/go-kit/log/level"
 
@@ -167,7 +168,14 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 }
 
 func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
-	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.cfg.Address), otlptracegrpc.WithInsecure())
+	opts := []otlptracegrpc.Option{otlptracegrpc.WithEndpoint(ots.cfg.Address)}
+	if ots.cfg.Insecure {
+		opts = append(opts, otlptracegrpc.WithInsecure())
+	} else {
+		opts = append(opts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(nil)))
+	}
+
+	client := otlptracegrpc.NewClient(opts...)
 	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
 		return nil, err
