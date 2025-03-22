@@ -90,6 +90,8 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		fT = data.FieldTypeTime
 	case types.Datetime:
 		fT = data.FieldTypeTime
+	case types.Date:
+		fT = data.FieldTypeTime
 	case types.Boolean:
 		fT = data.FieldTypeBool
 	default:
@@ -98,6 +100,12 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 			fT = data.FieldTypeFloat64
 		case types.IsText(col.Type):
 			fT = data.FieldTypeString
+		case types.IsTimespan(col.Type):
+			// The NOW() function in MySQL returns the current date and time as a DATETIME value
+			// CURDATE() returns the current date as a DATE value
+			// CURTIME() returns the current time as a TIME value
+			// So each can be converted to FieldTypeTime
+			fT = data.FieldTypeTime
 		default:
 			return fT, fmt.Errorf("unsupported type for column %s of type %v", col.Name, col.Type)
 		}
