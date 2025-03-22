@@ -27,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 // ToUnifiedStorage converts dashboards+folders into unified storage
@@ -188,15 +190,25 @@ func promptYesNo(prompt string) (bool, error) {
 }
 
 func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
+	tracer := tracing.NewNoopTracerService()
+	reg := prometheus.NewPedanticRegistry()
+	ac := authlib.FixedAccessClient(true)  // always true!
+	features := featuremgmt.WithFeatures() // none??
+	searchOptions, err := search.ProvideSearchOptions(features, cfg, tracer, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	sqlBackendServer, err := sql.ProvideSqlBackendResourceServer(sqlStore, cfg, tracer, reg, ac, searchOptions, nil, nil, features)
+	if err != nil {
+		return nil, err
+	}
 	return unified.ProvideUnifiedStorageClient(&unified.Options{
 		Cfg:      cfg,
-		Features: featuremgmt.WithFeatures(), // none??
+		Features: features,
 		DB:       sqlStore,
-		Tracer:   tracing.NewNoopTracerService(),
-		Reg:      prometheus.NewPedanticRegistry(),
-		Authzc:   authlib.FixedAccessClient(true), // always true!
-		Docs:     nil,                             // document supplier
-	}, nil, nil)
+		Tracer:   tracer,
+		Reg:      reg,
+	}, sqlBackendServer)
 }
 
 func newParquetClient(file *os.File) (resource.BulkStoreClient, error) {

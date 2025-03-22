@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
+	sql "github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 var wireExtsBasicSet = wire.NewSet(
@@ -119,6 +120,8 @@ var wireExtsBasicSet = wire.NewSet(
 	sandbox.ProvideService,
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	wire.Struct(new(unified.Options), "*"),
+	search2.ProvideSearchOptions,
+	sql.ProvideSqlBackendResourceServer,
 	unified.ProvideUnifiedStorageClient,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 )
