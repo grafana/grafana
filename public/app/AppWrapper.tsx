@@ -17,6 +17,7 @@ import { store } from 'app/store/store';
 
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
+import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
@@ -126,15 +127,17 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
                       <ScopesContextProvider>
                         <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                          <div className="grafana-app">
-                            {config.featureToggles.appSidecar ? (
-                              <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                            ) : (
-                              <RouterWrapper {...routerWrapperProps} />
-                            )}
-                            <LiveConnectionWarning />
-                            <PortalContainer />
-                          </div>
+                          <ExtensionSidebarContextProvider>
+                            <div className="grafana-app">
+                              {config.featureToggles.appSidecar ? (
+                                <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                              ) : (
+                                <RouterWrapper {...routerWrapperProps} />
+                              )}
+                              <LiveConnectionWarning />
+                              <PortalContainer />
+                            </div>
+                          </ExtensionSidebarContextProvider>
                         </ExtensionRegistriesProvider>
                       </ScopesContextProvider>
                     </SidecarContext_EXPERIMENTAL.Provider>
