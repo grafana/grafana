@@ -72,6 +72,7 @@ export interface UnifiedAlertingConfig {
   alertStateHistoryBackend?: string;
   // will be undefined if implementation is not "multiple"
   alertStateHistoryPrimary?: string;
+  recordingRulesEnabled?: boolean;
 }
 
 /** Supported OAuth services

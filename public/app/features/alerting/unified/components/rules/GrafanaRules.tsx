@@ -57,7 +57,8 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const hasGrafanaAlerts = namespaces.length > 0;
 
-  const grafanaRecordingRulesEnabled = config.featureToggles.grafanaManagedRecordingRules;
+  const grafanaRecordingRulesEnabled =
+    config.featureToggles.grafanaManagedRecordingRules && config.unifiedAlerting.recordingRulesEnabled;
 
   return (
     <section className={styles.wrapper}>

@@ -97,6 +97,7 @@ type FrontendSettingsUnifiedAlertingDTO struct {
 	MinInterval              string `json:"minInterval"`
 	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
 	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
+	RecordingRulesEnabled    bool   `json:"recordingRulesEnabled"`
 }
 
 // Enterprise-only
@@ -254,6 +255,7 @@ type FrontendSettingsDTO struct {
 	Reporting               FrontendSettingsReportingDTO       `json:"reporting"`
 	Analytics               FrontendSettingsAnalyticsDTO       `json:"analytics"`
 	UnifiedAlertingEnabled  bool                               `json:"unifiedAlertingEnabled"`
+	RecordingRulesEnabled   bool                               `json:"recordingRulesEnabled"`
 	UnifiedAlerting         FrontendSettingsUnifiedAlertingDTO `json:"unifiedAlerting"`
 	Oauth                   map[string]any                     `json:"oauth"`
 	SamlEnabled             bool                               `json:"samlEnabled"`

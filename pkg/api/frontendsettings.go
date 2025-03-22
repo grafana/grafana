@@ -337,6 +337,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.UnifiedAlerting.AlertStateHistoryPrimary = hs.Cfg.UnifiedAlerting.StateHistory.MultiPrimary
 	}
 
+	frontendSettings.UnifiedAlerting.RecordingRulesEnabled = hs.Cfg.UnifiedAlerting.RecordingRules.Enabled
+
 	if hs.Cfg.UnifiedAlerting.Enabled != nil {
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
 	}
