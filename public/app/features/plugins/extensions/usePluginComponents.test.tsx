@@ -1,4 +1,5 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
+import React from 'react';
 
 import { PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
 
@@ -201,6 +202,66 @@ describe('usePluginComponents()', () => {
       id: '-1921123019',
       type: 'component',
     });
+  });
+
+  it('should pass a read-only version of the to the components', async () => {
+    type Props = {
+      foo: {
+        foo2: {
+          foo3: {
+            foo4: string;
+          };
+        };
+      };
+      override?: boolean;
+    };
+
+    const originalFoo = {
+      foo2: {
+        foo3: {
+          foo4: 'bar',
+        },
+      },
+    };
+
+    registries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          targets: extensionPointId,
+          title: '1',
+          description: '1',
+          // @ts-ignore - The register() method is not designed to be called directly like this, and because of that it doesn't have a way to set the type of the Props
+          component: ({ foo, override = false }: Props) => {
+            // Trying to override the prop
+            if (override) {
+              const foo3 = foo.foo2.foo3;
+              foo3.foo4 = 'baz';
+            }
+
+            return <span>Foo</span>;
+          },
+        },
+      ],
+    });
+
+    // Check if it returns the components
+    const { result } = renderHook(() => usePluginComponents<Props>({ extensionPointId }), { wrapper });
+    expect(result.current.components.length).toBe(1);
+
+    const Component = result.current.components[0];
+
+    // Should be possible to render the component if it doesn't want to change the props
+    const rendered = render(<Component foo={originalFoo} />);
+    expect(rendered.getByText('Foo')).toBeVisible();
+
+    // Check if it throws a TypeError due to trying to change the prop
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => render(<Component foo={originalFoo} override />)).toThrow(TypeError);
+    jest.spyOn(console, 'error').mockRestore();
+
+    // Check if the original property hasn't been changed
+    expect(originalFoo.foo2.foo3.foo4).toBe('bar');
   });
 
   it('should dynamically update the extensions registered for a certain extension point', () => {

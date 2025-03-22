@@ -14,7 +14,7 @@ import * as errors from './errors';
 import { log } from './logs/log';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { generateExtensionId, getExtensionPointPluginDependencies, isGrafanaDevMode } from './utils';
+import { generateExtensionId, getExtensionPointPluginDependencies, getReadOnlyProxy, isGrafanaDevMode } from './utils';
 import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 
 // Returns an array of component extensions for the given extension point
@@ -85,14 +85,18 @@ export function usePluginComponents<Props extends object = {}>({
   }, [extensionPointId, limitPerPlugin, pluginContext, registryState, isLoadingAppPlugins]);
 }
 
-// exported so it can be used in tests
 export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
   registryItem: AddedComponentRegistryItem<Props>,
   extensionPointId: string
 ): ComponentTypeWithExtensionMeta<Props> {
   const { component: Component, ...config } = registryItem;
   function ComponentWithMeta(props: Props) {
-    return <Component {...props} />;
+    // Why are we not calling `getReadOnlyProxy()` on the `props` object?
+    // It is because in dev mode React freezes the props object and the element as well (in a shallow way), and then we couldn't make it read-only using a Proxy
+    // (we need to return the not-writable objects as is due to the invariant of the Proxy API)
+    // React freezing objects: https://github.com/facebook/react/blob/main/packages/react/src/jsx/ReactJSXElement.js#L268C9-L268C20
+    // Proxy .get() invariants: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy/Proxy/get#invariants
+    return <Component {...makeReactComponentPropsReadOnly<Props>(props)} />;
   }
 
   ComponentWithMeta.displayName = Component.displayName;
@@ -108,4 +112,10 @@ export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
   } satisfies PluginExtensionComponentMeta;
 
   return ComponentWithMeta;
+}
+
+function makeReactComponentPropsReadOnly<T extends JSX.IntrinsicAttributes>(props: T): T {
+  return Object.fromEntries(
+    Object.entries(props).map(([key, value]) => [key, getReadOnlyProxy<typeof value>(value)])
+  ) as T;
 }
