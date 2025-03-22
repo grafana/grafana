@@ -1246,7 +1246,7 @@ Multi-frame time series break data into multiple frames that all contain two fie
 
 ##### Long time series
 
-A long time series combines data to one frame, with the first field being an ascending time field. The time field might have duplicates. String values are in separate fields, and there might be more than one. 
+A long time series combines data into one frame, with the first field being an ascending time field. The time field might have duplicates. String values are in separate fields, and there might be more than one. 
 
 **Example: Converting to long format**
 
