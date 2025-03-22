@@ -30,6 +30,7 @@ type ConvertPrometheusApi interface {
 	RouteConvertPrometheusGetNamespace(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusGetRuleGroup(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusGetRules(*contextmodel.ReqContext) response.Response
+	RouteConvertPrometheusPostDatasource(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusPostRuleGroup(*contextmodel.ReqContext) response.Response
 }
 
@@ -87,6 +88,11 @@ func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusGetRuleGroup(ctx *co
 }
 func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusGetRules(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteConvertPrometheusGetRules(ctx)
+}
+func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusPostDatasource(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRouteConvertPrometheusPostDatasource(ctx, datasourceUIDParam)
 }
 func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusPostRuleGroup(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -225,6 +231,18 @@ func (api *API) RegisterConvertPrometheusApiEndpoints(srv ConvertPrometheusApi, 
 				http.MethodGet,
 				"/api/convert/prometheus/config/v1/rules",
 				api.Hooks.Wrap(srv.RouteConvertPrometheusGetRules),
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/convert/{DatasourceUID}/config/v1/rules"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/convert/{DatasourceUID}/config/v1/rules"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/convert/{DatasourceUID}/config/v1/rules",
+				api.Hooks.Wrap(srv.RouteConvertPrometheusPostDatasource),
 				m,
 			),
 		)
