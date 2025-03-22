@@ -1,6 +1,6 @@
 import { render, screen, within } from 'test/test-utils';
 
-import { locationService, setAngularLoader } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
@@ -55,16 +55,6 @@ describe('AnnotationsSettings', () => {
 
   const getTableBody = () => screen.getAllByRole('rowgroup')[1];
   const getTableBodyRows = () => within(getTableBody()).getAllByRole('row');
-
-  beforeAll(() => {
-    setAngularLoader({
-      load: () => ({
-        destroy: jest.fn(),
-        digest: jest.fn(),
-        getScope: () => ({ $watch: () => {} }),
-      }),
-    });
-  });
 
   beforeEach(() => {
     // we have a default build-in annotation

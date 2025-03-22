@@ -1799,11 +1799,6 @@
     }
   },
   "dashboards": {
-    "panel-edit": {
-      "angular-deprecation-button-open-panel-json": "Open JSON editor",
-      "angular-deprecation-description": "Angular panels options can only be edited using the JSON editor.",
-      "angular-deprecation-heading": "Panel options"
-    },
     "panel-queries": {
       "add-query-from-library": "Add query from library"
     },
@@ -3814,8 +3809,7 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "show-response": "Show response",
-      "toggle-edit-mode": "Toggle text edit mode"
+      "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },

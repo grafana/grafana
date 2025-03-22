@@ -26,7 +26,7 @@ export const PluginActions = ({ plugin }: Props) => {
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin?.details?.versions);
   const [needReload, setNeedReload] = useState(false);
 
-  if (!plugin) {
+  if (!plugin || plugin.angularDetected) {
     return null;
   }
 

@@ -63,34 +63,6 @@ export interface FeatureToggles {
   */
   correlations?: boolean;
   /**
-  * Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
-  */
-  autoMigrateOldPanels?: boolean;
-  /**
-  * Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateGraphPanel?: boolean;
-  /**
-  * Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateTablePanel?: boolean;
-  /**
-  * Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigratePiechartPanel?: boolean;
-  /**
-  * Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateWorldmapPanel?: boolean;
-  /**
-  * Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateStatPanel?: boolean;
-  /**
-  * Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
-  */
-  disableAngular?: boolean;
-  /**
   * Allow elements nesting
   */
   canvasPanelNesting?: boolean;

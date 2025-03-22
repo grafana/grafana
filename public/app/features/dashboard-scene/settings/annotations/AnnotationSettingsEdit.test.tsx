@@ -28,19 +28,6 @@ const promDatasource = mockDataSource({
   type: 'prometheus',
 });
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAngularLoader: () => ({
-    load: () => ({
-      destroy: jest.fn(),
-      digest: jest.fn(),
-      getScope: () => ({
-        $watch: jest.fn(),
-      }),
-    }),
-  }),
-}));
-
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
   ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
   getDataSourceSrv: () => ({
@@ -56,8 +43,6 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
     getInstanceSettings: () => ({ ...defaultDatasource }),
   }),
 }));
-
-jest.mock('./AngularEditorLoader', () => ({ AngularEditorLoader: () => 'mocked AngularEditorLoader' }));
 
 const runRequestMock = jest.fn().mockReturnValue(
   of<PanelData>({

@@ -680,7 +680,8 @@
       "metadata": {
         "name": "autoMigrateGraphPanel",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-08T22:00:48Z"
+        "creationTimestamp": "2024-02-08T22:00:48Z",
+        "deletionTimestamp": "2025-02-07T09:47:00Z"
       },
       "spec": {
         "description": "Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking",
@@ -693,7 +694,8 @@
       "metadata": {
         "name": "autoMigrateOldPanels",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-23T04:02:36Z"
+        "creationTimestamp": "2023-03-23T04:02:36Z",
+        "deletionTimestamp": "2025-02-06T14:58:01Z"
       },
       "spec": {
         "description": "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
@@ -706,7 +708,8 @@
       "metadata": {
         "name": "autoMigratePiechartPanel",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-14T16:06:25Z"
+        "creationTimestamp": "2024-02-14T16:06:25Z",
+        "deletionTimestamp": "2025-02-07T11:06:35Z"
       },
       "spec": {
         "description": "Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking",
@@ -719,7 +722,8 @@
       "metadata": {
         "name": "autoMigrateStatPanel",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-14T16:06:25Z"
+        "creationTimestamp": "2024-02-14T16:06:25Z",
+        "deletionTimestamp": "2025-02-07T11:10:21Z"
       },
       "spec": {
         "description": "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
@@ -732,7 +736,8 @@
       "metadata": {
         "name": "autoMigrateTablePanel",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-14T16:06:25Z"
+        "creationTimestamp": "2024-02-14T16:06:25Z",
+        "deletionTimestamp": "2025-02-07T11:04:58Z"
       },
       "spec": {
         "description": "Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking",
@@ -745,7 +750,8 @@
       "metadata": {
         "name": "autoMigrateWorldmapPanel",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-14T16:06:25Z"
+        "creationTimestamp": "2024-02-14T16:06:25Z",
+        "deletionTimestamp": "2025-02-07T11:07:56Z"
       },
       "spec": {
         "description": "Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking",
@@ -1370,7 +1376,8 @@
       "metadata": {
         "name": "disableAngular",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-23T15:43:45Z"
+        "creationTimestamp": "2023-03-23T15:43:45Z",
+        "deletionTimestamp": "2025-01-29T08:52:05Z"
       },
       "spec": {
         "description": "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
