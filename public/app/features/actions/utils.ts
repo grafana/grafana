@@ -13,11 +13,12 @@ import {
   textUtil,
   ValueLinkConfig,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { BackendDataSourceResponse, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
 import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
+import { getNextRequestId } from '../query/state/PanelQueryRunner';
 
 /** @internal */
 export const getActions = (
@@ -73,50 +74,96 @@ export const getActions = (
 
 /** @internal */
 const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunction) => {
-  try {
-    const url = new URL(getUrl(replaceVariables(action.fetch.url)));
+  /**
+   * TODO/Questions
+   * 1. How do we check if Infinity is enabled/properly configured? - url match, auth set up?
+   * 2.
+   */
+  const isInfinityEnabled = true;
+  if (isInfinityEnabled) {
+    try {
+      const url = new URL(getUrl(replaceVariables(action.fetch.url)));
+      const requestId = getNextRequestId(); // SQR102
+      const infinityUrl = `api/ds/query?ds_type=yesoreyeram-infinity-datasource&requestId=${requestId}`;
 
-    const requestHeaders: Record<string, string> = {};
+      const requestHeaders: any = [];
+      const queryParams: any = [];
+      let contentType = 'application/json';
 
-    let request: BackendSrvRequest = {
-      url: url.toString(),
-      method: action.fetch.method,
-      data: getData(action, replaceVariables),
-      headers: requestHeaders,
-    };
+      const infinityUrlOptions = {
+        method: action.fetch.method,
+        data: getData(action, replaceVariables),
+        headers: requestHeaders,
+        params: queryParams,
+        body_type: 'raw',
+        body_content_type: contentType,
+        // 'body_graphql_query': '',
+        // 'body_graphql_variables': '',
+      };
 
-    if (action.fetch.headers) {
-      action.fetch.headers.forEach(([name, value]) => {
-        requestHeaders[replaceVariables(name)] = replaceVariables(value);
-      });
-    }
+      if (action.fetch.headers) {
+        action.fetch.headers.forEach(([name, value]) => {
+          requestHeaders.push({ key: replaceVariables(name), value: replaceVariables(value) });
+          if (name.toLowerCase() === 'content-type') {
+            contentType = value;
+          }
+        });
+      }
 
-    if (action.fetch.queryParams) {
-      action.fetch.queryParams?.forEach(([name, value]) => {
-        url.searchParams.append(replaceVariables(name), replaceVariables(value));
-      });
+      if (action.fetch.queryParams) {
+        action.fetch.queryParams?.forEach(([name, value]) => {
+          queryParams.push({ key: replaceVariables(name), value: replaceVariables(value) });
+        });
+      }
 
-      request.url = url.toString();
-    }
+      infinityUrlOptions.headers = requestHeaders;
 
-    requestHeaders['X-Grafana-Action'] = '1';
-    request.headers = requestHeaders;
-
-    getBackendSrv()
-      .fetch(request)
-      .subscribe({
-        error: (error) => {
-          appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-          console.error(error);
+      const infinityRequest = {
+        url: infinityUrl,
+        method: HttpRequestMethod.POST,
+        data: {
+          queries: [
+            {
+              refId: 'A', // @TODO
+              datasource: {
+                type: 'yesoreyeram-infinity-datasource',
+                uid: 'bdta2ryyr1kaoa', // @TODO
+              },
+              type: 'json',
+              source: 'url',
+              format: 'as-is',
+              url,
+              url_options: infinityUrlOptions,
+              // 'root_selector': '',
+              // 'columns': [],
+              // 'filters': [],
+              // 'global_query_id': '',
+              // 'datasourceId': 45251,
+              // 'intervalMs': 2000,
+              // 'maxDataPoints': 1844
+            },
+          ],
+          from: Date.now().toString(), // @TODO
+          to: Date.now().toString(),
         },
-        complete: () => {
-          appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
-        },
-      });
-  } catch (error) {
-    appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-    console.error(error);
-    return;
+      };
+
+      getBackendSrv()
+        .fetch<BackendDataSourceResponse>(infinityRequest)
+        .subscribe({
+          error: (error) => {
+            appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+            console.error(error);
+          },
+          complete: () => {
+            appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
+          },
+        });
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+      console.error(error);
+      return;
+    }
   }
 };
 
