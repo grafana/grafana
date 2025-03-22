@@ -32,7 +32,8 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
             name="arrow-left"
             size="lg"
             onClick={onGoBack}
-            aria-label={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
+            tooltip={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
+            aria-abel={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
           />
         )}
         <Text>{elementInfo.typeName}</Text>
