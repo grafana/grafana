@@ -108,8 +108,6 @@ export interface DashboardSceneState extends SceneObjectState {
   controls?: DashboardControls;
   /** True when editing */
   isEditing?: boolean;
-  /** Controls the visibility of hidden elements like row headers */
-  showHiddenElements?: boolean;
   /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */
@@ -270,7 +268,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
-    this.setState({ isEditing: true, showHiddenElements: true });
+    this.setState({ isEditing: true });
 
     // Propagate change edit mode change to children
     this.state.body.editModeChanged?.(true);

@@ -22,7 +22,7 @@ export interface RowItemState extends SceneObjectState {
   title?: string;
   isCollapsed?: boolean;
   isHeaderHidden?: boolean;
-  height?: 'expand' | 'min';
+  fillScreen?: boolean;
   conditionalRendering?: ConditionalRendering;
 }
 
@@ -136,8 +136,8 @@ export class RowItem
     this.setState({ isHeaderHidden });
   }
 
-  public onChangeHeight(height: 'expand' | 'min') {
-    this.setState({ height });
+  public onChangeFillScreen(fillScreen: boolean) {
+    this.setState({ fillScreen });
   }
 
   public onChangeRepeat(repeat: string | undefined) {
