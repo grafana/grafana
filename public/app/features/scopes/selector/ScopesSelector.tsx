@@ -40,7 +40,7 @@ export const ScopesSelector = () => {
     ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
     : drawerOpened
       ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
-      : t('scopes.dashboards.toggle..expand', 'Expand suggested dashboards list');
+      : t('scopes.dashboards.toggle.expand', 'Expand suggested dashboards list');
 
   return (
     <div className={styles.container}>
