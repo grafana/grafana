@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -69,6 +70,57 @@ func TestBase_Is(t *testing.T) {
 			assert.Equal(t, tc.Expect, tc.Base.Is(tc.Other), "direct comparison")
 			assert.Equal(t, tc.Expect, errors.Is(tc.Base, tc.Other), "comparison using errors.Is with other as target")
 			assert.Equal(t, tc.Expect || tc.ExpectUnwrapped, errors.Is(tc.Other, tc.Base), "comparison using errors.Is with base as target, should unwrap other")
+		})
+	}
+}
+
+func TestError_WithContactSupportMessage(t *testing.T) {
+	tests := []struct {
+		name           string
+		error          Error
+		expectedSuffix string
+	}{
+		{
+			name: "should append contact support message when WithContactSupportMessage is called",
+			error: Error{
+				Reason:        StatusInternal,
+				MessageID:     "test.error",
+				LogMessage:    "test error message",
+				PublicMessage: "Something went wrong",
+			}.WithContactSupportMessage(),
+			expectedSuffix: "Please contact support if the issue persists.",
+		},
+		{
+			name: "should not append contact support message when WithContactSupportMessage is not called",
+			error: Error{
+				Reason:        StatusInternal,
+				MessageID:     "test.error",
+				LogMessage:    "test error message",
+				PublicMessage: "Something went wrong",
+			},
+			expectedSuffix: "",
+		},
+		{
+			name: "should handle message with existing period",
+			error: Error{
+				Reason:        StatusInternal,
+				MessageID:     "test.error",
+				LogMessage:    "test error message",
+				PublicMessage: "Something went wrong.",
+			}.WithContactSupportMessage(),
+			expectedSuffix: "Please contact support if the issue persists.",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			public := tt.error.Public()
+			message := public.Message
+			if tt.expectedSuffix != "" {
+				assert.True(t, strings.HasSuffix(message, tt.expectedSuffix))
+			} else {
+				assert.NotContains(t, message, "Please contact support if the issue persists.")
+			}
 		})
 	}
 }
