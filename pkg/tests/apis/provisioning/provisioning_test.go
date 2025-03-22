@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
@@ -35,8 +35,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-			featuremgmt.FlagKubernetesCliDashboards,
-			featuremgmt.FlagKubernetesFoldersServiceV2,
+			featuremgmt.FlagKubernetesClientDashboardsFolders,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {

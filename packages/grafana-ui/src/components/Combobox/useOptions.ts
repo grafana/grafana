@@ -1,9 +1,12 @@
+/* Spreading unbound arrays can be very slow or even crash the browser if used for arguments */
+/* eslint no-restricted-syntax: ["error", "SpreadElement"] */
+
 import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
 import { t } from '../../utils/i18n';
 
-import { itemFilter } from './filter';
+import { fuzzyFind, itemToString } from './filter';
 import { ComboboxOption } from './types';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
@@ -14,7 +17,7 @@ type AsyncOptions<T extends string | number> =
 const asyncNoop = () => Promise.resolve([]);
 
 /**
- * Abstracts away sync/async options for MultiCombobox (and later Combobox).
+ * Abstracts away sync/async options for combobox components.
  * It also filters options based on the user's input.
  *
  * Returns:
@@ -66,14 +69,11 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
         //we just focus on the value to check if the option already exists
         const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
         if (!customValueExists) {
-          currentOptions = [
-            {
-              label: userTypedSearch,
-              value: userTypedSearch as T,
-              description: t('combobox.custom-value.description', 'Use custom value'),
-            },
-            ...currentOptions,
-          ];
+          currentOptions.unshift({
+            label: userTypedSearch,
+            value: userTypedSearch as T,
+            description: t('combobox.custom-value.description', 'Use custom value'),
+          });
         }
       }
       return currentOptions;
@@ -83,28 +83,73 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
 
   const updateOptions = useCallback(
     (inputValue: string) => {
-      if (!isAsync) {
-        setUserTypedSearch(inputValue);
-        return;
+      setUserTypedSearch(inputValue);
+      if (isAsync) {
+        setAsyncLoading(true);
+        debouncedLoadOptions(inputValue);
       }
-
-      setAsyncLoading(true);
-
-      debouncedLoadOptions(inputValue);
     },
     [debouncedLoadOptions, isAsync]
   );
 
-  const finalOptions = useMemo(() => {
-    let currentOptions = [];
+  const stringifiedOptions = useMemo(() => {
+    return isAsync ? [] : rawOptions.map(itemToString);
+  }, [isAsync, rawOptions]);
+
+  // Create a list of options filtered by the current search.
+  // If async, just returns the async options.
+  const filteredOptions = useMemo(() => {
     if (isAsync) {
-      currentOptions = addCustomValue(asyncOptions);
-    } else {
-      currentOptions = addCustomValue(rawOptions.filter(itemFilter(userTypedSearch)));
+      return asyncOptions;
     }
 
-    return currentOptions;
-  }, [isAsync, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
+    return fuzzyFind(rawOptions, stringifiedOptions, userTypedSearch);
+  }, [asyncOptions, isAsync, rawOptions, stringifiedOptions, userTypedSearch]);
 
-  return { options: finalOptions, updateOptions, asyncLoading, asyncError };
+  const [finalOptions, groupStartIndices] = useMemo(() => {
+    const { options, groupStartIndices } = sortByGroup(filteredOptions);
+
+    return [addCustomValue(options), groupStartIndices];
+  }, [filteredOptions, addCustomValue]);
+
+  return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError };
+}
+
+function sortByGroup<T extends string | number>(options: Array<ComboboxOption<T>>) {
+  const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
+  for (const option of options) {
+    const groupExists = groupedOptions.has(option.group);
+    if (groupExists) {
+      groupedOptions.get(option.group)?.push(option);
+    } else {
+      groupedOptions.set(option.group, [option]);
+    }
+  }
+
+  // Create a map to track the starting index of each group
+  const groupStartIndices = new Map<string, number>();
+  let currentIndex = 0;
+
+  // Reorganize options to have groups first, then undefined group
+  let reorganizeOptions: Array<ComboboxOption<T>> = [];
+  for (const [group, groupOptions] of groupedOptions) {
+    if (!group) {
+      continue;
+    }
+
+    groupStartIndices.set(group, currentIndex);
+    reorganizeOptions = reorganizeOptions.concat(groupOptions);
+    currentIndex += groupOptions.length;
+  }
+
+  const undefinedGroupOptions = groupedOptions.get(undefined);
+  if (undefinedGroupOptions) {
+    groupStartIndices.set('undefined', currentIndex);
+    reorganizeOptions = reorganizeOptions.concat(undefinedGroupOptions);
+  }
+
+  return {
+    options: reorganizeOptions,
+    groupStartIndices,
+  };
 }

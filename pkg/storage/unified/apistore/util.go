@@ -6,20 +6,16 @@
 package apistore
 
 import (
-	"bytes"
 	"fmt"
 	"strconv"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
-	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -31,6 +27,27 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 			Key: k,
 		},
 		NextPageToken: predicate.Continue,
+	}
+
+	if opts.ResourceVersion != "" {
+		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return nil, predicate, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+		req.ResourceVersion = rv
+	}
+
+	switch opts.ResourceVersionMatch {
+	case "":
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_Unset
+	case metav1.ResourceVersionMatchNotOlderThan:
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_NotOlderThan
+	case metav1.ResourceVersionMatchExact:
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_Exact
+	default:
+		return nil, predicate, apierrors.NewBadRequest(
+			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
+		)
 	}
 
 	if opts.Predicate.Label != nil && !opts.Predicate.Label.Empty() {
@@ -93,76 +110,5 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 		}
 	}
 
-	if opts.ResourceVersion != "" {
-		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
-		if err != nil {
-			return nil, predicate, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
-		}
-		req.ResourceVersion = rv
-	}
-
-	switch opts.ResourceVersionMatch {
-	case "", metav1.ResourceVersionMatchNotOlderThan:
-		req.VersionMatch = resource.ResourceVersionMatch_NotOlderThan
-	case metav1.ResourceVersionMatchExact:
-		req.VersionMatch = resource.ResourceVersionMatch_Exact
-	default:
-		return nil, predicate, apierrors.NewBadRequest(
-			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
-		)
-	}
-
 	return req, predicate, nil
-}
-
-func isUnchanged(codec runtime.Codec, obj runtime.Object, newObj runtime.Object) (bool, error) {
-	buf := new(bytes.Buffer)
-	if err := codec.Encode(obj, buf); err != nil {
-		return false, err
-	}
-
-	newBuf := new(bytes.Buffer)
-	if err := codec.Encode(newObj, newBuf); err != nil {
-		return false, err
-	}
-
-	return bytes.Equal(buf.Bytes(), newBuf.Bytes()), nil
-}
-
-func testKeyParser(val string) (*resource.ResourceKey, error) {
-	k, err := grafanaregistry.ParseKey(val)
-	if err != nil {
-		if strings.HasPrefix(val, "pods/") {
-			parts := strings.Split(val, "/")
-			if len(parts) == 2 {
-				err = nil
-				k = &grafanaregistry.Key{
-					Resource: parts[0], // pods
-					Name:     parts[1],
-				}
-			} else if len(parts) == 3 {
-				err = nil
-				k = &grafanaregistry.Key{
-					Resource:  parts[0], // pods
-					Namespace: parts[1],
-					Name:      parts[2],
-				}
-			}
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	if k.Group == "" {
-		k.Group = "example.apiserver.k8s.io"
-	}
-	if k.Resource == "" {
-		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
-	}
-	return &resource.ResourceKey{
-		Namespace: k.Namespace,
-		Group:     k.Group,
-		Resource:  k.Resource,
-		Name:      k.Name,
-	}, err
 }

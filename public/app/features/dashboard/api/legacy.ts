@@ -25,7 +25,9 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
+    return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, undefined, {
+      showSuccessAlert,
+    });
   }
 
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {

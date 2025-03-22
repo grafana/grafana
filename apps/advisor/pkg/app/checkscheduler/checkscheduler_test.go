@@ -11,28 +11,35 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestRunner_Run_ErrorOnList(t *testing.T) {
-	mockCheckService := &MockCheckService{}
-	mockClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			return nil, errors.New("list error")
-		},
-		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
-			return &advisorv0alpha1.Check{}, nil
-		},
-	}
+func TestRunner_Run(t *testing.T) {
+	t.Run("does not crash when error on list", func(t *testing.T) {
+		mockCheckService := &MockCheckService{}
+		mockClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return nil, errors.New("list error")
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				return &advisorv0alpha1.Check{}, nil
+			},
+		}
 
-	runner := &Runner{
-		checkRegistry: mockCheckService,
-		client:        mockClient,
-	}
+		runner := &Runner{
+			checkRegistry:      mockCheckService,
+			client:             mockClient,
+			log:                log.NewNopLogger(),
+			evaluationInterval: 1 * time.Hour,
+		}
 
-	err := runner.Run(context.Background())
-	assert.Error(t, err)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := runner.Run(ctx)
+		assert.ErrorAs(t, err, &context.Canceled)
+	})
 }
 
 func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
@@ -44,6 +51,7 @@ func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
+		log:    log.NewNopLogger(),
 	}
 
 	lastCreated, err := runner.checkLastCreated(context.Background())
@@ -68,6 +76,7 @@ func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
 	runner := &Runner{
 		checkRegistry: mockCheckService,
 		client:        mockClient,
+		log:           log.NewNopLogger(),
 	}
 
 	err := runner.createChecks(context.Background())
@@ -91,6 +100,7 @@ func TestRunner_createChecks_Success(t *testing.T) {
 	runner := &Runner{
 		checkRegistry: mockCheckService,
 		client:        mockClient,
+		log:           log.NewNopLogger(),
 	}
 
 	err := runner.createChecks(context.Background())
@@ -106,6 +116,7 @@ func TestRunner_cleanupChecks_ErrorOnList(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
+		log:    log.NewNopLogger(),
 	}
 
 	err := runner.cleanupChecks(context.Background())
@@ -126,6 +137,7 @@ func TestRunner_cleanupChecks_WithinMax(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
+		log:    log.NewNopLogger(),
 	}
 
 	err := runner.cleanupChecks(context.Background())
@@ -135,8 +147,8 @@ func TestRunner_cleanupChecks_WithinMax(t *testing.T) {
 func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 	mockClient := &MockClient{
 		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			items := make([]advisorv0alpha1.Check, 0, maxChecks+1)
-			for i := 0; i < maxChecks+1; i++ {
+			items := make([]advisorv0alpha1.Check, 0, defaultMaxHistory+1)
+			for i := 0; i < defaultMaxHistory+1; i++ {
 				item := advisorv0alpha1.Check{}
 				item.ObjectMeta.SetLabels(map[string]string{
 					checks.TypeLabel: "mock",
@@ -153,7 +165,9 @@ func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 	}
 
 	runner := &Runner{
-		client: mockClient,
+		client:     mockClient,
+		maxHistory: defaultMaxHistory,
+		log:        log.NewNopLogger(),
 	}
 	err := runner.cleanupChecks(context.Background())
 	assert.ErrorContains(t, err, "delete error")
@@ -161,8 +175,8 @@ func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 
 func TestRunner_cleanupChecks_Success(t *testing.T) {
 	itemsDeleted := []string{}
-	items := make([]advisorv0alpha1.Check, 0, maxChecks+1)
-	for i := 0; i < maxChecks+1; i++ {
+	items := make([]advisorv0alpha1.Check, 0, defaultMaxHistory+1)
+	for i := 0; i < defaultMaxHistory+1; i++ {
 		item := advisorv0alpha1.Check{}
 		item.ObjectMeta.SetName(fmt.Sprintf("check-%d", i))
 		item.ObjectMeta.SetLabels(map[string]string{
@@ -187,11 +201,53 @@ func TestRunner_cleanupChecks_Success(t *testing.T) {
 	}
 
 	runner := &Runner{
-		client: mockClient,
+		client:     mockClient,
+		maxHistory: defaultMaxHistory,
+		log:        log.NewNopLogger(),
 	}
 	err := runner.cleanupChecks(context.Background())
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"check-0"}, itemsDeleted)
+}
+
+func Test_getEvaluationInterval(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		interval, err := getEvaluationInterval(map[string]string{})
+		assert.NoError(t, err)
+		assert.Equal(t, 24*time.Hour, interval)
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		interval, err := getEvaluationInterval(map[string]string{"evaluation_interval": "invalid"})
+		assert.Error(t, err)
+		assert.Zero(t, interval)
+	})
+
+	t.Run("custom", func(t *testing.T) {
+		interval, err := getEvaluationInterval(map[string]string{"evaluation_interval": "1h"})
+		assert.NoError(t, err)
+		assert.Equal(t, time.Hour, interval)
+	})
+}
+
+func Test_getMaxHistory(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		history, err := getMaxHistory(map[string]string{})
+		assert.NoError(t, err)
+		assert.Equal(t, 10, history)
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		history, err := getMaxHistory(map[string]string{"max_history": "invalid"})
+		assert.Error(t, err)
+		assert.Zero(t, history)
+	})
+
+	t.Run("custom", func(t *testing.T) {
+		history, err := getMaxHistory(map[string]string{"max_history": "5"})
+		assert.NoError(t, err)
+		assert.Equal(t, 5, history)
+	})
 }
 
 type MockCheckService struct {

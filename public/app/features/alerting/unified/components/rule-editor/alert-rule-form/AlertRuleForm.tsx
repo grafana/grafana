@@ -1,27 +1,27 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, ConfirmModal, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
   isCloudAlertingRuleByType,
   isCloudRecordingRuleByType,
-  isCloudRulerRule,
   isGrafanaManagedRuleByType,
-  isGrafanaRulerRule,
-  isGrafanaRulerRulePaused,
+  isPausedRule,
   isRecordingRuleByType,
+  rulerRuleType,
 } from 'app/features/alerting/unified/utils/rules';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -45,6 +45,10 @@ import {
   formValuesFromPrefill,
   translateRouteParamToRuleType,
 } from '../../../rule-editor/formDefaults';
+import {
+  areQueriesTransformableToSimpleCondition,
+  isExpressionQueryInAlert,
+} from '../../../rule-editor/formProcessing';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
   MANUAL_ROUTING_KEY,
@@ -69,11 +73,12 @@ import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndEx
 type Props = {
   existing?: RuleWithLocation;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
+  isManualRestore?: boolean;
 };
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
-export const AlertRuleForm = ({ existing, prefill }: Props) => {
+export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
   const [showEditYaml, setShowEditYaml] = useState(false);
@@ -91,6 +96,11 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {
+    // If we have an existing AND a prefill, then we're coming from the restore dialog
+    // and we want to merge the two
+    if (existing && prefill) {
+      return { ...formValuesFromExistingRule(existing), ...formValuesFromPrefill(prefill) };
+    }
     if (existing) {
       return formValuesFromExistingRule(existing);
     }
@@ -114,8 +124,16 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     handleSubmit,
     watch,
     formState: { isSubmitting },
+    trigger,
   } = formAPI;
 
+  useEffect(() => {
+    // If the user is manually restoring an old version of a rule,
+    // we should trigger validation on the form so any problem areas are clearly highlighted for them to action
+    if (isManualRestore) {
+      trigger();
+    }
+  }, [isManualRestore, trigger]);
   const type = watch('type');
   const grafanaTypeRule = isGrafanaManagedRuleByType(type ?? RuleFormType.grafana);
 
@@ -155,9 +173,20 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (!existing) {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
       storeInLocalStorageValues(values);
+      // save the rule to the rule group
       await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
-      grafanaTypeRule && trackNewGrafanaAlertRuleFormSavedSuccess(); // new Grafana-managed rule
+      // track the new Grafana-managed rule creation in the analytics
+      if (grafanaTypeRule) {
+        const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
+        const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
+        trackNewGrafanaAlertRuleFormSavedSuccess({
+          simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
+          simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
+          canBeTransformedToSimpleQuery: areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries),
+        });
+      }
     } else {
+      // when updating an existing rule
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
       await updateRuleInRuleGroup.execute(
         ruleGroupIdentifier,
@@ -179,7 +208,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
       // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
       // After successful update we need to update the URL to avoid displaying 404 errors
-      if (isCloudRulerRule(ruleDefinition)) {
+      if (rulerRuleType.dataSource.rule(ruleDefinition)) {
         const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
         locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
       }
@@ -265,7 +294,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     </Stack>
   );
 
-  const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
+  const isPaused = rulerRuleType.grafana.alertingRule(existing?.rule) && isPausedRule(existing?.rule);
+
   if (!type) {
     return null;
   }
@@ -274,12 +304,23 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
+          {isManualRestore && (
+            <Alert
+              severity="warning"
+              title={t('alerting.alertVersionHistory.warning-restore-manually-title', 'Restoring rule manually')}
+            >
+              <Trans i18nKey="alerting.alertVersionHistory.warning-restore-manually">
+                You are manually restoring an old version of this alert rule. Please review the changes carefully before
+                saving the rule definition.
+              </Trans>
+            </Alert>
+          )}
           {isPaused && <InfoPausedRule />}
           <Stack direction="column" gap={3}>
             {/* Step 1 */}
             <AlertRuleNameAndMetric />
             {/* Step 2 */}
-            <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
+            <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} mode="edit" />
             {/* Step 3-4-5 */}
             {showDataSourceDependantStep && (
               <>
@@ -328,7 +369,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 function getReturnToUrl(groupId: RuleGroupIdentifier, rule: RulerRuleDTO | PostableRuleGrafanaRuleDTO) {
   const { dataSourceName, namespaceName, groupName } = groupId;
 
-  if (prometheusRulesPrimary && isCloudRulerRule(rule)) {
+  if (prometheusRulesPrimary && rulerRuleType.dataSource.rule(rule)) {
     const ruleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, rule);
     return createViewLinkFromIdentifier(ruleIdentifier);
   }

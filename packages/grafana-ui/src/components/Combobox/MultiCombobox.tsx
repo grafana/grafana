@@ -27,6 +27,7 @@ import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 import { useMultiInputAutoSize } from './useMultiInputAutoSize';
 import { useOptions } from './useOptions';
+import { isNewGroup } from './utils';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
@@ -79,8 +80,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       return [];
     }
 
-    return getSelectedItemsFromValue<T>(value, baseOptions);
-  }, [value, baseOptions]);
+    return getSelectedItemsFromValue<T>(value, typeof props.options !== 'function' ? props.options : baseOptions);
+  }, [value, props.options, baseOptions]);
 
   const { measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
     selectedItems,
@@ -246,8 +247,18 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const virtualizerOptions = {
     count: options.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (index: number) =>
-      'description' in options[index] ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT,
+    estimateSize: (index: number) => {
+      const firstGroupItem = isNewGroup(options[index], index > 0 ? options[index - 1] : undefined);
+      const hasDescription = 'description' in options[index];
+      let itemHeight = MENU_OPTION_HEIGHT;
+      if (hasDescription) {
+        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
+      }
+      if (firstGroupItem) {
+        itemHeight += MENU_OPTION_HEIGHT;
+      }
+      return itemHeight;
+    },
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
@@ -334,14 +345,16 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           {...getMenuProps({ ref: floatingRef })}
         >
           {isOpen && (
-            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
+            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
               <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                 {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const startingNewGroup = isNewGroup(options[virtualRow.index], options[virtualRow.index - 1]);
                   const index = virtualRow.index;
                   const item = options[index];
                   const itemProps = getItemProps({ item, index });
                   const isSelected = isOptionSelected(item);
                   const id = 'multicombobox-option-' + item.value.toString();
+                  const groupHeaderid = 'multicombobox-option-group-' + item.value.toString();
                   const isAll = item.value === ALL_OPTION_VALUE;
 
                   // TODO: fix bug where if the search filtered items list is the
@@ -354,29 +367,46 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                       key={`${item.value}-${index}`}
                       data-index={index}
                       {...itemProps}
-                      className={cx(styles.option, { [styles.optionFocused]: highlightedIndex === index })}
+                      className={styles.optionBasic}
                       style={{ height: virtualRow.size, transform: `translateY(${virtualRow.start}px)` }}
                     >
-                      <Stack direction="row" alignItems="center">
-                        <Checkbox
-                          key={id}
-                          value={allItemsSelected || isSelected}
-                          indeterminate={isAll && selectedItems.length > 0 && !allItemsSelected}
-                          aria-labelledby={id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                        />
-                        <OptionListItem
-                          label={
-                            isAll
-                              ? (item.label ?? item.value.toString()) +
-                                (isAll && inputValue !== '' ? ` (${options.length - 1})` : '')
-                              : (item.label ?? item.value.toString())
-                          }
-                          description={item?.description}
-                          id={id}
-                        />
+                      <Stack direction="column" justifyContent="space-between" width={'100%'} height={'100%'} gap={0}>
+                        {startingNewGroup && (
+                          <div className={styles.optionGroup}>
+                            <OptionListItem
+                              label={item.group ?? t('combobox.group.undefined', 'No group')}
+                              id={groupHeaderid}
+                              isGroup={true}
+                            />
+                          </div>
+                        )}
+                        <div
+                          className={cx(styles.option, {
+                            [styles.optionFocused]: highlightedIndex === index,
+                          })}
+                        >
+                          <Stack direction="row" alignItems="center">
+                            <Checkbox
+                              key={id}
+                              value={allItemsSelected || isSelected}
+                              indeterminate={isAll && selectedItems.length > 0 && !allItemsSelected}
+                              aria-labelledby={id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            />
+                            <OptionListItem
+                              label={
+                                isAll
+                                  ? (item.label ?? item.value.toString()) +
+                                    (isAll && inputValue !== '' ? ` (${options.length - 1})` : '')
+                                  : (item.label ?? item.value.toString())
+                              }
+                              description={item?.description}
+                              id={id}
+                            />
+                          </Stack>
+                        </div>
                       </Stack>
                     </li>
                   );

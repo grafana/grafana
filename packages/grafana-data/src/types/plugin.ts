@@ -17,7 +17,6 @@ export enum PluginType {
   datasource = 'datasource',
   app = 'app',
   renderer = 'renderer',
-  secretsmanager = 'secretsmanager',
 }
 
 /** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature} */
@@ -129,6 +128,8 @@ export type ExtensionInfo = {
 export interface PluginExtensions {
   // The component extensions that the plugin registers
   addedComponents: ExtensionInfo[];
+
+  addedFunctions: ExtensionInfo[];
 
   // The link extensions that the plugin registers
   addedLinks: ExtensionInfo[];

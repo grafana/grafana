@@ -17,6 +17,14 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
           mode: FieldColorModeId.Thresholds,
         },
       },
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: true,
+        },
+      },
+      [FieldConfigProperty.Actions]: {
+        hideFromDefaults: false,
+      },
     },
     useCustomConfig: (builder) => {
       builder
