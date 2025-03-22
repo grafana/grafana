@@ -4,6 +4,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -19,6 +20,11 @@ var typedResources = map[string]typeInfo{
 		folderalpha1.FolderResourceInfo.GroupResource().Resource,
 		"",
 	): {Type: "folder", Relations: RelationsFolder},
+	FormatGroupResource(
+		"team.grafana.app",
+		"teams",
+		"",
+	): {Type: "team", Relations: RelationsFolder},
 }
 
 func getTypeInfo(group, resource string) (typeInfo, bool) {
@@ -133,7 +139,7 @@ func (r ResourceInfo) Type() string {
 }
 
 func (r ResourceInfo) Context() *structpb.Struct {
-	if !r.IsGeneric() {
+	if !r.IsGeneric() && r.typ != TypeFolder && r.typ != TypeTeam {
 		return nil
 	}
 
@@ -146,4 +152,8 @@ func (r ResourceInfo) Context() *structpb.Struct {
 
 func (r ResourceInfo) IsValidRelation(relation string) bool {
 	return isValidRelation(relation, r.relations)
+}
+
+func (r ResourceInfo) HasSubresource() bool {
+	return r.subresource != ""
 }

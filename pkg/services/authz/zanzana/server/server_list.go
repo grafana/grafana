@@ -56,6 +56,30 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 		return &authzv1.ListResponse{}, nil
 	}
 
+	var (
+		folderRelation = common.FolderResourceRelation(relation)
+		resourceCtx    = resource.Context()
+	)
+
+	var items []string
+	if resource.HasSubresource() && common.IsFolderResourceRelation(folderRelation) {
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			Type:                 common.TypeFolder,
+			Relation:             folderRelation,
+			User:                 subject,
+			Context:              resourceCtx,
+			ContextualTuples:     contextuals,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, typedObjects(resource.Type(), res.GetObjects())...)
+	}
+
 	// List all resources user has access too
 	res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              store.ID,
@@ -68,9 +92,10 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	if err != nil {
 		return nil, err
 	}
+	items = append(items, typedObjects(resource.Type(), res.GetObjects())...)
 
 	return &authzv1.ListResponse{
-		Items: typedObjects(resource.Type(), res.GetObjects()),
+		Items: items,
 	}, nil
 }
 

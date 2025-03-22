@@ -14,6 +14,17 @@ extend type folder
     define resource_get_permissions: [user with folder_group_filter, service-account with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_admin or resource_get_permissions from parent
     define resource_set_permissions: [user with folder_group_filter, service-account with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_admin or resource_set_permissions from parent
 
+extend type team
+  relations
+    define resource_view: [user, service-account, team#member, role#assignee] or resource_edit
+    define resource_edit: [user, service-account, team#member, role#assignee] or resource_admin
+    define resource_admin: [user, service-account, team#member, role#assignee]
+
+    define resource_get: [user with folder_group_filter, service-account with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_view
+    define resource_create: [user with folder_group_filter, service-account with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit
+    define resource_update: [user with folder_group_filter, service-account with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit
+    define resource_delete: [user with folder_group_filter, service-account with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit
+
 type group_resource
   relations
     define view: [user, service-account, render, team#member, role#assignee] or edit

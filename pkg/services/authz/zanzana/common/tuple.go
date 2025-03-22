@@ -30,6 +30,7 @@ const (
 	TypeFolderPrefix       string = TypeFolder + ":"
 	TypeResourcePrefix     string = TypeResource + ":"
 	TypeGroupResoucePrefix string = TypeGroupResouce + ":"
+	TypeTeamPrefix         string = TypeTeam + ":"
 )
 
 const (
@@ -159,6 +160,10 @@ func NewFolderIdent(name string) string {
 	return TypeFolderPrefix + name
 }
 
+func NewTeamIdent(name string) string {
+	return TypeTeamPrefix + name
+}
+
 func NewGroupResourceIdent(group, resource, subresource string) string {
 	return TypeGroupResoucePrefix + FormatGroupResource(group, resource, subresource)
 }
@@ -219,6 +224,30 @@ func NewFolderResourceTuple(subject, relation, group, resource, subresource, fol
 		User:      subject,
 		Relation:  relation,
 		Object:    NewFolderIdent(folder),
+		Condition: condition,
+	}
+}
+
+func NewTeamResourceTuple(subject, relation, group, resource, subresource, name string) *openfgav1.TupleKey {
+	relation = FolderResourceRelation(relation)
+	var condition *openfgav1.RelationshipCondition
+	if !isFolderResourceRelationSet(relation) {
+		condition = &openfgav1.RelationshipCondition{
+			Name: "folder_group_filter",
+			Context: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"group_resources": structpb.NewListValue(&structpb.ListValue{
+						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource, subresource))},
+					}),
+				},
+			},
+		}
+	}
+
+	return &openfgav1.TupleKey{
+		User:      subject,
+		Relation:  relation,
+		Object:    NewTeamIdent(name),
 		Condition: condition,
 	}
 }
