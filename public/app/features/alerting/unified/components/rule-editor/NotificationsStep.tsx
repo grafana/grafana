@@ -270,22 +270,16 @@ function NeedHelpInfoForContactpoint() {
         <>
           Select a contact point to notify all recipients in it.
           <br />
+          Muting, grouping, and timings options allow you to customize how notifications are sent.
           <br />
-          Notifications for firing alert instances are grouped based on folder and alert rule name.
           <br />
-          The wait time before sending the first notification for a new group of alerts is 30 seconds.
-          <br />
-          The waiting time before sending a notification about changes in the alert group after the first notification
-          has been sent is 5 minutes.
-          <br />
-          The wait time before resending a notification that has already been sent successfully is 4 hours.
-          <br />
-          Grouping and wait time values are defined in your default notification policy.
+          Alternatively, toggle the <b>Advanced options</b> button to route notifications using notification policies
+          for greater flexibility.
         </>
       }
       externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/"
       linkText="Read more about notifications"
-      title="Notify contact points"
+      title="Notify by selecting a contact point"
     />
   );
 }
