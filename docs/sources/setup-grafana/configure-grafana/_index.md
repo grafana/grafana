@@ -853,7 +853,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 {{< /admonition >}}
 
-### `[k8s_dashboard_cleanup]`
+### `[dashboard_cleanup]`
 
 Settings related to cleaning up dashboards that were deleted via Kubernetes/apis. This section configures how Grafana handles the cleanup process for dashboards that have been marked for deletion.
 
