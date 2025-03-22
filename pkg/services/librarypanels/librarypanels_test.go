@@ -15,7 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
@@ -739,7 +741,8 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 		features, acmock.NewMockedPermissionsService(), ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
 		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
-	)
+		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+		kvstore.NewFakeKVStore())
 	require.NoError(t, err)
 	service.RegisterDashboardPermissions(dashPermissionService)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
@@ -837,7 +840,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			features, acmock.NewMockedPermissionsService(), ac,
 			folderSvc, folder.NewFakeStore(),
 			nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
-		)
+			serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+			kvstore.NewFakeKVStore())
 		require.NoError(t, err)
 		dashService.RegisterDashboardPermissions(dashPermissionService)
 		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc, log.NewNopLogger())
