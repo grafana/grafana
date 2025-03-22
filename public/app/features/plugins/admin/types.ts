@@ -84,6 +84,10 @@ export interface CatalogPluginDetails {
   raiseAnIssueUrl?: string;
   signatureType?: PluginSignatureType;
   signature?: PluginSignatureStatus;
+  screenshots?: Array<{
+    path: string;
+    name: string;
+  }> | null;
 }
 
 export interface CatalogPluginInfo {
@@ -112,6 +116,10 @@ export type RemotePlugin = {
         name: string;
         url: string;
       }>;
+      screenshots?: Array<{
+        path: string;
+        name: string;
+      }> | null;
     };
   };
   links: Array<{ rel: string; href: string }>;
@@ -268,6 +276,7 @@ export enum PluginTabLabels {
   CHANGELOG = 'Changelog',
   PLUGINDETAILS = 'Plugin details',
   DATASOURCE_CONNECTIONS = 'Data source connections',
+  SCREENSHOTS = 'Screenshots',
 }
 
 export enum PluginTabIds {
@@ -280,6 +289,7 @@ export enum PluginTabIds {
   CHANGELOG = 'changelog',
   PLUGINDETAILS = 'right-panel',
   DATASOURCE_CONNECTIONS = 'datasource-connections',
+  SCREENSHOTS = 'screenshots',
 }
 
 export enum RequestStatus {

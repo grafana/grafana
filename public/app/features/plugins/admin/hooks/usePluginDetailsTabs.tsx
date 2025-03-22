@@ -42,6 +42,7 @@ export const usePluginDetailsTabs = (
   const navModelChildren = useMemo(() => {
     const canConfigurePlugins = plugin && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
     const navModelChildren: NavModelItem[] = [];
+
     // currently the versions available of core plugins are not consistent
     if (isPublished && !plugin?.isCore) {
       navModelChildren.push({
@@ -60,6 +61,16 @@ export const usePluginDetailsTabs = (
         icon: 'rocket',
         url: `${pathname}?page=${PluginTabIds.CHANGELOG}`,
         active: PluginTabIds.CHANGELOG === currentPageId,
+      });
+    }
+
+    if (isPublished && plugin?.details?.screenshots && plugin?.details?.screenshots?.length > 0) {
+      navModelChildren.push({
+        text: PluginTabLabels.SCREENSHOTS,
+        id: PluginTabIds.SCREENSHOTS,
+        icon: 'camera',
+        url: `${pathname}?page=${PluginTabIds.SCREENSHOTS}`,
+        active: PluginTabIds.SCREENSHOTS === currentPageId,
       });
     }
 

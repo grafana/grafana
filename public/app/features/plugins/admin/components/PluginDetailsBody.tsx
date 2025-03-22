@@ -16,6 +16,7 @@ import { CatalogPlugin, Permission, PluginTabIds } from '../types';
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import Connections from './ConnectionsTab';
 import { PluginDashboards } from './PluginDashboards';
+import { PluginScreenshotCarousel } from './PluginScreenshotCarousel';
 import { PluginUsage } from './PluginUsage';
 
 type Props = {
@@ -73,6 +74,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
 
   if (pageId === PluginTabIds.CHANGELOG && plugin?.details?.changelog) {
     return <Changelog sanitizedHTML={plugin?.details?.changelog} />;
+  }
+
+  if (pageId === PluginTabIds.SCREENSHOTS && plugin?.details?.screenshots) {
+    return <PluginScreenshotCarousel plugin={plugin} screenshots={plugin?.details?.screenshots} />;
   }
 
   if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
