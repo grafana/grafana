@@ -47,6 +47,7 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
         }
       }
     }
+
     panelDataProviders.forEach((d) => {
       this._subs.add(
         d.subscribeToState(() => {
