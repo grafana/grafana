@@ -142,4 +142,8 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Add api_version column", NewAddColumnMigration(tableV2, &Column{
 		Name: "api_version", Type: DB_Varchar, Nullable: true, Length: 20,
 	}))
+
+	mg.AddMigration("Update secure_json_data column to MediumText", NewTableCharsetMigration(tableV2.Name, []*Column{
+		{Name: "secure_json_data", Type: DB_MediumText, Nullable: true},
+	}))
 }
