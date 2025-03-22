@@ -175,12 +175,10 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf bytes.Buffer) ([]byte, error) {
 	support := s.opts.LargeObjectSupport
-	if support != nil {
-		size := buf.Len()
-		if size > support.Threshold() {
-			if support.MaxSize() > 0 && size > support.MaxSize() {
-				return nil, fmt.Errorf("request object is too big (%s > %s)", formatBytes(size), formatBytes(support.MaxSize()))
-			}
+	size := buf.Len()
+	if support != nil && size > support.Threshold() {
+		if support.MaxSize() > 0 && size > support.MaxSize() {
+			return nil, fmt.Errorf("request object is too big (%s > %s)", formatBytes(size), formatBytes(support.MaxSize()))
 		}
 
 		key := &resource.ResourceKey{
