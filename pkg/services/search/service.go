@@ -88,6 +88,10 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 	if query.IsStarred && len(query.DashboardIds) == 0 && len(query.DashboardUIDs) == 0 {
 		for uid := range staredDashIDs.UserStars {
 			query.DashboardUIDs = append(query.DashboardUIDs, uid)
+			// set the query type if searching for starred dashboards
+			// to limit access control filter
+			// to check access only for dashboards
+			query.Type = "dash-db"
 		}
 	}
 
