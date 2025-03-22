@@ -8,7 +8,6 @@ The following feature toggles need to be activated:
 
 ```ini
 [feature_toggles]
-authZGRPCServer = true
 grpcServer = true
 ```
 
