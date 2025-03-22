@@ -20,6 +20,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { TempoQuery } from '@grafana-plugins/tempo/types';
+import { Trans } from 'app/core/internationalization';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { useDispatch, useSelector } from 'app/types';
@@ -245,7 +246,9 @@ export function TraceView(props: Props) {
           />
         </>
       ) : (
-        <div className={styles.noDataMsg}>No data</div>
+        <div className={styles.noDataMsg}>
+          <Trans i18nKey="explore.trace-view.no-data">No data</Trans>
+        </div>
       )}
     </>
   );

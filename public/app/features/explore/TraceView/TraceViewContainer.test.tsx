@@ -62,9 +62,9 @@ describe('TraceViewContainer', () => {
   it('toggles collapses and expands all levels', async () => {
     renderTraceViewContainer();
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
-    await user.click(screen.getByLabelText('Collapse All'));
+    await user.click(screen.getByLabelText('Collapse all'));
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(1);
-    await user.click(screen.getByLabelText('Expand All'));
+    await user.click(screen.getByLabelText('Expand all'));
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
   });
 

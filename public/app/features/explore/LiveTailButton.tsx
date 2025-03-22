@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { Tooltip, ButtonGroup, ToolbarButton } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 type LiveTailButtonProps = {
   splitted: boolean;
@@ -23,7 +24,17 @@ export function LiveTailButton(props: LiveTailButtonProps) {
   return (
     <ButtonGroup>
       <Tooltip
-        content={isLive && !isPaused ? <>Pause the live stream</> : <>Start live stream your logs</>}
+        content={
+          isLive && !isPaused ? (
+            <>
+              <Trans i18nKey="explore.live-tail-button.pause-the-live-stream">Pause the live stream</Trans>
+            </>
+          ) : (
+            <>
+              <Trans i18nKey="explore.live-tail-button.start-live-stream-your-logs">Start live stream your logs</Trans>
+            </>
+          )
+        }
         placement="bottom"
       >
         <ToolbarButton
@@ -49,7 +60,16 @@ export function LiveTailButton(props: LiveTailButtonProps) {
         }}
         nodeRef={transitionRef}
       >
-        <Tooltip content={<>Stop and exit the live stream</>} placement="bottom">
+        <Tooltip
+          content={
+            <>
+              <Trans i18nKey="explore.live-tail-button.stop-and-exit-the-live-stream">
+                Stop and exit the live stream
+              </Trans>
+            </>
+          }
+          placement="bottom"
+        >
           <ToolbarButton ref={transitionRef} variant={buttonVariant} onClick={stop} icon="square-shape" />
         </Tooltip>
       </CSSTransition>
