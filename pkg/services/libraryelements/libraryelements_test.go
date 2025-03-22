@@ -18,7 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -366,6 +368,8 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 		nil,
 		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
+		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+		kvstore.NewFakeKVStore(),
 	)
 	require.NoError(t, err)
 	service.RegisterDashboardPermissions(dashboardPermissions)
@@ -459,6 +463,8 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		features, folderPermissions, ac,
 		folderSvc, fStore,
 		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+		kvstore.NewFakeKVStore(),
 	)
 	require.NoError(t, svcErr)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
@@ -532,6 +538,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			features, folderPermissions, ac,
 			folderSvc, fStore,
 			nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+			serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+			kvstore.NewFakeKVStore(),
 		)
 		require.NoError(t, dashSvcErr)
 		dashService.RegisterDashboardPermissions(dashboardPermissions)
