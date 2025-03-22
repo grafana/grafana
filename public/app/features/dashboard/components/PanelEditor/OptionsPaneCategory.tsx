@@ -43,38 +43,31 @@ export const OptionsPaneCategory = React.memo(
     });
 
     const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? isOpenDefault);
-    const manualClickTime = useRef(0);
     const ref = useRef<HTMLDivElement>(null);
     const [queryParams, updateQueryParams] = useQueryParams();
     const isOpenFromUrl = queryParams[CATEGORY_PARAM_NAME] === id;
 
+    // Handle opening by forceOpen param or from URL
     useEffect(() => {
-      if (manualClickTime.current) {
-        // ignore changes since the click handled the expected behavior
-        if (Date.now() - manualClickTime.current < 200) {
-          return;
-        }
-      }
-      if (isOpenFromUrl || forceOpen) {
-        if (!isExpanded) {
-          setIsExpanded(true);
-        }
-        if (isOpenFromUrl) {
+      if ((forceOpen || isOpenFromUrl) && !isExpanded) {
+        setIsExpanded(true);
+        setTimeout(() => {
           ref.current?.scrollIntoView();
-        }
+        }, 200);
       }
-    }, [forceOpen, isExpanded, isOpenFromUrl]);
+    }, [isExpanded, isOpenFromUrl, forceOpen]);
 
     const onToggle = useCallback(() => {
-      manualClickTime.current = Date.now();
-      updateQueryParams(
-        {
-          [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
-        },
-        true
-      );
+      updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id }, true);
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
+
+      // Scroll newly opened sections into view
+      if (!isExpanded) {
+        setTimeout(() => {
+          ref.current?.scrollIntoView();
+        }, 200);
+      }
     }, [updateQueryParams, isExpanded, id, setSavedState]);
 
     if (!renderTitle) {

@@ -66,9 +66,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     this._subs.add(
       dashboard.subscribeToEvent(ObjectsReorderedOnCanvasEvent, ({ payload }) => {
-        if (this.state.tab === 'outline') {
-          this.forceRender();
-        }
+        this.forceRender();
       })
     );
   }
@@ -247,7 +245,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
 
         {openOverlay && (
           <Resizable className={cx(styles.fixed, styles.container)} defaultSize={{ height: '100%', width: '20vw' }}>
-            <ElementEditPane element={editableElement} key={selectedObject?.state.key} />
+            <ElementEditPane element={editableElement} key={selectedObject?.state.key} editPane={editPane} />
           </Resizable>
         )}
       </>
@@ -277,7 +275,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
       <div {...splitter.containerProps}>
         <div {...splitter.primaryProps} className={cx(splitter.primaryProps.className, styles.paneContent)}>
           <ScrollContainer showScrollIndicators={true}>
-            <ElementEditPane element={editableElement} key={selectedObject?.state.key} />
+            <ElementEditPane element={editableElement} key={selectedObject?.state.key} editPane={editPane} />
           </ScrollContainer>
         </div>
         <div
