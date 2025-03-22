@@ -216,6 +216,7 @@ JSON response body schema:
 Status codes:
 
 - **200** - OK
+- **400** - Bad request (specified version has the same content as the current dashboard)
 - **401** - Unauthorized
 - **404** - Not found (dashboard not found or dashboard version not found)
 - **500** - Internal server error (indicates issue retrieving dashboard tags from database)
