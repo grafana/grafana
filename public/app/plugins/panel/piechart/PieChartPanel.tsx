@@ -11,7 +11,7 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { HideSeriesConfig, LegendDisplayMode } from '@grafana/schema';
+import { HideSeriesConfig, LegendDisplayMode, SortOrder } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
@@ -77,21 +77,31 @@ export function PieChartPanel(props: Props) {
 
 function getLegend(props: Props, displayValues: FieldDisplay[]) {
   const legendOptions = props.options.legend ?? defaultLegendOptions;
+  const sortOrder = props.options.reduceOptions.sort ?? SortOrder.None;
 
   if (legendOptions.showLegend === false) {
     return undefined;
   }
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
+  console.log(displayValues.map((dv) => `${dv.display.title} : ${dv.colIndex}`));
+
   const legendItems: VizLegendItem[] = displayValues
-    // Since the pie chart is always sorted, let's sort the legend as well.
     .sort((a, b) => {
-      if (isNaN(a.display.numeric)) {
+      if (sortOrder === SortOrder.FieldOrder) {
+        return (a.colIndex ?? 0) - (b.colIndex ?? 0);
+      } else if (sortOrder === SortOrder.Ascending || sortOrder === SortOrder.Descending) {
+        // if the sort order is Ascending or Descending, it is sorted by field name and we should preserve that sort
         return 1;
-      } else if (isNaN(b.display.numeric)) {
-        return -1;
       } else {
-        return b.display.numeric - a.display.numeric;
+        // default to sort order by value
+        if (isNaN(a.display.numeric)) {
+          return 1;
+        } else if (isNaN(b.display.numeric)) {
+          return -1;
+        } else {
+          return b.display.numeric - a.display.numeric;
+        }
       }
     })
     .map<VizLegendItem | undefined>((value: FieldDisplay, idx: number) => {

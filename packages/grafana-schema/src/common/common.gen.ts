@@ -464,6 +464,10 @@ export interface ReduceDataOptions {
    */
   limit?: number;
   /**
+   * what sort order, if any, to give to the final display of the values
+   */
+  sort?: SortOrder;
+  /**
    * If true show each row value
    */
   values?: boolean;
@@ -605,7 +609,9 @@ export enum TooltipDisplayMode {
 export enum SortOrder {
   Ascending = 'asc',
   Descending = 'desc',
+  FieldOrder = 'fieldOrder',
   None = 'none',
+  Value = 'value',
 }
 
 /**
