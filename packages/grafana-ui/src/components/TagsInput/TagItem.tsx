@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 import { getTagColorsFromName } from '../../utils';
 import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
@@ -12,18 +12,33 @@ interface Props {
   name: string;
   disabled?: boolean;
   onRemove: (tag: string) => void;
+  useThemeColors?: boolean;
 }
 
 /**
  * @internal
  * Only used internally by TagsInput
  * */
-export const TagItem = ({ name, disabled, onRemove }: Props) => {
-  const { color, borderColor } = useMemo(() => getTagColorsFromName(name), [name]);
+export const TagItem = ({ name, disabled, onRemove, useThemeColors }: Props) => {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
+  // Use theme colors or random colors based on name
+  const tagStyle = useMemo(() => {
+    if (useThemeColors) {
+      return {
+        backgroundColor: theme.colors.background.secondary,
+        borderColor: theme.components.input.borderColor,
+        color: theme.colors.text.primary,
+      };
+    }
+
+    const { color, borderColor } = getTagColorsFromName(name);
+    return { backgroundColor: color, borderColor };
+  }, [name, useThemeColors, theme]);
+
   return (
-    <li className={styles.itemStyle} style={{ backgroundColor: color, borderColor }}>
+    <li className={styles.itemStyle} style={tagStyle}>
       <span className={styles.nameStyle}>{name}</span>
       <IconButton
         name="times"
