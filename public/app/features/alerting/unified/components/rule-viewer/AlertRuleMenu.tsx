@@ -15,7 +15,7 @@ import { createRelativeUrl } from '../../utils/url';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
-  promRule: Rule;
+  promRule?: Rule;
   rulerRule?: RulerRuleDTO;
   identifier: RuleIdentifier;
   groupIdentifier: RuleGroupIdentifierV2;

@@ -29,7 +29,6 @@ import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { EvaluationGroupQuickPick } from '../components/rule-editor/EvaluationGroupQuickPick';
-import { evaluateEveryValidationOptions } from '../components/rules/EditRuleGroupModal';
 import { useDeleteRuleGroup } from '../hooks/ruleGroup/useDeleteRuleGroup';
 import { UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
 import { isLoading, useAsync } from '../hooks/useAsync';
@@ -43,6 +42,7 @@ import { stringifyErrorLike } from '../utils/misc';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
+import { evaluateEveryValidationOptions } from './validation';
 
 type GroupEditPageRouteParams = {
   dataSourceUid?: string;

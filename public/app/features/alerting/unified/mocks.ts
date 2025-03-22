@@ -43,6 +43,7 @@ import {
   AlertQuery,
   GrafanaAlertState,
   GrafanaAlertStateDecision,
+  GrafanaPromAlertingRuleDTO,
   GrafanaRuleDefinition,
   PromAlertingRuleState,
   PromRuleType,
@@ -219,6 +220,17 @@ export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): Alert
     state: PromAlertingRuleState.Firing,
     health: 'OK',
     totalsFiltered: { alerting: 1 },
+    ...partial,
+  };
+};
+
+export const mockGrafanaPromAlertingRule = (
+  partial: Partial<GrafanaPromAlertingRuleDTO> = {}
+): GrafanaPromAlertingRuleDTO => {
+  return {
+    ...mockPromAlertingRule(),
+    uid: 'mock-rule-uid-123',
+    folderUid: 'NAMESPACE_UID',
     ...partial,
   };
 };

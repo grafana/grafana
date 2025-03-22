@@ -7,6 +7,7 @@ import {
   PromRulesResponse,
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { PREVIEW_URL, PROM_RULES_URL, PreviewResponse } from '../api/alertRuleApi';
@@ -61,33 +62,93 @@ export const grafanaRulerRule: RulerGrafanaRuleDTO = {
   },
 };
 
-export const grafanaRulerGroup: RulerRuleGroupDTO = {
+export const grafanaRulerGroup: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
   name: grafanaRulerGroupName,
   interval: '1m',
   rules: [grafanaRulerRule],
 };
 
-export const grafanaRulerGroup2: RulerRuleGroupDTO = {
+export const grafanaRulerGroup2: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
   name: grafanaRulerGroupName2,
   interval: '1m',
   rules: [grafanaRulerRule],
 };
 
-export const grafanaRulerEmptyGroup: RulerRuleGroupDTO = {
+export const grafanaRulerEmptyGroup: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
   name: 'empty-group',
   interval: '1m',
   rules: [],
 };
 
-export const namespaceByUid: Record<string, { name: string; uid: string }> = {
-  [grafanaRulerNamespace.uid]: grafanaRulerNamespace,
-  [grafanaRulerNamespace2.uid]: grafanaRulerNamespace2,
-};
+// AKA Folder
+interface GrafanaNamespace {
+  name: string;
+  uid: string;
+}
 
-export const namespaces: Record<string, RulerRuleGroupDTO[]> = {
-  [grafanaRulerNamespace.uid]: [grafanaRulerGroup, grafanaRulerGroup2],
-  [grafanaRulerNamespace2.uid]: [grafanaRulerEmptyGroup],
-};
+export class RulerTestDb {
+  private namespaces = new Map<string, string>(); // UID -> Name
+  private groupsByNamespaceUid = new Map<string, RulerRuleGroupDTO[]>();
+
+  constructor(groups: Iterable<[RulerRuleGroupDTO, GrafanaNamespace]> = []) {
+    for (const [group, namespace] of groups) {
+      this.addGroup(group, namespace);
+    }
+  }
+  addGroup(group: RulerRuleGroupDTO, namespace: GrafanaNamespace) {
+    if (!this.namespaces.has(namespace.uid)) {
+      this.namespaces.set(namespace.uid, namespace.name);
+    }
+
+    const namespaceGroups = this.groupsByNamespaceUid.get(namespace.uid);
+    if (!namespaceGroups) {
+      this.groupsByNamespaceUid.set(namespace.uid, [group]);
+    } else {
+      namespaceGroups.push(group);
+    }
+  }
+
+  getRulerConfig(): RulerRulesConfigDTO {
+    const config: RulerRulesConfigDTO = {};
+    for (const [namespaceUid, groups] of this.groupsByNamespaceUid) {
+      const namespaceName = this.namespaces.get(namespaceUid);
+      if (!namespaceName) {
+        throw new Error(`Namespace name for uid ${namespaceUid} not found`);
+      }
+      config[namespaceName] = groups;
+    }
+    return config;
+  }
+
+  getNamespace(uid: string): RulerRulesConfigDTO | undefined {
+    const namespaceGroups = this.groupsByNamespaceUid.get(uid);
+    if (!namespaceGroups) {
+      return undefined;
+    }
+
+    const namespaceName = this.namespaces.get(uid);
+    if (!namespaceName) {
+      throw new Error(`Namespace name for uid ${uid} not found`);
+    }
+
+    return { [namespaceName]: namespaceGroups };
+  }
+
+  getGroup(uid: string, groupName: string): RulerRuleGroupDTO | undefined {
+    const namespaceGroups = this.groupsByNamespaceUid.get(uid);
+    if (!namespaceGroups) {
+      return undefined;
+    }
+
+    return namespaceGroups.find((group) => group.name === groupName);
+  }
+}
+
+export const rulerTestDb = new RulerTestDb([
+  [grafanaRulerGroup, grafanaRulerNamespace],
+  [grafanaRulerGroup2, grafanaRulerNamespace],
+  [grafanaRulerEmptyGroup, grafanaRulerNamespace2],
+]);
 
 //-------------------- for alert history tests we reuse these constants --------------------
 export const time_0 = 1718368710000;
