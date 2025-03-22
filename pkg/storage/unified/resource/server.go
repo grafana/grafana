@@ -376,6 +376,10 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		}
 	}
 
+	if obj.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
+		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
+	}
+
 	check := claims.CheckRequest{
 		Verb:      utils.VerbCreate,
 		Group:     key.Group,

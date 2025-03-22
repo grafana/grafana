@@ -49,6 +49,7 @@ type FolderAPIBuilder struct {
 	namespacer           request.NamespaceMapper
 	folderSvc            folder.Service
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	dashboardPermissions dashboards.PermissionsRegistrationService
 	storage              grafanarest.Storage
 
 	authorizer authorizer.Authorizer
@@ -63,6 +64,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
+	dashboardPermissions dashboards.PermissionsRegistrationService,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
@@ -80,6 +82,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		namespacer:           request.GetNamespaceMapper(cfg),
 		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
+		dashboardPermissions: dashboardPermissions,
 		cfg:                  cfg,
 		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
@@ -156,8 +159,12 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
+		RequireDeprecatedInternalID: true,
 		EnableFolderSupport:         true,
-		RequireDeprecatedInternalID: true})
+
+		// Will set default permissions for root folders
+		Permissions: b.dashboardPermissions.SetDefaultPermissions,
+	})
 
 	folderStore := &folderStorage{
 		tableConverter:       resourceInfo.TableConverter(),

@@ -62,6 +62,7 @@ type DashboardsAPIBuilder struct {
 	legacy                       *DashboardStorage
 	unified                      resource.ResourceClient
 	dashboardProvisioningService dashboards.DashboardProvisioningService
+	dashboardPermissions         dashboards.PermissionsRegistrationService
 	scheme                       *runtime.Scheme
 	search                       *SearchHandler
 
@@ -75,6 +76,7 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
 	provisioningDashboardService dashboards.DashboardProvisioningService,
+	dashboardPermissions dashboards.PermissionsRegistrationService,
 	accessControl accesscontrol.AccessControl,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
@@ -93,6 +95,7 @@ func RegisterAPIService(
 		log: log.New("grafana-apiserver.dashboards"),
 
 		dashboardService:             dashboardService,
+		dashboardPermissions:         dashboardPermissions,
 		features:                     features,
 		accessControl:                accessControl,
 		unified:                      unified,
@@ -186,6 +189,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	storageOpts := apistore.StorageOptions{
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
+
+		// Sets default root permissions
+		Permissions: b.dashboardPermissions.SetDefaultPermissions,
 	}
 
 	// Split dashboards when they are large

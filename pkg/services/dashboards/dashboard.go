@@ -4,11 +4,14 @@ import (
 	"context"
 	"time"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // DashboardService is a service for operating on dashboards.
@@ -42,6 +45,9 @@ type DashboardService interface {
 
 type PermissionsRegistrationService interface {
 	RegisterDashboardPermissions(service accesscontrol.DashboardPermissionsService)
+
+	// Used to apply default permissions in unified storage after create
+	SetDefaultPermissions(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 }
 
 // PluginService is a service for operating on plugin dashboards.

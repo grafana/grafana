@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -982,6 +983,21 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 	return dr.dashboardStore.GetDashboardsByPluginID(ctx, query)
 }
 
+// (sometimes) called by the k8s storage engine after creating an object
+func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, key *resource.ResourceKey, id claims.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultPermissions")
+	defer span.End()
+
+	logger := logging.FromContext(ctx)
+
+	logger.Info("TODO!!!!! check default permissions",
+		"key", key.SearchID(),
+		"user", id.GetUID(),
+		"folder", obj.GetFolder())
+
+	return nil
+}
+
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultPermissions")
 	defer span.End()
@@ -1583,6 +1599,15 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	obj, err := LegacySaveCommandToUnstructured(cmd, dr.k8sclient.GetNamespace(orgID))
 	if err != nil {
 		return nil, err
+	}
+
+	// Grant permissions for items created at the root folder
+	if cmd.FolderUID == "" {
+		user, _ := claims.AuthInfoFrom(ctx)
+		if user != nil && user.GetIdentityType() == claims.TypeUser {
+			meta, _ := utils.MetaAccessor(obj)
+			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+		}
 	}
 
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
