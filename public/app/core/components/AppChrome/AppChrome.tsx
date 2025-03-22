@@ -159,7 +159,8 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       zIndex: 2,
 
       [theme.breakpoints.up('xl')]: {
-        display: 'block',
+        display: 'flex',
+        flexDirection: 'column',
       },
     }),
     scopesDashboardsContainer: css({
