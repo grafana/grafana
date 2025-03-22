@@ -8,38 +8,6 @@ import { intrinsics } from './traceql/traceql';
 import { Scope } from './types';
 
 describe('Language_provider', () => {
-  describe('should get correct metrics summary tags', () => {
-    it('for API v1 tags', async () => {
-      const lp = setup(v1Tags);
-      const tags = lp.getMetricsSummaryTags();
-      expect(tags).toEqual(['bar', 'foo']);
-    });
-
-    it('for API v2 intrinsic tags', async () => {
-      const lp = setup(undefined, v2Tags);
-      const tags = lp.getMetricsSummaryTags(TraceqlSearchScope.Intrinsic);
-      expect(tags).toEqual(uniq(['duration', 'kind', 'name', 'status'].concat(intrinsics)));
-    });
-
-    it('for API v2 resource tags', async () => {
-      const lp = setup(undefined, v2Tags);
-      const tags = lp.getMetricsSummaryTags(TraceqlSearchScope.Resource);
-      expect(tags).toEqual(['cluster', 'container']);
-    });
-
-    it('for API v2 span tags', async () => {
-      const lp = setup(undefined, v2Tags);
-      const tags = lp.getMetricsSummaryTags(TraceqlSearchScope.Span);
-      expect(tags).toEqual(['db']);
-    });
-
-    it('for API v2 unscoped tags', async () => {
-      const lp = setup(undefined, v2Tags);
-      const tags = lp.getMetricsSummaryTags(TraceqlSearchScope.Unscoped);
-      expect(tags).toEqual(['cluster', 'container', 'db']);
-    });
-  });
-
   describe('should get correct tags', () => {
     it('for API v1 tags', async () => {
       const lp = setup(v1Tags);

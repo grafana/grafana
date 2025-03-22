@@ -271,10 +271,6 @@ export interface FeatureToggles {
   */
   traceQLStreaming?: boolean;
   /**
-  * Enables metrics summary queries in the Tempo data source
-  */
-  metricsSummary?: boolean;
-  /**
   * Expose some datasources as apiservers.
   */
   datasourceAPIServers?: boolean;

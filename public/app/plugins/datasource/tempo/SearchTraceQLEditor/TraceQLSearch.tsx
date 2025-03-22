@@ -13,8 +13,8 @@ import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
 import { traceqlGrammar } from '../traceql/traceql';
 import { TempoQuery } from '../types';
 
+import { AggregateByAlert } from './AggregateByAlert';
 import DurationInput from './DurationInput';
-import { GroupByField } from './GroupByField';
 import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
 import TagsInput from './TagsInput';
@@ -237,15 +237,15 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               addVariablesToOptions={addVariablesToOptions}
             />
           </InlineSearchField>
-          {config.featureToggles.metricsSummary && (
-            <GroupByField
-              datasource={datasource}
-              onChange={onChange}
-              query={query}
-              isTagsLoading={isTagsLoading}
-              addVariablesToOptions={addVariablesToOptions}
-            />
-          )}
+          <AggregateByAlert
+            query={query}
+            onChange={() => {
+              delete query.groupBy;
+              onChange({
+                ...query,
+              });
+            }}
+          />
         </div>
         <div className={styles.rawQueryContainer}>
           <RawQuery query={templateSrv.replace(traceQlQuery)} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
