@@ -6,14 +6,12 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
+	resourcegroupstaggingapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
@@ -21,26 +19,26 @@ import (
 )
 
 func TestQuery_InstanceAttributes(t *testing.T) {
-	origNewEC2Client := NewEC2Client
+	origNewEC2API := NewEC2API
 	t.Cleanup(func() {
-		NewEC2Client = origNewEC2Client
+		NewEC2API = origNewEC2API
 	})
 
 	var cli oldEC2Client
 
-	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
+	NewEC2API = func(aws.Config) models.EC2APIProvider {
 		return cli
 	}
 
 	t.Run("Get instance ID", func(t *testing.T) {
 		const instanceID = "i-12345678"
 		cli = oldEC2Client{
-			reservations: []*ec2.Reservation{
+			reservations: []ec2types.Reservation{
 				{
-					Instances: []*ec2.Instance{
+					Instances: []ec2types.Instance{
 						{
 							InstanceId: aws.String(instanceID),
-							Tags: []*ec2.Tag{
+							Tags: []ec2types.Tag{
 								{
 									Key:   aws.String("Environment"),
 									Value: aws.String("production"),
@@ -52,9 +50,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 			},
 		}
 
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
-		})
+		im := defaultTestInstanceManager()
 
 		filterMap := map[string][]string{
 			"tag:Environment": {"production"},
@@ -82,17 +78,17 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 	})
 
 	t.Run("Get different types", func(t *testing.T) {
-		var expectedInt int64 = 3
+		var expectedInt int32 = 3
 		var expectedBool = true
 		var expectedArn = "arn"
 		cli = oldEC2Client{
-			reservations: []*ec2.Reservation{
+			reservations: []ec2types.Reservation{
 				{
-					Instances: []*ec2.Instance{
+					Instances: []ec2types.Instance{
 						{
 							AmiLaunchIndex: &expectedInt,
 							EbsOptimized:   &expectedBool,
-							IamInstanceProfile: &ec2.IamInstanceProfile{
+							IamInstanceProfile: &ec2types.IamInstanceProfile{
 								Arn: &expectedArn,
 							},
 						},
@@ -101,9 +97,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 			},
 		}
 
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
-		})
+		im := defaultTestInstanceManager()
 
 		executor := newExecutor(im, log.NewNullLogger())
 
@@ -163,52 +157,52 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 }
 
 func TestQuery_EBSVolumeIDs(t *testing.T) {
-	origNewEC2Client := NewEC2Client
+	origNewEC2API := NewEC2API
 	t.Cleanup(func() {
-		NewEC2Client = origNewEC2Client
+		NewEC2API = origNewEC2API
 	})
 
 	var cli oldEC2Client
 
-	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
+	NewEC2API = func(aws.Config) models.EC2APIProvider {
 		return cli
 	}
 
 	t.Run("", func(t *testing.T) {
 		cli = oldEC2Client{
-			reservations: []*ec2.Reservation{
+			reservations: []ec2types.Reservation{
 				{
-					Instances: []*ec2.Instance{
+					Instances: []ec2types.Instance{
 						{
 							InstanceId: aws.String("i-1"),
-							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-1")}},
-								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-2")}},
+							BlockDeviceMappings: []ec2types.InstanceBlockDeviceMapping{
+								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-1")}},
+								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-2")}},
 							},
 						},
 						{
 							InstanceId: aws.String("i-2"),
-							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-1")}},
-								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-2")}},
+							BlockDeviceMappings: []ec2types.InstanceBlockDeviceMapping{
+								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-1")}},
+								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-2")}},
 							},
 						},
 					},
 				},
 				{
-					Instances: []*ec2.Instance{
+					Instances: []ec2types.Instance{
 						{
 							InstanceId: aws.String("i-3"),
-							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-1")}},
-								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-2")}},
+							BlockDeviceMappings: []ec2types.InstanceBlockDeviceMapping{
+								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-1")}},
+								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-2")}},
 							},
 						},
 						{
 							InstanceId: aws.String("i-4"),
-							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-1")}},
-								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-2")}},
+							BlockDeviceMappings: []ec2types.InstanceBlockDeviceMapping{
+								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-1")}},
+								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-2")}},
 							},
 						},
 					},
@@ -216,9 +210,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 			},
 		}
 
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
-		})
+		im := defaultTestInstanceManager()
 
 		executor := newExecutor(im, log.NewNullLogger())
 		resp, err := executor.handleGetEbsVolumeIds(
@@ -242,23 +234,23 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 }
 
 func TestQuery_ResourceARNs(t *testing.T) {
-	origNewRGTAClient := newRGTAClient
+	origNewRGTAClient := NewRGTAClient
 	t.Cleanup(func() {
-		newRGTAClient = origNewRGTAClient
+		NewRGTAClient = origNewRGTAClient
 	})
 
 	var cli fakeRGTAClient
 
-	newRGTAClient = func(client.ConfigProvider) resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI {
+	NewRGTAClient = func(aws.Config) resourcegroupstaggingapi.GetResourcesAPIClient {
 		return cli
 	}
 
 	t.Run("", func(t *testing.T) {
 		cli = fakeRGTAClient{
-			tagMapping: []*resourcegroupstaggingapi.ResourceTagMapping{
+			tagMapping: []resourcegroupstaggingapitypes.ResourceTagMapping{
 				{
 					ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567"),
-					Tags: []*resourcegroupstaggingapi.Tag{
+					Tags: []resourcegroupstaggingapitypes.Tag{
 						{
 							Key:   aws.String("Environment"),
 							Value: aws.String("production"),
@@ -267,7 +259,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 				},
 				{
 					ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321"),
-					Tags: []*resourcegroupstaggingapi.Tag{
+					Tags: []resourcegroupstaggingapitypes.Tag{
 						{
 							Key:   aws.String("Environment"),
 							Value: aws.String("production"),
@@ -277,9 +269,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 			},
 		}
 
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
-		})
+		im := defaultTestInstanceManager()
 
 		tagMap := map[string][]string{
 			"Environment": {"production"},
