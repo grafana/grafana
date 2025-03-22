@@ -134,6 +134,8 @@ export function NestedFolderPicker({
 
   const { context, refs, floatingStyles, elements } = useFloating({
     open: overlayOpen,
+    // Use fixed strategy to prevent picker being clipped when rendered inside collapsible containers etc
+    strategy: 'fixed',
     placement: 'bottom',
     onOpenChange: (value) => {
       // ensure state is clean on opening the overlay
