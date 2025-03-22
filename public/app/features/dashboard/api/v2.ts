@@ -11,7 +11,6 @@ import {
   AnnoKeyFolderUrl,
   AnnoKeyMessage,
   DeprecatedInternalId,
-  Resource,
   ResourceClient,
   ResourceForCreate,
 } from 'app/features/apiserver/types';
@@ -128,12 +127,16 @@ export class K8sDashboardV2API
     if (obj.metadata.name) {
       // remove resource version when updating
       delete obj.metadata.resourceVersion;
-      return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+      return this.client
+        .update(obj)
+        .then((v) => this.asSaveDashboardResponseDTO(v as DashboardWithAccessInfo<DashboardV2Spec>));
     }
-    return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+    return await this.client
+      .create(obj)
+      .then((v) => this.asSaveDashboardResponseDTO(v as DashboardWithAccessInfo<DashboardV2Spec>));
   }
 
-  asSaveDashboardResponseDTO(v: Resource<DashboardV2Spec>): SaveDashboardResponseDTO {
+  asSaveDashboardResponseDTO(v: DashboardWithAccessInfo<DashboardV2Spec>): SaveDashboardResponseDTO {
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
         uid: v.metadata.name,
@@ -154,6 +157,7 @@ export class K8sDashboardV2API
       status: 'success',
       url,
       slug: '',
+      k8s: v,
     };
   }
 }
