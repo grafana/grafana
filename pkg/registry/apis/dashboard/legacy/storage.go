@@ -85,7 +85,10 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	case resource.WatchEvent_DELETED:
 		{
 			_, _, err = a.DeleteDashboard(ctx, info.OrgID, event.Key.Name)
-			//rv = ???
+			// TODO: update this now
+			// if after != nil {
+			//	rv = after.DeletionTimestamp.UnixMilli()
+			// }
 		}
 	// The difference depends on embedded internal ID
 	case resource.WatchEvent_ADDED, resource.WatchEvent_MODIFIED:
@@ -113,10 +116,8 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 					return 0, err
 				}
 
-				// dashboard version is the RV in legacy storage
-				if after != nil {
-					rv = int64(after.Version)
-				}
+				// TODO: test provisioning - make sure this isn't a regression: https://github.com/grafana/grafana/pull/102249
+				rv = after.Updated.UnixMilli()
 			} else {
 				after, _, err := a.SaveDashboard(ctx, info.OrgID, dash)
 				if err != nil {
@@ -127,6 +128,7 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 					if err != nil {
 						return 0, err
 					}
+					// TOD: make sure this is correct
 					rv, err = meta.GetResourceVersionInt64()
 					if err != nil {
 						return 0, err
@@ -195,11 +197,15 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 		rsp.Error = resource.AsErrorResult(err)
 		return rsp
 	}
+
+	// TODO: this won't work anymore - the RV is not the dashboard version anymore
+	// double check if this is being used anywhere
 	version := int64(0)
 	if req.ResourceVersion > 0 {
 		version = req.ResourceVersion
 	}
 
+	// TODO: check what the rv is being returned here
 	dash, rv, err := a.GetDashboard(ctx, info.OrgID, req.Key.Name, version)
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)
