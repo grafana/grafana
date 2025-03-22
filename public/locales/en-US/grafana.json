@@ -1317,7 +1317,8 @@
         "tab": {
           "heading": "Tab",
           "title": "Break up your dashboard into different horizontal tabs"
-        }
+        },
+        "title": "Add element"
       },
       "elements": {
         "dashboard": "Dashboard",
@@ -1336,11 +1337,6 @@
           "title": "Row header"
         }
       }
-    },
-    "editpane": {
-      "add": "Add",
-      "configure": "Configure",
-      "outline": "Outline"
     },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
@@ -1425,9 +1421,7 @@
     "outline": {
       "tree": {
         "item": {
-          "collapse": "Collapse item",
-          "empty": "(empty)",
-          "expand": "Expand item"
+          "empty": "(empty)"
         }
       }
     },
@@ -1524,6 +1518,9 @@
     },
     "toolbar": {
       "add": "Add",
+      "add-new": {
+        "tooltip": "Add panels and other elements"
+      },
       "alert-rules": "Alert rules",
       "back-to-dashboard": "Back to dashboard",
       "dashboard-settings": {
@@ -2093,6 +2090,13 @@
   "get-enterprise": {
     "requires-license": "Requires a Grafana Enterprise license",
     "title": "Enterprise"
+  },
+  "grafana": {
+    "dashboard": {
+      "edit-pane": {
+        "go-back": "Go back"
+      }
+    }
   },
   "grafana-ui": {
     "action-editor": {
