@@ -8,7 +8,7 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/fatih/color v1.17.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/jsonnet-bundler/jsonnet-bundler v0.5.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

@@ -65,7 +65,6 @@ COPY .citools/cue .citools/cue
 COPY .citools/cog .citools/cog
 COPY .citools/lefthook .citools/lefthook
 COPY .citools/jb .citools/jb
-COPY .citools/drone .citools/drone
 COPY .citools/golangci-lint .citools/golangci-lint
 COPY .citools/swagger ./citools/swagger
 
