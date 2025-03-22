@@ -427,6 +427,25 @@ devenv-mysql:
 	@cd devenv; \
 	sources=mysql_tests
 
+# Launch a specific service directly (not in docker)
+# For example: `make launch iam`
+.PHONY: launch
+launch: launch-down ## Launch a specific service directly (not in docker)
+	@if [ "$(filter-out $@,$(MAKECMDGOALS))" = "" ]; then \
+		printf 'You have to specify which service to launch\nExample: make launch iam\n'; \
+		exit 1; \
+	fi
+	@cd devenv; \
+	./launch_service.sh $(filter-out $@,$(MAKECMDGOALS))
+
+.PHONY: launch-down
+launch-down: ## Stop all launched services.
+	@cd devenv; \
+	./launch_service.sh down
+
+%:
+	@:
+
 ##@ Helpers
 
 # We separate the protobuf generation because most development tasks on
