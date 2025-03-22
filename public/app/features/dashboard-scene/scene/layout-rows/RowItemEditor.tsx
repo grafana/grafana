@@ -31,8 +31,8 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: t('dashboard.rows-layout.row-options.row.height', 'Height'),
-            render: () => <RowHeightSelect row={model} />,
+            title: t('dashboard.rows-layout.row-options.row.fill-screen', 'Fill screen'),
+            render: () => <FillScreenSwitch row={model} />,
           })
         )
         .addItem(
@@ -99,15 +99,10 @@ function RowHeaderSwitch({ row }: { row: RowItem }) {
   return <Switch value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
 }
 
-function RowHeightSelect({ row }: { row: RowItem }) {
-  const { height = 'min' } = row.useState();
+function FillScreenSwitch({ row }: { row: RowItem }) {
+  const { fillScreen } = row.useState();
 
-  const options: Array<SelectableValue<'expand' | 'min'>> = [
-    { label: t('dashboard.rows-layout.options.height-expand', 'Expand'), value: 'expand' },
-    { label: t('dashboard.rows-layout.options.height-min', 'Min'), value: 'min' },
-  ];
-
-  return <RadioButtonGroup options={options} value={height} onChange={(option) => row.onChangeHeight(option)} />;
+  return <Switch value={fillScreen} onChange={() => row.onChangeFillScreen(!fillScreen)} />;
 }
 
 function RowRepeatSelect({ row }: { row: RowItem }) {
