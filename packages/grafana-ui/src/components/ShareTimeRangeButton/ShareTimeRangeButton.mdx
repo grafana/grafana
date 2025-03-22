@@ -1,0 +1,30 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { ShareTimeRangeButton } from './ShareTimeRangeButton';
+
+<Meta title="MDX|ShareTimeRangeButton" component={ShareTimeRangeButton} />
+
+# ShareTimeRangeButton
+
+ShareTimeRangeButton is a component that provides URL sharing functionality with time range preservation for use cases where
+time range info is stored in the URL as a query parameter such as "from" and "to".
+
+It consists of a button group with a primary share button and a dropdown menu offering different URL copying options as
+well as options for specifying which query parameters should be used.
+
+When copying URLs:
+
+- If no time range is present, it defaults to the last 30 minutes
+- Relative time ranges (e.g., 'now-6h') are converted to absolute timestamps
+- Absolute time ranges are preserved as-is
+
+# Usage
+
+```jsx
+<ShareTimeRangeButton />
+```
+
+```jsx
+<ShareTimeRangeButton collapsed={true} />
+```
+
+<ArgTypes of={ShareTimeRangeButton} />

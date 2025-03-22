@@ -2354,6 +2354,11 @@
     "toggletip": {
       "close": "Close"
     },
+    "toolbar": {
+      "copy-link": "Copy URL",
+      "copy-link-abs-time": "Copy absolute URL",
+      "copy-shortened-link-label": "Share"
+    },
     "toolbar-button-row": {
       "show-more": "Show more items"
     },
