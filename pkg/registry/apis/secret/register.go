@@ -29,10 +29,11 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder       = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupMutation      = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupValidation    = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupRouteProvider = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupBuilder               = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupMutation              = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupValidation            = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupRouteProvider         = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupPostStartHookProvider = (*SecretAPIBuilder)(nil)
 )
 
 type SecretAPIBuilder struct {
@@ -41,6 +42,7 @@ type SecretAPIBuilder struct {
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	accessClient               claims.AccessClient
 	decryptersAllowList        map[string]struct{}
+	isDevMode                  bool // REMOVE ME
 }
 
 func NewSecretAPIBuilder(
@@ -49,8 +51,9 @@ func NewSecretAPIBuilder(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
+	isDevMode bool, // REMOVE ME
 ) *SecretAPIBuilder {
-	return &SecretAPIBuilder{tracer, secureValueMetadataStorage, keeperMetadataStorage, accessClient, decryptersAllowList}
+	return &SecretAPIBuilder{tracer, secureValueMetadataStorage, keeperMetadataStorage, accessClient, decryptersAllowList, isDevMode}
 }
 
 func RegisterAPIService(
@@ -69,6 +72,14 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
+	// Check if dev mode is enabled and replace the provided stores with an in-memory stores if so.
+	// TODO: Remove before launch
+	if cfg.SecretsManagement.IsDeveloperMode {
+		fmt.Println("developer mode enabled")
+		secureValueMetadataStorage = reststorage.NewFakeSecureValueMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
+		keeperMetadataStorage = reststorage.NewFakeKeeperMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
+	}
+
 	if err := RegisterAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("register secret access control roles: %w", err)
 	}
@@ -79,6 +90,7 @@ func RegisterAPIService(
 		keeperMetadataStorage,
 		accessClient,
 		nil, // OSS does not need an allow list.
+		cfg.SecretsManagement.IsDeveloperMode,
 	)
 
 	apiregistration.RegisterAPI(builder)
@@ -153,6 +165,10 @@ func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 // For Secrets, this is not the case, but if we want to make it so, we need to update this ResourceAuthorizer to check the containing folder.
 // If we ever want to do that, get guidance from IAM first as well.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	if b.isDevMode {
+		return nil
+	}
+
 	return authsvc.NewResourceAuthorizer(b.accessClient)
 }
 
@@ -262,4 +278,13 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 	}
 
 	return nil
+}
+
+// TODO: use this for starting the outbox queue async process?
+func (b *SecretAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+	return map[string]genericapiserver.PostStartHookFunc{
+		"start-outbox-queue-workers": func(context genericapiserver.PostStartHookContext) error {
+			return nil
+		},
+	}, nil
 }
