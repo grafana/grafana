@@ -751,6 +751,10 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
+  * Allows access to the new react-data-grid based table component.
+  */
+  tableNG?: boolean;
+  /**
   * Send dashboard and panel names to Loki when querying
   */
   lokiSendDashboardPanelNames?: boolean;
