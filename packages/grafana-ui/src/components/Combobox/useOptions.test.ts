@@ -1,6 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 
-import { useOptions } from './useOptions';
+import { sortByGroup, useOptions } from './useOptions';
 
 describe('useOptions', () => {
   it('should handle a large number of synchronous options without throwing an error', () => {
@@ -99,5 +99,58 @@ describe('useOptions', () => {
 
     expect(result.current.asyncLoading).toBe(false);
     expect(result.current.asyncError).toBe(true);
+  });
+});
+
+describe('sortByGroup', () => {
+  it('should return original array when no groups exist', () => {
+    const options = [
+      { label: 'Apple', value: 'apple' },
+      { label: 'Banana', value: 'banana' },
+      { label: 'Carrot', value: 'carrot' },
+    ];
+
+    const { options: sortedOptions, groupStartIndices } = sortByGroup(options);
+
+    expect(sortedOptions).toBe(options); // Check reference equality
+    expect(groupStartIndices.size).toBe(0);
+  });
+
+  it('should return original array when only one group exists', () => {
+    const options = [
+      { label: 'Apple', value: 'apple', group: 'fruits' },
+      { label: 'Banana', value: 'banana', group: 'fruits' },
+      { label: 'Tomato', value: 'tomato', group: 'fruits' },
+    ];
+
+    const { options: sortedOptions, groupStartIndices } = sortByGroup(options);
+
+    expect(sortedOptions).toEqual(options);
+    expect(groupStartIndices.size).toBe(1);
+    expect(groupStartIndices.get('fruits')).toBe(0);
+  });
+
+  it('should group options and track group start indices', () => {
+    const options = [
+      { label: 'Apple', value: 'apple', group: 'fruits' },
+      { label: 'Carrot', value: 'carrot', group: 'vegetables' },
+      { label: 'Banana', value: 'banana', group: 'fruits' },
+      { label: 'Celery', value: 'celery', group: 'vegetables' },
+      { label: 'Other', value: 'other' }, // Ungrouped
+    ];
+
+    const { options: sortedOptions, groupStartIndices } = sortByGroup(options);
+
+    expect(sortedOptions).toEqual([
+      { label: 'Apple', value: 'apple', group: 'fruits' },
+      { label: 'Banana', value: 'banana', group: 'fruits' },
+      { label: 'Carrot', value: 'carrot', group: 'vegetables' },
+      { label: 'Celery', value: 'celery', group: 'vegetables' },
+      { label: 'Other', value: 'other' },
+    ]);
+
+    expect(groupStartIndices.size).toBe(2);
+    expect(groupStartIndices.get('fruits')).toBe(0);
+    expect(groupStartIndices.get('vegetables')).toBe(2);
   });
 });
