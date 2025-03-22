@@ -287,6 +287,11 @@ func (c *User) NewRestConfig() *rest.Config {
 	}
 }
 
+// Implements: apiserver.RestConfigProvider
+func (c *User) GetRestConfig(context.Context) (*rest.Config, error) {
+	return c.NewRestConfig(), nil
+}
+
 func (c *User) ResourceClient(t *testing.T, gvr schema.GroupVersionResource) dynamic.NamespaceableResourceInterface {
 	client, err := dynamic.NewForConfig(c.NewRestConfig())
 	require.NoError(t, err)

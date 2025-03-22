@@ -39,6 +39,25 @@ func Join(prefix string, elem ...string) (string, error) {
 	return completePath, nil
 }
 
+// JoinIncludingTrailing behaves like Join.
+// When the last element ends with a trailing slash, the output will also have a trailing slash.
+// A string of only a trailing slash is considered a trailing slash.
+// If the prefix would ultimately be escaped, an error is returned.
+//
+// This function is safe for <https://securego.io/docs/rules/g304.html>.
+func JoinIncludingTrailing(prefix string, elem ...string) (string, error) {
+	joined, err := Join(prefix, elem...)
+	if err != nil {
+		return "", err
+	}
+
+	// If the last element ends with a trailing slash, we should also have a trailing slash.
+	if len(elem) != 0 && strings.HasSuffix(elem[len(elem)-1], "/") {
+		return joined + "/", nil
+	}
+	return joined, nil
+}
+
 // Performs a [path.Clean] on the path, as well as replacing its OS separators.
 // Note that this does no effort to ensure the paths are safe to use. It only cleans them.
 func Clean(p string) string {
