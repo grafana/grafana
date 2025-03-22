@@ -1,4 +1,5 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
+import { ScopeNavigation } from '@grafana/data/';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { getAPINamespace } from '../../api/utils';
@@ -94,6 +95,18 @@ export class ScopesApiClient {
           scope: scopeNames,
         }
       );
+
+      return response?.items ?? [];
+    } catch (err) {
+      return [];
+    }
+  };
+
+  public fetchScopeNavigations = async (scopeNames: string[]): Promise<ScopeNavigation[]> => {
+    try {
+      const response = await getBackendSrv().get<{ items: ScopeNavigation[] }>(apiUrl + `/find/scope_navigations`, {
+        scope: scopeNames,
+      });
 
       return response?.items ?? [];
     } catch (err) {
