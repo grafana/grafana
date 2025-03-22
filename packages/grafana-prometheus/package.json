@@ -47,6 +47,7 @@
     "@hello-pangea/dnd": "17.0.0",
     "@leeoniya/ufuzzy": "1.0.18",
     "@lezer/common": "1.2.3",
+    "@lezer/highlight": "1.2.1",
     "@lezer/lr": "1.4.2",
     "@prometheus-io/lezer-promql": "0.301.0",
     "@reduxjs/toolkit": "2.5.1",
