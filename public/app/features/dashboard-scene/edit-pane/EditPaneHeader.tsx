@@ -21,7 +21,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
   // temporary simple solution, should select parent element
-  const onGoBack = () => editPane.clearParent();
+  const onGoBack = () => editPane.clearSelection();
   const canGoBack = editPane.state.selection;
 
   return (

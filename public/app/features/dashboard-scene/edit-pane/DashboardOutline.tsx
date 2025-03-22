@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Box, Icon, IconButton, Stack, styleMixins, Text, useElementSelection, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Box, Icon, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { isInCloneChain } from '../utils/clone';
