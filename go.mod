@@ -124,7 +124,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c //@grafana/identity-access-team
 	github.com/mocktools/go-smtp-mock/v2 v2.3.1 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.2 // @grafana/alerting-backend
-	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect; @grafana/alerting-backend
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/olekukonko/tablewriter v0.0.5 // @grafana/grafana-backend-group
 	github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369 // @grafana/identity-access-team
@@ -558,6 +558,8 @@ require (
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3 // @grafana/grafana-backend-group
 )
 
+require github.com/grafana/grafana/pkg/build v0.0.0-20250321151604-d1ff85d9a125 // @grafana/grafana-backend-group
+
 require (
 	github.com/1NCE-GmbH/grpc-go-pool v0.0.0-20231117122434-2a5bb974daa2 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.49.0 // indirect
@@ -565,6 +567,7 @@ require (
 	github.com/RoaringBitmap/roaring/v2 v2.4.5 // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.32.3 // indirect
+	github.com/google/go-github/v69 v69.2.0 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 )
 
