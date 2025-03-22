@@ -1179,8 +1179,8 @@ describe('TableNG', () => {
       const cells = container.querySelectorAll('[role="gridcell"]');
       const cellStyles = window.getComputedStyle(cells[0]);
 
-      // In the getStyles function, when textWrap is true, whiteSpace is set to 'break-spaces'
-      expect(cellStyles.getPropertyValue('white-space')).toBe('break-spaces');
+      // In the getStyles function, when textWrap is true, whiteSpace is set to 'normal'
+      expect(cellStyles.getPropertyValue('white-space')).toBe('normal');
     });
   });
 

@@ -476,7 +476,7 @@ export function TableNG(props: TableNGProps) {
         avgCharWidth,
         defaultLineHeight,
         defaultRowHeight,
-        TABLE.CELL_PADDING * 2,
+        TABLE.CELL_PADDING,
         fieldsData
       );
     },
@@ -950,7 +950,7 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
   cell: css({
     '--rdg-border-color': theme.colors.border.medium,
     borderLeft: 'none',
-    whiteSpace: `${textWrap ? 'break-spaces' : 'nowrap'}`,
+    whiteSpace: `${textWrap ? 'normal' : 'nowrap'}`,
     wordWrap: 'break-word',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
