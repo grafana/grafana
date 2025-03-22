@@ -181,6 +181,9 @@ type Cfg struct {
 	DataProxyWhiteList              map[string]bool
 	ActionsAllowPostURL             string
 
+	// K8s Dashboard Cleanup
+	K8sDashboardCleanup K8sDashboardCleanupSettings
+
 	TempDataLifetime time.Duration
 
 	// Plugins
@@ -1291,6 +1294,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.readDataSourcesSettings()
 	cfg.readDataSourceSecuritySettings()
+	cfg.readK8sDashboardCleanupSettings()
 	cfg.readSqlDataSourceSettings()
 
 	cfg.Storage = readStorageSettings(iniFile)

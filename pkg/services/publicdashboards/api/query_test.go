@@ -21,8 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -330,6 +333,8 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(), nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil,
 		nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+		serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
+		kvstore.NewFakeKVStore(),
 	)
 	require.NoError(t, err)
 	dashService.RegisterDashboardPermissions(dashPermissionService)
