@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
+import { config } from '@grafana/runtime';
 
 import { historySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 
@@ -168,6 +169,44 @@ describe('VersionSettings', () => {
       expect(screen.queryByText(/Fetching more entries/i)).not.toBeInTheDocument();
       expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(versions.versions.length);
     });
+  });
+
+  test('does not show more button when receiving partial page without version 1', async () => {
+    // Mock a partial page response (less than VERSIONS_FETCH_LIMIT)
+    // @ts-ignore
+    historySrv.getHistoryList.mockResolvedValueOnce({
+      continueToken: '',
+      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT - 5),
+    });
+
+    setup();
+
+    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+    // Verify that show more button is not present since we got a partial page
+    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
+    // Verify that compare button is still present
+    expect(screen.getByRole('button', { name: /compare versions/i })).toBeInTheDocument();
+  });
+
+  test('does not show more button when kubernetesClientDashboardsFolders is enabled and continueToken is empty', async () => {
+    // @ts-ignore
+    config.featureToggles.kubernetesClientDashboardsFolders = true;
+    // @ts-ignore
+    historySrv.getHistoryList.mockResolvedValueOnce({
+      continueToken: '',
+      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT - 1),
+    });
+
+    setup();
+
+    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /compare versions/i })).toBeInTheDocument();
+
+    // @ts-ignore
+    config.featureToggles.kubernetesClientDashboardsFolders = false;
   });
 
   test('selecting two versions and clicking compare button should render compare view', async () => {
