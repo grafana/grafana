@@ -6,10 +6,10 @@ import pluginJson from './plugin.json';
 
 export const plugin = new AppPlugin<{}>()
   .setRootPage(App)
-  .configureExtensionLink<PluginExtensionPanelContext>({
+  .addLink<PluginExtensionPanelContext>({
     title: 'Open from time series or pie charts (path)',
     description: 'This link will only be visible on time series and pie charts',
-    extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
+    targets: PluginExtensionPoints.DashboardPanelMenu,
     path: `/a/${pluginJson.id}/`,
     configure: (context) => {
       // Will only be visible for the Link Extensions dashboard
@@ -31,10 +31,10 @@ export const plugin = new AppPlugin<{}>()
       }
     },
   })
-  .configureExtensionLink<PluginExtensionPanelContext>({
+  .addLink<PluginExtensionPanelContext>({
     title: 'Open from time series or pie charts (onClick)',
     description: 'This link will only be visible on time series and pie charts',
-    extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
+    targets: PluginExtensionPoints.DashboardPanelMenu,
     onClick: (_, { openModal, context }) => {
       const targets = context?.targets ?? [];
       const title = context?.title;
