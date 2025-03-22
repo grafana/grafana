@@ -113,8 +113,7 @@ describe('sortByGroup', () => {
     const { options: sortedOptions, groupStartIndices } = sortByGroup(options);
 
     expect(sortedOptions).toBe(options); // Check reference equality
-    expect(groupStartIndices.size).toBe(1);
-    expect(groupStartIndices.get(undefined)).toBe(0);
+    expect(groupStartIndices.size).toBe(0);
   });
 
   it('should return original array when only one group exists', () => {
@@ -150,8 +149,8 @@ describe('sortByGroup', () => {
       { label: 'Other', value: 'other' },
     ]);
 
+    expect(groupStartIndices.size).toBe(2);
     expect(groupStartIndices.get('fruits')).toBe(0);
     expect(groupStartIndices.get('vegetables')).toBe(2);
-    expect(groupStartIndices.get('undefined')).toBe(4);
   });
 });

@@ -115,10 +115,12 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError };
 }
 
+/**
+ * Sorts options by group and returns the sorted options and the starting index of each group
+ */
 export function sortByGroup<T extends string | number>(options: Array<ComboboxOption<T>>) {
   // Group options by their group
   const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
-
   const groupStartIndices = new Map<string | undefined, number>();
 
   for (const option of options) {
@@ -133,7 +135,10 @@ export function sortByGroup<T extends string | number>(options: Array<ComboboxOp
 
   // If we only have one group (either the undefined group, or a single group), return the original array
   if (groupedOptions.size <= 1) {
-    groupStartIndices.set(options[0]?.group, 0);
+    if (options[0]?.group) {
+      groupStartIndices.set(options[0]?.group, 0);
+    }
+
     return {
       options,
       groupStartIndices,
@@ -142,6 +147,7 @@ export function sortByGroup<T extends string | number>(options: Array<ComboboxOp
 
   // 'Preallocate' result array with same size as input - very minor optimization
   const result: Array<ComboboxOption<T>> = new Array(options.length);
+
   let currentIndex = 0;
 
   // Fill result array with grouped options
@@ -157,7 +163,6 @@ export function sortByGroup<T extends string | number>(options: Array<ComboboxOp
   // Add ungrouped options at the end
   const ungrouped = groupedOptions.get(undefined);
   if (ungrouped) {
-    groupStartIndices.set('undefined', currentIndex);
     for (const option of ungrouped) {
       result[currentIndex++] = option;
     }
