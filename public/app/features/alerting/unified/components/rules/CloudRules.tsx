@@ -4,8 +4,8 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
-import { Alert, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Badge, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -62,7 +62,6 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
   return (
     <section className={styles.wrapper}>
       <Stack gap={2} direction="column">
-        {canMigrateToGMA && <MigrationToGMABanner />}
         <div className={styles.sectionHeader}>
           <div className={styles.headerRow}>
             <Text element="h2" variant="h5">
@@ -80,7 +79,10 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
             ) : (
               <div />
             )}
-            <CreateRecordingRuleButton />
+            <Stack gap={1}>
+              {canMigrateToGMA && <MigrateToGMAButton />}
+              <CreateRecordingRuleButton />
+            </Stack>
           </div>
         </div>
       </Stack>
@@ -173,20 +175,19 @@ export function CreateRecordingRuleButton() {
   return null;
 }
 
-function MigrationToGMABanner() {
+function MigrateToGMAButton() {
   const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
-
   return (
-    <Alert
-      title={t(
-        'alerting.list-view.import-to-gma-banner.title',
-        'You can now import your Data source-managed alert rules to Grafana-managed rules!'
-      )}
-      severity="info"
-      onRemove={() => {
-        locationService.push(importUrl);
-      }}
-      buttonContent={<Trans i18nKey="alerting.rule-list.migrate-to-gma">Import to Grafana-managed rules</Trans>}
-    />
+    <LinkButton variant="secondary" href={importUrl} icon="arrow-up">
+      <Stack direction="row" gap={1} alignItems="center">
+        <Trans i18nKey="alerting.rule-list.import-to-gma.text">Import to Grafana-managed rules</Trans>
+        <Badge
+          text={t('alerting.rule-list.import-to-gma.new-badge', 'New!')}
+          aria-label="new"
+          color="blue"
+          icon="rocket"
+        />
+      </Stack>
+    </LinkButton>
   );
 }
