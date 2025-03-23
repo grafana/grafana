@@ -101,7 +101,7 @@ export const ComboboxList = <T extends string | number>({
                   role="presentation"
                   id={groupHeaderId}
                   className={cx(
-                    styles.newOptionGroup,
+                    styles.optionGroupHeader,
                     item.group && styles.newOptionGroupLabel,
                     virtualRow.index === 0 && styles.newOptionGroupNoBorder
                   )}
