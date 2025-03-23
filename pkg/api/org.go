@@ -1,4 +1,4 @@
-package apipkg/api/org
+package api
 
 import (
 	"context"
