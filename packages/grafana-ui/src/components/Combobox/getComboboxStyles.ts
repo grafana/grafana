@@ -8,10 +8,11 @@ export const MENU_ITEM_FONT_SIZE = 14;
 export const MENU_ITEM_DESCRIPTION_FONT_SIZE = 12;
 export const MENU_ITEM_FONT_WEIGHT = 500;
 export const MENU_ITEM_PADDING = 8;
+export const MENU_ITEM_GAP = 2;
 export const MENU_ITEM_LINE_HEIGHT = 1.5;
 
 // Used with Downshift to get the height of each item
-export const MENU_OPTION_HEIGHT = MENU_ITEM_PADDING * 2 + MENU_ITEM_FONT_SIZE * MENU_ITEM_LINE_HEIGHT;
+export const MENU_OPTION_HEIGHT = MENU_ITEM_GAP + MENU_ITEM_PADDING * 2 + MENU_ITEM_FONT_SIZE * MENU_ITEM_LINE_HEIGHT;
 export const MENU_OPTION_HEIGHT_DESCRIPTION =
   MENU_OPTION_HEIGHT + MENU_ITEM_DESCRIPTION_FONT_SIZE * MENU_ITEM_LINE_HEIGHT;
 export const POPOVER_MAX_HEIGHT = MENU_OPTION_HEIGHT * 8.5;
@@ -35,15 +36,15 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       listStyle: 'none',
     }),
 
-    // Should be on the wrapper around the group header and option.
-    // Should not contain visual styling itself
+    // The wrapper around the group header and option, not the option itself.
+    // Should not contain visual styling itself.
     listItem: css({
       label: 'list-item',
-      width: '100%',
       position: 'absolute',
+      width: '100%',
     }),
 
-    newOptionGroup: css({
+    optionGroupHeader: css({
       label: 'combobox-new-option-group',
       borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
@@ -64,17 +65,18 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
 
     option: css({
       label: 'combobox-option',
+      position: 'relative', // for the selection gradient to grab to
       display: 'flex',
+      width: '100%',
       gap: theme.spacing(1),
       alignItems: 'center',
-
       padding: MENU_ITEM_PADDING,
-      cursor: 'pointer',
+      marginBottom: MENU_ITEM_GAP,
       borderRadius: theme.shape.radius.default,
       fontWeight: theme.typography.fontWeightMedium,
-      width: '100%',
       whiteSpace: 'nowrap',
       overflow: 'hidden',
+      cursor: 'pointer',
       '&:hover': {
         background: theme.colors.action.hover,
         '@media (forced-colors: active), (prefers-contrast: more)': {
@@ -85,9 +87,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
 
     optionAccessory: css({
       label: 'combobox-option-accessory',
-
-      // Ensure the accessory doesn't make the option too tall
-      height: MENU_ITEM_FONT_SIZE * MENU_ITEM_LINE_HEIGHT,
+      height: MENU_ITEM_FONT_SIZE * MENU_ITEM_LINE_HEIGHT, // Ensure the accessory doesn't make the option too tall
     }),
 
     optionBody: css({
@@ -95,6 +95,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      overflow: 'hidden',
     }),
 
     optionLabel: css({
@@ -109,9 +110,9 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
 
     optionDescription: css({
       label: 'combobox-option-description',
-      fontWeight: theme.typography.fontWeightRegular,
-      fontSize: MENU_ITEM_DESCRIPTION_FONT_SIZE,
       color: theme.colors.text.secondary,
+      fontSize: MENU_ITEM_DESCRIPTION_FONT_SIZE,
+      fontWeight: theme.typography.fontWeightRegular,
       lineHeight: MENU_ITEM_LINE_HEIGHT,
       letterSpacing: 0,
       textOverflow: 'ellipsis',
