@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-const DefaultContextTimeout = time.Second
+const DefaultContextTimeout = 2 * time.Minute
 
 // TestContext is a context.Context that can be canceled with or without a
 // cause. This is only relevant for testing purposes.

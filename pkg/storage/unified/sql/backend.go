@@ -521,22 +521,19 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 
 	// TODO: validate key ?
 
+	if req.ResourceVersion > 0 {
+		return b.readHistory(ctx, req.Key, req.ResourceVersion, resource.WatchEvent_UNKNOWN)
+	}
+
 	readReq := &sqlResourceReadRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Request:     req,
 		Response:    NewReadResponse(),
 	}
-
-	sr := sqlResourceRead
-	if req.ResourceVersion > 0 {
-		// read a specific version
-		sr = sqlResourceHistoryRead
-	}
-
 	var res *resource.BackendReadResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
-		res, err = dbutil.QueryRow(ctx, tx, sr, readReq)
+		res, err = dbutil.QueryRow(ctx, tx, sqlResourceRead, readReq)
 		return err
 	})
 
@@ -745,7 +742,40 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	return iter.listRV, err
 }
 
-// getHistory fetches the resources from the resource table.
+func (b *backend) readHistory(ctx context.Context, key *resource.ResourceKey, rv int64, eventType resource.WatchEvent_Type) *resource.BackendReadResponse {
+	_, span := b.tracer.Start(ctx, tracePrefix+".ReadHistory")
+	defer span.End()
+
+	readReq := &sqlResourceHistoryReadRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Request: &historyReadRequest{
+			Key:             key,
+			ResourceVersion: rv,
+			EventType:       eventType,
+		},
+		Response: NewReadResponse(),
+	}
+
+	var res *resource.BackendReadResponse
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		var err error
+		res, err = dbutil.QueryRow(ctx, tx, sqlResourceHistoryRead, readReq)
+		return err
+	})
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return &resource.BackendReadResponse{
+			Error: resource.NewNotFoundError(key),
+		}
+	}
+	if err != nil {
+		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+	}
+
+	return res
+}
+
+// listLatest fetches the resources from the resource table.
 func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"getHistory")
 	defer span.End()
@@ -784,18 +814,19 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 		listReq.MinRV = req.ResourceVersion
 	}
 
+	if listReq.MinRV == 0 && !listReq.Trash && req.VersionMatch == resource.ResourceVersionMatch_NotOlderThan {
+		res := b.readHistory(ctx, listReq.Key, listReq.StartRV, resource.WatchEvent_DELETED)
+		if res.Error != nil {
+			return 0, fmt.Errorf("get last deleted: %s", res.Error.Message)
+		}
+		listReq.MinRV = res.ResourceVersion + 1
+	}
+
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
-		}
-
-		if listReq.MinRV == 0 {
-			listReq.MinRV, err = fetchLatestDeletionRV(ctx, tx, b.dialect, req.Options.Key)
-			if err != nil {
-				return err
-			}
 		}
 
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
@@ -868,20 +899,20 @@ func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqlte
 	return res.ResourceVersion, nil
 }
 
-func fetchLatestDeletionRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (int64, error) {
-	readReq := sqlResourceHistoryReadRequest{
-		SQLTemplate: sqltemplate.New(d),
-		Request: &historyReadRequest{
-			Key:       key,
-			EventType: resource.WatchEvent_DELETED,
-		},
-		Response: NewReadResponse(),
-	}
-	rps, err := dbutil.QueryRow(ctx, x, sqlResourceHistoryRead, &readReq)
-	if errors.Is(err, sql.ErrNoRows) {
-		return 0, nil
-	} else if err != nil {
-		return 0, fmt.Errorf("get last deleted: %w", err)
-	}
-	return rps.ResourceVersion + 1, nil
-}
+// func fetchLatestDeletionRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (int64, error) {
+// 	readReq := sqlResourceHistoryReadRequest{
+// 		SQLTemplate: sqltemplate.New(d),
+// 		Request: &historyReadRequest{
+// 			Key:       key,
+// 			EventType: resource.WatchEvent_DELETED,
+// 		},
+// 		Response: NewReadResponse(),
+// 	}
+// 	rps, err := dbutil.QueryRow(ctx, x, sqlResourceHistoryRead, &readReq)
+// 	if errors.Is(err, sql.ErrNoRows) {
+// 		return 0, nil
+// 	} else if err != nil {
+// 		return 0, fmt.Errorf("get last deleted: %w", err)
+// 	}
+// 	return rps.ResourceVersion + 1, nil
+// }

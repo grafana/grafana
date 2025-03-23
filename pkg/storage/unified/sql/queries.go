@@ -206,11 +206,8 @@ func (r sqlResourceHistoryReadRequest) Validate() error {
 	return nil // TODO
 }
 
-func (r sqlResourceHistoryReadRequest) Results() (*resource.ResourceWrapper, error) {
-	return &resource.ResourceWrapper{
-		ResourceVersion: r.Response.ResourceVersion,
-		Value:           r.Response.Value,
-	}, nil
+func (r sqlResourceHistoryReadRequest) Results() (*resource.BackendReadResponse, error) {
+	return r.Response, nil
 }
 
 type historyListRequest struct {
