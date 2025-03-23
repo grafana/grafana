@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -79,7 +80,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	dataSourceCache datasources.CacheService, sqlStore db.DB, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService query.Service, toggles featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService, annotationsRepo annotations.Repository,
-	orgService org.Service) (*GrafanaLive, error) {
+	orgService org.Service, configProvider apiserver.RestConfigProvider) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,
@@ -190,6 +191,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
+
+	// Testing watch with just the provisioning support -- this will be removed when it is well validated
+	if toggles.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
+	}
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -889,6 +895,8 @@ func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, user identit
 	switch scope {
 	case live.ScopeGrafana:
 		return g.handleGrafanaScope(user, namespace)
+	case "watch": // TODO: live.ScopeWatch: update 275 https://github.com/grafana/grafana-plugin-sdk-go/releases
+		return g.handleWatchScope()
 	case live.ScopePlugin:
 		return g.handlePluginScope(ctx, user, namespace)
 	case live.ScopeDatasource:
@@ -905,6 +913,13 @@ func (g *GrafanaLive) handleGrafanaScope(_ identity.Requester, namespace string)
 		return p, nil
 	}
 	return nil, fmt.Errorf("unknown feature: %q", namespace)
+}
+
+func (g *GrafanaLive) handleWatchScope() (model.ChannelHandlerFactory, error) {
+	if p, ok := g.GrafanaScope.Features["watch"]; ok {
+		return p, nil
+	}
+	return nil, fmt.Errorf("watch not registered")
 }
 
 func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ identity.Requester, namespace string) (model.ChannelHandlerFactory, error) {
