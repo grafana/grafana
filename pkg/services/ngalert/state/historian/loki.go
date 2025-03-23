@@ -29,10 +29,11 @@ import (
 )
 
 const (
-	OrgIDLabel     = "orgID"
-	RuleUIDLabel   = "ruleUID"
-	GroupLabel     = "group"
-	FolderUIDLabel = "folderUID"
+	OrgIDLabel       = "orgID"
+	RuleUIDLabel     = "ruleUID"
+	GroupLabel       = "group"
+	FolderUIDLabel   = "folderUID"
+	MonitorNameLabel = "monitor_name"
 	// Name of the columns used in the dataframe.
 	dfTime   = "time"
 	dfLine   = "line"
@@ -290,7 +291,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		if !shouldRecord(state) && !logAll {
 			continue
 		}
-
+		state.Labels[MonitorNameLabel] = rule.Title
 		sanitizedLabels := removePrivateLabels(state.Labels)
 		var errMsg string
 		if state.State.State == eval.Error {
