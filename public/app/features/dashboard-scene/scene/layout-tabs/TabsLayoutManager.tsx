@@ -1,5 +1,4 @@
 import {
-  sceneGraph,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
@@ -221,22 +220,20 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   getUrlKey(): string {
     let parent = this.parent;
-    let parentKey = '';
+    let key = 'tab';
 
     while (parent) {
       if (parent instanceof TabItem) {
-        parentKey += parent.getSlug() + '-';
-        break;
+        key = `${parent.getSlug()}-${key}`;
       }
 
       if (parent instanceof RowItem) {
-        parentKey += parent.getSlug() + '-';
-        break;
+        key = `${parent.getSlug()}-${key}`;
       }
 
       parent = parent.parent;
     }
 
-    return `${parentKey}tab`;
+    return key;
   }
 }
