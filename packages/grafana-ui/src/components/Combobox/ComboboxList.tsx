@@ -9,7 +9,7 @@ import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { NotFoundError } from './MessageRows';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
-import { ComboboxOption } from './types';
+import { ALL_OPTION_VALUE, ComboboxOption } from './types';
 import { isNewGroup } from './utils';
 
 export const VIRTUAL_OVERSCAN_ITEMS = 4;
@@ -129,7 +129,7 @@ export const ComboboxList = <T extends string | number>({
                     <Checkbox
                       key={itemId}
                       value={allItemsSelected || isOptionSelected(item)}
-                      indeterminate={item.value === 'all' && selectedItems.length > 0 && !allItemsSelected}
+                      indeterminate={item.value === ALL_OPTION_VALUE && selectedItems.length > 0 && !allItemsSelected}
                       aria-labelledby={itemId}
                       onClick={(e) => {
                         e.stopPropagation();
