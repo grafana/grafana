@@ -814,7 +814,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 		listReq.MinRV = req.ResourceVersion
 	}
 
-	if listReq.MinRV == 0 && !listReq.Trash && req.VersionMatch == resource.ResourceVersionMatch_NotOlderThan {
+	if listReq.MinRV == 0 && !listReq.Trash && req.VersionMatchV2 == resource.ResourceVersionMatchV2_NotOlderThan {
 		res := b.readHistory(ctx, listReq.Key, listReq.StartRV, resource.WatchEvent_DELETED)
 		if res.Error != nil {
 			return 0, fmt.Errorf("get last deleted: %s", res.Error.Message)
@@ -898,21 +898,3 @@ func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqlte
 	}
 	return res.ResourceVersion, nil
 }
-
-// func fetchLatestDeletionRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (int64, error) {
-// 	readReq := sqlResourceHistoryReadRequest{
-// 		SQLTemplate: sqltemplate.New(d),
-// 		Request: &historyReadRequest{
-// 			Key:       key,
-// 			EventType: resource.WatchEvent_DELETED,
-// 		},
-// 		Response: NewReadResponse(),
-// 	}
-// 	rps, err := dbutil.QueryRow(ctx, x, sqlResourceHistoryRead, &readReq)
-// 	if errors.Is(err, sql.ErrNoRows) {
-// 		return 0, nil
-// 	} else if err != nil {
-// 		return 0, fmt.Errorf("get last deleted: %w", err)
-// 	}
-// 	return rps.ResourceVersion + 1, nil
-// }

@@ -562,7 +562,7 @@ func TestBackend_getHistory(t *testing.T) {
 	readHistoryColumns := []string{"namespace", "group", "resource", "name", "folder", "resource_version", "value"}
 	getResourceVersionColumns := []string{"resource_version", "unix_timestamp"}
 
-	t.Run("with ResourceVersionMatch_NotOlderThan", func(t *testing.T) {
+	t.Run("with ResourceVersionMatch_DEPRECATED_NotOlderThan", func(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
 
@@ -574,7 +574,7 @@ func TestBackend_getHistory(t *testing.T) {
 		req := &resource.ListRequest{
 			Options:         &resource.ListOptions{Key: key},
 			ResourceVersion: rv2,
-			VersionMatch:    resource.ResourceVersionMatch_NotOlderThan,
+			VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
 			Source:          resource.ListRequest_HISTORY,
 		}
 
@@ -612,7 +612,7 @@ func TestBackend_getHistory(t *testing.T) {
 		req := &resource.ListRequest{
 			Options:         &resource.ListOptions{Key: key},
 			ResourceVersion: rv2,
-			VersionMatch:    resource.ResourceVersionMatch_Exact,
+			VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
 			Source:          resource.ListRequest_HISTORY,
 		}
 
@@ -697,9 +697,9 @@ func TestBackend_getHistory(t *testing.T) {
 		}
 		expectedListRv := rv3
 		req := &resource.ListRequest{
-			Options:      &resource.ListOptions{Key: key},
-			VersionMatch: resource.ResourceVersionMatch_NotOlderThan,
-			Source:       resource.ListRequest_HISTORY,
+			Options:        &resource.ListOptions{Key: key},
+			VersionMatchV2: resource.ResourceVersionMatchV2_NotOlderThan,
+			Source:         resource.ListRequest_HISTORY,
 		}
 
 		b.SQLMock.ExpectBegin()
@@ -745,9 +745,9 @@ func TestBackend_getHistory(t *testing.T) {
 
 		expectedErr := "expecting an explicit resource version query when using Exact matching"
 		req := &resource.ListRequest{
-			Options:      &resource.ListOptions{Key: key},
-			VersionMatch: resource.ResourceVersionMatch_Exact,
-			Source:       resource.ListRequest_HISTORY,
+			Options:        &resource.ListOptions{Key: key},
+			VersionMatchV2: resource.ResourceVersionMatchV2_Exact,
+			Source:         resource.ListRequest_HISTORY,
 		}
 
 		callback := func(iter resource.ListIterator) error { return nil }
