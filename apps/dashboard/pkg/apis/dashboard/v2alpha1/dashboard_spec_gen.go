@@ -965,14 +965,21 @@ func NewDashboardResponsiveGridLayoutKind() *DashboardResponsiveGridLayoutKind {
 
 // +k8s:openapi-gen=true
 type DashboardResponsiveGridLayoutSpec struct {
-	Row   string                                  `json:"row"`
-	Col   string                                  `json:"col"`
-	Items []DashboardResponsiveGridLayoutItemKind `json:"items"`
+	MaxColumnCount *float64                                `json:"maxColumnCount,omitempty"`
+	MinColumnWidth DashboardStringOrStringOrFloat64        `json:"minColumnWidth"`
+	MinRowHeight   DashboardStringOrStringOrFloat64        `json:"minRowHeight"`
+	HeightFill     *bool                                   `json:"heightFill,omitempty"`
+	Items          []DashboardResponsiveGridLayoutItemKind `json:"items"`
 }
 
 // NewDashboardResponsiveGridLayoutSpec creates a new DashboardResponsiveGridLayoutSpec object.
 func NewDashboardResponsiveGridLayoutSpec() *DashboardResponsiveGridLayoutSpec {
-	return &DashboardResponsiveGridLayoutSpec{}
+	return &DashboardResponsiveGridLayoutSpec{
+		MaxColumnCount: (func(input float64) *float64 { return &input })(3),
+		MinColumnWidth: *NewDashboardStringOrStringOrFloat64(),
+		MinRowHeight:   *NewDashboardStringOrStringOrFloat64(),
+		HeightFill:     (func(input bool) *bool { return &input })(false),
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -2167,6 +2174,79 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 	}
 
 	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+}
+
+// +k8s:openapi-gen=true
+type DashboardStringOrStringOrFloat64 struct {
+	String  *string  `json:"String,omitempty"`
+	String  *string  `json:"String,omitempty"`
+	Float64 *float64 `json:"Float64,omitempty"`
+}
+
+// NewDashboardStringOrStringOrFloat64 creates a new DashboardStringOrStringOrFloat64 object.
+func NewDashboardStringOrStringOrFloat64() *DashboardStringOrStringOrFloat64 {
+	return &DashboardStringOrStringOrFloat64{
+		String: (func(input string) *string { return &input })("narrow"),
+		String: (func(input string) *string { return &input })("wide"),
+	}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardStringOrStringOrFloat64` as JSON.
+func (resource DashboardStringOrStringOrFloat64) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardStringOrStringOrFloat64` from JSON.
+func (resource *DashboardStringOrStringOrFloat64) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// Float64
+	var Float64 float64
+	if err := json.Unmarshal(raw, &Float64); err != nil {
+		errList = append(errList, err)
+		resource.Float64 = nil
+	} else {
+		resource.Float64 = &Float64
+		return nil
+	}
+
+	return errors.Join(errList...)
 }
 
 // +k8s:openapi-gen=true
