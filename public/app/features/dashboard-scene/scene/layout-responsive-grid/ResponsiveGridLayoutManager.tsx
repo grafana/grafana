@@ -6,7 +6,12 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import {
+  forceRenderChildren,
+  getGridItemKeyForPanelId,
+  getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
+} from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -96,6 +101,23 @@ export class ResponsiveGridLayoutManager
     this.publishEvent(new ObjectRemovedFromCanvasEvent(panel), true);
   }
 
+  public duplicate(): DashboardLayoutManager {
+    return this.clone({
+      key: undefined,
+      layout: this.state.layout.clone({
+        key: undefined,
+        children: this.state.layout.state.children.map((child) =>
+          child.clone({
+            key: undefined,
+            body: child.state.body.clone({
+              key: getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(child.state.body)),
+            }),
+          })
+        ),
+      }),
+    });
+  }
+
   public duplicatePanel(panel: VizPanel) {
     const gridItem = panel.parent;
     if (!(gridItem instanceof ResponsiveGridItem)) {
@@ -136,6 +158,11 @@ export class ResponsiveGridLayoutManager
     }
 
     return panels;
+  }
+
+  public editModeChanged(isEditing: boolean) {
+    this.state.layout.setState({ isDraggable: isEditing });
+    forceRenderChildren(this.state.layout, true);
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
