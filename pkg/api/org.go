@@ -1,4 +1,4 @@
-package api
+package apipkg/api/org
 
 import (
 	"context"
@@ -51,7 +51,7 @@ func (hs *HTTPServer) GetOrgByID(c *contextmodel.ReqContext) response.Response {
 
 // swagger:route GET /orgs/name/{org_name} orgs getOrgByName
 //
-// Get Organization by ID.
+// Get Organization by Name.
 //
 // Security:
 // - basic:
@@ -301,8 +301,48 @@ func (hs *HTTPServer) DeleteOrgByID(c *contextmodel.ReqContext) response.Respons
 		if errors.Is(err, org.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Failed to delete organization. ID not found", nil)
 		}
-		return response.Error(http.StatusInternalServerError, "Failed to update organization", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete organization", err)
 	}
+	return response.Success("Organization deleted")
+}
+
+// swagger:route DELETE /orgs/name/{org_name} orgs deleteOrgByName
+//
+// Delete Organization by Name.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) DeleteOrgByName(c *contextmodel.ReqContext) response.Response {
+	orgName := web.Params(c.Req)[":name"]
+
+	organization, err := hs.orgService.GetByName(c.Req.Context(), &org.GetOrgByNameQuery{Name: orgName})
+	if err != nil {
+		if errors.Is(err, org.ErrOrgNotFound) {
+			return response.Error(http.StatusNotFound, "Failed to delete organization. ID not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to delete organization", err)
+	}
+
+	// before deleting an org, check if user does not belong to the current org
+	if c.SignedInUser.GetOrgID() == organization.ID {
+		return response.Error(http.StatusBadRequest, "Can not delete org for current user", nil)
+	}
+
+	if err := hs.orgDeletionService.Delete(c.Req.Context(), &org.DeleteOrgCommand{ID: organization.ID}); err != nil {
+		if errors.Is(err, org.ErrOrgNotFound) {
+			return response.Error(http.StatusNotFound, "Failed to delete organization. ID not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to delete organization", err)
+	}
+
 	return response.Success("Organization deleted")
 }
 
@@ -388,6 +428,13 @@ type DeleteOrgByIDParams struct {
 	// in:path
 	// required:true
 	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters deleteOrgByName
+type DeleteOrgByNameParams struct {
+	// in:path
+	// required:true
+	OrgName string `json:"org_name"`
 }
 
 // swagger:parameters updateOrg

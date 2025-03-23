@@ -247,6 +247,56 @@ func TestAPIEndpoint_DeleteOrgs(t *testing.T) {
 	}
 }
 
+func TestAPIEndpoint_DeleteOrgsByName(t *testing.T) {
+	type testCase struct {
+		desc         string
+		permission   []accesscontrol.Permission
+		expectedCode int
+	}
+
+	tests := []testCase{
+		{
+			desc:         "should be able to delete org by name with correct permission",
+			permission:   []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsDelete}},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:         "should not be able to delete org by name without correct permission",
+			permission:   []accesscontrol.Permission{},
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			expectedIdentity := &authn.Identity{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permission),
+				},
+			}
+
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+				hs.orgDeletionService = &orgtest.FakeOrgDeletionService{}
+				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{OrgID: 1}}
+				hs.accesscontrolService = actest.FakeService{ExpectedPermissions: tt.permission}
+				hs.authnService = &authntest.FakeService{}
+				hs.authnService = &authntest.FakeService{
+					ExpectedIdentity: expectedIdentity,
+				}
+			})
+
+			req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodDelete, "/api/orgs/name/1", nil), userWithPermissions(2, nil))
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
 func TestAPIEndpoint_GetOrg(t *testing.T) {
 	type testCase struct {
 		desc         string
