@@ -446,14 +446,9 @@ export function useDashboard(scene: SceneObject): DashboardScene {
   return getDashboardSceneFor(scene);
 }
 
-export function useDashboardState(scene: SceneObject): DashboardSceneState & { isEditing: boolean } {
+export function useDashboardState(scene: SceneObject): DashboardSceneState {
   const dashboard = useDashboard(scene);
-  const state = dashboard.useState();
-
-  return {
-    ...state,
-    isEditing: !!state.isEditing,
-  };
+  return dashboard.useState();
 }
 
 export function useIsConditionallyHidden(scene: RowItem | ResponsiveGridItem): boolean {
