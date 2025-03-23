@@ -220,7 +220,8 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   getUrlKey(): string {
     let parent = this.parent;
-    let key = 'tab';
+    // Panel edit uses tab key already so we are using dtab here to not conflict
+    let key = 'dtab';
 
     while (parent) {
       if (parent instanceof TabItem) {
