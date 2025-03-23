@@ -1399,8 +1399,9 @@ var (
 		{
 			Name:              "unifiedStorageSearchPermissionFiltering",
 			Description:       "Enable permission filtering on unified storage search",
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaSearchAndStorageSquad,
+			Expression:        "true",
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
