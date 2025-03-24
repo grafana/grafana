@@ -32,7 +32,7 @@ export function SecretForm({
   disableNameField = false,
 }: BaseSecretFormProps) {
   const audiences = [
-    ...ALLOWED_SECRET_DECRYPTERS.map((audience) => ({ label: audience, value: audience })),
+    ...Object.entries(ALLOWED_SECRET_DECRYPTERS).map(([label, value]) => ({ label, value })),
     ...(initialValues?.audiences ?? []),
   ];
 

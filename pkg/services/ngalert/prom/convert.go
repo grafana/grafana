@@ -2,6 +2,7 @@ package prom
 
 import (
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,8 +37,12 @@ type Config struct {
 	EvaluationOffset *time.Duration
 	ExecErrState     models.ExecutionErrorState
 	NoDataState      models.NoDataState
-	RecordingRules   RulesConfig
-	AlertRules       RulesConfig
+	// KeepOriginalRuleDefinition indicates whether the original Prometheus rule definition
+	// if saved to the alert rule metadata. If not, then it will not be possible to convert
+	// the alert rule back to Prometheus format.
+	KeepOriginalRuleDefinition *bool
+	RecordingRules             RulesConfig
+	AlertRules                 RulesConfig
 }
 
 // RulesConfig contains configuration that applies to either recording or alerting rules.
@@ -50,10 +55,11 @@ var (
 	defaultEvaluationOffset = 0 * time.Minute
 
 	defaultConfig = Config{
-		FromTimeRange:    &defaultTimeRange,
-		EvaluationOffset: &defaultEvaluationOffset,
-		ExecErrState:     models.ErrorErrState,
-		NoDataState:      models.OK,
+		FromTimeRange:              &defaultTimeRange,
+		EvaluationOffset:           &defaultEvaluationOffset,
+		ExecErrState:               models.ErrorErrState,
+		NoDataState:                models.OK,
+		KeepOriginalRuleDefinition: util.Pointer(true),
 	}
 )
 
@@ -86,7 +92,9 @@ func NewConverter(cfg Config) (*Converter, error) {
 	if cfg.NoDataState == "" {
 		cfg.NoDataState = defaultConfig.NoDataState
 	}
-
+	if cfg.KeepOriginalRuleDefinition == nil {
+		cfg.KeepOriginalRuleDefinition = defaultConfig.KeepOriginalRuleDefinition
+	}
 	if cfg.DatasourceType != datasources.DS_PROMETHEUS && cfg.DatasourceType != datasources.DS_LOKI {
 		return nil, fmt.Errorf("invalid datasource type: %s", cfg.DatasourceType)
 	}
@@ -98,10 +106,8 @@ func NewConverter(cfg Config) (*Converter, error) {
 
 // PrometheusRulesToGrafana converts a Prometheus rule group into Grafana Alerting rule group.
 func (p *Converter) PrometheusRulesToGrafana(orgID int64, namespaceUID string, group PrometheusRuleGroup) (*models.AlertRuleGroup, error) {
-	for _, rule := range group.Rules {
-		if err := rule.Validate(); err != nil {
-			return nil, err
-		}
+	if err := group.Validate(); err != nil {
+		return nil, err
 	}
 
 	grafanaGroup, err := p.convertRuleGroup(orgID, namespaceUID, group)
@@ -122,7 +128,7 @@ func (p *Converter) convertRuleGroup(orgID int64, namespaceUID string, promGroup
 	}
 
 	for i, rule := range promGroup.Rules {
-		gr, err := p.convertRule(orgID, namespaceUID, promGroup.Name, rule)
+		gr, err := p.convertRule(orgID, namespaceUID, promGroup, rule)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Prometheus rule '%s' to Grafana rule: %w", rule.Alert, err)
 		}
@@ -172,7 +178,7 @@ func getUID(orgID int64, namespaceUID string, group string, position int, promRu
 	return u.String(), nil
 }
 
-func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule PrometheusRule) (models.AlertRule, error) {
+func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup PrometheusRuleGroup, rule PrometheusRule) (models.AlertRule, error) {
 	var forInterval time.Duration
 	if rule.For != nil {
 		forInterval = time.Duration(*rule.For)
@@ -192,8 +198,9 @@ func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule Pr
 
 	if isRecordingRule {
 		record = &models.Record{
-			From:   queryRefID,
-			Metric: rule.Record,
+			From:                queryRefID,
+			Metric:              rule.Record,
+			TargetDatasourceUID: p.cfg.DatasourceUID,
 		}
 
 		isPaused = p.cfg.RecordingRules.IsPaused
@@ -208,12 +215,11 @@ func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule Pr
 	// but Prometheus allows multiple rules with the same name. By adding the group name
 	// to the title we ensure that the title is unique within the group.
 	// TODO: Remove this workaround when we have a proper solution for handling rule title uniqueness.
-	title = fmt.Sprintf("[%s] %s", group, title)
+	title = fmt.Sprintf("[%s] %s", promGroup.Name, title)
 
-	labels := make(map[string]string, len(rule.Labels)+1)
-	for k, v := range rule.Labels {
-		labels[k] = v
-	}
+	labels := make(map[string]string, len(rule.Labels)+len(promGroup.Labels))
+	maps.Copy(labels, promGroup.Labels)
+	maps.Copy(labels, rule.Labels)
 
 	originalRuleDefinition, err := yaml.Marshal(rule)
 	if err != nil {
@@ -231,14 +237,15 @@ func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule Pr
 		Annotations:  rule.Annotations,
 		Labels:       labels,
 		For:          forInterval,
-		RuleGroup:    group,
+		RuleGroup:    promGroup.Name,
 		IsPaused:     isPaused,
 		Record:       record,
-		Metadata: models.AlertRuleMetadata{
-			PrometheusStyleRule: &models.PrometheusStyleRule{
-				OriginalRuleDefinition: string(originalRuleDefinition),
-			},
-		},
+	}
+
+	if p.cfg.KeepOriginalRuleDefinition != nil && *p.cfg.KeepOriginalRuleDefinition {
+		result.Metadata.PrometheusStyleRule = &models.PrometheusStyleRule{
+			OriginalRuleDefinition: string(originalRuleDefinition),
+		}
 	}
 
 	return result, nil

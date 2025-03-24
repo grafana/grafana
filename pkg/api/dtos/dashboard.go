@@ -3,7 +3,7 @@ package dtos
 import (
 	"time"
 
-	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboardsV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -26,6 +26,7 @@ type DashboardMeta struct {
 	Version    int       `json:"version"`
 	HasACL     bool      `json:"hasAcl" xorm:"has_acl"`
 	IsFolder   bool      `json:"isFolder"`
+	APIVersion string    `json:"apiVersion,omitempty"` // v0alpha1, v1, v2beta1 etc -- the version things were *saved* at
 	// Deprecated: use FolderUID instead
 	FolderId               int64                              `json:"folderId"`
 	FolderUid              string                             `json:"folderUid"`

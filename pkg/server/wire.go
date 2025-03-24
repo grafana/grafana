@@ -10,6 +10,7 @@ import (
 	"github.com/google/wire"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -36,7 +37,9 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
+	gsmEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -280,12 +283,6 @@ var wireBasicSet = wire.NewSet(
 	jaeger.ProvideService,
 	datasourceservice.ProvideCacheService,
 	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
-	secretmetadata.ProvideSecureValueMetadataStorage,
-	secretmetadata.ProvideKeeperMetadataStorage,
-	secretmetadata.ProvideDecryptStorage,
-	secretencryption.ProvideDataKeyStorageStorage,
-	secretencryption.ProvideEncryptedValueStorage,
-	manager.NewEncryptionManager,
 	encryptionservice.ProvideEncryptionService,
 	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,
@@ -310,6 +307,7 @@ var wireBasicSet = wire.NewSet(
 	expr.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
+	featuremgmt.ProvideOpenFeatureService,
 	dashboardservice.ProvideDashboardServiceImpl,
 	wire.Bind(new(dashboards.PermissionsRegistrationService), new(*dashboardservice.DashboardServiceImpl)),
 	dashboardservice.ProvideDashboardService,
@@ -408,9 +406,18 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideVerifier,
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
+	secretmetadata.ProvideSecureValueMetadataStorage,
+	secretmetadata.ProvideKeeperMetadataStorage,
+	secretmetadata.ProvideDecryptStorage,
+	secretdecrypt.ProvideDecryptAllowList,
+	secretencryption.ProvideDataKeyStorageStorage,
+	secretencryption.ProvideEncryptedValueStorage,
+	encryptionManager.ProvideEncryptionManager,
+	gsmEncryption.ProvideThirdPartyProviderMap,
 	authz.WireSet,
 	// Unified storage
 	resource.ProvideStorageMetrics,
+	resource.ProvideIndexMetrics,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
@@ -429,6 +436,7 @@ var wireSet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
 )
 
 var wireCLISet = wire.NewSet(
@@ -461,6 +469,7 @@ var wireTestSet = wire.NewSet(
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
+	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
 )
 
 func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {

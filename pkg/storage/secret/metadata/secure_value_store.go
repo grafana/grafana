@@ -5,18 +5,19 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -42,7 +43,7 @@ func ProvideSecureValueMetadataStorage(db db.DB, cfg *setting.Cfg, features feat
 type secureValueMetadataStorage struct {
 	db           db.DB
 	accessClient claims.AccessClient
-	keepers      map[keepertypes.KeeperType]keepertypes.Keeper
+	keepers      map[contracts.KeeperType]contracts.Keeper
 }
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
@@ -61,13 +62,18 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 	// From this point on, we should not have a need to read value.
 	sv.Spec.Value = ""
 
+	// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
+	// Temporarily mark succeeded here since the value is already stored in the keeper.
+	sv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
+	sv.Status.Message = ""
+
 	row, err := toCreateRow(sv, authInfo.GetUID(), externalID.String())
 	if err != nil {
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if row.Keeper != keepertypes.DefaultSQLKeeper {
+		if row.Keeper != contracts.DefaultSQLKeeper {
 			// Validate before inserting that the chosen `keeper` exists.
 			keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
 
@@ -165,13 +171,18 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 	// From this point on, we should not have a need to read value.
 	newSecureValue.Spec.Value = ""
 
+	// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
+	// Temporarily mark succeeded here since the value is already stored in the keeper.
+	newSecureValue.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
+	newSecureValue.Status.Message = ""
+
 	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), currentRow.ExternalID)
 	if err != nil {
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if newRow.Keeper != keepertypes.DefaultSQLKeeper {
+		if newRow.Keeper != contracts.DefaultSQLKeeper {
 			// Validate before updating that the new `keeper` exists.
 			keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: newRow.Namespace}
 
@@ -254,6 +265,10 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	if labelSelector == nil {
 		labelSelector = labels.Everything()
 	}
+	fieldSelector := options.FieldSelector
+	if fieldSelector == nil {
+		fieldSelector = fields.Everything()
+	}
 
 	secureValueRows := make([]*secureValueDB, 0)
 
@@ -284,7 +299,11 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 		}
 
 		if labelSelector.Matches(labels.Set(secureValue.Labels)) {
-			secureValues = append(secureValues, *secureValue)
+			if fieldSelector.Matches(fields.Set{
+				"status.phase": string(secureValue.Status.Phase),
+			}) {
+				secureValues = append(secureValues, *secureValue)
+			}
 		}
 	}
 

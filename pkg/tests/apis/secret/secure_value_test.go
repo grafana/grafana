@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +17,7 @@ import (
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -78,6 +78,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		require.NotEmpty(t, secureValue.Spec.Title)
 		require.NotEmpty(t, secureValue.Spec.Keeper)
 		require.NotEmpty(t, secureValue.Spec.Decrypters)
+		require.NotEmpty(t, secureValue.Status.Phase)
 
 		t.Run("and creating another secure value with the same name in the same namespace returns an error", func(t *testing.T) {
 			testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
@@ -142,6 +143,43 @@ func TestIntegrationSecureValue(t *testing.T) {
 			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
 			require.Error(t, err)
 			require.Nil(t, updatedRaw)
+		})
+
+		t.Run("and listing securevalues with status.phase Succeeded returns the created secure value", func(t *testing.T) {
+			rawList, err := client.Resource.List(ctx, metav1.ListOptions{
+				FieldSelector: "status.phase=Succeeded",
+			})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.GreaterOrEqual(t, len(rawList.Items), 1)
+			require.Equal(t, secureValue.Name, rawList.Items[0].GetName())
+		})
+
+		t.Run("and listing securevalues with label bb returns the created secure value", func(t *testing.T) {
+			rawList, err := client.Resource.List(ctx, metav1.ListOptions{
+				LabelSelector: "bb=BBB",
+			})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.GreaterOrEqual(t, len(rawList.Items), 1)
+			require.Equal(t, secureValue.Name, rawList.Items[0].GetName())
+		})
+
+		t.Run("and listing securevalues with status.phase Failed returns empty", func(t *testing.T) {
+			rawList, err := client.Resource.List(ctx, metav1.ListOptions{
+				FieldSelector: "status.phase=Failed",
+			})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.Equal(t, len(rawList.Items), 0)
+		})
+
+		t.Run("and listing securevalues with a not allowed filter returns error", func(t *testing.T) {
+			rawList, err := client.Resource.List(ctx, metav1.ListOptions{
+				FieldSelector: "some.label=something",
+			})
+			require.Error(t, err)
+			require.Nil(t, rawList)
 		})
 	})
 
@@ -566,7 +604,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value in default sql keeper returns it", func(t *testing.T) {
-		raw := mustGenerateSecureValue(t, helper, genericUserEditor, keepertypes.DefaultSQLKeeper)
+		raw := mustGenerateSecureValue(t, helper, genericUserEditor, contracts.DefaultSQLKeeper)
 
 		secureValue := new(secretv0alpha1.SecureValue)
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
@@ -606,8 +644,8 @@ func TestIntegrationSecureValue(t *testing.T) {
 			newRaw.SetName(raw.GetName())
 			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
-			newRaw.Object["spec"].(map[string]any)["keeper"] = keepertypes.DefaultSQLKeeper
-			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{"decrypter1/name1", "decrypter2/*"}
+			newRaw.Object["spec"].(map[string]any)["keeper"] = contracts.DefaultSQLKeeper
+			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{"actor_app1", "actor_app2"}
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
 
 			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})

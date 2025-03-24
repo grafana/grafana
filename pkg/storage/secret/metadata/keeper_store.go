@@ -278,7 +278,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(sess *sqlstore.DBS
 	thirdPartyKeepers := make([]*keeperDB, 0)
 
 	// SELECT * FROM secret_keeper WHERE name IN (...) AND namespace = ? AND type != 'sql' FOR UPDATE;
-	err = sess.Table(keeperCond.TableName()).ForUpdate().In("name", keeperNames).Where("type != ?", SqlKeeperType).Find(&thirdPartyKeepers, keeperCond)
+	err = sess.Table(keeperCond.TableName()).ForUpdate().In("name", keeperNames).Where("type != ?", contracts.SQLKeeperType).Find(&thirdPartyKeepers, keeperCond)
 	if err != nil {
 		return fmt.Errorf("check keepers type: %w", err)
 	}
