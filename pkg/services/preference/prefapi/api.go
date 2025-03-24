@@ -14,8 +14,8 @@ import (
 )
 
 func UpdatePreferencesFor(ctx context.Context,
-	dashboardService dashboards.DashboardService, preferenceService pref.Service,
-	orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd, features featuremgmt.FeatureToggles) response.Response {
+	dashboardService dashboards.DashboardService, preferenceService pref.Service, features featuremgmt.FeatureToggles,
+	orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd) response.Response {
 	if dtoCmd.Theme != "" && !pref.IsValidThemeID(dtoCmd.Theme) {
 		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
@@ -63,7 +63,7 @@ func UpdatePreferencesFor(ctx context.Context,
 
 func GetPreferencesFor(ctx context.Context,
 	dashboardService dashboards.DashboardService, preferenceService pref.Service,
-	orgID, userID, teamID int64, features featuremgmt.FeatureToggles) response.Response {
+	features featuremgmt.FeatureToggles, orgID, userID, teamID int64) response.Response {
 	prefsQuery := pref.GetPreferenceQuery{UserID: userID, OrgID: orgID, TeamID: teamID}
 
 	preference, err := preferenceService.Get(ctx, &prefsQuery)

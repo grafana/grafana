@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -57,13 +56,15 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	if prefs.JSONData.Language != "" {
 		language = prefs.JSONData.Language
 	}
-	var ctx context.Context
-	if hs.Features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) {
+
+	if len(acceptLangHeader) > 0 {
+		parts := strings.Split(acceptLangHeader, ",")
+		locale = parts[0]
+	}
+
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
 		if prefs.JSONData.Locale != "" {
 			locale = prefs.JSONData.Locale
-		} else if len(acceptLangHeader) > 0 {
-			parts := strings.Split(acceptLangHeader, ",")
-			locale = parts[0]
 		}
 	}
 

@@ -101,7 +101,7 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 }
 
 func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
-	jsonData, err := preferenceData(cmd, ctx)
+	jsonData, err := preferenceData(cmd)
 	if err != nil {
 		return err
 	}
@@ -270,7 +270,7 @@ func parseCookiePreferences(prefs []pref.CookieType) (map[string]struct{}, error
 	return m, nil
 }
 
-func preferenceData(cmd *pref.SavePreferenceCommand, ctx context.Context) (*pref.PreferenceJSONData, error) {
+func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, error) {
 	jsonData := &pref.PreferenceJSONData{
 		Language: cmd.Language,
 		Locale:   cmd.Locale,
