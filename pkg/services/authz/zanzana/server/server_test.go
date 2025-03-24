@@ -29,6 +29,9 @@ const (
 	folderGroup    = "folder.grafana.app"
 	folderResource = "folders"
 
+	teamGroup    = "iam.grafana.app"
+	teamResource = "teams"
+
 	statusSubresource = "status"
 )
 
@@ -104,7 +107,7 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 			common.NewGroupResourceTuple("user:11", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource),
 			common.NewFolderResourceTuple("user:12", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource, "5"),
 			common.NewFolderResourceTuple("user:13", common.RelationGet, folderGroup, folderResource, statusSubresource, "5"),
-			common.NewTeamResourceTuple("user:14", common.RelationGet, "team.grafana.app", "teams", statusSubresource, "1"),
+			common.NewTeamResourceTuple("user:14", common.RelationGet, teamGroup, teamResource, statusSubresource, "1"),
 		},
 	}
 	for _, w := range writes.TupleKeys {

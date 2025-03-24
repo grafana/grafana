@@ -168,7 +168,7 @@ func testCheck(t *testing.T, server *Server) {
 	})
 
 	t.Run("user:14 should be able to read team subresources for team 1", func(t *testing.T) {
-		res, err := server.Check(newContextWithNamespace(), newReq("user:14", utils.VerbGet, "team.grafana.app", "teams", statusSubresource, "", "1"))
+		res, err := server.Check(newContextWithNamespace(), newReq("user:14", utils.VerbGet, "iam.grafana.app", "teams", statusSubresource, "", "1"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 	})
