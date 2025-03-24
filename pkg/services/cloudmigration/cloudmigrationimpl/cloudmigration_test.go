@@ -441,7 +441,7 @@ func Test_DeletedDashboardsNotMigrated(t *testing.T) {
 		nil,
 	)
 
-	data, err := s.getMigrationDataJSON(context.TODO(), &user.SignedInUser{OrgID: 1})
+	data, err := s.getMigrationDataJSON(context.TODO(), &user.SignedInUser{OrgID: 1}, cloudmigration.ResourceTypes{cloudmigration.DashboardDataType: {}})
 	assert.NoError(t, err)
 	dashCount := 0
 	for _, it := range data.Items {
