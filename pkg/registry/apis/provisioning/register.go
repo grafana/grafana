@@ -479,8 +479,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		}
 	}
 
-	// Make sure there is only one
-	targetError := b.verifySingleInstanceTarget(cfg)
+	targetError := b.verifyAgaintsExistingRepositories(cfg)
 	if targetError != nil {
 		list = append(list, targetError)
 	}
@@ -511,13 +510,14 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 }
 
 // TODO: move this to a more appropriate place. Probably controller/validation.go
-func (b *APIBuilder) verifySingleInstanceTarget(cfg *provisioning.Repository) *field.Error {
+func (b *APIBuilder) verifyAgaintsExistingRepositories(cfg *provisioning.Repository) *field.Error {
+	all, err := b.repositoryLister.Repositories(cfg.Namespace).List(labels.Everything())
+	if err != nil {
+		return field.Forbidden(field.NewPath("spec"),
+			"Unable to verify root target: "+err.Error())
+	}
+
 	if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
-		all, err := b.repositoryLister.Repositories(cfg.Namespace).List(labels.Everything())
-		if err != nil {
-			return field.Forbidden(field.NewPath("spec", "sync", "target"),
-				"Unable to verify root target // "+err.Error())
-		}
 		for _, v := range all {
 			if v.Name != cfg.Name && v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
 				return field.Forbidden(field.NewPath("spec", "sync", "target"),
@@ -525,6 +525,12 @@ func (b *APIBuilder) verifySingleInstanceTarget(cfg *provisioning.Repository) *f
 			}
 		}
 	}
+
+	if len(all) >= 10 {
+		return field.Forbidden(field.NewPath("spec"),
+			"Maximum number of 10 repositories reached")
+	}
+
 	return nil
 }
 
