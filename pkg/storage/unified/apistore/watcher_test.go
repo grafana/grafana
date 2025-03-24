@@ -8,15 +8,12 @@ package apistore_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob/fileblob"
-	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/api/apitesting"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -34,19 +31,13 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-)
-
-type StorageType string
-
-const (
-	StorageTypeFile    StorageType = "file"
-	StorageTypeUnified StorageType = "unified"
 )
 
 var scheme = runtime.NewScheme()
@@ -65,21 +56,21 @@ type setupOptions struct {
 	prefix         string
 	resourcePrefix string
 	groupResource  schema.GroupResource
-	storageType    StorageType
+	storageType    options.StorageType
 }
 
 type setupOption func(*setupOptions, testing.TB)
 
-func withDefaults(options *setupOptions, t testing.TB) {
-	options.codec = apitesting.TestCodec(codecs, examplev1.SchemeGroupVersion)
-	options.newFunc = newPod
-	options.newListFunc = newPodList
-	options.prefix = t.TempDir()
-	options.resourcePrefix = storagetesting.KeyFunc("", "")
-	options.groupResource = schema.GroupResource{Resource: "pods"}
-	options.storageType = StorageTypeFile
+func withDefaults(setupOptions *setupOptions, t testing.TB) {
+	setupOptions.codec = apitesting.TestCodec(codecs, examplev1.SchemeGroupVersion)
+	setupOptions.newFunc = newPod
+	setupOptions.newListFunc = newPodList
+	setupOptions.prefix = t.TempDir()
+	setupOptions.resourcePrefix = storagetesting.KeyFunc("", "")
+	setupOptions.groupResource = schema.GroupResource{Resource: "pods"}
+	setupOptions.storageType = options.StorageTypeUnified
 }
-func withStorageType(storageType StorageType) setupOption {
+func withStorageType(storageType options.StorageType) setupOption {
 	return func(options *setupOptions, t testing.TB) {
 		options.storageType = storageType
 	}
@@ -92,6 +83,10 @@ func TestMain(m *testing.M) {
 }
 
 func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Interface, factory.DestroyFunc, error) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	setupOpts := setupOptions{}
 	opts = append([]setupOption{withDefaults}, opts...)
 	for _, opt := range opts {
@@ -103,65 +98,30 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		Resource: "pods",
 	}
 
-	bucket := memblob.OpenBucket(nil)
-	if true {
-		tmp, err := os.MkdirTemp("", "xxx-*")
-		require.NoError(t, err)
-
-		bucket, err = fileblob.OpenBucket(tmp, &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
-		})
-		require.NoError(t, err)
-	}
 	ctx := storagetesting.NewContext()
 
-	var server resource.ResourceServer
-	switch setupOpts.storageType {
-	case StorageTypeFile:
-		backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
-			Bucket: bucket,
-		})
-		require.NoError(t, err)
+	dbstore := infraDB.InitTestDB(t)
+	cfg := setting.NewCfg()
 
-		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: backend,
-		})
-		require.NoError(t, err)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)
+	require.NoError(t, err)
+	require.NotNil(t, eDB)
 
-		// Issue a health check to ensure the server is initialized
-		_, err = server.IsHealthy(ctx, &resource.HealthCheckRequest{})
-		require.NoError(t, err)
-	case StorageTypeUnified:
-		if testing.Short() {
-			t.Skip("skipping integration test")
-		}
-		dbstore := infraDB.InitTestDB(t)
-		cfg := setting.NewCfg()
+	ret, err := sql.NewBackend(sql.BackendOptions{
+		DBProvider:      eDB,
+		PollingInterval: time.Millisecond, // Keep this fast
+	})
+	require.NoError(t, err)
+	require.NotNil(t, ret)
+	err = ret.Init(ctx)
+	require.NoError(t, err)
 
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)
-		require.NoError(t, err)
-		require.NotNil(t, eDB)
-
-		ret, err := sql.NewBackend(sql.BackendOptions{
-			DBProvider:      eDB,
-			PollingInterval: time.Millisecond, // Keep this fast
-		})
-		require.NoError(t, err)
-		require.NotNil(t, ret)
-		ctx := storagetesting.NewContext()
-		err = ret.Init(ctx)
-		require.NoError(t, err)
-
-		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend:     ret,
-			Diagnostics: ret,
-			Lifecycle:   ret,
-		})
-		require.NoError(t, err)
-	default:
-		t.Fatalf("unsupported storage type: %s", setupOpts.storageType)
-	}
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:     ret,
+		Diagnostics: ret,
+		Lifecycle:   ret,
+	})
+	require.NoError(t, err)
 	client := resource.NewLocalResourceClient(server)
 
 	config := storagebackend.NewDefaultConfig(setupOpts.prefix, setupOpts.codec)
@@ -190,47 +150,39 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 }
 
 func TestWatch(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunTestWatch(ctx, t, store)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t, withStorageType(options.StorageTypeUnified))
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunTestWatch(ctx, t, store)
+	})
 }
 
 func TestClusterScopedWatch(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunTestClusterScopedWatch(ctx, t, store)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t)
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunTestClusterScopedWatch(ctx, t, store)
+	})
 }
 
 func TestNamespaceScopedWatch(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunTestNamespaceScopedWatch(ctx, t, store)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t)
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunTestNamespaceScopedWatch(ctx, t, store)
+	})
 }
 
 func TestDeleteTriggerWatch(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunTestDeleteTriggerWatch(ctx, t, store)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t)
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunTestDeleteTriggerWatch(ctx, t, store)
+	})
 }
 
 // Not Supported by unistore because there is no way to differentiate between:
@@ -247,14 +199,12 @@ func TestDeleteTriggerWatch(t *testing.T) {
 // TestWatchFromNonZero tests that
 // - watch from non-0 should just watch changes after given version
 func TestWatchFromNonZero(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunTestWatchFromNonZero(ctx, t, store)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t)
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunTestWatchFromNonZero(ctx, t, store)
+	})
 }
 
 /*
@@ -275,36 +225,30 @@ func TestWatchError(t *testing.T) {
 */
 
 func TestWatchContextCancel(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunTestWatchContextCancel(ctx, t, store)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t)
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunTestWatchContextCancel(ctx, t, store)
+	})
 }
 
 func TestWatcherTimeout(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunTestWatcherTimeout(ctx, t, store)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t)
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunTestWatcherTimeout(ctx, t, store)
+	})
 }
 
 func TestWatchDeleteEventObjectHaveLatestRV(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunTestWatchDeleteEventObjectHaveLatestRV(ctx, t, store)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t)
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunTestWatchDeleteEventObjectHaveLatestRV(ctx, t, store)
+	})
 }
 
 // TODO: enable when we support flow control and priority fairness
@@ -326,47 +270,39 @@ func TestWatchDeleteEventObjectHaveLatestRV(t *testing.T) {
 // setting allowWatchBookmarks query param against
 // etcd implementation doesn't have any effect.
 func TestWatchDispatchBookmarkEvents(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunTestWatchDispatchBookmarkEvents(ctx, t, store, false)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t)
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunTestWatchDispatchBookmarkEvents(ctx, t, store, false)
+	})
 }
 
 func TestSendInitialEventsBackwardCompatibility(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunSendInitialEventsBackwardCompatibility(ctx, t, store)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t)
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunSendInitialEventsBackwardCompatibility(ctx, t, store)
+	})
 }
 
 func TestEtcdWatchSemantics(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunWatchSemantics(ctx, t, store)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t)
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunWatchSemantics(ctx, t, store)
+	})
 }
 
 func TestEtcdWatchSemanticInitialEventsExtended(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
-			defer destroyFunc()
-			assert.NoError(t, err)
-			storagetesting.RunWatchSemanticInitialEventsExtended(ctx, t, store)
-		})
-	}
+	t.Run(string(options.StorageTypeUnified), func(t *testing.T) {
+		ctx, store, destroyFunc, err := testSetup(t)
+		defer destroyFunc()
+		assert.NoError(t, err)
+		storagetesting.RunWatchSemanticInitialEventsExtended(ctx, t, store)
+	})
 }
 
 func newPod() runtime.Object {

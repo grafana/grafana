@@ -28,7 +28,7 @@ func ProvideSqlBackendResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	storageType := options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified)))
 
-	if storageType == options.StorageTypeFile || storageType == options.StorageTypeUnifiedGrpc {
+	if storageType == options.StorageTypeUnifiedGrpc {
 		return nil, nil
 	}
 
