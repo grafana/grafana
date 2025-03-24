@@ -141,7 +141,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 		folderRelation = common.SubresourceRelation(relation)
 	)
 
-	if folderIdent != "" && common.IsFolderResourceRelation(folderRelation) {
+	if folderIdent != "" && common.IsSubresourceRelation(folderRelation) {
 		// Check if subject has access as a sub resource for the folder
 		res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 			StoreId:              store.ID,

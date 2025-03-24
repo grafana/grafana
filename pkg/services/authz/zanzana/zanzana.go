@@ -38,20 +38,20 @@ const (
 	RelationCreate = common.RelationCreate
 	RelationDelete = common.RelationDelete
 
-	RelationFolderResourceSetView  = common.RelationFolderResourceSetView
-	RelationFolderResourceSetEdit  = common.RelationFolderResourceSetEdit
-	RelationFolderResourceSetAdmin = common.RelationFolderResourceSetAdmin
+	RelationSubresourceSetView  = common.RelationSubresourceSetView
+	RelationSubresourceSetEdit  = common.RelationSubresourceSetEdit
+	RelationSubresourceSetAdmin = common.RelationSubresourceSetAdmin
 
-	RelationFolderResourceRead   = common.RelationFolderResourceGet
-	RelationFolderResourceWrite  = common.RelationFolderResourceUpdate
-	RelationFolderResourceCreate = common.RelationFolderResourceCreate
-	RelationFolderResourceDelete = common.RelationFolderResourceDelete
+	RelationSubresourceRead   = common.RelationSubresourceGet
+	RelationSubresourceWrite  = common.RelationSubresourceUpdate
+	RelationSubresourceCreate = common.RelationSubresourceCreate
+	RelationSubresourceDelete = common.RelationSubresourceDelete
 )
 
 var (
-	RelationsFolder         = common.RelationsFolder
-	RelationsResouce        = common.RelationsResource
-	RelationsFolderResource = common.RelationsFolderResource
+	RelationsFolder      = common.RelationsFolder
+	RelationsResouce     = common.RelationsResource
+	RelationsSubresource = common.RelationsSubresource
 )
 
 const (

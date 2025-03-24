@@ -51,16 +51,16 @@ const (
 	RelationGetPermissions string = "get_permissions"
 	RelationSetPermissions string = "set_permissions"
 
-	RelationFolderResourceSetView  string = "resource_" + RelationSetView
-	RelationFolderResourceSetEdit  string = "resource_" + RelationSetEdit
-	RelationFolderResourceSetAdmin string = "resource_" + RelationSetAdmin
+	RelationSubresourceSetView  string = "resource_" + RelationSetView
+	RelationSubresourceSetEdit  string = "resource_" + RelationSetEdit
+	RelationSubresourceSetAdmin string = "resource_" + RelationSetAdmin
 
-	RelationFolderResourceGet            string = "resource_" + RelationGet
-	RelationFolderResourceUpdate         string = "resource_" + RelationUpdate
-	RelationFolderResourceCreate         string = "resource_" + RelationCreate
-	RelationFolderResourceDelete         string = "resource_" + RelationDelete
-	RelationFolderResourceGetPermissions string = "resource_" + RelationGetPermissions
-	RelationFolderResourceSetPermissions string = "resource_" + RelationSetPermissions
+	RelationSubresourceGet            string = "resource_" + RelationGet
+	RelationSubresourceUpdate         string = "resource_" + RelationUpdate
+	RelationSubresourceCreate         string = "resource_" + RelationCreate
+	RelationSubresourceDelete         string = "resource_" + RelationDelete
+	RelationSubresourceGetPermissions string = "resource_" + RelationGetPermissions
+	RelationSubresourceSetPermissions string = "resource_" + RelationSetPermissions
 )
 
 // RelationsGroupResource are relations that can be added on type "group_resource".
@@ -82,19 +82,19 @@ var RelationsResource = []string{
 	RelationSetPermissions,
 }
 
-// RelationsFolderResource are relations that can be added on type "folder" for child resources.
-var RelationsFolderResource = []string{
-	RelationFolderResourceGet,
-	RelationFolderResourceUpdate,
-	RelationFolderResourceCreate,
-	RelationFolderResourceDelete,
-	RelationFolderResourceGetPermissions,
-	RelationFolderResourceSetPermissions,
+// RelationsSubresource are relations that can be added on typed resources for subresources.
+var RelationsSubresource = []string{
+	RelationSubresourceGet,
+	RelationSubresourceUpdate,
+	RelationSubresourceCreate,
+	RelationSubresourceDelete,
+	RelationSubresourceGetPermissions,
+	RelationSubresourceSetPermissions,
 }
 
 // RelationsFolder are relations that can be added on type "folder".
 var RelationsFolder = append(
-	RelationsFolderResource,
+	RelationsSubresource,
 	RelationGet,
 	RelationUpdate,
 	RelationCreate,
@@ -131,8 +131,8 @@ func IsGroupResourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsGroupResource)
 }
 
-func IsFolderResourceRelation(relation string) bool {
-	return isValidRelation(relation, RelationsFolderResource)
+func IsSubresourceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsSubresource)
 }
 
 func isValidRelation(relation string, valid []string) bool {
@@ -199,9 +199,9 @@ func NewResourceTuple(subject, relation, group, resource, subresource, name stri
 }
 
 func isSubresourceRelationSet(relation string) bool {
-	return relation == RelationFolderResourceSetView ||
-		relation == RelationFolderResourceSetEdit ||
-		relation == RelationFolderResourceSetAdmin
+	return relation == RelationSubresourceSetView ||
+		relation == RelationSubresourceSetEdit ||
+		relation == RelationSubresourceSetAdmin
 }
 
 func NewFolderResourceTuple(subject, relation, group, resource, subresource, folder string) *openfgav1.TupleKey {
