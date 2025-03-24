@@ -22,12 +22,7 @@ import {
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-import {
-  getAutoAssignedVariablesDSRef,
-  getDataQueryKind,
-  getDataQuerySpec,
-  getPersistedDSForVariable,
-} from './transformSceneToSaveModelSchemaV2';
+import { getDataQueryKind, getDataQuerySpec, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
@@ -55,7 +50,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       type: variable.state.type,
     };
 
-    const autoAssignedVariableDsRef = getAutoAssignedVariablesDSRef(set);
     if (sceneUtils.isQueryVariable(variable)) {
       let options: VariableOption[] = [];
       // Not sure if we actually have to still support this option given
@@ -74,7 +68,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         options,
         query: variable.state.query,
         definition: variable.state.definition,
-        datasource: getPersistedDSForVariable(variable, autoAssignedVariableDsRef),
+        datasource: getElementDatasource(set, variable, 'variable'),
         sort: variable.state.sort,
         refresh: variable.state.refresh,
         regex: variable.state.regex,
@@ -253,8 +247,6 @@ export function sceneVariablesSetToSchemaV2Variables(
     | AdhocVariableKind
   > = [];
 
-  const autoAssignedVariableDsRef = getAutoAssignedVariablesDSRef(set);
-
   for (const variable of set.state.variables) {
     const commonProperties = {
       name: variable.state.name,
@@ -302,7 +294,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           options,
           query: dataQuery,
           definition: variable.state.definition,
-          datasource: getPersistedDSForVariable(variable, autoAssignedVariableDsRef),
+          datasource: getElementDatasource(set, variable, 'variable'),
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex,

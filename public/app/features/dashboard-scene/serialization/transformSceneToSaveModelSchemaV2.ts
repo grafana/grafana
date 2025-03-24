@@ -9,10 +9,10 @@ import {
   SceneDataQuery,
   SceneDataTransformer,
   SceneQueryRunner,
-  SceneVariable,
   SceneVariables,
   SceneVariableSet,
   VizPanel,
+  sceneUtils,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
@@ -249,10 +249,10 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
-  const autoAssignedPanelDSRef = getAutoAssignedPanelDSRef(vizPanel);
+
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
-      const queryDatasource = getPersistedDSForQuery(query, queryRunner, autoAssignedPanelDSRef);
+      const queryDatasource = getElementDatasource(vizPanel, query, 'panel', queryRunner);
       const dataQuery: DataQueryKind = {
         kind: getDataQueryKind(query),
         spec: omit(query, 'datasource', 'refId', 'hide'),
@@ -596,23 +596,110 @@ function validateRowsLayout(layout: unknown) {
 }
 
 /**
- * Get a collection of panel queries refIds
- * the refIds are the ones which did not have a datasource set
- * @returns a set of panel queries refIds
+ * Function to get the collection of element references that did not have a datasource set
+ * @param element - The scene element (VizPanel or SceneVariables)
+ * @param type - Specifies which type of element we're looking for panel or variable references
+ * @returns A set of element identifiers (refIds for panels, names for variables) that had auto-assigned datasources
  */
-function getAutoAssignedPanelDSRef(vizPanel: VizPanel) {
-  const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
-  const scene = getDashboardSceneFor(vizPanel);
+function getAutoAssignedDSRef(element: VizPanel, type: 'panels'): Set<string> | undefined;
+function getAutoAssignedDSRef(element: SceneVariables, type: 'variables'): Set<string> | undefined;
+function getAutoAssignedDSRef(
+  element: VizPanel | SceneVariables,
+  type: 'panels' | 'variables'
+): Set<string> | undefined {
+  const scene = getDashboardSceneFor(element);
   const elementMapReferences = scene.serializer.getDSReferencesMapping();
-  const panelQueries = elementMapReferences.panels.get(elementKey);
-  return panelQueries;
+
+  if (type === 'panels' && isVizPanel(element)) {
+    const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(element);
+    return elementMapReferences.panels.get(elementKey);
+  }
+
+  return elementMapReferences.variables;
+}
+
+export function getAutoAssignedPanelDSRef(vizPanel: VizPanel) {
+  return getAutoAssignedDSRef(vizPanel, 'panels');
 }
 
 export function getAutoAssignedVariablesDSRef(set: SceneVariables) {
-  const scene = getDashboardSceneFor(set);
-  const elementMapReferences = scene.serializer.getDSReferencesMapping();
-  const variables = elementMapReferences.variables;
-  return variables;
+  return getAutoAssignedDSRef(set, 'variables');
+}
+
+/**
+ * Determines if a data source reference should be persisted for a query or variable
+ */
+function getPersistedDSFor<T extends SceneDataQuery | QueryVariable>(
+  element: T,
+  autoAssignedDsRef: Set<string> | undefined,
+  type: 'query' | 'variable',
+  context?: SceneQueryRunner
+): DataSourceRef | undefined {
+  // Get the element identifier - refId for queries, name for variables
+  const elementId = getElementIdentifier(element, type);
+
+  // If the element is in the auto-assigned set, it didn't have a datasource specified
+  if (autoAssignedDsRef?.has(elementId)) {
+    return undefined;
+  }
+
+  // Return appropriate datasource reference based on element type
+  if (type === 'query') {
+    if ('datasource' in element && element.datasource) {
+      // If element has its own datasource, use that
+      return element.datasource;
+    }
+
+    // For queries missing a datasource but not in auto-assigned set, use datasource from context (queryRunner)
+    return context?.state?.datasource;
+  }
+
+  if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
+    return element.state.datasource || {};
+  }
+
+  return undefined;
+}
+
+/**
+ * Helper function to extract which identifier to use from a query or variable element
+ * @returns refId for queries, name for variables
+ * TODO: we will add annotations in the future
+ */
+function getElementIdentifier<T extends SceneDataQuery | QueryVariable>(
+  element: T,
+  type: 'query' | 'variable'
+): string {
+  // when is type query look for refId
+  if (type === 'query') {
+    return 'refId' in element ? element.refId : '';
+  }
+  // when is type variable look for the name of the variable
+  return 'state' in element && 'name' in element.state ? element.state.name : '';
+}
+
+/**
+ * Type guard to check if an element is a VizPanel
+ */
+function isVizPanel(element: VizPanel | SceneVariables): element is VizPanel {
+  // Check for properties unique to VizPanel
+  // FIXME: is there another way to do this?
+  return 'pluginId' in element.state;
+}
+
+/**
+ * Type guard to check if an element is SceneVariables
+ */
+function isSceneVariables(element: VizPanel | SceneVariables): element is SceneVariables {
+  // Check for properties unique to SceneVariables but not in VizPanel
+  return !('pluginId' in element.state) && ('variables' in element.state || 'getValue' in element);
+}
+
+/**
+ * Type guard to check if query element is a SceneDataQuery
+ */
+function isSceneDataQuery(query: SceneDataQuery | QueryVariable): query is SceneDataQuery {
+  return 'refId' in query && !('state' in query);
 }
 
 /**
@@ -623,29 +710,68 @@ export function getAutoAssignedVariablesDSRef(set: SceneVariables) {
  * @param query
  * @param queryRunner
  * @param autoAssignedPanelDsRef
- * @returns
+ * @returns undefined or the persisted datasource
  */
 export function getPersistedDSForQuery(
   query: SceneDataQuery,
   queryRunner: SceneQueryRunner,
   autoAssignedPanelDsRef: Set<string> | undefined
 ) {
-  // if the query has a refId and it is in the panelDsReferences then it did NOT have a datasource
-  const hasMatchingRefId = autoAssignedPanelDsRef?.has(query.refId);
-  if (hasMatchingRefId) {
-    return undefined;
-  }
-
-  return query.datasource || queryRunner?.state?.datasource;
+  return getPersistedDSFor(query, autoAssignedPanelDsRef, 'query', queryRunner);
 }
 
+/**
+ * Get the persisted datasource for a variable
+ * When a variable is created it could not have a datasource set
+ * we want to respect that and not overwrite it with the auto assigned datasources
+ * resolved in runtime
+ * @param variable
+ * @param autoAssignedVariableDsRef
+ * @returns undefined or the persisted datasource
+ */
 export function getPersistedDSForVariable(variable: QueryVariable, autoAssignedVariableDsRef: Set<string> | undefined) {
-  const variableState = variable.state;
-  const hasMatchingRefId = autoAssignedVariableDsRef?.has(variableState.name);
+  return getPersistedDSFor(variable, autoAssignedVariableDsRef, 'variable');
+}
 
-  if (hasMatchingRefId) {
-    return undefined;
+/**
+ * Get the persisted datasource for a panel query
+ */
+export function getElementDatasource(
+  element: VizPanel,
+  queryElement: SceneDataQuery,
+  type: 'panel',
+  queryRunner: SceneQueryRunner
+): DataSourceRef | undefined;
+
+/**
+ * Get the persisted datasource for a variable query
+ */
+export function getElementDatasource(
+  element: SceneVariables,
+  queryElement: QueryVariable,
+  type: 'variable'
+): DataSourceRef | undefined;
+
+/**
+ * Implementation for the function overloads
+ */
+export function getElementDatasource(
+  element: VizPanel | SceneVariables,
+  queryElement: SceneDataQuery | QueryVariable,
+  type: 'panel' | 'variable',
+  queryRunner?: SceneQueryRunner
+): DataSourceRef | undefined {
+  // Handle panel datasource
+  if (type === 'panel' && queryRunner && isVizPanel(element) && isSceneDataQuery(queryElement)) {
+    const autoAssignedRefs = getAutoAssignedPanelDSRef(element);
+    return getPersistedDSForQuery(queryElement, queryRunner, autoAssignedRefs);
   }
 
-  return variableState.datasource || {};
+  // Handle variable datasource
+  if (type === 'variable' && isSceneVariables(element) && !isSceneDataQuery(queryElement)) {
+    const autoAssignedRefs = getAutoAssignedVariablesDSRef(element);
+    return getPersistedDSForVariable(queryElement, autoAssignedRefs);
+  }
+
+  return undefined;
 }

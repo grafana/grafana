@@ -48,7 +48,6 @@ import {
   AnnoKeyDashboardIsSnapshot,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
-import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardMeta } from 'app/types';
 

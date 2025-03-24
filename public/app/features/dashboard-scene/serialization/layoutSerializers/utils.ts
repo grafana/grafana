@@ -17,7 +17,6 @@ import {
   LibraryPanelKind,
   PanelKind,
   PanelQueryKind,
-  DataQueryKind,
   QueryVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
