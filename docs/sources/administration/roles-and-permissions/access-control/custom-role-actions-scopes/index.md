@@ -100,8 +100,6 @@ The following list contains role-based access control actions.
 | `folders:delete`                      | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Delete one or more folders and their subfolders.                                                                                                                                                                          |
 | `folders:read`                        | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Read one or more folders and their subfolders.                                                                                                                                                                            |
 | `folders:write`                       | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Update one or more folders and their subfolders.                                                                                                                                                                          |
-| `groupsync.mappings:read`             | None                                                               | List group attribute sync mappings. To use this permission, enable the `groupAttributeSync` feature toggle.                                                                                                               |
-| `groupsync.mappings:write`            | None                                                               | List, create, update, and delete group attribute sync mappings. To use this permission, enable the `groupAttributeSync` feature toggle.                                                                                   |
 | `ldap.config:reload`                  | None                                                                                                                | Reload the LDAP configuration.                                                                                                                                                                                            |
 | `ldap.status:read`                    | None                                                                                                                | Verify the availability of the LDAP server or servers.                                                                                                                                                                    |
 | `ldap.user:read`                      | None                                                                                                                | Read users via LDAP.                                                                                                                                                                                                      |
@@ -204,6 +202,20 @@ The following list contains role-based access control actions used by Grafana Ad
 | `grafana-adaptive-metrics-app.rules:delete`          | None              | Delete aggregation rules.                             |
 | `grafana-adaptive-metrics-app.exemptions:read`       | None              | Read recommendation exemptions.                       |
 | `grafana-adaptive-metrics-app.exemptions:write`      | None              | Create, update, and delete recommendation exemptions. |
+
+### Cloud Access Policies action definitions
+
+The following list contains role-based access control actions used by Cloud Access Policies.
+
+| Action                   | Applicable scopes | Description                                                         |
+| ------------------------ | ----------------- | ------------------------------------------------------------------- |
+| `grafana-auth-app:write` | None              | Create, read, update, and delete access policies for Grafana Cloud. |
+
+{{< admonition type="warning" >}}
+Granting the `grafana-auth-app:write` permission is equivalent to assigning the Admin role to a user in Grafana, as it allows them to manage all stack service accounts. This provides significant privileges and should be assigned with caution.
+{{< /admonition >}}
+
+For more information on Cloud Access Policies and how to use them, see [Access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/).
 
 ### Grafana Alerting Notification action definitions
 

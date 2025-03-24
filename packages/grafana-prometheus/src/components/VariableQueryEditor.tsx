@@ -2,7 +2,7 @@
 import debounce from 'debounce-promise';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { QueryEditorProps, SelectableValue, toOption } from '@grafana/data';
+import { getDefaultTimeRange, QueryEditorProps, SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AsyncSelect, InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
 
@@ -111,9 +111,14 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       return;
     }
     const variables = datasource.getVariables().map((variable: string) => ({ label: variable, value: variable }));
+    let timeRange = range;
+    if (!timeRange) {
+      timeRange = getDefaultTimeRange();
+    }
+
     if (!metric) {
       // get all the labels
-      datasource.getTagKeys({ filters: [] }).then((labelNames: Array<{ text: string }>) => {
+      datasource.getTagKeys({ timeRange, filters: [] }).then((labelNames: Array<{ text: string }>) => {
         const names = labelNames.map(({ text }) => ({ label: text, value: text }));
         setLabels(names, variables);
       });
@@ -122,13 +127,15 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       const labelToConsider = [{ label: '__name__', op: '=', value: metric }];
       const expr = promQueryModeller.renderLabels(labelToConsider);
 
-      datasource.languageProvider.fetchLabelsWithMatch(expr).then((labelsIndex: Record<string, string[]>) => {
-        const labelNames = Object.keys(labelsIndex);
-        const names = labelNames.map((value) => ({ label: value, value: value }));
-        setLabels(names, variables);
-      });
+      datasource.languageProvider
+        .fetchLabelsWithMatch(timeRange, expr)
+        .then((labelsIndex: Record<string, string[]>) => {
+          const labelNames = Object.keys(labelsIndex);
+          const names = labelNames.map((value) => ({ label: value, value: value }));
+          setLabels(names, variables);
+        });
     }
-  }, [datasource, qryType, metric]);
+  }, [datasource, qryType, metric, range]);
 
   const onChangeWithVariableString = (
     updateVar: { [key: string]: QueryType | string },
@@ -302,6 +309,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
             datasource={datasource}
             onChange={metricsLabelsChange}
             variableEditor={true}
+            timeRange={range ?? getDefaultTimeRange()}
           />
         </>
       )}

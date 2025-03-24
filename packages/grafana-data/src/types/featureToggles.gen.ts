@@ -271,10 +271,6 @@ export interface FeatureToggles {
   */
   traceQLStreaming?: boolean;
   /**
-  * Enables metrics summary queries in the Tempo data source
-  */
-  metricsSummary?: boolean;
-  /**
   * Expose some datasources as apiservers.
   */
   datasourceAPIServers?: boolean;
@@ -814,6 +810,7 @@ export interface FeatureToggles {
   unifiedStorageSearchSprinkles?: boolean;
   /**
   * Enable permission filtering on unified storage search
+  * @default true
   */
   unifiedStorageSearchPermissionFiltering?: boolean;
   /**
@@ -1060,6 +1057,10 @@ export interface FeatureToggles {
   * Enables the unified storage history pruner
   */
   unifiedStorageHistoryPruner?: boolean;
+  /**
+  * Enables the unified storage grpc connection pool
+  */
+  unifiedStorageGrpcConnectionPool?: boolean;
   /**
   * Enables the UI functionality to recover and view deleted alert rules
   * @default true
