@@ -198,7 +198,7 @@ func NewResourceTuple(subject, relation, group, resource, subresource, name stri
 	}
 }
 
-func isFolderResourceRelationSet(relation string) bool {
+func isSubresourceRelationSet(relation string) bool {
 	return relation == RelationFolderResourceSetView ||
 		relation == RelationFolderResourceSetEdit ||
 		relation == RelationFolderResourceSetAdmin
@@ -207,7 +207,7 @@ func isFolderResourceRelationSet(relation string) bool {
 func NewFolderResourceTuple(subject, relation, group, resource, subresource, folder string) *openfgav1.TupleKey {
 	relation = SubresourceRelation(relation)
 	var condition *openfgav1.RelationshipCondition
-	if !isFolderResourceRelationSet(relation) {
+	if !isSubresourceRelationSet(relation) {
 		condition = &openfgav1.RelationshipCondition{
 			Name: "subresource_filter",
 			Context: &structpb.Struct{
@@ -231,7 +231,7 @@ func NewFolderResourceTuple(subject, relation, group, resource, subresource, fol
 func NewTeamResourceTuple(subject, relation, group, resource, subresource, name string) *openfgav1.TupleKey {
 	relation = SubresourceRelation(relation)
 	var condition *openfgav1.RelationshipCondition
-	if !isFolderResourceRelationSet(relation) {
+	if !isSubresourceRelationSet(relation) {
 		condition = &openfgav1.RelationshipCondition{
 			Name: "subresource_filter",
 			Context: &structpb.Struct{
