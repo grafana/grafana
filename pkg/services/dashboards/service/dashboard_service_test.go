@@ -1123,7 +1123,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 		}}
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 		dashWithoutAnnotations := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"apiVersion": "dashboard.grafana.app/v1alpha1",
 			"kind":       "Dashboard",
 			"metadata": map[string]any{
 				"name":        "uid",
