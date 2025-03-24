@@ -1115,6 +1115,109 @@ func TestEvaluate(t *testing.T) {
 				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=10 ], [ var='C' labels={foo=bar} value=1 ]",
 			}},
 		},
+		{
+			name: "range query with reducer includes only reducer and condition values in EvaluationString",
+			cond: models.Condition{
+				Condition: "C",
+			},
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						// This simulates a range query data response with time series data
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Time",
+									nil,
+									[]time.Time{time.Now(), time.Now().Add(10 * time.Second)},
+								),
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0), util.Pointer(20.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						// Reduce node
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(15.0)},
+								),
+							},
+							Meta: &data.FrameMeta{
+								Custom: []NumberValueCapture{
+									{
+										Var:    "B",
+										Type:   expr.TypeCMDNode,
+										Labels: data.Labels{"foo": "bar"},
+										Value:  util.Pointer(15.0),
+									},
+								},
+							},
+						}},
+					},
+					"C": {
+						// Threshold
+						Frames: []*data.Frame{{
+							RefID: "C",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(1.0)},
+								),
+							},
+							Meta: &data.FrameMeta{
+								Custom: []NumberValueCapture{
+									{
+										Var:    "B",
+										Type:   expr.TypeCMDNode,
+										Labels: data.Labels{"foo": "bar"},
+										Value:  util.Pointer(15.0),
+									},
+									{
+										Var:    "C",
+										Type:   expr.TypeCMDNode,
+										Labels: data.Labels{"foo": "bar"},
+										Value:  util.Pointer(1.0),
+									},
+								},
+							},
+						}},
+					},
+				},
+			},
+			expected: Results{{
+				State: Alerting,
+				Instance: data.Labels{
+					"foo": "bar",
+				},
+				Values: map[string]NumberValueCapture{
+					"B": {
+						Var:    "B",
+						Type:   expr.TypeCMDNode,
+						Labels: data.Labels{"foo": "bar"},
+						Value:  util.Pointer(15.0),
+					},
+					"C": {
+						Var:    "C",
+						Type:   expr.TypeCMDNode,
+						Labels: data.Labels{"foo": "bar"},
+						Value:  util.Pointer(1.0),
+					},
+				},
+				// Note the absence of "A" in the EvaluationString.
+				// For range queries, the raw datasource values are not included
+				EvaluationString: "[ var='B' labels={foo=bar} value=15 ], [ var='C' labels={foo=bar} value=1 ]",
+			}},
+		},
 	}
 
 	for _, tc := range cases {
