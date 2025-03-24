@@ -107,13 +107,9 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	if gh.Token == "" && len(gh.EncryptedToken) == 0 {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
 	}
-	// TODO: Add safepath validation
-	if strings.Contains(gh.Path, "..") {
-		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Path, "path traversal disallowed"))
-	}
-	if strings.Contains(gh.Path, "//") {
-		// Avoid making an assumption :).
-		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Path, "path intent is unclear: double slashes (//) can be seen as either resetting to / or as a standard path traversal"))
+
+	if err := safepath.IsSafe(gh.Path); err != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Path, err.Error()))
 	}
 
 	return list
