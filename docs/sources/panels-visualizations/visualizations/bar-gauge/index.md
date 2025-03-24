@@ -120,85 +120,25 @@ Use the following options to refine how your visualization displays the value:
 
 ### Bar gauge options
 
-Adjust how the bar gauge is displayed.
+Adjust how the gauge is displayed.
 
-#### Orientation
+<!-- prettier-ignore-start -->
 
-Choose a stacking direction.
+| Option | Description |
+| ------ | ----------- |
+| Orientation | Choose a stacking direction:<ul><li>**Auto** - Grafana determines the best orientation.</li><li>**Horizontal** - Bars stretch horizontally, left to right.</li><li>**Vertical** - Bars stretch vertically, bottom to top.</li></ul> |
+| Display mode | Choose a display mode:<ul><li>**Gradient** - Threshold levels define a gradient.</li><li>**Retro LCD** - The gauge is split into small cells that are lit or unlit.</li><li>**Basic** - Single color based on the matching threshold.</li></ul> |
+| Value display | Choose a value display mode:<ul><li>**Value color** - Value color is determined by value.</li><li>**Text color** - Value color is default text color.</li><li>**Hidden** - Values are hidden.</li></ul> |
+| Name placement | When the orientation of the bar gauge is horizontal, choose the name placement mode. Choose from:<ul><li>**Auto** - Grafana determines the best placement.</li><li>**Top** - Names are placed on top of each bar gauge.</li><li>**Left** - Names are placed to the left of each bar gauge.</li><li>**Hidden** - Names are hidden on each bar gauge.</li></ul>. <p>When the bar gauge is in the vertical orientation, names are always placed at the bottom of each bar gauge.</p>|
+| Show unfilled area | Select this if you want to render the unfilled region of the bars as dark gray. Not applicable to Retro LCD display mode. |
+| Bar size | Choose a bar size mode.<ul><li>**Auto** - Grafana determines the best bar gauge size.</li><li>**Manual** - Manually configure the bar gauge size.</li></ul> |
+| Min width | Limit the minimum width of the bar column when the gauge is oriented vertically. Automatically show x-axis scrollbar when there's a large amount of data.<p>This option only applies when bar size is set to manual.</p> |
+| Min height | Limit the minimum height of the bar row when the gauge is oriented horizontally. Automatically show y-axis scrollbar when there's a large amount of data. <p>This option only applies when bar size is set to manual.</p> |
+| Max height | Limit the maximum height of the bar row when the gauge is oriented horizontally. Automatically show y-axis scrollbar when there's a large amount of data. <p>This option only applies when bar size is set to manual.</p> |
 
-- **Auto -** Grafana determines the best orientation.
-- **Horizontal -** Bars stretch horizontally, left to right.
-- **Vertical -** Bars stretch vertically, bottom to top.
+<!-- prettier-ignore-end -->
 
-#### Display mode
-
-Choose a display mode.
-
-- **Gradient -** Threshold levels define a gradient.
-- **Retro LCD -** The gauge is split into small cells that are lit or unlit.
-- **Basic -** Single color based on the matching threshold.
-
-#### Value display
-
-Choose a value display mode.
-
-- **Value color -** Value color is determined by value.
-- **Text color -** Value color is default text color.
-- **Hidden -** Values are hidden.
-
-#### Name placement
-
-Choose a name placement mode.
-
-{{% admonition type="note" %}}
-This option only applies when the orientation of the bar gauge is horizontal. When the bar gauge is in the vertical orientation, names are always placed at the bottom of each bar gauge.
-{{% /admonition %}}
-
-- **Auto -** Grafana determines the best placement.
-- **Top -** Names are placed on top of each bar gauge.
-- **Left -** Names are placed to the left of each bar gauge.
-- **Hidden -** Names are hidden on each bar gauge.
-
-#### Show unfilled area
-
-Select this if you want to render the unfilled region of the bars as dark gray. Not applicable to Retro LCD display mode.
-
-#### Bar size
-
-Choose a bar size mode.
-
-- **Auto -** Grafana determines the best bar gauge size.
-- **Manual -** Manually configure the bar gauge size.
-
-#### Min width
-
-Limit the minimum width of the bar column when the gauge is oriented vertically.
-
-Automatically show x-axis scrollbar when there's a large amount of data.
-
-{{% admonition type="note" %}}
-This option only applies when bar size is set to manual.
-{{% /admonition %}}
-
-#### Min height
-
-Limit the minimum height of the bar row when the gauge is oriented horizontally.
-
-Automatically show y-axis scrollbar when there's a large amount of data.
-
-{{% admonition type="note" %}}
-This option only applies when bar size is set to manual.
-{{% /admonition %}}
-
-#### Max height
-
-Limit the maximum height of the bar row when the gauge is oriented horizontally.
-
-Automatically show y-axis scrollbar when there's a large amount of data.
-
-{{% admonition type="note" %}}
-This option only applies when bar size is set to manual.
-{{% /admonition %}}
+<!-- review these for sequence -->
 
 ### Legend options
 
