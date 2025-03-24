@@ -104,7 +104,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   w.clonedir,
 			SingleCommitBeforePush: !(options.History && isFromLegacy),
-			Timeout:                10 * time.Minute,
+			// TODO: make this configurable
+			Timeout: 10 * time.Minute,
 		}, w.secrets, writer)
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
@@ -173,6 +174,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 		}()
 
 		if err := buffered.Push(ctx, gogit.GoGitPushOptions{
+			// TODO: make this configurable
 			Timeout: 10 * time.Minute,
 		}, writer); err != nil {
 			return fmt.Errorf("error pushing changes: %w", err)

@@ -68,7 +68,8 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   r.clonedir,
 			SingleCommitBeforePush: true,
-			Timeout:                10 * time.Minute,
+			// TODO: make this configurable
+			Timeout: 10 * time.Minute,
 		}, r.secrets, os.Stdout)
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
@@ -112,6 +113,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	if buffered != nil {
 		progress.SetMessage(ctx, "push changes")
 		if err := buffered.Push(ctx, gogit.GoGitPushOptions{
+			// TODO: make this configurable
 			Timeout: 10 * time.Minute,
 		}, os.Stdout); err != nil {
 			return fmt.Errorf("error pushing changes: %w", err)
