@@ -54,6 +54,9 @@ export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
+  // we specifically don't want a theme color here
+  // this gradient is more like a shadow
+  const scrollGradientColor = `rgba(0, 0, 0, ${theme.isDark ? 0.25 : 0.08})`;
   return {
     scrollContent: css({
       display: 'flex',
@@ -62,7 +65,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
     }),
     scrollIndicator: css({
-      height: theme.spacing(6),
+      height: `max(5%, ${theme.spacing(3)})`,
       left: 0,
       opacity: 0,
       pointerEvents: 'none',
@@ -74,11 +77,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: 1,
     }),
     scrollTopIndicator: css({
-      background: `linear-gradient(0deg, transparent, ${theme.colors.background.canvas})`,
+      background: `linear-gradient(0deg, transparent, ${scrollGradientColor})`,
       top: 0,
     }),
     scrollBottomIndicator: css({
-      background: `linear-gradient(180deg, transparent, ${theme.colors.background.canvas})`,
+      background: `linear-gradient(180deg, transparent, ${scrollGradientColor})`,
       bottom: 0,
     }),
     scrollIndicatorVisible: css({
