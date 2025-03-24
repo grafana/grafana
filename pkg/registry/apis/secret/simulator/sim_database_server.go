@@ -26,7 +26,7 @@ type secureValueMetadata struct {
 
 type secureValueMetadataRow struct {
 	secretv0alpha1.SecureValue
-	externalID string
+	ExternalID string
 }
 
 // Simulation version of a database server (e.g. mysql) used by secrets.
@@ -110,8 +110,11 @@ func (db *SimDatabaseServer) readRow(transactionID TransactionID, row secureValu
 	}
 
 	if _, ok := ns[row.name]; !ok {
-		copy := deepcopy.Copy(*db.secretMetadata[row.namespace][row.name]).(secureValueMetadataRow)
-		ns[row.name] = &copy
+		copy := deepcopy.Copy(db.secretMetadata[row.namespace][row.name]).(*secureValueMetadataRow)
+		ns[row.name] = copy
+		copy.Labels["fooo"] = "bar"
+		fmt.Printf("\n\naaaaaaa copy.Labels %+v\n\n", copy.Labels)
+		fmt.Printf("\n\naaaaaaa db.secretMetadata[row.namespace][row.name].Labels %+v\n\n", db.secretMetadata[row.namespace][row.name].Labels)
 	}
 
 	return ns[row.name]
@@ -277,7 +280,7 @@ func (db *SimDatabaseServer) onQuery(query any) any {
 	case simDatabaseSetExternalIDQuery:
 		row := db.readRow(query.transactionID, secureValueMetadata{namespace: query.namespace.String(), name: query.name})
 
-		row.externalID = query.externalID.String()
+		row.ExternalID = query.externalID.String()
 
 		return simDatabaseSetExternalIDResponse{err: nil}
 

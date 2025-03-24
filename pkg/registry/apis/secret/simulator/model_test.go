@@ -7,7 +7,6 @@ import (
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/mohae/deepcopy"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,18 +49,6 @@ func (model *Model) Create(
 	model.secrets[sv.Namespace][sv.Name] = true
 
 	return nil, nil
-}
-
-func TestFoo(t *testing.T) {
-	type Foo struct {
-		x int
-		m map[string]string
-	}
-
-	original := &Foo{x: 1, m: map[string]string{"hello": "world"}}
-	copy := deepcopy.Copy(original)
-
-	require.Equal(t, original, copy)
 }
 
 func TestCreate(t *testing.T) {
