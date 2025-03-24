@@ -1,5 +1,6 @@
 import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
+import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
@@ -22,7 +23,7 @@ export interface RowItemState extends SceneObjectState {
   title?: string;
   isCollapsed?: boolean;
   isHeaderHidden?: boolean;
-  height?: 'expand' | 'min';
+  fillScreen?: boolean;
   conditionalRendering?: ConditionalRendering;
 }
 
@@ -70,6 +71,10 @@ export class RowItem
 
   public getLayout(): DashboardLayoutManager {
     return this.state.layout;
+  }
+
+  public getSlug(): string {
+    return kbn.slugifyForUrl(sceneGraph.interpolate(this, this.state.title ?? 'Row'));
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
@@ -136,8 +141,8 @@ export class RowItem
     this.setState({ isHeaderHidden });
   }
 
-  public onChangeHeight(height: 'expand' | 'min') {
-    this.setState({ height });
+  public onChangeFillScreen(fillScreen: boolean) {
+    this.setState({ fillScreen });
   }
 
   public onChangeRepeat(repeat: string | undefined) {

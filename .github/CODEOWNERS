@@ -768,6 +768,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend
 /.github/workflows/alerting-update-module.yml @grafana/alerting-backend
 /.github/workflows/auto-milestone.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/backend-code-checks.yml @grafana/grafana-backend-group
 /.github/workflows/backend-unit-tests.yml @grafana/grafana-backend-group
 /.github/workflows/backport.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/bump-version.yml @grafana/grafana-developer-enablement-squad
@@ -788,15 +789,14 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/feature-toggles-ci.yml @grafana/docs-tooling
 /.github/workflows/github-release.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
+/.github/workflows/lint-build-docs.yml @grafana/docs-tooling
 /.github/workflows/metrics-collector.yml @torkelo
 /.github/workflows/milestone.yml @tolzhabayev
-/.github/workflows/pr-backend-code-checks.yml @grafana/grafana-backend-group
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-codeql-analysis-go.yml @DanCech
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev
-/.github/workflows/pr-lint-build-docs.yml @grafana/docs-tooling
 /.github/workflows/pr-patch-check.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
 /.github/workflows/pr-backend-coverage.yml @grafana/grafana-backend-group
