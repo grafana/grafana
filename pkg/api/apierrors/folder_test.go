@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestToFolderErrorResponse(t *testing.T) {
@@ -72,6 +74,21 @@ func TestToFolderErrorResponse(t *testing.T) {
 			name:  "fallback error",
 			input: errors.New("some error"),
 			want:  response.ErrOrFallback(http.StatusInternalServerError, "Folder API error", errors.New("some error")),
+		},
+		{
+			name: "kubernetes status error",
+			input: &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    412,
+					Message: "the folder has been changed by someone else",
+				},
+			},
+			want: response.Error(412, "the folder has been changed by someone else", &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    412,
+					Message: "the folder has been changed by someone else",
+				},
+			}),
 		},
 	}
 	for _, tt := range tests {

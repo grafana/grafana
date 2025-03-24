@@ -41,12 +41,16 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	if errors.Is(err, dashboards.ErrFolderVersionMismatch) {
-		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
+		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": "the folder has been changed by someone else"})
 	}
 
-	// folder errors are wrapped in an error util, so this is the only way of comparing errors
-	if err.Error() == folder.ErrMaximumDepthReached.Error() {
+	if errors.Is(err, folder.ErrMaximumDepthReached) {
 		return response.JSON(http.StatusBadRequest, util.DynMap{"messageId": "folder.maximum-depth-reached", "message": "Maximum nested folder depth reached"})
+	}
+
+	var statusErr *k8sErrors.StatusError
+	if errors.As(err, &statusErr) {
+		return response.Error(int(statusErr.ErrStatus.Code), statusErr.ErrStatus.Message, err)
 	}
 
 	return response.ErrOrFallback(http.StatusInternalServerError, "Folder API error", err)
