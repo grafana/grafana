@@ -134,18 +134,10 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) j
 
 	fileName := slugify.Slugify(title) + ".json"
 	if fid.Path != "" {
-		fileName, err = safepath.Join(fid.Path, fileName)
-		if err != nil {
-			result.Error = fmt.Errorf("error adding file path: %w", err)
-			return result
-		}
+		fileName = safepath.Join(fid.Path, fileName)
 	}
 	if r.path != "" {
-		fileName, err = safepath.Join(r.path, fileName)
-		if err != nil {
-			result.Error = fmt.Errorf("error adding path: %w", err)
-			return result
-		}
+		fileName = safepath.Join(r.path, fileName)
 	}
 
 	err = r.target.Write(ctx, fileName, r.ref, body, commitMessage)

@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"path"
 	"strings"
 	"time"
 
@@ -85,13 +84,6 @@ func Clone(
 	secrets secrets.Service,
 	progress io.Writer, // os.Stdout
 ) (*GoGitRepo, error) {
-	gitcfg := config.Spec.GitHub
-	if gitcfg == nil {
-		return nil, fmt.Errorf("missing github config")
-	}
-	if gitcfg.Branch == "" {
-		return nil, fmt.Errorf("missing base branch")
-	}
 	if opts.Root == "" {
 		return nil, fmt.Errorf("missing root config")
 	}
@@ -104,7 +96,7 @@ func Clone(
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	decrypted, err := secrets.Decrypt(ctx, gitcfg.EncryptedToken)
+	decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting token: %w", err)
 	}
@@ -257,11 +249,10 @@ func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.File
 	if g.config.Spec.GitHub.Path != "" {
 		treePath = g.config.Spec.GitHub.Path
 	}
+
+	// TODO: do we really need this?
 	if !strings.HasPrefix(treePath, "/") {
 		treePath = "/" + treePath
-	}
-	if !strings.HasSuffix(treePath, "/") {
-		treePath = treePath + "/"
 	}
 
 	entries := make([]repository.FileTreeEntry, 0, 100)
@@ -308,21 +299,17 @@ func (g *GoGitRepo) Create(ctx context.Context, path string, ref string, data []
 
 // Write implements repository.Repository.
 func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []byte, message string) error {
-	fpath, err := g.path(fpath)
-	if err != nil {
-		return err
-	}
-
+	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)
 	if err := verifyPathWithoutRef(fpath, ref); err != nil {
 		return err
 	}
 
 	// For folders, just create the folder and ignore the commit
-	if strings.HasSuffix(fpath, "/") {
+	if safepath.IsDir(fpath) {
 		return g.tree.Filesystem.MkdirAll(fpath, 0750)
 	}
 
-	dir := path.Dir(fpath)
+	dir := safepath.Dir(fpath)
 	if dir != "" {
 		err := g.tree.Filesystem.MkdirAll(dir, 0750)
 		if err != nil {
@@ -367,22 +354,16 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 
 // Delete implements repository.Repository.
 func (g *GoGitRepo) Delete(ctx context.Context, path string, ref string, message string) error {
-	path, err := g.path(path)
-	if err != nil {
+	if _, err := g.tree.Remove(safepath.Join(g.config.Spec.GitHub.Path, path)); err != nil {
 		return err
 	}
 
-	_, err = g.tree.Remove(path)
-	return err // missing slash
+	return nil
 }
 
 // Read implements repository.Repository.
 func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*repository.FileInfo, error) {
-	readPath, err := g.path(path)
-	if err != nil {
-		return nil, err
-	}
-
+	readPath := safepath.Join(g.config.Spec.GitHub.Path, path)
 	stat, err := g.tree.Filesystem.Lstat(readPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to stat path '%s': %w", readPath, err)
@@ -439,18 +420,4 @@ func (g *GoGitRepo) Webhook(ctx context.Context, req *http.Request) (*provisioni
 			Code:    http.StatusNotImplemented,
 		},
 	}
-}
-
-// path returns a safe path for the given file, based out of the Prefix property.
-//
-// If the fpath does a path traversal that would be unsafe, a safepath.ErrUnsafePathTraversal error is returned.
-// This error is already a Kubernetes apierror (being a HTTP 400 Bad Request), so it can be returned directly.
-func (g *GoGitRepo) path(fpath string) (string, error) {
-	prefix := g.config.Spec.GitHub.Path
-	prefix = strings.Trim(prefix, "/")
-	if prefix == "" {
-		return fpath, nil
-	}
-
-	return safepath.JoinIncludingTrailing(prefix, fpath)
 }
