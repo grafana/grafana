@@ -77,11 +77,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: 1,
     }),
     scrollTopIndicator: css({
-      background: `linear-gradient(0deg, transparent, ${scrollGradientColor}))`,
+      background: `linear-gradient(0deg, transparent, ${scrollGradientColor})`,
       top: 0,
     }),
     scrollBottomIndicator: css({
-      background: `linear-gradient(180deg, transparent, ${scrollGradientColor}))`,
+      background: `linear-gradient(180deg, transparent, ${scrollGradientColor})`,
       bottom: 0,
     }),
     scrollIndicatorVisible: css({
