@@ -19,7 +19,6 @@ import { useLogListContext } from './LogListContext';
 import { ScrollToLogsEvent } from './virtualization';
 
 type Props = {
-  app: CoreApp;
   eventBus: EventBus;
 };
 
@@ -39,9 +38,10 @@ const FILTER_LEVELS: LogLevel[] = [
   LogLevel.critical,
 ];
 
-export const LogListControls = ({ app, eventBus }: Props) => {
+export const LogListControls = ({ eventBus }: Props) => {
   const styles = useStyles2(getStyles);
   const {
+    app,
     dedupStrategy,
     filterLevels,
     setDedupStrategy,
@@ -57,7 +57,7 @@ export const LogListControls = ({ app, eventBus }: Props) => {
   } = useLogListContext();
 
   const onScrollToTopClick = useCallback(() => {
-    reportInteraction('log_list_controls_scroll_top_clicked');
+    reportInteraction('logs_log_list_controls_scroll_top_clicked');
     eventBus.publish(
       new ScrollToLogsEvent({
         scrollTo: 'top',
@@ -66,7 +66,7 @@ export const LogListControls = ({ app, eventBus }: Props) => {
   }, [eventBus]);
 
   const onScrollToBottomClick = useCallback(() => {
-    reportInteraction('log_list_controls_scroll_bottom_clicked');
+    reportInteraction('logs_log_list_controls_scroll_bottom_clicked');
     eventBus.publish(
       new ScrollToLogsEvent({
         scrollTo: 'bottom',
@@ -76,6 +76,7 @@ export const LogListControls = ({ app, eventBus }: Props) => {
 
   const onFilterLevelClick = useCallback(
     (level?: LogLevel) => {
+      reportInteraction('logs_log_list_controls_level_clicked');
       if (level === undefined) {
         setFilterLevels([]);
       } else if (!filterLevels.includes(level)) {
@@ -88,18 +89,30 @@ export const LogListControls = ({ app, eventBus }: Props) => {
   );
 
   const onShowTimestampsClick = useCallback(() => {
+    reportInteraction('logs_log_list_controls_show_time_clicked', {
+      show_time: showTime,
+    });
     setShowTime(!showTime);
   }, [setShowTime, showTime]);
 
   const onSortOrderClick = useCallback(() => {
+    reportInteraction('logs_log_list_controls_sort_order_clicked', {
+      order: sortOrder === LogsSortOrder.Ascending ? LogsSortOrder.Descending : LogsSortOrder.Ascending,
+    });
     setSortOrder(sortOrder === LogsSortOrder.Ascending ? LogsSortOrder.Descending : LogsSortOrder.Ascending);
   }, [setSortOrder, sortOrder]);
 
   const onSyntaxHightlightingClick = useCallback(() => {
+    reportInteraction('logs_log_list_controls_syntax_clicked', {
+      state: !syntaxHighlighting,
+    });
     setSyntaxHighlighting(!syntaxHighlighting);
   }, [setSyntaxHighlighting, syntaxHighlighting]);
 
   const onWrapLogMessageClick = useCallback(() => {
+    reportInteraction('logs_log_list_controls_wrap_clicked', {
+      state: !wrapLogMessage,
+    });
     setWrapLogMessage(!wrapLogMessage);
   }, [setWrapLogMessage, wrapLogMessage]);
 

@@ -274,7 +274,7 @@ const LogListComponent = ({
           </VariableSizeList>
         )}
       </InfiniteScroll>
-      {showControls && <LogListControls app={app} eventBus={eventBus} />}
+      {showControls && <LogListControls eventBus={eventBus} />}
     </div>
   );
 };
