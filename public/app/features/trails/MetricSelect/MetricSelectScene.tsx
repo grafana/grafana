@@ -523,6 +523,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     const isLoading = metricNamesLoading && children.length === 0;
 
+    const unableToRetrieveMetricNames = t(
+      'trails.metric-select-scene.unable-to-retrieve-metric-names',
+      'Unable to retrieve metric names'
+    );
     const blockingMessage = isLoading
       ? undefined
       : missingOtelTargets
@@ -535,11 +539,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       <Tooltip
         content={
           <>
-            <h4>
-              <Trans i18nKey="trails.metric-select-scene.metric-names-warning-icon.unable-to-retrieve-metric-names">
-                Unable to retrieve metric names
-              </Trans>
-            </h4>
+            <h4>{unableToRetrieveMetricNames}</h4>
             <p>{metricNamesWarning}</p>
           </>
         }
@@ -629,13 +629,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           )}
         </div>
         {metricNamesError && (
-          <Alert
-            title={t(
-              'trails.metric-select-scene.title-unable-to-retrieve-metric-names',
-              'Unable to retrieve metric names'
-            )}
-            severity="error"
-          >
+          <Alert title={unableToRetrieveMetricNames} severity="error">
             <div>We are unable to connect to your data source. Double check your data source URL and credentials.</div>
             <div>({metricNamesError})</div>
           </Alert>

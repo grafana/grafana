@@ -4827,12 +4827,9 @@
     },
     "metric-select-scene": {
       "label-otel-experience": "OTel experience",
-      "metric-names-warning-icon": {
-        "unable-to-retrieve-metric-names": "Unable to retrieve metric names"
-      },
       "placeholder-search-metrics": "Search metrics",
       "title-unable-to-retrieve-all-metric-names": "Unable to retrieve all metric names",
-      "title-unable-to-retrieve-metric-names": "Unable to retrieve metric names"
+      "unable-to-retrieve-metric-names": "Unable to retrieve metric names"
     },
     "metrics-header": {
       "explore-prometheuscompatible-metrics-without-writing-query": "Explore your Prometheus-compatible metrics without writing a query",

@@ -28,6 +28,7 @@ interface Props {
  * operators. Also filters are assumed to be joined with `AND` operator, which is also hardcoded.
  */
 export class AdHocFilter extends PureComponent<Props> {
+  private connectorLabel = t('variables.ad-hoc-filter.label-and', 'AND');
   onChange = (index: number, prop: string) => (key: SelectableValue<string | null>) => {
     const { filters } = this.props;
     const { value } = key;
@@ -56,9 +57,7 @@ export class AdHocFilter extends PureComponent<Props> {
         {!disabled && (
           <AdHocFilterBuilder
             datasource={this.props.datasource!}
-            appendBefore={
-              filters.length > 0 ? <ConditionSegment label={t('variables.ad-hoc-filter.label-and', 'AND')} /> : null
-            }
+            appendBefore={filters.length > 0 ? <ConditionSegment label={this.connectorLabel} /> : null}
             onCompleted={this.appendFilterToVariable}
             allFilters={this.getAllFilters()}
           />
@@ -82,9 +81,7 @@ export class AdHocFilter extends PureComponent<Props> {
 
     return filters.reduce((segments: ReactNode[], filter, index) => {
       if (segments.length > 0) {
-        segments.push(
-          <ConditionSegment label={t('variables.ad-hoc-filter.label-and', 'AND')} key={`condition-${index}`} />
-        );
+        segments.push(<ConditionSegment label={this.connectorLabel} key={`condition-${index}`} />);
       }
       segments.push(this.renderFilterSegments(filter, index, disabled));
       return segments;
