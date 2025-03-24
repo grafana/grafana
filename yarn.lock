@@ -2969,7 +2969,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/alerting@workspace:packages/grafana-alerting":
+"@grafana/alerting@workspace:*, @grafana/alerting@workspace:packages/grafana-alerting":
   version: 0.0.0-use.local
   resolution: "@grafana/alerting@workspace:packages/grafana-alerting"
   dependencies:
@@ -18073,6 +18073,7 @@ __metadata:
     "@floating-ui/react": "npm:0.27.5"
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
+    "@grafana/alerting": "workspace:*"
     "@grafana/aws-sdk": "npm:0.6.0"
     "@grafana/azure-sdk": "npm:0.0.5"
     "@grafana/data": "workspace:*"
