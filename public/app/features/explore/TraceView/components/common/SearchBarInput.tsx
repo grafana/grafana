@@ -15,6 +15,7 @@
 import * as React from 'react';
 
 import { IconButton, Input } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 type Props = {
   value: string | undefined;
@@ -34,13 +35,21 @@ export default class SearchBarInput extends React.PureComponent<Props> {
     const { value } = this.props;
 
     const suffix = (
-      <>{value && value.length && <IconButton name="times" onClick={this.clearUiFind} tooltip="Clear input" />}</>
+      <>
+        {value && value.length && (
+          <IconButton
+            name="times"
+            onClick={this.clearUiFind}
+            tooltip={t('explore.search-bar-input.suffix.tooltip-clear-input', 'Clear input')}
+          />
+        )}
+      </>
     );
 
     return (
       <div style={{ width: '200px' }}>
         <Input
-          placeholder="Find..."
+          placeholder={t('explore.search-bar-input.placeholder-find', 'Find...')}
           onChange={(e) => this.props.onChange(e.currentTarget.value)}
           suffix={suffix}
           value={value}
