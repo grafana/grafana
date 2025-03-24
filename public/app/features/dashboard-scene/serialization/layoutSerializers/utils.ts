@@ -12,12 +12,17 @@ import {
 import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import {
   DashboardV2Spec,
+  ResponsiveGridLayoutItemKind,
+  RowsLayoutRowKind,
   LibraryPanelKind,
   PanelKind,
   PanelQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
+import { conditionalRenderingSerializerRegistry } from '../../conditional-rendering/serializers';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
@@ -177,13 +182,21 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
-      datasource = query.spec.datasource;
+      if (!query.spec.datasource?.uid) {
+        const defaultDatasource = config.bootData.settings.defaultDatasource;
+        const dsList = config.bootData.settings.datasources;
+        // this is look up by type
+        const bestGuess = Object.values(dsList).find((ds) => ds.meta.id === query.spec.query.kind);
+        datasource = bestGuess ? { uid: bestGuess.uid, type: bestGuess.meta.id } : dsList[defaultDatasource];
+      } else {
+        datasource = query.spec.datasource;
+      }
     } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
       isMixedDatasource = true;
     }
   });
 
-  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
+  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : datasource;
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
@@ -201,4 +214,19 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
     throw new Error(`Layout serializer not found for kind: ${sceneState.descriptor.kind}`);
   }
   return registryItem.serializer.serialize(sceneState);
+}
+
+export function getConditionalRendering(item: RowsLayoutRowKind | ResponsiveGridLayoutItemKind): ConditionalRendering {
+  if (!item.spec.conditionalRendering) {
+    return ConditionalRendering.createEmpty();
+  }
+  const rootGroup = conditionalRenderingSerializerRegistry
+    .get(item.spec.conditionalRendering.kind)
+    .serializer.deserialize(item.spec.conditionalRendering);
+
+  if (rootGroup && !(rootGroup instanceof ConditionalRenderingGroup)) {
+    throw new Error(`Conditional rendering must always start with a root group`);
+  }
+
+  return new ConditionalRendering({ rootGroup: rootGroup });
 }

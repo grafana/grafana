@@ -7,7 +7,7 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 
 import { layoutSerializerRegistry } from './layoutSerializerRegistry';
-import { getLayout } from './utils';
+import { getConditionalRendering, getLayout } from './utils';
 
 export class RowsLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: RowsLayoutManager): DashboardV2Spec['layout'] {
@@ -16,9 +16,6 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
       spec: {
         rows: layoutManager.state.rows.map((row) => {
           const layout = getLayout(row.state.layout);
-          if (layout.kind === 'RowsLayout') {
-            throw new Error('Nested RowsLayout is not supported');
-          }
           const rowKind: RowsLayoutRowKind = {
             kind: 'RowsLayoutRow',
             spec: {
@@ -27,6 +24,12 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
               layout: layout,
             },
           };
+
+          const conditionalRenderingRootGroup = row.state.conditionalRendering?.serialize();
+          // Only serialize the conditional rendering if it has items
+          if (conditionalRenderingRootGroup?.spec.items.length) {
+            rowKind.spec.conditionalRendering = conditionalRenderingRootGroup;
+          }
 
           if (row.state.$behaviors) {
             for (const behavior of row.state.$behaviors) {
@@ -58,11 +61,13 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
       if (row.spec.repeat) {
         behaviors.push(new RowItemRepeaterBehavior({ variableName: row.spec.repeat.value }));
       }
+
       return new RowItem({
         title: row.spec.title,
         isCollapsed: row.spec.collapsed,
         $behaviors: behaviors,
         layout: layoutSerializerRegistry.get(layout.kind).serializer.deserialize(layout, elements, preload),
+        conditionalRendering: getConditionalRendering(row),
       });
     });
     return new RowsLayoutManager({ rows });

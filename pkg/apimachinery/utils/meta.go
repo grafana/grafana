@@ -35,7 +35,6 @@ const AnnoKeyCreatedBy = "grafana.app/createdBy"
 const AnnoKeyUpdatedTimestamp = "grafana.app/updatedTimestamp"
 const AnnoKeyUpdatedBy = "grafana.app/updatedBy"
 const AnnoKeyFolder = "grafana.app/folder"
-const AnnoKeySlug = "grafana.app/slug"
 const AnnoKeyBlob = "grafana.app/blob"
 const AnnoKeyMessage = "grafana.app/message"
 
@@ -87,9 +86,7 @@ type GrafanaMetaAccessor interface {
 	GetMessage() string
 	SetMessage(msg string)
 	SetAnnotation(key string, val string)
-
-	GetSlug() string
-	SetSlug(v string)
+	GetAnnotation(key string) string
 
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
@@ -147,9 +144,13 @@ type grafanaMetaAccessor struct {
 // required fields are missing. Fields that are not required return the default
 // value and are a no-op if set.
 func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
+	if raw == nil {
+		return nil, fmt.Errorf("unable to read metadata from nil object")
+	}
+
 	obj, err := meta.Accessor(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to read metadata from: %T, %s", raw, err)
 	}
 
 	// reflection to find title and other non object properties
@@ -190,6 +191,14 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 		anno[key] = val
 	}
 	m.obj.SetAnnotations(anno)
+}
+
+func (m *grafanaMetaAccessor) GetAnnotation(key string) string {
+	anno := m.obj.GetAnnotations()
+	if anno != nil {
+		return anno[key]
+	}
+	return ""
 }
 
 func (m *grafanaMetaAccessor) get(key string) string {
@@ -268,14 +277,6 @@ func (m *grafanaMetaAccessor) GetMessage() string {
 
 func (m *grafanaMetaAccessor) SetMessage(uid string) {
 	m.SetAnnotation(AnnoKeyMessage, uid)
-}
-
-func (m *grafanaMetaAccessor) GetSlug() string {
-	return m.get(AnnoKeySlug)
-}
-
-func (m *grafanaMetaAccessor) SetSlug(v string) {
-	m.SetAnnotation(AnnoKeySlug, v)
 }
 
 // This will be removed in Grafana 13. Do not add any new usage of it.

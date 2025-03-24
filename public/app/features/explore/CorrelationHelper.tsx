@@ -18,6 +18,7 @@ import {
   Icon,
   Stack,
 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { useDispatch, useSelector } from 'app/types';
 
 import { getTransformationVars } from '../correlations/transformations';
@@ -156,7 +157,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           }
         />
       )}
-      <Alert title="Correlation details" severity="info">
+      <Alert title={t('explore.correlation-helper.title-correlation-details', 'Correlation details')} severity="info">
         The correlation link will appear by the <code>{correlations.resultField}</code> field. You can use the following
         variables to set up your correlations:
         <pre>
@@ -179,7 +180,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
             </Stack>
           }
         >
-          <Field label="Label" htmlFor={`${id}-label`}>
+          <Field label={t('explore.correlation-helper.label-label', 'Label')} htmlFor={`${id}-label`}>
             <Input
               {...register('label')}
               id={`${id}-label`}
@@ -190,7 +191,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
               }}
             />
           </Field>
-          <Field label="Description" htmlFor={`${id}-description`}>
+          <Field label={t('explore.correlation-helper.label-description', 'Description')} htmlFor={`${id}-description`}>
             <Input {...register('description')} id={`${id}-description`} />
           </Field>
         </Collapse>
@@ -217,7 +218,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
             }}
             className={styles.transformationAction}
           >
-            Add transformation
+            <Trans i18nKey="explore.correlation-helper.add-transformation">Add transformation</Trans>
           </Button>
           {transformations.map((transformation, i) => {
             const { type, field, expression, mapValue } = transformation;
@@ -241,14 +242,17 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
                   <IconButton
                     key="edit"
                     name="edit"
-                    aria-label="edit transformation"
+                    aria-label={t('explore.correlation-helper.aria-label-edit-transformation', 'Edit transformation')}
                     onClick={() => {
                       setTransformationIdxToEdit(i);
                       setShowTransformationAddModal(true);
                     }}
                   />
                   <DeleteButton
-                    aria-label="delete transformation"
+                    aria-label={t(
+                      'explore.correlation-helper.aria-label-delete-transformation',
+                      'Delete transformation'
+                    )}
                     onConfirm={() => setTransformations(transformations.filter((_, idx) => i !== idx))}
                     closeOnConfirm
                   />
