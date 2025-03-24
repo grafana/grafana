@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	SQLMetricFieldName     = "__metric__"
-	SQLValueFieldName      = "value"
-	SQLDisplayFieldName    = "__display__"
+	SQLMetricFieldName  = "__metric__"
+	SQLValueFieldName   = "value"
+	SQLDisplayFieldName = "__display__"
 
 	// These are not types in the SDK or dataplane contract yet.
 	numericFullLongType    = "numeric_full_long"
