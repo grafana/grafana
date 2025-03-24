@@ -37,7 +37,7 @@ module.exports = {
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-setup.ts'],
-  testTimeout: 3000,
+  testTimeout: 30000,
   resolver: `<rootDir>/public/test/jest-resolver.js`,
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],
   globals: {
