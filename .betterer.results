@@ -6557,9 +6557,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/tempo/SearchTraceQLEditor/DurationInput.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
-    "public/app/plugins/datasource/tempo/SearchTraceQLEditor/GroupByField.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/plugins/datasource/tempo/SearchTraceQLEditor/SearchField.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
