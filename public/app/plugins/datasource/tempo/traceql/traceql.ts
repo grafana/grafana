@@ -58,6 +58,8 @@ export const intrinsics = intrinsicsV1.concat([
 ]);
 export const scopes: string[] = ['event', 'instrumentation', 'link', 'resource', 'span'];
 
+export const enumIntrinsics = ['kind', 'span:kind', 'status', 'span:status'];
+
 const aggregatorFunctions = ['avg', 'count', 'max', 'min', 'sum'];
 const functions = aggregatorFunctions.concat([
   'by',

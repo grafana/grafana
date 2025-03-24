@@ -1,4 +1,4 @@
-import { LanguageProvider, SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter, LanguageProvider, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
@@ -11,7 +11,7 @@ import {
 } from './SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
-import { intrinsicsV1 } from './traceql/traceql';
+import { enumIntrinsics, intrinsicsV1 } from './traceql/traceql';
 import { Scope } from './types';
 
 // Limit maximum tags retrieved from the backend
@@ -179,14 +179,48 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return encodeURIComponent(encodeURIComponent(tag));
   };
 
-  generateQueryFromFilters(filters: TraceqlFilter[]) {
+  generateQueryFromFilters({
+    traceqlFilters,
+    adhocFilters,
+  }: {
+    traceqlFilters?: TraceqlFilter[];
+    adhocFilters?: AdHocVariableFilter[];
+  }) {
+    if (!traceqlFilters && !adhocFilters) {
+      return '';
+    }
+
+    const allFilters = [
+      ...this.generateQueryFromTraceQlFilters(traceqlFilters || []),
+      ...this.generateQueryFromAdHocFilters(adhocFilters || []),
+    ];
+
+    return `{${allFilters.join(' && ')}}`;
+  }
+
+  private generateQueryFromTraceQlFilters(filters: TraceqlFilter[]) {
     if (!filters) {
       return '';
     }
 
-    return `{${filters
+    return filters
       .filter((f) => f.tag && f.operator && f.value?.length)
-      .map((f) => filterToQuerySection(f, filters, this))
-      .join(' && ')}}`;
+      .map((f) => filterToQuerySection(f, filters, this));
   }
+
+  private generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[]) => {
+    return filters
+      .filter((f) => f.key && f.operator && f.value)
+      .map((f) => `${f.key}${f.operator}${this.adHocValueHelper(f)}`);
+  };
+
+  adHocValueHelper = (f: AdHocVariableFilter) => {
+    if (this.getIntrinsics().find((t) => t === f.key) && enumIntrinsics.includes(f.key)) {
+      return f.value;
+    }
+    if (parseInt(f.value, 10).toString() === f.value) {
+      return f.value;
+    }
+    return `"${f.value}"`;
+  };
 }
