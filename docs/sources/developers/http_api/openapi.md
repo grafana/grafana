@@ -15,12 +15,12 @@ For an example of a production product that uses  OpenAPI docs features refer to
 
 ---
 
-## Example with scope `api_keys`
+## Example with scope `API Discovery`
 
-{{< docs/openapi/path url="https://raw.githubusercontent.com/grafana/grafana/main/public/openapi3.json" scope="api_keys" >}}
+{{< docs/openapi/path url="https://play.grafana.org/openapi/v3/apis/dashboard.grafana.app/v2alpha1" scope="API Discovery" >}}
 
 ---
 
-## Example with scope `dashboards`
+## Example with scope `LibraryPanel`
 
-{{< docs/openapi/path url="https://raw.githubusercontent.com/grafana/grafana/main/public/openapi3.json" scope="dashboards" >}}
+{{< docs/openapi/path url="https://play.grafana.org/openapi/v3/apis/dashboard.grafana.app/v2alpha1" scope="LibraryPanel" >}}
