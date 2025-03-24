@@ -20,16 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 var (
-	ErrNamespaceMismatch        = errors.New("the file namespace does not match target namespace")
-	ErrPathTooDeep              = errors.New("the path is too deep")
-	ErrUnsupportedFileExtension = errors.New("unsupported file extension")
+	ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 )
-
-const maxPathDepth = 8
 
 type ParserFactory struct {
 	ClientFactory *ClientFactory
@@ -296,26 +291,4 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 		wrap.Errors = append(wrap.Errors, err.Error())
 	}
 	return wrap
-}
-
-// IsPathSupported checks if the file path is supported by the provisioning API.
-// it also validates if the path is safe and if the file extension is supported.
-func IsPathSupported(filePath string) error {
-	// Validate the path for any traversal attempts first
-	if err := safepath.IsSafe(filePath); err != nil {
-		return err
-	}
-
-	if safepath.Depth(filePath) > maxPathDepth {
-		return ErrPathTooDeep
-	}
-
-	// Only check file extension if it's not a folder path
-	if !safepath.IsDir(filePath) {
-		if ext := path.Ext(filePath); ext != ".yml" && ext != ".yaml" && ext != ".json" {
-			return ErrUnsupportedFileExtension
-		}
-	}
-
-	return nil
 }
