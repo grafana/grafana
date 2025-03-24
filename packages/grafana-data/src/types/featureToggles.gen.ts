@@ -814,6 +814,7 @@ export interface FeatureToggles {
   unifiedStorageSearchSprinkles?: boolean;
   /**
   * Enable permission filtering on unified storage search
+  * @default true
   */
   unifiedStorageSearchPermissionFiltering?: boolean;
   /**
@@ -1064,4 +1065,8 @@ export interface FeatureToggles {
   * Specify the locale so we can show the correct format for numbers and dates
   */
   localeFormatPreference?: boolean;
+  /**
+  * Enables the unified storage grpc connection pool
+  */
+  unifiedStorageGrpcConnectionPool?: boolean;
 }
