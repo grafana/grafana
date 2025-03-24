@@ -2,21 +2,23 @@ import { useMemo } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
 import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
-import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
+import { HistoricJob, Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { useRepositoryJobs } from '../hooks';
 import { formatTimestamp } from '../utils/time';
 
 import { JobSummary } from './JobSummary';
+import { useRepositoryHistoricalJobs } from '../hooks/useRepositoryHistoricalJobs';
+import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 
 interface Props {
   repo: Repository;
 }
 
-type JobCell<T extends keyof Job = keyof Job> = {
+type JobCell = {
   row: {
-    original: Job;
+    original: Job | HistoricJob;
   };
 };
 
@@ -154,46 +156,61 @@ function ExpandedRow({ row }: ExpandedRowProps) {
 function EmptyState() {
   return (
     <Stack direction={'column'} alignItems={'center'}>
-      <Text color="secondary">No recent events...</Text>
-      <Text variant="bodySmall" color="secondary">
-        Note: history is not maintained after system restart
-      </Text>
+      <Text color="secondary">No jobs...</Text>
+    </Stack>
+  );
+}
+
+function ErrorLoading(typ: string, error: any) {
+  return (
+    <Alert title={`Error loading ${typ}`} severity="error">
+      <pre>{JSON.stringify(error)}</pre>
+    </Alert>
+  );
+}
+
+function Loading() {
+  return (
+    <Stack direction={'column'} alignItems={'center'}>
+      <Spinner />
     </Stack>
   );
 }
 
 export function RecentJobs({ repo }: Props) {
-  const [items, query] = useRepositoryJobs({ name: repo.metadata?.name, watch: true });
+  // TODO: Decide on whether we want to wait on historic jobs to show the current ones.
+  //   Gut feeling is that current jobs are far more important to show than historic ones.
+  const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({
+    repositoryName: repo.metadata?.name,
+    watch: true,
+    sort: 'active-first',
+  });
   const jobColumns = useMemo(() => getJobColumns(), []);
 
-  if (query.isLoading) {
-    return <Spinner />;
-  }
-
-  if (query.isError) {
-    return (
-      <Alert title="Error loading jobs" severity="error">
-        <pre>{JSON.stringify(query.error)}</pre>
-      </Alert>
+  let description: JSX.Element;
+  if (activeQuery.isLoading || historicQuery.isLoading) {
+    description = Loading();
+  } else if (activeQuery.isError) {
+    description = ErrorLoading('active jobs', activeQuery.error);
+    // TODO: Figure out what to do if historic fails. Maybe a separate card?
+  } else if (!jobs?.length) {
+    description = <EmptyState />;
+  } else {
+    description = (
+      <InteractiveTable
+        data={jobs}
+        columns={jobColumns}
+        getRowId={(item) => `${item.metadata?.name}`}
+        renderExpandedRow={(row) => <ExpandedRow row={row} />}
+        pageSize={10}
+      />
     );
   }
 
   return (
     <Card>
-      <Card.Heading>Recent jobs</Card.Heading>
-      <Card.Description>
-        {!items?.length ? (
-          <EmptyState />
-        ) : (
-          <InteractiveTable
-            data={items}
-            columns={jobColumns}
-            getRowId={(item) => `${item.metadata?.name}`}
-            renderExpandedRow={(row) => <ExpandedRow row={row} />}
-            pageSize={10}
-          />
-        )}
-      </Card.Description>
+      <Card.Heading>Jobs</Card.Heading>
+      <Card.Description>{description}</Card.Description>
     </Card>
   );
 }

@@ -19,7 +19,7 @@ import (
 type migrateConnector struct {
 	dual       dualwrite.Service
 	repoGetter RepoGetter
-	jobs       jobs.JobQueue
+	jobs       jobs.Queue
 }
 
 func (*migrateConnector) New() runtime.Object {
@@ -64,7 +64,7 @@ func (c *migrateConnector) Connect(
 			return
 		}
 
-		job, err := c.jobs.Add(ctx, &provisioning.Job{
+		job, err := c.jobs.Insert(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: cfg.Namespace,
 			},
