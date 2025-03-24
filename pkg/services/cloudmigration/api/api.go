@@ -343,7 +343,7 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 		rawResourceTypes = append(rawResourceTypes, cloudmigration.MigrateDataType(t))
 	}
 
-	resourceTypes, err := cloudmigration.ResourceDependency.Parse(rawResourceTypes)
+	resourceTypes, err := cma.resourceDependencyMap.Parse(rawResourceTypes)
 	if err != nil {
 		span.SetStatus(codes.Error, "invalid resource types")
 		span.RecordError(err)
