@@ -2030,9 +2030,13 @@ github.com/golang-jwt/jwt/v4 v4.4.2/go.mod h1:m21LjoU+eqJr34lmDMbreY2eSTRJ1cv77w
 github.com/golang-jwt/jwt/v4 v4.5.0/go.mod h1:m21LjoU+eqJr34lmDMbreY2eSTRJ1cv77w39/MY0Ch0=
 github.com/golang-jwt/jwt/v4 v4.5.1 h1:JdqV9zKUdtaa9gdPlywC3aeoEsR681PlKC+4F5gQgeo=
 github.com/golang-jwt/jwt/v4 v4.5.1/go.mod h1:m21LjoU+eqJr34lmDMbreY2eSTRJ1cv77w39/MY0Ch0=
+github.com/golang-jwt/jwt/v4 v4.5.2 h1:YtQM7lnr8iZ+j5q71MGKkNw9Mn7AjHM68uc9g5fXeUI=
+github.com/golang-jwt/jwt/v4 v4.5.2/go.mod h1:m21LjoU+eqJr34lmDMbreY2eSTRJ1cv77w39/MY0Ch0=
 github.com/golang-jwt/jwt/v5 v5.0.0/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
 github.com/golang-jwt/jwt/v5 v5.2.1 h1:OuVbFODueb089Lh128TAcimifWaLhJwVflnrgM17wHk=
 github.com/golang-jwt/jwt/v5 v5.2.1/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
+github.com/golang-jwt/jwt/v5 v5.2.2 h1:Rl4B7itRWVtYIHFrSNd7vhTiz9UpLdi6gZhZ3wEeDy8=
+github.com/golang-jwt/jwt/v5 v5.2.2/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
 github.com/golang-migrate/migrate/v4 v4.7.0 h1:gONcHxHApDTKXDyLH/H97gEHmpu1zcnnbAaq2zgrPrs=
 github.com/golang-migrate/migrate/v4 v4.7.0/go.mod h1:Qvut3N4xKWjoH3sokBccML6WyHSnggXm/DvMMnTsQIc=
 github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 h1:au07oEsX2xN0ktxqI+Sida1w446QrXBRJ0nee3SNZlA=
@@ -2260,6 +2264,8 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.241.0 h1:zBcSW9xV9gA9hD8UN+HjJtD7tESMZcaQhA1BI76MTxM=
 github.com/grafana/grafana-plugin-sdk-go v0.241.0/go.mod h1:2HjNwzGCfaFAyR2HGoECTwAmq8vSIn2L1/1yOt4XRS4=
+github.com/grafana/grafana-plugin-sdk-go v0.250.0 h1:9EBucp9jLqMx2b8NTlOXH+4OuQWUh6L85c6EJUN8Jdo=
+github.com/grafana/grafana-plugin-sdk-go v0.250.0/go.mod h1:gCGN9kHY3KeX4qyni3+Kead38Q+85pYOrsDcxZp6AIk=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240730185644-783ff7156079 h1:JnIzjNpW56Z9Tdmkzfs+kn3h2vtqavdr/CJTdAG1GIM=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240730185644-783ff7156079/go.mod h1:m/Tqd1ow+lmYtCj6/UZpejLdP2sxtN/4r6THdzS48r4=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240708134731-e9876749d440 h1:833vWSgndCcOXycwCq2Y98W8+W2ouuuhTL+Gf3BNKg8=
@@ -3230,8 +3236,10 @@ go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0 h1:CV7UdSG
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0/go.mod h1:FRmFuRJfag1IZ2dPkHnEoSFVgTVPUd2qf5Vi69hLb8I=
 go.opentelemetry.io/contrib/propagators/jaeger v1.28.0 h1:xQ3ktSVS128JWIaN1DiPGIjcH+GsvkibIAVRWFjS9eM=
 go.opentelemetry.io/contrib/propagators/jaeger v1.28.0/go.mod h1:O9HIyI2kVBrFoEwQZ0IN6PHXykGoit4mZV2aEjkTRH4=
+go.opentelemetry.io/contrib/propagators/jaeger v1.29.0/go.mod h1:6PD7q7qquWSp3Z4HeM3e/2ipRubaY1rXZO8NIHVDZjs=
 go.opentelemetry.io/contrib/samplers/jaegerremote v0.20.0 h1:ja+d7Aea/9PgGxB63+E0jtRFpma717wubS0KFkZpmYw=
 go.opentelemetry.io/contrib/samplers/jaegerremote v0.20.0/go.mod h1:Yc1eg51SJy7xZdOTyg1xyFcwE+ghcWh3/0hKeLo6Wlo=
+go.opentelemetry.io/contrib/samplers/jaegerremote v0.23.0/go.mod h1:1kbAgQa5lgYC3rC6cE3jSxQ/Q13l33wv/WI8U+htwag=
 go.opentelemetry.io/otel v1.17.0/go.mod h1:I2vmBGtFaODIVMBSTPVDlJSzBDNf93k60E6Ft0nyjo0=
 go.opentelemetry.io/otel v1.19.0/go.mod h1:i0QyjOq3UPoTzff0PJB2N66fb4S0+rSbSB15/oyH9fY=
 go.opentelemetry.io/otel v1.21.0/go.mod h1:QZzNPQPm1zLX4gZK4cMi+71eaorMSGT3A4znnUvNNEo=
