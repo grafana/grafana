@@ -628,62 +628,92 @@ func TestGetFolderNamesForFolderUIDs(t *testing.T) {
 func TestGetParentNames(t *testing.T) {
 	t.Parallel()
 
-	s := setUpServiceTest(t, false).(*Service)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
+	s := setUpServiceTest(t, false).(*Service)
+
 	user := &user.SignedInUser{OrgID: 1}
-	libraryElementFolderUID := "folderUID-A"
+
 	testcases := []struct {
+		name                string
 		fakeFolders         []*folder.Folder
-		folders             []folder.CreateFolderCommand
-		dashboards          []dashboards.Dashboard
-		libraryElements     []libraryElement
-		alertRules          []alertRule
-		expectedParentNames map[cloudmigration.MigrateDataType][]string
+		folderHierarchy     map[cloudmigration.MigrateDataType]map[string]string
+		expectedParentNames map[cloudmigration.MigrateDataType]map[string]string
 	}{
 		{
+			name: "multiple data types",
 			fakeFolders: []*folder.Folder{
-				{UID: "folderUID-A", Title: "Folder A", OrgID: 1, ParentUID: ""},
-				{UID: "folderUID-B", Title: "Folder B", OrgID: 1, ParentUID: "folderUID-A"},
-				{UID: "folderUID-X", Title: "Folder X", OrgID: 1, ParentUID: ""},
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1},
+				{UID: "folderUID-B", Title: "Folder B", OrgID: 1},
+				{UID: "folderUID-C", Title: "Folder C", OrgID: 1},
 			},
-			folders: []folder.CreateFolderCommand{
-				{UID: "folderUID-C", Title: "Folder A", OrgID: 1, ParentUID: "folderUID-A"},
+			folderHierarchy: map[cloudmigration.MigrateDataType]map[string]string{
+				cloudmigration.DashboardDataType:      {"dashboard-1": "folderUID-A", "dashboard-2": "folderUID-B", "dashboard-3": ""},
+				cloudmigration.LibraryElementDataType: {"libElement-1": "folderUID-A", "libElement-2": "folderUID-C"},
+				cloudmigration.AlertRuleType:          {"alertRule-1": "folderUID-B"},
 			},
-			dashboards: []dashboards.Dashboard{
-				{UID: "dashboardUID-0", OrgID: 1, FolderUID: ""},
-				{UID: "dashboardUID-1", OrgID: 1, FolderUID: "folderUID-A"},
-				{UID: "dashboardUID-2", OrgID: 1, FolderUID: "folderUID-B"},
+			expectedParentNames: map[cloudmigration.MigrateDataType]map[string]string{
+				cloudmigration.DashboardDataType:      {"dashboard-1": "Folder A", "dashboard-2": "Folder B", "dashboard-3": ""},
+				cloudmigration.LibraryElementDataType: {"libElement-1": "Folder A", "libElement-2": "Folder C"},
+				cloudmigration.AlertRuleType:          {"alertRule-1": "Folder B"},
 			},
-			libraryElements: []libraryElement{
-				{UID: "libraryElementUID-0", FolderUID: &libraryElementFolderUID},
-				{UID: "libraryElementUID-1"},
+		},
+		{
+			name: "empty folder hierarchy",
+			fakeFolders: []*folder.Folder{
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1},
 			},
-			alertRules: []alertRule{
-				{UID: "alertRuleUID-0", FolderUID: ""},
-				{UID: "alertRuleUID-1", FolderUID: "folderUID-B"},
+			folderHierarchy:     map[cloudmigration.MigrateDataType]map[string]string{},
+			expectedParentNames: map[cloudmigration.MigrateDataType]map[string]string{},
+		},
+		{
+			name: "all root folders (no parents)",
+			fakeFolders: []*folder.Folder{
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1},
 			},
-			expectedParentNames: map[cloudmigration.MigrateDataType][]string{
-				cloudmigration.DashboardDataType:      {"", "Folder A", "Folder B"},
-				cloudmigration.FolderDataType:         {"Folder A"},
-				cloudmigration.LibraryElementDataType: {"Folder A"},
-				cloudmigration.AlertRuleType:          {"Folder B"},
+			folderHierarchy: map[cloudmigration.MigrateDataType]map[string]string{
+				cloudmigration.DashboardDataType:      {"dashboard-1": "", "dashboard-2": ""},
+				cloudmigration.LibraryElementDataType: {"libElement-1": ""},
+			},
+			expectedParentNames: map[cloudmigration.MigrateDataType]map[string]string{
+				cloudmigration.DashboardDataType:      {"dashboard-1": "", "dashboard-2": ""},
+				cloudmigration.LibraryElementDataType: {"libElement-1": ""},
+			},
+		},
+		{
+			name: "non-existent folder UIDs",
+			fakeFolders: []*folder.Folder{
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1},
+			},
+			folderHierarchy: map[cloudmigration.MigrateDataType]map[string]string{
+				cloudmigration.DashboardDataType: {"dashboard-1": "folderUID-A", "dashboard-2": "non-existent-uid"},
+			},
+			expectedParentNames: map[cloudmigration.MigrateDataType]map[string]string{
+				cloudmigration.DashboardDataType: {"dashboard-1": "Folder A", "dashboard-2": ""},
 			},
 		},
 	}
 
 	for _, tc := range testcases {
-		s.folderService = &foldertest.FakeService{ExpectedFolders: tc.fakeFolders}
+		t.Run(tc.name, func(t *testing.T) {
+			s.folderService = &foldertest.FakeService{ExpectedFolders: tc.fakeFolders}
 
-		dataUIDsToParentNamesByType, err := s.getParentNames(ctx, user, tc.dashboards, tc.folders, tc.libraryElements, tc.alertRules)
-		require.NoError(t, err)
+			dataUIDsToParentNamesByType, err := s.getParentNames(ctx, user, tc.folderHierarchy)
+			require.NoError(t, err)
 
-		for dataType, expectedParentNames := range tc.expectedParentNames {
-			actualParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[dataType]))
-			require.Len(t, actualParentNames, len(expectedParentNames))
-			require.ElementsMatch(t, expectedParentNames, actualParentNames)
-		}
+			for dataType, expectedParentNames := range tc.expectedParentNames {
+				actualParentNames := dataUIDsToParentNamesByType[dataType]
+
+				require.Equal(t, len(expectedParentNames), len(actualParentNames))
+
+				for uid, expectedName := range expectedParentNames {
+					actualName, exists := actualParentNames[uid]
+					require.True(t, exists)
+					require.Equal(t, expectedName, actualName)
+				}
+			}
+		})
 	}
 }
 
