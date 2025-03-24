@@ -4,6 +4,11 @@ import { DataFrame, Field, IconName } from '@grafana/data';
 
 export type { Options as NodeGraphOptions, ArcOption, ZoomMode } from './panelcfg.gen';
 
+export enum LayoutType {
+  Force = 'force',
+  Layered = 'layered',
+}
+
 export type NodeDatum = SimulationNodeDatum & {
   id: string;
   title: string;

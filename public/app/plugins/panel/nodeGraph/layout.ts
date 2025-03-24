@@ -4,14 +4,14 @@ import { useUnmount } from 'react-use';
 import useMountedState from 'react-use/lib/useMountedState';
 
 import { Field } from '@grafana/data';
-import { config as grafanaConfig } from '@grafana/runtime';
 
 import { createWorker, createMsaglWorker } from './createLayoutWorker';
-import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
+import { EdgeDatum, EdgeDatumLayout, LayoutType, NodeDatum } from './types';
 import { useNodeLimit } from './useNodeLimit';
 import { graphBounds } from './utils';
 
 export interface Config {
+  layoutType: LayoutType;
   linkDistance: number;
   linkStrength: number;
   forceX: number;
@@ -30,6 +30,7 @@ export interface Config {
 // if you programmatically enable the config editor (for development only) see ViewControls. These could be moved to
 // panel configuration at some point (apart from gridLayout as that can be switched be user right now.).
 export const defaultConfig: Config = {
+  layoutType: LayoutType.Layered,
   linkDistance: 150,
   linkStrength: 0.5,
   forceX: 2000,
@@ -104,8 +105,7 @@ export function useLayout(
     }
 
     // Layered layout is better but also more expensive, so we switch to default force based layout for bigger graphs.
-    const layoutType =
-      grafanaConfig.featureToggles.nodeGraphDotLayout && rawNodes.length <= 500 ? 'layered' : 'default';
+    const layoutType = rawNodes.length <= 500 && config.layoutType === LayoutType.Layered ? 'layered' : 'default';
 
     setLoading(true);
     // This is async but as I wanted to still run the sync grid layout, and you cannot return promise from effect so
@@ -119,7 +119,7 @@ export function useLayout(
     });
     layoutWorkerCancelRef.current = cancel;
     return cancel;
-  }, [hasFixedPositions, rawNodes, rawEdges, isMounted]);
+  }, [hasFixedPositions, rawNodes, rawEdges, isMounted, config.layoutType]);
 
   // Compute grid separately as it is sync and do not need to be inside effect. Also it is dependant on width while
   // default layout does not care and we don't want to recalculate that on panel resize.

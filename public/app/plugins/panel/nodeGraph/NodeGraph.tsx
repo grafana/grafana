@@ -4,7 +4,7 @@ import { memo, MouseEvent, useCallback, useEffect, useMemo, useState } from 'rea
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { Icon, Spinner, useStyles2 } from '@grafana/ui';
+import { Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 
 import { Edge } from './Edge';
 import { EdgeLabel } from './EdgeLabel';
@@ -13,7 +13,7 @@ import { Marker } from './Marker';
 import { Node } from './Node';
 import { ViewControls } from './ViewControls';
 import { Config, defaultConfig, useLayout } from './layout';
-import { EdgeDatumLayout, NodeDatum, NodesMarker, ZoomMode } from './types';
+import { EdgeDatumLayout, LayoutType, NodeDatum, NodesMarker, ZoomMode } from './types';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { useContextMenu } from './useContextMenu';
 import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
@@ -69,6 +69,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     pointerEvents: 'none',
+  }),
+  layoutSelector: css({
+    label: 'layoutSelector',
+    pointerEvents: 'all',
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    zIndex: 1,
   }),
   legend: css({
     label: 'legend',
@@ -199,6 +207,13 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }
 
   const highlightId = useHighlight(focusedNodeId);
 
+  const handleLayoutChange = (cfg: Config) => {
+    if (cfg.layoutType !== config.layoutType) {
+      setFocusedNodeId(undefined);
+    }
+    setConfig(cfg);
+  };
+
   return (
     <div ref={topLevelRef} className={styles.wrapper}>
       {loading ? (
@@ -207,6 +222,24 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }
           <Spinner />
         </div>
       ) : null}
+
+      <div className={styles.layoutSelector}>
+        <RadioButtonGroup
+          size="sm"
+          options={[
+            { label: 'Layered', value: LayoutType.Layered },
+            { label: 'Force', value: LayoutType.Force },
+          ]}
+          value={config.layoutType}
+          onChange={(value) => {
+            handleLayoutChange({
+              ...config,
+              gridLayout: false,
+              layoutType: value,
+            });
+          }}
+        />
+      </div>
 
       {dataFrames.length && processed.nodes.length ? (
         <svg
@@ -267,12 +300,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }
         <div className={styles.viewControlsWrapper}>
           <ViewControls<Config>
             config={config}
-            onConfigChange={(cfg) => {
-              if (cfg.gridLayout !== config.gridLayout) {
-                setFocusedNodeId(undefined);
-              }
-              setConfig(cfg);
-            }}
+            onConfigChange={handleLayoutChange}
             onMinus={onStepDown}
             onPlus={onStepUp}
             scale={scale}

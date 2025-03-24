@@ -3,11 +3,20 @@ import { useState } from 'react';
 
 import { Button, HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
 
+import { LayoutType } from './types';
+
 function getStyles() {
   return {
     wrapper: css({
       label: 'wrapper',
       pointerEvents: 'all',
+    }),
+    layoutSelector: css({
+      pointerEvents: 'all',
+      position: 'absolute',
+      top: '8px',
+      right: '8px',
+      zIndex: 1,
     }),
   };
 }
@@ -57,7 +66,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
         <HorizontalGroup spacing="xs">
           <Button
             icon={'code-branch'}
-            onClick={() => onConfigChange({ ...config, gridLayout: false })}
+            onClick={() => onConfigChange({ ...config, gridLayout: false, layoutType: LayoutType.Layered })}
             size={'md'}
             title={'Default layout'}
             variant="secondary"
@@ -65,7 +74,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
           />
           <Button
             icon={'apps'}
-            onClick={() => onConfigChange({ ...config, gridLayout: true })}
+            onClick={() => onConfigChange({ ...config, gridLayout: true, layoutType: undefined })}
             size={'md'}
             title={'Grid layout'}
             variant="secondary"
