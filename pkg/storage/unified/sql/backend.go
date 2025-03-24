@@ -765,7 +765,8 @@ func (b *backend) readHistory(ctx context.Context, key *resource.ResourceKey, rv
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return &resource.BackendReadResponse{
-			Error: resource.NewNotFoundError(key),
+			Key:             key,
+			ResourceVersion: 0,
 		}
 	}
 	if err != nil {
