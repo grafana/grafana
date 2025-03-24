@@ -292,3 +292,82 @@ func TestConvertTimeSeriesMultiToFullLong(t *testing.T) {
 		}
 	})
 }
+
+func TestConvertTimeSeriesMultiToFullLongWithDisplayName(t *testing.T) {
+	t.Run("SingleSeriesWithDisplayName", func(t *testing.T) {
+		times := []time.Time{time.Unix(0, 0), time.Unix(10, 0)}
+
+		input := data.Frames{
+			data.NewFrame("cpu",
+				data.NewField("time", nil, times),
+				func() *data.Field {
+					f := data.NewField("cpu", nil, []float64{1.0, 2.0})
+					f.Config = &data.FieldConfig{DisplayNameFromDS: "CPU Display"}
+					return f
+				}(),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
+
+		expected := data.NewFrame("",
+			data.NewField("time", nil, times),
+			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
+			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
+			data.NewField(SQLDisplayFieldName, nil, []*string{sp("CPU Display"), sp("CPU Display")}),
+		)
+		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("TwoSeriesMixedDisplayNames", func(t *testing.T) {
+		times := []time.Time{time.Unix(0, 0), time.Unix(10, 0)}
+
+		input := data.Frames{
+			data.NewFrame("cpu",
+				data.NewField("time", nil, times),
+				func() *data.Field {
+					f := data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0, 2.0})
+					f.Config = &data.FieldConfig{DisplayNameFromDS: "CPU A"}
+					return f
+				}(),
+			),
+			data.NewFrame("cpu",
+				data.NewField("time", nil, times),
+				data.NewField("cpu", data.Labels{"host": "b"}, []float64{3.0, 4.0}),
+			),
+		}
+		for _, f := range input {
+			f.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
+		}
+
+		expected := data.NewFrame("",
+			data.NewField("time", nil, []time.Time{
+				times[0], times[0], times[1], times[1],
+			}),
+			data.NewField(SQLValueFieldName, nil, []*float64{
+				fp(1.0), fp(3.0), fp(2.0), fp(4.0),
+			}),
+			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu", "cpu", "cpu"}),
+			data.NewField(SQLDisplayFieldName, nil, []*string{
+				sp("CPU A"), nil, sp("CPU A"), nil,
+			}),
+			data.NewField("host", nil, []*string{
+				sp("a"), sp("b"), sp("a"), sp("b"),
+			}),
+		)
+		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Mismatch (-want +got):\n%s", diff)
+		}
+	})
+}

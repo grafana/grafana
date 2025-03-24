@@ -169,6 +169,64 @@ func TestConvertNumericWideToFullLong(t *testing.T) {
 	})
 }
 
+func TestConvertNumericWideToFullLongWithDisplayName(t *testing.T) {
+	t.Run("SingleFieldWithDisplayName", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("numeric",
+				func() *data.Field {
+					f := data.NewField("cpu", nil, []float64{3.14})
+					f.Config = &data.FieldConfig{DisplayNameFromDS: "CPU Display"}
+					return f
+				}(),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeNumericWide}
+
+		expected := data.NewFrame("",
+			data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
+			data.NewField(SQLValueFieldName, nil, []*float64{fp(3.14)}),
+			data.NewField(SQLDisplayFieldName, nil, []*string{sp("CPU Display")}),
+		)
+		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+		}
+	})
+
+	t.Run("MixedDisplayNames", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("numeric",
+				func() *data.Field {
+					f := data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0})
+					f.Config = &data.FieldConfig{DisplayNameFromDS: "CPU A"}
+					return f
+				}(),
+				data.NewField("cpu", data.Labels{"host": "b"}, []float64{2.0}),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeNumericWide}
+
+		expected := data.NewFrame("",
+			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
+			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
+			data.NewField(SQLDisplayFieldName, nil, []*string{sp("CPU A"), nil}),
+			data.NewField("host", nil, []*string{sp("a"), sp("b")}),
+		)
+		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+		}
+	})
+}
+
 func TestConvertNumericMultiToFullLong(t *testing.T) {
 	t.Run("SingleItemNoLabels", func(t *testing.T) {
 		input := data.Frames{

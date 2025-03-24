@@ -11,6 +11,9 @@ import (
 const (
 	SQLMetricFieldName     = "__metric__"
 	SQLValueFieldName      = "value"
+	SQLDisplayFieldName    = "__display__"
+
+	// These are not types in the SDK or dataplane contract yet.
 	numericFullLongType    = "numeric_full_long"
 	timeseriesFullLongType = "time_series_full_long"
 )
@@ -60,10 +63,12 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 	}
 
 	var (
-		metricCol   = make([]string, 0, len(inputFrame.Fields))
-		valueCol    = make([]*float64, 0, len(inputFrame.Fields))
-		labelKeys   []string
-		labelValues = make(map[string][]*string)
+		metricCol     = make([]string, 0, len(inputFrame.Fields))
+		valueCol      = make([]*float64, 0, len(inputFrame.Fields))
+		displayCol    = make([]*string, 0, len(inputFrame.Fields))
+		labelKeys     []string
+		labelValues   = make(map[string][]*string)
+		hasDisplayCol bool
 	)
 
 	labelKeySet := map[string]struct{}{}
@@ -78,6 +83,16 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 		v := val
 		valueCol = append(valueCol, &v)
 		metricCol = append(metricCol, field.Name)
+
+		// Display name
+		var d *string
+		if field.Config != nil && field.Config.DisplayNameFromDS != "" {
+			s := field.Config.DisplayNameFromDS
+			d = &s
+			hasDisplayCol = true
+		}
+		displayCol = append(displayCol, d)
+
 		for k := range field.Labels {
 			labelKeySet[k] = struct{}{}
 		}
@@ -108,6 +123,9 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 		data.NewField(SQLMetricFieldName, nil, metricCol),
 		data.NewField(SQLValueFieldName, nil, valueCol),
 	}
+	if hasDisplayCol {
+		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displayCol))
+	}
 	for _, k := range labelKeys {
 		fields = append(fields, data.NewField(k, nil, labelValues[k]))
 	}
@@ -119,14 +137,16 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 
 func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 	type row struct {
-		t      time.Time
-		value  *float64
-		metric string
-		labels data.Labels
+		t       time.Time
+		value   *float64
+		metric  string
+		display *string
+		labels  data.Labels
 	}
 
 	var rows []row
 	labelKeysSet := map[string]struct{}{}
+	hasDisplayCol := false
 
 	for _, frame := range frames {
 		var timeField *data.Field
@@ -143,6 +163,12 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 			if !f.Type().Numeric() {
 				continue
 			}
+			var display *string
+			if f.Config != nil && f.Config.DisplayNameFromDS != "" {
+				s := f.Config.DisplayNameFromDS
+				display = &s
+				hasDisplayCol = true
+			}
 			for i := 0; i < f.Len(); i++ {
 				t := timeField.At(i).(time.Time)
 				v, err := f.FloatAt(i)
@@ -151,10 +177,11 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 				}
 				val := v
 				rows = append(rows, row{
-					t:      t,
-					value:  &val,
-					metric: f.Name,
-					labels: f.Labels,
+					t:       t,
+					value:   &val,
+					metric:  f.Name,
+					display: display,
+					labels:  f.Labels,
 				})
 				for k := range f.Labels {
 					labelKeysSet[k] = struct{}{}
@@ -178,6 +205,10 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 	times := make([]time.Time, len(rows))
 	values := make([]*float64, len(rows))
 	metrics := make([]string, len(rows))
+	var displays []*string
+	if hasDisplayCol {
+		displays = make([]*string, len(rows))
+	}
 	labels := make(map[string][]*string)
 	for _, k := range labelKeys {
 		labels[k] = make([]*string, len(rows))
@@ -187,6 +218,9 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 		times[i] = r.t
 		values[i] = r.value
 		metrics[i] = r.metric
+		if hasDisplayCol {
+			displays[i] = r.display
+		}
 		for _, k := range labelKeys {
 			if v, ok := r.labels[k]; ok {
 				labels[k][i] = &v
@@ -198,6 +232,9 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 		data.NewField("time", nil, times),
 		data.NewField(SQLValueFieldName, nil, values),
 		data.NewField(SQLMetricFieldName, nil, metrics),
+	}
+	if hasDisplayCol {
+		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displays))
 	}
 	for _, k := range labelKeys {
 		fields = append(fields, data.NewField(k, nil, labels[k]))
@@ -226,15 +263,17 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	}
 
 	type row struct {
-		t      time.Time
-		value  *float64
-		metric string
-		labels data.Labels
+		t       time.Time
+		value   *float64
+		metric  string
+		display *string
+		labels  data.Labels
 	}
 
 	var (
-		rows         []row
-		labelKeysSet = map[string]struct{}{}
+		rows          []row
+		labelKeysSet  = map[string]struct{}{}
+		hasDisplayCol bool
 	)
 
 	// Collect all label keys
@@ -253,11 +292,16 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	}
 	sort.Strings(labelKeys)
 
-	// Build rows
 	timeLen := timeField.Len()
 	for _, f := range frame.Fields {
 		if !f.Type().Numeric() {
 			continue
+		}
+		var display *string
+		if f.Config != nil && f.Config.DisplayNameFromDS != "" {
+			s := f.Config.DisplayNameFromDS
+			display = &s
+			hasDisplayCol = true
 		}
 		for i := 0; i < timeLen; i++ {
 			t := timeField.At(i).(time.Time)
@@ -267,15 +311,15 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 			}
 			val := v
 			rows = append(rows, row{
-				t:      t,
-				value:  &val,
-				metric: f.Name,
-				labels: f.Labels,
+				t:       t,
+				value:   &val,
+				metric:  f.Name,
+				display: display,
+				labels:  f.Labels,
 			})
 		}
 	}
 
-	// Sort rows by time, then metric name
 	sort.SliceStable(rows, func(i, j int) bool {
 		if rows[i].t.Equal(rows[j].t) {
 			return rows[i].metric < rows[j].metric
@@ -286,6 +330,10 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	times := make([]time.Time, len(rows))
 	values := make([]*float64, len(rows))
 	metrics := make([]string, len(rows))
+	var displays []*string
+	if hasDisplayCol {
+		displays = make([]*string, len(rows))
+	}
 	labels := make(map[string][]*string)
 	for _, k := range labelKeys {
 		labels[k] = make([]*string, len(rows))
@@ -295,6 +343,9 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 		times[i] = r.t
 		values[i] = r.value
 		metrics[i] = r.metric
+		if hasDisplayCol {
+			displays[i] = r.display
+		}
 		for _, k := range labelKeys {
 			if v, ok := r.labels[k]; ok {
 				labels[k][i] = &v
@@ -306,6 +357,9 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 		data.NewField("time", nil, times),
 		data.NewField(SQLValueFieldName, nil, values),
 		data.NewField(SQLMetricFieldName, nil, metrics),
+	}
+	if hasDisplayCol {
+		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displays))
 	}
 	for _, k := range labelKeys {
 		fields = append(fields, data.NewField(k, nil, labels[k]))
