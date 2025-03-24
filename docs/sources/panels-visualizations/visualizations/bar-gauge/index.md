@@ -146,7 +146,9 @@ Adjust how the gauge is displayed.
 
 ### Text size options
 
-TBA
+Title -
+Value -
+Percentage change -
 
 ### Standard options
 
@@ -164,9 +166,7 @@ TBA
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Last, colors of the bar gauge thresholds can be configured as described above.
-
-![Bar gauge with colored thresholds configured](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-bargauge-example6.png)
+Colors of the bar gauge thresholds can be configured as described above.
 
 ### Field overrides
 
