@@ -136,6 +136,6 @@ export function useTranslateInternal() {
   }
 
   const { meta } = context;
-  const pluginT = useMemo(() => i18nInstance.getFixedT(null, meta.id), [meta.id]);
+  const pluginT = useMemo(() => getI18next().getFixedT(null, meta.id), [meta.id]);
   return pluginT;
 }
