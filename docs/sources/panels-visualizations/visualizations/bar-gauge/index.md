@@ -95,37 +95,41 @@ If you want to show one gauge per cell you can change the [Show](#show) setting 
 
 ![Bar gauge with multiple rows of data displaying all the values](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-bargauge-example5.png)
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value options
+### Value options
 
 Use the following options to refine how your visualization displays the value:
 
-### Show
+#### Show
 
 Choose how Grafana displays your data.
 
-#### Calculate
+##### Calculate
 
 Show a calculated value based on all rows.
 
 - **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types).
 - **Fields -** Select the fields display in the panel.
 
-#### All values
+##### All values
 
 Show a separate stat for every row. If you select this option, then you can also limit the number of rows to display.
 
 - **Limit -** The maximum number of rows to display. Default is 5,000.
 - **Fields -** Select the fields display in the panel.
 
-## Bar gauge options
+### Bar gauge options
 
 Adjust how the bar gauge is displayed.
 
-### Orientation
+#### Orientation
 
 Choose a stacking direction.
 
@@ -133,7 +137,7 @@ Choose a stacking direction.
 - **Horizontal -** Bars stretch horizontally, left to right.
 - **Vertical -** Bars stretch vertically, bottom to top.
 
-### Display mode
+#### Display mode
 
 Choose a display mode.
 
@@ -141,7 +145,7 @@ Choose a display mode.
 - **Retro LCD -** The gauge is split into small cells that are lit or unlit.
 - **Basic -** Single color based on the matching threshold.
 
-### Value display
+#### Value display
 
 Choose a value display mode.
 
@@ -149,7 +153,7 @@ Choose a value display mode.
 - **Text color -** Value color is default text color.
 - **Hidden -** Values are hidden.
 
-### Name placement
+#### Name placement
 
 Choose a name placement mode.
 
@@ -162,18 +166,18 @@ This option only applies when the orientation of the bar gauge is horizontal. Wh
 - **Left -** Names are placed to the left of each bar gauge.
 - **Hidden -** Names are hidden on each bar gauge.
 
-### Show unfilled area
+#### Show unfilled area
 
 Select this if you want to render the unfilled region of the bars as dark gray. Not applicable to Retro LCD display mode.
 
-### Bar size
+#### Bar size
 
 Choose a bar size mode.
 
 - **Auto -** Grafana determines the best bar gauge size.
 - **Manual -** Manually configure the bar gauge size.
 
-### Min width
+#### Min width
 
 Limit the minimum width of the bar column when the gauge is oriented vertically.
 
@@ -183,7 +187,7 @@ Automatically show x-axis scrollbar when there's a large amount of data.
 This option only applies when bar size is set to manual.
 {{% /admonition %}}
 
-### Min height
+#### Min height
 
 Limit the minimum height of the bar row when the gauge is oriented horizontally.
 
@@ -193,7 +197,7 @@ Automatically show y-axis scrollbar when there's a large amount of data.
 This option only applies when bar size is set to manual.
 {{% /admonition %}}
 
-### Max height
+#### Max height
 
 Limit the maximum height of the bar row when the gauge is oriented horizontally.
 
@@ -203,23 +207,23 @@ Automatically show y-axis scrollbar when there's a large amount of data.
 This option only applies when bar size is set to manual.
 {{% /admonition %}}
 
-## Legend options
+### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Standard options
+### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links and actions
+### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Thresholds
+### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
@@ -227,6 +231,6 @@ Last, colors of the bar gauge thresholds can be configured as described above.
 
 ![Bar gauge with colored thresholds configured](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-bargauge-example6.png)
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
