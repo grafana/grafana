@@ -12,7 +12,7 @@ describe('TabsLayoutManager', () => {
       });
 
       const urlState = tabsLayoutManager.getUrlState();
-      expect(urlState).toEqual({ tab: 'performance' });
+      expect(urlState).toEqual({ dtab: 'performance' });
     });
 
     it('when nested under row and parent tab', () => {
@@ -38,7 +38,7 @@ describe('TabsLayoutManager', () => {
 
       const urlState = innerMostTabs.getUrlState();
       expect(urlState).toEqual({
-        ['overview-frontend-tab']: 'performance',
+        ['overview-frontend-dtab']: 'performance',
       });
     });
   });
