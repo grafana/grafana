@@ -9,10 +9,11 @@ import {
   GrafanaTheme2,
   LoadingState,
   LogRowModel,
+  LogSortOrderChangeEvent,
   LogsSortOrder,
   PanelProps,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
@@ -60,6 +61,14 @@ export const LogsPanel = ({
       : null;
     return logsModel ? dedupLogRows(logsModel.rows, dedupStrategy) : [];
   }, [dedupStrategy, panelData]);
+
+  useEffect(() => {
+    getAppEvents().publish(
+      new LogSortOrderChangeEvent({
+        order: sortOrder,
+      })
+    );
+  }, [sortOrder]);
 
   useEffect(() => {
     if (data.state !== LoadingState.Loading) {

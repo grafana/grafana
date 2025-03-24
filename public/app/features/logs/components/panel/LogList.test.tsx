@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { createLogRow } from '../__mocks__/logRow';
 
 import { LogList } from './LogList';
-import userEvent from '@testing-library/user-event';
 
 const logs: LogRowModel[] = [createLogRow({ uid: '1' }), createLogRow({ uid: '2' })];
 
