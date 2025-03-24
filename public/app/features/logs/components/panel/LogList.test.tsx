@@ -5,6 +5,7 @@ import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortO
 import { createLogRow } from '../__mocks__/logRow';
 
 import { LogList } from './LogList';
+import userEvent from '@testing-library/user-event';
 
 const logs: LogRowModel[] = [createLogRow({ uid: '1' }), createLogRow({ uid: '2' })];
 
@@ -51,5 +52,29 @@ describe('LogList', () => {
     expect(screen.getByText('log message 1')).toBeInTheDocument();
     expect(screen.getByText('log message 2')).toBeInTheDocument();
     expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
+  });
+
+  test('Reports mouse over events', async () => {
+    const containerElement = document.createElement('div');
+    const onLogRowHover = jest.fn();
+    render(
+      <LogList
+        app={CoreApp.Explore}
+        containerElement={containerElement}
+        dedupStrategy={LogsDedupStrategy.none}
+        displayedFields={[]}
+        logs={logs}
+        onLogLineHover={onLogRowHover}
+        showControls={true}
+        showTime={false}
+        sortOrder={LogsSortOrder.Descending}
+        timeRange={getDefaultTimeRange()}
+        timeZone={'browser'}
+        wrapLogMessage={false}
+      />
+    );
+    await userEvent.hover(screen.getByText('log message 1'));
+    expect(onLogRowHover).toHaveBeenCalledTimes(1);
+    expect(onLogRowHover).toHaveBeenCalledWith(expect.objectContaining(logs[0]));
   });
 });
