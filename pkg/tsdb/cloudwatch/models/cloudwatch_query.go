@@ -11,8 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
-
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -202,11 +201,7 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 		return "", fmt.Errorf("could not marshal link: %w", err)
 	}
 
-	endpoint, err := getEndpoint(q.Region)
-	if err != nil {
-		return "", err
-	}
-	url, err := url.Parse(fmt.Sprintf(`https://%s/cloudwatch/deeplink.js`, endpoint))
+	url, err := url.Parse(fmt.Sprintf(`https://%s/cloudwatch/deeplink.js`, getEndpoint(q.Region)))
 	if err != nil {
 		return "", fmt.Errorf("unable to parse CloudWatch console deep link")
 	}
@@ -508,18 +503,14 @@ func parseDimensions(dimensions dataquery.Dimensions) (map[string][]string, erro
 	return parsedDimensions, nil
 }
 
-func getEndpoint(region string) (string, error) {
-	resolver := cloudwatch.NewDefaultEndpointResolver()
-	endpoint, err := resolver.ResolveEndpoint(region, cloudwatch.EndpointResolverOptions{})
-	if err != nil {
-		return "", fmt.Errorf("resolve endpoint failed: %w", err)
+func getEndpoint(region string) string {
+	partition, _ := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region)
+	url := defaultConsoleURL
+	if partition.ID() == endpoints.AwsUsGovPartitionID {
+		url = usGovConsoleURL
 	}
-	consoleURL := defaultConsoleURL
-	switch endpoint.PartitionID {
-	case "aws-us-gov":
-		consoleURL = usGovConsoleURL
-	case "aws-cn":
-		consoleURL = chinaConsoleURL
+	if partition.ID() == endpoints.AwsCnPartitionID {
+		url = chinaConsoleURL
 	}
-	return fmt.Sprintf("%s.%s", region, consoleURL), nil
+	return fmt.Sprintf("%s.%s", region, url)
 }

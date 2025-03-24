@@ -1,8 +1,6 @@
 package resources
 
-import (
-	cloudwatchtypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
-)
+import "github.com/aws/aws-sdk-go/service/cloudwatch"
 
 type Dimension struct {
 	Name  string
@@ -15,7 +13,7 @@ type ResourceResponse[T any] struct {
 }
 
 type MetricResponse struct {
-	Metric    cloudwatchtypes.Metric
+	*cloudwatch.Metric
 	AccountId *string `json:"accountId,omitempty"`
 }
 

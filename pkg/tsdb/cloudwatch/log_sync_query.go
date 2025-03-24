@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
-
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
@@ -86,7 +86,7 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 	return resp, nil
 }
 
-func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient models.CWLogsClient,
+func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	queryContext backend.DataQuery, logsQuery models.LogsQuery, logsTimeout time.Duration) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, logsQuery, queryContext.TimeRange)
 	if err != nil {
@@ -117,7 +117,7 @@ func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient models.CW
 		if err != nil {
 			return nil, err
 		}
-		if isTerminated(res.Status) {
+		if isTerminated(*res.Status) {
 			return res, err
 		}
 		if time.Duration(attemptCount)*time.Second >= logsTimeout {

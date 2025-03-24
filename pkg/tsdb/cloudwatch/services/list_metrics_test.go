@@ -4,10 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
-	cloudwatchtypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
-
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -20,20 +18,20 @@ const useLinkedAccountsId = "all"
 
 var metricResponse = []resources.MetricResponse{
 	{
-		Metric: cloudwatchtypes.Metric{
+		Metric: &cloudwatch.Metric{
 			MetricName: aws.String("CPUUtilization"),
 			Namespace:  aws.String("AWS/EC2"),
-			Dimensions: []cloudwatchtypes.Dimension{
+			Dimensions: []*cloudwatch.Dimension{
 				{Name: aws.String("InstanceId"), Value: aws.String("i-1234567890abcdef0")},
 				{Name: aws.String("InstanceType"), Value: aws.String("t2.micro")},
 			},
 		},
 	},
 	{
-		Metric: cloudwatchtypes.Metric{
+		Metric: &cloudwatch.Metric{
 			MetricName: aws.String("CPUUtilization"),
 			Namespace:  aws.String("AWS/EC2"),
-			Dimensions: []cloudwatchtypes.Dimension{
+			Dimensions: []*cloudwatch.Dimension{
 				{Name: aws.String("InstanceId"), Value: aws.String("i-5234567890abcdef0")},
 				{Name: aws.String("InstanceType"), Value: aws.String("t2.micro")},
 				{Name: aws.String("AutoScalingGroupName"), Value: aws.String("my-asg")},
@@ -41,10 +39,10 @@ var metricResponse = []resources.MetricResponse{
 		},
 	},
 	{
-		Metric: cloudwatchtypes.Metric{
+		Metric: &cloudwatch.Metric{
 			MetricName: aws.String("CPUUtilization"),
 			Namespace:  aws.String("AWS/EC2"),
-			Dimensions: []cloudwatchtypes.Dimension{
+			Dimensions: []*cloudwatch.Dimension{
 				{Name: aws.String("InstanceId"), Value: aws.String("i-64234567890abcdef0")},
 				{Name: aws.String("InstanceType"), Value: aws.String("t3.micro")},
 				{Name: aws.String("AutoScalingGroupName"), Value: aws.String("my-asg2")},
@@ -88,7 +86,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
 				Namespace:             aws.String("AWS/EC2"),
-				Dimensions:            []cloudwatchtypes.DimensionFilter{{Name: aws.String("InstanceId")}},
+				Dimensions:            []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}},
 				IncludeLinkedAccounts: aws.Bool(true),
 			},
 		},
@@ -103,7 +101,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
 				Namespace:             aws.String("AWS/EC2"),
-				Dimensions:            []cloudwatchtypes.DimensionFilter{{Name: aws.String("InstanceId")}},
+				Dimensions:            []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}},
 				IncludeLinkedAccounts: aws.Bool(true),
 				OwningAccount:         aws.String("1234567890"),
 			},
@@ -116,7 +114,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 				MetricName:      "",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
 			},
-			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{Dimensions: []cloudwatchtypes.DimensionFilter{{Name: aws.String("InstanceId")}}},
+			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{Dimensions: []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}}},
 		},
 	}
 
@@ -165,7 +163,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
 				Namespace:             aws.String("AWS/EC2"),
-				Dimensions:            []cloudwatchtypes.DimensionFilter{{Name: aws.String("InstanceId")}},
+				Dimensions:            []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}},
 				IncludeLinkedAccounts: aws.Bool(true),
 			},
 		},
@@ -180,7 +178,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
 				Namespace:             aws.String("AWS/EC2"),
-				Dimensions:            []cloudwatchtypes.DimensionFilter{{Name: aws.String("InstanceId")}},
+				Dimensions:            []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}},
 				IncludeLinkedAccounts: aws.Bool(true),
 				OwningAccount:         aws.String("1234567890"),
 			},
