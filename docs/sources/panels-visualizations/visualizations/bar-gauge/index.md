@@ -107,23 +107,16 @@ If you want to show one gauge per cell you can change the [Show](#show) setting 
 
 Use the following options to refine how your visualization displays the value:
 
-#### Show
+<!-- prettier-ignore-start -->
 
-Choose how Grafana displays your data.
+| Option | Description |
+| ------ | ----------- |
+| Show | Set how Grafana displays your data. Choose from:<ul><li>**Calculate** - Show a calculated value based on all rows.</li><li>**All values** - Show a separate value for every row. If you select this option, then you can also limit the number of rows to display.</li></ul> |
+| Calculation | If you chose **Calculate** as your **Show** option, select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types). |
+| Limit | If you chose **All values** as your **Show** option, enter the maximum number of rows to display. The default is 5,000. |
+| Fields | Select the fields display in the panel. |
 
-##### Calculate
-
-Show a calculated value based on all rows.
-
-- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types).
-- **Fields -** Select the fields display in the panel.
-
-##### All values
-
-Show a separate stat for every row. If you select this option, then you can also limit the number of rows to display.
-
-- **Limit -** The maximum number of rows to display. Default is 5,000.
-- **Fields -** Select the fields display in the panel.
+<!-- prettier-ignore-end -->
 
 ### Bar gauge options
 
@@ -210,6 +203,10 @@ This option only applies when bar size is set to manual.
 ### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Text size options
+
+TBA
 
 ### Standard options
 
