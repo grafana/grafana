@@ -15,9 +15,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.package }}
+          path: grafana.tar.gz
       - uses: ./.github/workflows/actions/start-grafana-server
         with:
-          package: ${{ inputs.package }}
+          package: grafana.tar.gz
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'

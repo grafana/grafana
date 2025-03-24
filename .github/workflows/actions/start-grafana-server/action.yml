@@ -11,4 +11,11 @@ runs:
   steps:
     - shell: bash
       run: |
-        tar -xvf ${{ inputs.package }} -C /tmp/grafana
+        mkdir workspace/grafana
+        tar --strip-components=1 -xvf ${{ inputs.package }} -C ./workspace/grafana
+    - shell: bash
+      run: cp -r devenv scripts tools ./workspace/grafana
+    - shell: bash
+      run: |
+        echo "GRAFANA_HOME=$GITHUB_ACTION_PATH/workspace/grafana" >> $GITHUB_ENV
+        ./workspace/grafana/scripts/grafana-server/start-server &
