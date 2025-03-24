@@ -1,71 +1,65 @@
 package mocks
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	cloudwatchtypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
+
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+
 	"github.com/stretchr/testify/mock"
 )
 
 type FakeMetricsAPI struct {
-	Metrics        []*cloudwatch.Metric
-	OwningAccounts []*string
+	models.CWClient
+
+	Metrics        []cloudwatchtypes.Metric
+	OwningAccounts []string
 	MetricsPerPage int
+
+	cursor int
 }
 
-func (c *FakeMetricsAPI) ListMetricsPagesWithContext(ctx aws.Context, input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool, opts ...request.Option) error {
+func (c *FakeMetricsAPI) ListMetrics(_ context.Context, _ *cloudwatch.ListMetricsInput, _ ...func(*cloudwatch.Options)) (*cloudwatch.ListMetricsOutput, error) {
 	if c.MetricsPerPage == 0 {
 		c.MetricsPerPage = 1000
 	}
-	chunks := chunkSlice(c.Metrics, c.MetricsPerPage)
-
-	for i, metrics := range chunks {
-		response := fn(&cloudwatch.ListMetricsOutput{
-			Metrics:        metrics,
-			OwningAccounts: c.OwningAccounts,
-		}, i+1 == len(chunks))
-		if !response {
-			break
+	var metrics []cloudwatchtypes.Metric
+	nextToken := aws.String("yes")
+	if c.cursor < len(c.Metrics) {
+		end := c.cursor + c.MetricsPerPage
+		if end > len(c.Metrics) {
+			end = len(c.Metrics)
+			nextToken = nil
 		}
+		metrics = c.Metrics[c.cursor:end]
 	}
-	return nil
-}
+	c.cursor += c.MetricsPerPage
 
-func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metric {
-	var chunks [][]*cloudwatch.Metric
-	for {
-		if len(slice) == 0 {
-			break
-		}
-		if len(slice) < chunkSize {
-			chunkSize = len(slice)
-		}
-
-		chunks = append(chunks, slice[0:chunkSize])
-		slice = slice[chunkSize:]
-	}
-
-	return chunks
+	return &cloudwatch.ListMetricsOutput{
+		Metrics:        metrics,
+		OwningAccounts: c.OwningAccounts,
+		NextToken:      nextToken,
+	}, nil
 }
 
 type MetricsAPI struct {
-	cloudwatchiface.CloudWatchAPI
 	mock.Mock
+	models.CWClient
 
-	Metrics []*cloudwatch.Metric
+	Metrics []cloudwatchtypes.Metric
 }
 
-func (m *MetricsAPI) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
-	args := m.Called(ctx, input, opts)
+func (m *MetricsAPI) GetMetricData(ctx context.Context, input *cloudwatch.GetMetricDataInput, optFns ...func(*cloudwatch.Options)) (*cloudwatch.GetMetricDataOutput, error) {
+	args := m.Called(ctx, input, optFns)
 
 	return args.Get(0).(*cloudwatch.GetMetricDataOutput), args.Error(1)
 }
 
-func (m *MetricsAPI) ListMetricsPagesWithContext(ctx aws.Context, input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool, opts ...request.Option) error {
-	fn(&cloudwatch.ListMetricsOutput{
+func (m *MetricsAPI) ListMetrics(_ context.Context, _ *cloudwatch.ListMetricsInput, _ ...func(*cloudwatch.Options)) (*cloudwatch.ListMetricsOutput, error) {
+	return &cloudwatch.ListMetricsOutput{
 		Metrics: m.Metrics,
-	}, true)
-
-	return m.Called().Error(0)
+	}, m.Called().Error(0)
 }
