@@ -50,70 +50,73 @@ type clientMetrics struct {
 func ProvideUnifiedStorageClient(opts *Options, sqlBackendServer sql.SqlBackendResourceServer) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-	client, err := newClient(options.StorageOptions{
-		StorageType: options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		Address:     apiserverCfg.Key("address").MustString(""), // client address
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, sqlBackendServer)
-	if err == nil {
-		// Used to get the folder stats
-		client = federated.NewFederatedClient(
-			client, // The original
-			legacysql.NewDatabaseProvider(opts.DB),
-		)
+	storageType := options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified)))
+	var client resource.ResourceClient
+	if storageType == options.StorageTypeUnifiedGrpc {
+		address := apiserverCfg.Key("address").MustString("")
+		if address == "" {
+			return nil, fmt.Errorf("expecting address for storage_type: %s", options.StorageTypeUnifiedGrpc)
+		}
+
+		var err error
+		client, err = newGrpcClient(address, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, sqlBackendServer)
+
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		client = resource.NewLocalResourceClient(sqlBackendServer)
 	}
 
-	return client, err
+	// Used to get the folder stats
+	client = federated.NewFederatedClient(
+		client, // The original
+		legacysql.NewDatabaseProvider(opts.DB),
+	)
+
+	return client, nil
 }
 
-func newClient(opts options.StorageOptions,
+func newGrpcClient(address string,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	sqlBackendServer sql.SqlBackendResourceServer,
 ) (resource.ResourceClient, error) {
-	if opts.StorageType == options.StorageTypeUnifiedGrpc {
-		if opts.Address == "" {
-			return nil, fmt.Errorf("expecting address for storage_type: %s", opts.StorageType)
-		}
-
-		var (
-			conn    grpc.ClientConnInterface
-			err     error
-			metrics = newClientMetrics(reg)
-		)
-		// Create either a connection pool or a single connection.
-		// The connection pool __can__ be useful when connection to
-		// server side load balancers like kube-proxy.
-		if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageGrpcConnectionPool) {
-			conn, err = newPooledConn(&poolOpts{
-				initialCapacity: 3,
-				maxCapacity:     6,
-				idleTimeout:     time.Minute,
-				factory: func() (*grpc.ClientConn, error) {
-					return grpcConn(opts.Address, metrics)
-				},
-			})
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			conn, err = grpcConn(opts.Address, metrics)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		// Create a client instance
-		client, err := newResourceClient(conn, cfg, features, tracer)
+	var (
+		conn    grpc.ClientConnInterface
+		err     error
+		metrics = newClientMetrics(reg)
+	)
+	// Create either a connection pool or a single connection.
+	// The connection pool __can__ be useful when connection to
+	// server side load balancers like kube-proxy.
+	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageGrpcConnectionPool) {
+		conn, err = newPooledConn(&poolOpts{
+			initialCapacity: 3,
+			maxCapacity:     6,
+			idleTimeout:     time.Minute,
+			factory: func() (*grpc.ClientConn, error) {
+				return grpcConn(address, metrics)
+			},
+		})
 		if err != nil {
 			return nil, err
 		}
-		return client, nil
+	} else {
+		conn, err = grpcConn(address, metrics)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Use the local SQL
-	return resource.NewLocalResourceClient(sqlBackendServer), nil
+	// Create a client instance
+	client, err := newResourceClient(conn, cfg, features, tracer)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 func newResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceClient, error) {
