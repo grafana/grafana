@@ -139,10 +139,6 @@ func (r ResourceInfo) Type() string {
 }
 
 func (r ResourceInfo) Context() *structpb.Struct {
-	if !r.IsGeneric() && r.typ != TypeFolder && r.typ != TypeTeam {
-		return nil
-	}
-
 	return &structpb.Struct{
 		Fields: map[string]*structpb.Value{
 			"requested_group": structpb.NewStringValue(r.GroupResource()),
