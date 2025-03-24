@@ -170,22 +170,22 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 		expected        []schema.GroupVersion
 	}{
 		{
-			name:            "should return v0alpha1 by default",
+			name:            "should return v1alpha1 by default",
 			enabledFeatures: []string{},
 			expected: []schema.GroupVersion{
-				v0alpha1.DashboardResourceInfo.GroupVersion(),
 				v1alpha1.DashboardResourceInfo.GroupVersion(),
+				v0alpha1.DashboardResourceInfo.GroupVersion(),
 				v2alpha1.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 		{
-			name: "should return v0alpha1 as the default if some other feature is enabled",
+			name: "should return v1alpha1 as the default if some other feature is enabled",
 			enabledFeatures: []string{
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			expected: []schema.GroupVersion{
-				v0alpha1.DashboardResourceInfo.GroupVersion(),
 				v1alpha1.DashboardResourceInfo.GroupVersion(),
+				v0alpha1.DashboardResourceInfo.GroupVersion(),
 				v2alpha1.DashboardResourceInfo.GroupVersion(),
 			},
 		},
