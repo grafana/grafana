@@ -141,7 +141,6 @@ type UserSearchHitDTO struct {
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
 	AuthLabels    []string             `json:"authLabels"`
 	AuthModule    AuthModuleConversion `json:"-"`
-	IsProvisioned bool                 `json:"isProvisioned" xorm:"is_provisioned"`
 }
 
 type GetUserProfileQuery struct {
