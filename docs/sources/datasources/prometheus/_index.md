@@ -97,6 +97,14 @@ The following documents will help you get started with the Prometheus data sourc
 - [Prometheus query editor](query-editor/)
 - [Template variables](template-variables/)
 
+
+## Exemplars
+
+An **exemplar** is a specific trace that represents a measurement taken within a given time interval. While metrics provide an aggregated view of your system, and traces offer a detailed view of individual requests, exemplars serve as a bridge between the two, linking high-level metrics to specific traces for deeper insights.
+Support for exemplars is available only for the Prometheus data source. You exemplars when you configure the Prometheus data source.
+
+ If this is your first time working with exemplars see [Introduction to exemplars](ref:exemplars). 
+
 ## Prometheus API
 
 The Prometheus data source also works with other projects that implement the [Prometheus querying API](https://prometheus.io/docs/prometheus/latest/querying/api/).
