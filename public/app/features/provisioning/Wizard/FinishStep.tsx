@@ -1,24 +1,10 @@
 import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
-import {
-  Alert,
-  Field,
-  FieldSet,
-  Input,
-  Label,
-  MultiCombobox,
-  Stack,
-  Switch,
-  Text,
-  TextLink,
-  useStyles2,
-} from '@grafana/ui';
+import { Field, Input, MultiCombobox, Stack, Switch, useStyles2 } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../Config/ConfigForm';
 import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
-import { GETTING_STARTED_URL } from '../constants';
 
 import { WizardFormData } from './types';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -34,7 +20,6 @@ export function FinishStep() {
   const hasImageRenderer = checkImageRenderer();
   // Enable sync by default
   const { setValue } = useFormContext<WizardFormData>();
-  const navigate = useNavigate();
   const style = useStyles2(getStyles);
 
   if (!isPublic || !hasImageRenderer) {
