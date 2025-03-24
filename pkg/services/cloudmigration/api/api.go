@@ -66,6 +66,9 @@ func (cma *CloudMigrationAPI) registerEndpoints(acHandler accesscontrol.AccessCo
 		cloudMigrationRoute.Get("/migration/:uid/snapshots", routing.Wrap(cma.GetSnapshotList))
 		cloudMigrationRoute.Post("/migration/:uid/snapshot/:snapshotUid/upload", routing.Wrap(cma.UploadSnapshot))
 		cloudMigrationRoute.Post("/migration/:uid/snapshot/:snapshotUid/cancel", routing.Wrap(cma.CancelSnapshot))
+
+		// resource dependency list
+		cloudMigrationRoute.Get("/resources/dependencies", routing.Wrap(cma.GetResourceDependencies))
 	}, authorize(cloudmigration.MigrationAssistantAccess))
 }
 
@@ -635,4 +638,32 @@ func (cma *CloudMigrationAPI) CancelSnapshot(c *contextmodel.ReqContext) respons
 	}
 
 	return response.JSON(http.StatusOK, nil)
+}
+
+// swagger:route GET /cloudmigration/resources/dependencies migrations getResourceDependencies
+//
+// Get the resource dependencies graph for the current set of migratable resources.
+//
+// Responses:
+// 200: resourceDependenciesResponse
+func (cma *CloudMigrationAPI) GetResourceDependencies(c *contextmodel.ReqContext) response.Response {
+	_, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetResourceDependencies")
+	defer span.End()
+
+	resourceDependencies := make([]ResourceDependencyDTO, 0, len(cma.resourceDependencyMap))
+	for resourceType, dependencies := range cma.resourceDependencyMap {
+		dependencyNames := make([]MigrateDataType, 0, len(dependencies))
+		for _, dependency := range dependencies {
+			dependencyNames = append(dependencyNames, MigrateDataType(dependency))
+		}
+
+		resourceDependencies = append(resourceDependencies, ResourceDependencyDTO{
+			ResourceType: MigrateDataType(resourceType),
+			Dependencies: dependencyNames,
+		})
+	}
+
+	return response.JSON(http.StatusOK, ResourceDependenciesResponseDTO{
+		ResourceDependencies: resourceDependencies,
+	})
 }

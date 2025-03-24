@@ -47,6 +47,7 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.PluginDataType,
 }
 
+//nolint:gocyclo
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser, resourceTypes cloudmigration.ResourceTypes) (*cloudmigration.MigrateDataRequest, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getMigrationDataJSON")
 	defer span.End()
