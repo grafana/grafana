@@ -195,6 +195,11 @@ type SnapshotResultQueryParams struct {
 
 type ResourceTypes map[MigrateDataType]struct{}
 
+func (r ResourceTypes) Has(t MigrateDataType) bool {
+	_, ok := r[t]
+	return ok
+}
+
 type CreateSnapshotCommand struct {
 	SessionUID    string
 	ResourceTypes ResourceTypes
