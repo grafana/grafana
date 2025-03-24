@@ -77,19 +77,19 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 	}
 
 	var (
-		resourceIdent  = resource.ResourceIdent()
-		resourceCtx    = resource.Context()
-		folderRelation = common.FolderResourceRelation(relation)
+		resourceIdent       = resource.ResourceIdent()
+		resourceCtx         = resource.Context()
+		subresourceRelation = common.SubresourceRelation(relation)
 	)
 
 	if resource.HasSubresource() {
-		// Check if subject has access as a sub resource for the folder
+		// Check if subject has access as a subresource
 		res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     subject,
-				Relation: folderRelation,
+				Relation: subresourceRelation,
 				Object:   resourceIdent,
 			},
 			Context:          resourceCtx,
@@ -138,7 +138,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 	var (
 		folderIdent    = resource.FolderIdent()
 		resourceCtx    = resource.Context()
-		folderRelation = common.FolderResourceRelation(relation)
+		folderRelation = common.SubresourceRelation(relation)
 	)
 
 	if folderIdent != "" && common.IsFolderResourceRelation(folderRelation) {

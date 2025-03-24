@@ -144,7 +144,7 @@ func isValidRelation(relation string, valid []string) bool {
 	return false
 }
 
-func FolderResourceRelation(relation string) string {
+func SubresourceRelation(relation string) string {
 	return TypeResource + "_" + relation
 }
 
@@ -205,11 +205,11 @@ func isFolderResourceRelationSet(relation string) bool {
 }
 
 func NewFolderResourceTuple(subject, relation, group, resource, subresource, folder string) *openfgav1.TupleKey {
-	relation = FolderResourceRelation(relation)
+	relation = SubresourceRelation(relation)
 	var condition *openfgav1.RelationshipCondition
 	if !isFolderResourceRelationSet(relation) {
 		condition = &openfgav1.RelationshipCondition{
-			Name: "folder_group_filter",
+			Name: "subresource_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"group_resources": structpb.NewListValue(&structpb.ListValue{
@@ -229,11 +229,11 @@ func NewFolderResourceTuple(subject, relation, group, resource, subresource, fol
 }
 
 func NewTeamResourceTuple(subject, relation, group, resource, subresource, name string) *openfgav1.TupleKey {
-	relation = FolderResourceRelation(relation)
+	relation = SubresourceRelation(relation)
 	var condition *openfgav1.RelationshipCondition
 	if !isFolderResourceRelationSet(relation) {
 		condition = &openfgav1.RelationshipCondition{
-			Name: "folder_group_filter",
+			Name: "subresource_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"group_resources": structpb.NewListValue(&structpb.ListValue{

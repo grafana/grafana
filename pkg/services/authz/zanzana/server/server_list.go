@@ -57,7 +57,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	}
 
 	var (
-		folderRelation = common.FolderResourceRelation(relation)
+		folderRelation = common.SubresourceRelation(relation)
 		resourceCtx    = resource.Context()
 	)
 
@@ -101,7 +101,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 
 func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
 	var (
-		folderRelation = common.FolderResourceRelation(relation)
+		folderRelation = common.SubresourceRelation(relation)
 		resourceCtx    = resource.Context()
 	)
 
