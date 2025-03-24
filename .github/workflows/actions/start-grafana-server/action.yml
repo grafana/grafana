@@ -17,5 +17,8 @@ runs:
       run: cp -r devenv scripts tools ./workspace/grafana
     - shell: bash
       run: |
-        echo "GRAFANA_HOME=$GITHUB_ACTION_PATH/workspace/grafana" >> $GITHUB_ENV
-        ./workspace/grafana/scripts/grafana-server/start-server &
+        pushd ./workspace/grafana
+        ./scripts/grafana-server/start-server &
+        popd
+    - shell: bash
+      run: curl --retry 20 --retry-delay 1 --retry-all-errors http://localhost:3001
