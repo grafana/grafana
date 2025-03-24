@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"database/sql"
 	"database/sql/driver"
 	"errors"
 	"testing"
@@ -677,7 +678,7 @@ func TestBackend_getHistory(t *testing.T) {
 		require.Equal(t, expectedListRv, listRv)
 	})
 
-	t.Run("with no version matcher", func(t *testing.T) {
+	t.Run("with no version matcher (no deletion in history)", func(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
 
@@ -686,14 +687,57 @@ func TestBackend_getHistory(t *testing.T) {
 			{resourceVersion: rv2, namespace: "ns", name: "nm", folder: "folder", value: "rv-200"},
 			{resourceVersion: rv1, namespace: "ns", name: "nm", folder: "folder", value: "rv-100"},
 		}
+		expectedListRv := rv3
+		req := &resource.ListRequest{
+			Options:        &resource.ListOptions{Key: key},
+			VersionMatchV2: resource.ResourceVersionMatchV2_NotOlderThan,
+			Source:         resource.ListRequest_HISTORY,
+		}
+
+		b.SQLMock.ExpectBegin()
+		b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").
+			WillReturnError(sql.ErrNoRows)
+		b.SQLMock.ExpectRollback()
+		b.SQLMock.ExpectBegin()
+		b.SQLMock.ExpectQuery("SELECT .* FROM resource_version").
+			WillReturnRows(sqlmock.NewRows(getResourceVersionColumns).
+				AddRow(expectedListRv, 0))
+
+		historyRows := sqlmock.NewRows(getHistoryColumns)
+		for _, result := range expectedResults {
+			historyRows.AddRow(
+				result.resourceVersion,
+				result.namespace,
+				result.name,
+				result.folder,
+				result.value,
+			)
+		}
+		b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").WillReturnRows(historyRows)
+		b.SQLMock.ExpectCommit()
+
+		callback := getCallback(t, expectedResults)
+		listRv, err := b.getHistory(ctx, req, callback)
+		require.NoError(t, err)
+		require.Equal(t, expectedListRv, listRv)
+	})
+
+	t.Run("with no version matcher (with deletion in history)", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		expectedResults := []getHistoryRow{
+			{resourceVersion: rv3, namespace: "ns", name: "nm", folder: "folder", value: "rv-300"},
+			{resourceVersion: rv2, namespace: "ns", name: "nm", folder: "folder", value: "rv-200"},
+		}
 		expectedReadRow := readHistoryRow{
 			namespace:        "ns",
 			group:            "gr",
 			resource:         "rs",
 			name:             "nm",
 			folder:           "folder",
-			resource_version: "300",
-			value:            "rv-300",
+			resource_version: "100",
+			value:            "rv-100",
 		}
 		expectedListRv := rv3
 		req := &resource.ListRequest{
