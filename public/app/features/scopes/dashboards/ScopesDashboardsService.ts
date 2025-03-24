@@ -5,7 +5,7 @@ import { ScopeDashboardBinding, ScopeNavigation } from '@grafana/data';
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
-import { SuggestedDashboardsFoldersMap } from './types';
+import { SuggestedNavigationsFoldersMap } from './types';
 
 interface ScopesDashboardsServiceState {
   // State of the drawer showing related dashboards
@@ -14,9 +14,9 @@ interface ScopesDashboardsServiceState {
   dashboards: ScopeDashboardBinding[];
   scopeNavigations: ScopeNavigation[];
   // a filtered version of the `folders` property. this prevents a lot of unnecessary parsings in React renders
-  filteredFolders: SuggestedDashboardsFoldersMap;
+  filteredFolders: SuggestedNavigationsFoldersMap;
   // this is a grouping in folders of the `dashboards` property. it is used for filtering the dashboards and folders when the search query changes
-  folders: SuggestedDashboardsFoldersMap;
+  folders: SuggestedNavigationsFoldersMap;
   forScopeNames: string[];
   loading: boolean;
   searchQuery: string;
@@ -39,8 +39,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   public updateFolder = (path: string[], expanded: boolean) => {
     let folders = { ...this.state.folders };
     let filteredFolders = { ...this.state.filteredFolders };
-    let currentLevelFolders: SuggestedDashboardsFoldersMap = folders;
-    let currentLevelFilteredFolders: SuggestedDashboardsFoldersMap = filteredFolders;
+    let currentLevelFolders: SuggestedNavigationsFoldersMap = folders;
+    let currentLevelFilteredFolders: SuggestedNavigationsFoldersMap = filteredFolders;
 
     for (let idx = 0; idx < path.length - 1; idx++) {
       currentLevelFolders = currentLevelFolders[path[idx]].folders;
@@ -129,8 +129,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
   public groupSuggestedItems = (
     navigationItems: Array<ScopeDashboardBinding | ScopeNavigation>
-  ): SuggestedDashboardsFoldersMap => {
-    const folders: SuggestedDashboardsFoldersMap = {
+  ): SuggestedNavigationsFoldersMap => {
+    const folders: SuggestedNavigationsFoldersMap = {
       '': {
         title: '',
         expanded: true,
@@ -172,13 +172,13 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
           target[navigation.spec.dashboard] = {
             url: '/d/' + navigation.spec.dashboard,
             title: navigation.status.dashboardTitle,
-            groups: navigation.status.groups ?? [],
+            name: navigation.spec.dashboard,
           };
         } else if ('url' in navigation.spec && 'title' in navigation.status && !target[navigation.spec.url]) {
           target[navigation.spec.url] = {
             title: navigation.status.title || navigation.metadata.name,
-            groups: navigation.status.groups ?? [],
             url: navigation.spec.url,
+            name: navigation.metadata.name,
           };
         }
       });
@@ -187,10 +187,10 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     return folders;
   };
 
-  public filterFolders = (folders: SuggestedDashboardsFoldersMap, query: string): SuggestedDashboardsFoldersMap => {
+  public filterFolders = (folders: SuggestedNavigationsFoldersMap, query: string): SuggestedNavigationsFoldersMap => {
     query = (query ?? '').toLowerCase();
 
-    return Object.entries(folders).reduce<SuggestedDashboardsFoldersMap>((acc, [folderId, folder]) => {
+    return Object.entries(folders).reduce<SuggestedNavigationsFoldersMap>((acc, [folderId, folder]) => {
       // If folder matches the query, we show everything inside
       if (folder.title.toLowerCase().includes(query)) {
         acc[folderId] = {

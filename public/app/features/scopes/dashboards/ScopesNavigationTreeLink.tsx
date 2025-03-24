@@ -8,14 +8,15 @@ import { Icon, useStyles2 } from '@grafana/ui';
 export interface ScopesNavigationTreeLinkProps {
   to: string;
   title: string;
+  id: string;
 }
 
-export function ScopesNavigationTreeLink({ to, title }: ScopesNavigationTreeLinkProps) {
+export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
 
   return (
-    <Link to={to} className={styles.container} data-testid={`scopes-dashboards-${title}`} role="treeitem">
+    <Link to={to} className={styles.container} data-testid={`scopes-dashboards-${id}`} role="treeitem">
       <Icon name={linkIcon} className={styles.icon} /> {title}
     </Link>
   );

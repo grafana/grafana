@@ -8,19 +8,18 @@ export interface SuggestedDashboard {
 
 export interface SuggestedNavigation {
   title: string;
-  groups: string[];
   url: string;
+  // Used for testid and keys
+  name: string;
 }
 
-export interface SuggestedDashboardsFolder {
+export interface SuggestedNavigationsFolder {
   title: string;
   expanded: boolean;
-  folders: SuggestedDashboardsFoldersMap;
+  folders: SuggestedNavigationsFoldersMap;
   suggestedNavigations: SuggestedNavigationsMap;
-  //  dashboards: SuggestedDashboardsMap;
 }
 
-//export type SuggestedDashboardsMap = Record<string, SuggestedDashboard>;
-export type SuggestedDashboardsFoldersMap = Record<string, SuggestedDashboardsFolder>;
+export type SuggestedNavigationsFoldersMap = Record<string, SuggestedNavigationsFolder>;
 export type SuggestedNavigationsMap = Record<string, SuggestedNavigation>;
 export type OnFolderUpdate = (path: string[], expanded: boolean) => void;

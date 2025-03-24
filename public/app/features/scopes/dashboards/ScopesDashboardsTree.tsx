@@ -3,10 +3,10 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { ScopesDashboardsTreeFolderItem } from './ScopesDashboardsTreeFolderItem';
 import { ScopesNavigationTreeLink } from './ScopesNavigationTreeLink';
-import { OnFolderUpdate, SuggestedDashboardsFoldersMap } from './types';
+import { OnFolderUpdate, SuggestedNavigationsFoldersMap } from './types';
 
 export interface ScopesDashboardsTreeProps {
-  folders: SuggestedDashboardsFoldersMap;
+  folders: SuggestedNavigationsFoldersMap;
   folderPath: string[];
   onFolderUpdate: OnFolderUpdate;
 }
@@ -30,9 +30,10 @@ export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: Sc
       ))}
       {Object.values(folder.suggestedNavigations).map((navigation) => (
         <ScopesNavigationTreeLink
-          key={navigation.title}
+          key={navigation.name}
           to={urlUtil.renderUrl(navigation.url, queryParams)}
           title={navigation.title}
+          id={navigation.name}
         />
       ))}
     </div>
