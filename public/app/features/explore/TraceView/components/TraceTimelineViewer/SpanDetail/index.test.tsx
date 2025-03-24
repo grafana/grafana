@@ -216,13 +216,13 @@ describe('<SpanDetail>', () => {
 
   it('renders the span tags', async () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-    await userEvent.click(screen.getByRole('switch', { name: /Span Attributes/ }));
+    await userEvent.click(screen.getByRole('switch', { name: /Span attributes/ }));
     expect(props.tagsToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders the process tags', async () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-    await userEvent.click(screen.getByRole('switch', { name: /Resource Attributes/ }));
+    await userEvent.click(screen.getByRole('switch', { name: /Resource attributes/ }));
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 

@@ -37,7 +37,7 @@ export const Search = ({ onChange, value }: Props) => {
         onChange={onChange}
         prefix={<Icon name="search" />}
         placeholder={placeholder}
-        aria-label="Search all"
+        aria-label={t('connections.search.aria-label-search-all', 'Search all')}
       />
     </div>
   );

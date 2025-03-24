@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 
 import { Button, Input, Field, Modal } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { Trans } from '../../../core/internationalization';
 import { ServerDiscoveryFormData } from '../types';
@@ -38,7 +39,15 @@ export const ServerDiscoveryModal = ({ isOpen, onClose, onSuccess, isLoading }: 
   };
 
   return (
-    <Modal title="OpenID Connect Discovery URL" onDismiss={onClose} onClickBackdrop={onClose} isOpen={isOpen}>
+    <Modal
+      title={t(
+        'auth-config.server-discovery-modal.title-open-id-connect-discovery-url',
+        'OpenID Connect Discovery URL'
+      )}
+      onDismiss={onClose}
+      onClickBackdrop={onClose}
+      isOpen={isOpen}
+    >
       <form
         onSubmit={(e) => {
           e.stopPropagation();
@@ -46,7 +55,10 @@ export const ServerDiscoveryModal = ({ isOpen, onClose, onSuccess, isLoading }: 
         }}
       >
         <Field
-          label="The .well-known/openid-configuration endpoint for your IdP"
+          label={t(
+            'auth-config.server-discovery-modal.label-the-wellknownopenidconfiguration-endpoint-for-your-id-p',
+            'The .well-known/openid-configuration endpoint for your IdP'
+          )}
           invalid={!!errors.url}
           error={errors.url?.message}
           htmlFor="url"
