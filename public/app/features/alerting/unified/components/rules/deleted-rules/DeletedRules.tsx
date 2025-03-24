@@ -171,5 +171,5 @@ export function DeletedRules() {
 }
 
 function getRowId(row: GrafanaRuleDefinition) {
-  return `${row.namespace_uid}${row.namespace_uid}${row.title}${row.version}`;
+  return `${row.namespace_uid}${row.namespace_uid}${row.title}${row.uid}${row.version}`;
 }
