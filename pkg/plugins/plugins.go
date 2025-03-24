@@ -64,6 +64,8 @@ type Plugin struct {
 	SkipHostEnvVars bool
 
 	mu sync.Mutex
+
+	Locales map[string]string
 }
 
 var (
@@ -129,6 +131,9 @@ type JSONData struct {
 
 	// App Service Auth Registration
 	IAM *auth.IAM `json:"iam,omitempty"`
+
+	// Localization
+	Locales []string `json:"locales,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {

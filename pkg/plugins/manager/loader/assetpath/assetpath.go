@@ -153,3 +153,18 @@ func getBaseDir(pluginDir string) string {
 	}
 	return baseDir
 }
+
+func (s *Service) GetLocales(n PluginInfo) (map[string]string, error) {
+	pathToLocales, err := s.RelativeURL(n, "locales/")
+	if err != nil {
+		return nil, fmt.Errorf("get locales: %w", err)
+	}
+
+	// loop through all the locales specified in the plugin.json and add them to the list
+	locales := map[string]string{}
+	for _, locale := range n.pluginJSON.Locales {
+		locales[locale] = fmt.Sprintf("%s/%s/%s.json", pathToLocales, locale, string(n.pluginJSON.ID))
+	}
+
+	return locales, nil
+}
