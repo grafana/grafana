@@ -217,31 +217,7 @@ func (g *genericCompleteStrategy) PrepareForCreate(ctx context.Context, obj runt
 	meta.SetGeneration(1)
 }
 
-func (g *genericCompleteStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	oldMeta, err := utils.MetaAccessor(old)
-	if err != nil {
-		return
-	}
-
-	newMeta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return
-	}
-
-	spec, err := newMeta.GetSpec()
-	if err != nil {
-		return
-	}
-
-	oldSpec, err := oldMeta.GetSpec()
-	if err != nil {
-		return
-	}
-
-	if !apiequality.Semantic.DeepEqual(spec, oldSpec) {
-		newMeta.SetGeneration(oldMeta.GetGeneration() + 1)
-	}
-}
+func (g *genericCompleteStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {}
 
 func (g *genericCompleteStrategy) AllowCreateOnUpdate() bool {
 	return true

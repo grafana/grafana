@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/apis/example"
@@ -64,13 +65,12 @@ func TestGenericStrategy(t *testing.T) {
 			assert.Equal(t, int64(1), newObj.Generation)
 		})
 
-		t.Run("increments generation if spec changes", func(t *testing.T) {
+		t.Run("does not increment generation if spec changes", func(t *testing.T) {
 			t.Parallel()
 			oldObj := obj.DeepCopy()
 			newObj := obj.DeepCopy()
 			newObj.Spec.NodeSelector = map[string]string{"foo": "baz"}
 			expectedObj := newObj.DeepCopy()
-			expectedObj.Generation = 2
 
 			strategy := generic.NewStrategy(runtime.NewScheme(), gv)
 			strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
@@ -283,7 +283,7 @@ func TestCompleteStrategy(t *testing.T) {
 				require.Equal(t, map[string]string{"foo": "baz"}, newObj.Spec.NodeSelector)
 			})
 
-			t.Run("increments generation", func(t *testing.T) {
+			t.Run("does not increment generation", func(t *testing.T) {
 				t.Parallel()
 				oldObj := obj.DeepCopy()
 				newObj := obj.DeepCopy()
@@ -291,7 +291,7 @@ func TestCompleteStrategy(t *testing.T) {
 
 				strategy := generic.NewCompleteStrategy(runtime.NewScheme(), gv)
 				strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
-				require.Equal(t, int64(2), newObj.Generation)
+				require.Equal(t, int64(1), newObj.Generation)
 			})
 		})
 
@@ -423,10 +423,10 @@ func TestGetAttrs(t *testing.T) {
 				},
 			}
 
-			labels, _, err := generic.GetAttrs(obj)
+			l, _, err := generic.GetAttrs(obj)
 			require.NoError(t, err)
 
-			require.Equal(t, map[string]string{"foo": "bar"}, labels, "expected labels to match")
+			require.Equal(t, labels.Set{"foo": "bar"}, l, "expected labels to match")
 		})
 
 		t.Run("when there are many labels", func(t *testing.T) {
@@ -440,10 +440,10 @@ func TestGetAttrs(t *testing.T) {
 				},
 			}
 
-			labels, _, err := generic.GetAttrs(obj)
+			l, _, err := generic.GetAttrs(obj)
 			require.NoError(t, err)
 
-			require.Equal(t, map[string]string{"foo": "bar", "baz": "qux", "grafana": "is-cool"}, labels, "expected labels to match")
+			require.Equal(t, labels.Set{"foo": "bar", "baz": "qux", "grafana": "is-cool"}, l, "expected labels to match")
 		})
 	})
 
