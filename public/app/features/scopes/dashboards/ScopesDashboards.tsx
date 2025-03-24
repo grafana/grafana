@@ -47,7 +47,9 @@ export function ScopesDashboards() {
           className={cx(styles.container, styles.noResultsContainer)}
           data-testid="scopes-dashboards-notFoundForScope"
         >
-          <Trans i18nKey="scopes.dashboards.noResultsForScopes">No dashboards found for the selected scopes</Trans>
+          <Trans i18nKey="scopes.dashboards.noResultsForScopes">
+            No dashboards or links found for the selected scopes
+          </Trans>
         </div>
       );
     }
