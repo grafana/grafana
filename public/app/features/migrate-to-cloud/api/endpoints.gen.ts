@@ -58,6 +58,9 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    getResourceDependencies: build.query<GetResourceDependenciesApiResponse, GetResourceDependenciesApiArg>({
+      query: () => ({ url: `/cloudmigration/resources/dependencies` }),
+    }),
     getCloudMigrationToken: build.query<GetCloudMigrationTokenApiResponse, GetCloudMigrationTokenApiArg>({
       query: () => ({ url: `/cloudmigration/token` }),
     }),
@@ -141,6 +144,8 @@ export type GetShapshotListApiArg = {
   /** Sort with value latest to return results sorted in descending order. */
   sort?: string;
 };
+export type GetResourceDependenciesApiResponse = /** status 200 (empty) */ ResourceDependenciesResponseDto;
+export type GetResourceDependenciesApiArg = void;
 export type GetCloudMigrationTokenApiResponse = /** status 200 (empty) */ GetAccessTokenResponseDto;
 export type GetCloudMigrationTokenApiArg = void;
 export type CreateCloudMigrationTokenApiResponse = /** status 200 (empty) */ CreateAccessTokenResponseDto;
@@ -278,6 +283,36 @@ export type SnapshotDto = {
 export type SnapshotListResponseDto = {
   snapshots?: SnapshotDto[];
 };
+export type ResourceDependencyDto = {
+  dependencies?: (
+    | 'DASHBOARD'
+    | 'DATASOURCE'
+    | 'FOLDER'
+    | 'LIBRARY_ELEMENT'
+    | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
+    | 'CONTACT_POINT'
+    | 'NOTIFICATION_POLICY'
+    | 'NOTIFICATION_TEMPLATE'
+    | 'MUTE_TIMING'
+    | 'PLUGIN'
+  )[];
+  resourceType?:
+    | 'DASHBOARD'
+    | 'DATASOURCE'
+    | 'FOLDER'
+    | 'LIBRARY_ELEMENT'
+    | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
+    | 'CONTACT_POINT'
+    | 'NOTIFICATION_POLICY'
+    | 'NOTIFICATION_TEMPLATE'
+    | 'MUTE_TIMING'
+    | 'PLUGIN';
+};
+export type ResourceDependenciesResponseDto = {
+  resourceDependencies?: ResourceDependencyDto[];
+};
 export type GetAccessTokenResponseDto = {
   createdAt?: string;
   displayName?: string;
@@ -376,6 +411,7 @@ export const {
   useCancelSnapshotMutation,
   useUploadSnapshotMutation,
   useGetShapshotListQuery,
+  useGetResourceDependenciesQuery,
   useGetCloudMigrationTokenQuery,
   useCreateCloudMigrationTokenMutation,
   useDeleteCloudMigrationTokenMutation,
