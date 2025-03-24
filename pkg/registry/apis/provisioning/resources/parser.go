@@ -24,8 +24,9 @@ import (
 )
 
 var (
-	ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
-	ErrPathTooDeep       = errors.New("the path is too deep")
+	ErrNamespaceMismatch        = errors.New("the file namespace does not match target namespace")
+	ErrPathTooDeep              = errors.New("the path is too deep")
+	ErrUnsupportedFileExtension = errors.New("unsupported file extension")
 )
 
 const maxPathDepth = 8
@@ -310,7 +311,7 @@ func IsPathSupported(filePath string) error {
 	// Only check file extension if it's not a folder path
 	if !safepath.IsDir(filePath) {
 		if ext := path.Ext(filePath); ext != ".yml" && ext != ".yaml" && ext != ".json" {
-			return errors.New("only YAML and JSON files supported")
+			return ErrUnsupportedFileExtension
 		}
 	}
 
