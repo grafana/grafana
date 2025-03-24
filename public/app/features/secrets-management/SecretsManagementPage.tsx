@@ -2,13 +2,11 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Box, Button, EmptyState, FilterInput, InlineField, RadioButtonGroup } from '@grafana/ui';
-import { useStyles2 } from '@grafana/ui/';
+import { Box, Button, EmptyState, FilterInput, InlineField, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageContents } from 'app/core/components/Page/PageContents';
+import { t } from 'app/core/internationalization';
 import { useDispatch, useSelector } from 'app/types';
-
-import { t } from '../../core/internationalization';
 
 import { EditSecretModal } from './components/EditSecretModal';
 import { SecretsList } from './components/SecretsList';

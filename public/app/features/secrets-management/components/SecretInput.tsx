@@ -3,7 +3,8 @@ import { forwardRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Input, IconButton, Button, useStyles2 } from '@grafana/ui';
-import { Props as InputProps } from '@grafana/ui/src/components/Input/Input';
+
+import { InputProps } from '../types';
 
 interface SecretInputProps extends Omit<InputProps, 'type'> {
   isConfigured?: boolean;

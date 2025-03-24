@@ -1,3 +1,5 @@
+import { HTMLProps, ReactNode } from 'react';
+
 interface SecretsListEmptyResponseItem {
   metadata: { creationTimestamp: null };
   spec: { audiences: null; title: '' };
@@ -57,4 +59,22 @@ export interface Secret {
 export interface NewSecret extends Omit<Secret, 'uid'> {
   uid: never;
   value: string;
+}
+
+// TypeScript doesn't like `import { Props as InputProps } from '@grafana/ui/src/components/Input/Input'`, this is a copy-paste of the InputProps interface
+export interface InputProps extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
+  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
+  width?: number;
+  /** Show an invalid state around the input */
+  invalid?: boolean;
+  /** Show an icon as a prefix in the input */
+  prefix?: ReactNode;
+  /** Show an icon as a suffix in the input */
+  suffix?: ReactNode;
+  /** Show a loading indicator as a suffix in the input */
+  loading?: boolean;
+  /** Add a component as an addon before the input  */
+  addonBefore?: ReactNode;
+  /** Add a component as an addon after the input */
+  addonAfter?: ReactNode;
 }

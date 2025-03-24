@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { Badge, ClipboardButton, ConfirmModal, InlineField, InlineFieldRow } from '@grafana/ui';
-import { Button, useStyles2 } from '@grafana/ui/';
+import { Badge, ClipboardButton, ConfirmModal, InlineField, InlineFieldRow, Button, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { deleteSecret } from '../state/actions';
