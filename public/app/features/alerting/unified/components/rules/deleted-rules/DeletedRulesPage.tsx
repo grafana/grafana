@@ -5,7 +5,7 @@ import { DeletedRules } from './DeletedRules';
 
 function DeletedrulesPage() {
   return (
-    <AlertingPageWrapper navId="alerts-trash" isLoading={false}>
+    <AlertingPageWrapper navId="alerts/recently-deleted" isLoading={false}>
       <DeletedRules />
     </AlertingPageWrapper>
   );

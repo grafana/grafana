@@ -212,16 +212,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/trash/',
+      path: '/alerting/recently-deleted/',
       roles: () => ['Admin'],
       component:
         config.featureToggles.alertRuleRestore && config.featureToggles.alertingRuleRecoverDeleted
           ? SafeDynamicImport(
-              () =>
-                import(
-                  /* webpackChunkName: "TrashPage" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
-                )
-            )
+            () =>
+              import(
+                  /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
+              )
+          )
           : () => <Navigate replace to="/alerting/list" />,
     },
     {

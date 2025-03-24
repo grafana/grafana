@@ -73,7 +73,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
         title="Delete rule"
         body={
           isSoftDeleteEnabled
-            ? 'Are you sure you want to delete this rule? This rule will be recoverable from the trash page.'
+            ? 'Are you sure you want to delete this rule? This rule will be recoverable from the Recently deleted page.'
             : 'Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?'
         }
         confirmText="Yes, delete"

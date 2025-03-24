@@ -493,9 +493,8 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text:     "Recently deleted",
 			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
-			Id:       "alerts-trash",
-			Url:      s.cfg.AppSubURL + "/alerting/trash",
-			Icon:     "trash",
+			Id:       "alerts/recently-deleted",
+			Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
 		})
 	}
 
