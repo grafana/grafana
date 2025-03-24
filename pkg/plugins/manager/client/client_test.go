@@ -25,24 +25,39 @@ func TestQueryData(t *testing.T) {
 
 	t.Run("Non-empty registry", func(t *testing.T) {
 		tcs := []struct {
-			err           error
-			expectedError error
+			err               error
+			expectedError     error
+			shouldPassThrough bool
 		}{
 			{
-				err:           plugins.ErrPluginUnavailable,
-				expectedError: plugins.ErrPluginUnavailable,
+				err:               plugins.ErrPluginUnavailable,
+				expectedError:     plugins.ErrPluginUnavailable,
+				shouldPassThrough: true,
 			},
 			{
-				err:           plugins.ErrMethodNotImplemented,
-				expectedError: plugins.ErrMethodNotImplemented,
+				err:               plugins.ErrMethodNotImplemented,
+				expectedError:     plugins.ErrMethodNotImplemented,
+				shouldPassThrough: true,
 			},
 			{
-				err:           errors.New("surprise surprise"),
-				expectedError: plugins.ErrPluginRequestFailureErrorBase,
+				err:               errors.New("surprise surprise"),
+				expectedError:     plugins.ErrPluginRequestFailureErrorBase,
+				shouldPassThrough: false,
 			},
 			{
-				err:           context.Canceled,
-				expectedError: plugins.ErrPluginRequestCanceledErrorBase,
+				err:               context.Canceled,
+				expectedError:     plugins.ErrPluginRequestCanceledErrorBase,
+				shouldPassThrough: false,
+			},
+			{
+				err:               plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("unavailable"),
+				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("unavailable"),
+				shouldPassThrough: true,
+			},
+			{
+				err:               plugins.ErrPluginGrpcResourceExhaustedBase.Errorf("exhausted"),
+				expectedError:     plugins.ErrPluginGrpcResourceExhaustedBase.Errorf("exhausted"),
+				shouldPassThrough: true,
 			},
 		}
 
@@ -69,7 +84,11 @@ func TestQueryData(t *testing.T) {
 					},
 				})
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
+				if tc.shouldPassThrough {
+					require.Equal(t, tc.err, err)
+				} else {
+					require.ErrorIs(t, err, tc.expectedError)
+				}
 			})
 		}
 	})
