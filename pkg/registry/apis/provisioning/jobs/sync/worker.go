@@ -337,7 +337,6 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			r.progress.Record(ctx, jobs.JobResourceResult{
 				Path:   change.Path,
 				Action: repository.FileActionIgnored,
-				// TODO: add a message in the result on why it was ignored
 			})
 			continue
 		}
