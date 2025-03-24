@@ -1,8 +1,28 @@
-import { useContext } from 'react';
+import { createContext, useContext } from 'react';
 
 import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
-import { LogListContext, LogListContextData, Props } from '../LogListContext';
+import { LogListContextData, Props } from '../LogListContext';
+
+export const LogListContext = createContext<LogListContextData>({
+  app: CoreApp.Unknown,
+  dedupStrategy: LogsDedupStrategy.none,
+  displayedFields: [],
+  filterLevels: [],
+  setDedupStrategy: () => {},
+  setDisplayedFields: () => {},
+  setFilterLevels: () => {},
+  setLogListState: () => {},
+  setPinnedLogs: () => {},
+  setShowTime: () => {},
+  setSortOrder: () => {},
+  setSyntaxHighlighting: () => {},
+  setWrapLogMessage: () => {},
+  showTime: true,
+  sortOrder: LogsSortOrder.Ascending,
+  syntaxHighlighting: true,
+  wrapLogMessage: false,
+});
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
   const data: LogListContextData = useContext(LogListContext);
