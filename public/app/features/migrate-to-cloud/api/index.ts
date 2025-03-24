@@ -26,7 +26,12 @@ export const cloudMigrationAPI = generatedAPI
     }),
   })
   .enhanceEndpoints({
-    addTagTypes: ['cloud-migration-token', 'cloud-migration-session', 'cloud-migration-snapshot'],
+    addTagTypes: [
+      'cloud-migration-token',
+      'cloud-migration-session',
+      'cloud-migration-snapshot',
+      'cloud-migration-resource-dependencies',
+    ],
 
     endpoints: {
       // Cloud-side - create token
@@ -66,6 +71,11 @@ export const cloudMigrationAPI = generatedAPI
       },
       uploadSnapshot: {
         invalidatesTags: ['cloud-migration-snapshot'],
+      },
+
+      // Resource dependencies
+      getResourceDependencies: {
+        providesTags: ['cloud-migration-resource-dependencies'],
       },
 
       getDashboardByUid: suppressErrorsOnQuery,

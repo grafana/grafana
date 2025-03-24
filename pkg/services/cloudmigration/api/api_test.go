@@ -598,6 +598,31 @@ func TestCloudMigrationAPI_CancelSnapshot(t *testing.T) {
 	}
 }
 
+func TestCloudMigrationAPI_GetResourceDependencies(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "returns 200 if the user has the right permissions",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/resources/dependencies",
+			user:               userWithPermissions,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"resourceDependencies":[{"resourceType":"PLUGIN","dependencies":[]}]}`,
+		},
+		{
+			desc:               "returns 403 if the user does not have the right permissions",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/resources/dependencies",
+			user:               userWithoutPermissions,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
 func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 	return func(t *testing.T) {
 		// setup server

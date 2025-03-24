@@ -30,6 +30,8 @@ const config: ConfigFile = {
 
         'getDashboardByUid',
         'getLibraryElementByUid',
+
+        'getResourceDependencies',
       ],
     },
     '../public/app/features/preferences/api/user/endpoints.gen.ts': {
