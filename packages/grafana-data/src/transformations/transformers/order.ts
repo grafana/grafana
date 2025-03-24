@@ -7,10 +7,6 @@ import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
-export interface OrderFieldsTransformerOptions {
-  indexByName: Record<string, number>;
-}
-
 export enum FieldOrdering {
   Manual = 'manual',
   Auto = 'auto',
@@ -20,6 +16,19 @@ export enum Order {
   Off = 'off',
   Asc = 'asc',
   Desc = 'desc',
+}
+
+export interface LabelSort {
+  labelName: string;
+  order: Order;
+  index: number;
+}
+
+export interface OrderFieldsTransformerOptions {
+  indexByName: Record<string, number>;
+  fieldOrder: FieldOrdering;
+  fieldNameSort: { order: Order; index: number };
+  labelSort: LabelSort[];
 }
 
 export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerOptions> = {
@@ -37,16 +46,25 @@ export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerO
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
-        const orderer = createFieldsOrderer(options.indexByName);
+        if (options.fieldOrder === FieldOrdering.Manual) {
+          const orderer = createFieldsOrdererManual(options.indexByName);
 
-        if (!Array.isArray(data) || data.length === 0) {
-          return data;
+          if (!Array.isArray(data) || data.length === 0) {
+            return data;
+          }
+
+          return data.map((frame) => ({
+            ...frame,
+            fields: orderer(frame.fields, data, frame),
+          }));
+        } else {
+          const orderer = createFieldsOrdererAuto(options.fieldNameSort, options.labelSort);
+
+          return data.map((frame) => ({
+            ...frame,
+            fields: orderer(frame.fields, data, frame),
+          }));
         }
-
-        return data.map((frame) => ({
-          ...frame,
-          fields: orderer(frame.fields, data, frame),
-        }));
       })
     ),
 };
@@ -55,7 +73,7 @@ export const createOrderFieldsComparer = (indexByName: Record<string, number>) =
   return indexOfField(a, indexByName) - indexOfField(b, indexByName);
 };
 
-const createFieldsOrderer =
+const createFieldsOrdererManual =
   (indexByName: Record<string, number>) => (fields: Field[], data: DataFrame[], frame: DataFrame) => {
     if (!Array.isArray(fields) || fields.length === 0) {
       return fields;
@@ -75,3 +93,19 @@ const indexOfField = (fieldName: string, indexByName: Record<string, number>) =>
   }
   return Number.MAX_SAFE_INTEGER;
 };
+
+const createFieldsOrdererAuto =
+  (fieldNameSort: { order: Order; index: number }, labelSort: LabelSort[]) =>
+  (fields: Field[], data: DataFrame[], frame: DataFrame) => {
+    const allSort: Array<{ name?: String; order: Order; index: number }> = [...labelSort, fieldNameSort];
+    if (!Array.isArray(fields) || fields.length === 0) {
+      return fields;
+    }
+    if (!allSort || allSort.length === 0) {
+      return fields;
+    }
+
+    return clone(fields).sort((a, b) => {
+      return 1;
+    });
+  };

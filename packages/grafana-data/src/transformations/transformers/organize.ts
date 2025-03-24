@@ -6,7 +6,7 @@ import { DataTransformerID } from './ids';
 import { FieldOrdering, Order, orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
 import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
 
-interface LabelSort {
+export interface LabelSort {
   labelName: string;
   order: Order;
   index: number;
@@ -18,7 +18,7 @@ export interface OrganizeFieldsTransformerOptions
   excludeByName: Record<string, boolean>;
   includeByName?: Record<string, boolean>;
   fieldOrder: FieldOrdering;
-  sortByFieldName: { order: Order; index: number };
+  fieldNameSort: { order: Order; index: number };
   labelSort: LabelSort[];
 }
 

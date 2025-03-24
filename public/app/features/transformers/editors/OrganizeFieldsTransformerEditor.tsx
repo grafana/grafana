@@ -10,8 +10,13 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { createOrderFieldsComparer, FieldOrdering, Order } from '@grafana/data/src/transformations/transformers/order';
-import { LabelSort, OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
+import {
+  createOrderFieldsComparer,
+  FieldOrdering,
+  LabelSort,
+  Order,
+} from '@grafana/data/src/transformations/transformers/order';
+import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
 import {
   Input,
   IconButton,
@@ -39,7 +44,10 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
-  const labels = Array.from(getDistinctLabels(input));
+  const allLabels: LabelSort[] = Array.from(getDistinctLabels(input)).map((label) => {
+    const sortedLabel = (options.labelSort ?? []).find((sortedLabel) => sortedLabel.labelName === label);
+    return { labelName: label, index: sortedLabel?.index ?? 0, order: sortedLabel?.order ?? Order.Off };
+  });
   const filterType = includeByName && Object.keys(includeByName).length > 0 ? 'include' : 'exclude';
 
   const onToggleVisibility = useCallback(
@@ -123,16 +131,25 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
       if (isFieldName) {
         onChange({ ...options, fieldNameSort: { ...options.fieldNameSort, order: sortOrder } });
       } else {
-        const fieldOptions = options.labelSort.find((label) => label.labelName === labelName);
-        if (fieldOptions === undefined) {
-          const labelIndex = labels.findIndex((label) => label === labelName);
+        const optionsLabels = options.labelSort ?? [];
+        const fieldOptionsIdx = optionsLabels.findIndex((label) => label.labelName === labelName);
+        if (fieldOptionsIdx === -1) {
+          //  not found in options, add
+          const labelIndex = allLabels.findIndex((label) => label.labelName === labelName);
           const newLabelSort: LabelSort = { labelName, index: labelIndex, order: sortOrder };
-          onChange({ ...options, labelSort: [...options.labelSort, newLabelSort] });
+          onChange({ ...options, labelSort: [...optionsLabels, newLabelSort] });
         } else {
+          let labelSort = optionsLabels[fieldOptionsIdx];
+          const newLabelSortArr = optionsLabels.filter((v, i) => i !== fieldOptionsIdx);
+          if (sortOrder !== Order.Off) {
+            labelSort.order = sortOrder;
+            newLabelSortArr.push(labelSort);
+          }
+          onChange({ ...options, labelSort: newLabelSortArr });
         }
       }
     },
-    [onChange, options]
+    [allLabels, onChange, options]
   );
 
   // Show warning that we only apply the first frame
@@ -167,14 +184,21 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
             {(provided) => {
               return (
                 <div ref={provided.innerRef} {...provided.droppableProps} className={styles.labelsDraggable}>
-                  {labels.map((label, idx) => (
-                    <DraggableLabel labelKeyName={label} index={idx} isFieldName={false} onChangeSort={onChangeSort} />
+                  {allLabels.map((label, idx) => (
+                    <DraggableLabel
+                      labelKeyName={label.labelName}
+                      index={idx}
+                      isFieldName={false}
+                      onChangeSort={onChangeSort}
+                      order={label.order}
+                    />
                   ))}
                   <DraggableLabel
                     labelKeyName={'Field Name'}
-                    index={labels.length}
+                    index={allLabels.length}
                     isFieldName={true}
                     onChangeSort={onChangeSort}
+                    order={options.fieldNameSort?.order}
                   />
                 </div>
               );
@@ -282,11 +306,12 @@ DraggableFieldName.displayName = 'DraggableFieldName';
 interface DraggableLabelProps {
   labelKeyName: string;
   index: number;
+  order?: Order;
   isFieldName: boolean;
   onChangeSort: (isFieldName: boolean, labelName: string, order: Order) => void;
 }
 
-const DraggableLabel = ({ labelKeyName, index, isFieldName, onChangeSort }: DraggableLabelProps) => {
+const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort }: DraggableLabelProps) => {
   const styles = useStyles2(getFieldNameStyles);
 
   return (
@@ -310,7 +335,7 @@ const DraggableLabel = ({ labelKeyName, index, isFieldName, onChangeSort }: Drag
               { label: 'ASC', value: Order.Asc },
               { label: 'DESC', value: Order.Desc },
             ]}
-            value={Order.Off}
+            value={order ?? Order.Off}
             onChange={(v) => {
               onChangeSort(isFieldName, labelKeyName, v);
             }}
