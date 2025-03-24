@@ -221,25 +221,42 @@ func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string, orgID int
 	return result.ID, nil
 }
 
-func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, rv int64) (*dashver.DashboardVersionDTO, error) {
-	out, err := s.k8sclient.Get(ctx, dashboardUID, orgID, v1.GetOptions{ResourceVersion: strconv.FormatInt(rv, 10)})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
+func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, version int64) (*dashver.DashboardVersionDTO, error) {
+	// this is an unideal implementation - we have to list all versions and filter here, since there currently is no way to query for the
+	// generation id in unified storage, so we cannot query for the dashboard version directly, and we cannot use search as history is not indexed.
+	// use batches to make sure we don't load too much data at once.
+	const batchSize = 50
+	labelSelector := utils.LabelKeyGetHistory + "=" + dashboardUID
+	var continueToken string
+	for {
+		out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
+			LabelSelector: labelSelector,
+			Limit:         int64(batchSize),
+			Continue:      continueToken,
+		})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil, dashboards.ErrDashboardNotFound
+			}
+			return nil, err
+		}
+		if out == nil {
 			return nil, dashboards.ErrDashboardNotFound
 		}
 
-		return nil, err
-	}
-	if out == nil {
-		return nil, dashboards.ErrDashboardNotFound
+		for _, item := range out.Items {
+			if item.GetGeneration() == version {
+				return s.UnstructuredToLegacyDashboardVersion(ctx, &item, orgID)
+			}
+		}
+
+		continueToken = out.GetContinue()
+		if continueToken == "" || len(out.Items) == 0 {
+			break
+		}
 	}
 
-	dash, err := s.UnstructuredToLegacyDashboardVersion(ctx, out, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	return dash, nil
+	return nil, dashboards.ErrDashboardNotFound
 }
 
 func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, limit int64, continueToken string) (*dashver.DashboardVersionResponse, error) {
@@ -308,10 +325,9 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 			createdBy = updatedBy
 		}
 	}
-
-	id, err := obj.GetResourceVersionInt64()
-	if err != nil {
-		return nil, err
+	created := obj.GetCreationTimestamp().Time
+	if updated, err := obj.GetUpdatedTimestamp(); err == nil && updated != nil {
+		created = *updated
 	}
 
 	restoreVer, err := getRestoreVersion(obj.GetMessage())
@@ -320,10 +336,10 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 	}
 
 	out := dashver.DashboardVersionDTO{
-		ID:            id,
+		ID:            dashVersion,
 		DashboardID:   obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		DashboardUID:  uid,
-		Created:       obj.GetCreationTimestamp().Time,
+		Created:       created,
 		CreatedBy:     createdBy.ID,
 		Message:       obj.GetMessage(),
 		RestoredFrom:  restoreVer,
