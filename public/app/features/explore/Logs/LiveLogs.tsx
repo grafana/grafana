@@ -6,6 +6,7 @@ import tinycolor from 'tinycolor2';
 import { LogRowModel, dateTimeFormat, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Button, Themeable2, withTheme2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { LogMessageAnsi } from '../../logs/components/LogMessageAnsi';
 import { getLogRowStyles } from '../../logs/components/getLogRowStyles';
@@ -172,10 +173,10 @@ class LiveLogs extends PureComponent<Props, State> {
             {isPaused ? 'Resume' : 'Pause'}
           </Button>
           <Button icon="trash-alt" variant="secondary" onClick={onClear} className={styles.button}>
-            Clear logs
+            <Trans i18nKey="explore.live-logs.clear-logs">Clear logs</Trans>
           </Button>
           <Button icon="square-shape" variant="secondary" onClick={this.props.stopLive} className={styles.button}>
-            Exit live mode
+            <Trans i18nKey="explore.live-logs.exit-live-mode">Exit live mode</Trans>
           </Button>
           {isPaused ||
             (this.rowsToRender().length > 0 && (
