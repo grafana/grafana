@@ -34,7 +34,16 @@ type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace'
 export const prometheusApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getGroups: build.query<PromRulesResponse<PromRuleGroupDTO<PromRuleDTO>>, PromRulesOptions>({
-      query: ({ ruleSource, namespace, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => {
+      query: ({
+        ruleSource,
+        namespace,
+        groupName,
+        ruleName,
+        groupLimit,
+        excludeAlerts,
+        groupNextToken,
+        notificationOptions,
+      }) => {
         if (ruleSource.uid === GRAFANA_RULES_SOURCE_NAME) {
           throw new Error('Please use getGrafanaGroups endpoint for grafana rules');
         }
@@ -51,6 +60,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
             group_limit: groupLimit?.toFixed(0),
             group_next_token: groupNextToken,
           },
+          notificationOptions,
         };
       },
       transformResponse: (response: PromRulesResponse<PromRuleGroupDTO<PromRuleDTO>>) => {

@@ -210,6 +210,9 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
     const { dataSourceName, namespaceName, groupName } = targetRuleGroupIdentifier;
 
+    // V2 list is based on eventually consistent Prometheus API.
+    // When a new rule group is created it takes a while for the new rule group to be reflected in the V2 list.
+    // To avoid user confusion we redirect to the details page which is driven by a strongly consistent Ruler API..
     if (alertingListViewV2) {
       redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);
       return;
@@ -388,7 +391,7 @@ function useRedirectToDetailsPage() {
 
   const redirectGrafanaRule = useCallback(
     (saveResult: GrafanaGroupUpdatedResponse) => {
-      const newOrUpdatedRuleUid = saveResult.created?.[0] || saveResult.updated?.[0];
+      const newOrUpdatedRuleUid = saveResult.created?.at(0) || saveResult.updated?.at(0);
       if (newOrUpdatedRuleUid) {
         locationService.replace(
           rulesNav.detailsPageLink('grafana', { uid: newOrUpdatedRuleUid, ruleSourceName: 'grafana' })
