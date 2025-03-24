@@ -439,6 +439,7 @@
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
 /package.json @grafana/frontend-ops
+/biome.jsonc @grafana/frontend-ops
 /nx.json @grafana/frontend-ops
 /project.json @grafana/frontend-ops
 /.nxignore @grafana/frontend-ops
