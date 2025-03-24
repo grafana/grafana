@@ -89,9 +89,6 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
     this.updateState({ forScopeNames, loading: true });
 
-    //const dashboards = await this.apiClient.fetchDashboards(forScopeNames);
-    //const scopeNavigations = await this.apiClient.fetchScopeNavigations(forScopeNames);
-
     const res = await Promise.all([
       this.apiClient.fetchDashboards(forScopeNames),
       this.apiClient.fetchScopeNavigations(forScopeNames),
