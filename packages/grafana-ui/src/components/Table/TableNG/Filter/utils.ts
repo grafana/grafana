@@ -1,6 +1,8 @@
 import { Field, formattedValueToString, SelectableValue } from '@grafana/data';
 
-export function calculateUniqueFieldValues(rows: any[], field?: Field) {
+import { TableRow } from '../../types';
+
+export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
   if (!field || rows.length === 0) {
     return {};
   }
