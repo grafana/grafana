@@ -4327,6 +4327,76 @@
       "title": "You haven't created any service accounts yet"
     }
   },
+  "serviceaccounts": {
+    "create-token-modal": {
+      "close": "Close",
+      "copy-clipboard": "Copy to clipboard",
+      "copy-to-clipboard-and-close": "Copy to clipboard and close",
+      "description-name-to-easily-identify-the-token": "Name to easily identify the token",
+      "generate-token": "Generate token",
+      "label-display-name": "Display name",
+      "label-expiration": "Expiration",
+      "label-expiration-date": "Expiration date",
+      "label-token": "Token"
+    },
+    "get-actions-cell": {
+      "add-token": "Add token",
+      "disable": "Disable",
+      "enable": "Enable"
+    },
+    "get-role-cell": {
+      "aria-label-role": "Role"
+    },
+    "service-account-list-item": {
+      "add-token": "Add token",
+      "aria-label-role": "Role",
+      "disable": "Disable",
+      "enable": "Enable",
+      "title-tokens": "Tokens"
+    },
+    "service-account-page-unconnected": {
+      "add-service-account-token": "Add service account token",
+      "delete-service-account": "Delete service account",
+      "disable-service-account": "Disable service account",
+      "enable-service-account": "Enable service account",
+      "title-delete-service-account": "Delete service account",
+      "title-disable-service-account": "Disable service account",
+      "tokens": "Tokens"
+    },
+    "service-account-permissions": {
+      "title-permissions": "Permissions"
+    },
+    "service-account-profile": {
+      "information": "Information",
+      "label-creation-date": "Creation date",
+      "label-id": "ID",
+      "label-name": "Name",
+      "label-numerical-identifier": "Numerical identifier",
+      "label-roles": "Roles",
+      "used-by": "Used by"
+    },
+    "service-account-profile-row": {
+      "edit": "Edit"
+    },
+    "service-account-role-row": {
+      "aria-label-role": "Role"
+    },
+    "service-account-tokens-table": {
+      "created": "Created",
+      "expires": "Expires",
+      "last-used-at": "Last used at",
+      "name": "Name"
+    },
+    "service-accounts-list-page-unconnected": {
+      "add-service-account": "Add service account",
+      "placeholder-search-service-account-by-name": "Search service account by name",
+      "title-delete-service-account": "Delete service account",
+      "title-disable-service-account": "Disable service account"
+    },
+    "token-expiration": {
+      "never": "Never"
+    }
+  },
   "share-dashboard": {
     "menu": {
       "export-json-title": "Export as JSON",
@@ -4707,11 +4777,34 @@
     }
   },
   "trails": {
+    "add-to-filters-graph-action": {
+      "add-to-filters": "Add to filters"
+    },
     "bookmarks": {
       "or-view-bookmarks": "Or view bookmarks"
     },
+    "breakdown-search-scene": {
+      "placeholder-search-for-value": "Search for value"
+    },
+    "build-normal-layout": {
+      "text-loading": "Loading..."
+    },
     "card": {
       "date-created": "Date created: "
+    },
+    "create-bookmark-saved-notification": {
+      "view-bookmarks": "View bookmarks"
+    },
+    "data-trail-card": {
+      "deleteButton-tooltip-remove-bookmark": "Remove bookmark"
+    },
+    "data-trail-history": {
+      "history": "History"
+    },
+    "data-trail-settings": {
+      "render-popover": {
+        "settings": "Settings"
+      }
     },
     "home": {
       "learn-more": "Learn more",
@@ -4719,11 +4812,34 @@
       "start-your-metrics-exploration": "Start your metrics exploration!",
       "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
     },
+    "label-breakdown-scene": {
+      "label-search": "Search",
+      "label-view": "View"
+    },
+    "metric-action-bar": {
+      "open": "Open",
+      "select-new-metric": "Select new metric",
+      "tooltip-open-in-explore": "Open in explore",
+      "tooltip-remove-existing-metric-choose": "Remove existing metric and choose a new metric"
+    },
     "metric-select": {
       "filter-by": "Filter by",
       "native-histogram": "Native Histogram",
       "new-badge": "New",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "metric-select-scene": {
+      "label-otel-experience": "OTel experience",
+      "metric-names-warning-icon": {
+        "unable-to-retrieve-metric-names": "Unable to retrieve metric names"
+      },
+      "placeholder-search-metrics": "Search metrics",
+      "title-unable-to-retrieve-all-metric-names": "Unable to retrieve all metric names",
+      "title-unable-to-retrieve-metric-names": "Unable to retrieve metric names"
+    },
+    "metrics-header": {
+      "explore-prometheuscompatible-metrics-without-writing-query": "Explore your Prometheus-compatible metrics without writing a query",
+      "metrics": "Metrics"
     },
     "native-histogram-banner": {
       "ch-heatmap": "Classic Histogram displayed as heatmap:",
@@ -4745,6 +4861,9 @@
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
       "show-previews-of-metric-graphs": "Show previews of metric graphs"
+    },
+    "sort-by-scene": {
+      "tooltip-sorts-values-using-standard-smart-series": "Sorts values using standard or smart time series calculations."
     }
   },
   "transformations": {
