@@ -209,9 +209,137 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 }
 
 func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
-	longFrames, err := convertTimeSeriesWideToTimeSeriesLong(frames)
-	if err != nil {
-		return nil, err
+	if len(frames) != 1 {
+		return nil, fmt.Errorf("expected exactly one frame for wide format, but got %d", len(frames))
 	}
-	return convertTimeSeriesMultiToFullLong(longFrames)
+	frame := frames[0]
+
+	var timeField *data.Field
+	for _, f := range frame.Fields {
+		if f.Type() == data.FieldTypeTime {
+			timeField = f
+			break
+		}
+	}
+	if timeField == nil {
+		return nil, fmt.Errorf("time field not found in TimeSeriesWide frame")
+	}
+
+	type row struct {
+		t      time.Time
+		value  *float64
+		metric string
+		labels data.Labels
+	}
+
+	var (
+		rows         []row
+		labelKeysSet = map[string]struct{}{}
+	)
+
+	// Collect all label keys
+	for _, f := range frame.Fields {
+		if !f.Type().Numeric() {
+			continue
+		}
+		for k := range f.Labels {
+			labelKeysSet[k] = struct{}{}
+		}
+	}
+
+	labelKeys := make([]string, 0, len(labelKeysSet))
+	for k := range labelKeysSet {
+		labelKeys = append(labelKeys, k)
+	}
+	sort.Strings(labelKeys)
+
+	// Build rows
+	timeLen := timeField.Len()
+	for _, f := range frame.Fields {
+		if !f.Type().Numeric() {
+			continue
+		}
+		for i := 0; i < timeLen; i++ {
+			t := timeField.At(i).(time.Time)
+			v, err := f.FloatAt(i)
+			if err != nil {
+				continue
+			}
+			val := v
+			rows = append(rows, row{
+				t:      t,
+				value:  &val,
+				metric: f.Name,
+				labels: f.Labels,
+			})
+		}
+	}
+
+	// Sort rows by time, then metric name
+	sort.SliceStable(rows, func(i, j int) bool {
+		if rows[i].t.Equal(rows[j].t) {
+			return rows[i].metric < rows[j].metric
+		}
+		return rows[i].t.Before(rows[j].t)
+	})
+
+	times := make([]time.Time, len(rows))
+	values := make([]*float64, len(rows))
+	metrics := make([]string, len(rows))
+	labels := make(map[string][]*string)
+	for _, k := range labelKeys {
+		labels[k] = make([]*string, len(rows))
+	}
+
+	for i, r := range rows {
+		times[i] = r.t
+		values[i] = r.value
+		metrics[i] = r.metric
+		for _, k := range labelKeys {
+			if v, ok := r.labels[k]; ok {
+				labels[k][i] = &v
+			}
+		}
+	}
+
+	fields := []*data.Field{
+		data.NewField("time", nil, times),
+		data.NewField(SQLValueFieldName, nil, values),
+		data.NewField(SQLMetricFieldName, nil, metrics),
+	}
+	for _, k := range labelKeys {
+		fields = append(fields, data.NewField(k, nil, labels[k]))
+	}
+
+	out := data.NewFrame("", fields...)
+	out.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+	return data.Frames{out}, nil
+}
+
+func supportedToLongConversion(inputType data.FrameType) bool {
+	switch inputType {
+	case data.FrameTypeNumericMulti, data.FrameTypeNumericWide:
+		return true
+	case data.FrameTypeTimeSeriesMulti, data.FrameTypeTimeSeriesWide:
+		return true
+	default:
+		return false
+	}
+}
+
+func convertNumericMultiToNumericWide(frames data.Frames) data.Frames {
+	if len(frames) == 0 {
+		return nil
+	}
+
+	out := data.NewFrame("")
+	for _, frame := range frames {
+		for _, field := range frame.Fields {
+			if field.Type().Numeric() {
+				out.Fields = append(out.Fields, field)
+			}
+		}
+	}
+	out.Meta = &data.FrameMeta{Type: data.FrameTypeNumericWide}
+	return data.Frames{out}
 }
