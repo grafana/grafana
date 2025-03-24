@@ -95,9 +95,8 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 	t.Run("with dual write (file, mode 0)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
+			AppModeProduction: true,
+			DisableAnonymous:  true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode0,
@@ -111,9 +110,8 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 	t.Run("with dual write (file, mode 1)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
+			AppModeProduction: true,
+			DisableAnonymous:  true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
@@ -127,9 +125,8 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 	t.Run("with dual write (file, mode 2)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
+			AppModeProduction: true,
+			DisableAnonymous:  true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode2,
@@ -143,9 +140,8 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 	t.Run("with dual write (file, mode 3)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
+			AppModeProduction: true,
+			DisableAnonymous:  true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode3,
@@ -159,9 +155,8 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 	t.Run("with dual write (file, mode 5)", func(t *testing.T) {
 		helper := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
+			AppModeProduction: true,
+			DisableAnonymous:  true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode5,
