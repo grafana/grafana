@@ -1,37 +1,25 @@
 import { useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { Alert, Button, Column, InteractiveTable, LoadingPlaceholder, Stack } from '@grafana/ui';
+import { Button, Column, InteractiveTable, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { trackDeletedRuleRestoreFail, trackDeletedRuleRestoreSuccess } from '../../../Analytics';
-import { alertRuleApi } from '../../../api/alertRuleApi';
-import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
-import { stringifyErrorLike } from '../../../utils/misc';
 import { UpdatedByUser } from '../../rule-viewer/tabs/version-history/UpdatedBy';
 
 import { ConfirmRestoreDeletedRuleModal } from './ConfirmRestoreDeletedRuleModal';
 
 export const DELETED_RULES_PAGE_SIZE = 30;
 
-export function DeletedRules() {
+interface DeletedRulesProps {
+  deletedRules: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>
+}
+export function DeletedRules({ deletedRules }: DeletedRulesProps) {
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoreRule, setRestoreRule] = useState<RulerGrafanaRuleDTO | undefined>();
 
-  const {
-    currentData = [],
-    isLoading,
-    error,
-  } = alertRuleApi.endpoints.getDeletedRules.useQuery({
-    rulerConfig: GRAFANA_RULER_CONFIG,
-    filter: {}, // todo: add filters, and limit?????
-  });
-
   const unknown = t('alerting.deletedRules.unknown', 'Unknown');
-
-  const values = Object.values(currentData);
-  const deletedRules = values.length > 0 ? values[0][0]?.rules : [];
 
   const showConfirmation = (id: string) => {
     const ruleTorestore = deletedRules.find(
@@ -48,18 +36,6 @@ export function DeletedRules() {
   const hideConfirmation = () => {
     setConfirmRestore(false);
   };
-
-  if (isLoading) {
-    return <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />;
-  }
-
-  if (error) {
-    return (
-      <Alert title={t('alerting.deletedRules.errorloading', 'Failed to load alert deleted rules')}>
-        {stringifyErrorLike(error)}
-      </Alert>
-    );
-  }
 
   const columns: Array<Column<(typeof deletedRules)[0]>> = [
     {

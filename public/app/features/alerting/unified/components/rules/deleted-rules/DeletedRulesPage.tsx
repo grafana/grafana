@@ -1,12 +1,37 @@
+import { t } from 'i18next';
+
+import { Alert } from '@grafana/ui';
+
+import { alertRuleApi } from '../../../api/alertRuleApi';
+import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
+import { stringifyErrorLike } from '../../../utils/misc';
 import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 
 import { DeletedRules } from './DeletedRules';
 
 function DeletedrulesPage() {
+  const {
+    currentData = [],
+    isLoading,
+    error,
+  } = alertRuleApi.endpoints.getDeletedRules.useQuery({
+    rulerConfig: GRAFANA_RULER_CONFIG,
+    filter: {}, // todo: add filters, and limit?????
+  });
+  const values = Object.values(currentData);
+  const deletedRules = values.length > 0 ? values[0][0]?.rules : [];
+
   return (
-    <AlertingPageWrapper navId="alerts/recently-deleted" isLoading={false}>
-      <DeletedRules />
+    <AlertingPageWrapper navId="alerts/recently-deleted" isLoading={isLoading}>
+      <>
+        {error && (
+          <Alert title={t('alerting.deletedRules.errorloading', 'Failed to load alert deleted rules')}>
+            {stringifyErrorLike(error)}
+          </Alert>)}
+
+        <DeletedRules deletedRules={deletedRules} />
+      </>
     </AlertingPageWrapper>
   );
 }
