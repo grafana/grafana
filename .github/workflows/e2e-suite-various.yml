@@ -15,12 +15,14 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.package }}
-      - uses: ./.github/workflows/actions/start-grafana-server
-        with:
-          package: grafana.tar.gz
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: 'yarn'
           cache-dependency-path: 'yarn.lock'
+      - run: yarn install --immutable --check-cache
+      - run: yarn e2e:plugin:build
+      - uses: ./.github/workflows/actions/start-grafana-server
+        with:
+          package: grafana.tar.gz
       - run: ./e2e/run-suite various-suite
