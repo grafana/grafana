@@ -71,7 +71,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
         <Label htmlFor={inputId} description={description}>
           <span>
             {label}
-            {required && ' *'}
+            {required ? ' *' : ''}
           </span>
         </Label>
       ) : (
