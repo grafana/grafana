@@ -66,3 +66,7 @@ func RemoveExt(p string) string {
 
 	return p[0 : len(p)-len(ext)]
 }
+
+func IsAbs(p string) bool {
+	return path.IsAbs(p)
+}

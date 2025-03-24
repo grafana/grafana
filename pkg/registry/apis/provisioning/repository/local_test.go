@@ -36,7 +36,6 @@ func TestLocal(t *testing.T) {
 		{"absolute path", "/devenv/test", []string{"/devenv"}, "/devenv/test/"},
 		{"relative path with multiple prefixes", "devenv/test", []string{"/home/grafana", "/devenv"}, "/home/grafana/devenv/test/"},
 		{"absolute path with multiple prefixes", "/devenv/test", []string{"/home/grafana", "/devenv"}, "/devenv/test/"},
-		{"path traversal inside allowed prefix", "/home/grafana/devenv/../test/test", []string{"/home/grafana"}, "/home/grafana/test/test/"},
 	} {
 		t.Run("valid: "+tc.Name, func(t *testing.T) {
 			r := NewLocal(&v0alpha1.Repository{

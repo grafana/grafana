@@ -14,7 +14,6 @@ var (
 	ErrPercentChar          = errors.New("path contains percent character which could be used for URL encoding attacks")
 	ErrHiddenPath           = errors.New("path contains hidden file or directory (starting with dot)")
 	ErrPathTraversalAttempt = errors.New("path contains traversal attempt (./ or ../)")
-	ErrNotRelative          = errors.New("path must be relative to the root")
 )
 
 const (
@@ -52,10 +51,6 @@ func IsSafe(path string) error {
 	// Check for double slashes
 	if strings.Contains(path, "//") {
 		return ErrDoubleSlash
-	}
-
-	if strings.HasPrefix(path, "/") {
-		return ErrNotRelative
 	}
 
 	parts := Split(path)

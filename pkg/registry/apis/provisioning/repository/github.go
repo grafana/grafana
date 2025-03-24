@@ -112,6 +112,10 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Path, err.Error()))
 	}
 
+	if safepath.IsAbs(gh.Path) {
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "prefix"), gh.Path, "path must be relative"))
+	}
+
 	return list
 }
 

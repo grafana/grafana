@@ -51,7 +51,7 @@ func TestIsPathSupported(t *testing.T) {
 		{
 			name:        "absolute path",
 			path:        "/etc/dashboards/my-dashboard.yaml",
-			expectedErr: safepath.ErrNotRelative,
+			expectedErr: ErrNotRelative,
 		},
 		{
 			name: "empty directory path",

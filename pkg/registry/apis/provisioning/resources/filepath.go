@@ -10,6 +10,7 @@ import (
 var (
 	ErrPathTooDeep              = errors.New("the path is too deep")
 	ErrUnsupportedFileExtension = errors.New("unsupported file extension")
+	ErrNotRelative              = errors.New("path must be relative to the root")
 )
 
 const maxPathDepth = 8
@@ -24,6 +25,10 @@ func IsPathSupported(filePath string) error {
 
 	if safepath.Depth(filePath) > maxPathDepth {
 		return ErrPathTooDeep
+	}
+
+	if safepath.IsAbs(filePath) {
+		return ErrNotRelative
 	}
 
 	// Only check file extension if it's not a folder path
