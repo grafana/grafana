@@ -12,6 +12,7 @@ import {
   FieldType,
   LoadingState,
   PanelData,
+  PluginType,
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
@@ -249,6 +250,7 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     defaultDatasource: 'gdev-testdata',
+    expressionsEnabled: true,
   },
 }));
 
@@ -352,6 +354,50 @@ describe('PanelDataQueriesTab', () => {
       await userEvent.click(screen.getByTestId('data-testid Remove query'));
 
       expect(modelMock.onQueriesChange).toHaveBeenCalledWith([]);
+    });
+
+    it('renders add expression button when datasource meta.backend is true', async () => {
+      // arrange
+      const modelMock = await createModelMock();
+      const dsSettingsMock: DataSourceInstanceSettings<DataSourceJsonData> = {
+        id: 1,
+        uid: 'gdev-testdata',
+        name: 'testDs1',
+        type: 'grafana-testdata-datasource',
+        meta: {
+          id: 'grafana-testdata-datasource',
+          info: {
+            logos: {
+              small: 'test-logo.png',
+              large: 'test-logo.png',
+            },
+            author: {
+              name: '',
+              url: undefined,
+            },
+            description: '',
+            links: [],
+            screenshots: [],
+            updated: '',
+            version: '',
+          },
+          backend: true,
+          name: '',
+          type: PluginType.datasource,
+          module: '',
+          baseUrl: '',
+        },
+        readOnly: false,
+        jsonData: {},
+        access: 'proxy',
+      };
+      modelMock.setState({ datasource: ds1Mock, dsSettings: dsSettingsMock });
+
+      // act
+      render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
+
+      // assert
+      await screen.findByTestId(selectors.components.QueryTab.addExpression);
     });
   });
 

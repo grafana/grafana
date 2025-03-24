@@ -390,10 +390,6 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
-  * Allow restoring objects in k8s
-  */
-  kubernetesRestore?: boolean;
-  /**
   * Route the folder and dashboard service requests to k8s
   */
   kubernetesClientDashboardsFolders?: boolean;
@@ -818,6 +814,7 @@ export interface FeatureToggles {
   unifiedStorageSearchSprinkles?: boolean;
   /**
   * Enable permission filtering on unified storage search
+  * @default true
   */
   unifiedStorageSearchPermissionFiltering?: boolean;
   /**
@@ -826,6 +823,7 @@ export interface FeatureToggles {
   managedDualWriter?: boolean;
   /**
   * Enables SRI checks for plugin assets
+  * @default false
   */
   pluginsSriChecks?: boolean;
   /**
@@ -1063,4 +1061,8 @@ export interface FeatureToggles {
   * Enables the unified storage history pruner
   */
   unifiedStorageHistoryPruner?: boolean;
+  /**
+  * Enables the unified storage grpc connection pool
+  */
+  unifiedStorageGrpcConnectionPool?: boolean;
 }
