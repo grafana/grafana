@@ -64,7 +64,14 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
 
   const timeZone = getTimeZone(options);
   const zone = moment.tz.zone(timeZone);
-  const format = options?.format ?? systemDateFormats.fullDate;
+  let format = options?.format ?? systemDateFormats.fullDate;
+  if (value.endsWith('Z')) {
+    // This is a special case when we have an ISO date string
+    // In this case we want to force the format to be ISO and the timeZone to be UTC
+    // This logic is needed for initial load when parsing the URL params
+    format = 'YYYY-MM-DDTHH:mm:ss.SSSZ';
+    options = { ...options, timeZone: 'utc' };
+  }
 
   if (zone && zone.name) {
     return dateTimeForTimeZone(zone.name, value, format);
