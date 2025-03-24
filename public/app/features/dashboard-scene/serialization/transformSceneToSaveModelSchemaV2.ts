@@ -7,6 +7,7 @@ import {
   dataLayers,
   SceneDataQuery,
   SceneDataTransformer,
+  SceneQueryRunner,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
@@ -45,7 +46,13 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import {
+  getDashboardSceneFor,
+  getLibraryPanelBehavior,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  isLibraryPanel,
+} from '../utils/utils';
 
 import { getLayout } from './layoutSerializers/utils';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
@@ -239,16 +246,16 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
-  const datasource = queryRunner?.state.datasource ?? getDefaultDataSourceRef();
-
+  const autoAssignedPanelDSRef = getAutoAssignedPanelDSRef(vizPanel);
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
+      const queryDatasource = getPersistedDSForQuery(query, queryRunner, autoAssignedPanelDSRef);
       const dataQuery: DataQueryKind = {
         kind: getDataQueryKind(query),
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
-        datasource: query.datasource ?? datasource,
+        datasource: queryDatasource,
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
@@ -583,4 +590,42 @@ function validateRowsLayout(layout: unknown) {
   if (!('rows' in layout.spec) || !Array.isArray(layout.spec.rows)) {
     throw new Error('Layout spec items is not an array');
   }
+}
+
+/**
+ * Get a collection of panel queries refIds
+ * the refIds are the ones which did not have a datasource set
+ * @returns a set of panel queries refIds
+ */
+function getAutoAssignedPanelDSRef(vizPanel: VizPanel) {
+  const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
+  const scene = getDashboardSceneFor(vizPanel);
+  const elementMapReferences = scene.serializer.getDSReferencesMapping();
+
+  const panelQueries = elementMapReferences.panels.get(elementKey);
+  return panelQueries;
+}
+
+/**
+ * Get the persisted datasource for a query
+ * When a query is created it could not have a datasource set
+ * we want to respect that and not overwrite it with the auto assigned datasources
+ * resolved in runtime
+ * @param query
+ * @param queryRunner
+ * @param autoAssignedPanelDsRef
+ * @returns
+ */
+export function getPersistedDSForQuery(
+  query: SceneDataQuery,
+  queryRunner: SceneQueryRunner,
+  autoAssignedPanelDsRef: Set<string> | undefined
+) {
+  // if the query has a refId and it is in the panelDsReferences then it did NOT have a datasource
+  const hasMatchingRefId = autoAssignedPanelDsRef?.has(query.refId);
+  if (hasMatchingRefId) {
+    return undefined;
+  }
+
+  return query.datasource || queryRunner?.state?.datasource;
 }

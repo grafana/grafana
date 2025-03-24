@@ -76,6 +76,13 @@ export function changeLanguage(locale: string) {
 }
 
 export const Trans = (props: TransProps): ReactElement => {
+  const context = usePluginContext();
+
+  // If we are in a plugin context, use the plugin's id as the namespace
+  if (context?.meta?.id) {
+    return <I18NextTrans shouldUnescape ns={context.meta.id} {...props} />;
+  }
+
   return <I18NextTrans shouldUnescape ns={NAMESPACES} {...props} />;
 };
 
@@ -136,6 +143,6 @@ export function useTranslateInternal() {
   }
 
   const { meta } = context;
-  const pluginT = useMemo(() => i18nInstance.getFixedT(null, meta.id), [meta.id]);
+  const pluginT = useMemo(() => getI18next().getFixedT(null, meta.id), [meta.id]);
   return pluginT;
 }

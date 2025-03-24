@@ -497,7 +497,7 @@ export type CreateRepositoryExportApiArg = {
     /** Include the identifier in the exported metadata */
     identifier: boolean;
     /** Prefix in target file system */
-    prefix?: string;
+    path?: string;
   };
 };
 export type GetRepositoryFilesApiResponse = /** status 200 OK */ {
@@ -587,8 +587,6 @@ export type CreateRepositoryMigrateApiArg = {
     history?: boolean;
     /** Include the identifier in the exported metadata */
     identifier: boolean;
-    /** Target file prefix */
-    prefix?: string;
   };
 };
 export type GetRepositoryRenderWithPathApiResponse = unknown;
@@ -748,8 +746,6 @@ export type MigrateJobOptions = {
   history?: boolean;
   /** Include the identifier in the exported metadata */
   identifier: boolean;
-  /** Target file prefix */
-  prefix?: string;
 };
 export type PullRequestJobOptions = {
   hash?: string;
@@ -772,7 +768,7 @@ export type ExportJobOptions = {
   /** Include the identifier in the exported metadata */
   identifier: boolean;
   /** Prefix in target file system */
-  prefix?: string;
+  path?: string;
 };
 export type JobSpec = {
   /** Possible enum values:

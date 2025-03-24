@@ -1,11 +1,11 @@
-import { usePluginContext } from '@grafana/data';
-
 import { type TransProps, type TransType, type UseTranslateHook } from '../types/i18n';
 
 /**
  * Provides a i18next-compatible translation function.
  */
-export let useTranslate: UseTranslateHook = () => {
+export let useTranslate: UseTranslateHook = useTranslateDefault;
+
+function useTranslateDefault() {
   // Fallback implementation that should be overridden by setUseT
   const errorMessage = 'useTranslate is not set. useTranslate must not be called before Grafana is initialized.';
   if (process.env.NODE_ENV === 'development') {
@@ -16,7 +16,7 @@ export let useTranslate: UseTranslateHook = () => {
   return (id: string, defaultMessage: string) => {
     return defaultMessage;
   };
-};
+}
 
 export function setUseTranslateHook(hook: UseTranslateHook) {
   useTranslate = hook;
@@ -49,16 +49,9 @@ export function setTransComponent(transComponent: TransType) {
  * @throws {Error} If the Trans component hasn't been initialized
  */
 export function Trans(props: TransProps): React.ReactElement {
-  const context = usePluginContext();
-
   if (!TransComponent) {
     throw new Error('Trans component not set. Use setTransComponent to set the Trans component.');
   }
 
-  if (!context) {
-    return <TransComponent {...props} />;
-  }
-
-  const { meta } = context;
-  return <TransComponent {...props} ns={meta.id} />;
+  return <TransComponent {...props} />;
 }
