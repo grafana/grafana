@@ -1082,19 +1082,19 @@ func TestRouteConvertPrometheusPostDatasource(t *testing.T) {
 			// Check that the rule matches one of our original prometheus rules
 			switch rule.RuleGroup {
 			case "TestGroup1":
-				require.Equal(t, "[TestGroup1] TestAlert", rule.Title)
+				require.Equal(t, "TestAlert", rule.Title)
 				require.Equal(t, "critical", rule.Labels["severity"])
 				require.Equal(t, 5*time.Minute, rule.For)
 			case "TestGroup2":
-				require.Equal(t, "[TestGroup2] TestAlert", rule.Title)
+				require.Equal(t, "TestAlert", rule.Title)
 				require.Equal(t, "critical", rule.Labels["severity"])
 				require.Equal(t, 5*time.Minute, rule.For)
 			case "TestGroup3":
 				switch rule.Title {
-				case "[TestGroup3] TestAlert":
+				case "TestAlert":
 					require.Equal(t, "critical", rule.Labels["severity"])
 					require.Equal(t, 5*time.Minute, rule.For)
-				case "[TestGroup3] TestRecordingRule":
+				case "TestRecordingRule":
 					require.Equal(t, "TestRecordingRule", rule.Record.Metric)
 				default:
 					t.Fatalf("unexpected rule title: %s", rule.Title)
