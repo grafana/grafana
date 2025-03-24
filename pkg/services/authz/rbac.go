@@ -94,7 +94,6 @@ func ProvideAuthZClient(
 func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 ) (authlib.AccessClient, error) {
-
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
