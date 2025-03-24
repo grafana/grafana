@@ -1,9 +1,7 @@
 package unified
 
 import (
-	"context"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	otgrpc "github.com/opentracing-contrib/go-grpc"
@@ -11,7 +9,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -54,10 +51,8 @@ func ProvideUnifiedStorageClient(opts *Options, sqlBackendServer sql.SqlBackendR
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
-		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
-		Address:      apiserverCfg.Key("address").MustString(""), // client address
-		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
+		StorageType: options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
+		Address:     apiserverCfg.Key("address").MustString(""), // client address
 	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, sqlBackendServer)
 	if err == nil {
 		// Used to get the folder stats
@@ -77,37 +72,7 @@ func newClient(opts options.StorageOptions,
 	reg prometheus.Registerer,
 	sqlBackendServer sql.SqlBackendResourceServer,
 ) (resource.ResourceClient, error) {
-	ctx := context.Background()
-	switch opts.StorageType {
-	case options.StorageTypeFile:
-		if opts.DataPath == "" {
-			opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
-		}
-		bucket, err := fileblob.OpenBucket(filepath.Join(opts.DataPath, "resource"), &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
-		})
-		if err != nil {
-			return nil, err
-		}
-		backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
-			Bucket: bucket,
-		})
-		if err != nil {
-			return nil, err
-		}
-		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: backend,
-			Blob: resource.BlobConfig{
-				URL: opts.BlobStoreURL,
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-		return resource.NewLocalResourceClient(server), nil
-
-	case options.StorageTypeUnifiedGrpc:
+	if opts.StorageType == options.StorageTypeUnifiedGrpc {
 		if opts.Address == "" {
 			return nil, fmt.Errorf("expecting address for storage_type: %s", opts.StorageType)
 		}
@@ -145,11 +110,10 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 		return client, nil
+	}
 
 	// Use the local SQL
-	default:
-		return resource.NewLocalResourceClient(sqlBackendServer), nil
-	}
+	return resource.NewLocalResourceClient(sqlBackendServer), nil
 }
 
 func newResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceClient, error) {
