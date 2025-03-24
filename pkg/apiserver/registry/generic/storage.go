@@ -32,6 +32,18 @@ func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, o
 	return store, nil
 }
 
+func NewCompleteRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter) (*registry.Store, error) {
+	registryStore, err := NewRegistryStore(scheme, resourceInfo, optsGetter)
+	if err != nil {
+		return nil, err
+	}
+	strategy := NewCompleteStrategy(scheme, resourceInfo.GroupVersion())
+	registryStore.CreateStrategy = strategy
+	registryStore.UpdateStrategy = strategy
+	registryStore.DeleteStrategy = strategy
+	return registryStore, nil
+}
+
 func NewRegistryStatusStore(scheme *runtime.Scheme, specStore *registry.Store) *StatusREST {
 	gv := specStore.New().GetObjectKind().GroupVersionKind().GroupVersion()
 	strategy := NewStatusStrategy(scheme, gv)
