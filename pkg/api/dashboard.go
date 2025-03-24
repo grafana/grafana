@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -1114,6 +1115,13 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusNotFound, "Dashboard version not found", nil)
 	}
 
+	// do not allow restores if the json data is identical
+	// this is needed for the k8s flow, as the generation id will be used on the
+	// version table, and the generation id only increments when the actual spec is changed
+	if compareDashboardData(version.Data.MustMap(), dash.Data.MustMap()) {
+		return response.Error(http.StatusBadRequest, "Current dashboard is identical to the specified version", nil)
+	}
+
 	var userID int64
 	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
 		userID = id
@@ -1133,6 +1141,18 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 	saveCmd.FolderUID = dash.FolderUID
 
 	return hs.postDashboard(c, saveCmd)
+}
+
+func compareDashboardData(versionData, dashData map[string]any) bool {
+	// these can be different but the actual data is the same
+	delete(versionData, "version")
+	delete(dashData, "version")
+	delete(versionData, "id")
+	delete(dashData, "id")
+	delete(versionData, "uid")
+	delete(dashData, "uid")
+
+	return reflect.DeepEqual(versionData, dashData)
 }
 
 // swagger:route GET /dashboards/tags dashboards getDashboardTags
