@@ -2,6 +2,7 @@ import { Fragment, PureComponent, ReactNode } from 'react';
 
 import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { AdHocFilterBuilder } from './AdHocFilterBuilder';
 import { REMOVE_FILTER_KEY } from './AdHocFilterKey';
@@ -55,7 +56,9 @@ export class AdHocFilter extends PureComponent<Props> {
         {!disabled && (
           <AdHocFilterBuilder
             datasource={this.props.datasource!}
-            appendBefore={filters.length > 0 ? <ConditionSegment label="AND" /> : null}
+            appendBefore={
+              filters.length > 0 ? <ConditionSegment label={t('variables.ad-hoc-filter.label-and', 'AND')} /> : null
+            }
             onCompleted={this.appendFilterToVariable}
             allFilters={this.getAllFilters()}
           />
@@ -79,7 +82,9 @@ export class AdHocFilter extends PureComponent<Props> {
 
     return filters.reduce((segments: ReactNode[], filter, index) => {
       if (segments.length > 0) {
-        segments.push(<ConditionSegment label="AND" key={`condition-${index}`} />);
+        segments.push(
+          <ConditionSegment label={t('variables.ad-hoc-filter.label-and', 'AND')} key={`condition-${index}`} />
+        );
       }
       segments.push(this.renderFilterSegments(filter, index, disabled));
       return segments;
