@@ -2,6 +2,7 @@ package expr
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -29,6 +30,19 @@ func TestConvertNumericWideToFullLong(t *testing.T) {
 		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
 			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
 		}
+	})
+
+	t.Run("MultiRowShouldError", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("numeric",
+				data.NewField("cpu", nil, []float64{1.0, 2.0}),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeNumericWide}
+
+		_, err := ConvertToFullLong(input)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "no more than one row")
 	})
 
 	t.Run("TwoItemsWithSingleLabel", func(t *testing.T) {
@@ -118,6 +132,31 @@ func TestConvertNumericWideToFullLong(t *testing.T) {
 			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(4.0)}),
 			data.NewField("env", nil, []*string{nil, sp("prod")}),
 			data.NewField("host", nil, []*string{sp("a"), nil}),
+		)
+		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+		}
+	})
+
+	t.Run("ExtraTimeFieldIsDropped", func(t *testing.T) {
+		// Note we may consider changing this behavior and looking into keeping
+		// remainder fields in the future.
+		input := data.Frames{
+			data.NewFrame("numeric",
+				data.NewField("timestamp", nil, []time.Time{time.Now()}), // extra time field
+				data.NewField("cpu", nil, []float64{1.23}),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeNumericWide}
+
+		expected := data.NewFrame("",
+			data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
+			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.23)}),
 		)
 		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
 
