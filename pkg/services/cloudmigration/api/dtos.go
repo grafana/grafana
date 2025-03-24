@@ -385,3 +385,20 @@ type CancelSnapshotParams struct {
 	// in: path
 	SnapshotUID string `json:"snapshotUid"`
 }
+
+// swagger:response resourceDependenciesResponse
+type ResourceDependenciesResponse struct {
+	// in: body
+	Body ResourceDependenciesResponseDTO
+}
+
+// swagger:model ResourceDependenciesResponseDTO
+type ResourceDependenciesResponseDTO struct {
+	ResourceDependencies []ResourceDependencyDTO `json:"resourceDependencies"`
+}
+
+// swagger:model ResourceDependencyDTO
+type ResourceDependencyDTO struct {
+	ResourceType MigrateDataType   `json:"resourceType"`
+	Dependencies []MigrateDataType `json:"dependencies"`
+}
