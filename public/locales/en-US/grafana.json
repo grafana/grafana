@@ -136,7 +136,7 @@
       "title": "LDAP Synchronization"
     },
     "ldap-user-groups": {
-      "no-org-found": "No match <2><0></0></2>"
+      "no-org-found": "No match"
     },
     "ldap-user-info": {
       "no-team": "No teams found via LDAP"
