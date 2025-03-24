@@ -101,8 +101,8 @@ func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *l
 		for i, permitted := range r.resolver.PermittedPrefixes {
 			r.resolver.PermittedPrefixes[i] = safepath.Clean(permitted)
 		}
-
 	}
+
 	return r
 }
 
