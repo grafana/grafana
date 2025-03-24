@@ -6,6 +6,7 @@ import { Column, SortDirection } from 'react-data-grid';
 import { Field, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes';
+import { getFieldTypeIcon } from '../../../../types';
 import { Icon } from '../../../Icon/Icon';
 import { Filter } from '../Filter/Filter';
 import { TableColumnResizeActionCallback, FilterType, TableRow, TableSummaryRow } from '../types';
@@ -24,6 +25,7 @@ interface HeaderCellProps {
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
   crossFilterOrder: React.MutableRefObject<string[]>;
   crossFilterRows: React.MutableRefObject<{ [key: string]: TableRow[] }>;
+  showTypeIcons?: boolean;
 }
 
 const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -40,6 +42,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   headerCellRefs,
   crossFilterOrder,
   crossFilterRows,
+  showTypeIcons,
 }) => {
   const styles = useStyles2(getStyles);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -106,6 +109,9 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
       }}
     >
       <button className={styles.headerCellLabel} onClick={handleSort}>
+        {showTypeIcons && (
+          <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" className={styles.typeIcon} />
+        )}
         <div>{column.name}</div>
         {direction &&
           (direction === 'ASC' ? (
@@ -151,6 +157,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   sortIcon: css({
     marginLeft: theme.spacing(0.5),
+  }),
+  typeIcon: css({
+    marginRight: theme.spacing(1),
+    color: theme.colors.text.secondary,
   }),
 });
 
