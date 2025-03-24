@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -221,7 +220,7 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidat
 }
 
 // ValidateSecureValue does basic spec validation of a securevalue.
-func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admission.Operation, decryptersAllowList []string) field.ErrorList {
+func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admission.Operation, decryptersAllowList map[string]struct{}) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
 	// Operation-specific field validation.
@@ -238,88 +237,8 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 	}
 
 	// General validations.
-	decrypterGroups := make(map[string]map[string]int, 0)
-
-	// If populated, `Decrypters` must match "{group}/{name OR *}" and must be unique.
-	for i, decrypter := range sv.Spec.Decrypters {
-		// Allow List: decrypters must match exactly and be in the allowed list to be able to decrypt.
-		if len(decryptersAllowList) > 0 && !slices.Contains(decryptersAllowList, decrypter) {
-			errs = append(
-				errs,
-				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, fmt.Sprintf("allowed values: %v", decryptersAllowList)),
-			)
-
-			return errs
-		}
-
-		group, name, found := strings.Cut(decrypter, "/")
-		if !found {
-			errs = append(
-				errs,
-				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "a decrypter must have the format `{string}/{string}`"),
-			)
-
-			continue
-		}
-
-		if group == "" {
-			errs = append(
-				errs,
-				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "a decrypter group must be present"),
-			)
-
-			continue
-		}
-
-		if found && name == "" {
-			errs = append(
-				errs,
-				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "a decrypter name must be present (use * for match-all)"),
-			)
-
-			continue
-		}
-
-		if _, exists := decrypterGroups[group][name]; exists {
-			errs = append(
-				errs,
-				field.Invalid(
-					field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"),
-					decrypter,
-					"the same decrypter already exists and must be unique",
-				),
-			)
-
-			continue
-		}
-
-		if decrypterGroups[group] == nil {
-			decrypterGroups[group] = make(map[string]int)
-		}
-
-		decrypterGroups[group][name] = i
-	}
-
-	// In case of a "{group}/*" any other "{group}/{name}" with a matching "{group}" is redundant.
-	for group, names := range decrypterGroups {
-		const wildcard = "*"
-
-		if _, exists := names[wildcard]; exists && len(names) > 1 {
-			for name, i := range names {
-				if name == wildcard {
-					continue
-				}
-
-				errs = append(
-					errs,
-					field.Invalid(
-						field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"),
-						group+"/"+name,
-						`the decrypter is not required as there is a wildcard "`+group+`/*" which takes precedence`,
-					),
-				)
-			}
-		}
+	if errs := validateDecrypters(sv.Spec.Decrypters, decryptersAllowList); len(errs) > 0 {
+		return errs
 	}
 
 	return errs
@@ -373,6 +292,53 @@ func validateSecureValueUpdate(sv, oldSv *secretv0alpha1.SecureValue) field.Erro
 	// Keeper cannot be changed.
 	if sv.Spec.Keeper != oldSv.Spec.Keeper {
 		errs = append(errs, field.Forbidden(field.NewPath("spec"), "the `keeper` cannot be changed"))
+	}
+
+	return errs
+}
+
+// validateDecrypters validates that (if populated) the `decrypters` must match "actor_{name}" and must be unique.
+func validateDecrypters(decrypters []string, decryptersAllowList map[string]struct{}) field.ErrorList {
+	errs := make(field.ErrorList, 0)
+
+	decrypterNames := make(map[string]struct{}, 0)
+
+	for i, decrypter := range decrypters {
+		// Allow List: decrypters must match exactly and be in the allowed list to be able to decrypt.
+		// This means an allow list item should have the format "actor_{name}" and not just "{name}".
+		if len(decryptersAllowList) > 0 {
+			if _, exists := decryptersAllowList[decrypter]; !exists {
+				errs = append(
+					errs,
+					field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, fmt.Sprintf("allowed values: %v", decryptersAllowList)),
+				)
+
+				return errs
+			}
+
+			continue
+		}
+
+		actor, name, found := strings.Cut(strings.TrimSpace(decrypter), "_")
+		if !found || actor != "actor" || name == "" {
+			errs = append(
+				errs,
+				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "a decrypter must have the format `actor_{name}`"),
+			)
+
+			continue
+		}
+
+		if _, exists := decrypterNames[name]; exists {
+			errs = append(
+				errs,
+				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "decrypters must be unique"),
+			)
+
+			continue
+		}
+
+		decrypterNames[name] = struct{}{}
 	}
 
 	return errs

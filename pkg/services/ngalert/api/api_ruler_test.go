@@ -60,7 +60,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		deleteCommands := getRecordedCommand(ruleStore)
 		require.Len(t, deleteCommands, 1)
 		cmd := deleteCommands[0]
-		actualUIDs := cmd.Params[2].([]string)
+		actualUIDs := cmd.Params[3].([]string)
 		require.Len(t, actualUIDs, len(expectedRules))
 		for _, rule := range expectedRules {
 			require.Containsf(t, actualUIDs, rule.UID, "Rule %s was expected to be deleted but it wasn't", rule.UID)
@@ -340,6 +340,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 			gen.WithUniqueGroupIndex(), gen.WithUniqueID(),
 			gen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 			gen.WithEditorSettingsSimplifiedNotificationsSection(true),
+			gen.WithKeepFiringFor(30*time.Second),
 		).GenerateManyRef(3)
 		require.Len(t, createdRules, 3)
 		ruleStore.PutRule(context.Background(), createdRules...)
@@ -358,6 +359,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		require.Equal(t, expectedRule.UID, result.GrafanaManagedAlert.UID)
 		require.Equal(t, expectedRule.RuleGroup, result.GrafanaManagedAlert.RuleGroup)
 		require.Equal(t, expectedRule.Title, result.GrafanaManagedAlert.Title)
+		require.Equal(t, int64(expectedRule.KeepFiringFor), int64(*(result.KeepFiringFor)))
 		require.True(t, result.GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
 		require.True(t, result.GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection)
 

@@ -204,10 +204,10 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 	require.NoError(t, err)
 
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, cfg, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
 	require.NoError(t, err)
 
 	// Initialize the encryption manager
@@ -229,7 +229,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
 
 	// Initialize the keeper storage and add a test keeper
-	keeperStorage, err := ProvideKeeperMetadataStorage(testDB, cfg, features, accessClient)
+	keeperStorage, err := ProvideKeeperMetadataStorage(testDB, features, accessClient)
 	require.NoError(t, err)
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
@@ -243,7 +243,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, cfg, features, accessClient, keeperService)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperService)
 	require.NoError(t, err)
 
 	return secureValueMetadataStorage

@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+const UsageInsightsPrefix = "secrets_manager"
+
 // Service is an envelope encryption service in charge of encrypting/decrypting secrets.
 type Service interface {
 	// Encrypt MUST NOT be used within database transactions, it may cause database locks.

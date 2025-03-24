@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	encryptionprovider "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/provider"
 	"github.com/grafana/grafana/pkg/setting"
@@ -94,7 +95,7 @@ func (s *Service) registerUsageMetrics() {
 		algorithm := s.cfg.SecretsManagement.Encryption.Algorithm
 
 		return map[string]any{
-			fmt.Sprintf("stats.cipher.%s.count", algorithm): 1,
+			fmt.Sprintf("stats.%s.encryption.cipher.%s.count", encryption.UsageInsightsPrefix, algorithm): 1,
 		}, nil
 	})
 }

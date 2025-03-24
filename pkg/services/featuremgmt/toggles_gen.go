@@ -279,10 +279,6 @@ const (
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 
-	// FlagAlertingNoDataErrorExecution
-	// Changes how Alerting state manager handles execution of NoData/Error
-	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
-
 	// FlagAngularDeprecationUI
 	// Display Angular warnings in dashboards and panels
 	FlagAngularDeprecationUI = "angularDeprecationUI"
@@ -358,10 +354,6 @@ const (
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
-
-	// FlagKubernetesRestore
-	// Allow restoring objects in k8s
-	FlagKubernetesRestore = "kubernetesRestore"
 
 	// FlagKubernetesClientDashboardsFolders
 	// Route the folder and dashboard service requests to k8s
@@ -540,7 +532,7 @@ const (
 	FlagLogQLScope = "logQLScope"
 
 	// FlagSqlExpressions
-	// Enables using SQL and DuckDB functions as Expressions.
+	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagNodeGraphDotLayout
@@ -590,10 +582,6 @@ const (
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
-
-	// FlagAccessActionSets
-	// Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.
-	FlagAccessActionSets = "accessActionSets"
 
 	// FlagDisableNumericMetricsSortingInExpressions
 	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
@@ -839,10 +827,6 @@ const (
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 
-	// FlagUseV2DashboardsAPI
-	// Use the v2 kubernetes API in the frontend for dashboards
-	FlagUseV2DashboardsAPI = "useV2DashboardsAPI"
-
 	// FlagFeedbackButton
 	// Enables a button to send feedback from the Grafana UI
 	FlagFeedbackButton = "feedbackButton"
@@ -904,7 +888,7 @@ const (
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 
 	// FlagExploreMetricsUseExternalAppPlugin
-	// Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin
+	// Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
 	FlagExploreMetricsUseExternalAppPlugin = "exploreMetricsUseExternalAppPlugin"
 
 	// FlagDatasourceConnectionsTab
@@ -967,7 +951,27 @@ const (
 	// Enables writing to data sources for Grafana-managed recording rules.
 	FlagGrafanaManagedRecordingRulesDatasources = "grafanaManagedRecordingRulesDatasources"
 
+	// FlagInfinityRunQueriesInParallel
+	// Enables running Infinity queries in parallel
+	FlagInfinityRunQueriesInParallel = "infinityRunQueriesInParallel"
+
 	// FlagInviteUserExperimental
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
+
+	// FlagExtraLanguages
+	// Enables additional languages
+	FlagExtraLanguages = "extraLanguages"
+
+	// FlagNoBackdropBlur
+	// Disables backdrop blur
+	FlagNoBackdropBlur = "noBackdropBlur"
+
+	// FlagAlertingMigrationUI
+	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+	FlagAlertingMigrationUI = "alertingMigrationUI"
+
+	// FlagUnifiedStorageHistoryPruner
+	// Enables the unified storage history pruner
+	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
 )

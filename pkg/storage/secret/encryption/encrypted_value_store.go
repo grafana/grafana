@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -24,7 +23,7 @@ type EncryptedValueStorage interface {
 	Delete(ctx context.Context, namespace string, uid string) error
 }
 
-func ProvideEncryptedValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (EncryptedValueStorage, error) {
+func ProvideEncryptedValueStorage(db db.DB, features featuremgmt.FeatureToggles) (EncryptedValueStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptedValStorage{}, nil

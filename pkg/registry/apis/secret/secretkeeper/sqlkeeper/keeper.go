@@ -7,23 +7,20 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
-	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
 type SQLKeeper struct {
 	tracer            tracing.Tracer
-	encryptionManager *manager.EncryptionManager
-	store             encryptionstorage.EncryptedValueStorage
+	encryptionManager contracts.EncryptionManager
+	store             contracts.EncryptedValueStorage
 }
 
 var _ contracts.Keeper = (*SQLKeeper)(nil)
 
 func NewSQLKeeper(
 	tracer tracing.Tracer,
-	encryptionManager *manager.EncryptionManager,
-	store encryptionstorage.EncryptedValueStorage,
+	encryptionManager contracts.EncryptionManager,
+	store contracts.EncryptedValueStorage,
 ) (*SQLKeeper, error) {
 	return &SQLKeeper{
 		tracer:            tracer,
@@ -36,7 +33,7 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, 
 	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Store")
 	defer span.End()
 
-	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef), encryption.WithoutScope())
+	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef), contracts.EncryptWithoutScope())
 	if err != nil {
 		return "", fmt.Errorf("unable to encrypt value: %w", err)
 	}
@@ -82,7 +79,7 @@ func (s *SQLKeeper) Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Update")
 	defer span.End()
 
-	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef), encryption.WithoutScope())
+	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef), contracts.EncryptWithoutScope())
 	if err != nil {
 		return fmt.Errorf("unable to encrypt value: %w", err)
 	}

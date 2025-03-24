@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,10 +13,9 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := db.InitTestDB(t)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	cfg := &setting.Cfg{}
 	ctx := context.Background()
 
-	store, err := ProvideEncryptedValueStorage(testDB, cfg, features)
+	store, err := ProvideEncryptedValueStorage(testDB, features)
 	require.NoError(t, err)
 
 	t.Run("creating an encrypted value returns it", func(t *testing.T) {

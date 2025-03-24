@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -674,7 +674,7 @@ func (m *MockClient) Search(ctx context.Context, in *resource.ResourceSearchRequ
 func (m *MockClient) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) CountRepositoryObjects(ctx context.Context, in *resource.CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.CountRepositoryObjectsResponse, error) {
+func (m *MockClient) CountManagedObjects(ctx context.Context, in *resource.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resource.CountManagedObjectsResponse, error) {
 	return nil, nil
 }
 func (m *MockClient) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
@@ -692,9 +692,6 @@ func (m *MockClient) Update(ctx context.Context, in *resource.UpdateRequest, opt
 func (m *MockClient) Read(ctx context.Context, in *resource.ReadRequest, opts ...grpc.CallOption) (*resource.ReadResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) Restore(ctx context.Context, in *resource.RestoreRequest, opts ...grpc.CallOption) (*resource.RestoreResponse, error) {
-	return nil, nil
-}
 func (m *MockClient) GetBlob(ctx context.Context, in *resource.GetBlobRequest, opts ...grpc.CallOption) (*resource.GetBlobResponse, error) {
 	return nil, nil
 }
@@ -704,7 +701,7 @@ func (m *MockClient) PutBlob(ctx context.Context, in *resource.PutBlobRequest, o
 func (m *MockClient) List(ctx context.Context, in *resource.ListRequest, opts ...grpc.CallOption) (*resource.ListResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) ListRepositoryObjects(ctx context.Context, in *resource.ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.ListRepositoryObjectsResponse, error) {
+func (m *MockClient) ListManagedObjects(ctx context.Context, in *resource.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resource.ListManagedObjectsResponse, error) {
 	return nil, nil
 }
 func (m *MockClient) IsHealthy(ctx context.Context, in *resource.HealthCheckRequest, opts ...grpc.CallOption) (*resource.HealthCheckResponse, error) {

@@ -10,6 +10,7 @@ import (
 	"github.com/google/wire"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -36,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	gsmEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
@@ -365,8 +367,6 @@ var wireBasicSet = wire.NewSet(
 	loginattemptimpl.ProvideService,
 	wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)),
 	secretsMigrations.ProvideDataSourceMigrationService,
-	secretsMigrations.ProvideMigrateToPluginService,
-	secretsMigrations.ProvideMigrateFromPluginService,
 	secretsMigrations.ProvideSecretMigrationProvider,
 	wire.Bind(new(secretsMigrations.SecretMigrationProvider), new(*secretsMigrations.SecretMigrationProviderImpl)),
 	resourcepermissions.NewActionSetService,
@@ -404,16 +404,19 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideVerifier,
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
+	authz.WireSet,
+	// Secrets Manager
 	secretmetadata.ProvideSecureValueMetadataStorage,
 	secretmetadata.ProvideKeeperMetadataStorage,
 	secretmetadata.ProvideDecryptStorage,
-	secretencryption.ProvideDataKeyStorageStorage,
+	secretdecrypt.ProvideDecryptAllowList,
+	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
 	encryptionManager.ProvideEncryptionManager,
 	gsmEncryption.ProvideThirdPartyProviderMap,
-	authz.WireSet,
 	// Unified storage
 	resource.ProvideStorageMetrics,
+	resource.ProvideIndexMetrics,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
@@ -432,6 +435,7 @@ var wireSet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
 )
 
 var wireCLISet = wire.NewSet(
@@ -464,6 +468,7 @@ var wireTestSet = wire.NewSet(
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
+	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
 )
 
 func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {

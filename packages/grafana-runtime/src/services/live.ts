@@ -42,6 +42,20 @@ export interface LiveQueryDataOptions {
 /**
  * @alpha -- experimental
  */
+export interface LivePublishOptions {
+  /**
+   * Publish the data over the websocket instead of the HTTP API.
+   *
+   * This is not recommended for most use cases.
+   *
+   * @experimental
+   */
+  useSocket?: boolean;
+}
+
+/**
+ * @alpha -- experimental
+ */
 export interface GrafanaLiveSrv {
   /**
    * Listen for changes to the main service
@@ -79,7 +93,7 @@ export interface GrafanaLiveSrv {
    *
    * @alpha -- experimental
    */
-  publish(address: LiveChannelAddress, data: unknown): Promise<unknown>;
+  publish(address: LiveChannelAddress, data: unknown, options?: LivePublishOptions): Promise<unknown>;
 }
 
 let singletonInstance: GrafanaLiveSrv;

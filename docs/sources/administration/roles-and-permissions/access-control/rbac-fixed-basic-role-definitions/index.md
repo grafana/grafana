@@ -50,7 +50,7 @@ refs:
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
-The following tables list permissions associated with basic and fixed roles.
+The following tables list permissions associated with basic and fixed roles. This does not include basic role assignments added by plugins or apps.
 
 ## Basic role assignments
 
@@ -94,7 +94,7 @@ To learn how to use the roles API to determine the role UUIDs, refer to [Manage 
 | `fixed:authentication.config:writer`         | `fixed_0rYhZ2Qnzs8AdB1nX7gexk3fHDw` | `settings:read` for scope `settings:auth.saml:*` <br> `settings:write` for scope `settings:auth.saml:*`                                                                                                                                                                     | Read and update authentication and SAML settings.                                                                                                                                                                                                                                     |
 | `fixed:dashboards:creator`                   | `fixed_ZorKUcEPCM01A1fPakEzGBUyU64` | `dashboards:create`<br>`folders:read`                                                                                                                                                                                                                                       | Create dashboards.                                                                                                                                                                                                                                                                    |
 | `fixed:dashboards:reader`                    | `fixed_Sgr67JTOhjQGFlzYRahOe45TdWM` | `dashboards:read`                                                                                                                                                                                                                                                           | Read all dashboards.                                                                                                                                                                                                                                                                  |
-| `fixed:dashboards:writer`                    | `fixed_OK2YOQGIoI1G031hVzJB6rAJQAs` | All permissions from `fixed:dashboards:reader` and <br>`dashboards:write`<br>`dashboards:edit`<br>`dashboards:delete`<br>`dashboards:create`<br>`dashboards.permissions:read`<br>`dashboards.permissions:write`                                                             | Read, create, update, and delete all dashboards.                                                                                                                                                                                                                                      |
+| `fixed:dashboards:writer`                    | `fixed_OK2YOQGIoI1G031hVzJB6rAJQAs` | All permissions from `fixed:dashboards:reader` and <br>`dashboards:write`<br>`dashboards:delete`<br>`dashboards:create`<br>`dashboards.permissions:read`<br>`dashboards.permissions:write`                                                                                  | Read, create, update, and delete all dashboards.                                                                                                                                                                                                                                      |
 | `fixed:dashboards.insights:reader`           | `fixed_JlBJ2_gizP8zhgaeGE2rjyZe2Rs` | `dashboards.insights:read`                                                                                                                                                                                                                                                  | Read dashboard insights data and see presence indicators.                                                                                                                                                                                                                             |
 | `fixed:dashboards.permissions:reader`        | `fixed_f17oxuXW_58LL8mYJsm4T_mCeIw` | `dashboards.permissions:read`                                                                                                                                                                                                                                               | Read all dashboard permissions.                                                                                                                                                                                                                                                       |
 | `fixed:dashboards.permissions:writer`        | `fixed_CcznxhWX_Yqn8uWMXMQ-b5iFW9k` | All permissions from `fixed:dashboards.permissions:reader` and <br>`dashboards.permissions:write`                                                                                                                                                                           | Read and update all dashboard permissions.                                                                                                                                                                                                                                            |
@@ -165,16 +165,7 @@ There is only one exclusion at this moment. Role `fixed:alerting.provisioning:wr
 
 For more information about the permissions required to access alert rules, refer to [Create a custom role to access alerts in a folder](ref:plan-rbac-rollout-strategy-create-a-custom-role-to-access-alerts-in-a-folder).
 
-### Grafana OnCall roles (beta)
-
-{{% admonition type="note" %}}
-Available from Grafana 9.4 in early access.
-{{% /admonition %}}
-
-{{% admonition type="note" %}}
-This feature is behind the `accessControlOnCall` feature toggle.
-You can enable feature toggles through configuration file or environment variables. See configuration [docs](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles) for details.
-{{% /admonition %}}
+### Grafana OnCall roles
 
 If you are using [Grafana OnCall](ref:oncall), you can try out the integration between Grafana OnCall and RBAC.
 For a detailed list of the available OnCall RBAC roles, refer to the table in [Available Grafana OnCall RBAC roles and granted actions](ref:available-grafana-oncall-rbac-roles--granted-actions).
