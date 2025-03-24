@@ -600,9 +600,20 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 			Permissions: map[int64]map[string][]string{
 				orgID: {
 					dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
-					accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization, accesscontrol.ScopeAnnotationsAll},
+					accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
 				},
 			},
+		}
+
+		if features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
+			tempUser = &user.SignedInUser{
+				OrgID: orgID,
+				Permissions: map[int64]map[string][]string{
+					orgID: {
+						accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization, dashboards.ScopeDashboardsAll},
+					},
+				},
+			}
 		}
 
 		annotation, resp := findAnnotationByID(ctx, annotationsRepo, int64(annotationId), tempUser)
