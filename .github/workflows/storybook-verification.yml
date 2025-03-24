@@ -4,7 +4,13 @@ on:
   pull_request:
     paths:
       - 'packages/grafana-ui/**'
-      - '.github/workflows/storybook-verification.yml'
+      - '!docs/**'
+      - '!*.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/grafana-ui/**'
       - '!docs/**'
       - '!*.md'
 
