@@ -1,8 +1,12 @@
+import { Repository } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 
 import GettingStarted from './GettingStarted';
+interface Props {
+  items: Repository[];
+}
 
-export default function GettingStartedPage() {
+export default function GettingStartedPage({ items }: Props) {
   return (
     <Page
       navId="provisioning"
@@ -13,7 +17,7 @@ export default function GettingStartedPage() {
       }}
     >
       <Page.Contents>
-        <GettingStarted />
+        <GettingStarted items={items} />
       </Page.Contents>
     </Page>
   );

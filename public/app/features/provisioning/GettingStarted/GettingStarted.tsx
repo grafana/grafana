@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { Alert, Stack, Text, Box } from '@grafana/ui';
-import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
+import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';
@@ -47,7 +47,11 @@ HTTP Requests
 const rootUrlExample = `[server]
 root_url = https://d60d-83-33-235-27.ngrok-free.app`;
 
-export default function GettingStarted() {
+interface Props {
+  items: Repository[];
+}
+
+export default function GettingStarted({ items }: Props) {
   const settingsQuery = useGetFrontendSettingsQuery();
   const legacyStorage = settingsQuery.data?.legacyStorage;
 
@@ -112,7 +116,7 @@ export default function GettingStarted() {
       <Stack direction="row" gap={2}>
         <Box width="50%" marginTop={2} paddingTop={2} paddingBottom={2}>
           <FeaturesList
-            settings={settingsQuery.data}
+            repos={items}
             hasPublicAccess={hasPublicAccess}
             hasImageRenderer={hasImageRenderer}
             hasRequiredFeatures={hasRequiredFeatures}

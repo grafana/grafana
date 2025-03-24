@@ -136,7 +136,7 @@
       "title": "LDAP Synchronization"
     },
     "ldap-user-groups": {
-      "no-org-found": "No match <2><0></0></2>"
+      "no-org-found": "No match"
     },
     "ldap-user-info": {
       "no-team": "No teams found via LDAP"
@@ -729,6 +729,14 @@
       },
       "pause": {
         "label": "Pause evaluation"
+      },
+      "simple-routing": {
+        "alertmanager-label": "Alertmanager:",
+        "optional-settings": {
+          "description": "Configure how notifications for this alert rule are sent.",
+          "help-info1": "Mute timings allows you to temporarily pause notifications for a specific recurring period, such as a regular maintenance window or weekends.",
+          "help-info2": "Grouping and timing options combine multiple alerts within a specific period into a single notification, allowing you to customize default options."
+        }
       },
       "threshold": {
         "recovery": {
@@ -1439,6 +1447,15 @@
     },
     "responsive-layout": {
       "description": "Panels resize to fit and form uniform grids",
+      "item-options": {
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
+            "title": "Repeat by variable"
+          }
+        }
+      },
       "name": "Auto grid",
       "options": {
         "columns": "Columns",
@@ -1453,12 +1470,6 @@
     "rows-layout": {
       "description": "Collapsable panel groups with headings",
       "name": "Rows",
-      "option": {
-        "height": "Height",
-        "hide-header": "Hide row header",
-        "repeat": "Repeat for",
-        "title": "Title"
-      },
       "options": {
         "height-expand": "Expand",
         "height-min": "Min"
@@ -1482,6 +1493,18 @@
         }
       },
       "row-options": {
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this row for each value in the selected variable.",
+            "title": "Repeat by variable"
+          }
+        },
+        "row": {
+          "height": "Height",
+          "hide-header": "Hide row header",
+          "title": "Title"
+        },
         "title-option": "Title"
       }
     },
@@ -1522,7 +1545,6 @@
         "label": "Edit",
         "tooltip": "Enter edit mode"
       },
-      "edit-dashboard-v2-schema": "Edit dashboard v2 schema",
       "enter-edit-mode": {
         "label": "Make editable",
         "tooltip": "This dashboard was marked as read only"
@@ -1533,6 +1555,66 @@
       },
       "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
+      "new": {
+        "back-to-dashboard": "Back to dashboard",
+        "dashboard-settings": {
+          "tooltip": "Dashboard settings"
+        },
+        "discard-library-panel-changes": "Discard library panel changes",
+        "discard-panel": "Discard panel changes",
+        "discard-panel-new": "Discard panel",
+        "edit-dashboard-v2-schema": {
+          "tooltip": "Edit dashboard v2 schema"
+        },
+        "edit-toggle": {
+          "enter": {
+            "label": "Enter edit mode"
+          },
+          "exit": {
+            "label": "Exit edit mode"
+          }
+        },
+        "enter-edit-mode": {
+          "label": "Make editable",
+          "tooltip": "This dashboard was marked as read only"
+        },
+        "export": {
+          "arrow": "Export",
+          "title": "Export",
+          "tooltip": "Export as JSON"
+        },
+        "mark-favorite": "Mark as favorite",
+        "more-save-options": "More save options",
+        "playlist-next": "Go to next dashboard",
+        "playlist-previous": "Go to previous dashboard",
+        "playlist-stop": "Stop playlist",
+        "public-dashboard": "Public",
+        "save-dashboard": {
+          "label": "Save",
+          "tooltip": "Save changes"
+        },
+        "save-dashboard-copy": {
+          "label": "Save as copy",
+          "tooltip": "Save as copy"
+        },
+        "save-dashboard-short": "Save",
+        "save-library-panel": "Save library panel",
+        "share": {
+          "arrow": "Share",
+          "title": "Share",
+          "tooltip": "Copy link"
+        },
+        "share-export": {
+          "modal": {
+            "noText": "Discard",
+            "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
+            "title": "Save changes to dashboard?",
+            "yesText": "Save"
+          }
+        },
+        "unlink-library-panel": "Unlink library panel",
+        "unmark-favorite": "Unmark as favorite"
+      },
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
@@ -1556,7 +1638,6 @@
         "tooltip": "Share dashboard"
       },
       "share-button": "Share",
-      "show-hidden-elements": "Show hidden",
       "switch-old-dashboard": "Switch to old dashboard page",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"

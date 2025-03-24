@@ -9,11 +9,13 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport/client"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,6 +27,22 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
+const (
+	// maxOperationBytes is the maximum size of a git operation in bytes (1 GB)
+	maxOperationBytes   = int64(1 << 30)
+	maxOperationTimeout = 10 * time.Minute
+)
+
+func init() {
+	// Create a size-limited writer that will cancel the context if size is exceeded
+	limitedTransport := NewByteLimitedTransport(http.DefaultTransport, maxOperationBytes)
+	httpClient := githttp.NewClient(&http.Client{
+		Transport: limitedTransport,
+	})
+	client.InstallProtocol("https", httpClient)
+	client.InstallProtocol("http", httpClient)
+}
+
 var _ repository.Repository = (*GoGitRepo)(nil)
 
 type GoGitCloneOptions struct {
@@ -35,6 +53,16 @@ type GoGitCloneOptions struct {
 
 	// Skip intermediate commits and commit all before push
 	SingleCommitBeforePush bool
+
+	// Maximum allowed size for repository clone in bytes (0 means no limit)
+	MaxSize int64
+
+	// Maximum time allowed for clone operation in seconds (0 means no limit)
+	Timeout time.Duration
+}
+
+type GoGitPushOptions struct {
+	Timeout time.Duration
 }
 
 type GoGitRepo struct {
@@ -59,6 +87,14 @@ func Clone(
 	if opts.Root == "" {
 		return nil, fmt.Errorf("missing root config")
 	}
+
+	// add a timeout to the operation
+	timeout := maxOperationTimeout
+	if opts.Timeout > 0 {
+		timeout = opts.Timeout
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 
 	decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
 	if err != nil {
@@ -126,8 +162,7 @@ func clone(ctx context.Context, config *provisioning.Repository, opts GoGitClone
 				return nil, nil, fmt.Errorf("unable to create new branch: %w", err)
 			}
 		}
-	}
-	if err != nil {
+	} else if err != nil {
 		return nil, nil, fmt.Errorf("clone error: %w", err)
 	}
 
@@ -140,6 +175,7 @@ func clone(ctx context.Context, config *provisioning.Repository, opts GoGitClone
 	if origin == nil {
 		return nil, nil, fmt.Errorf("missing origin remote %w", err)
 	}
+
 	if url != origin.URLs[0] {
 		return nil, nil, fmt.Errorf("unexpected remote (expected: %s, found: %s)", url, origin.URLs[0])
 	}
@@ -163,7 +199,15 @@ func mkdirTempClone(root string, config *provisioning.Repository) (string, error
 }
 
 // Affer making changes to the worktree, push changes
-func (g *GoGitRepo) Push(ctx context.Context, progress io.Writer) error {
+func (g *GoGitRepo) Push(ctx context.Context, opts GoGitPushOptions, progress io.Writer) error {
+	timeout := maxOperationTimeout
+	if opts.Timeout > 0 {
+		timeout = opts.Timeout
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
 	if g.opts.SingleCommitBeforePush {
 		_, err := g.tree.Commit("exported from grafana", &git.CommitOptions{
 			All: true, // Add everything that changed
