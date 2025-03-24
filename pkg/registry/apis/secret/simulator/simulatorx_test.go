@@ -244,8 +244,8 @@ func getSimulatorConfigOrDefault() SimulatorConfig {
 		Seed:  seed,
 		Steps: steps,
 		// TODO: random number of workers
-		NumWorkers:       1,
-		MaxCreateSecrets: 2,
+		NumWorkers:       3,
+		MaxCreateSecrets: 5,
 	}
 }
 
@@ -253,7 +253,7 @@ func TestSimulate(t *testing.T) {
 	t.Parallel()
 
 	simulatorConfig := getSimulatorConfigOrDefault()
-	rng := rand.New(rand.NewSource(6975927690679579418))
+	rng := rand.New(rand.NewSource(simulatorConfig.Seed))
 	activityLog := NewActivityLog()
 
 	defer func() {
@@ -344,7 +344,7 @@ func invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t *testing
 			_, exists := secureValuesInQueue[namespace][secureValue.Name]
 			statusPending := secureValue.Status.Phase == secretv0alpha1.SecureValuePhasePending
 
-			require.True(t, (statusPending && exists || (!statusPending && !exists)), fmt.Sprintf("statusPending=%v exists=%v currentStatus=%+v metadata_db=%v", statusPending, exists, secureValue.Status.Phase, simDatabase.secretMetadata))
+			require.True(t, (statusPending && exists || (!statusPending && !exists)), fmt.Sprintf("when there's a message in the queue for a secret, the secret should have Pending status: statusPending=%v exists=%v currentStatus=%+v metadata_db=%v", statusPending, exists, secureValue.Status.Phase, simDatabase.secretMetadata))
 		}
 	}
 }

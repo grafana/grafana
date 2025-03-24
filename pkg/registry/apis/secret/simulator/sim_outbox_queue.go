@@ -22,28 +22,29 @@ func (queue *SimOutboxQueue) Append(ctx context.Context, message contracts.Appen
 	reply := queue.simNetwork.Send(SendInput{
 		Debug: fmt.Sprintf("AppendQuery(%+v, %+v)", transactionIDFromContext(ctx), message),
 		Execute: func() any {
-			return queue.simDatabase.onQuery(simDatabaseAppendQuery{message: message, transactionID: transactionIDFromContext(ctx)})
-		}}).(simDatabaseAppendResponse)
+			return queue.simDatabase.QueryOutboxAppend(transactionIDFromContext(ctx), message)
+		}})
 
-	return reply.err
+	return toError(reply)
 }
 
 func (queue *SimOutboxQueue) Delete(ctx context.Context, messageID string) error {
 	reply := queue.simNetwork.Send(SendInput{
 		Debug: fmt.Sprintf("Outbox.Delete(%+v)", messageID),
 		Execute: func() any {
-			return queue.simDatabase.onQuery(simDatabaseOutboxDeleteQuery{transactionID: transactionIDFromContext(ctx), messageID: messageID})
-		}}).(simDatabaseOutboxDeleteResponse)
+			return queue.simDatabase.QueryOutboxDelete(transactionIDFromContext(ctx), messageID)
+		}})
 
-	return reply.err
+	return toError(reply)
 }
 
-func (queue *SimOutboxQueue) ReceiveN(ctx context.Context, n uint) (messages []contracts.OutboxMessage, err error) {
+func (queue *SimOutboxQueue) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxMessage, error) {
 	reply := queue.simNetwork.Send(SendInput{
 		Debug: fmt.Sprintf("ReceiveN(%+v)", n),
 		Execute: func() any {
-			return queue.simDatabase.onQuery(simDatabaseOutboxReceive{transactionID: transactionIDFromContext(ctx), n: n})
-		}}).(simDatabaseOutboxReceiveResponse)
+			messages, err := queue.simDatabase.QueryOutboxReceive(transactionIDFromContext(ctx), n)
+			return []any{messages, err}
+		}}).([]any)
 
-	return reply.messages, reply.err
+	return reply[0].([]contracts.OutboxMessage), toError(reply[1])
 }

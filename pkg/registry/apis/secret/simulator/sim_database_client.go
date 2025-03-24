@@ -26,35 +26,38 @@ func (client *SimDatabaseClient) Transaction(ctx context.Context, fn func(ctx co
 	reply := client.simNetwork.Send(SendInput{
 		Debug: "BeginTx",
 		Execute: func() any {
-			return client.simDatabase.onQuery(simDatabaseBeginTxQuery{ctx: ctx, opts: nil})
-		}}).(simDatabaseBeginTxResponse)
+			txID, err := client.simDatabase.QueryBeginTx(ctx)
+			return []any{txID, err}
+		}}).([]any)
+	transactionID := reply[0].(TransactionID)
+	err := toError(reply[1])
 
 	// If an error happened when starting the transaction
-	if reply.err != nil {
-		return reply.err
+	if err != nil {
+		return err
 	}
 
 	// Run the function with the transaction in the context
-	if err := fn(context.WithValue(ctx, transactionContextKey, reply.transactionID)); err != nil {
+	if err := fn(context.WithValue(ctx, transactionContextKey, transactionID)); err != nil {
 		// If an error happened, rollback the transaction
-		rollbackReply := client.simNetwork.Send(SendInput{
-			Debug: fmt.Sprintf("RollbackTx(%+v)", reply.transactionID),
+		rollbackErr := toError(client.simNetwork.Send(SendInput{
+			Debug: fmt.Sprintf("RollbackTx(%+v)", transactionID),
 			Execute: func() any {
-				return client.simDatabase.onQuery(simDatabaseRollback{transactionID: reply.transactionID})
-			}}).(simDatabaseRollbackResponse)
+				return client.simDatabase.QueryRollbackTx(transactionID)
+			}}))
 
-		return errors.Join(err, rollbackReply.err)
+		return errors.Join(err, rollbackErr)
 	}
 
-	commitReply := client.simNetwork.Send(SendInput{
-		Debug: fmt.Sprintf("CommiTx(%+v)", reply.transactionID),
+	commitErr := toError(client.simNetwork.Send(SendInput{
+		Debug: fmt.Sprintf("CommiTx(%+v)", transactionID),
 		Execute: func() any {
-			return client.simDatabase.onQuery(simDatabaseCommit{transactionID: reply.transactionID})
-		}}).(simDatabaseCommitResponse)
+			return client.simDatabase.QueryCommitTx(transactionID)
+		}}))
 
 	// If an error happened when committing the transaction
-	if commitReply.err != nil {
-		return commitReply.err
+	if commitErr != nil {
+		return commitErr
 	}
 
 	return nil

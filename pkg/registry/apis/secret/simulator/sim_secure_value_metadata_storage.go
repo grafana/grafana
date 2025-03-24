@@ -25,9 +25,10 @@ func (storage *SimSecureValueMetadataStorage) Create(ctx context.Context, sv *se
 	reply := storage.simNetwork.Send(SendInput{
 		Debug: fmt.Sprintf("DatabaseCreateSecureValueMetadataQuery(%+v, %+v, %+v)", transactionIDFromContext(ctx), sv.Namespace, sv.Name),
 		Execute: func() any {
-			return storage.simDatabase.onQuery(simDatabaseCreateSecureValueMetadataQuery{ctx: ctx, sv: sv, transactionID: transactionIDFromContext(ctx)})
-		}}).(simDatabaseCreateSecureValueMetadataResponse)
-	return reply.sv, reply.err
+			createdSv, err := storage.simDatabase.QueryCreateSecureValueMetadata(transactionIDFromContext(ctx), sv)
+			return []any{createdSv, err}
+		}}).([]any)
+	return reply[0].(*secretv0alpha1.SecureValue), toError(reply[1])
 }
 func (storage *SimSecureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
 	panic("TODO: SimSecureValueMetadataStorage.Read")
@@ -46,16 +47,16 @@ func (storage *SimSecureValueMetadataStorage) SetExternalID(ctx context.Context,
 	reply := storage.simNetwork.Send(SendInput{
 		Debug: fmt.Sprintf("DatabaseSetExternalIDQuery(%+v, %+v, %+v, %+v)", transactionIDFromContext(ctx), namespace, name, externalID),
 		Execute: func() any {
-			return storage.simDatabase.onQuery(simDatabaseSetExternalIDQuery{transactionID: transactionIDFromContext(ctx), namespace: namespace, name: name, externalID: externalID})
-		}}).(simDatabaseSetExternalIDResponse)
-	return reply.err
+			return storage.simDatabase.QuerySetExternalID(transactionIDFromContext(ctx), namespace, name, externalID)
+		}})
+	return toError(reply)
 }
 
 func (storage *SimSecureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
 	reply := storage.simNetwork.Send(SendInput{
 		Debug: fmt.Sprintf("DatabaseSetStatusSucceeded(%+v, %+v, %+v)", transactionIDFromContext(ctx), namespace, name),
 		Execute: func() any {
-			return storage.simDatabase.onQuery(simDatabaseSetStatusSucceededQuery{transactionID: transactionIDFromContext(ctx), namespace: namespace, name: name})
-		}}).(simDatabaseSetStatusSucceededResponse)
-	return reply.err
+			return storage.simDatabase.QuerySetStatusSucceeded(transactionIDFromContext(ctx), namespace, name)
+		}})
+	return toError(reply)
 }

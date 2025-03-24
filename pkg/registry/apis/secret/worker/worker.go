@@ -107,7 +107,6 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 		if err := w.secureValueMetadataStorage.SetExternalID(ctx, xkube.Namespace(message.Namespace), message.Name, externalID); err != nil {
 			return fmt.Errorf("setting secret metadata externalID: externalID=%+v message=%+v %w", externalID, message, err)
 		}
-		fmt.Printf("\n\naaaaaaa SET EXTENRAL ID\n\n")
 
 	case contracts.UpdateSecretOutboxMessage:
 		if err := keeper.Update(ctx, keeperCfg, message.Name, contracts.ExternalID(*message.ExternalID), rawSecret); err != nil {
