@@ -8,7 +8,7 @@ import (
 // IsDir returns true if the filePath ends with a slash.
 // Empty string is considered a directory.
 func IsDir(filePath string) bool {
-	if filePath == "" {
+	if filePath == "" || filePath == "." {
 		return true
 	}
 

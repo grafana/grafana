@@ -18,6 +18,11 @@ func TestIsFolderPath(t *testing.T) {
 			want:     true,
 		},
 		{
+			name:     "dot path",
+			filePath: ".",
+			want:     true,
+		},
+		{
 			name:     "file path without extension",
 			filePath: "test",
 			want:     false,
