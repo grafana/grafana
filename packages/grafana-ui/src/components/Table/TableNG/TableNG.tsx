@@ -40,9 +40,11 @@ import {
   TableColumn,
   TableFieldOptionsType,
   ScrollPosition,
+  CellColors,
 } from './types';
 import {
   frameToRecords,
+  getCellColors,
   getComparator,
   getDefaultRowHeight,
   getFooterItemNG,
@@ -644,6 +646,26 @@ export function mapFrameToDataGrid({
     availableWidth -= COLUMN.EXPANDER_WIDTH;
   }
 
+  // Row background color function
+  let rowBg: Function | undefined = undefined;
+  for (const field of frame.fields) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const fieldOptions = field.config.custom as TableFieldOptionsType;
+    const cellOptionsExist = fieldOptions !== undefined && fieldOptions.cellOptions !== undefined;
+
+    if (
+      cellOptionsExist &&
+      fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground &&
+      fieldOptions.cellOptions.applyToRow
+    ) {
+      rowBg = (rowIndex: number): CellColors => {
+        const display = field.display!(field.values.get(rowIndex));
+        const colors = getCellColors(theme, fieldOptions.cellOptions, display);
+        return colors;
+      };
+    }
+  }
+
   let fieldCountWithoutWidth = 0;
   frame.fields.map((field, fieldIndex) => {
     if (field.type === FieldType.nestedFrames) {
@@ -703,6 +725,7 @@ export function mapFrameToDataGrid({
             setContextMenuProps={setContextMenuProps}
             cellInspect={cellInspect}
             getActions={getActions}
+            rowBg={rowBg}
           />
         );
       },
