@@ -15,7 +15,6 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.package }}
-          path: grafana.tar.gz
       - uses: ./.github/workflows/actions/start-grafana-server
         with:
           package: grafana.tar.gz
