@@ -1,4 +1,3 @@
-
 import { Settings } from 'app/percona/settings/Settings.types';
 import { TourStep } from 'app/percona/shared/core/reducers/tour';
 import { ServiceType } from 'app/percona/shared/services/services/Services.types';

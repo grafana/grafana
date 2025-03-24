@@ -13,7 +13,7 @@ export const useLinkWithVariables = (url?: string) => {
       targetBlank: false,
       title: '',
       tooltip: '',
-      type: 'link'
+      type: 'link',
     });
     return cleanupVariables(urlWithLinks);
   } else {

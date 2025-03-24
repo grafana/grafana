@@ -1,4 +1,3 @@
-
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { getStyles } from './Advisor.styles';

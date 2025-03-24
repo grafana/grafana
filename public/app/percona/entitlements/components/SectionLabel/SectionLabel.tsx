@@ -1,4 +1,3 @@
-
 import { useStyles2 } from '@grafana/ui';
 
 import { Messages } from './SectionLabel.messages';
