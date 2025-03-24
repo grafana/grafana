@@ -55,6 +55,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   useEffect(() => {
     if (dockedPluginId && !isLoading) {
       store.set(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, dockedPluginId);
+    } else if (!dockedPluginId && !isLoading) {
+      store.delete(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
     }
   }, [dockedPluginId, isLoading]);
 
