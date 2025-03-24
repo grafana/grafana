@@ -10,6 +10,7 @@ import { formatTimestamp } from '../utils/time';
 
 import { JobSummary } from './JobSummary';
 import { useRepositoryHistoricalJobs } from '../hooks/useRepositoryHistoricalJobs';
+import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 
 interface Props {
   repo: Repository;
@@ -152,14 +153,10 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   );
 }
 
-interface EmptyStateProps {
-  typ: string;
-}
-
-function EmptyState({ typ }: EmptyStateProps) {
+function EmptyState() {
   return (
     <Stack direction={'column'} alignItems={'center'}>
-      <Text color="secondary">No {typ}...</Text>
+      <Text color="secondary">No jobs...</Text>
     </Stack>
   );
 }
@@ -180,22 +177,25 @@ function Loading() {
   );
 }
 
-interface JobsCardProps {
-  typ: string;
-  text: string;
-  jobs: ReturnType<typeof useRepositoryJobs | typeof useRepositoryHistoricalJobs>;
-}
+export function RecentJobs({ repo }: Props) {
+  // TODO: Decide on whether we want to wait on historic jobs to show the current ones.
+  //   Gut feeling is that current jobs are far more important to show than historic ones.
+  const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({
+    repositoryName: repo.metadata?.name,
+    watch: true,
+    sort: 'active-first',
+  });
+  const jobColumns = useMemo(() => getJobColumns(), []);
 
-function JobsCard({ typ, text, jobs: [jobs, query] }: JobsCardProps) {
   let description: JSX.Element;
-  if (query.isLoading) {
+  if (activeQuery.isLoading || historicQuery.isLoading) {
     description = Loading();
-  } else if (query.isError) {
-    description = ErrorLoading(typ, query.error);
+  } else if (activeQuery.isError) {
+    description = ErrorLoading('active jobs', activeQuery.error);
+    // TODO: Figure out what to do if historic fails. Maybe a separate card?
   } else if (!jobs?.length) {
-    description = <EmptyState typ={typ} />;
+    description = <EmptyState />;
   } else {
-    const jobColumns = useMemo(() => getJobColumns(), []);
     description = (
       <InteractiveTable
         data={jobs}
@@ -206,31 +206,11 @@ function JobsCard({ typ, text, jobs: [jobs, query] }: JobsCardProps) {
       />
     );
   }
+
   return (
     <Card>
-      <Card.Heading>{text}</Card.Heading>
+      <Card.Heading>Jobs</Card.Heading>
       <Card.Description>{description}</Card.Description>
     </Card>
-  );
-}
-
-export function RecentJobs({ repo }: Props) {
-  // TODO: Decide on whether we want to wait on historic jobs to show the current ones.
-  //   Gut feeling is that current jobs are far more important to show than historic ones.
-
-  return (
-    <Stack direction={'column'} gap={1}>
-      <JobsCard
-        typ="active jobs"
-        text="Active jobs"
-        jobs={useRepositoryJobs({ name: repo.metadata?.name, watch: true })}
-      />
-
-      <JobsCard
-        typ="historic jobs"
-        text="Historic jobs"
-        jobs={useRepositoryHistoricalJobs({ repositoryName: repo.metadata?.name, watch: true })}
-      />
-    </Stack>
   );
 }
