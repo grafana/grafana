@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// TODO: explore if we want to use our own type for safepath
+// to make it clearer that this is a safe path and not a regular path
+
 // osSeparator is declared as a var here only to ensure we can change it in tests.
 var osSeparator = os.PathSeparator
 
