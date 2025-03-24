@@ -6,23 +6,39 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Popover } from '../../..';
 import { useStyles2 } from '../../../../themes';
 import { Icon } from '../../../Icon/Icon';
-import { TableRow } from '../types';
+import { TableRow, FilterType } from '../types';
 
 import { REGEX_OPERATOR } from './FilterList';
 import { FilterPopup } from './FilterPopup';
 
+interface FilterItem {
+  filtered: boolean;
+  filteredSet: Set<string>;
+  searchFilter?: string;
+  operator?: SelectableValue<string>;
+}
+
 interface Props {
   name: string;
-  rows: any[];
-  filter: any;
-  setFilter: (value: any) => void;
+  rows: TableRow[];
+  filter: FilterType;
+  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   field?: Field;
   crossFilterOrder: string[];
   crossFilterRows: { [key: string]: TableRow[] };
 }
 
-export const Filter = ({ name, rows, filter, setFilter, field, crossFilterOrder, crossFilterRows }: Props) => {
-  const filterValue = filter[name]?.filtered;
+export const Filter = ({
+  name,
+  rows,
+  filter,
+  setFilter,
+  field,
+  crossFilterOrder,
+  crossFilterRows,
+}: Props): JSX.Element => {
+  const filterItem = filter[name] as FilterItem | undefined;
+  const filterValue = filterItem?.filtered;
 
   // get rows for cross filtering
   const filterIndex = crossFilterOrder.indexOf(name);
@@ -45,8 +61,8 @@ export const Filter = ({ name, rows, filter, setFilter, field, crossFilterOrder,
   const filterEnabled = useMemo(() => Boolean(filterValue), [filterValue]);
   const onShowPopover = useCallback(() => setPopoverVisible(true), [setPopoverVisible]);
   const onClosePopover = useCallback(() => setPopoverVisible(false), [setPopoverVisible]);
-  const [searchFilter, setSearchFilter] = useState(filter[name]?.searchFilter || '');
-  const [operator, setOperator] = useState<SelectableValue<string>>(filter[name]?.operator || REGEX_OPERATOR);
+  const [searchFilter, setSearchFilter] = useState<string>(filterItem?.searchFilter || '');
+  const [operator, setOperator] = useState<SelectableValue<string>>(filterItem?.operator || REGEX_OPERATOR);
 
   return (
     <button
