@@ -92,7 +92,7 @@ Following is a list of configuration options for Prometheus.
 {{< admonition type="note" >}}
 When running Grafana and Prometheus in separate containers, localhost refers to each container’s own network namespace. This means that `localhost:9090` points to port 9090 inside the Grafana container, not on the host machine.
 
-You should use the IP address of the Prometheus container, or the hostname if you are using Docker Compose. Alternatively, you can use `http://host.docker.internal:9090` to reference the host machine. 
+You should use the IP address of the Prometheus container, or the hostname if you are using Docker Compose. Alternatively, you can use `http://host.docker.internal:9090` to reference the host machine.
 {{< /admonition >}}
 
 {{< /shared >}}
@@ -101,7 +101,8 @@ You should use the IP address of the Prometheus container, or the hostname if yo
 
 There are three authentication option for the Prometheus data source.
 
-- **Basic authentication** - The most common authentication method. 
+- **Basic authentication** - The most common authentication method.
+
   - **User** - The username you use to connect to the data source.
   - **Password** - The password you use to connect to the data source.
 
@@ -116,11 +117,11 @@ Use TLS (Transport Layer Security) for an additional layer of security when work
 {{< /admonition >}}
 
 - **Add self-signed certificate** - Check the box to ass a self-signed certificate.
-  _ **CA certificate** - Add your certificate.
-- **TLS client authentication** - Check the box to enable TLS client authentication. 
-  - **Server name** -   
+  \_ **CA certificate** - Add your certificate.
+- **TLS client authentication** - Check the box to enable TLS client authentication.
+  - **Server name** -
   - **Client certificate** - The client certificate is generated from a Certificate Authority or it's self-signed. Follow the instructions of the CA (Certificate Authority) to download the certificate file.
-  - **Client key** -  The client provides a certificate that is validated by the server to establish the client's trusted identity. The client key encrypts the data between client and server.
+  - **Client key** - The client provides a certificate that is validated by the server to establish the client's trusted identity. The client key encrypts the data between client and server.
 - **Skip TLS verify** - Toggle on to bypass TLS certificate validation.
 
 **HTTP headers:**
@@ -162,12 +163,13 @@ The **Manage alerts via Alerting UI** toggle is enabled by default. You can chan
 
 **Performance:**
 
-- **Prometheus type** - Select the type of your Prometheus-compatible database, such as Prometheus, Cortex, Mimir, or Thanos. Changing this setting will save your current configuration. Different database types support different APIs. For example, some allow `regex` matching for label queries to improve performance, while others provide a metadata API. Setting this incorrectly may cause unexpected behavior when querying metrics and labels. Refer to your Prometheus documentation to ensure you select the correct type. 
+- **Prometheus type** - Select the type of your Prometheus-compatible database, such as Prometheus, Cortex, Mimir, or Thanos. Changing this setting will save your current configuration. Different database types support different APIs. For example, some allow `regex` matching for label queries to improve performance, while others provide a metadata API. Setting this incorrectly may cause unexpected behavior when querying metrics and labels. Refer to your Prometheus documentation to ensure you select the correct type.
 
 - **Cache level** - Sets the browser caching level for editor queries. There are four options: `Low`, `Medium`, `High`, or `None`. Higher cache settings are recommended for high cardinality data sources.
 
 - **Incremental querying (beta)** - Changes the default behavior of relative queries to always request fresh data from the Prometheus instance. Enable this option to decrease database and network load.
-  - **Query overlap window** - Specify a duration (e.g., 10m, 120s, or 0s). The default is `10m`.  This value is added to the duration of each incremental request.  
+
+  - **Query overlap window** - Specify a duration (e.g., 10m, 120s, or 0s). The default is `10m`. This value is added to the duration of each incremental request.
 
 - **Disable recording rules (beta)** - Toggle to disable the recording rules. Enable this option to improve dashboard performance.
 
@@ -177,7 +179,7 @@ The **Manage alerts via Alerting UI** toggle is enabled by default. You can chan
 
 - **HTTP method** - Use either `POST` or `GET` HTTP method to query your data source. `POST` is the recommended and pre-selected method as it allows bigger queries. Change to `GET` if you have a Prometheus version older than 2.1 or if `POST` requests are restricted in your network.
 
-- **Use series endpoint** - 
+- **Use series endpoint** -
 
 Checking this option will favor the series endpoint with match[] parameter over the label values endpoint with match[] parameter. While the label values endpoint is considered more performant, some users may prefer the series because it has a POST method while the label values endpoint only has a GET method. Visit docs for more details here.
 
@@ -192,7 +194,7 @@ Support for exemplars is available only for the Prometheus data source. If this 
 - **Label name** - The name of the field in the `labels` object used to obtain the traceID property.
 - **Remove exemplar link** - Click to remove existing links.
 
-## Exemplars 
+## Exemplars
 
 Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars](ref:exemplars) in Prometheus documentation for detailed information on how they work.
 
@@ -206,10 +208,7 @@ Grafana can show exemplars data alongside a metric both in Explore and in Dashbo
 
 See the Exemplars section in [Configure Prometheus data source](ref:configure-prometheus-data-source).
 
-{{< figure src="/static/img/docs/prometheus/exemplars-10-1.png" max-width="500px" class="docs-image--no-shadow" 
-
-
-
+{{< figure src="/static/img/docs/prometheus/exemplars-10-1.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Provision the Prometheus data source
 
@@ -279,9 +278,6 @@ Example of a Prometheus data source configuration:
             - name: traceID
               url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
     ```
-
-
-
 
 ## Recording rules (beta)
 
