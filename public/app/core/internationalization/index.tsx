@@ -76,6 +76,13 @@ export function changeLanguage(locale: string) {
 }
 
 export const Trans = (props: TransProps): ReactElement => {
+  const context = usePluginContext();
+
+  // If we are in a plugin context, use the plugin's id as the namespace
+  if (context?.meta?.id) {
+    return <I18NextTrans shouldUnescape ns={context.meta.id} {...props} />;
+  }
+
   return <I18NextTrans shouldUnescape ns={NAMESPACES} {...props} />;
 };
 

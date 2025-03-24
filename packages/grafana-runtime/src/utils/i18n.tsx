@@ -1,5 +1,3 @@
-import { usePluginContext } from '@grafana/data';
-
 import { type TransProps, type TransType, type UseTranslateHook } from '../types/i18n';
 
 /**
@@ -51,16 +49,9 @@ export function setTransComponent(transComponent: TransType) {
  * @throws {Error} If the Trans component hasn't been initialized
  */
 export function Trans(props: TransProps): React.ReactElement {
-  const context = usePluginContext();
-
   if (!TransComponent) {
     throw new Error('Trans component not set. Use setTransComponent to set the Trans component.');
   }
 
-  if (!context) {
-    return <TransComponent {...props} />;
-  }
-
-  const { meta } = context;
-  return <TransComponent {...props} ns={meta.id} />;
+  return <TransComponent {...props} />;
 }

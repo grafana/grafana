@@ -12,23 +12,39 @@ type TransChild = React.ReactNode | Record<string, unknown>;
 
 /**
  * Props interface for the Trans component used for internationalization
- * @param i18nKey - The translation key to look up
- * @param children - Child elements or values to interpolate
- * @param components - React elements to use for interpolation
- * @param count - Count value for pluralization
- * @param string defaults - Default text if translation is not found
- * @param ns - Namespace for the translation key
- * @param shouldUnescape - Whether to unescape HTML entities
- * @param values - Values to interpolate into the translation
  */
 interface TransProps {
+  /**
+   * The translation key to look up
+   */
   i18nKey: string;
+  /**
+   * Child elements or values to interpolate
+   */
   children?: TransChild | readonly TransChild[];
+  /**
+   * React elements to use for interpolation
+   */
   components?: readonly React.ReactElement[] | { readonly [tagName: string]: React.ReactElement };
+  /**
+   * Count value for pluralization
+   */
   count?: number;
+  /**
+   * Default text if translation is not found
+   */
   defaults?: string;
+  /**
+   * Namespace for the translation key
+   */
   ns?: string;
+  /**
+   * Whether to unescape HTML entities
+   */
   shouldUnescape?: boolean;
+  /**
+   * Values to interpolate into the translation
+   */
   values?: Record<string, unknown>;
 }
 
