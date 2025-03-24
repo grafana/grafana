@@ -41,11 +41,11 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	if errors.Is(err, dashboards.ErrFolderVersionMismatch) {
-		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": "the folder has been changed by someone else"})
+		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
 	}
 
 	if errors.Is(err, folder.ErrMaximumDepthReached) {
-		return response.JSON(http.StatusBadRequest, util.DynMap{"messageId": "folder.maximum-depth-reached", "message": "Maximum nested folder depth reached"})
+		return response.JSON(http.StatusBadRequest, util.DynMap{"messageId": "folder.maximum-depth-reached", "message": folder.ErrMaximumDepthReached.Error()})
 	}
 
 	var statusErr *k8sErrors.StatusError

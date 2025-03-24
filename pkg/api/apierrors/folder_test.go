@@ -68,7 +68,7 @@ func TestToFolderErrorResponse(t *testing.T) {
 		{
 			name:  "folder max depth reached",
 			input: folder.ErrMaximumDepthReached,
-			want:  response.JSON(http.StatusBadRequest, util.DynMap{"messageId": "folder.maximum-depth-reached", "message": "Maximum nested folder depth reached"}),
+			want:  response.JSON(http.StatusBadRequest, util.DynMap{"messageId": "folder.maximum-depth-reached", "message": folder.ErrMaximumDepthReached.Error()}),
 		},
 		{
 			name:  "fallback error",
