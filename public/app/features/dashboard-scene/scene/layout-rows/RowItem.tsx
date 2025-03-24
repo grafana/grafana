@@ -1,5 +1,6 @@
 import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
+import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
@@ -22,7 +23,7 @@ export interface RowItemState extends SceneObjectState {
   title?: string;
   isCollapsed?: boolean;
   isHeaderHidden?: boolean;
-  height?: 'expand' | 'min';
+  fillScreen?: boolean;
   conditionalRendering?: ConditionalRendering;
 }
 
@@ -72,6 +73,10 @@ export class RowItem
     return this.state.layout;
   }
 
+  public getSlug(): string {
+    return kbn.slugifyForUrl(sceneGraph.interpolate(this, this.state.title ?? 'Row'));
+  }
+
   public switchLayout(layout: DashboardLayoutManager) {
     this.setState({ layout: this._layoutRestorer.getLayout(layout, this.state.layout) });
   }
@@ -86,6 +91,14 @@ export class RowItem
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
     return new RowItems(items.filter((item) => item instanceof RowItem));
+  }
+
+  public onDuplicate() {
+    this._getParentLayout().duplicateRow(this);
+  }
+
+  public duplicate(): RowItem {
+    return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
   }
 
   public onAddPanel(panel = getDefaultVizPanel()) {
@@ -128,8 +141,8 @@ export class RowItem
     this.setState({ isHeaderHidden });
   }
 
-  public onChangeHeight(height: 'expand' | 'min') {
-    this.setState({ height });
+  public onChangeFillScreen(fillScreen: boolean) {
+    this.setState({ fillScreen });
   }
 
   public onChangeRepeat(repeat: string | undefined) {

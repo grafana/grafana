@@ -5,6 +5,7 @@ import { Field, GrafanaTheme2 } from '@grafana/data/';
 import { isValidLegacyName, utf8Support } from '@grafana/prometheus/src/utf8_support';
 import { reportInteraction } from '@grafana/runtime/src';
 import { IconButton, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { ItemLabels } from './ItemLabels';
 import { ItemValues } from './ItemValues';
@@ -130,7 +131,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
       <div key={listKey} className={styles.rowWrapper}>
         <span className={styles.copyToClipboardWrapper}>
           <IconButton
-            tooltip="Copy to clipboard"
+            tooltip={t('explore.raw-list-item.tooltip-copy-to-clipboard', 'Copy to clipboard')}
             onClick={() => {
               reportInteraction('grafana_explore_prometheus_instant_query_ui_raw_toggle_expand');
               copyToClipboard(stringRep);
