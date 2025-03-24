@@ -208,7 +208,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       if (hasDescription) {
         itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
       }
-      if (firstGroupItem) {
+      if (firstGroupItem && filteredOptions[index].group) {
         itemHeight += MENU_OPTION_HEIGHT;
       }
       return itemHeight;
@@ -402,7 +402,15 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                         }}
                       >
                         {startingNewGroup && (
-                          <div role="presentation" id={groupHeaderId} className={styles.newOptionGroup}>
+                          <div
+                            role="presentation"
+                            id={groupHeaderId}
+                            className={cx(
+                              styles.newOptionGroup,
+                              item.group && styles.newOptionGroupLabel,
+                              virtualRow.index === 0 && styles.newOptionGroupNoBorder
+                            )}
+                          >
                             {item.group}
                           </div>
                         )}
