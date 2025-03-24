@@ -1,10 +1,15 @@
+import { produce } from 'immer';
 import { useCallback } from 'react';
 
 import { useDispatch } from 'app/types/store';
 import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
+import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
+import { RulesFilter } from '../../search/rulesSearchParser';
+
+import { groupFilter, ruleFilter } from './filters';
 
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
 
@@ -22,7 +27,7 @@ export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOption
   const [getGroups] = useLazyGetGroupsQuery();
 
   return useCallback(
-    async function* (ruleSource: DataSourceRulesSourceIdentifier, groupLimit: number) {
+    async function* (ruleSource: DataSourceRulesSourceIdentifier, groupLimit: number, filterState?: RulesFilter) {
       const getRuleSourceGroupsWithCache = async (fetchOptions: FetchGroupsOptions) => {
         const response = await getGroups({
           ruleSource: { uid: ruleSource.uid },
@@ -42,7 +47,9 @@ export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOption
           });
         }
 
-        return response;
+        return produce(response, (draft) => {
+          draft.data.groups = filterGroups(draft.data.groups, filterState);
+        });
       };
 
       yield* genericGroupsGenerator(getRuleSourceGroupsWithCache, groupLimit);
@@ -56,7 +63,7 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
   const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
 
   const getGroupsAndProvideCache = useCallback(
-    async (fetchOptions: FetchGroupsOptions) => {
+    async (fetchOptions: FetchGroupsOptions, filterState?: RulesFilter) => {
       const response = await getGrafanaGroups(fetchOptions).unwrap();
 
       // This is not mandatory to preload ruler rules, but it improves the UX
@@ -82,14 +89,16 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
         await Promise.allSettled(cacheAndRulerPreload);
       }
 
-      return response;
+      return produce(response, (draft) => {
+        draft.data.groups = filterGroups(draft.data.groups, filterState);
+      });
     },
     [getGrafanaGroups, dispatch, hookOptions.populateCache]
   );
 
   return useCallback(
-    async function* (groupLimit: number) {
-      yield* genericGroupsGenerator(getGroupsAndProvideCache, groupLimit);
+    async function* (groupLimit: number, filterState?: RulesFilter) {
+      yield* genericGroupsGenerator((options) => getGroupsAndProvideCache(options, filterState), groupLimit);
     },
     [getGroupsAndProvideCache]
   );
@@ -114,4 +123,22 @@ async function* genericGroupsGenerator<TGroup>(
     yield* response.data.groups;
     lastToken = response.data?.groupNextToken;
   }
+}
+
+function filterGroups<TRule extends PromRuleDTO, TGroup extends PromRuleGroupDTO<TRule>>(
+  groups: TGroup[],
+  filterState?: RulesFilter
+) {
+  return groups.reduce<TGroup[]>((acc, group) => {
+    if (!filterState) {
+      acc.push(group);
+      return acc;
+    }
+
+    const filteredRules = group.rules.filter((rule) => ruleFilter(rule, filterState));
+    if (filteredRules.length > 0 && groupFilter(group, filterState)) {
+      acc.push({ ...group, rules: filteredRules });
+    }
+    return acc;
+  }, []);
 }

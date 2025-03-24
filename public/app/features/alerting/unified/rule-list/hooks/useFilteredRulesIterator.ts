@@ -1,9 +1,7 @@
 import { AsyncIterableX, empty, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
-import { catchError, filter, flatMap, map } from 'ix/asynciterable/operators';
-import { compact } from 'lodash';
+import { catchError, flatMap, map } from 'ix/asynciterable/operators';
 
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import {
   DataSourceRuleGroupIdentifier,
   DataSourceRulesSourceIdentifier,
@@ -17,11 +15,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { RulesFilter } from '../../search/rulesSearchParser';
-import { labelsMatchMatchers } from '../../utils/alertmanager';
-import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
-import { parseMatcher } from '../../utils/matchers';
-import { prometheusRuleType } from '../../utils/rules';
 
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
@@ -61,8 +55,8 @@ export function useFilteredRulesIteratorProvider() {
         }))
       : allExternalRulesSources;
 
-    const grafanaIterator = from(grafanaGroupsGenerator(groupLimit)).pipe(
-      filter((group) => groupFilter(group, normalizedFilterState)),
+    const grafanaIterator = from(grafanaGroupsGenerator(groupLimit, normalizedFilterState)).pipe(
+      // filter((group) => groupFilter(group, normalizedFilterState)),
       flatMap((group) => group.rules.map((rule) => [group, rule] as const)),
       filter(([_, rule]) => ruleFilter(rule, normalizedFilterState)),
       map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule)),
@@ -82,9 +76,9 @@ export function useFilteredRulesIteratorProvider() {
     const otherIterables = sourceIterables.slice(1);
 
     const dataSourcesIterator = merge(source, ...otherIterables).pipe(
-      filter(([_, group]) => groupFilter(group, normalizedFilterState)),
+      // filter(([_, group]) => groupFilter(group, normalizedFilterState)),
       flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
-      filter(([_, __, rule]) => ruleFilter(rule, filterState)),
+      // filter(([_, __, rule]) => ruleFilter(rule, filterState)),
       map(([rulesSource, group, rule]) => mapRuleToRuleWithOrigin(rulesSource, group, rule))
     );
 
@@ -128,70 +122,6 @@ function mapGrafanaRuleToRuleWithOrigin(
 }
 
 /**
- * Returns a new group with only the rules that match the filter.
- * @returns A new group with filtered rules, or undefined if the group does not match the filter or all rules are filtered out.
- */
-function groupFilter(group: PromRuleGroupDTO, filterState: RulesFilter): boolean {
-  const { name, file } = group;
-
-  // TODO Add fuzzy filtering or not
-  if (filterState.namespace && !file.toLowerCase().includes(filterState.namespace)) {
-    return false;
-  }
-
-  if (filterState.groupName && !name.toLowerCase().includes(filterState.groupName)) {
-    return false;
-  }
-
-  return true;
-}
-
-function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
-  const { name, labels = {}, health, type } = rule;
-
-  const nameLower = name.toLowerCase();
-
-  if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => nameLower.includes(word))) {
-    return false;
-  }
-
-  if (filterState.ruleName && !nameLower.includes(filterState.ruleName)) {
-    return false;
-  }
-
-  if (filterState.labels.length > 0) {
-    const matchers = compact(filterState.labels.map(looseParseMatcher));
-    const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(labels, matchers);
-    if (!doRuleLabelsMatchQuery) {
-      return false;
-    }
-  }
-
-  if (filterState.ruleType && type !== filterState.ruleType) {
-    return false;
-  }
-
-  if (filterState.ruleState) {
-    if (!prometheusRuleType.alertingRule(rule)) {
-      return false;
-    }
-    if (rule.state !== filterState.ruleState) {
-      return false;
-    }
-  }
-
-  if (filterState.ruleHealth && health !== filterState.ruleHealth) {
-    return false;
-  }
-
-  if (filterState.dashboardUid) {
-    return rule.labels ? rule.labels[Annotation.dashboardUID] === filterState.dashboardUid : false;
-  }
-
-  return true;
-}
-
-/**
  * Lowercase free form words, rule name, group name and namespace
  */
 function normalizeFilterState(filterState: RulesFilter): RulesFilter {
@@ -202,13 +132,4 @@ function normalizeFilterState(filterState: RulesFilter): RulesFilter {
     groupName: filterState.groupName?.toLowerCase(),
     namespace: filterState.namespace?.toLowerCase(),
   };
-}
-
-function looseParseMatcher(matcherQuery: string): Matcher | undefined {
-  try {
-    return parseMatcher(matcherQuery);
-  } catch {
-    // Try to createa a matcher than matches all values for a given key
-    return { name: matcherQuery, value: '', isRegex: true, isEqual: true };
-  }
 }

@@ -76,18 +76,21 @@ function FilterViewResults({ filterState }: FilterViewProps) {
 
   /* This function will fetch a page of results from the iterable */
   const [{ execute: loadResultPage }, state] = useAsync(async () => {
+    console.time('loadResults');
     for await (const rule of rulesIterator.current.pipe(
       // grab <FRONTENT_PAGE_SIZE> from the rules iterable
       take(FRONTENT_PAGE_SIZE),
       // if an error occurs trying to fetch a page, return an empty iterable so the front-end isn't caught in an infinite loop
       catchError(() => empty())
     )) {
+      console.timeLog('loadResults');
       startTransition(() => {
         // Rule key could be computed on the fly, but we do it here to avoid recalculating it with each render
         // It's a not trivial computation because it involves hashing the rule
         setRules((rules) => rules.concat({ key: getRuleKey(rule), ...rule }));
       });
     }
+    console.timeEnd('loadResults');
   });
 
   /* When we unmount the component we make sure to abort all iterables */
