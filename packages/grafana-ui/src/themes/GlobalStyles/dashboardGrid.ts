@@ -90,6 +90,14 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       },
     },
 
+    '.dashboard-canvas-add-button': {
+      opacity: 0,
+
+      '&:hover': {
+        opacity: 1,
+      },
+    },
+
     '.dashboard-visible-hidden-element': {
       opacity: 0.6,
 

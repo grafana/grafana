@@ -1539,11 +1539,8 @@
     },
     "rows-layout": {
       "description": "Collapsable panel groups with headings",
+      "header-hidden-tooltip": "Row header only visible in edit mode",
       "name": "Rows",
-      "options": {
-        "height-expand": "Expand",
-        "height-min": "Min"
-      },
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
@@ -1571,7 +1568,7 @@
           }
         },
         "row": {
-          "height": "Height",
+          "fill-screen": "Fill screen",
           "hide-header": "Hide row header",
           "title": "Title"
         },
