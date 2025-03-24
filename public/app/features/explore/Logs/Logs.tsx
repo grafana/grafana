@@ -1076,6 +1076,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   logs={dedupedRows}
                   logSupportsContext={showContextToggle}
                   onLogOptionsChange={onLogOptionsChange}
+                  onLogLineHover={onLogRowHover}
                   onOpenContext={onOpenContext}
                   onPermalinkClick={onPermalinkClick}
                   onPinLine={onPinToContentOutlineClick}

@@ -5,8 +5,10 @@ import {
   AbsoluteTimeRange,
   CoreApp,
   DataFrame,
+  DataHoverEvent,
   GrafanaTheme2,
   LoadingState,
+  LogRowModel,
   LogsSortOrder,
   PanelProps,
 } from '@grafana/data';
@@ -50,7 +52,7 @@ export const LogsPanel = ({
   const keepScrollPositionRef = useRef(false);
   // Loading ref to prevent firing multiple requests
   const loadingRef = useRef(false);
-  const { app } = usePanelContext();
+  const { app, eventBus } = usePanelContext();
 
   const logs = useMemo(() => {
     const logsModel = panelData
@@ -92,6 +94,21 @@ export const LogsPanel = ({
     [data.request, dataSourcesMap, onNewLogsReceived, panelData, timeZone]
   );
 
+  const onLogRowHover = useCallback(
+    (row?: LogRowModel) => {
+      if (row) {
+        eventBus.publish(
+          new DataHoverEvent({
+            point: {
+              time: row.timeEpochMs,
+            },
+          })
+        );
+      }
+    },
+    [eventBus]
+  );
+
   const initialScrollPosition = useMemo(() => {
     /**
      * In dashboards, users with newest logs at the bottom have the expectation of keeping the scroll at the bottom
@@ -120,6 +137,7 @@ export const LogsPanel = ({
           logs={logs}
           loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
           onLogOptionsChange={isOnLogOptionsChange(onLogOptionsChange) ? onLogOptionsChange : undefined}
+          onLogLineHover={onLogRowHover}
           showControls={showControls}
           showTime={showTime}
           sortOrder={sortOrder}

@@ -83,6 +83,7 @@ export interface Props {
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
   onLogOptionsChange?: (option: keyof LogListState, value: string | boolean | string[]) => void;
+  onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
@@ -106,6 +107,7 @@ export const LogListContextProvider = ({
   filterLevels = logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : [],
   logSupportsContext,
   onLogOptionsChange,
+  onLogLineHover,
   onPermalinkClick,
   onPinLine,
   onOpenContext,
@@ -254,6 +256,7 @@ export const LogListContextProvider = ({
         filterLevels: logListState.filterLevels,
         getRowContextQuery,
         logSupportsContext,
+        onLogLineHover,
         onPermalinkClick,
         onPinLine,
         onOpenContext,

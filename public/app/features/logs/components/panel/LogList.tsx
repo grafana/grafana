@@ -53,6 +53,7 @@ interface Props {
   logs: LogRowModel[];
   logSupportsContext?: (row: LogRowModel) => boolean;
   onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
@@ -92,6 +93,7 @@ export const LogList = ({
   logs,
   logSupportsContext,
   onLogOptionsChange,
+  onLogLineHover,
   onPermalinkClick,
   onPinLine,
   onOpenContext,
@@ -115,6 +117,7 @@ export const LogList = ({
       logOptionsStorageKey={logOptionsStorageKey}
       logSupportsContext={logSupportsContext}
       onLogOptionsChange={onLogOptionsChange}
+      onLogLineHover={onLogLineHover}
       onPermalinkClick={onPermalinkClick}
       onPinLine={onPinLine}
       onOpenContext={onOpenContext}

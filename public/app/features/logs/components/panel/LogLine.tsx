@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CSSProperties, useEffect, useRef } from 'react';
+import { CSSProperties, useCallback, useEffect, useRef } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -35,8 +35,13 @@ export const LogLine = ({
   variant,
   wrapLogMessage,
 }: Props) => {
+  const { onLogLineHover } = useLogListContext();
   const logLineRef = useRef<HTMLDivElement | null>(null);
   const pinned = useLogIsPinned(log);
+
+  const handleMouseOver = useCallback(() => {
+    onLogLineHover?.(log);
+  }, [log, onLogLineHover]);
 
   useEffect(() => {
     if (!onOverflow || !logLineRef.current) {
@@ -54,6 +59,7 @@ export const LogLine = ({
       style={style}
       className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''}`}
       ref={onOverflow ? logLineRef : undefined}
+      onMouseOver={handleMouseOver}
     >
       <LogLineMenu styles={styles} log={log} />
       <div className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`}`}>
