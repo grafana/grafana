@@ -109,9 +109,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
       }}
     >
       <button className={styles.headerCellLabel} onClick={handleSort}>
-        {showTypeIcons && (
-          <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" className={styles.typeIcon} />
-        )}
+        {showTypeIcons && <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" />}
         <div>{column.name}</div>
         {direction &&
           (direction === 'ASC' ? (
@@ -149,6 +147,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     marginRight: theme.spacing(0.5),
+    color: theme.colors.text.secondary,
+    gap: theme.spacing(1),
 
     '&:hover': {
       textDecoration: 'underline',
@@ -157,10 +157,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   sortIcon: css({
     marginLeft: theme.spacing(0.5),
-  }),
-  typeIcon: css({
-    marginRight: theme.spacing(1),
-    color: theme.colors.text.secondary,
   }),
 });
 
