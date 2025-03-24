@@ -1,6 +1,7 @@
 package errutil
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,6 +22,9 @@ type Base struct {
 	publicMessage string
 	logLevel      LogLevel
 	source        Source
+	// dynamicPublicMessageFn is an optional function that returns a dynamic public message based on context
+	// If not set, the public message will be the static message set with WithPublicMessage
+	dynamicPublicMessageFn func(context.Context) string
 }
 
 // NewBase initializes a [Base] that is used to construct [Error].
@@ -244,16 +248,55 @@ func WithDownstream() BaseOpt {
 	}
 }
 
+// WithDynamicMessage sets a function that will be called to get the public message
+// based on the context when creating an error.
+func WithDynamicPublicMessage(fn func(context.Context) string) BaseOpt {
+	return func(b Base) Base {
+		b.dynamicPublicMessageFn = fn
+		return b
+	}
+}
+
 // Errorf creates a new [Error] with Reason and MessageID from [Base],
 // and Message and Underlying will be populated using the rules of
 // [fmt.Errorf].
 func (b Base) Errorf(format string, args ...any) Error {
 	err := fmt.Errorf(format, args...)
 
+	// If we have a dynamic message function, use it to get the public message
+	publicMessage := b.publicMessage
+	if b.dynamicPublicMessageFn != nil {
+		publicMessage = b.dynamicPublicMessageFn(context.Background())
+	}
+
 	return Error{
 		Reason:        b.reason,
 		LogMessage:    err.Error(),
-		PublicMessage: b.publicMessage,
+		PublicMessage: publicMessage,
+		MessageID:     b.messageID,
+		Underlying:    errors.Unwrap(err),
+		LogLevel:      b.logLevel,
+		Source:        b.source,
+	}
+}
+
+// ErrorfWithContext creates a new [Error] with Reason and MessageID from [Base],
+// and Message and Underlying will be populated using the rules of
+// [fmt.Errorf]. The context is used to determine the public message if a dynamic
+// message function is set.
+func (b Base) ErrorfWithContext(ctx context.Context, format string, args ...any) Error {
+	err := fmt.Errorf(format, args...)
+
+	// If we have a dynamic message function, use it to get the public message
+	publicMessage := b.publicMessage
+	if b.dynamicPublicMessageFn != nil {
+		publicMessage = b.dynamicPublicMessageFn(ctx)
+	}
+
+	return Error{
+		Reason:        b.reason,
+		LogMessage:    err.Error(),
+		PublicMessage: publicMessage,
 		MessageID:     b.messageID,
 		Underlying:    errors.Unwrap(err),
 		LogLevel:      b.logLevel,

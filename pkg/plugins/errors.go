@@ -1,6 +1,11 @@
 package plugins
 
-import "github.com/grafana/grafana/pkg/apimachinery/errutil"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"google.golang.org/grpc/metadata"
+)
 
 var (
 	errPluginNotRegisteredBase = errutil.NotFound("plugin.notRegistered",
@@ -46,5 +51,15 @@ var (
 	// Exposed as a base error to wrap it with plugin connection issue errors.
 	ErrPluginGrpcConnectionUnavailableBase = errutil.Internal("plugin.connectionUnavailable",
 		errutil.WithPublicMessage("Data source became unavailable during request. Please try again."),
-		errutil.WithDownstream())
+		errutil.WithDownstream(),
+		errutil.WithDynamicPublicMessage(func(ctx context.Context) string {
+			if kv, exists := metadata.FromIncomingContext(ctx); exists {
+				sid := kv.Get("stackID")
+				// If we have stack ID, we can include a support message
+				if len(sid) > 0 {
+					return "Data source became unavailable during request. Please try again. If the problem persists, please contact customer support."
+				}
+			}
+			return "Data source became unavailable during request. Please try again."
+		}))
 )
