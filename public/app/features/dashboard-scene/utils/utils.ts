@@ -446,17 +446,9 @@ export function useDashboard(scene: SceneObject): DashboardScene {
   return getDashboardSceneFor(scene);
 }
 
-export function useDashboardState(
-  scene: SceneObject
-): DashboardSceneState & { isEditing: boolean; showHiddenElements: boolean } {
+export function useDashboardState(scene: SceneObject): DashboardSceneState {
   const dashboard = useDashboard(scene);
-  const state = dashboard.useState();
-
-  return {
-    ...state,
-    isEditing: !!state.isEditing,
-    showHiddenElements: !!(state.isEditing && state.showHiddenElements),
-  };
+  return dashboard.useState();
 }
 
 export function useIsConditionallyHidden(scene: RowItem | ResponsiveGridItem): boolean {

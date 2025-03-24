@@ -10,24 +10,23 @@ export interface ResponsiveGridItemProps extends SceneComponentProps<ResponsiveG
 
 export function ResponsiveGridItemRenderer({ model }: ResponsiveGridItemProps) {
   const { body } = model.useState();
-  const { showHiddenElements } = useDashboardState(model);
+  const { isEditing } = useDashboardState(model);
   const isConditionallyHidden = useIsConditionallyHidden(model);
 
-  if (isConditionallyHidden && !showHiddenElements) {
+  if (isConditionallyHidden && !isEditing) {
     return null;
   }
-  const isHiddenButVisibleElement = showHiddenElements && isConditionallyHidden;
 
   return model.state.repeatedPanels ? (
     <>
       {model.state.repeatedPanels.map((item) => (
-        <div className={cx({ 'dashboard-visible-hidden-element': isHiddenButVisibleElement })} key={item.state.key}>
+        <div className={cx({ 'dashboard-visible-hidden-element': isConditionallyHidden })} key={item.state.key}>
           <item.Component model={item} />
         </div>
       ))}
     </>
   ) : (
-    <div className={cx({ 'dashboard-visible-hidden-element': isHiddenButVisibleElement })}>
+    <div className={cx({ 'dashboard-visible-hidden-element': isConditionallyHidden })}>
       <body.Component model={body} />
     </div>
   );
