@@ -815,7 +815,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 		listReq.MinRV = req.ResourceVersion
 	}
 
-	if listReq.MinRV == 0 && !listReq.Trash && req.VersionMatchV2 == resource.ResourceVersionMatchV2_NotOlderThan {
+	if listReq.MinRV == 0 && !listReq.Trash && req.VersionMatchV2 != resource.ResourceVersionMatchV2_Exact {
 		res := b.readHistory(ctx, listReq.Key, listReq.StartRV, resource.WatchEvent_DELETED)
 		if res.Error != nil {
 			return 0, fmt.Errorf("get last deleted: %s", res.Error.Message)
