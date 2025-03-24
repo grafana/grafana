@@ -70,6 +70,14 @@ export class TabItem
     return new TabItems(items.filter((item) => item instanceof TabItem));
   }
 
+  public onDuplicate(): void {
+    this._getParentLayout().duplicateTab(this);
+  }
+
+  public duplicate(): TabItem {
+    return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
+  }
+
   public onAddPanel(panel = getDefaultVizPanel()) {
     this.getLayout().addPanel(panel);
   }

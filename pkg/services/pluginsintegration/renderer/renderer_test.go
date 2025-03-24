@@ -39,7 +39,7 @@ func TestRenderer(t *testing.T) {
 
 		r, exists := m.Renderer(context.Background())
 		require.False(t, exists)
-		require.Equal(t, 4, numLoaded)
+		require.Equal(t, 3, numLoaded)
 		require.Equal(t, 0, numUnloaded)
 		require.Nil(t, r)
 	})
