@@ -66,8 +66,6 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 		metricCol     = make([]string, 0, len(inputFrame.Fields))
 		valueCol      = make([]*float64, 0, len(inputFrame.Fields))
 		displayCol    = make([]*string, 0, len(inputFrame.Fields))
-		labelKeys     []string
-		labelValues   = make(map[string][]*string)
 		hasDisplayCol bool
 	)
 
@@ -98,6 +96,9 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 		}
 	}
 
+	labelKeys := make([]string, 0, len(labelKeySet))
+
+	labelValues := make(map[string][]*string)
 	for k := range labelKeySet {
 		labelKeys = append(labelKeys, k)
 		labelValues[k] = make([]*string, 0, len(valueCol))
