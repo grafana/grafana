@@ -5,13 +5,11 @@ interface FeatureCardProps {
   description: string;
   icon?: React.ReactNode;
   action?: React.ReactNode;
-  showBorder?: boolean;
-  className?: string;
 }
 
-export const FeatureCard = ({ title, description, icon, action, className }: FeatureCardProps) => (
+export const FeatureCard = ({ title, description, icon, action }: FeatureCardProps) => (
   <Box width="25%" padding={2}>
-    <div style={{ height: '100%' }} className={className}>
+    <div style={{ height: '100%' }}>
       <Stack direction="column" gap={2}>
         {icon}
         <Text variant="h3">{title}</Text>

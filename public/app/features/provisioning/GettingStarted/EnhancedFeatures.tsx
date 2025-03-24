@@ -49,7 +49,6 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
                 </LinkButton>
               )
             }
-            showBorder
           />
 
           <div className={style.separator} />
