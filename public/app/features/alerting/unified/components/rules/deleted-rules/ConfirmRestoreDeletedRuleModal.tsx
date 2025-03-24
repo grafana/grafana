@@ -19,7 +19,7 @@ import { createRelativeUrl } from '../../../utils/url';
 
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
   isOpen: boolean;
-  ruleToRestore?: RulerRuleDTO | undefined;
+  ruleToRestore?: RulerGrafanaRuleDTO | undefined;
   onRestoreSucess: () => void;
   onRestoreError: (error: Error) => void;
 };
@@ -44,9 +44,6 @@ export const ConfirmRestoreDeletedRuleModal = ({
     if (!ruleToRestore) {
       return;
     }
-    if (!rulerRuleType.grafana.rule(ruleToRestore)) {
-      return;
-    }
     return restoreMethod
       .execute(ruleToRestore)
       .then(() => {
@@ -60,9 +57,6 @@ export const ConfirmRestoreDeletedRuleModal = ({
 
   async function onManualRestore() {
     if (!ruleToRestore) {
-      return;
-    }
-    if (!rulerRuleType.grafana.rule(ruleToRestore)) {
       return;
     }
     await redirectToRestoreForm(ruleToRestore);

@@ -3,13 +3,12 @@ import { useState } from 'react';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Alert, Button, Column, InteractiveTable, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { GrafanaRuleDefinition, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { trackDeletedRuleRestoreFail, trackDeletedRuleRestoreSuccess } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
 import { stringifyErrorLike } from '../../../utils/misc';
-import { rulerRuleType } from '../../../utils/rules';
 import { UpdatedByUser } from '../../rule-viewer/tabs/version-history/UpdatedBy';
 
 import { ConfirmRestoreDeletedRuleModal } from './ConfirmRestoreDeletedRuleModal';
@@ -18,7 +17,7 @@ export const DELETED_RULES_PAGE_SIZE = 30;
 
 export function DeletedRules() {
   const [confirmRestore, setConfirmRestore] = useState(false);
-  const [restoreRule, setRestoreRule] = useState<RulerRuleDTO | undefined>();
+  const [restoreRule, setRestoreRule] = useState<RulerGrafanaRuleDTO | undefined>();
 
   const {
     currentData = [],
@@ -36,7 +35,7 @@ export function DeletedRules() {
 
   const showConfirmation = (id: string) => {
     const ruleTorestore = deletedRules.find(
-      (rule) => rulerRuleType.grafana.rule(rule) && getRowId(rule.grafana_alert) === id
+      (rule) => getRowId(rule.grafana_alert) === id
     );
     if (!ruleTorestore) {
       return;
@@ -68,9 +67,6 @@ export function DeletedRules() {
       header: t('alerting.deletedRules.table.updatedBy', 'Deleted By'),
       disableGrow: true,
       cell: ({ row }) => {
-        if (!rulerRuleType.grafana.rule(row.original)) {
-          return unknown;
-        }
         return <UpdatedByUser user={row.original.grafana_alert.updated_by} />;
       },
     },
@@ -79,9 +75,6 @@ export function DeletedRules() {
       header: t('alerting.deletedRules.table.title', 'Title'),
       disableGrow: true,
       cell: ({ row }) => {
-        if (!rulerRuleType.grafana.rule(row.original)) {
-          return unknown;
-        }
         return row.original.grafana_alert.title;
       },
     },
@@ -90,9 +83,6 @@ export function DeletedRules() {
       header: t('alerting.deletedRules.table.folder', 'Folder'),
       disableGrow: true,
       cell: ({ row }) => {
-        if (!rulerRuleType.grafana.rule(row.original)) {
-          return unknown;
-        }
         return row.original.grafana_alert.namespace_uid;
       },
     },
@@ -101,9 +91,6 @@ export function DeletedRules() {
       header: t('alerting.deletedRules.table.group', 'Group'),
       disableGrow: true,
       cell: ({ row }) => {
-        if (!rulerRuleType.grafana.rule(row.original)) {
-          return unknown;
-        }
         return row.original.grafana_alert.rule_group;
       },
     },
@@ -112,9 +99,6 @@ export function DeletedRules() {
       header: t('alerting.deletedRules.table.updated', 'Deletion Date'),
       disableGrow: true,
       cell: ({ row }) => {
-        if (!rulerRuleType.grafana.rule(row.original)) {
-          return unknown;
-        }
         const value = row.original.grafana_alert.updated;
         if (!value) {
           return unknown;
@@ -133,8 +117,7 @@ export function DeletedRules() {
               size="sm"
               icon="history"
               onClick={() => {
-                showConfirmation(
-                  rulerRuleType.grafana.rule(row.original) ? getRowId(row.original.grafana_alert) : 'unknown'
+                showConfirmation(getRowId(row.original.grafana_alert)
                 );
               }}
             >
@@ -153,9 +136,6 @@ export function DeletedRules() {
         columns={columns}
         data={deletedRules}
         getRowId={(row) => {
-          if (!rulerRuleType.grafana.rule(row)) {
-            return 'unknown';
-          }
           return getRowId(row.grafana_alert);
         }}
       />
