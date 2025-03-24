@@ -649,8 +649,7 @@ export function mapFrameToDataGrid({
   // Row background color function
   let rowBg: Function | undefined = undefined;
   for (const field of frame.fields) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const fieldOptions = field.config.custom as TableFieldOptionsType;
+    const fieldOptions = field.config.custom;
     const cellOptionsExist = fieldOptions !== undefined && fieldOptions.cellOptions !== undefined;
 
     if (
@@ -659,7 +658,7 @@ export function mapFrameToDataGrid({
       fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values.get(rowIndex));
+        const display = field.display!(field.values[rowIndex]);
         const colors = getCellColors(theme, fieldOptions.cellOptions, display);
         return colors;
       };
