@@ -20,7 +20,8 @@ import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
 import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
 
-export const MENU_WIDTH = '300px';
+// @PERCONA - increase menu width to fit PMM name
+export const MENU_WIDTH = '350px';
 
 export interface Props extends DOMAttributes {
   onClose: () => void;
