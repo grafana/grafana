@@ -68,6 +68,7 @@ export function TableNG(props: TableNGProps) {
     width,
     data,
     enableSharedCrosshair,
+    showTypeIcons,
   } = props;
 
   /* ------------------------------- Local state ------------------------------ */
@@ -371,6 +372,7 @@ export function TableNG(props: TableNGProps) {
           styles,
           textWrap,
           theme,
+          showTypeIcons,
           ...props,
         },
         handlers: {
@@ -573,6 +575,7 @@ export function mapFrameToDataGrid({
     theme,
     timeRange,
     getActions,
+    showTypeIcons,
   } = options;
   const { onCellExpand, onColumnResize } = handlers;
 
@@ -736,6 +739,7 @@ export function mapFrameToDataGrid({
           headerCellRefs={headerCellRefs}
           crossFilterOrder={crossFilterOrder}
           crossFilterRows={crossFilterRows}
+          showTypeIcons={showTypeIcons}
         />
       ),
       width: fieldTableOptions.width,

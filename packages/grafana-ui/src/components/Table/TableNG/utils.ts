@@ -487,6 +487,7 @@ export interface MapFrameToGridOptions extends TableNGProps {
   styles: { cell: string };
   textWrap: boolean;
   theme: GrafanaTheme2;
+  showTypeIcons?: boolean;
 }
 
 /* ----------------------------- Data grid comparator ---------------------------- */
