@@ -247,7 +247,6 @@ func (g *GoGitRepo) Config() *provisioning.Repository {
 func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
 	var treePath string
 	if g.config.Spec.GitHub.Path != "" {
-		// TODO: add validation for this path
 		treePath = g.config.Spec.GitHub.Path
 	}
 
