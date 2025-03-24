@@ -34,7 +34,7 @@ const mockedMeta: PluginMeta = {
 
 const DummyUseTranslateComponent = () => {
   const t = useTranslate();
-  return <div>{t('test-key', 'test-key not found')}</div>;
+  return <div>{t('frontendtests.test-key', 'test-key not found')}</div>;
 };
 
 describe('internationalization', () => {
@@ -59,7 +59,7 @@ describe('internationalization', () => {
   });
   describe('for plugins', () => {
     beforeEach(() => {
-      getI18next().addResourceBundle('en', id, { 'test-key': 'test-value' }, undefined, true);
+      getI18next().addResourceBundle('en', id, { 'frontendtests.test-key': 'test-value' }, undefined, true);
       setTransComponent(Trans);
       setUseTranslateHook(useTranslateInternal);
     });
@@ -68,7 +68,7 @@ describe('internationalization', () => {
       const { getByText, queryByText } = render(
         <I18nextProvider i18n={getI18next()}>
           <PluginContextProvider meta={mockedMeta}>
-            <PluginTrans i18nKey="test-key" defaults="test-key not found" />
+            <PluginTrans i18nKey="frontendtests.test-key" defaults="test-key not found" />
           </PluginContextProvider>
         </I18nextProvider>
       );
@@ -80,7 +80,7 @@ describe('internationalization', () => {
     it('should return the correct value when using Trans component without a plugin context', async () => {
       const { getByText, queryByText } = render(
         <I18nextProvider i18n={getI18next()}>
-          <PluginTrans i18nKey="test-key" defaults="test-key not found" />
+          <PluginTrans i18nKey="frontendtests.test-key" defaults="test-key not found" />
         </I18nextProvider>
       );
 
