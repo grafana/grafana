@@ -562,7 +562,7 @@ func TestBackend_getHistory(t *testing.T) {
 	readHistoryColumns := []string{"namespace", "group", "resource", "name", "folder", "resource_version", "value"}
 	getResourceVersionColumns := []string{"resource_version", "unix_timestamp"}
 
-	t.Run("with ResourceVersionMatch_DEPRECATED_NotOlderThan", func(t *testing.T) {
+	t.Run("with ResourceVersionMatchV2_NotOlderThan", func(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
 
@@ -601,7 +601,7 @@ func TestBackend_getHistory(t *testing.T) {
 		require.Equal(t, expectedListRv, listRv)
 	})
 
-	t.Run("with ResourceVersionMatch_Exact", func(t *testing.T) {
+	t.Run("with ResourceVersionMatchV2_Exact", func(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
 
