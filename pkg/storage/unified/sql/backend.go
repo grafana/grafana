@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"sync"
 	"time"
 
@@ -764,10 +765,7 @@ func (b *backend) readHistory(ctx context.Context, key *resource.ResourceKey, rv
 	})
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return &resource.BackendReadResponse{
-			Key:             key,
-			ResourceVersion: 0,
-		}
+		return &resource.BackendReadResponse{Error: resource.NewNotFoundError(key)}
 	}
 	if err != nil {
 		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
@@ -818,7 +816,9 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 	if listReq.MinRV == 0 && !listReq.Trash && req.VersionMatchV2 != resource.ResourceVersionMatchV2_Exact {
 		res := b.readHistory(ctx, listReq.Key, listReq.StartRV, resource.WatchEvent_DELETED)
 		if res.Error != nil {
-			return 0, fmt.Errorf("get last deleted: %s", res.Error.Message)
+			if res.Error.Code != http.StatusNotFound {
+				return 0, fmt.Errorf("failed to read last deleted history record: %s", res.Error.Message)
+			}
 		}
 		listReq.MinRV = res.ResourceVersion + 1
 	}
