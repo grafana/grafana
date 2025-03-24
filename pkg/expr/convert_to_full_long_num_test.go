@@ -307,6 +307,143 @@ func TestConvertNumericMultiToFullLong(t *testing.T) {
 	})
 }
 
+func TestConvertTimeSeriesWideToFullLong(t *testing.T) {
+	times := []time.Time{
+		time.Unix(0, 0),
+		time.Unix(10, 0),
+	}
+
+	t.Run("SingleSeriesNoLabels", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("cpu", nil, []float64{1.0, 2.0}),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}
+
+		expected := data.NewFrame("",
+			data.NewField("time", nil, times),
+			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
+			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
+		)
+		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("TwoSeriesOneLabel", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0, 2.0}),
+				data.NewField("cpu", data.Labels{"host": "b"}, []float64{3.0, 4.0}),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}
+
+		expected := data.NewFrame("",
+			data.NewField("time", nil, []time.Time{times[0], times[0], times[1], times[1]}),
+			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(3.0), fp(2.0), fp(4.0)}),
+			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu", "cpu", "cpu"}),
+			data.NewField("host", nil, []*string{sp("a"), sp("b"), sp("a"), sp("b")}),
+		)
+		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("TwoMetricsWithSharedLabels", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0, 2.0}),
+				data.NewField("mem", data.Labels{"host": "a"}, []float64{3.0, 4.0}),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}
+
+		expected := data.NewFrame("",
+			data.NewField("time", nil, []time.Time{times[0], times[0], times[1], times[1]}),
+			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(3.0), fp(2.0), fp(4.0)}),
+			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "mem", "cpu", "mem"}),
+			data.NewField("host", nil, []*string{sp("a"), sp("a"), sp("a"), sp("a")}),
+		)
+		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("TwoSeriesSparseLabels", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0, 2.0}),
+				data.NewField("cpu", data.Labels{"host": "b", "env": "prod"}, []float64{3.0, 4.0}),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}
+
+		expected := data.NewFrame("",
+			data.NewField("time", nil, []time.Time{times[0], times[0], times[1], times[1]}),
+			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(3.0), fp(2.0), fp(4.0)}),
+			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu", "cpu", "cpu"}),
+			data.NewField("env", nil, []*string{nil, sp("prod"), nil, sp("prod")}),
+			data.NewField("host", nil, []*string{sp("a"), sp("b"), sp("a"), sp("b")}),
+		)
+		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("TwoSeriesSparseMetricsAndLabels", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0, 2.0}),
+				data.NewField("mem", data.Labels{"host": "b", "env": "prod"}, []float64{3.0, 4.0}),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}
+
+		expected := data.NewFrame("",
+			data.NewField("time", nil, []time.Time{times[0], times[0], times[1], times[1]}),
+			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(3.0), fp(2.0), fp(4.0)}),
+			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "mem", "cpu", "mem"}),
+			data.NewField("env", nil, []*string{nil, sp("prod"), nil, sp("prod")}),
+			data.NewField("host", nil, []*string{sp("a"), sp("b"), sp("a"), sp("b")}),
+		)
+		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Mismatch (-want +got):\n%s", diff)
+		}
+	})
+}
+
 func sp(s string) *string {
 	return &s
 }
