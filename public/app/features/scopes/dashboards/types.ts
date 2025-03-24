@@ -17,10 +17,10 @@ export interface SuggestedDashboardsFolder {
   expanded: boolean;
   folders: SuggestedDashboardsFoldersMap;
   suggestedNavigations: SuggestedNavigationsMap;
-  dashboards: SuggestedDashboardsMap;
+  //  dashboards: SuggestedDashboardsMap;
 }
 
-export type SuggestedDashboardsMap = Record<string, SuggestedDashboard>;
+//export type SuggestedDashboardsMap = Record<string, SuggestedDashboard>;
 export type SuggestedDashboardsFoldersMap = Record<string, SuggestedDashboardsFolder>;
 export type SuggestedNavigationsMap = Record<string, SuggestedNavigation>;
 export type OnFolderUpdate = (path: string[], expanded: boolean) => void;

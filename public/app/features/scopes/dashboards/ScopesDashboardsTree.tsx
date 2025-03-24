@@ -35,14 +35,6 @@ export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: Sc
           title={navigation.title}
         />
       ))}
-
-      {Object.values(folder.dashboards).map((dashboard) => (
-        <ScopesNavigationTreeLink
-          key={dashboard.dashboard}
-          title={dashboard.dashboardTitle}
-          to={urlUtil.renderUrl(`/d/${dashboard.dashboard}/`, queryParams)}
-        />
-      ))}
     </div>
   );
 }

@@ -89,11 +89,21 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
     this.updateState({ forScopeNames, loading: true });
 
-    const dashboards = await this.apiClient.fetchDashboards(forScopeNames);
-    const scopeNavigations = await this.apiClient.fetchScopeNavigations(forScopeNames);
+    //const dashboards = await this.apiClient.fetchDashboards(forScopeNames);
+    //const scopeNavigations = await this.apiClient.fetchScopeNavigations(forScopeNames);
+
+    const res = await Promise.all([
+      this.apiClient.fetchDashboards(forScopeNames),
+      this.apiClient.fetchScopeNavigations(forScopeNames),
+    ]);
+
+    const dashboards = res[0];
+    const scopeNavigations = res[1];
+
+    const suggestedNavigations: Array<ScopeDashboardBinding | ScopeNavigation> = [...scopeNavigations, ...dashboards];
 
     if (isEqual(this.state.forScopeNames, forScopeNames)) {
-      const folders = this.groupSuggestedItems(dashboards, scopeNavigations);
+      const folders = this.groupSuggestedItems(suggestedNavigations);
       const filteredFolders = this.filterFolders(folders, this.state.searchQuery);
 
       this.updateState({
@@ -118,56 +128,19 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   };
 
   public groupSuggestedItems = (
-    dashboards: ScopeDashboardBinding[],
-    navigations: ScopeNavigation[]
+    navigationItems: Array<ScopeDashboardBinding | ScopeNavigation>
   ): SuggestedDashboardsFoldersMap => {
     const folders: SuggestedDashboardsFoldersMap = {
       '': {
         title: '',
         expanded: true,
         folders: {},
-        dashboards: {},
         suggestedNavigations: {},
       },
     };
 
-    // Process dashboards
-    dashboards.forEach((dashboard) => {
-      const rootNode = folders[''];
-      const groups = dashboard.status.groups ?? [];
-
-      groups.forEach((group) => {
-        if (group && !rootNode.folders[group]) {
-          rootNode.folders[group] = {
-            title: group,
-            expanded: false,
-            folders: {},
-            dashboards: {},
-            suggestedNavigations: {},
-          };
-        }
-      });
-
-      const targets =
-        groups.length > 0
-          ? groups.map((group) => (group === '' ? rootNode.dashboards : rootNode.folders[group].dashboards))
-          : [rootNode.dashboards];
-
-      targets.forEach((target) => {
-        if (!target[dashboard.spec.dashboard]) {
-          target[dashboard.spec.dashboard] = {
-            dashboard: dashboard.spec.dashboard,
-            dashboardTitle: dashboard.status.dashboardTitle,
-            items: [],
-          };
-        }
-
-        target[dashboard.spec.dashboard].items.push(dashboard);
-      });
-    });
-
     // Process navigations
-    navigations.forEach((navigation) => {
+    navigationItems.forEach((navigation) => {
       const rootNode = folders[''];
       const groups = navigation.status.groups ?? [];
 
@@ -177,7 +150,6 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
             title: group,
             expanded: false,
             folders: {},
-            dashboards: {},
             suggestedNavigations: {},
           };
         }
@@ -191,7 +163,18 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
           : [rootNode.suggestedNavigations];
 
       targets.forEach((target) => {
-        if (!target[navigation.spec.url]) {
+        // Dashboard
+        if (
+          'dashboard' in navigation.spec &&
+          'dashboardTitle' in navigation.status &&
+          !target[navigation.spec.dashboard]
+        ) {
+          target[navigation.spec.dashboard] = {
+            url: '/d/' + navigation.spec.dashboard,
+            title: navigation.status.dashboardTitle,
+            groups: navigation.status.groups ?? [],
+          };
+        } else if ('url' in navigation.spec && 'title' in navigation.status && !target[navigation.spec.url]) {
           target[navigation.spec.url] = {
             title: navigation.status.title || navigation.metadata.name,
             groups: navigation.status.groups ?? [],
@@ -219,19 +202,16 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       }
 
       const filteredFolders = this.filterFolders(folder.folders, query);
-      const filteredDashboards = Object.entries(folder.dashboards).filter(([_, dashboard]) =>
-        dashboard.dashboardTitle.toLowerCase().includes(query)
-      );
+
       const filteredNavigations = Object.entries(folder.suggestedNavigations).filter(([_, navigation]) =>
         navigation.title.toLowerCase().includes(query)
       );
 
-      if (Object.keys(filteredFolders).length > 0 || filteredDashboards.length > 0 || filteredNavigations.length > 0) {
+      if (Object.keys(filteredFolders).length > 0 || filteredNavigations.length > 0) {
         acc[folderId] = {
           ...folder,
           expanded: true,
           folders: filteredFolders,
-          dashboards: Object.fromEntries(filteredDashboards),
           suggestedNavigations: Object.fromEntries(filteredNavigations),
         };
       }
