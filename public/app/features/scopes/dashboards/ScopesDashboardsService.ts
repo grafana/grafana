@@ -117,16 +117,6 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     }
   };
 
-  public fetchScopeNavigations = async (forScopeNames: string[]) => {
-    if (isEqual(this.state.forScopeNames, forScopeNames)) {
-      return;
-    }
-
-    const scopeNavigations = await this.apiClient.fetchScopeNavigations(forScopeNames);
-
-    this.updateState({ scopeNavigations });
-  };
-
   public groupSuggestedItems = (
     navigationItems: Array<ScopeDashboardBinding | ScopeNavigation>
   ): SuggestedNavigationsFoldersMap => {

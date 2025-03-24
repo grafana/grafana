@@ -183,8 +183,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     // Apply the scopes right away even though we don't have the metadata yet.
     this.updateState({ selectedScopes, treeScopes, loading: true });
-    this.dashboardsService.fetchScopeNavigations(selectedScopes.map(({ scope }) => scope.metadata.name));
 
+    // Fetches both dashboards and scope navigations
     this.dashboardsService.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
 
     selectedScopes = await this.apiClient.fetchMultipleScopes(treeScopes);
