@@ -4,6 +4,7 @@ import {
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { FilterPill, HorizontalGroup, InlineField, StatsPicker } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 
@@ -47,7 +48,11 @@ export const ReduceRowOptionsEditor = (props: {
 
   return (
     <>
-      <InlineField label="Operation" labelWidth={LABEL_WIDTH} grow={true}>
+      <InlineField
+        label={t('transformers.reduce-row-options-editor.label-operation', 'Operation')}
+        labelWidth={LABEL_WIDTH}
+        grow={true}
+      >
         <HorizontalGroup spacing="xs" align="flex-start" wrap>
           {names.map((o, i) => {
             return (
@@ -63,7 +68,10 @@ export const ReduceRowOptionsEditor = (props: {
           })}
         </HorizontalGroup>
       </InlineField>
-      <InlineField label="Calculation" labelWidth={LABEL_WIDTH}>
+      <InlineField
+        label={t('transformers.reduce-row-options-editor.label-calculation', 'Calculation')}
+        labelWidth={LABEL_WIDTH}
+      >
         <StatsPicker
           allowMultiple={false}
           className="width-18"
