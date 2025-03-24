@@ -70,10 +70,12 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DropZonePlaceholder } from './layout-manager/DropZonePlaceholder';
+import { LayoutOrchestrator } from './layout-manager/LayoutOrchestrator';
 import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
-import { LayoutParent } from './types/LayoutParent';
+import { isLayoutParent, LayoutParent } from './types/LayoutParent';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -135,6 +137,8 @@ export interface DashboardSceneState extends SceneObjectState {
   /** options pane */
   editPane: DashboardEditPane;
   scopesBridge: SceneScopesBridge | undefined;
+  /** Manages dragging/dropping of layout items */
+  layoutOrchestrator: LayoutOrchestrator;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -188,6 +192,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       ...state,
       editPane: new DashboardEditPane(),
       scopesBridge: config.featureToggles.scopeFilters ? new SceneScopesBridge({}) : undefined,
+      layoutOrchestrator: new LayoutOrchestrator({
+        placeholder: new DropZonePlaceholder({ top: 0, left: 0, width: 0, height: 0 }),
+      }),
     });
 
     this.serializer =
@@ -493,6 +500,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.onEnterEditMode();
     }
 
+    const selectedObject = this.state.editPane.getSelection();
+    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
+      const layout = selectedObject.getLayout();
+      layout.addPanel(vizPanel);
+      return;
+    }
+
     // Add panel to layout
     this.state.body.addPanel(vizPanel);
   }
@@ -602,10 +616,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onCreateNewRow() {
+    const selectedObject = this.state.editPane.getSelection();
+    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
+      const layout = selectedObject.getLayout();
+      return addNewRowTo(layout);
+    }
+
     return addNewRowTo(this.state.body);
   }
 
   public onCreateNewTab() {
+    const selectedObject = this.state.editPane.getSelection();
+    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
+      const layout = selectedObject.getLayout();
+      return addNewTabTo(layout);
+    }
+
     return addNewTabTo(this.state.body);
   }
 
@@ -679,7 +705,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveModel?: Dashboard | DashboardV2Spec,
     meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   ): void {
-    this.serializer.initializeMapping(saveModel);
+    this.serializer.initializeElementMapping(saveModel);
+    this.serializer.initializeDSReferencesMapping(saveModel);
     const sortedModel = sortedDeepCloneWithoutNulls(saveModel);
     this.serializer.initialSaveModel = sortedModel;
     this.serializer.metadata = meta;
@@ -751,6 +778,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   isManagedRepository() {
+    if (!config.featureToggles.provisioning) {
+      return false;
+    }
     return Boolean(this.getManagerKind() === ManagerKind.Repo);
   }
 
