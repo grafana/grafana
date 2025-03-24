@@ -5,12 +5,10 @@ import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text }
 import { HistoricJob, Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
-import { useRepositoryJobs } from '../hooks';
+import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 import { formatTimestamp } from '../utils/time';
 
 import { JobSummary } from './JobSummary';
-import { useRepositoryHistoricalJobs } from '../hooks/useRepositoryHistoricalJobs';
-import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 
 interface Props {
   repo: Repository;
