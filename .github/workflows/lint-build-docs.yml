@@ -7,6 +7,14 @@ on:
       - 'docs/**'
       - 'packages/**/*.md'
       - 'latest.json'
+  push:
+    branches:
+      - main
+    paths:
+      - '*.md'
+      - 'docs/**'
+      - 'packages/**/*.md'
+      - 'latest.json'
 
 jobs:
   docs:
