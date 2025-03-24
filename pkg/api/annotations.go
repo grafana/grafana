@@ -633,23 +633,25 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 		if annotation.DashboardID == 0 {
 			return []string{accesscontrol.ScopeAnnotationsTypeOrganization}, nil
 		} else {
-			dashboard, err := dashSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: annotation.DashboardID, OrgID: orgID})
-			if err != nil {
-				return nil, err
-			}
-			scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}
-			// Append dashboard parent scopes if dashboard is in a folder or the general scope if dashboard is not in a folder
-			if dashboard.FolderUID != "" {
-				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
-				inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
+			return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context) ([]string, error) {
+				dashboard, err := dashSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: annotation.DashboardID, OrgID: orgID})
 				if err != nil {
 					return nil, err
 				}
-				scopes = append(scopes, inheritedScopes...)
-			} else {
-				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
-			}
-			return scopes, nil
+				scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}
+				// Append dashboard parent scopes if dashboard is in a folder or the general scope if dashboard is not in a folder
+				if dashboard.FolderUID != "" {
+					scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
+					inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
+					if err != nil {
+						return nil, err
+					}
+					scopes = append(scopes, inheritedScopes...)
+				} else {
+					scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+				}
+				return scopes, nil
+			})
 		}
 	})
 }
