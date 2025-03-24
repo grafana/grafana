@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 // FIXME: revise logging in this method
@@ -52,10 +53,9 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 	r.progress.SetMessage(ctx, "write folders")
 
 	err = r.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
-		// TODO: It's funny that we have to do this here. Why folder doesn't have the slash?
-		p := folder.Path + "/"
+		p := folder.Path
 		if r.path != "" {
-			p = r.path + "/" + p
+			p = safepath.Join(r.path, p)
 		}
 		logger := logger.With("path", p)
 

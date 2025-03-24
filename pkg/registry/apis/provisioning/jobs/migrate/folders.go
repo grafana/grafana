@@ -73,8 +73,7 @@ func (j *migrationJob) migrateLegacyFolders(ctx context.Context) error {
 	j.progress.SetMessage(ctx, "write folders")
 
 	err = j.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
-		// TODO: Folder should come already with the slash
-		p := folder.Path + "/"
+		p := folder.Path
 		logger = logger.With("path", p)
 
 		result := jobs.JobResourceResult{

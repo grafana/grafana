@@ -134,6 +134,11 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 			cfg.Path, err.Error()))
 	}
 
+	if err := safepath.IsSafe(cfg.Path); err != nil {
+		fields = append(fields, field.Invalid(field.NewPath("spec", "local", "path"),
+			cfg.Path, err.Error()))
+	}
+
 	return fields
 }
 

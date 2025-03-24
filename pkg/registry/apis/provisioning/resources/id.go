@@ -113,13 +113,12 @@ type Folder struct {
 }
 
 func ParseFolder(dirPath, repositoryName string) Folder {
-	// We trim the trailing slash to avoid having a trailing slash in the ID.
-	dirPath = strings.TrimSuffix(dirPath, "/")
-	hasher := appendHashSuffix(dirPath, repositoryName)
+	hasher := appendHashSuffix(strings.TrimSuffix(dirPath, "/"), repositoryName)
+	base := safepath.Base(dirPath)
 
 	return Folder{
-		Title: safepath.Base(dirPath),
-		ID:    hasher(sanitiseKubeName(safepath.Base(dirPath))),
+		Title: base,
+		ID:    hasher(sanitiseKubeName(base)),
 		Path:  dirPath,
 	}
 }
