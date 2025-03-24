@@ -11,7 +11,7 @@ runs:
   steps:
     - shell: bash
       run: |
-        mkdir workspace/grafana
+        mkdir -p workspace/grafana
         tar --strip-components=1 -xvf ${{ inputs.package }} -C ./workspace/grafana
     - shell: bash
       run: cp -r devenv scripts tools ./workspace/grafana
