@@ -1,5 +1,3 @@
-import { css } from '@emotion/css';
-
 import { Box, Stack, Text } from '@grafana/ui';
 
 interface FeatureCardProps {
@@ -8,16 +6,12 @@ interface FeatureCardProps {
   icon?: React.ReactNode;
   action?: React.ReactNode;
   showBorder?: boolean;
+  className?: string;
 }
 
-export const FeatureCard = ({ title, description, icon, action, showBorder = false }: FeatureCardProps) => (
+export const FeatureCard = ({ title, description, icon, action, className }: FeatureCardProps) => (
   <Box width="25%" padding={2}>
-    <div
-      className={css({
-        borderRight: showBorder ? ': 1px solid rgba(204, 204, 220, 0.15);' : undefined,
-        height: `100%`,
-      })}
-    >
+    <div style={{ height: '100%' }} className={className}>
       <Stack direction="column" gap={2}>
         {icon}
         <Text variant="h3">{title}</Text>

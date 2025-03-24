@@ -15,6 +15,8 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactElement;
   /** Label for the field */
   label?: React.ReactNode;
+  /** Forcibly use a Label, despite passing a non-string node. */
+  useLabel?: boolean;
   /** Description of the field */
   description?: React.ReactNode;
   /** Indicates if field is in invalid state */
@@ -45,6 +47,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
   (
     {
       label,
+      useLabel,
       description,
       horizontal,
       invalid,
@@ -64,9 +67,12 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
     const inputId = htmlFor ?? getChildId(children);
 
     const labelElement =
-      typeof label === 'string' ? (
+      useLabel || typeof label === 'string' ? (
         <Label htmlFor={inputId} description={description}>
-          {`${label}${required ? ' *' : ''}`}
+          <span>
+            {label}
+            {required && ' *'}
+          </span>
         </Label>
       ) : (
         label
