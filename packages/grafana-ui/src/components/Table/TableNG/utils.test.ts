@@ -1,4 +1,5 @@
-import { SortColumn } from 'react-data-grid';
+import { Property } from 'csstype';
+import { SortColumn, RenderRowProps } from 'react-data-grid';
 
 import {
   createDataFrame,
@@ -24,7 +25,7 @@ import { PanelContext } from '../../PanelChrome';
 
 import { mapFrameToDataGrid, myRowRenderer } from './TableNG';
 import { COLUMN, TABLE } from './constants';
-import { TableColumn } from './types';
+import { TableColumn, TableRow, TableSummaryRow } from './types';
 import {
   convertRGBAToHex,
   extractPixelValue,
@@ -64,7 +65,7 @@ const data = createDataFrame({
       name: 'Value',
       type: FieldType.number,
       values: [],
-      display: ((v: any) => ({
+      display: ((v: unknown) => ({
         text: String(v),
         numeric: v,
         color: undefined,
@@ -776,7 +777,7 @@ describe('TableNG utils', () => {
         config: {},
         values: [1, 22, 333, 4444],
         // No state property initially
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
         }),
@@ -820,7 +821,7 @@ describe('TableNG utils', () => {
             text: '1',
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
         }),
@@ -862,7 +863,7 @@ describe('TableNG utils', () => {
             text: '4444',
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
         }),
@@ -907,7 +908,7 @@ describe('TableNG utils', () => {
           // Or if noValue is a valid property:
           // noValue: true
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
         }),
@@ -1580,7 +1581,7 @@ describe('TableNG utils', () => {
     });
 
     it('should default to space-between when no justification is provided', () => {
-      const styles = getFooterStyles(undefined as any);
+      const styles = getFooterStyles(undefined as unknown as Property.JustifyContent);
 
       // Create a DOM element and apply the CSS class
       document.body.innerHTML = `<div class="${styles.footerCell}">Test</div>`;
@@ -1646,8 +1647,8 @@ describe('TableNG utils', () => {
       expect(extractPixelValue('not-a-number')).toBe(0);
       expect(extractPixelValue('px')).toBe(0);
       expect(extractPixelValue('')).toBe(0);
-      expect(extractPixelValue(null as any)).toBe(0);
-      expect(extractPixelValue(undefined as any)).toBe(0);
+      expect(extractPixelValue(null as unknown as string | number)).toBe(0);
+      expect(extractPixelValue(undefined as unknown as string | number)).toBe(0);
     });
   });
 
@@ -1717,7 +1718,7 @@ describe('TableNG utils', () => {
         onRowChange: jest.fn(),
         rowArray: [],
         selectedPosition: { idx: 0, rowIdx: 0, mode: 'SELECT' },
-      } as any;
+      } as unknown as RenderRowProps<TableRow, TableSummaryRow>;
     };
 
     const mockPanelContext = {
