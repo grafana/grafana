@@ -28,7 +28,7 @@ import {
 } from '../../../plugins/datasource/alertmanager/types';
 import { DashboardSearchItem } from '../../search/types';
 
-import { GrafanaGroupUpdatedResponse } from './api/alertRuleModel';
+import { RulerGroupUpdatedResponse } from './api/alertRuleModel';
 
 type Configurator<T> = (builder: T) => T;
 
@@ -174,7 +174,7 @@ export function mockAlertRuleApi(server: SetupServer) {
     rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
       server.use(http.get(`/api/ruler/${dsName}/api/v1/rules`, () => HttpResponse.json(response)));
     },
-    updateRule: (dsName: string, response: GrafanaGroupUpdatedResponse) => {
+    updateRule: (dsName: string, response: RulerGroupUpdatedResponse) => {
       server.use(http.post(`/api/ruler/${dsName}/api/v1/rules/:namespaceUid`, () => HttpResponse.json(response)));
     },
     rulerRuleGroup: (dsName: string, namespace: string, group: string, response: RulerRuleGroupDTO) => {

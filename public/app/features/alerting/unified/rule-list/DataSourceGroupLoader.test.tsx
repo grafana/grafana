@@ -26,6 +26,8 @@ setupMswServer();
 
 const ui = {
   ruleItem: (ruleName: string | RegExp) => byRole('treeitem', { name: ruleName }),
+  editButton: byRole('link', { name: 'Edit' }),
+  moreButton: byRole('button', { name: 'More' }),
 };
 
 const vanillaPromDs = alertingFactory.dataSource.vanillaPrometheus().build();
@@ -67,8 +69,8 @@ describe('DataSourceGroupLoader', () => {
       expect(ruleListItems).toHaveLength(3);
 
       ruleListItems.forEach((ruleListItem) => {
-        expect(within(ruleListItem).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
-        expect(within(ruleListItem).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+        expect(ui.editButton.query(ruleListItem)).not.toBeInTheDocument();
+        expect(ui.moreButton.query(ruleListItem)).not.toBeInTheDocument();
       });
     });
   });
@@ -102,6 +104,15 @@ describe('DataSourceGroupLoader', () => {
 
       const ruleLink = within(ruleListItems[0]).getByRole('link', { name: 'mimir-rule-1' });
       expect(ruleLink).toHaveAttribute('href', getRuleLink(groupIdentifier, rulerRule));
+    });
+
+    it('should render Edit and More buttons for rules that are present in ruler and prometheus', async () => {
+      render(<DataSourceGroupLoader groupIdentifier={groupIdentifier} />);
+
+      const mimirRule1 = await ui.ruleItem(/mimir-rule/).find();
+
+      expect(await ui.editButton.find(mimirRule1)).toBeInTheDocument();
+      expect(await ui.moreButton.find(mimirRule1)).toBeInTheDocument();
     });
 
     it('should render creating state if a rules is only present in ruler', async () => {

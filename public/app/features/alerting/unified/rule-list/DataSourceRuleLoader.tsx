@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { memo, useMemo } from 'react';
 
 import { DataSourceRuleGroupIdentifier, Rule } from 'app/types/unified-alerting';
@@ -25,13 +26,12 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
 }: DataSourceRuleLoaderProps) {
   const { rulesSource, namespace, groupName } = groupIdentifier;
 
-  // @TODO work with context API to propagate rulerConfig and such
-  const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ uid: rulesSource.uid });
+  const { data: dsFeatures } = useDiscoverDsFeaturesQuery({ uid: rulesSource.uid });
 
-  // @TODO refactor this to use a separate hook (useRuleWithLocation() and useCombinedRule() seems to introduce infinite loading / recursion)
   const { isLoading, data: rulerRuleGroup } = useGetRuleGroupForNamespaceQuery(
-    { namespace: namespace.name, group: groupName, rulerConfig: dataSourceInfo?.rulerConfig! },
-    { skip: !dataSourceInfo?.rulerConfig }
+    dsFeatures?.rulerConfig
+      ? { namespace: namespace.name, group: groupName, rulerConfig: dsFeatures?.rulerConfig }
+      : skipToken
   );
 
   const rulerRule = useMemo(() => {
@@ -68,7 +68,7 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
       rule={rule}
       rulerRule={rulerRule}
       groupIdentifier={groupIdentifier}
-      application={dataSourceInfo?.application}
+      application={dsFeatures?.application}
       actions={actions}
     />
   );

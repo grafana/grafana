@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
 import { isFetchError } from '@grafana/runtime';
@@ -76,12 +77,13 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
     isFetching: isRulerGroupFetching,
     isError: isRulerGroupError,
   } = useGetRuleGroupForNamespaceQuery(
-    {
-      rulerConfig: dsFeatures?.rulerConfig!,
-      namespace: namespaceName,
-      group: groupName,
-    },
-    { skip: !dsFeatures?.rulerConfig }
+    dsFeatures?.rulerConfig
+      ? {
+          rulerConfig: dsFeatures?.rulerConfig,
+          namespace: namespaceName,
+          group: groupName,
+        }
+      : skipToken
   );
 
   const isLoading = isPromResponseLoading || isDsFeaturesLoading || isRulerGroupFetching;

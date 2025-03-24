@@ -223,9 +223,6 @@ export function useRuleGroupConsistencyCheck() {
 
       performance.mark('waitForGroupConsistency:started');
       checkGroupConsistency();
-      // consistencyInterval.current = setInterval(() => {
-
-      // }, CONSISTENCY_CHECK_POOL_INTERVAL);
     });
 
     return Promise.race([timeoutPromise, waitPromise]);
