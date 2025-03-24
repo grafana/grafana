@@ -33,6 +33,15 @@ To grant a user access to the subresource of the specific resource we store foll
 
 It's also possible to grant user access to all subresources for specific resource type. It can be done with following tuple: `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<subresource>” }`.
 
+For the typed resources (like folders, users, teams, etc) subresources work in a little bit different way. Since typed resources only have ID in the name, subresources are added to the `subresource_filter`. For example, to grant user access to folder subresource, following tuple will be created:
+
+```
+{ “user”: “user:1”, relation: “resource_read”, object:”folder:<uid>” }
+context: { "subresource_filter": ["folder.grafana.app/folders/<subresource>"] }
+```
+
+Note that relation is translated from `read` to `resource_read`. This is required to distinguish access between resource and its subresources. When check request is performed, we check if request contains subresource. If so, context filter and translated relation are used.
+
 ## Managed permissions
 
 In the RBAC model managed permissions stored as a special "managed" role permissions. OpenFGA model allows to assign permissions directly to users, so it produces following tuples:
