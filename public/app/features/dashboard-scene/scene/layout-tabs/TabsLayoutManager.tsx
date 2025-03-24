@@ -12,6 +12,7 @@ import {
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
+import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -44,7 +45,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public readonly descriptor = TabsLayoutManager.descriptor;
 
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: () => [this.getUrlKey()] });
 
   public constructor(state: Partial<TabsLayoutManagerState>) {
     super({
@@ -65,19 +66,23 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public getUrlState() {
-    return { tab: this.state.currentTabIndex.toString() };
+    const key = this.getUrlKey();
+    return { [key]: this.getCurrentTab().getSlug() };
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
-    if (!values.tab) {
+    const key = this.getUrlKey();
+    const urlValue = values[key];
+
+    if (!urlValue) {
       return;
     }
-    if (typeof values.tab === 'string') {
-      const tabIndex = parseInt(values.tab, 10);
-      if (this.state.tabs[tabIndex]) {
-        this.setState({ currentTabIndex: tabIndex });
-      } else {
-        this.setState({ currentTabIndex: 0 });
+
+    if (typeof values[key] === 'string') {
+      // find tab with matching slug
+      const matchIndex = this.state.tabs.findIndex((tab) => tab.getSlug() === urlValue);
+      if (matchIndex !== -1) {
+        this.setState({ currentTabIndex: matchIndex });
       }
     }
   }
@@ -211,5 +216,25 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
 
     return new TabsLayoutManager({ tabs });
+  }
+
+  getUrlKey(): string {
+    let parent = this.parent;
+    // Panel edit uses tab key already so we are using dtab here to not conflict
+    let key = 'dtab';
+
+    while (parent) {
+      if (parent instanceof TabItem) {
+        key = `${parent.getSlug()}-${key}`;
+      }
+
+      if (parent instanceof RowItem) {
+        key = `${parent.getSlug()}-${key}`;
+      }
+
+      parent = parent.parent;
+    }
+
+    return key;
   }
 }
