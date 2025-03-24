@@ -76,7 +76,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		logger := logger.With("url", r.URL.Path, "ref", ref, "message", message)
 		ctx := logging.Context(r.Context(), logger)
 
-		filePath, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files/", name))
+		filePath, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files", name))
 		if err != nil {
 			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
