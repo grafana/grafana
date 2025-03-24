@@ -57,17 +57,18 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	}
 
 	var (
-		folderRelation = common.SubresourceRelation(relation)
-		resourceCtx    = resource.Context()
+		subresourceRelation = common.SubresourceRelation(relation)
+		resourceCtx         = resource.Context()
 	)
 
 	var items []string
-	if resource.HasSubresource() && common.IsSubresourceRelation(folderRelation) {
+	if resource.HasSubresource() && common.IsSubresourceRelation(subresourceRelation) {
+		// List requested subresources
 		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
-			Type:                 common.TypeFolder,
-			Relation:             folderRelation,
+			Type:                 resource.Type(),
+			Relation:             subresourceRelation,
 			User:                 subject,
 			Context:              resourceCtx,
 			ContextualTuples:     contextuals,
