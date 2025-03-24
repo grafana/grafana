@@ -1,14 +1,14 @@
+import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { Field, Input, MultiCombobox, Stack, Switch, useStyles2 } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../Config/ConfigForm';
 import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
 
 import { WizardFormData } from './types';
-import { GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
 
 export function FinishStep() {
   const { register, watch, control, formState } = useFormContext<WizardFormData>();
