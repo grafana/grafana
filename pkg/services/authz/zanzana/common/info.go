@@ -1,11 +1,11 @@
 package common
 
 import (
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	iamalpha1 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
@@ -21,8 +21,8 @@ var typedResources = map[string]typeInfo{
 		"",
 	): {Type: "folder", Relations: RelationsFolder},
 	FormatGroupResource(
-		"team.grafana.app",
-		"teams",
+		iamalpha1.TeamResourceInfo.GroupResource().Group,
+		iamalpha1.TeamResourceInfo.GroupResource().Resource,
 		"",
 	): {Type: "team", Relations: RelationsFolder},
 }
