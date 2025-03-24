@@ -1,11 +1,11 @@
 import { isEqual } from 'lodash';
 
-import { ScopeDashboardBinding, ScopeNavigation } from '@grafana/data';
+import { ScopeDashboardBinding } from '@grafana/data';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
-import { SuggestedNavigationsFoldersMap } from './types';
+import { ScopeNavigation, SuggestedNavigationsFoldersMap } from './types';
 
 interface ScopesDashboardsServiceState {
   // State of the drawer showing related dashboards

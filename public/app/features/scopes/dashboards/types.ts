@@ -1,5 +1,24 @@
 import { ScopeDashboardBinding } from '@grafana/data';
 
+// TODO: replace with generate API client types
+export interface ScopeNavigationSpec {
+  url: string;
+  scope: string;
+}
+
+export interface ScopeNavigationStatus {
+  title: string;
+  groups?: string[];
+}
+
+export interface ScopeNavigation {
+  metadata: {
+    name: string;
+  };
+  spec: ScopeNavigationSpec;
+  status: ScopeNavigationStatus;
+}
+
 export interface SuggestedDashboard {
   dashboard: string;
   dashboardTitle: string;
