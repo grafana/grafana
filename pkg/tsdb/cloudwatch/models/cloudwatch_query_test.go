@@ -7,13 +7,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 var logger = log.NewNullLogger()
@@ -932,7 +934,6 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			average := "Average"
-			false := false
 
 			queryToMigrate := metricsDataQuery{
 				CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
@@ -945,7 +946,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 					},
 					Statistic: &average,
 					Period:    utils.Pointer("600"),
-					Hide:      &false,
+					Hide:      aws.Bool(false),
 				},
 			}
 
@@ -1305,7 +1306,8 @@ func TestGetEndpoint(t *testing.T) {
 	}
 	for _, ts := range testcases {
 		t.Run(fmt.Sprintf("should create correct endpoint for %s", ts), func(t *testing.T) {
-			actual := getEndpoint(ts.region)
+			actual, err := getEndpoint(ts.region)
+			assert.NoError(t, err)
 			assert.Equal(t, ts.expectedEndpoint, actual)
 		})
 	}
