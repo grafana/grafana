@@ -97,18 +97,6 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return [];
   };
 
-  getMetricsSummaryTags = (scope?: TraceqlSearchScope) => {
-    if (this.tagsV2 && scope) {
-      if (scope === TraceqlSearchScope.Unscoped) {
-        return getUnscopedTags(this.tagsV2);
-      }
-      return getTagsByScope(this.tagsV2, scope);
-    } else if (this.tagsV1) {
-      return this.tagsV1;
-    }
-    return [];
-  };
-
   getTraceqlAutocompleteTags = (scope?: string) => {
     if (this.tagsV2) {
       if (!scope) {
