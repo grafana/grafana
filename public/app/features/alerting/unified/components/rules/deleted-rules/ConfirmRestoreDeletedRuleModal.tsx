@@ -65,10 +65,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
     if (!rulerRuleType.grafana.rule(ruleToRestore)) {
       return;
     }
-    const namespaceName = await backendSrv
-      .getFolderByUid(ruleToRestore.grafana_alert.namespace_uid)
-      .then((folder) => folder.title);
-    createAlert(ruleToRestore, namespaceName);
+    await redirectToRestoreForm(ruleToRestore);
   }
 
   return (
@@ -149,11 +146,14 @@ export function useRestoreDeletedRule() {
   });
 }
 
-const createAlert = async (ruleToRecover: RulerGrafanaRuleDTO, namespace: string) => {
+const redirectToRestoreForm = async (ruleToRecover: RulerGrafanaRuleDTO) => {
   let formValues: Partial<RuleFormValues> | undefined;
+  const namespaceName = await backendSrv
+    .getFolderByUid(ruleToRecover.grafana_alert.namespace_uid)
+    .then((folder) => folder.title);
 
   try {
-    formValues = grafanaRuleDtoToFormValues(ruleToRecover, namespace);
+    formValues = grafanaRuleDtoToFormValues(ruleToRecover, namespaceName);
   } catch (err) {
     const message = `Error getting rule values from the deleted rule: ${getMessageFromError(err)}`;
     throw new Error(message);
