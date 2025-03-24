@@ -66,7 +66,7 @@ require (
 	github.com/go-stack/stack v1.8.1 // @grafana/grafana-backend-group
 	github.com/gobwas/glob v0.2.3 // @grafana/grafana-backend-group
 	github.com/gogo/protobuf v1.3.2 // @grafana/alerting-backend
-	github.com/golang-jwt/jwt/v4 v4.5.1 // @grafana/grafana-backend-group
+	github.com/golang-jwt/jwt/v4 v4.5.2 // @grafana/grafana-backend-group
 	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/grafana-backend-group
 	github.com/golang/mock v1.7.0-rc.1 // @grafana/alerting-backend
 	github.com/golang/protobuf v1.5.4 // @grafana/grafana-backend-group
