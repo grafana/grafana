@@ -62,6 +62,10 @@ export class ScopesApiClient {
     });
   }
 
+  /**
+   * @param parent
+   * @param query Filters by title substring
+   */
   async fetchNode(parent: string, query: string): Promise<NodesMap> {
     try {
       const nodes =

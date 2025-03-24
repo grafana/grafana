@@ -1,8 +1,8 @@
 import { isEqual } from 'lodash';
-import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, Subscription } from 'rxjs';
 import { map, distinctUntilChanged } from 'rxjs/operators';
 
-import { ScopesContextValue, ScopesContextValueState } from '@grafana/runtime';
+import { LocationService, ScopesContextValue, ScopesContextValueState } from '@grafana/runtime';
 
 import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
 import { ScopesSelectorService } from './selector/ScopesSelectorService';
@@ -24,9 +24,12 @@ export class ScopesService implements ScopesContextValue {
   // This will contain the combined state that will be public.
   private readonly _stateObservable: BehaviorSubject<ScopesContextValueState>;
 
+  private subscriptions: Subscription[] = [];
+
   constructor(
     private selectorService: ScopesSelectorService,
-    private dashboardsService: ScopesDashboardsService
+    private dashboardsService: ScopesDashboardsService,
+    private locationService: LocationService
   ) {
     this._state = new BehaviorSubject<State>({
       enabled: false,
@@ -41,24 +44,64 @@ export class ScopesService implements ScopesContextValue {
     });
 
     // We combine the latest emissions from this state + selectorService + dashboardsService.
-    combineLatest([
-      this._state.asObservable(),
-      this.getSelectorServiceStateObservable(),
-      this.getDashboardsServiceStateObservable(),
-    ])
-      .pipe(
-        // Map the 3 states into single ScopesContextValueState object
-        map(
-          ([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
-            ...thisState,
-            value: selectorState.selectedScopes,
-            loading: selectorState.loading,
-            drawerOpened: dashboardsState.drawerOpened,
-          })
+    this.subscriptions.push(
+      combineLatest([
+        this._state.asObservable(),
+        this.getSelectorServiceStateObservable(),
+        this.getDashboardsServiceStateObservable(),
+      ])
+        .pipe(
+          // Map the 3 states into single ScopesContextValueState object
+          map(
+            ([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
+              ...thisState,
+              value: selectorState.selectedScopes,
+              loading: selectorState.loading,
+              drawerOpened: dashboardsState.drawerOpened,
+            })
+          )
         )
-      )
-      // We pass this into behaviourSubject so we get the 1 event buffer and we can access latest value.
-      .subscribe(this._stateObservable);
+        // We pass this into behaviourSubject so we get the 1 event buffer and we can access latest value.
+        .subscribe(this._stateObservable)
+    );
+
+    // Init from the URL when we first load
+    const queryParams = new URLSearchParams(locationService.getLocation().search);
+    this.changeScopes(queryParams.getAll('scopes'));
+
+    // Update scopes state based on URL.
+    this.subscriptions.push(
+      locationService.getLocationObservable().subscribe((location) => {
+        if (!this.state.enabled) {
+          // We don't need to react on pages that don't interact with scopes.
+          return;
+        }
+        const queryParams = new URLSearchParams(location.search);
+        const scopes = queryParams.getAll('scopes');
+        if (scopes.length) {
+          // We only update scopes but never delete them. This is to keep the scopes in memory if user navigates to
+          // page that does not use scopes (like from dashboard to dashboard list back to dashboard). If user
+          // changes the URL directly, it would trigger a reload so scopes would still be reset.
+          this.changeScopes(scopes);
+        }
+      })
+    );
+
+    // Update the URL based on change in the scopes state
+    this.subscriptions.push(
+      selectorService.subscribeToState((state, prev) => {
+        const oldScopeNames = prev.selectedScopes.map((scope) => scope.scope.metadata.name);
+        const newScopeNames = state.selectedScopes.map((scope) => scope.scope.metadata.name);
+        if (!isEqual(oldScopeNames, newScopeNames)) {
+          this.locationService.partial(
+            {
+              scopes: newScopeNames,
+            },
+            true
+          );
+        }
+      })
+    );
   }
 
   /**
@@ -97,6 +140,14 @@ export class ScopesService implements ScopesContextValue {
   public setEnabled = (enabled: boolean) => {
     if (this.state.enabled !== enabled) {
       this.updateState({ enabled });
+      if (enabled) {
+        this.locationService.partial(
+          {
+            scopes: this.selectorService.state.selectedScopes.map(({ scope }) => scope.metadata.name),
+          },
+          true
+        );
+      }
     }
   };
 
@@ -126,5 +177,14 @@ export class ScopesService implements ScopesContextValue {
     return this.dashboardsService.stateObservable.pipe(
       distinctUntilChanged((prev, curr) => prev.drawerOpened === curr.drawerOpened)
     );
+  }
+
+  /**
+   * Cleanup subscriptions so this can be garbage collected.
+   */
+  public cleanUp() {
+    for (const sub of this.subscriptions) {
+      sub.unsubscribe();
+    }
   }
 }
