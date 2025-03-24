@@ -123,7 +123,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
                 )}
                 onClick={onClearCustomMinWidth}
               >
-                Clear
+                {t('dashboard.responsive-layout.options.custom-min-width.clear', 'Clear')}
               </Button>
             }
           />
@@ -133,7 +133,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
         <Combobox
           options={colOptions}
           value={String(maxColumnCount)}
-          onChange={({ value }) => layoutManager.onMaxColumnCountChanged(value)}
+          onChange={({ value }) => layoutManager.onMaxColumnCountChanged(parseInt(value, 10))}
         />
       </Field>
     </Stack>
@@ -229,7 +229,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: ResponsiveGridLayout
                 )}
                 onClick={onClearCustomRowHeight}
               >
-                Clear
+                {t('dashboard.responsive-layout.options.custom-min-height.clear', 'Clear')}
               </Button>
             }
           />

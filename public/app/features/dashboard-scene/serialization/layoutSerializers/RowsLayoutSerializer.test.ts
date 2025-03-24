@@ -46,8 +46,9 @@ describe('deserialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  row: 'minmax(min-content, max-content)',
-                  col: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  minColumnWidthMode: 'standard',
+                  minRowHeightMode: 'standard',
+                  maxColumnCount: 4,
                   items: [],
                 },
               },
@@ -75,8 +76,9 @@ describe('deserialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  row: 'minmax(min-content, max-content)',
-                  col: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  minColumnWidthMode: 'standard',
+                  minRowHeightMode: 'standard',
+                  maxColumnCount: 4,
                   items: [],
                 },
               },

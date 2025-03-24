@@ -563,9 +563,13 @@ ResponsiveGridLayoutKind: {
 }
 
 ResponsiveGridLayoutSpec: {
-  row: string,
-  col: string,
-  items: [...ResponsiveGridLayoutItemKind]
+	maxColumnCount?: number | *3
+	minColumnWidthMode: "narrow" | *"standard" | "wide" | "custom"
+	minColumnWidth?: number
+	minRowHeightMode: "short" | *"standard" | "tall" | "custom"
+	minRowHeight?: number
+	heightFill?: bool | *false
+	items: [...ResponsiveGridLayoutItemKind]
 }
 
 ResponsiveGridLayoutItemKind: {
