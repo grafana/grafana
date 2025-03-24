@@ -6,22 +6,22 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '../../..';
 import { useStyles2, useTheme2 } from '../../../../themes';
 import { Trans } from '../../../../utils/i18n';
-import { FilterType } from '../types';
+import { FilterType, TableRow } from '../types';
 
 import { FilterList } from './FilterList';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
 
 interface Props {
   name: string;
-  rows: any[];
-  filterValue: any;
-  setFilter: (value: any) => void;
+  rows: TableRow[];
+  filterValue: boolean | SelectableValue[] | undefined;
+  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   onClose: () => void;
   field?: Field;
   searchFilter: string;
-  setSearchFilter: (value: string) => void;
+  setSearchFilter: React.Dispatch<React.SetStateAction<string>>;
   operator: SelectableValue<string>;
-  setOperator: (item: SelectableValue<string>) => void;
+  setOperator: React.Dispatch<React.SetStateAction<SelectableValue<string>>>;
 }
 
 export const FilterPopup = ({
@@ -39,7 +39,10 @@ export const FilterPopup = ({
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
-  const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
+  const filteredOptions = useMemo(
+    () => getFilteredOptions(options, Array.isArray(filterValue) ? filterValue : undefined),
+    [options, filterValue]
+  );
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
 
@@ -68,7 +71,7 @@ export const FilterPopup = ({
   );
 
   const onClearFilter = useCallback(
-    (event: React.MouseEvent) => {
+    () => {
       setFilter((filter: FilterType) => {
         const newFilter = { ...filter };
         delete newFilter[name];
