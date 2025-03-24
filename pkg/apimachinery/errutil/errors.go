@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -357,9 +356,6 @@ type Error struct {
 	LogLevel LogLevel
 	// Source identifies from where the error originates.
 	Source Source
-	// WithContactSupportErrorMessage indicates whether we should append a message
-	// to the public message advising the user to contact support
-	WithContactSupportErrorMessage bool
 }
 
 // MarshalJSON returns an error, we do not want raw [Error]s being
@@ -462,13 +458,6 @@ func (e Error) Public() PublicError {
 		}
 	}
 
-	if e.WithContactSupportErrorMessage {
-		if !strings.HasSuffix(message, ".") {
-			message += "."
-		}
-		message += " Please contact support if the issue persists."
-	}
-
 	return PublicError{
 		StatusCode: e.Reason.Status().HTTPStatus(),
 		MessageID:  e.MessageID,
@@ -480,10 +469,4 @@ func (e Error) Public() PublicError {
 // Error implements the error interface.
 func (p PublicError) Error() string {
 	return fmt.Sprintf("[%s] %s", p.MessageID, p.Message)
-}
-
-// WithSupportContact creates a new Error with WithContactSupportErrorMessage set to true
-func (e Error) WithContactSupportMessage() Error {
-	e.WithContactSupportErrorMessage = true
-	return e
 }

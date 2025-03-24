@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/grafana/pkg/extensions/datasource/dsrunner/pluginmetrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -174,13 +173,7 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 		}
 
 		if status.Code(err) == codes.Unavailable {
-			connectionErr := plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("%v", err)
-			// Check if the plugin is running in a cloud environment
-			_, hasStackId := pluginmetrics.StackIDFromContext(ctx)
-			if hasStackId {
-				return nil,connectionErr.WithContactSupportMessage()
-			}
-			return nil, connectionErr
+			return nil, plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("%v", err)
 		}
 
 		if status.Code(err) == codes.ResourceExhausted {
