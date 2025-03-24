@@ -60,8 +60,8 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 	}
 
 	var (
-		metricCol   []string
-		valueCol    []*float64
+		metricCol   = make([]string, 0, len(inputFrame.Fields))
+		valueCol    = make([]*float64, 0, len(inputFrame.Fields))
 		labelKeys   []string
 		labelValues = make(map[string][]*string)
 	)
