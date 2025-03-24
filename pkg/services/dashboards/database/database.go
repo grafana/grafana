@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -146,7 +147,7 @@ func (d *dashboardStore) GetProvisionedDashboardData(ctx context.Context, name s
 	return result, err
 }
 
-func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string) ([]*dashboards.Dashboard, error) {
+func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetProvisionedDashboardsByName")
 	defer span.End()
 
@@ -154,7 +155,7 @@ func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, nam
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
-			Where(`dashboard_provisioning.name = ?`, name).Find(&dashes)
+			Where(`dashboard_provisioning.name = ? AND dashboard.org_id = ?`, name, orgID).Find(&dashes)
 	})
 	if err != nil {
 		return nil, err
@@ -162,7 +163,7 @@ func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, nam
 	return dashes, nil
 }
 
-func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string) ([]*dashboards.Dashboard, error) {
+func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string, orgID int64) ([]*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetOrphanedProvisionedDashboards")
 	defer span.End()
 
@@ -170,6 +171,7 @@ func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, n
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+			Where(`dashboard.org_id = ?`, orgID).
 			NotIn(`dashboard_provisioning.name`, notIn).Find(&dashes)
 	})
 	if err != nil {
@@ -672,7 +674,7 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{dashboard.UID, dashboard.OrgID}},
 		{SQL: "DELETE FROM star WHERE dashboard_id = ? ", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard WHERE id = ?", args: []any{dashboard.ID}},
-		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{dashboard.ID}},
+		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{strconv.FormatInt(dashboard.ID, 10)}}, // Column has TEXT type.
 		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{dashboard.ID}},
@@ -736,7 +738,7 @@ func (d *dashboardStore) CleanupAfterDelete(ctx context.Context, cmd *dashboards
 	sqlStatements := []statement{
 		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
 		{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
-		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{cmd.ID}},
+		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{strconv.FormatInt(cmd.ID, 10)}}, // Column has TEXT type.
 		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{cmd.ID}},
 		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{cmd.ID}},
 		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{cmd.ID}},

@@ -407,10 +407,7 @@ func NewDashboardValueMapping() *DashboardValueMapping {
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
 // +k8s:openapi-gen=true
 type DashboardValueMap struct {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "value"
-	Type string `json:"type"`
+	Type DashboardMappingType `json:"type"`
 	// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
 	Options map[string]DashboardValueMappingResult `json:"options"`
 }
@@ -418,9 +415,24 @@ type DashboardValueMap struct {
 // NewDashboardValueMap creates a new DashboardValueMap object.
 func NewDashboardValueMap() *DashboardValueMap {
 	return &DashboardValueMap{
-		Type: "value",
+		Type: DashboardMappingTypeValue,
 	}
 }
+
+// Supported value mapping types
+// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
+// +k8s:openapi-gen=true
+type DashboardMappingType string
+
+const (
+	DashboardMappingTypeValue   DashboardMappingType = "value"
+	DashboardMappingTypeRange   DashboardMappingType = "range"
+	DashboardMappingTypeRegex   DashboardMappingType = "regex"
+	DashboardMappingTypeSpecial DashboardMappingType = "special"
+)
 
 // Result used as replacement with text and color when the value matches
 // +k8s:openapi-gen=true
@@ -444,10 +456,7 @@ func NewDashboardValueMappingResult() *DashboardValueMappingResult {
 // For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 // +k8s:openapi-gen=true
 type DashboardRangeMap struct {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "range"
-	Type string `json:"type"`
+	Type DashboardMappingType `json:"type"`
 	// Range to match against and the result to apply when the value is within the range
 	Options DashboardV2alpha1RangeMapOptions `json:"options"`
 }
@@ -455,7 +464,7 @@ type DashboardRangeMap struct {
 // NewDashboardRangeMap creates a new DashboardRangeMap object.
 func NewDashboardRangeMap() *DashboardRangeMap {
 	return &DashboardRangeMap{
-		Type:    "range",
+		Type:    DashboardMappingTypeRange,
 		Options: *NewDashboardV2alpha1RangeMapOptions(),
 	}
 }
@@ -464,10 +473,7 @@ func NewDashboardRangeMap() *DashboardRangeMap {
 // For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 // +k8s:openapi-gen=true
 type DashboardRegexMap struct {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "regex"
-	Type string `json:"type"`
+	Type DashboardMappingType `json:"type"`
 	// Regular expression to match against and the result to apply when the value matches the regex
 	Options DashboardV2alpha1RegexMapOptions `json:"options"`
 }
@@ -475,7 +481,7 @@ type DashboardRegexMap struct {
 // NewDashboardRegexMap creates a new DashboardRegexMap object.
 func NewDashboardRegexMap() *DashboardRegexMap {
 	return &DashboardRegexMap{
-		Type:    "regex",
+		Type:    DashboardMappingTypeRegex,
 		Options: *NewDashboardV2alpha1RegexMapOptions(),
 	}
 }
@@ -485,17 +491,14 @@ func NewDashboardRegexMap() *DashboardRegexMap {
 // For example, you can configure a special value mapping so that null values appear as N/A.
 // +k8s:openapi-gen=true
 type DashboardSpecialValueMap struct {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "special"
-	Type    string                                  `json:"type"`
+	Type    DashboardMappingType                    `json:"type"`
 	Options DashboardV2alpha1SpecialValueMapOptions `json:"options"`
 }
 
 // NewDashboardSpecialValueMap creates a new DashboardSpecialValueMap object.
 func NewDashboardSpecialValueMap() *DashboardSpecialValueMap {
 	return &DashboardSpecialValueMap{
-		Type:    "special",
+		Type:    DashboardMappingTypeSpecial,
 		Options: *NewDashboardV2alpha1SpecialValueMapOptions(),
 	}
 }
@@ -833,17 +836,17 @@ func NewDashboardRowsLayoutRowKind() *DashboardRowsLayoutRowKind {
 
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutRowSpec struct {
-	Title                *string                                                           `json:"title,omitempty"`
-	Collapsed            bool                                                              `json:"collapsed"`
-	ConditionalRendering *DashboardConditionalRenderingGroupKind                           `json:"conditionalRendering,omitempty"`
-	Repeat               *DashboardRowRepeatOptions                                        `json:"repeat,omitempty"`
-	Layout               DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	Title                *string                                                                           `json:"title,omitempty"`
+	Collapsed            bool                                                                              `json:"collapsed"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind                                           `json:"conditionalRendering,omitempty"`
+	Repeat               *DashboardRowRepeatOptions                                                        `json:"repeat,omitempty"`
+	Layout               DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
 func NewDashboardRowsLayoutRowSpec() *DashboardRowsLayoutRowSpec {
 	return &DashboardRowsLayoutRowSpec{
-		Layout: *NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind(),
+		Layout: *NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind(),
 	}
 }
 
@@ -1051,14 +1054,14 @@ func NewDashboardTabsLayoutTabKind() *DashboardTabsLayoutTabKind {
 
 // +k8s:openapi-gen=true
 type DashboardTabsLayoutTabSpec struct {
-	Title  *string                                                           `json:"title,omitempty"`
-	Layout DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind `json:"layout"`
+	Title  *string                                                                           `json:"title,omitempty"`
+	Layout DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind `json:"layout"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.
 func NewDashboardTabsLayoutTabSpec() *DashboardTabsLayoutTabSpec {
 	return &DashboardTabsLayoutTabSpec{
-		Layout: *NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind(),
+		Layout: *NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind(),
 	}
 }
 
@@ -1820,8 +1823,7 @@ func (resource DashboardPanelKindOrLibraryPanelKind) MarshalJSON() ([]byte, erro
 	if resource.LibraryPanelKind != nil {
 		return json.Marshal(resource.LibraryPanelKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardPanelKindOrLibraryPanelKind` from JSON.
@@ -1890,8 +1892,7 @@ func (resource DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) MarshalJS
 	if resource.SpecialValueMap != nil {
 		return json.Marshal(resource.SpecialValueMap)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap` from JSON.
@@ -1968,8 +1969,7 @@ func (resource DashboardGridLayoutItemKindOrGridLayoutRowKind) MarshalJSON() ([]
 	if resource.GridLayoutRowKind != nil {
 		return json.Marshal(resource.GridLayoutRowKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutItemKindOrGridLayoutRowKind` from JSON.
@@ -2012,19 +2012,20 @@ func (resource *DashboardGridLayoutItemKindOrGridLayoutRowKind) UnmarshalJSON(ra
 }
 
 // +k8s:openapi-gen=true
-type DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind struct {
+type DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind struct {
 	GridLayoutKind           *DashboardGridLayoutKind           `json:"GridLayoutKind,omitempty"`
 	ResponsiveGridLayoutKind *DashboardResponsiveGridLayoutKind `json:"ResponsiveGridLayoutKind,omitempty"`
 	TabsLayoutKind           *DashboardTabsLayoutKind           `json:"TabsLayoutKind,omitempty"`
+	RowsLayoutKind           *DashboardRowsLayoutKind           `json:"RowsLayoutKind,omitempty"`
 }
 
-// NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind creates a new DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind object.
-func NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind() *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind {
-	return &DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind{}
+// NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind creates a new DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind object.
+func NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind() *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind {
+	return &DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` as JSON.
-func (resource DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind` as JSON.
+func (resource DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) MarshalJSON() ([]byte, error) {
 	if resource.GridLayoutKind != nil {
 		return json.Marshal(resource.GridLayoutKind)
 	}
@@ -2034,12 +2035,14 @@ func (resource DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind
 	if resource.TabsLayoutKind != nil {
 		return json.Marshal(resource.TabsLayoutKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	if resource.RowsLayoutKind != nil {
+		return json.Marshal(resource.RowsLayoutKind)
+	}
+	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` from JSON.
-func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind` from JSON.
+func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -2071,6 +2074,14 @@ func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKin
 		}
 
 		resource.ResponsiveGridLayoutKind = &dashboardResponsiveGridLayoutKind
+		return nil
+	case "RowsLayout":
+		var dashboardRowsLayoutKind DashboardRowsLayoutKind
+		if err := json.Unmarshal(raw, &dashboardRowsLayoutKind); err != nil {
+			return err
+		}
+
+		resource.RowsLayoutKind = &dashboardRowsLayoutKind
 		return nil
 	case "TabsLayout":
 		var dashboardTabsLayoutKind DashboardTabsLayoutKind
@@ -2108,8 +2119,7 @@ func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDa
 	if resource.ConditionalRenderingTimeIntervalKind != nil {
 		return json.Marshal(resource.ConditionalRenderingTimeIntervalKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind` from JSON.
@@ -2160,19 +2170,20 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 }
 
 // +k8s:openapi-gen=true
-type DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind struct {
+type DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind struct {
 	GridLayoutKind           *DashboardGridLayoutKind           `json:"GridLayoutKind,omitempty"`
 	RowsLayoutKind           *DashboardRowsLayoutKind           `json:"RowsLayoutKind,omitempty"`
 	ResponsiveGridLayoutKind *DashboardResponsiveGridLayoutKind `json:"ResponsiveGridLayoutKind,omitempty"`
+	TabsLayoutKind           *DashboardTabsLayoutKind           `json:"TabsLayoutKind,omitempty"`
 }
 
-// NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind creates a new DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind object.
-func NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind() *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind {
-	return &DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind{}
+// NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind creates a new DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind object.
+func NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind() *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind {
+	return &DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind` as JSON.
-func (resource DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` as JSON.
+func (resource DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) MarshalJSON() ([]byte, error) {
 	if resource.GridLayoutKind != nil {
 		return json.Marshal(resource.GridLayoutKind)
 	}
@@ -2182,12 +2193,14 @@ func (resource DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind
 	if resource.ResponsiveGridLayoutKind != nil {
 		return json.Marshal(resource.ResponsiveGridLayoutKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	if resource.TabsLayoutKind != nil {
+		return json.Marshal(resource.TabsLayoutKind)
+	}
+	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind` from JSON.
-func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` from JSON.
+func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -2227,6 +2240,14 @@ func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKin
 		}
 
 		resource.RowsLayoutKind = &dashboardRowsLayoutKind
+		return nil
+	case "TabsLayout":
+		var dashboardTabsLayoutKind DashboardTabsLayoutKind
+		if err := json.Unmarshal(raw, &dashboardTabsLayoutKind); err != nil {
+			return err
+		}
+
+		resource.TabsLayoutKind = &dashboardTabsLayoutKind
 		return nil
 	}
 
@@ -2276,8 +2297,7 @@ func (resource DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKin
 	if resource.AdhocVariableKind != nil {
 		return json.Marshal(resource.AdhocVariableKind)
 	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind` from JSON.
@@ -2388,7 +2408,7 @@ func (resource DashboardStringOrArrayOfString) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.ArrayOfString)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardStringOrArrayOfString` from JSON.
@@ -2443,7 +2463,7 @@ func (resource DashboardStringOrFloat64) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.Float64)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardStringOrFloat64` from JSON.
@@ -2475,90 +2495,4 @@ func (resource *DashboardStringOrFloat64) UnmarshalJSON(raw []byte) error {
 	}
 
 	return errors.Join(errList...)
-}
-
-// +k8s:openapi-gen=true
-type DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind struct {
-	GridLayoutKind           *DashboardGridLayoutKind           `json:"GridLayoutKind,omitempty"`
-	RowsLayoutKind           *DashboardRowsLayoutKind           `json:"RowsLayoutKind,omitempty"`
-	ResponsiveGridLayoutKind *DashboardResponsiveGridLayoutKind `json:"ResponsiveGridLayoutKind,omitempty"`
-	TabsLayoutKind           *DashboardTabsLayoutKind           `json:"TabsLayoutKind,omitempty"`
-}
-
-// NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind creates a new DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind object.
-func NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind() *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind {
-	return &DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind{}
-}
-
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` as JSON.
-func (resource DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) MarshalJSON() ([]byte, error) {
-	if resource.GridLayoutKind != nil {
-		return json.Marshal(resource.GridLayoutKind)
-	}
-	if resource.RowsLayoutKind != nil {
-		return json.Marshal(resource.RowsLayoutKind)
-	}
-	if resource.ResponsiveGridLayoutKind != nil {
-		return json.Marshal(resource.ResponsiveGridLayoutKind)
-	}
-	if resource.TabsLayoutKind != nil {
-		return json.Marshal(resource.TabsLayoutKind)
-	}
-
-	return nil, fmt.Errorf("no value for disjunction of refs")
-}
-
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` from JSON.
-func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) UnmarshalJSON(raw []byte) error {
-	if raw == nil {
-		return nil
-	}
-
-	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
-	parsedAsMap := make(map[string]interface{})
-	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
-		return err
-	}
-
-	discriminator, found := parsedAsMap["kind"]
-	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
-	}
-
-	switch discriminator {
-	case "GridLayout":
-		var dashboardGridLayoutKind DashboardGridLayoutKind
-		if err := json.Unmarshal(raw, &dashboardGridLayoutKind); err != nil {
-			return err
-		}
-
-		resource.GridLayoutKind = &dashboardGridLayoutKind
-		return nil
-	case "ResponsiveGridLayout":
-		var dashboardResponsiveGridLayoutKind DashboardResponsiveGridLayoutKind
-		if err := json.Unmarshal(raw, &dashboardResponsiveGridLayoutKind); err != nil {
-			return err
-		}
-
-		resource.ResponsiveGridLayoutKind = &dashboardResponsiveGridLayoutKind
-		return nil
-	case "RowsLayout":
-		var dashboardRowsLayoutKind DashboardRowsLayoutKind
-		if err := json.Unmarshal(raw, &dashboardRowsLayoutKind); err != nil {
-			return err
-		}
-
-		resource.RowsLayoutKind = &dashboardRowsLayoutKind
-		return nil
-	case "TabsLayout":
-		var dashboardTabsLayoutKind DashboardTabsLayoutKind
-		if err := json.Unmarshal(raw, &dashboardTabsLayoutKind); err != nil {
-			return err
-		}
-
-		resource.TabsLayoutKind = &dashboardTabsLayoutKind
-		return nil
-	}
-
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
 }

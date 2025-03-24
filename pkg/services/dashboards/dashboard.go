@@ -35,6 +35,7 @@ type DashboardService interface {
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
 	RestoreDashboard(ctx context.Context, dashboard *Dashboard, user identity.Requester, optionalFolderUID string) error
+	CleanUpDashboard(ctx context.Context, dashboardUID string, orgId int64) error
 	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
@@ -81,8 +82,8 @@ type Store interface {
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
-	GetProvisionedDashboardsByName(ctx context.Context, name string) ([]*Dashboard, error)
-	GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string) ([]*Dashboard, error)
+	GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*Dashboard, error)
+	GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string, orgID int64) ([]*Dashboard, error)
 	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)
 	SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, id int64) error

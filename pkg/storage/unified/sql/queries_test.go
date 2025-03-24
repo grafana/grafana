@@ -176,26 +176,6 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResoureceHistoryUpdateUid: {
-				{
-					Name: "modify uids in history",
-					Data: &sqlResourceHistoryUpdateRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						WriteEvent: resource.WriteEvent{
-							Key: &resource.ResourceKey{
-								Namespace: "nn",
-								Group:     "gg",
-								Resource:  "rr",
-								Name:      "name",
-							},
-							PreviousRV: 1234,
-						},
-						OldUID: "old-uid",
-						NewUID: "new-uid",
-					},
-				},
-			},
-
 			sqlResourceHistoryInsert: {
 				{
 					Name: "insert into resource_history",
@@ -251,6 +231,22 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						},
 						Trash:   true,
 						StartRV: 123456,
+					},
+				},
+			},
+
+			sqlResourceHistoryPrune: {
+				{
+					Name: "simple",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+							Name:      "na",
+						},
+						HistoryLimit: 100,
 					},
 				},
 			},
