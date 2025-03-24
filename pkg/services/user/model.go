@@ -137,6 +137,7 @@ type UserSearchHitDTO struct {
 	AvatarURL     string               `json:"avatarUrl" xorm:"avatar_url"`
 	IsAdmin       bool                 `json:"isAdmin"`
 	IsDisabled    bool                 `json:"isDisabled"`
+	IsProvisioned bool                 `json:"isProvisioned"`
 	LastSeenAt    time.Time            `json:"lastSeenAt"`
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
 	AuthLabels    []string             `json:"authLabels"`

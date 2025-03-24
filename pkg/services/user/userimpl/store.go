@@ -374,6 +374,7 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 			Theme:          usr.Theme,
 			IsGrafanaAdmin: usr.IsAdmin,
 			IsDisabled:     usr.IsDisabled,
+			IsProvisioned:  usr.IsProvisioned,
 			OrgID:          usr.OrgID,
 			UpdatedAt:      usr.Updated,
 			CreatedAt:      usr.Created,
