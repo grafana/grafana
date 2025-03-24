@@ -373,14 +373,13 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
   const duration = rule.for;
   const annotations = rule.annotations;
   const labels = rule.labels;
-  if (rulerRuleType.grafana.rule(rule)) {
+  if (rulerRuleType.grafana.recordingRule(rule)) {
     // grafana recording rule
     return {
       ...defaultFormValues,
       name: ga.title,
       type: RuleFormType.grafanaRecording,
       group: ga.rule_group,
-      // evaluateEvery: ga. || defaultFormValues.evaluateEvery, // todo ???
       queries: ga.data,
       condition: ga.condition,
       annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
@@ -398,7 +397,6 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
       name: ga.title,
       type: RuleFormType.grafana,
       group: ga.rule_group,
-      // evaluateEvery: group.interval || defaultFormValues.evaluateEvery, // todo ????
       evaluateFor: duration || '0',
       noDataState: ga.no_data_state,
       execErrState: ga.exec_err_state,
