@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
-import * as React from 'react';
 
 import { GrafanaTheme2, PluginDependencyInfo } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';

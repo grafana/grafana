@@ -69,11 +69,14 @@ export function mergeLocalsAndRemotes({
     if (!shouldSkip) {
       const catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
 
+      const isDependency = catalogPlugin?.dependantPlugins && catalogPlugin?.dependantPlugins.length > 0;
+
       // for managed instances, check if plugin is installed, but not yet present in the current instance
       if (config.pluginAdminExternalManageEnabled) {
         catalogPlugin.isFullyInstalled = catalogPlugin.isCore
           ? true
-          : (instancesMap.has(remotePlugin.slug) || provisionedSet.has(remotePlugin.slug)) && catalogPlugin.isInstalled;
+          : (instancesMap.has(remotePlugin.slug) || provisionedSet.has(remotePlugin.slug) || isDependency) &&
+            catalogPlugin.isInstalled;
 
         catalogPlugin.isInstalled = instancesMap.has(remotePlugin.slug) || catalogPlugin.isInstalled;
 
@@ -87,7 +90,8 @@ export function mergeLocalsAndRemotes({
           catalogPlugin.hasUpdate = true;
         }
 
-        catalogPlugin.isUninstallingFromInstance = Boolean(localCounterpart) && !instancesMap.has(remotePlugin.slug);
+        catalogPlugin.isUninstallingFromInstance =
+          Boolean(localCounterpart) && !instancesMap.has(remotePlugin.slug) && !isDependency;
         catalogPlugin.isProvisioned = provisionedSet.has(remotePlugin.slug);
       }
 
@@ -281,6 +285,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     iam: local?.iam,
     latestVersion: local?.latestVersion || remote?.version || '',
     url: remote?.url || '',
+    dependantPlugins: dependantPlugins(id),
   };
 }
 

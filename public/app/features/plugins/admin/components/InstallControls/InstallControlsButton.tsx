@@ -132,7 +132,7 @@ export function InstallControlsButton({
 
   let uninstallConfirmationBody = 'Are you sure you want to uninstall this plugin?';
   // TODO && dependant plugin is still installed
-  const dependencyOf = plugin.details?.dependantPlugins?.map((dep) => dep.name);
+  const dependencyOf = plugin.dependantPlugins?.map((dep) => dep.name);
   if (dependencyOf?.length) {
     uninstallConfirmationBody = `This plugin is a dependency of ${dependencyOf.join(', ')}. Are you sure you want to uninstall this plugin?`;
   }
