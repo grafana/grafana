@@ -77,8 +77,8 @@ func TestChanges(t *testing.T) {
 		}
 		require.Equal(t, []string{
 			"zzz/longest/path/here.json", // not sorted yet
-			"short/file.yml",
 			"x/y/file.json",
+			"short/file.yml",
 			"a.json",
 		}, order)
 	})
