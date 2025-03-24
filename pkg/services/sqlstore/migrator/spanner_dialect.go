@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"xorm.io/core"
 
-	spannerext "github.com/grafana/grafana/pkg/extensions/spanner"
 	"xorm.io/xorm"
 
 	_ "embed"
@@ -291,7 +290,7 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 		return err
 	}
 
-	opts := spannerext.SpannerConnectorConfigToClientOptions(cfg)
+	opts := xorm.SpannerConnectorConfigToClientOptions(cfg)
 
 	databaseAdminClient, err := database.NewDatabaseAdminClient(ctx, opts...)
 	if err != nil {
