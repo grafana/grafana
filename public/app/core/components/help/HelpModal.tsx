@@ -130,7 +130,7 @@ const getShortcuts = (modKey: string) => {
         },
         {
           keys: ['p', 's'],
-          description: t('help-modal.shortcuts-description.open-shared-modal', 'Open Panel Share Modal'),
+          description: t('help-modal.shortcuts-description.open-shared-modal', 'Share panel snapshot'),
         },
         { keys: ['p', 'd'], description: t('help-modal.shortcuts-description.duplicate-panel', 'Duplicate Panel') },
         { keys: ['p', 'r'], description: t('help-modal.shortcuts-description.remove-panel', 'Remove Panel') },
