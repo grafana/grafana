@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 
+import { PrometheusRuleGroupResponse } from '@grafana/alerting/src/types/prometheus/rules/api';
 import { setBackendSrv } from '@grafana/runtime';
 import { AlertGroupUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
@@ -10,12 +11,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { DashboardDTO, FolderDTO, OrgUser } from 'app/types';
-import {
-  PromRulesResponse,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
-} from 'app/types/unified-alerting-dto';
+import { RulerGrafanaRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../core/services/backend_srv';
 import {
@@ -165,9 +161,11 @@ export const getMockConfig = (configure: (builder: AlertmanagerConfigBuilder) =>
 
 export function mockAlertRuleApi(server: SetupServer) {
   return {
-    prometheusRuleNamespaces: (dsName: string, response: PromRulesResponse) => {
+    prometheusRuleNamespaces: (dsName: string, response: PrometheusRuleGroupResponse) => {
       server.use(
-        http.get(`api/prometheus/${dsName}/api/v1/rules`, () => HttpResponse.json<PromRulesResponse>(response))
+        http.get(`api/prometheus/${dsName}/api/v1/rules`, () =>
+          HttpResponse.json<PrometheusRuleGroupResponse>(response)
+        )
       );
     },
     rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {

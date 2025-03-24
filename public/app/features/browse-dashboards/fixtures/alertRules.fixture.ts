@@ -1,9 +1,9 @@
 import { Chance } from 'chance';
 
+import { PrometheusRuleGroupResponse } from '@grafana/alerting/src/types/prometheus/rules/api';
 import {
   GrafanaAlertStateDecision,
   PromAlertingRuleState,
-  PromRulesResponse,
   PromRuleType,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -57,7 +57,7 @@ export function getRulerRulesResponse(folderName: string, folderUid: string, see
   };
 }
 
-export function getPrometheusRulesResponse(folderName: string, seed = 1): PromRulesResponse {
+export function getPrometheusRulesResponse(folderName: string, seed = 1): PrometheusRuleGroupResponse {
   const random = Chance(seed);
   return {
     status: 'success',
@@ -86,9 +86,6 @@ export function getPrometheusRulesResponse(folderName: string, seed = 1): PromRu
           evaluationTime: 0,
         },
       ],
-      totals: {
-        inactive: 1,
-      },
     },
   };
 }

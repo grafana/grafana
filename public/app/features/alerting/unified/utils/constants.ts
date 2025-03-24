@@ -1,3 +1,5 @@
+import { ReservedAnnotation } from '@grafana/alerting/src/types/common';
+
 export const RULER_NOT_SUPPORTED_MSG = 'ruler not supported';
 
 export const RULE_LIST_POLL_INTERVAL_MS = 30000;
@@ -12,37 +14,30 @@ export const TIMESERIES = 'timeseries';
 export const TABLE = 'table';
 export const STAT = 'stat';
 
-export enum Annotation {
-  description = 'description',
-  summary = 'summary',
-  runbookURL = 'runbook_url',
-  alertId = '__alertId__',
-  dashboardUID = '__dashboardUid__',
-  panelID = '__panelId__',
-}
+export { ReservedAnnotation as Annotation } from '@grafana/alerting/src/types/common';
 
-export const annotationLabels: Record<Annotation, string> = {
-  [Annotation.description]: 'Description',
-  [Annotation.summary]: 'Summary',
-  [Annotation.runbookURL]: 'Runbook URL',
-  [Annotation.dashboardUID]: 'Dashboard UID',
-  [Annotation.panelID]: 'Panel ID',
-  [Annotation.alertId]: 'Alert ID',
+export const annotationLabels: Record<ReservedAnnotation, string> = {
+  [ReservedAnnotation.description]: 'Description',
+  [ReservedAnnotation.summary]: 'Summary',
+  [ReservedAnnotation.runbookURL]: 'Runbook URL',
+  [ReservedAnnotation.dashboardUID]: 'Dashboard UID',
+  [ReservedAnnotation.panelID]: 'Panel ID',
+  [ReservedAnnotation.alertId]: 'Alert ID',
 };
 
-export const annotationDescriptions: Record<Annotation, string> = {
-  [Annotation.description]: 'Description of what the alert rule does.',
-  [Annotation.summary]: 'Short summary of what happened and why.',
-  [Annotation.runbookURL]: 'Webpage where you keep your runbook for the alert.',
-  [Annotation.dashboardUID]: '',
-  [Annotation.panelID]: '',
-  [Annotation.alertId]: '',
+export const annotationDescriptions: Record<ReservedAnnotation, string> = {
+  [ReservedAnnotation.description]: 'Description of what the alert rule does.',
+  [ReservedAnnotation.summary]: 'Short summary of what happened and why.',
+  [ReservedAnnotation.runbookURL]: 'Webpage where you keep your runbook for the alert.',
+  [ReservedAnnotation.dashboardUID]: '',
+  [ReservedAnnotation.panelID]: '',
+  [ReservedAnnotation.alertId]: '',
 };
 
 export const defaultAnnotations = [
-  { key: Annotation.summary, value: '' },
-  { key: Annotation.description, value: '' },
-  { key: Annotation.runbookURL, value: '' },
+  { key: ReservedAnnotation.summary, value: '' },
+  { key: ReservedAnnotation.description, value: '' },
+  { key: ReservedAnnotation.runbookURL, value: '' },
 ];
 
 /** Special matcher name used to identify alert rules by UID */

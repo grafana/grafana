@@ -1,12 +1,16 @@
-import { PrometheusApiResponse } from '../prometheus/api';
+/* Success response */
+export interface PrometheusSuccessResponse<Data = unknown> {
+  status: 'success';
+  data: Data;
+}
 
-import { GrafanaPrometheusRuleGroup } from './rules';
+/* Error response */
+export interface PrometheusErrorResponse {
+  status: 'error';
+  errorType: string;
+  error: string;
+  data?: never;
+}
 
-/**
- * Rule Group response for listing Prometheus rule groups
- * /api/v1/rules
- */
-export type PrometheusApiRuleGroupResponse = PrometheusApiResponse<{
-  groups: GrafanaPrometheusRuleGroup[];
-  groupNextToken?: string; // for paginated API responses
-}>;
+/* API response (Success or Error) */
+export type PrometheusApiResponse<Data = unknown> = PrometheusSuccessResponse<Data> | PrometheusErrorResponse;

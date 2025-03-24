@@ -1,2 +1,1 @@
-export * from './types/prometheus';
-export * from './types/alertmanager';
+export type * from './types/index';

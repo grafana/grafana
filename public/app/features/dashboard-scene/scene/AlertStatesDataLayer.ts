@@ -1,5 +1,7 @@
 import { from, map, Observable, Unsubscribable } from 'rxjs';
 
+import { PrometheusRuleGroup, RuleState } from '@grafana/alerting/src/types/prometheus/rules/api';
+import { prometheusRuleType } from '@grafana/alerting/src/types/prometheus/rules/guards';
 import { AlertState, AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
@@ -17,11 +19,9 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { ungroupRulesByFileName } from 'app/features/alerting/unified/api/prometheus';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { prometheusRuleType } from 'app/features/alerting/unified/utils/rules';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 import { RuleNamespace } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -86,12 +86,12 @@ export class AlertStatesDataLayer
       }
       return promRules.data;
     };
-    const res: Observable<PromRuleGroupDTO[]> = from(fetchData()).pipe(
+    const res: Observable<PrometheusRuleGroup[]> = from(fetchData()).pipe(
       map((namespaces: RuleNamespace[]) => ungroupRulesByFileName(namespaces))
     );
 
     const alerStatesExecution = res.pipe(
-      map((groups: PromRuleGroupDTO[]) => {
+      map((groups: PrometheusRuleGroup[]) => {
         this.hasAlertRules = false;
         const panelIdToAlertState: Record<number, AlertStateInfo> = {};
         groups.forEach((group) =>
@@ -197,10 +197,10 @@ export class AlertStatesDataLayer
   };
 }
 
-export function promAlertStateToAlertState(state: PromAlertingRuleState): AlertState {
-  if (state === PromAlertingRuleState.Firing) {
+export function promAlertStateToAlertState(state: RuleState): AlertState {
+  if (state === 'firing') {
     return AlertState.Alerting;
-  } else if (state === PromAlertingRuleState.Pending) {
+  } else if (state === 'pending') {
     return AlertState.Pending;
   }
   return AlertState.OK;

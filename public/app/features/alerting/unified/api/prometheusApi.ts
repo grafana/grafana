@@ -1,9 +1,5 @@
-import {
-  PrometheusApiResponse,
-  PrometheusApiRuleGroupResponse,
-  PrometheusSuccessResponse,
-} from '@grafana/alerting/src/types/prometheus/api';
-import { GrafanaPromRuleGroupDTO, PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import type * as GrafanaFlavor from '@grafana/alerting/src/types/grafana/rules/api';
+import type * as VanillaFlavor from '@grafana/alerting/src/types/prometheus/rules/api';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -27,7 +23,7 @@ type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource'> & {
 
 export const prometheusApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    getGroups: build.query<PrometheusApiRuleGroupResponse, PromRulesOptions>({
+    getGroups: build.query<VanillaFlavor.PrometheusRuleGroupResponse, PromRulesOptions>({
       query: ({ ruleSource, namespace, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => {
         if (ruleSource.uid === GRAFANA_RULES_SOURCE_NAME) {
           throw new Error('Please use getGrafanaGroups endpoint for grafana rules');
@@ -44,11 +40,11 @@ export const prometheusApi = alertingApi.injectEndpoints({
           },
         };
       },
-      transformResponse: (response: PrometheusSuccessResponse<PromRuleGroupDTO<PromRuleDTO>>) => {
+      transformResponse: (response: VanillaFlavor.PrometheusRuleGroupResponse) => {
         return { ...response, data: { ...response.data, groups: response.data.groups.map(normalizeRuleGroup) } };
       },
     }),
-    getGrafanaGroups: build.query<PromRulesResponse<GrafanaPromRuleGroupDTO>, GrafanaPromRulesOptions>({
+    getGrafanaGroups: build.query<GrafanaFlavor.PrometheusRuleGroupResponse, GrafanaPromRulesOptions>({
       query: ({ namespace, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {

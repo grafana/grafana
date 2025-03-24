@@ -1,6 +1,8 @@
 import { Observable, from } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
+import { PrometheusRuleGroup } from '@grafana/alerting/src/types/prometheus/rules/api';
+import { prometheusRuleType } from '@grafana/alerting/src/types/prometheus/rules/guards';
 import { AlertState, AlertStateInfo } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -8,12 +10,10 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { ungroupRulesByFileName } from 'app/features/alerting/unified/api/prometheus';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { prometheusRuleType } from 'app/features/alerting/unified/utils/rules';
 import { promAlertStateToAlertState } from 'app/features/dashboard-scene/scene/AlertStatesDataLayer';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 import { RuleNamespace } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult, handleDashboardQueryRunnerWorkerError } from './utils';
@@ -72,12 +72,12 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
       return promRules.data;
     };
 
-    const res: Observable<PromRuleGroupDTO[]> = from(fetchData()).pipe(
+    const res: Observable<PrometheusRuleGroup[]> = from(fetchData()).pipe(
       map((namespaces: RuleNamespace[]) => ungroupRulesByFileName(namespaces))
     );
 
     return res.pipe(
-      map((groups: PromRuleGroupDTO[]) => {
+      map((groups: PrometheusRuleGroup[]) => {
         this.hasAlertRules[dashboard.uid] = false;
         const panelIdToAlertState: Record<number, AlertStateInfo> = {};
         groups.forEach((group) =>

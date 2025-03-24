@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { byRole, byText } from 'testing-library-selector';
 
+import { PrometheusRuleGroup, PrometheusRuleGroupResponse } from '@grafana/alerting/src/types/grafana/rules/api';
 import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps, PluginExtensionTypes } from '@grafana/data';
 import { TimeRangeUpdatedEvent, usePluginLinks } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -10,7 +11,7 @@ import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/gr
 import { mockRulerRulesApiResponse } from 'app/features/alerting/unified/mocks/rulerApi';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PromRuleGroupDTO, PromRulesResponse, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { contextSrv } from '../../../core/services/context_srv';
 import {
@@ -64,8 +65,8 @@ const mocks = {
   usePluginLinksMock: jest.mocked(usePluginLinks),
 };
 
-const fakeResponse: PromRulesResponse = {
-  data: { groups: grafanaRuleMock.promRules.grafana.result[0].groups as PromRuleGroupDTO[] },
+const fakeResponse: PrometheusRuleGroupResponse = {
+  data: { groups: grafanaRuleMock.promRules.grafana.result[0].groups as PrometheusRuleGroup[] },
   status: 'success',
 };
 
