@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data/';
 import { Badge, ClipboardButton, ConfirmModal, InlineField, InlineFieldRow, Button, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
+import { AllowedDecrypter, DECRYPT_ALLOW_LIST_LABEL_MAP } from '../constants';
 import { deleteSecret } from '../state/actions';
 import { Secret } from '../types';
 
@@ -50,7 +51,7 @@ export function SecretItem({ secret, onEditSecret }: SecretItemProps) {
             <Button fill="outline" icon="edit" size="sm" onClick={handleEdit} variant="secondary">
               Edit
             </Button>
-            <Button fill="outline" icon="trash-alt" size="sm" variant="secondary" onClick={handleShowDeleteModal} />
+            <Button icon="trash-alt" size="sm" variant="secondary" onClick={handleShowDeleteModal} />
           </div>
         </div>
         <InlineFieldRow className={styles.inlineField}>
@@ -94,7 +95,12 @@ export function SecretItem({ secret, onEditSecret }: SecretItemProps) {
           <InlineField label="Decrypters:">
             <div className={styles.row}>
               {secret.audiences?.map((item) => (
-                <Badge className={styles.audienceBadge} color="blue" key={item} text={item} />
+                <Badge
+                  className={styles.audienceBadge}
+                  color="blue"
+                  key={item}
+                  text={DECRYPT_ALLOW_LIST_LABEL_MAP[item as AllowedDecrypter] ?? item}
+                />
               ))}
             </div>
           </InlineField>

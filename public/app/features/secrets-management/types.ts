@@ -78,3 +78,10 @@ export interface InputProps extends Omit<HTMLProps<HTMLInputElement>, 'prefix' |
   /** Add a component as an addon after the input */
   addonAfter?: ReactNode;
 }
+
+// Helper types
+export type Entries<T> = Array<
+  {
+    [K in keyof T]-?: [K, T[K]];
+  }[keyof T]
+>;

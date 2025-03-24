@@ -2,7 +2,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { Button, Field, Input, MultiSelect, RadioButtonGroup, Stack } from '@grafana/ui';
 
-import { ALLOWED_SECRET_DECRYPTERS } from '../constants';
+import { DECRYPT_ALLOW_LIST_OPTIONS } from '../constants';
 
 import { SecretInput } from './SecretInput';
 
@@ -31,10 +31,8 @@ export function SecretForm({
   submitText = 'Save',
   disableNameField = false,
 }: BaseSecretFormProps) {
-  const audiences = [
-    ...Object.entries(ALLOWED_SECRET_DECRYPTERS).map(([label, value]) => ({ label, value })),
-    ...(initialValues?.audiences ?? []),
-  ];
+  // Duplicates are not shown.
+  const audiences = [...DECRYPT_ALLOW_LIST_OPTIONS, ...(initialValues?.audiences ?? [])];
 
   const {
     register,

@@ -1,5 +1,5 @@
 import { SecretFormValues } from './components/SecretForm';
-import { MOCKED_SECRET_KEEPER } from './constants';
+import { AllowedDecrypter, DECRYPT_ALLOW_LIST_LABEL_MAP, MOCKED_SECRET_KEEPER } from './constants';
 import { CreateSecretPayload, NewSecret, Secret, SecretsListResponse, SecretsListResponseItem } from './types';
 
 export function transformListResponse(response: SecretsListResponse): Secret[] {
@@ -43,7 +43,14 @@ export function secretToSecretFormValues(secret: Secret): SecretFormValues {
     name: secret.name,
     description: secret.description,
     enabled: true,
-    audiences: secret.audiences?.map((audience) => ({ label: audience, value: audience })) ?? [],
+    audiences:
+      secret.audiences?.map((audience) => {
+        if (audience in DECRYPT_ALLOW_LIST_LABEL_MAP) {
+          return { label: DECRYPT_ALLOW_LIST_LABEL_MAP[audience as AllowedDecrypter], value: audience };
+        }
+
+        return { label: `Unsupported (${audience})`, value: audience };
+      }) ?? [],
     keeper: secret.keeper,
   };
 }

@@ -27,6 +27,7 @@ export const SecretInput = forwardRef<HTMLInputElement, SecretInputProps>((props
           ref={ref}
           disabled={!canEdit}
           placeholder={!canEdit ? 'Secret is configured' : 'Enter secret value'}
+          autoComplete="off"
           suffix={
             canEdit && (
               <IconButton
