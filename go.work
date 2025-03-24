@@ -8,7 +8,6 @@ use (
 	./.citools/bra
 	./.citools/cog
 	./.citools/cue
-	./.citools/drone
 	./.citools/golangci-lint
 	./.citools/jb
 	./.citools/lefthook
