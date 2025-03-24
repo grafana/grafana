@@ -143,7 +143,7 @@ export const LdapSettingsPage = () => {
    */
   if (!config.featureToggles.ssoSettingsLDAP) {
     return (
-      <Alert title="invalid configuration">
+      <Alert title={t('admin.ldap-settings-page.title-invalid-configuration', 'Invalid configuration')}>
         <Trans i18nKey="ldap-settings-page.alert.feature-flag-disabled">
           This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.
         </Trans>
@@ -421,14 +421,21 @@ export const LdapSettingsPage = () => {
                     <Dropdown
                       overlay={
                         <Menu>
-                          <Menu.Item label="Reset to default values" icon="history-alt" onClick={deleteLDAPConfig} />
+                          <Menu.Item
+                            label={t(
+                              'admin.ldap-settings-page.label-reset-to-default-values',
+                              'Reset to default values'
+                            )}
+                            icon="history-alt"
+                            onClick={deleteLDAPConfig}
+                          />
                         </Menu>
                       }
                       placement="bottom-start"
                     >
                       <IconButton
-                        tooltip="More actions"
-                        title="More actions"
+                        tooltip={t('admin.ldap-settings-page.tooltip-more-actions', 'More actions')}
+                        title={t('admin.ldap-settings-page.title-more-actions', 'More actions')}
                         size="md"
                         variant="secondary"
                         name="ellipsis-v"

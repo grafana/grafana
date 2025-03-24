@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 import { GrafanaTheme2, SelectableValue, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
-import { comparisonOperationOptions } from '@grafana/ui/src/components/MatchersUI/FieldValueMatcher';
+import { comparisonOperationOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';

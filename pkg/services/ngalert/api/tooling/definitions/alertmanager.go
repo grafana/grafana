@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/mohae/deepcopy"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
@@ -369,6 +368,10 @@ type TestTemplatesResult struct {
 
 	// Interpolated value of the template.
 	Text string `json:"text"`
+
+	// Scope that was successfully used to interpolate the template. If the root scope "." fails, more specific
+	// scopes will be tried, such as ".Alerts', or ".Alert".
+	Scope TemplateScope `json:"scope"`
 }
 
 type TestTemplatesErrorResult struct {
@@ -388,6 +391,15 @@ type TemplateErrorKind string
 const (
 	InvalidTemplate TemplateErrorKind = "invalid_template"
 	ExecutionError  TemplateErrorKind = "execution_error"
+)
+
+// swagger:enum TemplateScope
+type TemplateScope string
+
+const (
+	RootScope   TemplateScope = "."
+	AlertsScope TemplateScope = ".Alerts"
+	AlertScope  TemplateScope = ".Alert"
 )
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
@@ -683,26 +695,6 @@ func (c *PostableUserConfig) validate() error {
 	}
 
 	return nil
-}
-
-// Decrypt returns a copy of the configuration struct with decrypted secure settings in receivers.
-func (c *PostableUserConfig) Decrypt(decryptFn func(payload []byte) ([]byte, error)) (PostableUserConfig, error) {
-	newCfg, ok := deepcopy.Copy(c).(*PostableUserConfig)
-	if !ok {
-		return PostableUserConfig{}, fmt.Errorf("failed to copy config")
-	}
-
-	// Iterate through receivers and decrypt secure settings.
-	for _, rcv := range newCfg.AlertmanagerConfig.Receivers {
-		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			decrypted, err := gmr.DecryptSecureSettings(decryptFn)
-			if err != nil {
-				return PostableUserConfig{}, err
-			}
-			gmr.SecureSettings = decrypted
-		}
-	}
-	return *newCfg, nil
 }
 
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers

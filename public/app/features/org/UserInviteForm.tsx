@@ -17,6 +17,7 @@ import {
   Stack,
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
+import { t, Trans } from 'app/core/internationalization';
 import { OrgRole, useDispatch } from 'app/types';
 
 import { Form } from '../../core/components/Form/Form';
@@ -74,19 +75,25 @@ export const UserInviteForm = () => {
               <Field
                 invalid={!!errors.loginOrEmail}
                 error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
-                label="Email or username"
+                label={t('org.user-invite-form.label-email-or-username', 'Email or username')}
               >
+                {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
                 <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
               </Field>
-              <Field invalid={!!errors.name} label="Name">
-                <Input {...register('name')} placeholder="(optional)" />
+              <Field invalid={!!errors.name} label={t('org.user-invite-form.label-name', 'Name')}>
+                <Input
+                  {...register('name')}
+                  placeholder={t('org.user-invite-form.placeholder-optional', '(optional)')}
+                />
               </Field>
               <Field
                 invalid={!!errors.role}
                 label={
                   <Label>
                     <Stack gap={0.5}>
-                      <span>Role</span>
+                      <span>
+                        <Trans i18nKey="org.user-invite-form.role">Role</Trans>
+                      </span>
                       {tooltipMessage && (
                         <Tooltip placement="right-end" interactive={true} content={tooltipMessage}>
                           <Icon name="info-circle" size="xs" />
@@ -102,14 +109,16 @@ export const UserInviteForm = () => {
                   name="role"
                 />
               </Field>
-              <Field label="Send invite email">
+              <Field label={t('org.user-invite-form.label-send-invite-email', 'Send invite email')}>
                 <Switch id="send-email-switch" {...register('sendEmail')} />
               </Field>
             </FieldSet>
             <Stack>
-              <Button type="submit">Submit</Button>
+              <Button type="submit">
+                <Trans i18nKey="org.user-invite-form.submit">Submit</Trans>
+              </Button>
               <LinkButton href={locationUtil.assureBaseUrl(getConfig().appSubUrl + '/admin/users')} variant="secondary">
-                Back
+                <Trans i18nKey="org.user-invite-form.back">Back</Trans>
               </LinkButton>
             </Stack>
           </>

@@ -194,4 +194,4 @@ To uninstall Grafana, run the following commands in a terminal window:
 
 ## Next steps
 
-Refer to [Start the Grafana server]({{< relref "../../start-restart-grafana" >}}).
+Refer to [Start the Grafana server](../../start-restart-grafana/).

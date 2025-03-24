@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	authtypes "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,6 +17,7 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -148,28 +148,39 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	legacyStore := &legacyStorage{
-		service:              b.folderSvc,
-		namespacer:           b.namespacer,
+		service:        b.folderSvc,
+		namespacer:     b.namespacer,
+		tableConverter: resourceInfo.TableConverter(),
+		features:       b.features,
+		cfg:            b.cfg,
+	}
+
+	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
+		EnableFolderSupport:         true,
+		RequireDeprecatedInternalID: true})
+
+	folderStore := &folderStorage{
 		tableConverter:       resourceInfo.TableConverter(),
 		folderPermissionsSvc: b.folderPermissionsSvc,
 		features:             b.features,
 		cfg:                  b.cfg,
 	}
 
-	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
-		RequireDeprecatedInternalID: true})
-
-	storage[resourceInfo.StoragePath()] = legacyStore
 	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 		if err != nil {
 			return err
 		}
-		storage[resourceInfo.StoragePath()], err = dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
+
+		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
 		if err != nil {
 			return err
 		}
+
+		folderStore.store = dw
 	}
+	storage[resourceInfo.StoragePath()] = folderStore
+
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
 		getter: storage[resourceInfo.StoragePath()].(rest.Getter), // Get the parents
 	}
@@ -295,6 +306,10 @@ func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj 
 	}
 	if f.Spec.Title == "" {
 		return dashboards.ErrFolderTitleEmpty
+	}
+
+	if f.Name == getParent(obj) {
+		return folder.ErrFolderCannotBeParentOfItself
 	}
 
 	_, err := b.checkFolderMaxDepth(ctx, obj)

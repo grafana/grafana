@@ -177,8 +177,6 @@ message ReadRequest {
 
   // Optionally pick an explicit resource version
   int64 resource_version = 2;
-  // Optionally decide to return the latest RV if deleted
-  bool include_deleted = 3;
 }
 
 message ReadResponse {
@@ -220,9 +218,18 @@ message ListOptions {
 }
 
 enum ResourceVersionMatch {
-  NotOlderThan = 0;
-  Exact = 1;
+  // Deprecated, use ResourceVersionMatch V2
+  DEPRECATED_NotOlderThan = 0;
+  DEPRECATED_Exact = 1;
 }
+
+enum ResourceVersionMatchV2 {
+  UNKNOWN = 0;
+  Unset = 1;
+  Exact = 2;
+  NotOlderThan = 3;
+}
+
 
 message ListRequest {
   enum Source {
@@ -238,7 +245,8 @@ message ListRequest {
   int64 resource_version = 2;
 
   // List options
-  ResourceVersionMatch version_match = 3;
+  // DEPRECATED - use version_match_v2
+  optional ResourceVersionMatch version_match = 3;
 
   // Maximum number of items to return
   // NOTE responses will also be limited by the response payload size
@@ -249,6 +257,8 @@ message ListRequest {
 
   // Select values from history or trash
   Source source = 6;
+
+  ResourceVersionMatchV2 version_match_v2 = 7;
 }
 
 message ListResponse {
@@ -503,18 +513,21 @@ message ResourceSearchResponse {
 
 // List items within a resource type & repository name
 // Access control is managed above this request
-message ListRepositoryObjectsRequest {
+message ListManagedObjectsRequest {
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
 
   // Namespace (tenant)
   string namespace = 2;
 
-  // The name of the repository
-  string name = 3;
+  // The manager type (eg, terraform vs repo)
+  string kind = 3;
+
+  // The name of the manager
+  string id = 4;
 }
 
-message ListRepositoryObjectsResponse {
+message ListManagedObjectsResponse {
   message Item {
     // The resource object key
     ResourceKey object = 1;
@@ -546,22 +559,25 @@ message ListRepositoryObjectsResponse {
 }
 
 // Count the items that exist with
-message CountRepositoryObjectsRequest {
+message CountManagedObjectsRequest {
   // Namespace (tenant)
   string namespace = 1;
 
-  // The name of the repository
-  // empty to count across all repositories
-  string name = 2;
+  // Manager kind: terraform, plugin, kubectl, repo
+  string kind = 2;
+
+  // Name of the manager (meaningful inside kind)
+  string id = 3;
 }
 
 // Count the items that exist with
-message CountRepositoryObjectsResponse {
+message CountManagedObjectsResponse {
   message ResourceCount {
-    string repository = 1;
-    string group = 2;
-    string resource = 3;
-    int64 count = 4;
+    string kind = 1;
+    string id = 2;
+    string group = 3;
+    string resource = 4;
+    int64 count = 5;
   }
 
   // Resource counts
@@ -697,26 +713,6 @@ message ResourceTableRow {
 }
 
 //----------------------------
-// Restore Support
-//----------------------------
-
-message RestoreRequest {
-  // Full key must be set
-  ResourceKey key = 1;
-
-  // The resource version to restore
-  int64 resource_version = 2;
-}
-
-message RestoreResponse {
-  // Error details
-  ErrorResult error = 1;
-
-  // The updated resource version
-  int64 resource_version = 2;
-}
-
-//----------------------------
 // Blob Support
 //----------------------------
 
@@ -805,7 +801,6 @@ service ResourceStore {
   rpc Create(CreateRequest) returns (CreateResponse);
   rpc Update(UpdateRequest) returns (UpdateResponse);
   rpc Delete(DeleteRequest) returns (DeleteResponse);
-  rpc Restore(RestoreRequest) returns (RestoreResponse);
 
   // The results *may* include values that should not be returned to the user
   // This will perform best-effort filtering to increase performace.
@@ -834,14 +829,14 @@ service ResourceIndex {
   rpc GetStats(ResourceStatsRequest) returns (ResourceStatsResponse);
 }
 
-// Query repository info from the search index.
+// Query managed objects
 // Results access control is based on access to the repository *not* the items
-service RepositoryIndex {
+service ManagedObjectIndex {
   // Describe how many resources of each type exist within a repository
-  rpc CountRepositoryObjects(CountRepositoryObjectsRequest) returns (CountRepositoryObjectsResponse);
+  rpc CountManagedObjects(CountManagedObjectsRequest) returns (CountManagedObjectsResponse);
 
   // List the resources of a specific kind within a repository
-  rpc ListRepositoryObjects(ListRepositoryObjectsRequest) returns (ListRepositoryObjectsResponse);
+  rpc ListManagedObjects(ListManagedObjectsRequest) returns (ListManagedObjectsResponse);
 }
 
 service BlobStore {

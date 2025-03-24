@@ -7,7 +7,7 @@ import { CombinedRule } from 'app/types/unified-alerting';
 
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
 import { useCleanAnnotations } from '../../utils/annotations';
-import { isGrafanaRecordingRule, isRecordingRule, isRecordingRulerRule } from '../../utils/rules';
+import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { isNullDate } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
@@ -34,6 +34,8 @@ export const RuleDetails = ({ rule }: Props) => {
   } = rule;
 
   const annotations = useCleanAnnotations(rule.annotations);
+  const isAlertingRule =
+    rulerRuleType.any.alertingRule(rule.rulerRule) || prometheusRuleType.alertingRule(rule.promRule);
 
   return (
     <div>
@@ -53,11 +55,7 @@ export const RuleDetails = ({ rule }: Props) => {
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      {!(
-        isRecordingRulerRule(rule.rulerRule) ||
-        isRecordingRule(rule.promRule) ||
-        isGrafanaRecordingRule(rule.rulerRule)
-      ) && (
+      {isAlertingRule && (
         <DetailsField label="Instances" horizontal={true}>
           <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
         </DetailsField>
@@ -74,7 +72,9 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
   const every = rule.group.interval;
   const lastEvaluation = rule.promRule?.lastEvaluation;
   const lastEvaluationDuration = rule.promRule?.evaluationTime;
-  const metric = isGrafanaRecordingRule(rule.rulerRule) ? rule.rulerRule?.grafana_alert.record?.metric : undefined;
+  const metric = rulerRuleType.grafana.recordingRule(rule.rulerRule)
+    ? rule.rulerRule?.grafana_alert.record?.metric
+    : undefined;
 
   const pendingPeriod = usePendingPeriod(rule);
 

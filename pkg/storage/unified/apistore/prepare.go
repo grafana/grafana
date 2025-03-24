@@ -9,12 +9,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	authtypes "github.com/grafana/authlib/types"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -56,6 +58,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if obj.GetUID() == "" {
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
+	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+	}
 
 	if s.opts.RequireDeprecatedInternalID {
 		// nolint:staticcheck
@@ -73,15 +78,10 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
 
-	// Read+write will verify that repository format is accurate
-	repo, err := obj.GetRepositoryInfo()
-	if err != nil {
-		return nil, err
-	}
-	obj.SetRepositoryInfo(repo)
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	obj.SetCreatedBy(info.GetUID())
+	obj.SetGeneration(1) // the first time we write
 
 	var buf bytes.Buffer
 	if err = s.codec.Encode(newObject, &buf); err != nil {
@@ -136,14 +136,35 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
 	}
 
-	// Read+write will verify that origin format is accurate
-	repo, err := obj.GetRepositoryInfo()
-	if err != nil {
-		return nil, err
+	// Check if we should bump the generation
+	changed := obj.GetFolder() != previous.GetFolder()
+	if changed {
+		if !s.opts.EnableFolderSupport {
+			return nil, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+		}
+		// TODO: check that we can move the folder?
+	} else if obj.GetDeletionTimestamp() != nil && previous.GetDeletionTimestamp() == nil {
+		changed = true // bump generation when deleted
+	} else {
+		spec, e1 := obj.GetSpec()
+		oldSpec, e2 := previous.GetSpec()
+		if e1 == nil && e2 == nil {
+			if !apiequality.Semantic.DeepEqual(spec, oldSpec) {
+				changed = true
+			}
+		}
 	}
-	obj.SetRepositoryInfo(repo)
-	obj.SetUpdatedBy(info.GetUID())
-	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
+
+	// Mark the resource as changed
+	if changed {
+		obj.SetGeneration(previous.GetGeneration() + 1)
+		obj.SetUpdatedBy(info.GetUID())
+		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
+	} else {
+		obj.SetGeneration(previous.GetGeneration())
+		obj.SetAnnotation(utils.AnnoKeyUpdatedBy, previous.GetAnnotation(utils.AnnoKeyUpdatedBy))
+		obj.SetAnnotation(utils.AnnoKeyUpdatedTimestamp, previous.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
+	}
 
 	var buf bytes.Buffer
 	if err = s.codec.Encode(updateObject, &buf); err != nil {

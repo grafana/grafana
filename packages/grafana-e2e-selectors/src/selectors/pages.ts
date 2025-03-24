@@ -206,9 +206,6 @@ export const versionedPages = {
           shareSnapshot: {
             '11.2.0': 'data-testid new share button share snapshot',
           },
-          inviteUser: {
-            '11.5.0': 'data-testid new share button invite user',
-          },
         },
       },
       NewExportButton: {
@@ -869,6 +866,9 @@ export const versionedPages = {
       },
       scrollView: {
         '9.0.0': 'data-testid explorer scroll view',
+      },
+      addFromQueryLibrary: {
+        '11.5.0': 'data-testid explore add from query library button',
       },
     },
     QueryHistory: {

@@ -169,6 +169,12 @@ func TestCalculateChanges(t *testing.T) {
 					r.For = 0
 				},
 			},
+			{
+				name: "GUID is empty",
+				mutator: func(r *models.AlertRule) {
+					r.GUID = ""
+				},
+			},
 		}
 
 		dbRule := gen.With(gen.WithOrgID(orgId)).GenerateRef()
