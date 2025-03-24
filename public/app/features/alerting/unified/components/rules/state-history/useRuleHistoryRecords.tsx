@@ -123,7 +123,7 @@ export function logRecordsToDataFrame(
               type: MappingType.RegexToText,
               options: {
                 //  Map as a regex so we capture `Normal`, and `Normal (Updated)`
-                pattern: '/Normal/',
+                pattern: '/^normal/i',
                 result: { color: theme.colors.success.main },
               },
             },
