@@ -154,7 +154,7 @@ export type LogLineStyles = ReturnType<typeof getStyles>;
 export const getStyles = (theme: GrafanaTheme2) => {
   const colors = {
     critical: '#B877D9',
-    error: '#f22f44',
+    error: theme.colors.error.text,
     warning: '#FBAD37',
     debug: '#6CCF8E',
     trace: '#6ed0e0',
