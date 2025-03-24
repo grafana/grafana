@@ -1,9 +1,9 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
-import { ScopeNavigation } from '@grafana/data/';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { getAPINamespace } from '../../api/utils';
 
+import { ScopeNavigation } from './dashboards/types';
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './selector/types';
 import { getEmptyScopeObject } from './utils';
 
