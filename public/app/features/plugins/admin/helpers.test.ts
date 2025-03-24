@@ -349,6 +349,7 @@ describe('Plugins/Helpers', () => {
         isFullyInstalled: true,
         angularDetected: false,
         url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+        dependantPlugins: [],
       });
     });
 
