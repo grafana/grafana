@@ -27,7 +27,7 @@ const createBasicDataFrame = (): DataFrame => {
           },
         },
         // Add display function
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: 0,
           color: undefined,
@@ -52,7 +52,7 @@ const createBasicDataFrame = (): DataFrame => {
           },
         },
         // Add display function
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
           color: undefined,
@@ -179,7 +179,7 @@ const createSortingTestDataFrame = (): DataFrame => {
             },
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: 0,
           color: undefined,
@@ -202,7 +202,7 @@ const createSortingTestDataFrame = (): DataFrame => {
             },
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
           color: undefined,
@@ -225,7 +225,7 @@ const createSortingTestDataFrame = (): DataFrame => {
             },
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: 0,
           color: undefined,
@@ -1205,11 +1205,11 @@ describe('TableNG', () => {
     beforeEach(() => {
       // Mock ResizeObserver
       global.ResizeObserver = class ResizeObserver {
-        constructor(callback: any) {
+        constructor(callback: ResizeObserverCallback) {
           // Store the callback
           this.callback = callback;
         }
-        callback: any;
+        callback: ResizeObserverCallback;
         observe() {
           // Do nothing
         }
@@ -1333,7 +1333,7 @@ describe('TableNG', () => {
       // Add color to the display values
       const originalDisplay = frame.fields[0].display;
       const expectedColor = '#ff0000'; // Red color
-      frame.fields[0].display = (value: any) => {
+      frame.fields[0].display = (value: unknown) => {
         const displayValue = originalDisplay ? originalDisplay(value) : { text: String(value), numeric: 0 };
         return {
           ...displayValue,
@@ -1370,7 +1370,7 @@ describe('TableNG', () => {
 
       // Add color to the display values
       const originalDisplay = frame.fields[0].display;
-      frame.fields[0].display = (value: any) => {
+      frame.fields[0].display = (value: unknown) => {
         const displayValue = originalDisplay ? originalDisplay(value) : { text: String(value), numeric: 0 };
         return {
           ...displayValue,
