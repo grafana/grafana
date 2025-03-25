@@ -4,11 +4,8 @@ package apistore
 
 import (
 	"context"
-	"os"
-	"path/filepath"
 	"time"
 
-	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -45,41 +42,6 @@ func NewRESTOptionsGetterForClient(client resource.ResourceClient, original stor
 func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
 	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 		Bucket: memblob.OpenBucket(&memblob.Options{}),
-	})
-	if err != nil {
-		return nil, err
-	}
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: backend,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceClient(server),
-		originalStorageConfig,
-	), nil
-}
-
-// Optionally, this constructor allows specifying directories
-// for resources that are required to be read/watched on startup and there
-// won't be any write operations that initially bootstrap their directories
-func NewRESTOptionsGetterForFile(path string,
-	originalStorageConfig storagebackend.Config,
-	features map[string]any) (*RESTOptionsGetter, error) {
-	if path == "" {
-		path = filepath.Join(os.TempDir(), "grafana-apiserver")
-	}
-
-	bucket, err := fileblob.OpenBucket(filepath.Join(path, "resource"), &fileblob.Options{
-		CreateDir: true,
-		Metadata:  fileblob.MetadataDontWrite, // skip
-	})
-	if err != nil {
-		return nil, err
-	}
-	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
-		Bucket: bucket,
 	})
 	if err != nil {
 		return nil, err
