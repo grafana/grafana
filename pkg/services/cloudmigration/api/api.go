@@ -364,19 +364,28 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
 
+	// parse and validate query params
+	page, lim, col, dir := c.QueryInt("resultPage"), c.QueryInt("resultLimit"), c.Query("sortColumn"), c.Query("sortOrder")
+	if lim == 0 {
+		lim = 100
+	}
+	if page < 1 {
+		page = 1
+	}
+
 	q := cloudmigration.GetSnapshotsQuery{
 		SnapshotUID: snapshotUid,
 		SessionUID:  sessUid,
-		ResultPage:  c.QueryInt("resultPage"),
-		ResultLimit: c.QueryInt("resultLimit"),
 		OrgID:       c.SignedInUser.OrgID,
+		SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  page,
+			ResultLimit: lim,
+			// These wrapper types sanitize the user input and handles defaults
+			SortColumn: cloudmigration.ResultSortColumn(col),
+			SortOrder:  cloudmigration.SortOrder(dir),
+		},
 	}
-	if q.ResultLimit == 0 {
-		q.ResultLimit = 100
-	}
-	if q.ResultPage < 1 {
-		q.ResultPage = 1
-	}
+
 	snapshot, err := cma.cloudMigrationService.GetSnapshot(ctx, q)
 	if err != nil {
 		span.SetStatus(codes.Error, "error retrieving snapshot")
@@ -387,6 +396,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 
 	results := snapshot.Resources
 
+	// convert the results to DTOs
 	dtoResults := make([]MigrateDataResponseItemDTO, len(results))
 	for i := 0; i < len(results); i++ {
 		dtoResults[i] = MigrateDataResponseItemDTO{

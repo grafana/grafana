@@ -162,12 +162,60 @@ type CloudMigrationSessionListResponse struct {
 	Sessions []CloudMigrationSessionResponse
 }
 
+type ResultSortColumn string
+
+const (
+	SortColumnID     ResultSortColumn = "id"
+	SortColumnName   ResultSortColumn = "name"
+	SortColumnType   ResultSortColumn = "resource_type"
+	SortColumnStatus ResultSortColumn = "status"
+)
+
+func (s ResultSortColumn) String() string {
+	switch s {
+	case SortColumnID:
+		return string(SortColumnID)
+	case SortColumnName:
+		return string(SortColumnName)
+	case SortColumnType:
+		return string(SortColumnType)
+	case SortColumnStatus:
+		return string(SortColumnStatus)
+	default:
+		return string(SortColumnID)
+	}
+}
+
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "ASC"
+	SortOrderDesc SortOrder = "DESC"
+)
+
+func (s SortOrder) String() string {
+	switch s {
+	case SortOrderAsc:
+		return string(SortOrderAsc)
+	case SortOrderDesc:
+		return string(SortOrderDesc)
+	default:
+		return string(SortOrderAsc)
+	}
+}
+
+type SnapshotResultQueryParams struct {
+	ResultPage  int
+	ResultLimit int
+	SortColumn  ResultSortColumn
+	SortOrder   SortOrder
+}
+
 type GetSnapshotsQuery struct {
 	SnapshotUID string
 	OrgID       int64
 	SessionUID  string
-	ResultPage  int
-	ResultLimit int
+	SnapshotResultQueryParams
 }
 
 type ListSnapshotsQuery struct {

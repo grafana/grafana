@@ -281,6 +281,24 @@ type CreateSnapshotResponseDTO struct {
 	SnapshotUID string `json:"uid"`
 }
 
+// swagger:enum ResultSortColumn
+type ResultSortColumn string
+
+const (
+	ResultSortColumnDefault ResultSortColumn = "default"
+	ResultSortColumnName    ResultSortColumn = "name"
+	ResultSortColumnType    ResultSortColumn = "type"
+	ResultSortColumnStatus  ResultSortColumn = "status"
+)
+
+// swagger:enum ResultSortDirection
+type ResultSortDirection string
+
+const (
+	ResultSortDirectionAsc  ResultSortColumn = "ASC"
+	ResultSortDirectionDesc ResultSortColumn = "DESC"
+)
+
 // swagger:parameters getSnapshot
 type GetSnapshotParams struct {
 	// ResultPage is used for pagination with ResultLimit
@@ -294,6 +312,18 @@ type GetSnapshotParams struct {
 	// required:false
 	// default: 100
 	ResultLimit int `json:"resultLimit"`
+
+	// ResultSortColumn can be used to override the default system sort. It should be one of the values in the ResultSortColumn enum.
+	// in:query
+	// required:false
+	// default: default
+	ResultSortColumn ResultSortColumn `json:"resultSortColumn"`
+
+	// ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC.
+	// in:query
+	// required:false
+	// default: ASC
+	ResultSortOrder ResultSortDirection `json:"resultSortOrder"`
 
 	// Session UID of a session
 	// in: path
