@@ -1,10 +1,11 @@
 package common
 
 import (
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	iamalpha1 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
@@ -19,6 +20,11 @@ var typedResources = map[string]typeInfo{
 		folderalpha1.FolderResourceInfo.GroupResource().Resource,
 		"",
 	): {Type: "folder", Relations: RelationsFolder},
+	FormatGroupResource(
+		iamalpha1.TeamResourceInfo.GroupResource().Group,
+		iamalpha1.TeamResourceInfo.GroupResource().Resource,
+		"",
+	): {Type: "team", Relations: RelationsFolder},
 }
 
 func getTypeInfo(group, resource string) (typeInfo, bool) {
@@ -133,17 +139,18 @@ func (r ResourceInfo) Type() string {
 }
 
 func (r ResourceInfo) Context() *structpb.Struct {
-	if !r.IsGeneric() {
-		return nil
-	}
-
 	return &structpb.Struct{
 		Fields: map[string]*structpb.Value{
 			"requested_group": structpb.NewStringValue(r.GroupResource()),
+			"subresource":     structpb.NewStringValue(r.GroupResource()),
 		},
 	}
 }
 
 func (r ResourceInfo) IsValidRelation(relation string) bool {
 	return isValidRelation(relation, r.relations)
+}
+
+func (r ResourceInfo) HasSubresource() bool {
+	return r.subresource != ""
 }

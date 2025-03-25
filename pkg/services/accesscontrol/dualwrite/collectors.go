@@ -167,8 +167,7 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
 			}
 
-			// For resource actions on folders we need to merge the tuples into one with combined
-			// group_resources.
+			// For resource actions on folders we need to merge the tuples into one with combined subresources.
 			if zanzana.IsFolderResourceTuple(tuple) {
 				key := tupleStringWithoutCondition(tuple)
 				if t, ok := tuples[tuple.Object][key]; ok {
@@ -386,8 +385,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
 			}
 
-			// For resource actions on folders we need to merge the tuples into one with combined
-			// group_resources.
+			// For resource actions on folders we need to merge the tuples into one with combined subresources.
 			if zanzana.IsFolderResourceTuple(tuple) {
 				key := tupleStringWithoutCondition(tuple)
 				if t, ok := tuples[tuple.Object][key]; ok {
@@ -449,8 +447,7 @@ func fixedRolePermissionsCollector(store db.DB) legacyTupleCollector {
 				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
 			}
 
-			// For resource actions on folders we need to merge the tuples into one with combined
-			// group_resources.
+			// For resource actions on folders we need to merge the tuples into one with combined subresources.
 			if zanzana.IsFolderResourceTuple(tuple) {
 				key := tupleStringWithoutCondition(tuple)
 				if t, ok := tuples[tuple.Object][key]; ok {
