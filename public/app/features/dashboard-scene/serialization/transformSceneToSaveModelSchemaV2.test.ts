@@ -50,7 +50,7 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
-import { getPersistedDSForQuery, transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import { getPersistedDSFor, transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
 jest.mock('../utils/dashboardSceneGraph', () => {
@@ -411,7 +411,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
   });
 
-  describe('getPersistedDSForQuery', () => {
+  describe('getPersistedDSFor query', () => {
     it('should respect datasource reference mapping when determining query datasource', () => {
       // Setup test data
       const queryWithoutDS: SceneDataQuery = {
@@ -433,11 +433,11 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       const dsReferencesMap = new Set(['A']);
 
       // Test the query without DS originally - should return undefined
-      const resultA = getPersistedDSForQuery(queryWithoutDS, queryRunner, dsReferencesMap);
+      const resultA = getPersistedDSFor(queryWithoutDS, dsReferencesMap, 'query', queryRunner);
       expect(resultA).toBeUndefined();
 
       // Test the query with DS originally - should return the original datasource
-      const resultB = getPersistedDSForQuery(queryWithDS, queryRunner, dsReferencesMap);
+      const resultB = getPersistedDSFor(queryWithDS, dsReferencesMap, 'query', queryRunner);
       expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
 
       // Test a query with no DS originally but not in the mapping - should get the runner's datasource
@@ -445,7 +445,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         refId: 'C',
         // No datasource, but not in mapping
       };
-      const resultC = getPersistedDSForQuery(queryNotInMapping, queryRunner, dsReferencesMap);
+      const resultC = getPersistedDSFor(queryNotInMapping, dsReferencesMap, 'query', queryRunner);
       expect(resultC).toEqual({ uid: 'default-ds', type: 'default' });
     });
   });
@@ -472,11 +472,11 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       const dsReferencesMap = new Set(['A']);
 
       // Test the query without DS originally - should return undefined
-      const resultA = getPersistedDSForQuery(queryWithoutDS, queryRunner, dsReferencesMap);
+      const resultA = getPersistedDSFor(queryWithoutDS, dsReferencesMap, 'query', queryRunner);
       expect(resultA).toBeUndefined();
 
       // Test the query with DS originally - should return the original datasource
-      const resultB = getPersistedDSForQuery(queryWithDS, queryRunner, dsReferencesMap);
+      const resultB = getPersistedDSFor(queryWithDS, dsReferencesMap, 'query', queryRunner);
       expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
 
       // Test a query with no DS originally but not in the mapping - should get the runner's datasource
@@ -484,7 +484,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         refId: 'C',
         // No datasource, but not in mapping
       };
-      const resultC = getPersistedDSForQuery(queryNotInMapping, queryRunner, dsReferencesMap);
+      const resultC = getPersistedDSFor(queryNotInMapping, dsReferencesMap, 'query', queryRunner);
       expect(resultC).toEqual({ uid: 'default-ds', type: 'default' });
     });
   });
