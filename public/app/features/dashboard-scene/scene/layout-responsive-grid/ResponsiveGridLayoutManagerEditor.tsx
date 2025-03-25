@@ -137,7 +137,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
 }
 
 function GridLayoutRows({ layoutManager }: { layoutManager: ResponsiveGridLayoutManager }) {
-  const { rowHeight, heightFill } = layoutManager.useState();
+  const { rowHeight, fillScreen } = layoutManager.useState();
   const [inputRef, setInputRef] = React.useState<HTMLInputElement | null>(null);
   const [focusInput, setFocusInput] = React.useState(false);
   const [customMinWidthError, setCustomMinWidthError] = React.useState(false);
@@ -232,7 +232,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: ResponsiveGridLayout
         )}
       </Field>
       <Field label={t('dashboard.responsive-layout.options.height-fill', 'Fill screen')}>
-        <InlineSwitch value={heightFill} onChange={() => layoutManager.onHeightFillChanged(!heightFill)} />
+        <InlineSwitch value={fillScreen} onChange={() => layoutManager.onFillScreenChanged(!fillScreen)} />
       </Field>
     </Stack>
   );

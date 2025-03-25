@@ -24,7 +24,7 @@ interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   maxColumnCount: number;
   rowHeight: AutoGridRowHeight;
   columnWidth: AutoGridColumnWidth;
-  heightFill: boolean;
+  fillScreen: boolean;
 }
 
 export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
@@ -61,19 +61,19 @@ export class ResponsiveGridLayoutManager
     const maxColumnCount = state.maxColumnCount ?? AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT;
     const columnWidth = state.columnWidth ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH;
     const rowHeight = state.rowHeight ?? AUTO_GRID_DEFAULT_ROW_HEIGHT;
-    const heightFill = state.heightFill ?? false;
+    const fillScreen = state.fillScreen ?? false;
 
     super({
       ...state,
       maxColumnCount,
       columnWidth,
       rowHeight,
-      heightFill,
+      fillScreen,
       layout:
         state.layout ??
         new ResponsiveGridLayout({
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
-          autoRows: getAutoRowsTemplate(rowHeight, heightFill),
+          autoRows: getAutoRowsTemplate(rowHeight, fillScreen),
         }),
     });
 
@@ -209,10 +209,10 @@ export class ResponsiveGridLayoutManager
     });
   }
 
-  public onHeightFillChanged(heightFill: boolean) {
-    this.setState({ heightFill });
+  public onFillScreenChanged(fillScreen: boolean) {
+    this.setState({ fillScreen });
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(this.state.rowHeight, heightFill),
+      autoRows: getAutoRowsTemplate(this.state.rowHeight, fillScreen),
     });
   }
 
@@ -223,7 +223,7 @@ export class ResponsiveGridLayoutManager
 
     this.setState({ rowHeight });
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(rowHeight, this.state.heightFill),
+      autoRows: getAutoRowsTemplate(rowHeight, this.state.fillScreen),
     });
   }
 
@@ -250,7 +250,7 @@ function ResponsiveGridLayoutManagerRenderer({ model }: SceneComponentProps<Resp
   return <model.state.layout.Component model={model.state.layout} />;
 }
 
-function getTemplateColumnsTemplate(maxColumnCount: number, columnWidth: AutoGridColumnWidth) {
+export function getTemplateColumnsTemplate(maxColumnCount: number, columnWidth: AutoGridColumnWidth) {
   return `repeat(auto-fit, minmax(min(max(100% / ${maxColumnCount} - ${GRID_CELL_VMARGIN}px, ${getNamedColumWidthInPixels(columnWidth)}px), 100%), 1fr))`;
 }
 
@@ -288,8 +288,8 @@ function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
   }
 }
 
-function getAutoRowsTemplate(rowHeight: AutoGridRowHeight, heightFill: boolean) {
+export function getAutoRowsTemplate(rowHeight: AutoGridRowHeight, fillScreen: boolean) {
   const rowHeightPixels = getNamedHeightInPixels(rowHeight);
-  const maxRowHeightValue = heightFill ? 'auto' : `${rowHeightPixels}px`;
+  const maxRowHeightValue = fillScreen ? 'auto' : `${rowHeightPixels}px`;
   return `minmax(${rowHeightPixels}px, ${maxRowHeightValue})`;
 }

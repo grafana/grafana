@@ -634,6 +634,7 @@ describe('dynamic layouts', () => {
           columnWidth: 100,
           rowHeight: 'standard',
           maxColumnCount: 4,
+          fillScreen: true,
           layout: new ResponsiveGridLayout({
             children: [
               new ResponsiveGridItem({
@@ -655,6 +656,7 @@ describe('dynamic layouts', () => {
     expect(respGridLayout.rowHeightMode).toBe('standard');
     expect(respGridLayout.rowHeight).toBeUndefined();
     expect(respGridLayout.maxColumnCount).toBe(4);
+    expect(respGridLayout.fillScreen).toBe(true);
     expect(respGridLayout.items.length).toBe(2);
     expect(respGridLayout.items[0].kind).toBe('ResponsiveGridLayoutItem');
   });
