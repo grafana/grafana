@@ -90,7 +90,7 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
           style={{ width: 332 }}
         />
         <IconButton
-          aria-label={t('actions.params-editor.aria-label-add', 'add')}
+          aria-label={t('actions.params-editor.aria-label-add', 'Add')}
           name="plus-circle"
           onClick={() => addParam()}
           disabled={isAddParamsDisabled}
@@ -103,7 +103,7 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
             <Input disabled value={entry[0]} />
             <Input disabled value={entry[1]} />
             <IconButton
-              aria-label={t('actions.params-editor.aria-label-delete', 'delete')}
+              aria-label={t('actions.params-editor.aria-label-delete', 'Delete')}
               onClick={removeParam(entry[0])}
               name="trash-alt"
             />

@@ -41,8 +41,8 @@
       "placeholder-url": "URL"
     },
     "params-editor": {
-      "aria-label-add": "add",
-      "aria-label-delete": "delete",
+      "aria-label-add": "Add",
+      "aria-label-delete": "Delete",
       "placeholder-key": "Key",
       "placeholder-value": "Value"
     }
