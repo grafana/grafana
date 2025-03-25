@@ -17,7 +17,6 @@ import {
 import { DashboardScene } from '../DashboardScene';
 
 import { RowItem } from './RowItem';
-import { RowItemMenu } from './RowItemMenu';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const { layout, isCollapsed, fillScreen, isHeaderHidden } = model.useState();
@@ -153,14 +152,14 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       minHeight: '100px',
       '> div:nth-child(2)': {
-        paddingLeft: theme.spacing(3),
+        marginLeft: theme.spacing(3),
         position: 'relative',
         '&:before': {
           content: '""',
           position: 'absolute',
-          top: 0,
+          top: `-8px`,
           bottom: 0,
-          left: '7px',
+          left: '-16px',
           width: '1px',
           backgroundColor: theme.colors.border.weak,
         },
