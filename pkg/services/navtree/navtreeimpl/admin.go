@@ -62,7 +62,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	}
 	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(ctx, featuremgmt.FlagProvisioning) {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
-			Text:     "Provisioning",
+			Text:     "Remote provisioning",
 			Id:       "provisioning",
 			SubTitle: "Manage resources from remote repositories",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",

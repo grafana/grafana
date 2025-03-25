@@ -12,7 +12,7 @@ import { WizardContent } from './WizardContent';
 import { WizardFormData, WizardStep } from './types';
 
 const steps: Array<Step<WizardStep>> = [
-  { id: 'connection', name: 'Connect', title: 'Connect to repository', submitOnNext: true },
+  { id: 'connection', name: 'Connect', title: 'Connect to external storage', submitOnNext: true },
   { id: 'bootstrap', name: 'Bootstrap', title: 'Bootstrap repository', submitOnNext: true },
   { id: 'migrate', name: 'Resources', title: 'Migrate resources', submitOnNext: false },
   { id: 'pull', name: 'Resources', title: 'Pull resources', submitOnNext: false },
