@@ -4887,9 +4887,6 @@
       "label-roles": "Roles",
       "used-by": "Used by"
     },
-    "service-account-profile-row": {
-      "edit": "Edit"
-    },
     "service-account-role-row": {
       "aria-label-role": "Role"
     },
