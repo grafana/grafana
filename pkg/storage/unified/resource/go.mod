@@ -133,8 +133,8 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/alerting v0.0.0-20250310104713-16b885f1c79e // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
-	github.com/grafana/grafana-app-sdk v0.35.0 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.34.0 // indirect
+	github.com/grafana/grafana-app-sdk v0.35.1-0.20250325141034-dd7d3019f4f0 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.35.0 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
