@@ -146,7 +146,7 @@ func handleSqlInput(dataFrames data.Frames) (mathexp.Results, error) {
 	}
 
 	if needsConversion {
-		convertedFrames, err := ConvertToLong(dataFrames)
+		convertedFrames, err := ConvertToFullLong(dataFrames)
 		if err != nil {
 			return result, fmt.Errorf("failed to convert data frames to long format for sql: %w", err)
 		}

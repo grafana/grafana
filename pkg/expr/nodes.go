@@ -411,6 +411,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	var result mathexp.Results
 
 	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
+
 	if err != nil {
 		err = makeConversionError(dn.refID, err)
 	}
