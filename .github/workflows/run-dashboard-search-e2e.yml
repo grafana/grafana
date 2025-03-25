@@ -1,0 +1,46 @@
+name: Run dashboard search e2e
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**' 
+
+env:
+  ARCH: linux-amd64
+
+jobs:
+  dashboard-search-e2e:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Pin Go version to mod file
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - run: go version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Build grafana
+        run: make build
+      - name: Install Cypress dependencies
+        uses: cypress-io/github-action@v6
+        with:
+          runTests: false
+      - name: Run dashboard search e2e mode0
+        run: 
+         - cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode0.ini ${{ github.workspace }}/grafana-server/custom.ini
+         - yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
+      
+      - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
+        if: failure()
+        run: exit 0
