@@ -15,7 +15,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"

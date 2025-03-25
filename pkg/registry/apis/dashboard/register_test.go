@@ -24,7 +24,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 	zeroInt64 := int64(0)
 	tests := []struct {
 		name                   string
-		inputObj               *v0alpha1.Dashboard
+		inputObj               *v1alpha1.Dashboard
 		deletionOptions        metav1.DeleteOptions
 		dashboardResponse      *dashboards.DashboardProvisioning
 		dashboardErrorResponse error
@@ -33,7 +33,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 	}{
 		{
 			name: "should return an error if data is found",
-			inputObj: &v0alpha1.Dashboard{
+			inputObj: &v1alpha1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -52,7 +52,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		},
 		{
 			name: "should return an error if unable to check",
-			inputObj: &v0alpha1.Dashboard{
+			inputObj: &v1alpha1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -71,7 +71,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		},
 		{
 			name: "should be okay if error is provisioned dashboard not found",
-			inputObj: &v0alpha1.Dashboard{
+			inputObj: &v1alpha1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -90,7 +90,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		},
 		{
 			name: "Should still run the check for delete if grace period is not 0",
-			inputObj: &v0alpha1.Dashboard{
+			inputObj: &v1alpha1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -109,7 +109,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		},
 		{
 			name: "should not run the check for delete if grace period is set to 0",
-			inputObj: &v0alpha1.Dashboard{
+			inputObj: &v1alpha1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -137,10 +137,10 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
 				tt.inputObj,
 				nil,
-				v0alpha1.DashboardResourceInfo.GroupVersionKind(),
+				v1alpha1.DashboardResourceInfo.GroupVersionKind(),
 				"stacks-123",
 				tt.inputObj.Name,
-				v0alpha1.DashboardResourceInfo.GroupVersionResource(),
+				v1alpha1.DashboardResourceInfo.GroupVersionResource(),
 				"",
 				admission.Operation("DELETE"),
 				&tt.deletionOptions,
@@ -170,22 +170,22 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 		expected        []schema.GroupVersion
 	}{
 		{
-			name:            "should return v0alpha1 by default",
+			name:            "should return v1alpha1 by default",
 			enabledFeatures: []string{},
 			expected: []schema.GroupVersion{
-				v0alpha1.DashboardResourceInfo.GroupVersion(),
 				v1alpha1.DashboardResourceInfo.GroupVersion(),
+				v0alpha1.DashboardResourceInfo.GroupVersion(),
 				v2alpha1.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 		{
-			name: "should return v0alpha1 as the default if some other feature is enabled",
+			name: "should return v1alpha1 as the default if some other feature is enabled",
 			enabledFeatures: []string{
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			expected: []schema.GroupVersion{
-				v0alpha1.DashboardResourceInfo.GroupVersion(),
 				v1alpha1.DashboardResourceInfo.GroupVersion(),
+				v0alpha1.DashboardResourceInfo.GroupVersion(),
 				v2alpha1.DashboardResourceInfo.GroupVersion(),
 			},
 		},

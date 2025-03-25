@@ -6,7 +6,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )

@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	claims "github.com/grafana/authlib/types"
-	dashboardsV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -168,7 +168,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		creator = hs.getIdentityName(ctx, dash.OrgID, dash.CreatedBy)
 	}
 
-	annotationPermissions := &dashboardsV0.AnnotationPermission{}
+	annotationPermissions := &dashboardsV1.AnnotationPermission{}
 	if hs.Features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
 		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
 	} else {
@@ -276,7 +276,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	return response.JSON(http.StatusOK, dto)
 }
 
-func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext, actions *dashboardsV0.AnnotationActions, scope string) {
+func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext, actions *dashboardsV1.AnnotationActions, scope string) {
 	ctx, span := tracer.Start(c.Req.Context(), "api.getAnnotationPermissionsByScope")
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
