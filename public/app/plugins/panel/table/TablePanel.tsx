@@ -34,7 +34,7 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
-  const useTableNg = config.featureToggles.tableNG;
+  const useTableNg = config.featureToggles.tableNextGen;
 
   let tableHeight = height;
 
