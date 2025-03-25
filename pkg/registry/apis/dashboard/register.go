@@ -118,10 +118,9 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 		}
 	}
 
-	// TODO (@radiohead): should we switch to v1alpha1 by default?
 	return []schema.GroupVersion{
-		v0alpha1.DashboardResourceInfo.GroupVersion(),
 		v1alpha1.DashboardResourceInfo.GroupVersion(),
+		v0alpha1.DashboardResourceInfo.GroupVersion(),
 		v2alpha1.DashboardResourceInfo.GroupVersion(),
 	}
 }
