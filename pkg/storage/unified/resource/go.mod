@@ -14,7 +14,6 @@ require (
 	github.com/grafana/authlib v0.0.0-20250305132846-37f49eb947fa
 	github.com/grafana/authlib/types v0.0.0-20250224151205-5ef97131cc82
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
-	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
 	github.com/grafana/grafana-plugin-sdk-go v0.272.0
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250314071911-14e2784e6979
@@ -31,6 +30,12 @@ require (
 	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.5
 	k8s.io/apimachinery v0.32.1
+)
+
+require (
+	github.com/go-jose/go-jose/v3 v3.0.4
+	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
+	github.com/spf13/pflag v1.0.6
 )
 
 require (
@@ -102,7 +107,6 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/getkin/kin-openapi v0.129.0 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
@@ -211,7 +215,6 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/spf13/cobra v1.9.1 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tjhop/slog-gokit v0.1.3 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
