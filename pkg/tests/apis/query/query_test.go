@@ -3,7 +3,6 @@ package dashboards
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 
