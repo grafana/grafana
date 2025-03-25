@@ -46,7 +46,7 @@ You can use a histogram visualization if you need to:
 
 ## Configure a histogram visualization
 
-Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a histogram visualization:
+After you've created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a histogram visualization:
 
 {{< youtube id="QfJ480j9-KM" >}}
 
@@ -121,7 +121,11 @@ Use the following options to refine your histogram visualization.
 
 #### Bucket offset
 
-If the first bucket should not start at zero. A non-zero offset has the effect of shifting the aggregation window. For example, 5-sized buckets that are 0-5, 5-10, 10-15 with a default 0 offset would become 2-7, 7-12, 12-17 with an offset of 2; offsets of 0, 5, or 10, in this case, would effectively do nothing. Typically, this option would be used with an explicitly defined bucket size rather than automatic. For this setting to affect, the offset amount should be greater than 0 and less than the bucket size; values outside this range will have the same effect as values within this range.
+If the first bucket should not start at zero. A non-zero offset has the effect of shifting the aggregation window.
+
+For example, 5-sized buckets that are 0-5, 5-10, 10-15 with a default 0 offset would become 2-7, 7-12, 12-17 with an offset of 2; offsets of 0, 5, or 10, in this case, would effectively do nothing.
+
+Typically, this option would be used with an explicitly defined bucket size rather than automatic. For this setting to affect, the offset amount should be greater than 0 and less than the bucket size; values outside this range have the same effect as values within this range.
 
 #### Gradient mode
 
