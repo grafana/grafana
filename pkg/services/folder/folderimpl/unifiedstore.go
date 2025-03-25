@@ -36,9 +36,7 @@ type FolderUnifiedStoreImpl struct {
 	log         log.Logger
 	k8sclient   client.K8sHandler
 	userService user.Service
-	// TODO(JP):  add TTL
-	listCache *localcache.CacheService
-	getCache  *localcache.CacheService
+	folderCache *localcache.CacheService
 }
 
 // sqlStore implements the store interface.
@@ -49,8 +47,7 @@ func ProvideUnifiedStore(k8sHandler client.K8sHandler, userService user.Service)
 		k8sclient:   k8sHandler,
 		log:         log.New("folder-store"),
 		userService: userService,
-		listCache:   localcache.New(time.Second*30, time.Second*10),
-		getCache:    localcache.New(time.Second*30, time.Second*10),
+		folderCache: localcache.New(time.Second*30, time.Second*10),
 	}
 }
 
@@ -142,8 +139,8 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 // The full path of C is "A/B\/C".
 func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
 	cacheKey := cacheKeyGet(q)
-	if c, exist := ss.getCache.Get(cacheKey); exist {
-		ss.log.Debug("Folder cache hit", "key", cacheKey)
+	if c, exist := ss.folderCache.Get(cacheKey); exist {
+		ss.log.Debug("Folder cache hit GET", "key", cacheKey)
 		return c.(*folder.Folder), nil
 	}
 	out, err := ss.k8sclient.Get(ctx, *q.UID, q.OrgID, v1.GetOptions{})
@@ -157,7 +154,7 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 	if err != nil {
 		return nil, err
 	}
-	ss.getCache.Set(cacheKey, res, 0)
+	ss.folderCache.Set(cacheKey, res, 0)
 	return res, nil
 }
 
@@ -328,7 +325,8 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 // The full path UIDs of A is "uid1".
 func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
 	cacheKey := cacheKeyList(q)
-	if c, exist := ss.listCache.Get(cacheKey); exist {
+	if c, exist := ss.folderCache.Get(cacheKey); exist {
+		ss.log.Debug("Folder cache hit - LIST", "key", cacheKey)
 		return c.([]*folder.Folder), nil
 	}
 	out, err := ss.k8sclient.List(ctx, q.OrgID, v1.ListOptions{})
@@ -365,7 +363,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 				hits = append(hits, f)
 			}
 		}
-		ss.getCache.Set(cacheKey, hits, 0)
+		ss.folderCache.Set(cacheKey, hits, 0)
 		return hits, nil
 	}
 
@@ -381,7 +379,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		hits = append(hits, f)
 	}
 
-	ss.getCache.Set(cacheKey, hits, 0)
+	ss.folderCache.Set(cacheKey, hits, 0)
 	return hits, nil
 }
 
