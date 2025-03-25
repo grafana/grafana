@@ -130,6 +130,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
         ...this.state.selectionContext,
         selected,
       },
+      showAddPane: false,
     });
   }
 
