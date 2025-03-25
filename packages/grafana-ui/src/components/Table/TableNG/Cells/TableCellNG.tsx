@@ -45,7 +45,7 @@ export function TableCellNG(props: TableCellNGProps) {
   const displayValue = field.display!(value);
   let colors: CellColors = { bgColor: '', textColor: '', bgHoverColor: '' };
   if (rowBg) {
-    colors = rowBg(rowIdx, cellOptions, displayValue);
+    colors = rowBg(rowIdx);
   } else {
     colors = useMemo(() => getCellColors(theme, cellOptions, displayValue), [theme, cellOptions, displayValue]);
   }

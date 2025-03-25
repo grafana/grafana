@@ -364,7 +364,8 @@ export function TableNG(props: TableNGProps) {
           headerCellRefs,
           isCountRowsSet,
           osContext,
-          rows,
+          // INFO: sortedRows is for correct row indexing for cell background coloring
+          rows: sortedRows,
           setContextMenuProps,
           setFilter,
           setIsInspecting,
@@ -382,7 +383,7 @@ export function TableNG(props: TableNGProps) {
         // Adjust table width to account for the scroll bar width
         availableWidth: width - (hasScroll ? TABLE.SCROLL_BAR_WIDTH + TABLE.SCROLL_BAR_MARGIN : 0),
       }),
-    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions, width, hasScroll] // eslint-disable-line react-hooks/exhaustive-deps
+    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions, width, hasScroll, sortedRows] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // This effect needed to set header cells refs before row height calculation
@@ -658,7 +659,7 @@ export function mapFrameToDataGrid({
       fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values[rowIndex]);
+        const display = field.display!(field.values.get(rows[rowIndex].__index));
         const colors = getCellColors(theme, fieldOptions.cellOptions, display);
         return colors;
       };
