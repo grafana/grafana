@@ -525,6 +525,10 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"List")
 	defer span.End()
 
+	if err := resource.MigrateListRequestVersionMatch(req, b.log); err != nil {
+		return 0, err
+	}
+
 	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
 		return 0, fmt.Errorf("missing group or resource")
 	}
@@ -710,24 +714,6 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 
 // getHistory fetches the resources from the resource table.
 func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	// Backwards compatibility for ResourceVersionMatch
-	if req.VersionMatch != nil && req.GetVersionMatchV2() == resource.ResourceVersionMatchV2_UNKNOWN {
-		switch req.GetVersionMatch() {
-		case resource.ResourceVersionMatch_DEPRECATED_NotOlderThan:
-			// This is not a typo. The old implementation actually did behave like Unset.
-			req.VersionMatchV2 = resource.ResourceVersionMatchV2_Unset
-		case resource.ResourceVersionMatch_DEPRECATED_Exact:
-			req.VersionMatchV2 = resource.ResourceVersionMatchV2_Exact
-		default:
-			return 0, fmt.Errorf("unknown version match: %v", req.GetVersionMatch())
-		}
-
-		// Log the migration for debugging purposes
-		b.log.Debug("Old client request received, migrating from version_match to version_match_v2",
-			"oldValue", req.GetVersionMatch(),
-			"newValue", req.GetVersionMatchV2())
-	}
-
 	listReq := sqlGetHistoryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Key:         req.Options.Key,
