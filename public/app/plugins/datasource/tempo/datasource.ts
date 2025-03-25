@@ -678,6 +678,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return EMPTY;
     }
 
+    // Check if the time range exceeds 24 hours
+    const timeRangeMs = options.range.to.valueOf() - options.range.from.valueOf();
+    const limitMs = 24 * 60 * 60 * 1000;
+    if (timeRangeMs > limitMs) {
+      return of({
+        error: {
+          message: 'Metrics query time range exceeds the maximum allowed duration of 24 hours.',
+        },
+        data: [],
+      });
+    }
+
     const startTime = performance.now();
     const request = { ...options, targets: validTargets };
     return super.query(request).pipe(
