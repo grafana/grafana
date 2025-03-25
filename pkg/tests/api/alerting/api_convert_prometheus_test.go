@@ -100,7 +100,7 @@ var (
 )
 
 func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
-	runTest := func(t *testing.T, enableLokiPaths bool) {
+	runTest := func(t *testing.T, enableLokiPaths bool, postContentType string) {
 		testinfra.SQLiteIntegrationTest(t)
 
 		// Setup Grafana and its Database
@@ -136,12 +136,16 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 
 		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
 
+		postContentTypeHeader := map[string]string{
+			"Content-Type": postContentType,
+		}
+
 		t.Run("create rule groups and get them back", func(t *testing.T) {
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, postContentTypeHeader)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, postContentTypeHeader)
 
 			// create a third group in a different namespace
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, postContentTypeHeader)
 
 			// And a non-provisioned rule in another namespace
 			namespace3UID := util.GenerateShortUID()
@@ -173,11 +177,16 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			requireStatusCode(t, http.StatusForbidden, status, raw)
 		})
 
+		t.Run("with incorrect content-type should receive 415", func(t *testing.T) {
+			_, status, raw := apiClient.RawConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, map[string]string{"Content-Type": "application/xml"})
+			requireStatusCode(t, http.StatusUnsupportedMediaType, status, raw)
+		})
+
 		t.Run("delete one rule group", func(t *testing.T) {
 			// Create three groups
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, postContentTypeHeader)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, postContentTypeHeader)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, postContentTypeHeader)
 
 			// delete the first one
 			apiClient.ConvertPrometheusDeleteRuleGroup(t, namespace1, promGroup1.Name, nil)
@@ -202,13 +211,51 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 		})
 	}
 
-	t.Run("with the mimirtool paths", func(t *testing.T) {
-		runTest(t, false)
-	})
+	const applicationYAML = "application/yaml"
+	const applicationJSON = "application/json"
 
-	t.Run("with the cortextool Loki paths", func(t *testing.T) {
-		runTest(t, true)
-	})
+	cases := []struct {
+		name            string
+		contentType     string
+		enableLokiPaths bool
+	}{
+		{
+			name:            "with the mimirtool paths; empty content-type",
+			contentType:     "",
+			enableLokiPaths: false,
+		},
+		{
+			name:            "with the cortextool Loki paths; empty content-type",
+			contentType:     "",
+			enableLokiPaths: true,
+		},
+		{
+			name:            "with the mimirtool paths; yaml",
+			contentType:     applicationYAML,
+			enableLokiPaths: false,
+		},
+		{
+			name:            "with the cortextool Loki paths; yaml",
+			contentType:     applicationYAML,
+			enableLokiPaths: true,
+		},
+		{
+			name:            "with the mimirtool paths; json",
+			contentType:     applicationJSON,
+			enableLokiPaths: false,
+		},
+		{
+			name:            "with the cortextool Loki paths; json",
+			contentType:     applicationJSON,
+			enableLokiPaths: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			runTest(t, tc.enableLokiPaths, tc.contentType)
+		})
+	}
 }
 
 func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {

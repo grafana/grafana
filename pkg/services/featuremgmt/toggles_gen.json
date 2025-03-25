@@ -2768,7 +2768,8 @@
       "metadata": {
         "name": "metricsSummary",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-08-28T14:02:12Z"
+        "creationTimestamp": "2023-08-28T14:02:12Z",
+        "deletionTimestamp": "2024-11-25T10:47:18Z"
       },
       "spec": {
         "description": "Enables metrics summary queries in the Tempo data source",
