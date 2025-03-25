@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CSSProperties, useCallback, useEffect, useRef } from 'react';
+import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,7 +10,14 @@ import { LogMessageAnsi } from '../LogMessageAnsi';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
-import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight, LogFieldDimension } from './virtualization';
+import {
+  FIELD_GAP_MULTIPLIER,
+  hasUnderOrOverflow,
+  getLineHeight,
+  LogFieldDimension,
+  TRUNCATION_LINE_COUNT,
+  getTruncationLength,
+} from './virtualization';
 
 interface Props {
   displayedFields: string[];
@@ -36,6 +43,9 @@ export const LogLine = ({
   wrapLogMessage,
 }: Props) => {
   const { onLogLineHover } = useLogListContext();
+  const [expanded, setExpanded] = useState<boolean | undefined>(
+    wrapLogMessage ? getLogInitialExpandedState(log, displayedFields) : undefined
+  );
   const logLineRef = useRef<HTMLDivElement | null>(null);
   const pinned = useLogIsPinned(log);
 
@@ -62,9 +72,12 @@ export const LogLine = ({
       onMouseOver={handleMouseOver}
     >
       <LogLineMenu styles={styles} log={log} />
-      <div className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`}`}>
+      <div
+        className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${expanded === false ? styles.truncatedLogLine : ''}`}
+      >
         <Log
           displayedFields={displayedFields}
+          expanded={expanded}
           log={log}
           showTime={showTime}
           styles={styles}
@@ -75,15 +88,22 @@ export const LogLine = ({
   );
 };
 
+function getLogInitialExpandedState(log: LogListModel, displayedFields: string[]) {
+  const lineLength =
+    displayedFields.map((field) => getDisplayedFieldValue(field, log)).join('').length + log.body.length;
+  return lineLength >= getTruncationLength() ? false : undefined;
+}
+
 interface LogProps {
   displayedFields: string[];
+  expanded?: boolean;
   log: LogListModel;
   showTime: boolean;
   styles: LogLineStyles;
   wrapLogMessage: boolean;
 }
 
-const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
+const Log = ({ displayedFields, expanded, log, showTime, styles, wrapLogMessage }: LogProps) => {
   return (
     <>
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
@@ -96,7 +116,7 @@ const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProp
       {displayedFields.length > 0 ? (
         displayedFields.map((field) =>
           field === LOG_LINE_BODY_FIELD_NAME ? (
-            <LogLineBody log={log} key={field} />
+            <LogLineBody log={log} key={field} expanded={expanded} />
           ) : (
             <span className="field" title={field} key={field}>
               {getDisplayedFieldValue(field, log)}
@@ -110,7 +130,7 @@ const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProp
   );
 };
 
-const LogLineBody = ({ log }: { log: LogListModel }) => {
+const LogLineBody = ({ expanded, log }: { expanded?: boolean; log: LogListModel }) => {
   const { syntaxHighlighting } = useLogListContext();
 
   if (log.hasAnsi) {
@@ -172,6 +192,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.fontSize,
       wordBreak: 'break-all',
+      cursor: 'pointer',
       '&:hover': {
         background: `hsla(0, 0%, 0%, 0.2)`,
       },
@@ -282,6 +303,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       '& .field:last-child': {
         marginRight: 0,
       },
+    }),
+    truncatedLogLine: css({
+      maxHeight: `${TRUNCATION_LINE_COUNT * getLineHeight()}px`,
+      overflow: 'hidden',
     }),
   };
 };
