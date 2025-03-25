@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
@@ -61,7 +62,7 @@ func ProvideEncryptionManager(
 	cfg *setting.Cfg,
 	usageStats usagestats.Service,
 	thirdPartyKMS encryption.ProviderMap,
-) (*EncryptionManager, error) {
+) (contracts.EncryptionManager, error) {
 	ttl := cfg.SecretsManagement.Encryption.DataKeysCacheTTL
 	currentProviderID := encryption.ProviderID(cfg.SecretsManagement.EncryptionProvider)
 
@@ -150,7 +151,7 @@ func (s *EncryptionManager) registerUsageMetrics() {
 
 var b64 = base64.RawStdEncoding
 
-func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte, opt encryption.EncryptionOptions) ([]byte, error) {
+func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte, opt contracts.EncryptionOptions) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "secretsService.Encrypt")
 	defer span.End()
 
