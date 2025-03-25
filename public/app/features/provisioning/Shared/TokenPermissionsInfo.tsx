@@ -1,36 +1,69 @@
-import { ControlledCollapse, TextLink } from '@grafana/ui';
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { TextLink, useStyles2 } from '@grafana/ui';
 
 export function TokenPermissionsInfo() {
+  const styles = useStyles2(getStyles);
+
   return (
-    <ControlledCollapse collapsible label="Access Token Permissions">
+    <div className={styles.container}>
       <div>
-        To create a new access token, navigate to{' '}
+        Go to{' '}
         <TextLink external href="https://github.com/settings/personal-access-tokens/new">
-          Personal access tokens
-        </TextLink>{' '}
+          GitHub Personal Access Tokens
+        </TextLink>
+        . Make sure to include these permissions under <b>Repository</b>:
       </div>
 
-      <p>Select the appropriate owner and repository. Then expand repository permissions, granting</p>
-      <table style={{ fontSize: '2em' }}>
+      <table className={styles.permissionTable}>
         <tbody>
+          <tr className={styles.headerSeparator}>
+            <th>Permission</th>
+            <th>Access</th>
+          </tr>
           <tr>
-            <td>Content</td>
+            <td>Contents</td>
             <td>Read and write</td>
           </tr>
           <tr>
             <td>Metadata</td>
-            <td>Read only</td>
+            <td>Read-only</td>
           </tr>
           <tr>
-            <td>Pull requests&nbsp;&nbsp;</td>
+            <td>Pull requests</td>
             <td>Read and write</td>
           </tr>
           <tr>
             <td>Webhooks</td>
-            <td>Read and write &nbsp;&nbsp;</td>
+            <td>Read and write</td>
           </tr>
         </tbody>
       </table>
-    </ControlledCollapse>
+    </div>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      marginBottom: theme.spacing(1),
+      backgroundColor: theme.colors.background.secondary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      position: 'relative',
+      borderRadius: theme.shape.radius.default,
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '1 1 0',
+      padding: theme.spacing(theme.components.panel.padding),
+    }),
+    permissionTable: css({
+      tableLayout: 'auto',
+      width: '40%',
+    }),
+    headerSeparator: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+  };
 }
