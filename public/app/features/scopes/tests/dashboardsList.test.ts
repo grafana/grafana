@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { ScopesService } from '../ScopesService';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
@@ -65,6 +65,7 @@ describe('Dashboards list', () => {
   });
 
   afterEach(async () => {
+    locationService.replace('');
     await resetScenes([fetchDashboardsSpy]);
   });
 

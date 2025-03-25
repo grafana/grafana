@@ -1,13 +1,12 @@
 import { config } from '@grafana/runtime';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
-import { useUrlParams } from 'app/core/navigation/hooks';
 
 import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { useGetResourceRepository } from './useGetResourceRepository';
 
 export function useIsProvisionedNG(dashboard: DashboardScene): boolean {
-  const [params] = useUrlParams();
+  const params = new URLSearchParams(window.location.search);
   const folderUid = params.get('folderUid') || undefined;
 
   const folderRepository = useGetResourceRepository({ folderUid });

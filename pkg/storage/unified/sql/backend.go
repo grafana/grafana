@@ -27,6 +27,7 @@ import (
 const tracePrefix = "sql.resource."
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
+const defaultPrunerHistoryLimit = 20
 
 type Backend interface {
 	resource.StorageBackend
@@ -211,7 +212,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 			return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 					SQLTemplate:  sqltemplate.New(b.dialect),
-					HistoryLimit: 100,
+					HistoryLimit: defaultPrunerHistoryLimit,
 					Key: &resource.ResourceKey{
 						Namespace: key.namespace,
 						Group:     key.group,
@@ -525,6 +526,10 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"List")
 	defer span.End()
 
+	if err := resource.MigrateListRequestVersionMatch(req, b.log); err != nil {
+		return 0, err
+	}
+
 	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
 		return 0, fmt.Errorf("missing group or resource")
 	}
@@ -650,6 +655,9 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"listAtRevision")
+	defer span.End()
+
 	// Get the RV
 	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
 	if req.NextPageToken != "" {
@@ -667,6 +675,10 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	if iter.listRV < 1 {
 		return 0, apierrors.NewBadRequest("expecting an explicit resource version query")
 	}
+
+	// The query below has the potential to be EXTREMELY slow if the resource_history table is big. May be helpful to know
+	// which stack is calling this.
+	b.log.Debug("listAtRevision", "ns", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "rv", iter.listRV)
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		limit := int64(0) // ignore limit
@@ -703,24 +715,6 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 
 // getHistory fetches the resources from the resource table.
 func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	// Backwards compatibility for ResourceVersionMatch
-	if req.VersionMatch != nil && req.GetVersionMatchV2() == resource.ResourceVersionMatchV2_UNKNOWN {
-		switch req.GetVersionMatch() {
-		case resource.ResourceVersionMatch_DEPRECATED_NotOlderThan:
-			// This is not a typo. The old implementation actually did behave like Unset.
-			req.VersionMatchV2 = resource.ResourceVersionMatchV2_Unset
-		case resource.ResourceVersionMatch_DEPRECATED_Exact:
-			req.VersionMatchV2 = resource.ResourceVersionMatchV2_Exact
-		default:
-			return 0, fmt.Errorf("unknown version match: %v", req.GetVersionMatch())
-		}
-
-		// Log the migration for debugging purposes
-		b.log.Debug("Old client request received, migrating from version_match to version_match_v2",
-			"oldValue", req.GetVersionMatch(),
-			"newValue", req.GetVersionMatchV2())
-	}
-
 	listReq := sqlGetHistoryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Key:         req.Options.Key,

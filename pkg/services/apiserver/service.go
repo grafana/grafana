@@ -87,6 +87,15 @@ func init() {
 	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
 }
 
+// ClearRestConfig clears the package level restConfig.
+// This is intended to be used in tests only.
+//
+// TODO: Refactor such that there is no global state.
+func ClearRestConfig() {
+	restConfig = nil
+	ready = make(chan struct{})
+}
+
 // GetRestConfig return a client Config mounted at package level
 // This resolves circular dependency issues between apiserver, authz,
 // and Folder Service.
