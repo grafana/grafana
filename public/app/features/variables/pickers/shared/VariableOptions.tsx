@@ -121,7 +121,7 @@ class VariableOptions extends PureComponent<Props> {
           role="checkbox"
           aria-checked={selectedValues.length > 1 ? 'mixed' : 'false'}
           onClick={this.onToggleAll}
-          aria-label="Toggle all values"
+          aria-label={t('variables.variable-options.aria-label-toggle-all-values', 'Toggle all values')}
           data-placement="top"
         >
           <span
