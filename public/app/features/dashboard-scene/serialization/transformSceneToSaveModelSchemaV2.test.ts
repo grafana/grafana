@@ -553,7 +553,7 @@ describe('getElementDatasource', () => {
     if (variableWithoutDS && sceneUtils.isQueryVariable(variableWithoutDS)) {
       // Test with auto-assigned variable (in the mapping)
       const resultWithoutDS = getElementDatasource(variableSet, variableWithoutDS, 'variable');
-      expect(resultWithoutDS).toEqual({});
+      expect(resultWithoutDS).toEqual(undefined);
     }
   });
 

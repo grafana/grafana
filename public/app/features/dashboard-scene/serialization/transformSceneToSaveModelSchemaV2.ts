@@ -708,7 +708,10 @@ export function getElementDatasource(
         return undefined;
       }
       const autoAssignedRefs = getAutoAssignedDSRef(element, 'variables');
-      return getPersistedDSFor(queryElement, autoAssignedRefs, 'variable');
+      // Important: Only return the datasource if it's not in auto-assigned refs
+      // and if the result would not be an empty object
+      const result = getPersistedDSFor(queryElement, autoAssignedRefs, 'variable');
+      return Object.keys(result || {}).length > 0 ? result : undefined;
     }
 
     return undefined;
@@ -723,7 +726,9 @@ export function getElementDatasource(
     }
 
     if (type === 'variable' && !isSceneDataQuery(queryElement) && sceneUtils.isQueryVariable(queryElement)) {
-      return queryElement.state.datasource || {};
+      // Only return the datasource if it exists and is not empty
+      const ds = queryElement.state.datasource;
+      return ds && Object.keys(ds).length > 0 ? ds : undefined;
     }
 
     return undefined;
