@@ -55,6 +55,9 @@ func TestPathClean(t *testing.T) {
 		{"Path traversal with multiple slashes", "/test////abc/..//def", "/test/def"},
 		{"Path traversal with current directory", "/test/./abc/../def/./ghi", "/test/def/ghi"},
 		{"Empty path segments with traversal", "//test//abc//..//def", "/test/def"},
+		{"Root path returns empty string", "/", ""},
+		{"Current directory returns empty string", ".", ""},
+		{"Path traversal to root returns empty string", "/test/..", ""},
 	}
 
 	for _, tc := range testCases {
