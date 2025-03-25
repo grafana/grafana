@@ -66,17 +66,25 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
     const styles = useStyles2(getFieldStyles);
     const inputId = htmlFor ?? getChildId(children);
 
-    const labelElement =
-      useLabel || typeof label === 'string' ? (
+    let labelElement: React.ReactNode;
+    if (typeof label === 'string') {
+      labelElement = (
+        <Label htmlFor={inputId} description={description}>
+          {label + (required ? ' *' : '')}
+        </Label>
+      );
+    } else if (useLabel) {
+      labelElement = (
         <Label htmlFor={inputId} description={description}>
           <span>
             {label}
             {required ? ' *' : ''}
           </span>
         </Label>
-      ) : (
-        label
       );
+    } else {
+      labelElement = label;
+    }
 
     const childProps = deleteUndefinedProps({ invalid, disabled, loading });
     return (
