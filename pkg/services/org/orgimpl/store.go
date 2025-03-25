@@ -611,6 +611,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			"u.created",
 			"u.updated",
 			"u.is_disabled",
+			"u.is_provisioned",
 		)
 
 		if len(query.SortOpts) > 0 {
