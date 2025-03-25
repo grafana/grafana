@@ -87,22 +87,6 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-jest.mock('../utils/utils', () => {
-  const original = jest.requireActual('../utils/utils');
-  return {
-    ...original,
-    getDashboardSceneFor: jest.fn().mockImplementation(() => ({
-      serializer: {
-        getDSReferencesMapping: jest.fn().mockReturnValue({
-          panels: new Map(),
-          variables: new Set(),
-          annotations: new Set(),
-        }),
-      },
-    })),
-  };
-});
-
 describe('sceneVariablesSetToVariables', () => {
   it('should handle QueryVariable', () => {
     const variable = new QueryVariable({

@@ -689,26 +689,43 @@ export function getElementDatasource(
   type: 'panel' | 'variable',
   queryRunner?: SceneQueryRunner
 ): DataSourceRef | undefined {
-  if (type === 'panel') {
-    if (!queryRunner || !isVizPanel(element) || !isSceneDataQuery(queryElement)) {
-      return undefined;
+  try {
+    if (type === 'panel') {
+      if (!queryRunner || !isVizPanel(element) || !isSceneDataQuery(queryElement)) {
+        return undefined;
+      }
+      // Get datasource for panel query
+      const autoAssignedRefs = getAutoAssignedDSRef(element, 'panels');
+      return getPersistedDSFor(queryElement, autoAssignedRefs, 'query', queryRunner);
     }
-    // Get datasource for panel query
-    const autoAssignedRefs = getAutoAssignedDSRef(element, 'panels');
-    return getPersistedDSFor(queryElement, autoAssignedRefs, 'query', queryRunner);
-  }
 
-  if (type === 'variable') {
-    if (!isSceneVariables(element) || isSceneDataQuery(queryElement)) {
-      return undefined;
+    if (type === 'variable') {
+      if (!isSceneVariables(element) || isSceneDataQuery(queryElement)) {
+        return undefined;
+      }
+      // Get datasource for variable
+      if (!sceneUtils.isQueryVariable(queryElement)) {
+        return undefined;
+      }
+      const autoAssignedRefs = getAutoAssignedDSRef(element, 'variables');
+      return getPersistedDSFor(queryElement, autoAssignedRefs, 'variable');
     }
-    // Get datasource for variable
-    if (!sceneUtils.isQueryVariable(queryElement)) {
-      return undefined;
-    }
-    const autoAssignedRefs = getAutoAssignedDSRef(element, 'variables');
-    return getPersistedDSFor(queryElement, autoAssignedRefs, 'variable');
-  }
 
-  return undefined;
+    return undefined;
+  } catch (error) {
+    // If no dashboard scene is found, fall back to the original behavior
+    // this is neeeded because nowadays we could have variables and viz panels without a dashboard scene
+    // if we don't have a dashboard scene, it means we don't have a serializer with the logic of
+    // ds references auto-assigned mapping
+    // we want to keep the original behavior for backwards compatibility
+    if (type === 'panel' && isSceneDataQuery(queryElement)) {
+      return queryElement.datasource || queryRunner?.state?.datasource;
+    }
+
+    if (type === 'variable' && !isSceneDataQuery(queryElement) && sceneUtils.isQueryVariable(queryElement)) {
+      return queryElement.state.datasource || {};
+    }
+
+    return undefined;
+  }
 }
