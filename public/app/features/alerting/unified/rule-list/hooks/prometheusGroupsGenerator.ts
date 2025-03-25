@@ -48,7 +48,7 @@ export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOption
         }
 
         return produce(response, (draft) => {
-          draft.data.groups = filterGroups(draft.data.groups, filterState);
+          draft.data.groups = filterGroups(response.data.groups, filterState);
         });
       };
 
@@ -90,7 +90,7 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
       }
 
       return produce(response, (draft) => {
-        draft.data.groups = filterGroups(draft.data.groups, filterState);
+        draft.data.groups = filterGroups(response.data.groups, filterState);
       });
     },
     [getGrafanaGroups, dispatch, hookOptions.populateCache]

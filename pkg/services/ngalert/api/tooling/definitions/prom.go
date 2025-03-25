@@ -168,12 +168,10 @@ type AlertingRule struct {
 // adapted from cortex
 // swagger:model
 type Rule struct {
-	// required: true
-	UID string `json:"uid"`
+	UID string `json:"uid,omitempty"`
 	// required: true
 	Name string `json:"name"`
-	// required: true
-	FolderUID string `json:"folderUid"`
+	FolderUID string `json:"folderUid,omitempty"`
 	// required: true
 	Query  string            `json:"query"`
 	Labels promlabels.Labels `json:"labels,omitempty"`

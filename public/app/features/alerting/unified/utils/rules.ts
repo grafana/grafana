@@ -26,6 +26,8 @@ import {
   GrafanaAlertState,
   GrafanaAlertStateWithReason,
   GrafanaAlertingRuleDefinition,
+  GrafanaPromAlertingRuleDTO,
+  GrafanaPromRecordingRuleDTO,
   GrafanaRecordingRuleDefinition,
   PostableRuleDTO,
   PromAlertingRuleState,
@@ -98,6 +100,14 @@ function isRecordingRule(rule?: Rule): rule is RecordingRule {
   return typeof rule === 'object' && rule.type === PromRuleType.Recording;
 }
 
+function isGrafanaPromAlertingRule(rule?: Rule): rule is GrafanaPromAlertingRuleDTO {
+  return isAlertingRule(rule) && 'folderUid' in rule && 'uid' in rule;
+}
+
+function isGrafanaPromRecordingRule(rule?: Rule): rule is GrafanaPromRecordingRuleDTO {
+  return isRecordingRule(rule) && 'folderUid' in rule && 'uid' in rule;
+}
+
 export const rulerRuleType = {
   grafana: {
     rule: isGrafanaRulerRule,
@@ -119,6 +129,11 @@ export const prometheusRuleType = {
   rule: (rule?: Rule) => isAlertingRule(rule) || isRecordingRule(rule),
   alertingRule: isAlertingRule,
   recordingRule: isRecordingRule,
+  grafana: {
+    rule: (rule?: Rule) => isGrafanaPromAlertingRule(rule) || isGrafanaPromRecordingRule(rule),
+    alertingRule: isGrafanaPromAlertingRule,
+    recordingRule: isGrafanaPromRecordingRule,
+  },
 };
 
 export function alertInstanceKey(alert: Alert): string {

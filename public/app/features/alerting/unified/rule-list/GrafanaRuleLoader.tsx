@@ -15,6 +15,7 @@ import {
 import { AlertRuleListItemSkeleton, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleOperation } from './components/RuleListIcon';
+import { Alert } from '@grafana/ui';
 
 const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
 
@@ -26,7 +27,11 @@ interface GrafanaRuleLoaderProps {
 }
 
 export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: GrafanaRuleLoaderProps) {
-  const { data: rulerRuleGroup, isError } = useGetGrafanaRulerGroupQuery({
+  const {
+    data: rulerRuleGroup,
+    isError,
+    isLoading,
+  } = useGetGrafanaRulerGroupQuery({
     folderUid: groupIdentifier.namespace.uid,
     groupName: groupIdentifier.groupName,
   });
@@ -38,7 +43,15 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
       return <RulerRuleLoadingError rule={rule} />;
     }
 
-    return <AlertRuleListItemSkeleton />;
+    if (isLoading) {
+      return <AlertRuleListItemSkeleton />;
+    }
+
+    return (
+      <Alert title={`Cannot load rule details for ${rule.name}`} severity="error">
+        Cannot find rule details for {rule.uid ?? '<empty uid>'}
+      </Alert>
+    );
   }
 
   return (

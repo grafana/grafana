@@ -1,13 +1,14 @@
 import { compact } from 'lodash';
 
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { AlertQuery, PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { parseMatcher } from '../../utils/matchers';
 import { isPluginProvidedRule, prometheusRuleType } from '../../utils/rules';
+import { getDataSourceUID } from '../../utils/datasource';
 
 /**
  * @returns True if the group matches the filter, false otherwise. Keeps rules intact
@@ -104,6 +105,25 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   // which is not available in PromRuleDTO:
   // - contactPoint filter
   // - dataSourceNames filter
+  if (filterState.dataSourceNames.length > 0) {
+    const isGrafanaRule = prometheusRuleType.grafana.rule(rule);
+    if (isGrafanaRule) {
+      try {
+        const parsedQuery: AlertQuery[] = JSON.parse(rule.query);
+
+        const filterDataSourceUids = compact(
+          filterState.dataSourceNames.map((name) => getDataSourceUID({ rulesSourceName: name }))
+        );
+        const datasourceUids = parsedQuery.map((q) => q.datasourceUid);
+        const containsSpecificDataSource = datasourceUids.some((uid) => filterDataSourceUids.includes(uid));
+        if (!containsSpecificDataSource) {
+          return false;
+        }
+      } catch (error) {
+        return false;
+      }
+    }
+  }
 
   return true;
 }

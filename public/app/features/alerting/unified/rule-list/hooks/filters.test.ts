@@ -1,8 +1,9 @@
 import { PromAlertingRuleState, PromRuleDTO, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { mockPromAlertingRule, mockPromRecordingRule } from '../../mocks';
+import { mockGrafanaPromAlertingRule, mockPromAlertingRule, mockPromRecordingRule } from '../../mocks';
 import { RuleHealth } from '../../search/rulesSearchParser';
 import { Annotation } from '../../utils/constants';
+import * as datasourceUtils from '../../utils/datasource';
 import { getFilter } from '../../utils/search';
 
 import { groupFilter, ruleFilter } from './filters';
@@ -167,40 +168,96 @@ describe('ruleFilter', () => {
     expect(ruleFilter(recordingRule, getFilter({ dashboardUid: 'any-dashboard' }))).toBe(false);
   });
 
-  // For plugins filter test we'll need to rely on actual implementation of isPluginProvidedRule
-  // We're just testing if the filter logic works correctly, not the plugin detection itself
+  describe('dataSourceNames filter', () => {
+    let getDataSourceUIDSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      // Setup spy on getDataSourceUID
+      getDataSourceUIDSpy = jest.spyOn(datasourceUtils, 'getDataSourceUID').mockImplementation((args: any) => {
+        if (args && args.rulesSourceName === 'prometheus') {
+          return 'datasource-uid-1';
+        }
+        if (args && args.rulesSourceName === 'loki') {
+          return 'datasource-uid-3';
+        }
+        return undefined;
+      });
+    });
+
+    afterEach(() => {
+      // Clean up
+      getDataSourceUIDSpy.mockRestore();
+    });
+
+    it('should match rules that use the filtered datasource', () => {
+      // Create a Grafana rule with matching datasource
+      const ruleWithMatchingDatasource = mockGrafanaPromAlertingRule({
+        query: JSON.stringify([
+          { refId: 'A', datasourceUid: 'datasource-uid-1' }, // Will match 'prometheus'
+          { refId: 'B', datasourceUid: 'datasource-uid-2' },
+        ]),
+      });
+
+      // 'prometheus' resolves to 'datasource-uid-1' which is in the rule
+      expect(ruleFilter(ruleWithMatchingDatasource, getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
+    });
+
+    it("should filter out rules that don't use the filtered datasource", () => {
+      // Create a Grafana rule without the target datasource
+      const ruleWithoutMatchingDatasource = mockGrafanaPromAlertingRule({
+        query: JSON.stringify([
+          { refId: 'A', datasourceUid: 'datasource-uid-1' },
+          { refId: 'B', datasourceUid: 'datasource-uid-2' },
+        ]),
+      });
+
+      // 'loki' resolves to 'datasource-uid-3' which is not in the rule
+      expect(ruleFilter(ruleWithoutMatchingDatasource, getFilter({ dataSourceNames: ['loki'] }))).toBe(false);
+    });
+
+    it('should return false when there is an error parsing the query', () => {
+      const ruleWithInvalidQuery = mockGrafanaPromAlertingRule({
+        query: 'not-valid-json',
+      });
+
+      expect(ruleFilter(ruleWithInvalidQuery, getFilter({ dataSourceNames: ['prometheus'] }))).toBe(false);
+    });
+  });
 
   it('should combine multiple filters with AND logic', () => {
     const rule = mockPromAlertingRule({
       name: 'High CPU Usage Production',
       labels: { severity: 'critical', environment: 'production' },
       state: PromAlertingRuleState.Firing,
+      health: RuleHealth.Ok,
     });
 
-    // All filters match
-    expect(
-      ruleFilter(
-        rule,
-        getFilter({
-          ruleName: 'cpu',
-          labels: ['severity=critical', 'environment=production'],
-          ruleState: PromAlertingRuleState.Firing,
-          ruleHealth: RuleHealth.Ok,
-        })
-      )
-    ).toBe(true);
+    const filter = getFilter({
+      ruleName: 'cpu',
+      labels: ['severity=critical', 'environment=production'],
+      ruleState: PromAlertingRuleState.Firing,
+      ruleHealth: RuleHealth.Ok,
+    });
 
-    // One filter doesn't match
-    expect(
-      ruleFilter(
-        rule,
-        getFilter({
-          ruleName: 'cpu',
-          labels: ['severity=warning'], // This doesn't match
-          ruleState: PromAlertingRuleState.Firing,
-          ruleHealth: RuleHealth.Ok,
-        })
-      )
-    ).toBe(false);
+    expect(ruleFilter(rule, filter)).toBe(true);
+  });
+
+  it('should return false if any filter does not match', () => {
+    const rule = mockPromAlertingRule({
+      name: 'High CPU Usage Production',
+      labels: { severity: 'critical', environment: 'production' },
+      state: PromAlertingRuleState.Firing,
+      health: RuleHealth.Ok,
+      alerts: [],
+    });
+
+    const filter = getFilter({
+      ruleName: 'cpu',
+      labels: ['severity=warning'],
+      ruleState: PromAlertingRuleState.Firing,
+      ruleHealth: RuleHealth.Ok,
+    });
+
+    expect(ruleFilter(rule, filter)).toBe(false);
   });
 });
