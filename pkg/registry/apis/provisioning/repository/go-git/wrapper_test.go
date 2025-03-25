@@ -130,7 +130,7 @@ func TestReadTree(t *testing.T) {
 	err = os.WriteFile(filepath.Join(dir, "test.txt"), []byte("test"), 0644)
 	require.NoError(t, err, "failed to write test file")
 
-	err = os.Mkdir(filepath.Join(dir, "grafana"), 0755)
+	err = os.Mkdir(filepath.Join(dir, "grafana"), 0750)
 	require.NoError(t, err, "failed to mkdir grafana")
 
 	err = os.WriteFile(filepath.Join(dir, "grafana", "test2.txt"), []byte("test"), 0644)
