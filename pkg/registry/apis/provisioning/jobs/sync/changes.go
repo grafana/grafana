@@ -63,18 +63,20 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 				Path:   file.Path,
 			})
 
-			continue
+			if err := keep.Add(file.Path); err != nil {
+				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+			}
 		}
 
 		// Maintain the non-hidden path for empty folders
 		unhiddenPath := safepath.UnhiddenPath(file.Path)
 		if unhiddenPath != "" && resources.IsPathSupported(unhiddenPath) == nil {
+			if err := keep.Add(unhiddenPath); err != nil {
+				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+			}
+
 			_, ok := lookup[unhiddenPath]
 			if ok {
-				if err := keep.Add(unhiddenPath); err != nil {
-					return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
-				}
-
 				continue
 			}
 

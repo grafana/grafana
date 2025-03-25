@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -263,11 +262,6 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		return fmt.Errorf("this should be empty")
 	}
 
-	// Do the deepest paths first (important for delete)
-	sort.Slice(changes, func(i, j int) bool {
-		return safepath.Depth(changes[i].Path) > safepath.Depth(changes[j].Path)
-	})
-
 	r.progress.SetTotal(ctx, len(changes))
 	r.progress.SetMessage(ctx, "replicating changes")
 
@@ -301,6 +295,28 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 			result.Error = client.Delete(ctx, change.Existing.Name, metav1.DeleteOptions{})
 			r.progress.Record(ctx, result)
+			continue
+		}
+
+		// If folder create it
+		if safepath.IsDir(change.Path) {
+			result := jobs.JobResourceResult{
+				Path:   change.Path,
+				Action: change.Action,
+			}
+
+			folder, err := r.folders.EnsureFolderPathExist(ctx, change.Path)
+			if err != nil {
+				result.Error = fmt.Errorf("unable to create empty file folder: %w", err)
+				r.progress.Record(ctx, result)
+				continue
+			}
+
+			result.Name = folder
+			result.Resource = folders.RESOURCE
+			result.Group = folders.GROUP
+			r.progress.Record(ctx, result)
+
 			continue
 		}
 
