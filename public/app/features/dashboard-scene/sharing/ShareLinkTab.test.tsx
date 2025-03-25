@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { advanceTo, clear } from 'jest-date-mock';
 
 import { dateTime } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';

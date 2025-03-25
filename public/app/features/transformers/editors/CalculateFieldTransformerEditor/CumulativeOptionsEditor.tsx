@@ -1,9 +1,5 @@
 import { ReducerID, SelectableValue } from '@grafana/data';
-import {
-  CalculateFieldMode,
-  CalculateFieldTransformerOptions,
-  CumulativeOptions,
-} from '@grafana/data/src/transformations/transformers/calculateField';
+import { CalculateFieldMode, CalculateFieldTransformerOptions, CumulativeOptions } from '@grafana/data/internal';
 import { InlineField, Select, StatsPicker } from '@grafana/ui';
 
 import { LABEL_WIDTH } from './constants';
