@@ -14,9 +14,6 @@ export class TabsLayoutSerializer implements LayoutManagerSerializer {
       spec: {
         tabs: layoutManager.state.tabs.map((tab) => {
           const layout = getLayout(tab.state.layout);
-          if (layout.kind === 'TabsLayout') {
-            throw new Error('Nested TabsLayout is not supported');
-          }
           return {
             kind: 'TabsLayoutTab',
             spec: {

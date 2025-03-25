@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { useTheme2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { LogsTableActiveFields } from './LogsTableActiveFields';
 import { LogsTableAvailableFields } from './LogsTableAvailableFields';
@@ -71,7 +72,9 @@ export const LogsTableMultiSelect = (props: {
           id={'selected-fields'}
         />
 
-        <div className={styles.columnHeader}>Fields</div>
+        <div className={styles.columnHeader}>
+          <Trans i18nKey="explore.logs-table-multi-select.fields">Fields</Trans>
+        </div>
         <LogsTableAvailableFields
           toggleColumn={props.toggleColumn}
           labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}

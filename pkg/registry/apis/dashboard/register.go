@@ -229,6 +229,7 @@ func (b *DashboardsAPIBuilder) getValidationType(a admission.Attributes) string 
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storageOpts := apistore.StorageOptions{
+		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
 	}
 
@@ -323,11 +324,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage[dashboards.StoragePath()], err = opts.DualWriteBuilder(gr, legacyStore, store)
 	if err != nil {
 		return err
-	}
-
-	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
-		storage[dashboards.StoragePath("restore")] = NewRestoreConnector(b.unified, gr)
-		storage[dashboards.StoragePath("latest")] = NewLatestConnector(b.unified, gr)
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits

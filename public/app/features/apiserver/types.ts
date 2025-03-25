@@ -111,6 +111,18 @@ type GrafanaLabels = {
   [DeprecatedInternalId]?: string;
 };
 
+export interface GroupVersionResource {
+  group: string;
+  version: string;
+  resource: string;
+}
+
+export interface GroupVersionKind {
+  group: string;
+  version: string;
+  kind: string;
+}
+
 export interface Resource<T = object, S = object, K = string> extends TypeMeta<K> {
   metadata: ObjectMeta;
   spec: T;
