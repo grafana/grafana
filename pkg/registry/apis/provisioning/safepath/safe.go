@@ -54,17 +54,14 @@ func IsSafe(path string) error {
 	}
 
 	parts := Split(path)
-
-	// Check for path traversal attempts first
 	for _, part := range parts {
+		// Check for path traversal attempts first
 		if part == ".." || part == "." {
 			return ErrPathTraversalAttempt
 		}
-	}
 
-	// Check for hidden files/directories in any part of the path
-	for _, part := range parts {
-		if part != "" && part[0] == '.' && part != ".." && part != "." {
+		// Check for hidden files/directories in any part of the path
+		if part == "" || IsHidden(part) {
 			return ErrHiddenPath
 		}
 	}
