@@ -100,38 +100,42 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			return nil, err
 		}
 
-		folderHierarchy[cloudmigration.DashboardDataType] = make(map[string]string, 0)
+		if resourceTypes.Has(cloudmigration.DashboardDataType) {
+			folderHierarchy[cloudmigration.DashboardDataType] = make(map[string]string, 0)
 
-		for _, dashboard := range dashs {
-			dashboard.Data.Del("id")
-			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-				Type:  cloudmigration.DashboardDataType,
-				RefID: dashboard.UID,
-				Name:  dashboard.Title,
-				Data: dashboards.SaveDashboardCommand{
-					Dashboard: dashboard.Data,
-					Overwrite: true, // currently only intended to be a push, not a sync; revisit during the preview
-					Message:   fmt.Sprintf("Created via the Grafana Cloud Migration Assistant by on-prem user \"%s\"", signedInUser.Login),
-					IsFolder:  false,
-					FolderUID: dashboard.FolderUID,
-				},
-			})
+			for _, dashboard := range dashs {
+				dashboard.Data.Del("id")
+				migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+					Type:  cloudmigration.DashboardDataType,
+					RefID: dashboard.UID,
+					Name:  dashboard.Title,
+					Data: dashboards.SaveDashboardCommand{
+						Dashboard: dashboard.Data,
+						Overwrite: true, // currently only intended to be a push, not a sync; revisit during the preview
+						Message:   fmt.Sprintf("Created via the Grafana Cloud Migration Assistant by on-prem user \"%s\"", signedInUser.Login),
+						IsFolder:  false,
+						FolderUID: dashboard.FolderUID,
+					},
+				})
 
-			folderHierarchy[cloudmigration.DashboardDataType][dashboard.UID] = dashboard.FolderUID
+				folderHierarchy[cloudmigration.DashboardDataType][dashboard.UID] = dashboard.FolderUID
+			}
 		}
 
-		folderHierarchy[cloudmigration.FolderDataType] = make(map[string]string, 0)
+		if resourceTypes.Has(cloudmigration.FolderDataType) {
+			folderHierarchy[cloudmigration.FolderDataType] = make(map[string]string, 0)
 
-		folders = sortFolders(folders)
-		for _, f := range folders {
-			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-				Type:  cloudmigration.FolderDataType,
-				RefID: f.UID,
-				Name:  f.Title,
-				Data:  f,
-			})
+			folders = sortFolders(folders)
+			for _, f := range folders {
+				migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+					Type:  cloudmigration.FolderDataType,
+					RefID: f.UID,
+					Name:  f.Title,
+					Data:  f,
+				})
 
-			folderHierarchy[cloudmigration.FolderDataType][f.UID] = f.ParentUID
+				folderHierarchy[cloudmigration.FolderDataType][f.UID] = f.ParentUID
+			}
 		}
 	}
 
