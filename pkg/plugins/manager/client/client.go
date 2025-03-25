@@ -35,7 +35,9 @@ var passthroughErrors = []error{
 	plugins.ErrPluginUnavailable,
 	plugins.ErrMethodNotImplemented,
 	plugins.ErrPluginGrpcResourceExhaustedBase,
-	plugins.ErrPluginGrpcConnectionUnavailableBase,
+	// This error is created dynamically based on the context, but the error is the same, only the public message is different
+	// So we can use context.Background() as context for the error
+	plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()),
 }
 
 type Service struct {

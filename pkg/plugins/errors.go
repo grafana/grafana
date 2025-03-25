@@ -47,19 +47,14 @@ var (
 		errutil.WithPublicMessage("The response is too large. Please try to reduce the time range or narrow down your query to return fewer data points."),
 		errutil.WithDownstream())
 
-	// ErrPluginGrpcConnectionUnavailableBase error returned when a plugin connection issue occurs.
-	// Exposed as a base error to wrap it with plugin connection issue errors.
-	ErrPluginGrpcConnectionUnavailableBase = errutil.Internal("plugin.connectionUnavailable",
-		errutil.WithPublicMessage("Data source became unavailable during request. Please try again."),
-		errutil.WithDownstream(),
-		errutil.WithDynamicPublicMessage(func(ctx context.Context) string {
-			if kv, exists := metadata.FromIncomingContext(ctx); exists {
-				sid := kv.Get("stackID")
-				// If we have stack ID, we can include a support message
-				if len(sid) > 0 {
-					return "Data source became unavailable during request. Please try again. If the problem persists, please contact customer support."
-				}
-			}
-			return "Data source became unavailable during request. Please try again."
-		}))
+	ErrPluginGrpcConnectionUnavailableBaseFn = func(ctx context.Context) errutil.Base {
+		pubMsg := "Data source became unavailable during request. Please try again."
+		if kv, exists := metadata.FromIncomingContext(ctx); exists && len(kv.Get("stackID")) > 0 {
+			pubMsg = pubMsg + " If the problem persists, please contact customer support."
+		}
+		return errutil.Internal("plugin.connectionUnavailable",
+			errutil.WithPublicMessage(pubMsg),
+			errutil.WithDownstream(),
+		)
+	}
 )
