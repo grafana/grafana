@@ -102,6 +102,102 @@ func TestChanges(t *testing.T) {
 			},
 		}, changes[0])
 	})
+
+	t.Run("keep folder with hidden files", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder/.hidden.json", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "folder/", Resource: "folders"},
+			},
+		}
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Empty(t, changes, "folder should be kept when it contains hidden files")
+	})
+
+	t.Run("keep folder with invalid hidden paths", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder/.invalid/path.json", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "folder/", Resource: "folders"},
+			},
+		}
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Empty(t, changes, "folder should be kept when it contains invalid hidden paths")
+	})
+
+	t.Run("keep folder with hidden folders", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder/.hidden/valid.json", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "folder/", Resource: "folders"},
+			},
+		}
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Empty(t, changes, "folder should be kept when it contains hidden folders")
+	})
+
+	t.Run("unhidden path from hidden file", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder/.hidden/dashboard.json", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "folder/", Resource: "folders"},
+			},
+		}
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Empty(t, changes, "hidden file should not be unhidden")
+	})
+	t.Run("hidden path to file", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "one/two/.hidden/dashboard.json", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
+		expected := []ResourceFileChange{
+			{
+				Action: repository.FileActionCreated,
+				Path:   "one/two/",
+			},
+		}
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Equal(t, expected, changes)
+	})
+	t.Run("hidden path to folder", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "one/two/.hidden/folder/", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
+		expected := []ResourceFileChange{
+			{
+				Action: repository.FileActionCreated,
+				Path:   "one/two/",
+			},
+		}
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Equal(t, expected, changes)
+	})
+	t.Run("hidden at the root", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: ".hidden/dashboard.json", Hash: "xyz", Blob: true},
+		}
+
+		target := &provisioning.ResourceList{}
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Empty(t, changes)
+	})
 }
 
 func getBase(t *testing.T) (source []repository.FileTreeEntry, target *provisioning.ResourceList) {
