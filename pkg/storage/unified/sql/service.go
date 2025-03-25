@@ -109,7 +109,16 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	server, err := ProvideSqlBackendResourceServer(nil, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics, s.features)
+	server, err := ProvideSqlBackendResourceServer(&Options{
+		Cfg:            s.cfg,
+		Tracer:         s.tracing,
+		Reg:            s.reg,
+		Authzc:         authzClient,
+		SearchOpts:     searchOptions,
+		StorageMetrics: s.storageMetrics,
+		IndexMetrics:   s.indexMetrics,
+		Features:       s.features,
+	})
 	if err != nil {
 		return err
 	}

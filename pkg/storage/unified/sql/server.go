@@ -10,7 +10,7 @@ import (
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	apiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,67 +18,72 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
-type SqlBackendResourceServer resource.ResourceServer
+type Options struct {
+	DB             infraDB.DB
+	Cfg            *setting.Cfg
+	Tracer         tracing.Tracer
+	Reg            prometheus.Registerer
+	Features       featuremgmt.FeatureToggles
+	Authzc         types.AccessClient
+	SearchOpts     resource.SearchOptions
+	StorageMetrics *resource.StorageMetrics
+	IndexMetrics   *resource.BleveIndexMetrics
+}
 
 // Creates a new ResourceServer
-func ProvideSqlBackendResourceServer(db infraDB.DB, cfg *setting.Cfg,
-	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient,
-	searchOptions resource.SearchOptions, storageMetrics *resource.StorageMetrics,
-	indexMetrics *resource.BleveIndexMetrics, features featuremgmt.FeatureToggles) (SqlBackendResourceServer, error) {
-	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
-	storageType := options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified)))
+func ProvideSqlBackendResourceServer(opts *Options) (resource.ResourceServer, error) {
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+	storageType := apiserveroptions.StorageType(apiserverCfg.Key("storage_type").MustString(string(apiserveroptions.StorageTypeUnified)))
 
-	if storageType == options.StorageTypeUnifiedGrpc {
+	if storageType == apiserveroptions.StorageTypeUnifiedGrpc {
 		return nil, nil
 	}
 
-	opts := resource.ResourceServerOptions{
-		Tracer: tracer,
+	resourceServerOpts := resource.ResourceServerOptions{
+		AccessClient: resource.NewAuthzLimitedClient(opts.Authzc, resource.AuthzOptions{Tracer: opts.Tracer, Registry: opts.Reg}),
+		Tracer:       opts.Tracer,
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg: reg,
-	}
-	if ac != nil {
-		opts.AccessClient = resource.NewAuthzLimitedClient(ac, resource.AuthzOptions{Tracer: tracer, Registry: reg})
+		Reg: opts.Reg,
 	}
 	// Support local file blob
-	if strings.HasPrefix(opts.Blob.URL, "./data/") {
-		dir := strings.Replace(opts.Blob.URL, "./data", cfg.DataPath, 1)
+	if strings.HasPrefix(resourceServerOpts.Blob.URL, "./data/") {
+		dir := strings.Replace(resourceServerOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
 		err := os.MkdirAll(dir, 0700)
 		if err != nil {
 			return nil, err
 		}
-		opts.Blob.URL = "file:///" + dir
+		resourceServerOpts.Blob.URL = "file:///" + dir
 	}
 
-	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
+	eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
 	if err != nil {
 		return nil, err
 	}
 
-	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"),
-		cfg.SectionWithEnvOverrides("resource_api"))
-	withPruner := features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
+	isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+		opts.Cfg.SectionWithEnvOverrides("resource_api"))
+	withPruner := opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
 
 	store, err := NewBackend(BackendOptions{
 		DBProvider:     eDB,
-		Tracer:         tracer,
-		Reg:            reg,
+		Tracer:         opts.Tracer,
+		Reg:            opts.Reg,
 		IsHA:           isHA,
 		withPruner:     withPruner,
-		storageMetrics: storageMetrics,
+		storageMetrics: opts.StorageMetrics,
 	})
 	if err != nil {
 		return nil, err
 	}
-	opts.Backend = store
-	opts.Diagnostics = store
-	opts.Lifecycle = store
-	opts.Search = searchOptions
-	opts.IndexMetrics = indexMetrics
+	resourceServerOpts.Backend = store
+	resourceServerOpts.Diagnostics = store
+	resourceServerOpts.Lifecycle = store
+	resourceServerOpts.Search = opts.SearchOpts
+	resourceServerOpts.IndexMetrics = opts.IndexMetrics
 
-	rs, err := resource.NewResourceServer(opts)
+	rs, err := resource.NewResourceServer(resourceServerOpts)
 	if err != nil {
 		return nil, err
 	}

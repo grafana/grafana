@@ -120,6 +120,7 @@ var wireExtsBasicSet = wire.NewSet(
 	sandbox.ProvideService,
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	wire.Struct(new(unified.Options), "*"),
+	wire.Struct(new(sql.Options), "*"),
 	search2.ProvideSearchOptions,
 	sql.ProvideSqlBackendResourceServer,
 	unified.ProvideUnifiedStorageClient,

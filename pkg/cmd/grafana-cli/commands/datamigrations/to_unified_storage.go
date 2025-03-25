@@ -198,7 +198,15 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 	if err != nil {
 		return nil, err
 	}
-	sqlBackendServer, err := sql.ProvideSqlBackendResourceServer(sqlStore, cfg, tracer, reg, ac, searchOptions, nil, nil, features)
+	sqlBackendServer, err := sql.ProvideSqlBackendResourceServer(&sql.Options{
+		DB:         sqlStore,
+		Cfg:        cfg,
+		Tracer:     tracer,
+		Reg:        reg,
+		Authzc:     ac,
+		SearchOpts: searchOptions,
+		Features:   features,
+	})
 	if err != nil {
 		return nil, err
 	}

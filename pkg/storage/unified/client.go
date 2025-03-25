@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 const resourceStoreAudience = "resourceStore"
@@ -47,7 +46,7 @@ type clientMetrics struct {
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(opts *Options, sqlBackendServer sql.SqlBackendResourceServer) (resource.ResourceClient, error) {
+func ProvideUnifiedStorageClient(opts *Options, sqlBackendServer resource.ResourceServer) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	storageType := options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified)))
@@ -82,7 +81,7 @@ func newGrpcClient(address string,
 	features featuremgmt.FeatureToggles,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	sqlBackendServer sql.SqlBackendResourceServer,
+	sqlBackendServer resource.ResourceServer,
 ) (resource.ResourceClient, error) {
 	var (
 		conn    grpc.ClientConnInterface
