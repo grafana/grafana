@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
@@ -800,4 +801,154 @@ func TestBackend_getHistory(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, expectedErr)
 	})
+}
+
+// TestBackend_getHistoryPagination tests the ordering behavior for ResourceVersionMatch_NotOlderThan
+// when using pagination, ensuring entries are returned in oldest-to-newest order.
+func TestBackend_getHistoryPagination(t *testing.T) {
+	t.Parallel()
+
+	// Common setup
+	key := &resource.ResourceKey{
+		Namespace: "ns",
+		Group:     "gr",
+		Resource:  "rs",
+		Name:      "nm",
+	}
+
+	// Create resource versions that will be returned in our test
+	versions := make([]int64, 10)
+	for i := range versions {
+		versions[i] = int64(51 + i)
+	}
+	rv51, rv52, rv53, rv54, rv55, rv56, rv57, rv58, rv59, rv60 := versions[0], versions[1], versions[2], versions[3], versions[4], versions[5], versions[6], versions[7], versions[8], versions[9]
+
+	t.Run("pagination with NotOlderThan should return entries from oldest to newest", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+
+		// Define all pages we want to test
+		pages := []struct {
+			versions []int64
+			token    *resource.ContinueToken
+		}{
+			{
+				versions: []int64{rv51, rv52, rv53, rv54},
+				token:    nil,
+			},
+			{
+				versions: []int64{rv55, rv56, rv57, rv58},
+				token: &resource.ContinueToken{
+					ResourceVersion: rv54,
+					StartOffset:     4,
+					SortAscending:   true,
+				},
+			},
+			{
+				versions: []int64{rv59, rv60},
+				token: &resource.ContinueToken{
+					ResourceVersion: rv58,
+					StartOffset:     8,
+					SortAscending:   true,
+				},
+			},
+		}
+
+		var allItems []int64
+		initialRV := rv51
+
+		// Test each page
+		for _, page := range pages {
+			req := &resource.ListRequest{
+				Options:         &resource.ListOptions{Key: key},
+				ResourceVersion: initialRV,
+				VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
+				Source:          resource.ListRequest_HISTORY,
+				Limit:           4,
+			}
+			if page.token != nil {
+				req.NextPageToken = page.token.String()
+			}
+
+			items := make([]int64, 0)
+			callback := func(iter resource.ListIterator) error {
+				for iter.Next() {
+					items = append(items, iter.ResourceVersion())
+				}
+				return nil
+			}
+
+			b.SQLMock.ExpectBegin()
+			historyRows := setupHistoryTest(b, page.versions, rv60)
+			b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").WillReturnRows(historyRows)
+			b.SQLMock.ExpectCommit()
+
+			listRv, err := b.getHistory(ctx, req, callback)
+			require.NoError(t, err)
+			require.Equal(t, rv60, listRv, "Head version should be the latest resource version (rv60)")
+			require.Equal(t, page.versions, items, "Items should be in ASC order")
+
+			allItems = append(allItems, items...)
+		}
+
+		// Verify complete sequence
+		expectedAllItems := []int64{rv51, rv52, rv53, rv54, rv55, rv56, rv57, rv58, rv59, rv60}
+		require.Equal(t, expectedAllItems, allItems)
+	})
+
+	t.Run("pagination with ResourceVersion=0 and NotOlderThan should return entries in ASC order", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+
+		req := &resource.ListRequest{
+			Options:         &resource.ListOptions{Key: key},
+			ResourceVersion: 0,
+			VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
+			Source:          resource.ListRequest_HISTORY,
+			Limit:           4,
+		}
+
+		// First batch of items we expect, in ASC order (because of NotOlderThan flag)
+		// Even with ResourceVersion=0, the order is ASC because we use SortAscending=true
+		expectedVersions := []int64{rv51, rv52, rv53, rv54}
+		items := make([]int64, 0)
+
+		callback := func(iter resource.ListIterator) error {
+			for iter.Next() {
+				items = append(items, iter.ResourceVersion())
+			}
+			return nil
+		}
+
+		b.SQLMock.ExpectBegin()
+		historyRows := setupHistoryTest(b, expectedVersions, rv60)
+		b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").WillReturnRows(historyRows)
+		b.SQLMock.ExpectCommit()
+
+		listRv, err := b.getHistory(ctx, req, callback)
+		require.NoError(t, err)
+		require.Equal(t, rv60, listRv, "Head version should be the latest resource version (rv60)")
+		require.Equal(t, expectedVersions, items, "Items should be in ASC order even with ResourceVersion=0")
+	})
+}
+
+// setupHistoryTest creates the necessary mock expectations for a history test
+func setupHistoryTest(b testBackend, resourceVersions []int64, latestRV int64) *sqlmock.Rows {
+	// Expect fetch latest RV call - set to the highest resource version
+	latestRVRows := sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).
+		AddRow(latestRV, 0)
+	b.SQLMock.ExpectQuery("SELECT .* FROM resource_version").WillReturnRows(latestRVRows)
+
+	// Create the mock rows for the history items
+	cols := []string{"resource_version", "namespace", "name", "folder", "value"}
+	historyRows := sqlmock.NewRows(cols)
+	for _, rv := range resourceVersions {
+		historyRows.AddRow(
+			rv,                               // resource_version
+			"ns",                             // namespace
+			"nm",                             // name
+			"folder",                         // folder
+			[]byte(fmt.Sprintf("rv-%d", rv)), // value
+		)
+	}
+
+	return historyRows
 }
