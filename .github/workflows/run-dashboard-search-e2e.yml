@@ -3,7 +3,7 @@ name: Run dashboard search e2e
 on:
   push:
     branches:
-      - main
+      - search-e2e
   pull_request:
     branches:
       - '**' 
