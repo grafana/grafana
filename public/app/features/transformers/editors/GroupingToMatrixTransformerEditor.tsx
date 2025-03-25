@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
@@ -79,7 +80,10 @@ export const GroupingToMatrixTransformerEditor = ({
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Column" labelWidth={8}>
+        <InlineField
+          label={t('transformers.grouping-to-matrix-transformer-editor.label-column', 'Column')}
+          labelWidth={8}
+        >
           <Select
             options={[...fieldNames, ...variables]}
             value={options.columnField}
@@ -87,10 +91,13 @@ export const GroupingToMatrixTransformerEditor = ({
             isClearable
           />
         </InlineField>
-        <InlineField label="Row" labelWidth={8}>
+        <InlineField label={t('transformers.grouping-to-matrix-transformer-editor.label-row', 'Row')} labelWidth={8}>
           <Select options={[...fieldNames, ...variables]} value={options.rowField} onChange={onSelectRow} isClearable />
         </InlineField>
-        <InlineField label="Cell Value" labelWidth={10}>
+        <InlineField
+          label={t('transformers.grouping-to-matrix-transformer-editor.label-cell-value', 'Cell value')}
+          labelWidth={10}
+        >
           <Select
             options={[...fieldNames, ...variables]}
             value={options.valueField}
@@ -98,7 +105,7 @@ export const GroupingToMatrixTransformerEditor = ({
             isClearable
           />
         </InlineField>
-        <InlineField label="Empty Value">
+        <InlineField label={t('transformers.grouping-to-matrix-transformer-editor.label-empty-value', 'Empty value')}>
           <Select options={specialValueOptions} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />
         </InlineField>
       </InlineFieldRow>

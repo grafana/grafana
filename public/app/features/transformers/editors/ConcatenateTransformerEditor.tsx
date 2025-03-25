@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 import { ConcatenateFrameNameMode, ConcatenateTransformerOptions } from '@grafana/data/internal';
 import { InlineField, Input, Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -54,7 +55,7 @@ export class ConcatenateTransformerEditor extends PureComponent<ConcatenateTrans
 
     return (
       <div>
-        <InlineField label="Name" labelWidth={16} grow>
+        <InlineField label={t('transformers.concatenate-transformer-editor.label-name', 'Name')} labelWidth={16} grow>
           <Select
             width={36}
             options={nameModes}
@@ -63,8 +64,17 @@ export class ConcatenateTransformerEditor extends PureComponent<ConcatenateTrans
           />
         </InlineField>
         {frameNameMode === ConcatenateFrameNameMode.Label && (
-          <InlineField label="Label" labelWidth={16} grow>
-            <Input width={36} value={options.frameNameLabel ?? ''} placeholder="frame" onChange={this.onLabelChanged} />
+          <InlineField
+            label={t('transformers.concatenate-transformer-editor.label-label', 'Label')}
+            labelWidth={16}
+            grow
+          >
+            <Input
+              width={36}
+              value={options.frameNameLabel ?? ''}
+              placeholder={t('transformers.concatenate-transformer-editor.placeholder-frame', 'Frame')}
+              onChange={this.onLabelChanged}
+            />
           </InlineField>
         )}
       </div>

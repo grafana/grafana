@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { NetworkGraphModal } from './NetworkGraphModal';
 import { UsagesToNetwork } from './utils';
@@ -35,7 +36,7 @@ export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
               showModal();
             }}
             name="code-branch"
-            tooltip="Show usages"
+            tooltip={t('variables.variable-usages-button.tooltip-show-usages', 'Show usages')}
           />
         );
       }}

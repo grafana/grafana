@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { DataFrame, EnumFieldConfig, GrafanaTheme2 } from '@grafana/data';
 import { ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { Button, HorizontalGroup, InlineFieldRow, useStyles2, VerticalGroup } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import EnumMappingRow from './EnumMappingRow';
 
@@ -121,10 +122,12 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
     <InlineFieldRow>
       <HorizontalGroup>
         <Button size="sm" icon="plus" onClick={() => generateEnumValues()} className={styles.button}>
-          Generate enum values from data
+          <Trans i18nKey="transformers.enum-mapping-editor.generate-enum-values-from-data">
+            Generate enum values from data
+          </Trans>
         </Button>
         <Button size="sm" icon="plus" onClick={() => onAddEnumRow()} className={styles.button}>
-          Add enum value
+          <Trans i18nKey="transformers.enum-mapping-editor.add-enum-value">Add enum value</Trans>
         </Button>
       </HorizontalGroup>
 

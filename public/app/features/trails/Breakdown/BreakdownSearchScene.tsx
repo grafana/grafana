@@ -2,6 +2,7 @@ import { ChangeEvent } from 'react';
 
 import { BusEventBase } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { t } from 'app/core/internationalization';
 
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LabelBreakdownScene } from './LabelBreakdownScene';
@@ -34,7 +35,7 @@ export class BreakdownSearchScene extends SceneObjectBase<BreakdownSearchSceneSt
         value={filter}
         onChange={model.onValueFilterChange}
         onClear={model.clearValueFilter}
-        placeholder="Search for value"
+        placeholder={t('trails.breakdown-search-scene.placeholder-search-for-value', 'Search for value')}
       />
     );
   };

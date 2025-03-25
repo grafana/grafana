@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { IconButton } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { NetworkGraphModal } from './NetworkGraphModal';
 import { UsagesToNetwork } from './utils';
@@ -31,7 +32,7 @@ export const VariablesUnknownButton = ({ id, usages }: Props) => {
           <IconButton
             onClick={() => showModal()}
             name="code-branch"
-            tooltip="Show usages"
+            tooltip={t('variables.variables-unknown-button.VariablesUnknownButton-tooltip-show-usages', 'Show usages')}
             data-testid="VariablesUnknownButton"
           />
         );
