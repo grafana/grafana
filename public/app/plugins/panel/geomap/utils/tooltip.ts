@@ -2,7 +2,7 @@ import { debounce } from 'lodash';
 import { MapBrowserEvent } from 'ol';
 import { toLonLat } from 'ol/proj';
 
-import { DataFrame, DataHoverClearEvent } from '@grafana/data/src';
+import { DataFrame, DataHoverClearEvent } from '@grafana/data';
 
 import { GeomapPanel } from '../GeomapPanel';
 import { GeomapHoverPayload, GeomapLayerHover } from '../event';
