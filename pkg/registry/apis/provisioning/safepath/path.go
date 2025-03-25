@@ -13,15 +13,22 @@ import (
 var osSeparator = os.PathSeparator
 
 // Performs a [path.Clean] on the path, as well as replacing its OS separators.
+//
 // This replaces the OS separator with a slash.
 // All OSes we target (Linux, macOS, and Windows) support forward-slashes in path traversals, as such it's simpler to use the same character everywhere.
 // BSDs do as well (even though they're not a target as of writing).
+//
+// The output of a root path (i.e. absolute root or relative current dir) is always "" (empty string).
 func Clean(p string) string {
-	if osSeparator == '/' { // perf: nothing to do!
-		return path.Clean(p)
+	if osSeparator != '/' {
+		p = strings.ReplaceAll(p, string(osSeparator), "/")
 	}
 
-	return path.Clean(strings.ReplaceAll(p, string(osSeparator), "/"))
+	cleaned := path.Clean(p)
+	if cleaned == "." || cleaned == "/" {
+		return ""
+	}
+	return cleaned
 }
 
 // Join is like path.Join but preserves trailing slashes from the last element
