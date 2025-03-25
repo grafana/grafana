@@ -141,6 +141,7 @@ export function GrafanaEvaluationBehaviorStep({
     getValues,
     formState: { errors },
     control,
+    register,
   } = useFormContext<RuleFormValues>();
 
   const [group, type, isPaused, folder, evaluateEvery] = watch([
@@ -366,6 +367,26 @@ export function GrafanaEvaluationBehaviorStep({
                     />
                   )}
                   name="execErrState"
+                />
+              </Field>
+              <Field
+                label={t(
+                  'alerting.grafana-evaluation-behavior-step.label-missing-series-evaluations',
+                  'Missing series evaluations to resolve'
+                )}
+                description={t(
+                  'alerting.grafana-evaluation-behavior-step.description-missing-series-evaluations',
+                  'How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved'
+                )}
+                invalid={!!errors.missingSeriesEvalsToResolve?.message}
+                error={errors.missingSeriesEvalsToResolve?.message}
+                className={styles.inlineField}
+              >
+                <Input
+                  {...register('missingSeriesEvalsToResolve', {
+                    pattern: { value: /^\d+$/, message: 'Must be a positive integer.' },
+                  })}
+                  width={21}
                 />
               </Field>
             </>
