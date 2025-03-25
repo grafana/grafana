@@ -53,9 +53,15 @@ export class DashboardSrv {
 
   saveJSONDashboard(json: string) {
     const parsedJson = JSON.parse(json);
+    debugger;
     return getDashboardAPI().saveDashboard({
       dashboard: parsedJson,
       folderUid: this.dashboard?.meta.folderUid || parsedJson.folderUid,
+      overwrite: true,
+      message: 'Edit Dashboard JSON',
+      k8s: {
+        ...this.dashboard?.meta.k8s,
+      },
     });
   }
 

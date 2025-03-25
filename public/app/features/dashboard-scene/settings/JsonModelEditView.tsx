@@ -9,7 +9,7 @@ import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
-import { SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import {
   NameAlreadyExistsError,
@@ -25,6 +25,10 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { ObjectMeta } from 'app/features/apiserver/types';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 
 export interface JsonModelEditViewState extends DashboardEditViewState {
   jsonText: string;
@@ -60,29 +64,33 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     this.setState({ jsonText: value });
   };
 
-  public onSaveSuccess = (result: SaveDashboardResponseDTO) => {
-    const jsonModel = JSON.parse(this.state.jsonText);
+  public onSaveSuccess = async (result: SaveDashboardResponseDTO) => {
+    const jsonModel: DashboardDataDTO | DashboardV2Spec = JSON.parse(this.state.jsonText);
     const dashboard = this.getDashboard();
-    jsonModel.version = result.version;
+
     const isV2 = isV2Dashboard(jsonModel);
+    let newDashboardScene: DashboardScene;
 
-    const newDashboardScene = isV2
-      ? transformSaveModelSchemaV2ToScene(result.k8s!)
-      : transformSaveModelToScene({
-          dashboard: jsonModel,
-          meta: dashboard.state.meta,
-        });
-    const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
-
-    dashboard.pauseTrackingChanges();
     if (isV2) {
-      // For V2 dashboards, use the k8s resource returned from the backend
-      dashboard.setInitialSaveModel(result.k8s?.spec, result.k8s?.metadata);
+      const dto = await getDashboardAPI('v2').getDashboardDTO(result.uid);
+      newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+
+      dashboard.pauseTrackingChanges();
+      dashboard.setInitialSaveModel(dto.spec, dto.metadata);
+      dashboard.setState(newState);
     } else {
-      // For V1 dashboards, use the JSON as sent
+      jsonModel.version = result.version;
+      newDashboardScene = transformSaveModelToScene({
+        dashboard: jsonModel,
+        meta: dashboard.state.meta,
+      });
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+
+      dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(jsonModel, dashboard.state.meta);
+      dashboard.setState(newState);
     }
-    dashboard.setState(newState);
 
     this.setState({ jsonText: this.getJsonText() });
   };
@@ -102,11 +110,16 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
         folderUid: dashboard.state.meta.folderUid,
         overwrite,
         rawDashboardJSON: JSON.parse(model.state.jsonText),
+        k8s: {
+          ...dashboard.state.meta.k8s,
+          resourceVersion: undefined,
+          generation: undefined,
+        },
       });
 
       setIsSaving(true);
       if (result.status === 'success') {
-        model.onSaveSuccess(result);
+        await model.onSaveSuccess(result);
         setIsSaving(false);
       } else {
         setIsSaving(true);

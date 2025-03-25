@@ -1,7 +1,7 @@
 import { DataQuery } from '@grafana/data';
 import { Dashboard, DataSourceRef } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { ObjectMeta } from 'app/features/apiserver/types';
+import { ObjectMeta, Resource } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { ProvisioningPreview } from 'app/features/provisioning/types';
@@ -39,7 +39,6 @@ export interface SaveDashboardResponseDTO {
   uid: string;
   url: string;
   version: number;
-  k8s?: DashboardWithAccessInfo<DashboardV2Spec>;
 }
 
 export interface DashboardMeta {

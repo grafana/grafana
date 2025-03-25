@@ -157,7 +157,6 @@ export class K8sDashboardV2API
       status: 'success',
       url,
       slug: '',
-      k8s: v,
     };
   }
 }

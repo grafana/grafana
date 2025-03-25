@@ -7,7 +7,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
-import { getDashboardSrv } from '../../services/DashboardSrv';
+import { getDashboardAPI } from '../../api/dashboard_api';
 
 import { SettingsPageProps } from './types';
 
@@ -17,7 +17,17 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
   const pageNav = sectionNav.node.parentItem;
 
   const onClick = async () => {
-    await getDashboardSrv().saveJSONDashboard(dashboardJson);
+    await getDashboardAPI().saveDashboard({
+      dashboard: JSON.parse(dashboardJson),
+      message: 'Edit Dashboard JSON',
+      folderUid: dashboard.meta.folderUid,
+      overwrite: true,
+      k8s: {
+        ...dashboard.meta.k8s,
+        resourceVersion: undefined,
+        generation: undefined,
+      },
+    });
     dashboardWatcher.reloadPage();
   };
 
