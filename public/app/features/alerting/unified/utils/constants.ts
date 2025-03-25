@@ -1,4 +1,4 @@
-import type { ReservedAnnotation } from '@grafana/alerting/types';
+import type { ReservedAnnotation } from '@grafana/alerting/internal';
 
 export enum Annotation {
   description = 'description',

@@ -1,6 +1,6 @@
 import { expectNotAssignable, expectType } from 'tsd';
 
-import { Response, ErrorResponse, SuccessResponse } from './api';
+import { Response, ErrorResponse, SuccessResponse } from '../common/api';
 
 test('success response', () => {
   const response = {
