@@ -1051,12 +1051,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`profiler\`)", "6"],
       [0, 0, 0, "Do not re-export imported variable (\`updateLegendValues\`)", "7"]
     ],
-    "public/app/core/internationalization/index.test.tsx:5381": [
-      [0, 0, 0, "\'@grafana/runtime/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
-    "public/app/core/internationalization/index.tsx:5381": [
-      [0, 0, 0, "\'@grafana/runtime/src/unstable\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/core/navigation/GrafanaRouteError.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
