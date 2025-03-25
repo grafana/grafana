@@ -6,7 +6,10 @@ export default function ConnectPage() {
   return (
     <Page
       navId="provisioning"
-      pageNav={{ text: 'Connect to repository', subTitle: 'Connect to a repository to manage your resources' }}
+      pageNav={{
+        text: 'Connect to external storage',
+        subTitle: 'Connect to an external storage to manage your resources',
+      }}
     >
       <Page.Contents>
         <ProvisioningWizard />
