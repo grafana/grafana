@@ -265,7 +265,7 @@ export class V2DashboardSerializer
       }
     });
 
-    // initialize variables
+    // initialize autossigned variable ds references map
     if (saveModel?.variables) {
       for (const variable of saveModel.variables) {
         // for query variables that dont have a ds defined add them to the list
