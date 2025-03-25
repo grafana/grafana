@@ -37,9 +37,9 @@ jobs:
         with:
           runTests: false
       - name: Run dashboard search e2e mode0
-        run: 
-         - cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode0.ini ${{ github.workspace }}/grafana-server/custom.ini
-         - yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
+        run: |
+          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode0.ini ${{ github.workspace }}/grafana-server/custom.ini
+          yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
       
       - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
         if: failure()
