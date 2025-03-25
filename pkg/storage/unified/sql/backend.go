@@ -525,6 +525,10 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"List")
 	defer span.End()
 
+	if err := MigrateVersionMatch(req, b.log); err != nil {
+		return 0, err
+	}
+
 	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
 		return 0, fmt.Errorf("missing group or resource")
 	}
@@ -733,10 +737,6 @@ func MigrateVersionMatch(req *resource.ListRequest, logger log.Logger) error {
 
 // getHistory fetches the resources from the resource table.
 func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	if err := MigrateVersionMatch(req, b.log); err != nil {
-		return 0, err
-	}
-
 	listReq := sqlGetHistoryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Key:         req.Options.Key,
