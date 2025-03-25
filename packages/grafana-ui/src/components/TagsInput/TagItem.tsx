@@ -12,20 +12,20 @@ interface Props {
   name: string;
   disabled?: boolean;
   onRemove: (tag: string) => void;
-  useThemeColors?: boolean;
+  disableColoredTags?: boolean;
 }
 
 /**
  * @internal
  * Only used internally by TagsInput
  * */
-export const TagItem = ({ name, disabled, onRemove, useThemeColors }: Props) => {
+export const TagItem = ({ name, disabled, onRemove, disableColoredTags }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   // Use theme colors or random colors based on name
   const tagStyle = useMemo(() => {
-    if (useThemeColors) {
+    if (disableColoredTags) {
       return {
         backgroundColor: theme.colors.background.secondary,
         borderColor: theme.components.input.borderColor,
@@ -35,7 +35,7 @@ export const TagItem = ({ name, disabled, onRemove, useThemeColors }: Props) => 
 
     const { color, borderColor } = getTagColorsFromName(name);
     return { backgroundColor: color, borderColor };
-  }, [name, useThemeColors, theme]);
+  }, [name, disableColoredTags, theme]);
 
   return (
     <li className={styles.itemStyle} style={tagStyle}>

@@ -25,8 +25,8 @@ export interface Props {
   addOnBlur?: boolean;
   /** Toggle invalid state */
   invalid?: boolean;
-  /** Use theme colors instead of random colors for tags */
-  useThemeColors?: boolean;
+  /** Disable colored tags and use theme colors instead */
+  disableColoredTags?: boolean;
 }
 
 export const TagsInput = ({
@@ -39,7 +39,7 @@ export const TagsInput = ({
   addOnBlur,
   invalid,
   id,
-  useThemeColors,
+  disableColoredTags,
 }: Props) => {
   const [newTagName, setNewTagName] = useState('');
   const styles = useStyles2(getStyles);
@@ -99,7 +99,13 @@ export const TagsInput = ({
       {tags?.length > 0 && (
         <ul className={styles.tags}>
           {tags.map((tag) => (
-            <TagItem key={tag} name={tag} onRemove={onRemove} disabled={disabled} useThemeColors={useThemeColors} />
+            <TagItem
+              key={tag}
+              name={tag}
+              onRemove={onRemove}
+              disabled={disabled}
+              disableColoredTags={disableColoredTags}
+            />
           ))}
         </ul>
       )}
