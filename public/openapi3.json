@@ -7822,6 +7822,9 @@
           "isExternallySynced": {
             "type": "boolean"
           },
+          "isProvisioned": {
+            "type": "boolean"
+          },
           "lastSeenAt": {
             "format": "date-time",
             "type": "string"
@@ -11312,6 +11315,9 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          },
+          "userUID": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -12438,6 +12444,9 @@
           "isGrafanaAdminExternallySynced": {
             "type": "boolean"
           },
+          "isProvisioned": {
+            "type": "boolean"
+          },
           "login": {
             "type": "string"
           },
@@ -12483,6 +12492,9 @@
             "type": "boolean"
           },
           "isDisabled": {
+            "type": "boolean"
+          },
+          "isProvisioned": {
             "type": "boolean"
           },
           "lastSeenAt": {

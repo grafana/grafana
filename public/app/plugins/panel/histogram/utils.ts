@@ -1,8 +1,9 @@
-import { DataFrame, FieldType } from '@grafana/data';
 import {
   isHistogramFrameBucketMinFieldName,
   isHistogramFrameBucketMaxFieldName,
-} from '@grafana/data/src/transformations/transformers/histogram';
+  DataFrame,
+  FieldType,
+} from '@grafana/data';
 
 export function originalDataHasHistogram(frames?: DataFrame[]): boolean {
   if (frames?.length !== 1) {
