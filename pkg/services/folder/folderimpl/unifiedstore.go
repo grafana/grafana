@@ -320,7 +320,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		if f == nil {
 			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
 		}
-		if q.WithFullpath || q.WithFullpathUIDs {
+		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
 			parents, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: q.OrgID})
 			if err != nil {
 				return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)

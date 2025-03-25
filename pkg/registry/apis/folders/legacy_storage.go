@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -103,6 +104,11 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		// also need to update the paging token so the continue token is correct
 		paging.limit = options.Limit
 		paging.page = 1
+	}
+
+	if user.GetOrgRole() == org.RoleAdmin {
+		query.WithFullpath = true
+		query.WithFullpathUIDs = true
 	}
 
 	hits, err := s.service.GetFoldersLegacy(ctx, query)
