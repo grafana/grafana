@@ -32,9 +32,11 @@ refs:
 
 # Text
 
-Text visualizations enable you to directly include text or HTML in your dashboards. This can be used to add contextual information and descriptions or embed complex HTML.
+Text visualizations let you include text or HTML in your dashboards.
+This can be used to add contextual information and descriptions or embed complex HTML.
+You can include [variables](ref:variables) in the content, which are expanded for display.
 
-For example, if you want to display important links to your dashboard, you can use a text visualization to add these links:
+For example, if you want to display important links on your dashboard, you can use a text visualization to add these links:
 
 {{< figure src="/static/img/docs/text-panel/text-panel.png" max-width="1025px" alt="A text panel showing important links" >}}
 
@@ -68,9 +70,3 @@ Use the following options to refine your text visualization.
 | Show mini map | Displays a small outline of the embedded text in the panel preview when you choose **Code** as your text mode. |
 
 <!-- prettier-ignore-end -->
-
-<!--
-## Variables ??
-
-[Variables](ref:variables) in the content will be expanded for display.
--->
