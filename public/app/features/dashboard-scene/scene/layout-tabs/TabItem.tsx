@@ -95,6 +95,10 @@ export class TabItem
     this._getParentLayout().addTabAfter(this);
   }
 
+  public onAddTab() {
+    this._getParentLayout().addNewTab();
+  }
+
   public onMoveLeft() {
     this._getParentLayout().moveTabLeft(this);
   }

@@ -10,21 +10,21 @@ const migrateInstance: ModeOption = {
   target: 'instance',
   operation: 'migrate',
   label: 'Migrate instance to repository',
-  description: 'Save all Grafana resources to repository',
+  description: 'Save all Grafana resources in the repository',
 };
 
 const pullInstance: ModeOption = {
   target: 'instance',
   operation: 'pull',
   label: 'Pull from repository to instance',
-  description: 'Pull resources from repository into this Grafana instance',
+  description: 'Pull resources from the repository into this Grafana instance',
 };
 
 const pullFolder: ModeOption = {
   target: 'folder',
   operation: 'pull',
   label: 'Pull from repository to folder',
-  description: 'Pull repository resources into a specific folder',
+  description: 'Pull repository resources into a repository-managed Grafana folder',
 };
 
 function getDisabledReason(action: ModeOption, resourceCount: number, folderConnected?: boolean) {
@@ -80,7 +80,7 @@ export function getState(
 
   const state: SystemState = {
     resourceCount,
-    resourceCountString: counts.join(','),
+    resourceCountString: counts.join(',\n'),
     fileCount,
     actions: [],
     disabled: [],
