@@ -61,7 +61,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   }, [inputValue]);
 
   // Handle async options and the 'All' option
-  const { options: baseOptions, updateOptions, asyncLoading } = useOptions(props.options, createCustomValue);
+  const {
+    options: baseOptions,
+    updateOptions,
+    asyncLoading,
+    asyncError,
+  } = useOptions(props.options, createCustomValue);
   const options = useMemo(() => {
     // Only add the 'All' option if there's more than 1 option
     const addAllOption = enableAllOption && baseOptions.length > 1;
@@ -327,6 +332,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               getItemProps={getItemProps}
               enableAllOption={enableAllOption}
               isMultiSelect={true}
+              error={asyncError}
             />
           )}
         </div>

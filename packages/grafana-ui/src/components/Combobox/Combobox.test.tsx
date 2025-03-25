@@ -514,11 +514,9 @@ describe('Combobox', () => {
       });
 
       const customItem = screen.getByRole('option');
-      const customValue = customItem.getElementsByTagName('span')[0].textContent;
-      const customDescription = customItem.getElementsByTagName('span')[1].textContent;
-      expect(customItem).toBeInTheDocument();
-      expect(customValue).toBe('fir');
-      expect(customDescription).toBe('Use custom value');
+
+      expect(customItem).toHaveTextContent('fir');
+      expect(customItem).toHaveTextContent('Use custom value');
     });
 
     it('should display message when there is an error loading async options', async () => {

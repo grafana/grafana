@@ -136,7 +136,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     groupStartIndices,
     updateOptions,
     asyncLoading,
-    // asyncError,
+    asyncError,
   } = useOptions(props.options, createCustomValue);
   const isAsync = typeof allOptions === 'function';
 
@@ -376,6 +376,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               selectedItems={selectedItem ? [selectedItem] : []}
               scrollRef={scrollRef}
               getItemProps={getItemProps}
+              error={asyncError}
             />
           )}
         </div>
