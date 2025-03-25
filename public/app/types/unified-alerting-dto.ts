@@ -122,6 +122,7 @@ interface PromRuleDTOBase {
   evaluationTime?: number;
   lastEvaluation?: string;
   lastError?: string;
+  uid?: string;
 }
 
 export interface PromAlertingRuleDTO extends PromRuleDTOBase {

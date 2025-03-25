@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"cloud.google.com/go/spanner"
@@ -15,10 +14,7 @@ import (
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
 	"github.com/grafana/dskit/concurrency"
-	"google.golang.org/api/option"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"xorm.io/core"
 
 	"xorm.io/xorm"
@@ -147,6 +143,9 @@ func (s *SpannerDialect) TruncateDBTables(engine *xorm.Engine) error {
 		switch table.Name {
 		case "":
 			continue
+		case "autoincrement_sequences":
+			// Don't delete sequence number for migration_log.id column.
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE name <> 'migration_log:id'", s.Quote(table.Name)))
 		case "migration_log":
 			continue
 		case "dashboard_acl":
@@ -173,12 +172,15 @@ func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 
 	// Collect all DROP statements.
 	var statements []string
-	for _, table := range tables {
-		// Ignore these tables used by Unified storage.
-		if table.Name == "resource" || table.Name == "resource_blob" || table.Name == "resource_history" {
-			continue
-		}
+	changeStreams, err := s.findChangeStreams(engine)
+	if err != nil {
+		return err
+	}
+	for _, cs := range changeStreams {
+		statements = append(statements, fmt.Sprintf("DROP CHANGE STREAM `%s`", cs))
+	}
 
+	for _, table := range tables {
 		// Indexes must be dropped first, otherwise dropping tables fails.
 		for _, index := range table.Indexes {
 			if !index.IsRegular {
@@ -288,7 +290,7 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 		return err
 	}
 
-	opts := SpannerConnectorConfigToClientOptions(cfg)
+	opts := xorm.SpannerConnectorConfigToClientOptions(cfg)
 
 	databaseAdminClient, err := database.NewDatabaseAdminClient(ctx, opts...)
 	if err != nil {
@@ -313,28 +315,27 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 	return nil
 }
 
-// SpannerConnectorConfigToClientOptions is adapted from https://github.com/googleapis/go-sql-spanner/blob/main/driver.go#L341-L477, from version 1.11.1.
-func SpannerConnectorConfigToClientOptions(connectorConfig spannerdriver.ConnectorConfig) []option.ClientOption {
-	var opts []option.ClientOption
-	if connectorConfig.Host != "" {
-		opts = append(opts, option.WithEndpoint(connectorConfig.Host))
-	}
-	if strval, ok := connectorConfig.Params["credentials"]; ok {
-		opts = append(opts, option.WithCredentialsFile(strval))
-	}
-	if strval, ok := connectorConfig.Params["credentialsjson"]; ok {
-		opts = append(opts, option.WithCredentialsJSON([]byte(strval)))
-	}
-	if strval, ok := connectorConfig.Params["useplaintext"]; ok {
-		if val, err := strconv.ParseBool(strval); err == nil && val {
-			opts = append(opts,
-				option.WithGRPCDialOption(grpc.WithTransportCredentials(insecure.NewCredentials())),
-				option.WithoutAuthentication())
-		}
-	}
-	return opts
-}
-
 func (s *SpannerDialect) UnionDistinct() string {
 	return "UNION DISTINCT"
+}
+
+func (s *SpannerDialect) findChangeStreams(engine *xorm.Engine) ([]string, error) {
+	var result []string
+	query := `SELECT c.CHANGE_STREAM_NAME
+	FROM INFORMATION_SCHEMA.CHANGE_STREAMS AS C
+	WHERE C.CHANGE_STREAM_CATALOG=''
+	AND C.CHANGE_STREAM_SCHEMA=''`
+	rows, err := engine.DB().Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		result = append(result, name)
+	}
+	return result, nil
 }

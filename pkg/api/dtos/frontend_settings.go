@@ -154,20 +154,21 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 }
 
 type FrontendSettingsDTO struct {
-	DefaultDatasource  string                           `json:"defaultDatasource"`
-	Datasources        map[string]plugins.DataSourceDTO `json:"datasources"`
-	MinRefreshInterval string                           `json:"minRefreshInterval"`
-	Panels             map[string]plugins.PanelDTO      `json:"panels"`
-	Apps               map[string]*plugins.AppDTO       `json:"apps"`
-	AppUrl             string                           `json:"appUrl"`
-	AppSubUrl          string                           `json:"appSubUrl"`
-	AllowOrgCreate     bool                             `json:"allowOrgCreate"`
-	AuthProxyEnabled   bool                             `json:"authProxyEnabled"`
-	LdapEnabled        bool                             `json:"ldapEnabled"`
-	JwtHeaderName      string                           `json:"jwtHeaderName"`
-	JwtUrlLogin        bool                             `json:"jwtUrlLogin"`
-	LiveEnabled        bool                             `json:"liveEnabled"`
-	AutoAssignOrg      bool                             `json:"autoAssignOrg"`
+	DefaultDatasource    string                           `json:"defaultDatasource"`
+	Datasources          map[string]plugins.DataSourceDTO `json:"datasources"`
+	MinRefreshInterval   string                           `json:"minRefreshInterval"`
+	Panels               map[string]plugins.PanelDTO      `json:"panels"`
+	Apps                 map[string]*plugins.AppDTO       `json:"apps"`
+	AppUrl               string                           `json:"appUrl"`
+	AppSubUrl            string                           `json:"appSubUrl"`
+	AllowOrgCreate       bool                             `json:"allowOrgCreate"`
+	AuthProxyEnabled     bool                             `json:"authProxyEnabled"`
+	LdapEnabled          bool                             `json:"ldapEnabled"`
+	JwtHeaderName        string                           `json:"jwtHeaderName"`
+	JwtUrlLogin          bool                             `json:"jwtUrlLogin"`
+	LiveEnabled          bool                             `json:"liveEnabled"`
+	LiveMessageSizeLimit int                              `json:"liveMessageSizeLimit"`
+	AutoAssignOrg        bool                             `json:"autoAssignOrg"`
 
 	VerifyEmailEnabled  bool `json:"verifyEmailEnabled"`
 	SigV4AuthEnabled    bool `json:"sigV4AuthEnabled"`
@@ -228,7 +229,6 @@ type FrontendSettingsDTO struct {
 	RendererDefaultImageWidth        int                            `json:"rendererDefaultImageWidth"`
 	RendererDefaultImageHeight       int                            `json:"rendererDefaultImageHeight"`
 	RendererDefaultImageScale        float64                        `json:"rendererDefaultImageScale"`
-	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
 	Http2Enabled                     bool                           `json:"http2Enabled"`
 	GrafanaJavascriptAgent           setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
 	PluginCatalogURL                 string                         `json:"pluginCatalogURL"`
@@ -269,9 +269,8 @@ type FrontendSettingsDTO struct {
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
 
-	CloudMigrationIsTarget       bool   `json:"cloudMigrationIsTarget"`
-	CloudMigrationFeedbackURL    string `json:"cloudMigrationFeedbackURL"`
-	CloudMigrationPollIntervalMs int    `json:"cloudMigrationPollIntervalMs"`
+	CloudMigrationIsTarget       bool `json:"cloudMigrationIsTarget"`
+	CloudMigrationPollIntervalMs int  `json:"cloudMigrationPollIntervalMs"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 

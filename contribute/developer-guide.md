@@ -19,8 +19,13 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 brew install git
 brew install go
 brew install node@22
-brew install corepack
+```
+
+In the repository enable and install yarn via corepack
+
+```
 corepack enable
+corepack install
 ```
 
 ### Windows

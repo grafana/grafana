@@ -554,6 +554,7 @@ export {
   type PluginExtensionFunction,
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
+  type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,

@@ -70,9 +70,12 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DropZonePlaceholder } from './layout-manager/DropZonePlaceholder';
+import { LayoutOrchestrator } from './layout-manager/LayoutOrchestrator';
+import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
-import { LayoutParent } from './types/LayoutParent';
+import { isLayoutParent, LayoutParent } from './types/LayoutParent';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -105,8 +108,6 @@ export interface DashboardSceneState extends SceneObjectState {
   controls?: DashboardControls;
   /** True when editing */
   isEditing?: boolean;
-  /** Controls the visibility of hidden elements like row headers */
-  showHiddenElements?: boolean;
   /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */
@@ -134,6 +135,8 @@ export interface DashboardSceneState extends SceneObjectState {
   /** options pane */
   editPane: DashboardEditPane;
   scopesBridge: SceneScopesBridge | undefined;
+  /** Manages dragging/dropping of layout items */
+  layoutOrchestrator: LayoutOrchestrator;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -169,10 +172,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   protected _renderBeforeActivation = true;
 
-  private _serializer: DashboardSceneSerializerLike<
+  public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
     DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   >;
+
+  private _layoutRestorer = new LayoutRestorer();
 
   public constructor(state: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
     super({
@@ -185,9 +190,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       ...state,
       editPane: new DashboardEditPane(),
       scopesBridge: config.featureToggles.scopeFilters ? new SceneScopesBridge({}) : undefined,
+      layoutOrchestrator: new LayoutOrchestrator({
+        placeholder: new DropZonePlaceholder({ top: 0, left: 0, width: 0, height: 0 }),
+      }),
     });
 
-    this._serializer =
+    this.serializer =
       serializerVersion === 'v2' ? getDashboardSceneSerializer('v2') : getDashboardSceneSerializer('v1');
 
     this._changeTracker = new DashboardSceneChangeTracker(this);
@@ -260,7 +268,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
-    this.setState({ isEditing: true, showHiddenElements: true });
+    this.setState({ isEditing: true });
 
     // Propagate change edit mode change to children
     this.state.body.editModeChanged?.(true);
@@ -272,7 +280,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   };
 
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
-    this._serializer.onSaveComplete(saveModel, result);
+    this.serializer.onSaveComplete(saveModel, result);
 
     this._changeTracker.stopTrackingChanges();
 
@@ -345,10 +353,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     if (restoreInitialState) {
       //  Restore initial state and disable editing
-      this.setState({ ...this._initialState, isEditing: false, showHiddenElements: false });
+      this.setState({ ...this._initialState, isEditing: false });
     } else {
       // Do not restore
-      this.setState({ isEditing: false, showHiddenElements: false });
+      this.setState({ isEditing: false });
     }
 
     // if we are in edit panel, we need to onDiscard()
@@ -365,8 +373,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public canDiscard() {
     return this._initialState !== undefined;
   }
-
-  public onToggleHiddenElements = () => this.setState({ showHiddenElements: !this.state.showHiddenElements });
 
   public pauseTrackingChanges() {
     this._changeTracker.stopTrackingChanges();
@@ -490,6 +496,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.onEnterEditMode();
     }
 
+    const selectedObject = this.state.editPane.getSelection();
+    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
+      const layout = selectedObject.getLayout();
+      layout.addPanel(vizPanel);
+      return;
+    }
+
     // Add panel to layout
     this.state.body.addPanel(vizPanel);
   }
@@ -599,10 +612,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onCreateNewRow() {
+    const selectedObject = this.state.editPane.getSelection();
+    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
+      const layout = selectedObject.getLayout();
+      return addNewRowTo(layout);
+    }
+
     return addNewRowTo(this.state.body);
   }
 
   public onCreateNewTab() {
+    const selectedObject = this.state.editPane.getSelection();
+    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
+      const layout = selectedObject.getLayout();
+      return addNewTabTo(layout);
+    }
+
     return addNewTabTo(this.state.body);
   }
 
@@ -613,8 +638,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ body: layout });
-    layout.activateRepeaters?.();
+    this.setState({ body: this._layoutRestorer.getLayout(layout, this.state.body) });
+    this.state.body.activateRepeaters?.();
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -662,11 +687,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public getInitialSaveModel() {
-    return this._serializer.initialSaveModel;
+    return this.serializer.initialSaveModel;
   }
 
   public getSnapshotUrl = () => {
-    return this._serializer.getSnapshotUrl();
+    return this.serializer.getSnapshotUrl();
   };
 
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
@@ -676,26 +701,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveModel?: Dashboard | DashboardV2Spec,
     meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   ): void {
-    this._serializer.initializeMapping(saveModel);
+    this.serializer.initializeElementMapping(saveModel);
+    this.serializer.initializeDSReferencesMapping(saveModel);
     const sortedModel = sortedDeepCloneWithoutNulls(saveModel);
-    this._serializer.initialSaveModel = sortedModel;
-    this._serializer.metadata = meta;
+    this.serializer.initialSaveModel = sortedModel;
+    this.serializer.metadata = meta;
   }
 
   public getTrackingInformation() {
-    return this._serializer.getTrackingInformation(this);
-  }
-
-  public getPanelIdForElement(elementId: string) {
-    return this._serializer.getPanelIdForElement(elementId);
-  }
-
-  public getElementPanelMapping() {
-    return this._serializer.getElementPanelMapping();
-  }
-
-  public getElementIdentifierForPanel(panelId: number) {
-    return this._serializer.getElementIdForPanel(panelId);
+    return this.serializer.getTrackingInformation(this);
   }
 
   public async onDashboardDelete() {
@@ -740,15 +754,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   getSaveModel(): Dashboard | DashboardV2Spec {
-    return this._serializer.getSaveModel(this);
+    return this.serializer.getSaveModel(this);
   }
 
   getSaveAsModel(options: SaveDashboardAsOptions): Dashboard | DashboardV2Spec {
-    return this._serializer.getSaveAsModel(this, options);
+    return this.serializer.getSaveAsModel(this, options);
   }
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
-    return this._serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
+    return this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
   }
 
   getManagerKind(): ManagerKind | undefined {
@@ -760,6 +774,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   isManagedRepository() {
+    if (!config.featureToggles.provisioning) {
+      return false;
+    }
     return Boolean(this.getManagerKind() === ManagerKind.Repo);
   }
 
