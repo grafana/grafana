@@ -196,7 +196,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
               <Trans i18nKey="annotations.annotation-field-mapper.from">From</Trans>
             </th>
             <th>
-              <Trans i18nKey="annotations.annotation-field-mapper.first-value">First Value</Trans>
+              <Trans i18nKey="annotations.annotation-field-mapper.first-value">First value</Trans>
             </th>
           </tr>
         </thead>

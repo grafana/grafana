@@ -52,7 +52,7 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
             <Trans i18nKey="plugins.version-list.last-updated">Last updated</Trans>
           </th>
           <th>
-            <Trans i18nKey="plugins.version-list.grafana-dependency">Grafana Dependency</Trans>
+            <Trans i18nKey="plugins.version-list.grafana-dependency">Grafana dependency</Trans>
           </th>
         </tr>
       </thead>

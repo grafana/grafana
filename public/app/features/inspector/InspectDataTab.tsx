@@ -260,7 +260,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     if (!dataFrames || !dataFrames.length) {
       return (
         <div>
-          <Trans i18nKey="inspector.inspect-data-tab.no-data">No Data</Trans>
+          <Trans i18nKey="inspector.inspect-data-tab.no-data">No data</Trans>
         </div>
       );
     }

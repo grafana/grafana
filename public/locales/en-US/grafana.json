@@ -885,7 +885,7 @@
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Annotation",
-      "first-value": "First Value",
+      "first-value": "First value",
       "from": "From"
     },
     "empty-state": {
@@ -2961,7 +2961,7 @@
   },
   "inspector": {
     "inspect-data-tab": {
-      "no-data": "No Data"
+      "no-data": "No data"
     },
     "inspect-jsontab": {
       "apply": "Apply",
@@ -4346,7 +4346,7 @@
       "text-installed": "Installed"
     },
     "version-list": {
-      "grafana-dependency": "Grafana Dependency",
+      "grafana-dependency": "Grafana dependency",
       "last-updated": "Last updated",
       "no-version-history-was-found": "No version history was found.",
       "version": "Version"
