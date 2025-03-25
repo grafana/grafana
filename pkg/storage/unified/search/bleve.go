@@ -159,7 +159,7 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	var index bleve.Index
 
 	build := true
-	mapper, err := getBleveMappings(fields)
+	mapper, err := GetBleveMappings(fields)
 	if err != nil {
 		return nil, err
 	}
@@ -660,8 +660,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		}
 	}
 
-	// Add a text query
-	if req.Query != "" && req.Query != "*" {
+	if len(req.Query) > 1 && strings.Contains(req.Query, "*") {
+		// wildcard query is expensive - should be used with caution
+		wildcard := bleve.NewWildcardQuery(req.Query)
+		queries = append(queries, wildcard)
+	}
+
+	if req.Query != "" && !strings.Contains(req.Query, "*") {
+		// Add a text query
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
 
 		// There are multiple ways to match the query string to documents. The following queries are ordered by priority:
@@ -789,6 +795,11 @@ var textSortFields = map[string]string{
 
 const lowerCase = "phrase"
 
+// termField fields to use termQuery for filtering
+var termFields = []string{
+	resource.SEARCH_FIELD_TITLE,
+}
+
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
 	switch selection.Operator(req.Operator) {
@@ -797,16 +808,14 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 			return query.NewMatchAllQuery(), nil
 		}
 
-		if len(req.Values[0]) == 1 {
-			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
-			q.FieldVal = prefix + req.Key
-			return q, nil
+		if len(req.Values) == 1 {
+			filter := filterValue(req.Key, req.Values[0])
+			return newQuery(req.Key, filter, prefix), nil
 		}
 
 		conjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(filterValue(req.Key, v))
-			q.FieldVal = prefix + req.Key
+			q := newQuery(req.Key, filterValue(req.Key, v), prefix)
 			conjuncts = append(conjuncts, q)
 		}
 
@@ -822,15 +831,13 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 			return query.NewMatchAllQuery(), nil
 		}
 		if len(req.Values) == 1 {
-			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
-			q.FieldVal = prefix + req.Key
+			q := newQuery(req.Key, filterValue(req.Key, req.Values[0]), prefix)
 			return q, nil
 		}
 
 		disjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(filterValue(req.Key, v))
-			q.FieldVal = prefix + req.Key
+			q := newQuery(req.Key, filterValue(req.Key, v), prefix)
 			disjuncts = append(disjuncts, q)
 		}
 
@@ -841,7 +848,8 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(filterValue(req.Key, value)))
+			q := newQuery(req.Key, filterValue(req.Key, value), prefix)
+			mustNotQueries = append(mustNotQueries, q)
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
 
@@ -854,6 +862,55 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
 	)
+}
+
+// newQuery will create a query that will match the value or the tokens of the value
+func newQuery(key string, value string, prefix string) query.Query {
+	if value == "*" {
+		return bleve.NewMatchAllQuery()
+	}
+	if strings.Contains(value, "*") {
+		// wildcard query is expensive - should be used with caution
+		return bleve.NewWildcardQuery(value)
+	}
+	delimiter, ok := hasTerms(value)
+	if slices.Contains(termFields, key) && ok {
+		return newTermsQuery(key, value, delimiter, prefix)
+	}
+	q := bleve.NewMatchQuery(value)
+	q.SetField(prefix + key)
+	return q
+}
+
+// newTermsQuery will create a query that will match on term or tokens
+func newTermsQuery(key string, value string, delimiter string, prefix string) query.Query {
+	tokens := strings.Split(value, delimiter)
+	// won't match with ending space
+	value = strings.TrimSuffix(value, " ")
+
+	q := bleve.NewTermQuery(value)
+	q.SetField(prefix + key)
+
+	cq := newMatchAllTokensQuery(tokens, key, prefix)
+	return bleve.NewDisjunctionQuery(q, cq)
+}
+
+// newMatchAllTokensQuery will create a query that will match on all tokens
+func newMatchAllTokensQuery(tokens []string, key string, prefix string) query.Query {
+	cq := bleve.NewConjunctionQuery()
+	for _, token := range tokens {
+		_, ok := hasTerms(token)
+		if ok {
+			tq := bleve.NewTermQuery(token)
+			tq.SetField(prefix + key)
+			cq.AddQuery(tq)
+			continue
+		}
+		mq := bleve.NewMatchQuery(token)
+		mq.SetField(prefix + key)
+		cq.AddQuery(mq)
+	}
+	return cq
 }
 
 // filterValue will convert the value to lower case if the field is a phrase field
@@ -1067,4 +1124,21 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 	})
 
 	return filteringSearcher, nil
+}
+
+// hasTerms - any value that will be split into multiple tokens
+var hasTerms = func(v string) (string, bool) {
+	for _, c := range TermCharacters {
+		if strings.Contains(v, c) {
+			return c, true
+		}
+	}
+	return "", false
+}
+
+// TermCharacters characters that will be used to determine if a value is split into tokens
+var TermCharacters = []string{
+	" ", "-", "_", ".", ",", ":", ";", "?", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+",
+	"=", "{", "}", "[", "]", "|", "\\", "/", "<", ">", "~", "`",
+	"'", "\"",
 }
