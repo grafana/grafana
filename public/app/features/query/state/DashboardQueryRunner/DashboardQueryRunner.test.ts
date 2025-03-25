@@ -2,7 +2,7 @@ import { uniqueId } from 'lodash';
 import { throwError } from 'rxjs';
 import { delay, first } from 'rxjs/operators';
 
-import { PrometheusRuleGroupResponse } from '@grafana/alerting/src/types/grafana/rules/api';
+import { GrafanaAPI } from '@grafana/alerting/types';
 import { AlertState } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import {
@@ -74,7 +74,7 @@ function getTestContext() {
   // These tests are setup so all the workers and runners are invoked once, this wouldn't be the case in real life
   const runner = createDashboardQueryRunner({ dashboard: options.dashboard, timeSrv: timeSrvMock });
 
-  const getResults: PrometheusRuleGroupResponse = {
+  const getResults: GrafanaAPI.RuleGroupResponse = {
     status: 'success',
     data: {
       groups: [

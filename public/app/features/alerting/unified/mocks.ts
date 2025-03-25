@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import { isEmpty, pick } from 'lodash';
 
-import { PrometheusRuleGroup } from '@grafana/alerting/src/types/prometheus/rules/api';
+import { PrometheusAPI } from '@grafana/alerting/types';
 import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
@@ -259,7 +259,7 @@ export const mockPromRecordingRule = (partial: Partial<RecordingRule> = {}): Rec
   };
 };
 
-export const mockPromRuleGroup = (partial: Partial<RuleGroup> = {}): PrometheusRuleGroup => {
+export const mockPromRuleGroup = (partial: Partial<RuleGroup> = {}): PrometheusAPI.RuleGroup => {
   return {
     name: 'mygroup',
     interval: 60,

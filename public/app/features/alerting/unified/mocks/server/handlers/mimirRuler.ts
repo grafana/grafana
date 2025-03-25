@@ -1,10 +1,8 @@
 import { HttpResponse, delay, http } from 'msw';
 
-import {
-  PromRulesResponse,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
-} from '../../../../../../types/unified-alerting-dto';
+import { PrometheusAPI } from '@grafana/alerting/types';
+
+import { RulerRuleGroupDTO, RulerRulesConfigDTO } from '../../../../../../types/unified-alerting-dto';
 import { namespaces } from '../../mimirRulerApi';
 import { HandlerOptions } from '../configure';
 
@@ -16,7 +14,7 @@ export const getRulerRulesHandler = () => {
 
 export const prometheusRulesHandler = () => {
   return http.get('/api/prometheus/:dataSourceUID/api/v1/rules', () => {
-    return HttpResponse.json<PromRulesResponse>({ status: 'success', data: { groups: [] } });
+    return HttpResponse.json<PrometheusAPI.RuleGroupResponse>({ status: 'success', data: { groups: [] } });
   });
 };
 

@@ -1,11 +1,6 @@
-import type * as GrafanaFlavor from '@grafana/alerting/src/types/grafana/rules/api';
-import type * as VanillaFlavor from '@grafana/alerting/src/types/prometheus/rules/api';
+/* API object types */
+export type * as GrafanaAPI from './grafana/api';
+export type * as PrometheusAPI from './prometheus/api';
+export type * as API from './common/api';
 
-/**
- * RuleGroup response from either the Grafana API endpoint or a vanilla prometheus API endpoint
- */
-export type PrometheusRuleGroupResponse =
-  | GrafanaFlavor.PrometheusRuleGroupResponse
-  | VanillaFlavor.PrometheusRuleGroupResponse;
-
-export type PrometheusRuleGroup = GrafanaFlavor.PrometheusRuleGroup | VanillaFlavor.PrometheusRuleGroup;
+export * from './common/rules'; // we can't export only types because it contains enums

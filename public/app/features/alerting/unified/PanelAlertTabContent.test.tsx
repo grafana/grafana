@@ -1,6 +1,7 @@
 import { render } from 'test/test-utils';
 import { byTestId, byText } from 'testing-library-selector';
 
+import { PrometheusAPI } from '@grafana/alerting/types';
 import { PromOptions } from '@grafana/prometheus';
 import { setPluginLinksHook } from '@grafana/runtime';
 import config from 'app/core/config';
@@ -8,7 +9,7 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AccessControlAction } from 'app/types';
-import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { PanelAlertTabContent } from './PanelAlertTabContent';
 import * as apiRuler from './api/ruler';
@@ -70,7 +71,7 @@ const mocks = {
 const renderAlertTabContent = (dashboard: DashboardModel, panel: PanelModel) =>
   render(<PanelAlertTabContent dashboard={dashboard} panel={panel} />);
 
-const promResponse: PromRulesResponse = {
+const promResponse: PrometheusAPI.SuccessResponse = {
   status: 'success',
   data: {
     groups: [

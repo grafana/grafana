@@ -1,4 +1,4 @@
-import { PrometheusRule } from '@grafana/alerting/src/types/grafana/rules/api';
+import type { GrafanaAPI } from '@grafana/alerting/types';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -13,7 +13,7 @@ import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
 
 interface GrafanaRuleLoaderProps {
-  rule: PrometheusRule;
+  rule: GrafanaAPI.Rule;
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
 }

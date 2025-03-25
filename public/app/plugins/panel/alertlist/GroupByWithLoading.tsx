@@ -1,7 +1,7 @@
 import { isEmpty, uniq } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { prometheusRuleType } from '@grafana/alerting/src/types/prometheus/rules/guards';
+import { prometheusRuleType } from '@grafana/alerting/unstable';
 import { SelectableValue } from '@grafana/data';
 import { Icon, MultiSelect } from '@grafana/ui';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
@@ -51,7 +51,7 @@ export const GroupBy = (props: Props) => {
     const allLabels = Object.keys(promRulesByDatasource)
       .flatMap((datasource) => promRulesByDatasource[datasource].result ?? [])
       .flatMap((rules) => rules.groups)
-      .flatMap((group) => group.rules.filter(prometheusRuleType.alertingRule))
+      .flatMap((group) => group.rules.filter((rule) => prometheusRuleType.alertingRule(rule)))
       .flatMap((rule) => rule.alerts ?? [])
       .map((alert) => Object.keys(alert.labels ?? {}))
       .flatMap((labels) => labels.filter((label) => !isPrivateLabelKey(label)));

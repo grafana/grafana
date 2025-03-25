@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { byRole, byText } from 'testing-library-selector';
 
-import { PrometheusRuleGroup, PrometheusRuleGroupResponse } from '@grafana/alerting/src/types/grafana/rules/api';
+import { GrafanaAPI } from '@grafana/alerting/types';
 import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps, PluginExtensionTypes } from '@grafana/data';
 import { TimeRangeUpdatedEvent, usePluginLinks } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -65,8 +65,8 @@ const mocks = {
   usePluginLinksMock: jest.mocked(usePluginLinks),
 };
 
-const fakeResponse: PrometheusRuleGroupResponse = {
-  data: { groups: grafanaRuleMock.promRules.grafana.result[0].groups as PrometheusRuleGroup[] },
+const fakeResponse: GrafanaAPI.RuleGroupResponse = {
+  data: { groups: grafanaRuleMock.promRules.grafana.result[0].groups as GrafanaAPI.RuleGroup[] },
   status: 'success',
 };
 

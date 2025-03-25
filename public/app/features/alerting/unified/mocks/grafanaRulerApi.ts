@@ -1,13 +1,9 @@
 import { HttpResponse, http } from 'msw';
 import { SetupServer } from 'msw/node';
 
+import { PrometheusAPI } from '@grafana/alerting/types';
 import { FieldType } from '@grafana/data';
-import {
-  GrafanaAlertStateDecision,
-  PromRulesResponse,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
-} from 'app/types/unified-alerting-dto';
+import { GrafanaAlertStateDecision, RulerGrafanaRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { PREVIEW_URL, PROM_RULES_URL, PreviewResponse } from '../api/alertRuleApi';
 import { Annotation } from '../utils/constants';
@@ -16,7 +12,7 @@ export function mockPreviewApiResponse(server: SetupServer, result: PreviewRespo
   server.use(http.post(PREVIEW_URL, () => HttpResponse.json(result)));
 }
 
-export function mockPromRulesApiResponse(server: SetupServer, result: PromRulesResponse) {
+export function mockPromRulesApiResponse(server: SetupServer, result: PrometheusAPI.RuleGroupResponse) {
   server.use(http.get(PROM_RULES_URL, () => HttpResponse.json(result)));
 }
 

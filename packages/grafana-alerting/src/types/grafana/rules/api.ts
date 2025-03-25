@@ -1,5 +1,5 @@
-import { Annotations, Labels } from '../../common';
-import { PrometheusSuccessResponse } from '../api';
+import { Annotations, Labels } from '../../common/rules';
+import { SuccessResponse } from '../api';
 
 /**
  * RuleHealth
@@ -10,7 +10,7 @@ type RuleHealth = 'ok' | 'unknown' | 'error';
  * Rule
  * * https://github.com/grafana/grafana/blob/55f28124665e73f0ced273f854fe1eabfe225a8c/pkg/services/ngalert/api/tooling/definitions/prom.go#L168-L187
  */
-interface GenericPrometheusRule {
+interface BaseRule {
   uid: string;
   name: string;
   folderUid: string;
@@ -25,8 +25,7 @@ interface GenericPrometheusRule {
 /**
  * RecordingRule
  */
-export interface PrometheusRecordingRule extends GenericPrometheusRule {
-  alerts?: never; // recording rule can't have alerts
+export interface RecordingRule extends BaseRule {
   type: 'recording';
 }
 
@@ -34,26 +33,26 @@ export interface PrometheusRecordingRule extends GenericPrometheusRule {
  * AlertingRule
  * https://github.com/grafana/grafana/blob/55f28124665e73f0ced273f854fe1eabfe225a8c/pkg/services/ngalert/api/tooling/definitions/prom.go#L146-L166
  */
-export interface PrometheusAlertingRule extends GenericPrometheusRule {
+export interface AlertingRule extends BaseRule {
   state: RuleState;
   duration?: number;
   keepFiringFor?: number;
   annotations: Annotations;
   activeAt?: string; // ISO date string
-  alerts: PrometheusAlert[];
+  alerts: AlertInstance[];
   totals?: Totals<Lowercase<AlertStateWithoutReason>>;
   totalsFiltered?: Totals<Lowercase<AlertStateWithoutReason>>;
   type: 'alerting';
 }
 
-export type PrometheusRule = PrometheusRecordingRule | PrometheusAlertingRule;
+export type Rule = RecordingRule | AlertingRule;
 
 /**
  * Rule Group response for listing Prometheus rule groups
  * /api/v1/rules
  */
-export type PrometheusRuleGroupResponse = PrometheusSuccessResponse<{
-  groups: PrometheusRuleGroup[];
+export type RuleGroupResponse = SuccessResponse<{
+  groups: RuleGroup[];
   groupNextToken?: string; // for paginated API responses
 }>;
 
@@ -61,11 +60,11 @@ export type PrometheusRuleGroupResponse = PrometheusSuccessResponse<{
  * RuleGroup
  * https://github.com/grafana/grafana/blob/55f28124665e73f0ced273f854fe1eabfe225a8c/pkg/services/ngalert/api/tooling/definitions/prom.go#L86-L104
  */
-export interface PrometheusRuleGroup {
+export interface RuleGroup {
   name: string;
   file: string;
   folderUid: string;
-  rules: PrometheusRule[];
+  rules: Rule[];
   totals?: Totals<RuleState>;
   interval: number;
   lastEvaluation: string; // ISO date string
@@ -76,7 +75,7 @@ export interface PrometheusRuleGroup {
  * Alert
  * https://github.com/grafana/grafana/blob/55f28124665e73f0ced273f854fe1eabfe225a8c/pkg/services/ngalert/api/tooling/definitions/prom.go#L189-L201
  */
-export interface PrometheusAlert {
+export interface AlertInstance {
   labels: Labels;
   annotations: Annotations;
   state: AlertStateWithoutReason | AlertStateWithReason;

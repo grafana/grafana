@@ -1,7 +1,7 @@
 import { from, map, Observable, Unsubscribable } from 'rxjs';
 
-import { PrometheusRuleGroup, RuleState } from '@grafana/alerting/src/types/prometheus/rules/api';
-import { prometheusRuleType } from '@grafana/alerting/src/types/prometheus/rules/guards';
+import { PrometheusAPI } from '@grafana/alerting/types';
+import { prometheusRuleType } from '@grafana/alerting/unstable';
 import { AlertState, AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
@@ -86,12 +86,12 @@ export class AlertStatesDataLayer
       }
       return promRules.data;
     };
-    const res: Observable<PrometheusRuleGroup[]> = from(fetchData()).pipe(
+    const res: Observable<PrometheusAPI.RuleGroup[]> = from(fetchData()).pipe(
       map((namespaces: RuleNamespace[]) => ungroupRulesByFileName(namespaces))
     );
 
     const alerStatesExecution = res.pipe(
-      map((groups: PrometheusRuleGroup[]) => {
+      map((groups: PrometheusAPI.RuleGroup[]) => {
         this.hasAlertRules = false;
         const panelIdToAlertState: Record<number, AlertStateInfo> = {};
         groups.forEach((group) =>
@@ -197,7 +197,7 @@ export class AlertStatesDataLayer
   };
 }
 
-export function promAlertStateToAlertState(state: RuleState): AlertState {
+export function promAlertStateToAlertState(state: PrometheusAPI.AlertRuleState): AlertState {
   if (state === 'firing') {
     return AlertState.Alerting;
   } else if (state === 'pending') {

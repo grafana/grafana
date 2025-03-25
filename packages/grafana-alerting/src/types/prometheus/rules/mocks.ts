@@ -1,7 +1,7 @@
 import { randomLogNormal } from 'd3-random';
 import { Factory } from 'fishery';
 
-import { PrometheusAlert, PrometheusAlertingRule, PrometheusRecordingRule, PrometheusRuleGroup } from './api';
+import { AlertInstance, AlertingRule, RecordingRule, RuleGroup } from './api';
 import {
   PrometheusAlertingRuleDefinition,
   PrometheusRecordingRuleDefinition,
@@ -11,7 +11,7 @@ import {
 const evaluationTime = randomLogNormal(0, 0.5);
 
 /* mock a API alerting rule object */
-export const PrometheusAlertingRuleFactory = Factory.define<PrometheusAlertingRule>(
+export const PrometheusAlertingRuleFactory = Factory.define<AlertingRule>(
   ({ sequence, params: { state = 'firing' } }) => {
     const labels = {
       label1: 'value1',
@@ -39,12 +39,12 @@ export const PrometheusAlertingRuleFactory = Factory.define<PrometheusAlertingRu
       health: 'ok',
       evaluationTime: evaluationTime(),
       lastEvaluation: new Date().toISOString(),
-    } satisfies PrometheusAlertingRule;
+    } satisfies AlertingRule;
   }
 );
 
 /* mock a API alert object, embedded in Alert Rule API object */
-export const PrometheusAlertFactory = Factory.define<PrometheusAlert>(() => {
+export const PrometheusAlertFactory = Factory.define<AlertInstance>(() => {
   return {
     value: '1',
     annotations: {},
@@ -52,7 +52,7 @@ export const PrometheusAlertFactory = Factory.define<PrometheusAlert>(() => {
     state: 'firing',
     activeAt: new Date().toISOString(),
     keepFiringSince: new Date().toISOString(),
-  } satisfies PrometheusAlert;
+  } satisfies AlertInstance;
 });
 
 /* mock a YAML alerting rule definition */
@@ -75,7 +75,7 @@ export const PrometheusAlertingRuleDefinitionFactory = Factory.define<Prometheus
 );
 
 /* mock a API recording rule object */
-export const PrometheusRecordingRuleFactory = Factory.define<PrometheusRecordingRule>(({ sequence }) => {
+export const PrometheusRecordingRuleFactory = Factory.define<RecordingRule>(({ sequence }) => {
   return {
     type: 'recording',
     name: `Recording Rule #${sequence}`,
@@ -87,7 +87,7 @@ export const PrometheusRecordingRuleFactory = Factory.define<PrometheusRecording
     health: 'ok',
     evaluationTime: evaluationTime(),
     lastEvaluation: new Date().toISOString(),
-  } satisfies PrometheusRecordingRule;
+  } satisfies RecordingRule;
 });
 
 /* mock a YAML alerting rule definition */
@@ -105,7 +105,7 @@ export const PrometheusRecordingRuleDefinitionFactory = Factory.define<Prometheu
 );
 
 /* mock a PrometheusRuleGroup API object */
-export const PrometheusRuleGroupFactory = Factory.define<PrometheusRuleGroup>(({ sequence }) => {
+export const PrometheusRuleGroupFactory = Factory.define<RuleGroup>(({ sequence }) => {
   return {
     name: `Rule Group #${sequence}`,
     file: 'default',
@@ -114,7 +114,7 @@ export const PrometheusRuleGroupFactory = Factory.define<PrometheusRuleGroup>(({
     interval: 60,
     evaluationTime: evaluationTime(),
     lastEvaluation: new Date().toISOString(),
-  } satisfies PrometheusRuleGroup;
+  } satisfies RuleGroup;
 });
 
 /* mock a YAML PrometheusRuleGroup definition */

@@ -1,23 +1,23 @@
-import { PrometheusAlertingRule, PrometheusRecordingRule, PrometheusRule } from './api';
+import type { Rule, AlertingRule, RecordingRule } from './common/api';
 import {
   PrometheusAlertingRuleDefinition,
   PrometheusRecordingRuleDefinition,
   PrometheusRuleDefinition,
-} from './definitions';
+} from './prometheus/rules/definitions';
 
 export const prometheusRuleType = {
-  rule: (rule: PrometheusRule) => isAlertingRule(rule) || isRecordingRule(rule),
+  rule: (rule: Rule) => isAlertingRule(rule) || isRecordingRule(rule),
   alertingRule: isAlertingRule,
   recordingRule: isRecordingRule,
 };
 
 // for API response objects
-function isAlertingRule(rule: PrometheusRule): rule is PrometheusAlertingRule {
+function isAlertingRule(rule: Rule): rule is AlertingRule {
   return 'type' in rule && rule.type === 'alerting';
 }
 
 // for API response objects
-function isRecordingRule(rule: PrometheusRule): rule is PrometheusRecordingRule {
+function isRecordingRule(rule: Rule): rule is RecordingRule {
   return 'type' in rule && rule.type === 'recording';
 }
 

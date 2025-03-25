@@ -1,6 +1,6 @@
 import { Chance } from 'chance';
 
-import { PrometheusRuleGroupResponse } from '@grafana/alerting/src/types/prometheus/rules/api';
+import { PrometheusAPI } from '@grafana/alerting/types';
 import {
   GrafanaAlertStateDecision,
   PromAlertingRuleState,
@@ -57,7 +57,7 @@ export function getRulerRulesResponse(folderName: string, folderUid: string, see
   };
 }
 
-export function getPrometheusRulesResponse(folderName: string, seed = 1): PrometheusRuleGroupResponse {
+export function getPrometheusRulesResponse(folderName: string, seed = 1): PrometheusAPI.RuleGroupResponse {
   const random = Chance(seed);
   return {
     status: 'success',

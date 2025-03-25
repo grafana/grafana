@@ -3,9 +3,10 @@ import { HttpResponse, delay, http } from 'msw';
 
 export const MOCK_GRAFANA_ALERT_RULE_TITLE = 'Test alert';
 
+import { PrometheusAPI } from '@grafana/alerting/types';
+
 import {
   GrafanaRuleDefinition,
-  PromRulesResponse,
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
@@ -33,7 +34,7 @@ export const rulerRulesHandler = () => {
 
 export const prometheusRulesHandler = () => {
   return http.get('/api/prometheus/grafana/api/v1/rules', () => {
-    return HttpResponse.json<PromRulesResponse>({ status: 'success', data: { groups: [] } });
+    return HttpResponse.json<PrometheusAPI.RuleGroupResponse>({ status: 'success', data: { groups: [] } });
   });
 };
 

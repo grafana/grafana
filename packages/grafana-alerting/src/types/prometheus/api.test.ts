@@ -1,15 +1,15 @@
 import { expectNotAssignable, expectType } from 'tsd';
 
-import { PrometheusApiResponse, PrometheusErrorResponse, PrometheusSuccessResponse } from './api';
+import { Response, ErrorResponse, SuccessResponse } from './api';
 
 test('success response', () => {
   const response = {
     status: 'success',
     data: 'hello, world',
-  } satisfies PrometheusApiResponse;
+  } satisfies Response;
 
-  expectType<PrometheusSuccessResponse>(response);
-  expectNotAssignable<PrometheusErrorResponse>(response);
+  expectType<SuccessResponse>(response);
+  expectNotAssignable<ErrorResponse>(response);
   expect(response).not.toHaveProperty('error');
   expect(response).not.toHaveProperty('errorType');
 });
@@ -19,9 +19,9 @@ test('error response', () => {
     status: 'error',
     error: 'oops, something went wrong',
     errorType: 'InternalError',
-  } satisfies PrometheusApiResponse;
+  } satisfies Response;
 
-  expectType<PrometheusErrorResponse>(response);
-  expectNotAssignable<PrometheusSuccessResponse>(response);
+  expectType<ErrorResponse>(response);
+  expectNotAssignable<SuccessResponse>(response);
   expect(response).not.toHaveProperty('data');
 });

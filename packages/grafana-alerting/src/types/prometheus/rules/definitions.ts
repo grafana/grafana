@@ -1,4 +1,4 @@
-import { Annotations, Labels } from '../../common';
+import { Annotations, Labels } from '../../common/rules';
 
 export type PrometheusRuleDefinition = PrometheusRecordingRuleDefinition | PrometheusAlertingRuleDefinition;
 

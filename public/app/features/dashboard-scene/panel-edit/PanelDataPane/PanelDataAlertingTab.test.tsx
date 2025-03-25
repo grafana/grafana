@@ -2,7 +2,7 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
-import { PrometheusAlertingRule, PrometheusRuleGroupResponse } from '@grafana/alerting/src/types/grafana/rules/api';
+import { GrafanaAPI } from '@grafana/alerting/types';
 import { PromOptions } from '@grafana/prometheus';
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -88,7 +88,7 @@ const renderAlertTabContent = (model: PanelDataAlertingTab, initialStore?: Retur
   render(<PanelDataAlertingTabRendered model={model} />);
 };
 
-const promResponse: PrometheusRuleGroupResponse = {
+const promResponse: GrafanaAPI.RuleGroupResponse = {
   status: 'success',
   data: {
     groups: [
@@ -112,7 +112,7 @@ const promResponse: PrometheusRuleGroupResponse = {
             ],
             totals: { alerting: 1 },
             totalsFiltered: { alerting: 1 },
-          }) as PrometheusAlertingRule,
+          }) as GrafanaAPI.AlertingRule,
         ],
         interval: 20,
       },
@@ -136,7 +136,7 @@ const promResponse: PrometheusRuleGroupResponse = {
             ],
             totals: { alerting: 1 },
             totalsFiltered: { alerting: 1 },
-          }) as PrometheusAlertingRule,
+          }) as GrafanaAPI.AlertingRule,
         ],
         interval: 20,
       },

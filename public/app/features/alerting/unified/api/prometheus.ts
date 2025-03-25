@@ -1,8 +1,8 @@
 import { produce } from 'immer';
 import { lastValueFrom } from 'rxjs';
 
-import { PrometheusRuleGroup, PrometheusRuleGroupResponse } from '@grafana/alerting/src/types/prometheus/rules/api';
-import { prometheusRuleType } from '@grafana/alerting/src/types/prometheus/rules/guards';
+import { PrometheusAPI } from '@grafana/alerting/types';
+import { prometheusRuleType } from '@grafana/alerting/unstable';
 import { getBackendSrv } from '@grafana/runtime';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
@@ -87,7 +87,7 @@ export function paramsWithMatcherAndState(
   return paramsResult;
 }
 
-export function normalizeRuleGroup(group: PrometheusRuleGroup): PrometheusRuleGroup {
+export function normalizeRuleGroup(group: PrometheusAPI.RuleGroup): PrometheusAPI.RuleGroup {
   return produce(group, (draft) => {
     draft.rules.forEach((rule) => {
       rule.query = rule.query || '';
@@ -105,7 +105,7 @@ export function normalizeRuleGroup(group: PrometheusRuleGroup): PrometheusRuleGr
   });
 }
 
-export const groupRulesByFileName = (groups: PrometheusRuleGroup[], dataSourceName: string) => {
+export const groupRulesByFileName = (groups: PrometheusAPI.RuleGroup[], dataSourceName: string) => {
   const normalizedGroups = groups.map(normalizeRuleGroup);
 
   const nsMap: { [key: string]: RuleNamespace } = {};
@@ -124,13 +124,13 @@ export const groupRulesByFileName = (groups: PrometheusRuleGroup[], dataSourceNa
   return Object.values(nsMap);
 };
 
-export const ungroupRulesByFileName = (namespaces: RuleNamespace[] = []): PrometheusRuleGroup[] => {
+export const ungroupRulesByFileName = (namespaces: RuleNamespace[] = []): PrometheusAPI.RuleGroup[] => {
   return namespaces?.flatMap((namespace) =>
     namespace.groups.flatMap((group) => ruleGroupToPromRuleGroupDTO(group, namespace.name))
   );
 };
 
-function ruleGroupToPromRuleGroupDTO(group: PrometheusRuleGroup, namespace: string): PrometheusRuleGroup {
+function ruleGroupToPromRuleGroupDTO(group: PrometheusAPI.RuleGroup, namespace: string): PrometheusAPI.RuleGroup {
   return {
     name: group.name,
     file: namespace,
@@ -161,7 +161,7 @@ export async function fetchRules(
 
   // adding state param here instead of adding it in prometheusUrlBuilder, for being a possible multiple query param
   const response = await lastValueFrom(
-    getBackendSrv().fetch<PrometheusRuleGroupResponse>({
+    getBackendSrv().fetch<PrometheusAPI.RuleGroupResponse>({
       url,
       params: params,
       showErrorAlert: false,

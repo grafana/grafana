@@ -1,8 +1,8 @@
 import { Observable, from } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { PrometheusRuleGroup } from '@grafana/alerting/src/types/prometheus/rules/api';
-import { prometheusRuleType } from '@grafana/alerting/src/types/prometheus/rules/guards';
+import { PrometheusAPI } from '@grafana/alerting/types';
+import { prometheusRuleType } from '@grafana/alerting/unstable';
 import { AlertState, AlertStateInfo } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -72,12 +72,12 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
       return promRules.data;
     };
 
-    const res: Observable<PrometheusRuleGroup[]> = from(fetchData()).pipe(
+    const res: Observable<PrometheusAPI.RuleGroup[]> = from(fetchData()).pipe(
       map((namespaces: RuleNamespace[]) => ungroupRulesByFileName(namespaces))
     );
 
     return res.pipe(
-      map((groups: PrometheusRuleGroup[]) => {
+      map((groups: PrometheusAPI.RuleGroup[]) => {
         this.hasAlertRules[dashboard.uid] = false;
         const panelIdToAlertState: Record<number, AlertStateInfo> = {};
         groups.forEach((group) =>

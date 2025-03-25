@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { PrometheusRuleGroup } from '@grafana/alerting/src/types';
+import type { API } from '@grafana/alerting/types';
 
 import { isLoading, useAsync } from '../../hooks/useAsync';
 
@@ -14,7 +14,7 @@ import { isLoading, useAsync } from '../../hooks/useAsync';
  * @returns Pagination state and controls for navigating through rule groups
  */
 
-export function usePaginatedPrometheusGroups<GroupType extends PrometheusRuleGroup>(
+export function usePaginatedPrometheusGroups<GroupType extends API.RuleGroup>(
   groupsGenerator: AsyncGenerator<GroupType, void, unknown>,
   pageSize: number
 ) {

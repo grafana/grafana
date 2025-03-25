@@ -1,7 +1,7 @@
 import { groupBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { PrometheusRuleGroup } from '@grafana/alerting/src/types/grafana/rules/api';
+import { GrafanaAPI } from '@grafana/alerting/types';
 import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 
@@ -79,7 +79,7 @@ export function PaginatedGrafanaLoader() {
 }
 
 interface GrafanaRuleGroupListItemProps {
-  group: PrometheusRuleGroup;
+  group: GrafanaAPI.RuleGroup;
   namespaceName: string;
 }
 export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {

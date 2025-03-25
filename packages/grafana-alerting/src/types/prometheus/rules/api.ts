@@ -1,5 +1,5 @@
-import { Annotations, Labels } from '../../common';
-import { PrometheusSuccessResponse } from '../api';
+import { Annotations, Labels } from '../../common/rules';
+import { SuccessResponse as SuccessResponse } from '../api';
 
 /**
  * RuleHealth
@@ -7,7 +7,7 @@ import { PrometheusSuccessResponse } from '../api';
  */
 export type RuleHealth = 'ok' | 'unknown' | 'err';
 
-interface BasePrometheusRule {
+interface BaseRule {
   name: string;
   query: string;
   labels: Labels;
@@ -21,7 +21,7 @@ interface BasePrometheusRule {
  * RecordingRule
  * https://github.com/prometheus/prometheus/blob/475092ff79741aed3d28594662876fca02b9553c/web/api/v1/api.go#L1458-L1468
  */
-export interface PrometheusRecordingRule extends BasePrometheusRule {
+export interface RecordingRule extends BaseRule {
   type: 'recording';
 }
 
@@ -29,22 +29,22 @@ export interface PrometheusRecordingRule extends BasePrometheusRule {
  * AlertingRule
  * https://github.com/prometheus/prometheus/blob/475092ff79741aed3d28594662876fca02b9553c/web/api/v1/api.go#L1440-L1456
  */
-export interface PrometheusAlertingRule extends BasePrometheusRule {
+export interface AlertingRule extends BaseRule {
   type: 'alerting';
-  state: RuleState;
+  state: AlertRuleState;
   duration: number; // pending period (also know as "for") in seconds
   annotations: Annotations;
-  alerts: PrometheusAlert[];
+  alerts: AlertInstance[];
 }
 
-export type PrometheusRule = PrometheusRecordingRule | PrometheusAlertingRule;
+export type Rule = RecordingRule | AlertingRule;
 
 /**
  * Rule Group response for listing Prometheus rule groups
  * /api/v1/rules
  */
-export type PrometheusRuleGroupResponse = PrometheusSuccessResponse<{
-  groups: PrometheusRuleGroup[];
+export type RuleGroupResponse = SuccessResponse<{
+  groups: RuleGroup[];
   groupNextToken?: string; // for paginated API responses, requires Prometheus v3.1.0+
 }>;
 
@@ -52,10 +52,10 @@ export type PrometheusRuleGroupResponse = PrometheusSuccessResponse<{
  * RuleGroup
  * https://github.com/prometheus/prometheus/blob/475092ff79741aed3d28594662876fca02b9553c/web/api/v1/api.go#L1424-L1436
  */
-export interface PrometheusRuleGroup {
+export interface RuleGroup {
   name: string;
   file: string;
-  rules: PrometheusRule[];
+  rules: Rule[];
   interval: number;
   limit?: number;
 
@@ -67,14 +67,14 @@ export interface PrometheusRuleGroup {
  * Alert
  * https://github.com/prometheus/prometheus/blob/475092ff79741aed3d28594662876fca02b9553c/web/api/v1/api.go#L1301-L1309
  */
-export interface PrometheusAlert {
+export interface AlertInstance {
   labels: Labels;
   annotations?: Annotations;
-  state: AlertState;
+  state: AlertInstanceState;
   activeAt?: string; // ISO timestamp
   keepFiringSince?: string; // ISO timestamp
   value: string;
 }
 
-export type RuleState = 'inactive' | 'pending' | 'firing';
-export type AlertState = 'inactive' | 'pending' | 'firing';
+export type AlertRuleState = 'inactive' | 'pending' | 'firing';
+export type AlertInstanceState = 'inactive' | 'pending' | 'firing';

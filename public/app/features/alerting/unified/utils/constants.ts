@@ -1,4 +1,5 @@
-import { ReservedAnnotation } from '@grafana/alerting/src/types/common';
+import { ReservedAnnotation } from '@grafana/alerting/types';
+export { ReservedAnnotation as Annotation } from '@grafana/alerting/types';
 
 export const RULER_NOT_SUPPORTED_MSG = 'ruler not supported';
 
@@ -13,8 +14,6 @@ export const CONTACT_POINTS_STATE_INTERVAL_MS = 20000;
 export const TIMESERIES = 'timeseries';
 export const TABLE = 'table';
 export const STAT = 'stat';
-
-export { ReservedAnnotation as Annotation } from '@grafana/alerting/src/types/common';
 
 export const annotationLabels: Record<ReservedAnnotation, string> = {
   [ReservedAnnotation.description]: 'Description',

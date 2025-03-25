@@ -1,16 +1,17 @@
-/* Success response */
-export interface PrometheusSuccessResponse<Data = unknown> {
+export type * from './rules/api';
+
+/* Prometheus API success response */
+export interface SuccessResponse<Data = unknown> {
   status: 'success';
   data: Data;
 }
 
-/* Error response */
-export interface PrometheusErrorResponse {
+/* Prometheus API error response */
+export interface ErrorResponse {
   status: 'error';
   errorType: string;
   error: string;
-  data?: never;
 }
 
-/* API response (Success or Error) */
-export type PrometheusApiResponse<Data = unknown> = PrometheusSuccessResponse<Data> | PrometheusErrorResponse;
+/* Prometheus API response (either success or error) */
+export type Response<Data = unknown> = SuccessResponse<Data> | ErrorResponse;

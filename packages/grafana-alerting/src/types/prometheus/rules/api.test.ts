@@ -1,6 +1,6 @@
 import { expectType } from 'tsd';
 
-import { PrometheusAlertingRule, PrometheusRecordingRule, PrometheusRule } from './api';
+import { AlertingRule, RecordingRule, Rule } from './api';
 
 describe('API object definitions (DTO)', () => {
   test('recording rule', () => {
@@ -13,9 +13,9 @@ describe('API object definitions (DTO)', () => {
       evaluationTime: 0,
       lastEvaluation: '2021-01-01T00:00:00Z',
       type: 'recording',
-    } satisfies PrometheusRule;
+    } satisfies Rule;
 
-    expectType<PrometheusRecordingRule>(rule);
+    expectType<RecordingRule>(rule);
     expect(rule).not.toHaveProperty('alerts');
     expect(rule).toHaveProperty('type', 'recording');
   });
@@ -34,9 +34,9 @@ describe('API object definitions (DTO)', () => {
       evaluationTime: 0,
       lastEvaluation: '2021-01-01T00:00:00Z',
       type: 'alerting',
-    } satisfies PrometheusRule;
+    } satisfies Rule;
 
-    expectType<PrometheusAlertingRule>(rule);
+    expectType<AlertingRule>(rule);
     expect(rule).toHaveProperty('alerts', expect.any(Array));
     expect(rule).toHaveProperty('type', 'alerting');
 
