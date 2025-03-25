@@ -47,5 +47,5 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 	)
 	require.NoError(tb, err)
 
-	return encMgr
+	return encMgr.(*EncryptionManager)
 }
