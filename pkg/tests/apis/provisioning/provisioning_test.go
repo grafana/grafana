@@ -181,27 +181,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	result := helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("sync").
-		Body(asJSON(provisioning.SyncJobOptions{
-			Incremental: false,
-		})).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-
-	obj, err := result.Get()
-	require.NoError(t, err, "expecting to be able to sync repository")
-	obj2, ok := obj.(*unstructured.Unstructured)
-	if !ok {
-		require.Fail(t, "expected unstructured response, %T", obj)
-	}
-	job := obj2.GetName()
-	require.NotEmpty(t, job)
-
-	helper.AwaitJobSuccess(t, ctx, job)
+	helper.SyncAndWait(t, repo, nil)
 
 	// By now, we should have synced, meaning we have data to read in the local Grafana instance!
 
@@ -290,29 +270,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	require.Error(t, err, "no all-panels dashboard should exist")
 
 	// Now, we import it, such that it may exist
-	result := helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("sync").
-		SetHeader("Content-Type", "application/json").
-		Body(asJSON(provisioning.SyncJobOptions{
-			Incremental: false,
-		})).
-		Do(ctx)
-
-	obj, err := result.Get()
-	require.NoError(t, err, "expecting to be able to sync repository")
-
-	obj2, ok := obj.(*unstructured.Unstructured)
-	if !ok {
-		require.Fail(t, "expected unstructured response, %T", obj)
-	}
-	job := obj2.GetName()
-	require.NotEmpty(t, job)
-
-	// Wait for the async job to finish
-	helper.AwaitJobSuccess(t, ctx, job)
+	helper.SyncAndWait(t, repo, nil)
 
 	found, err := helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
