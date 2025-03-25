@@ -895,7 +895,7 @@ func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, user identit
 	switch scope {
 	case live.ScopeGrafana:
 		return g.handleGrafanaScope(user, namespace)
-	case "watch": // TODO: live.ScopeWatch: update 275 https://github.com/grafana/grafana-plugin-sdk-go/releases
+	case live.ScopeWatch:
 		return g.handleWatchScope()
 	case live.ScopePlugin:
 		return g.handlePluginScope(ctx, user, namespace)

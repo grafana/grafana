@@ -97,6 +97,9 @@ conf/custom.ini
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
 
+# sample yaml files
+!/conf/provisioning/sample/*.yaml
+
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml
 profile.cov

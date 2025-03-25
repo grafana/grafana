@@ -16,12 +16,14 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
         url: data.url || '',
         branch: data.branch,
         token: data.token,
+        path: data.path,
       };
       break;
     case 'local':
       spec.local = {
         path: data.path,
       };
+      spec.workflows = spec.workflows.filter((v) => v !== 'branch'); // branch only supported by github
       break;
   }
 
@@ -35,5 +37,6 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     ...spec.local,
     branch: spec.github?.branch || '',
     url: spec.github?.url || '',
+    generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
   };
 };
