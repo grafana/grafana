@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -545,8 +545,8 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": dashboardv0alpha1.DashboardResourceInfo.GroupVersion().String(),
-				"kind":       dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
+				"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"name": "uid",
 					"labels": map[string]interface{}{
@@ -651,8 +651,8 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": dashboardv0alpha1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"name": "uid",
 				"labels": map[string]interface{}{
@@ -745,8 +745,8 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": dashboardv0alpha1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"name": "uid",
 				"labels": map[string]interface{}{
@@ -978,8 +978,8 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": dashboardv0alpha1.DashboardResourceInfo.GroupVersion().String(),
-				"kind":       dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
+				"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"name": "uid",
 					"labels": map[string]interface{}{
@@ -1123,7 +1123,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 		}}
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 		dashWithoutAnnotations := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"apiVersion": "dashboard.grafana.app/v1alpha1",
 			"kind":       "Dashboard",
 			"metadata": map[string]any{
 				"name":        "uid",
@@ -2628,8 +2628,8 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 func createTestUnstructuredDashboard(uid, title string, resourceVersion string) unstructured.Unstructured {
 	return unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": dashboardv0alpha1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"name":              uid,
 				"deletionTimestamp": "2023-01-01T00:00:00Z",
