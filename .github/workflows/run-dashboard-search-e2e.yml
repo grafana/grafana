@@ -38,27 +38,27 @@ jobs:
           runTests: false
       - name: Run dashboard search e2e mode0
         run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode0.ini ${{ github.workspace }}/grafana-server/custom.ini
+          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode0.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
           yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
       - name: Run dashboard search e2e mode1
         run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode1.ini ${{ github.workspace }}/grafana-server/custom.ini
+          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode1.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
           yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
       - name: Run dashboard search e2e mode2
         run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode2.ini ${{ github.workspace }}/grafana-server/custom.ini
+          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode2.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
           yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
       - name: Run dashboard search e2e mode3
         run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode3.ini ${{ github.workspace }}/grafana-server/custom.ini
+          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode3.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
           yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
       - name: Run dashboard search e2e mode4
         run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode4.ini ${{ github.workspace }}/grafana-server/custom.ini
+          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode4.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
           yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
       - name: Run dashboard search e2e mode5
         run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode5.ini ${{ github.workspace }}/grafana-server/custom.ini
+          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode5.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
           yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
       - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
         if: failure()
