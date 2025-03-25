@@ -82,7 +82,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		if err := resources.IsFilePathSupported(filePath); err != nil {
+		if err := resources.IsPathSupported(filePath); err != nil {
 			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}

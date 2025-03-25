@@ -15,9 +15,9 @@ var (
 
 const maxPathDepth = 8
 
-// IsFilePathSupported checks if the file path is supported by the provisioning API.
+// IsPathSupported checks if the file path is supported by the provisioning API.
 // it also validates if the path is safe and if the file extension is supported.
-func IsFilePathSupported(filePath string) error {
+func IsPathSupported(filePath string) error {
 	// Validate the path for any traversal attempts first
 	if err := safepath.IsSafe(filePath); err != nil {
 		return err

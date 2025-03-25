@@ -56,7 +56,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 			continue
 		}
 
-		if resources.IsFilePathSupported(file.Path) == nil {
+		if resources.IsPathSupported(file.Path) == nil {
 			changes = append(changes, ResourceFileChange{
 				Action: repository.FileActionCreated, // or previously ignored/failed
 				Path:   file.Path,
@@ -67,7 +67,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 
 		// Maintain the non-hidden path for empty folders
 		unhiddenPath := safepath.UnhiddenPath(file.Path)
-		if unhiddenPath != "" && resources.IsFilePathSupported(unhiddenPath) == nil && lookup[unhiddenPath] == nil {
+		if unhiddenPath != "" && resources.IsPathSupported(unhiddenPath) == nil && lookup[unhiddenPath] == nil {
 			changes = append(changes, ResourceFileChange{
 				Action: repository.FileActionCreated, // or previously ignored/failed
 				Path:   unhiddenPath,

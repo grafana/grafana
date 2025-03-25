@@ -333,10 +333,10 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			return err
 		}
 
-		if err := resources.IsFilePathSupported(change.Path); err != nil {
+		if err := resources.IsPathSupported(change.Path); err != nil {
 			// Maintain the non-hidden path for empty folders if it's not a deletion or ignore operation
 			unhiddenPath := safepath.UnhiddenPath(change.Path)
-			if unhiddenPath != "" && resources.IsFilePathSupported(unhiddenPath) == nil && change.Action != repository.FileActionDeleted && change.Action != repository.FileActionIgnored {
+			if unhiddenPath != "" && resources.IsPathSupported(unhiddenPath) == nil && change.Action != repository.FileActionDeleted && change.Action != repository.FileActionIgnored {
 				if _, err := r.folders.EnsureFolderPathExist(ctx, unhiddenPath); err != nil {
 					return fmt.Errorf("unable to create empty file folder: %w", err)
 				}
