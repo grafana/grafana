@@ -1,5 +1,13 @@
-import { ReservedAnnotation } from '@grafana/alerting/types';
-export { ReservedAnnotation as Annotation } from '@grafana/alerting/types';
+import type { ReservedAnnotation } from '@grafana/alerting/types';
+
+export enum Annotation {
+  description = 'description',
+  summary = 'summary',
+  runbookURL = 'runbook_url',
+  alertId = '__alertId__',
+  dashboardUID = '__dashboardUid__',
+  panelID = '__panelId__',
+}
 
 export const RULER_NOT_SUPPORTED_MSG = 'ruler not supported';
 
@@ -16,27 +24,27 @@ export const TABLE = 'table';
 export const STAT = 'stat';
 
 export const annotationLabels: Record<ReservedAnnotation, string> = {
-  [ReservedAnnotation.description]: 'Description',
-  [ReservedAnnotation.summary]: 'Summary',
-  [ReservedAnnotation.runbookURL]: 'Runbook URL',
-  [ReservedAnnotation.dashboardUID]: 'Dashboard UID',
-  [ReservedAnnotation.panelID]: 'Panel ID',
-  [ReservedAnnotation.alertId]: 'Alert ID',
+  description: 'Description',
+  summary: 'Summary',
+  runbook_url: 'Runbook URL',
+  __dashboardUid__: 'Dashboard UID',
+  __panelId__: 'Panel ID',
+  __alertId__: 'Alert ID',
 };
 
 export const annotationDescriptions: Record<ReservedAnnotation, string> = {
-  [ReservedAnnotation.description]: 'Description of what the alert rule does.',
-  [ReservedAnnotation.summary]: 'Short summary of what happened and why.',
-  [ReservedAnnotation.runbookURL]: 'Webpage where you keep your runbook for the alert.',
-  [ReservedAnnotation.dashboardUID]: '',
-  [ReservedAnnotation.panelID]: '',
-  [ReservedAnnotation.alertId]: '',
+  description: 'Description of what the alert rule does.',
+  summary: 'Short summary of what happened and why.',
+  runbook_url: 'Webpage where you keep your runbook for the alert.',
+  __dashboardUid__: '',
+  __panelId__: '',
+  __alertId__: '',
 };
 
-export const defaultAnnotations = [
-  { key: ReservedAnnotation.summary, value: '' },
-  { key: ReservedAnnotation.description, value: '' },
-  { key: ReservedAnnotation.runbookURL, value: '' },
+export const defaultAnnotations: Array<{ key: ReservedAnnotation; value: string }> = [
+  { key: 'summary', value: '' },
+  { key: 'description', value: '' },
+  { key: 'runbook_url', value: '' },
 ];
 
 /** Special matcher name used to identify alert rules by UID */

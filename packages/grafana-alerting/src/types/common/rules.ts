@@ -4,11 +4,10 @@ export type Labels = Record<string, string>;
 /**
  * These annotations have special meaning / reserved usage in Grafana.
  */
-export enum ReservedAnnotation {
-  description = 'description',
-  summary = 'summary',
-  runbookURL = 'runbook_url',
-  alertId = '__alertId__',
-  dashboardUID = '__dashboardUid__',
-  panelID = '__panelId__',
-}
+export type ReservedAnnotation =
+  | 'description'
+  | 'summary'
+  | 'runbook_url'
+  | '__alertId__'
+  | '__dashboardUid__'
+  | '__panelId__';
