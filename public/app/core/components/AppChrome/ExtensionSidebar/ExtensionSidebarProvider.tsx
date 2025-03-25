@@ -1,22 +1,28 @@
-import { createContext, ReactNode, useContext, useEffect, useState, useMemo } from 'react';
+import { createContext, ReactNode, useContext, useState } from 'react';
 
-import { ComponentTypeWithExtensionMeta, store } from '@grafana/data';
-import { usePluginComponents } from '@grafana/runtime';
+import { store, type ExtensionInfo } from '@grafana/data';
+import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
 export const EXTENSION_SIDEBAR_EXTENSION_POINT_ID = 'grafana/extension-sidebar/v0-alpha';
 const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 const ENABLED_EXTENSION_SIDEBAR_PLUGINS = ['grafana-investigations-app'];
 
 type ExtensionSidebarContextType = {
-  dockedPluginId: string | undefined;
-  setDockedPluginId: (pluginId: string | undefined) => void;
-  components: Map<string, ComponentTypeWithExtensionMeta<{}>>;
+  dockedComponentId: string | undefined;
+  setDockedComponentId: (componentId: string | undefined) => void;
+  availableComponents: Map<
+    string,
+    {
+      readonly exposedComponents: ExtensionInfo[];
+      readonly addedLinks: ExtensionInfo[];
+    }
+  >;
 };
 
 export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
-  dockedPluginId: undefined,
-  setDockedPluginId: () => {},
-  components: new Map<string, ComponentTypeWithExtensionMeta<{}>>(),
+  dockedComponentId: undefined,
+  setDockedComponentId: () => {},
+  availableComponents: new Map(),
 });
 
 export function useExtensionSidebarContext() {
@@ -29,40 +35,41 @@ interface ExtensionSidebarContextProps {
 
 export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarContextProps) => {
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
-  const { components, isLoading } = usePluginComponents({
-    extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
-  });
-  const [dockedPluginId, setDockedPluginId] = useState<string | undefined>(undefined);
-
-  const componentsMap = useMemo(
-    () =>
-      new Map(
-        components
-          .filter((c) => ENABLED_EXTENSION_SIDEBAR_PLUGINS.includes(c.meta.pluginId))
-          .map((c) => [c.meta.pluginId, c])
-      ),
-    [components]
+  // get all components for this extension point, but only for the permitted plugins
+  const availableComponents = new Map(
+    Array.from(getExtensionPointPluginMeta(EXTENSION_SIDEBAR_EXTENSION_POINT_ID).entries()).filter(([pluginId]) =>
+      ENABLED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId)
+    )
   );
 
-  // update the initial docked plugin id when the components are loaded
-  useEffect(() => {
-    if (!isLoading) {
-      const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
-      setDockedPluginId(componentsMap.has(storedDockedPluginId) ? storedDockedPluginId : undefined);
-    }
-  }, [componentsMap, isLoading, storedDockedPluginId]);
-
-  useEffect(() => {
-    if (dockedPluginId && !isLoading) {
-      store.set(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, dockedPluginId);
-    } else if (!dockedPluginId && !isLoading) {
-      store.delete(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
-    }
-  }, [dockedPluginId, isLoading]);
+  const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(undefined);
 
   return (
-    <ExtensionSidebarContext.Provider value={{ dockedPluginId, setDockedPluginId, components: componentsMap }}>
+    <ExtensionSidebarContext.Provider value={{ dockedComponentId, setDockedComponentId, availableComponents }}>
       {children}
     </ExtensionSidebarContext.Provider>
   );
 };
+
+export function getIdFromComponentMeta(pluginId: string, component: ExtensionInfo) {
+  return JSON.stringify({ pluginId, componentTitle: component.title });
+}
+
+export function getComponentMetaFromId(componentId: string): { pluginId: string; componentTitle: string } | undefined {
+  try {
+    const parsed = JSON.parse(componentId);
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      'pluginId' in parsed &&
+      'componentTitle' in parsed &&
+      typeof parsed.pluginId === 'string' &&
+      typeof parsed.componentTitle === 'string'
+    ) {
+      return parsed;
+    }
+    return undefined;
+  } catch (error) {
+    return undefined;
+  }
+}

@@ -1,28 +1,44 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 
-import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import {
+  EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
+  getComponentMetaFromId,
+  useExtensionSidebarContext,
+} from './ExtensionSidebarProvider';
 
 export const EXTENSION_SIDEBAR_WIDTH = '300px';
 
 export function ExtensionSidebar() {
   const styles = getStyles(useTheme2());
-  const { components, dockedPluginId } = useExtensionSidebarContext();
+  const { dockedComponentId } = useExtensionSidebarContext();
+  const { components, isLoading } = usePluginComponents({ extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID });
 
-  if (components.size === 0 || !dockedPluginId) {
+  if (isLoading || !dockedComponentId) {
     return null;
   }
 
-  const ExtensionComponent = components.get(dockedPluginId);
+  const dockedMeta = getComponentMetaFromId(dockedComponentId);
+  if (!dockedMeta) {
+    return null;
+  }
+
+  const ExtensionComponent = components.find(
+    (c) => c.meta.pluginId === dockedMeta.pluginId && c.meta.title === dockedMeta.componentTitle
+  );
+
   if (!ExtensionComponent) {
     return null;
   }
 
   return (
     <div className={styles.sidebarWrapper}>
-      <ExtensionComponent />
+      <div className={styles.content}>
+        <ExtensionComponent />
+      </div>
     </div>
   );
 }
@@ -38,6 +54,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       width: EXTENSION_SIDEBAR_WIDTH,
       height: '100%',
+    }),
+    content: css({
+      flex: 1,
+      minHeight: 0,
+      overflow: 'auto',
     }),
   };
 };

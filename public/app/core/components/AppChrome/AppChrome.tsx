@@ -27,7 +27,7 @@ export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
-  const { dockedPluginId } = useExtensionSidebarContext();
+  const { dockedComponentId: dockedPluginId } = useExtensionSidebarContext();
   const state = chrome.useState();
   const theme = useTheme2();
   const scopes = useScopes();

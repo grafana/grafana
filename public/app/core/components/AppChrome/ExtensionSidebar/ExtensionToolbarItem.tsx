@@ -1,26 +1,36 @@
+import { groupBy } from 'lodash';
 import { useState } from 'react';
 
 import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { truncateTitle } from 'app/features/plugins/extensions/utils';
 
-import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import { getIdFromComponentMeta, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 
 export function ExtensionToolbarItem() {
   const [isOpen, setIsOpen] = useState(false);
-  const { components, dockedPluginId, setDockedPluginId } = useExtensionSidebarContext();
+  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
 
-  if (components.size === 0) {
+  if (availableComponents.size === 0) {
     return null;
   }
 
-  if (components.size === 1) {
-    const component = components.values().next().value;
+  // get a flat list of all components with their pluginId
+  const components = Array.from(availableComponents.entries()).flatMap(([pluginId, { exposedComponents }]) =>
+    exposedComponents.map((c) => ({ ...c, pluginId }))
+  );
+
+  if (components.length === 0) {
+    return null;
+  }
+
+  if (components.length === 1) {
     return (
       <ToolbarButton
         icon="web-section"
-        variant={dockedPluginId ? 'active' : 'default'}
-        tooltip={component?.meta.description}
+        variant={dockedComponentId ? 'active' : 'default'}
+        tooltip={components[0].description}
         onClick={() => {
-          setDockedPluginId(dockedPluginId === component?.meta.pluginId ? undefined : component?.meta.pluginId);
+          setDockedComponentId(getIdFromComponentMeta(components[0].pluginId, components[0]));
         }}
       />
     );
@@ -28,21 +38,24 @@ export function ExtensionToolbarItem() {
 
   const MenuItems = (
     <Menu>
-      {Array.from(components.values()).map((c) => (
-        <Menu.Item
-          key={c.meta.pluginId}
-          active={dockedPluginId === c.meta.pluginId}
-          label={c.meta.title}
-          onClick={() => {
-            setDockedPluginId(dockedPluginId === c.meta.pluginId ? undefined : c.meta.pluginId);
-          }}
-        />
-      ))}
+      {components.map((c) => {
+        const id = getIdFromComponentMeta(c.pluginId, c);
+        return (
+          <Menu.Item
+            key={id}
+            active={dockedComponentId === id}
+            label={c.title}
+            onClick={() => {
+              setDockedComponentId(dockedComponentId === id ? undefined : id);
+            }}
+          />
+        );
+      })}
     </Menu>
   );
   return (
     <Dropdown overlay={MenuItems} onVisibleChange={setIsOpen} placement="bottom-end">
-      <ToolbarButton icon="web-section" isOpen={isOpen} variant={dockedPluginId ? 'active' : 'default'} />
+      <ToolbarButton icon="web-section" isOpen={isOpen} variant={dockedComponentId ? 'active' : 'default'} />
     </Dropdown>
   );
 }

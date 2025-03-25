@@ -446,6 +446,32 @@ export const getExtensionPointPluginDependencies = (extensionPointId: string): s
     }, []);
 };
 
+export const getExtensionPointPluginMeta = (extensionPointId: string) => {
+  const comps = getExtensionPointPluginDependencies(extensionPointId)
+    .map((pluginId) => {
+      const app = config.apps[pluginId];
+      // if the plugin does not exist or does not expose any components or links to the extension point, return undefined
+      if (
+        !app ||
+        (!app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId)) &&
+          !app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)))
+      ) {
+        return undefined;
+      }
+      return [
+        pluginId,
+        {
+          exposedComponents: app.extensions.addedComponents.filter((component) =>
+            component.targets.includes(extensionPointId)
+          ),
+          addedLinks: app.extensions.addedLinks.filter((link) => link.targets.includes(extensionPointId)),
+        },
+      ] as const;
+    })
+    .filter((c): c is NonNullable<typeof c> => c !== undefined);
+  return new Map(comps);
+};
+
 // Returns a list of app plugin ids that are necessary to be loaded to use the exposed component.
 // (It is first the plugin that exposes the component, and then the ones that it depends on.)
 export const getExposedComponentPluginDependencies = (exposedComponentId: string) => {
