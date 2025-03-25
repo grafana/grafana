@@ -14,6 +14,8 @@ import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types';
 
+import { FolderRepo } from './FolderRepo';
+
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';
 
@@ -212,6 +214,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
 
         <label className={styles.label} id={labelId}>
           <Text truncate>{item.title}</Text>
+          <FolderRepo folder={item} />
         </label>
       </div>
     </div>
@@ -275,6 +278,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     rowBody,
 
     label: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
       lineHeight: ROW_HEIGHT + 'px',
       flexGrow: 1,
       minWidth: 0,

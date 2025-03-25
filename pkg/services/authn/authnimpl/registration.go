@@ -126,6 +126,10 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features))
 	}
 
+	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		authnSvc.RegisterClient(clients.ProvideProvisioning())
+	}
+
 	// FIXME (jguer): move to User package
 	userSync := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService, tracer, features)
 	orgSync := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg, tracer)
