@@ -365,7 +365,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	}
 
 	// parse and validate query params
-	page, lim, col, dir := c.QueryInt("resultPage"), c.QueryInt("resultLimit"), c.Query("sortColumn"), c.Query("sortOrder")
+	page, lim, col, dir := c.QueryInt("resultPage"), c.QueryInt("resultLimit"), c.Query("resultSortColumn"), c.Query("resultSortOrder")
 	if lim == 0 {
 		lim = 100
 	}

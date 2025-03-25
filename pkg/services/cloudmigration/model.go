@@ -177,6 +177,8 @@ func (s ResultSortColumn) String() string {
 		return string(SortColumnID)
 	case SortColumnName:
 		return string(SortColumnName)
+	case "type":
+		fallthrough
 	case SortColumnType:
 		return string(SortColumnType)
 	case SortColumnStatus:
