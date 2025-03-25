@@ -1,15 +1,15 @@
-/* Success response */
+/* Prometheus API success response */
 export interface PrometheusSuccessResponse<Data = unknown> {
   status: 'success';
   data: Data;
 }
 
-/* Error response */
+/* Prometheus API error response */
 export interface PrometheusErrorResponse {
   status: 'error';
   errorType: string;
   error: string;
 }
 
-/* API response (Success or Error) */
+/* Prometheus API response (either success or error) */
 export type PrometheusApiResponse<Data = unknown> = PrometheusSuccessResponse<Data> | PrometheusErrorResponse;

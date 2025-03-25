@@ -41,9 +41,12 @@
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "16.0.0",
+    "@types/d3-random": "^3.0.2",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
+    "d3-random": "^3.0.1",
     "esbuild": "0.25.0",
+    "fishery": "^2.2.3",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "rimraf": "6.0.1",

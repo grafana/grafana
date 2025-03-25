@@ -2,7 +2,11 @@ import { BaseQueryFn } from '@reduxjs/toolkit/query';
 import { TypedLazyQueryTrigger } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
-import { PrometheusRuleGroupResponse } from '@grafana/alerting/src/types';
+import type { PrometheusRuleGroupResponse as GrafanaPrometheusRuleGroupResponse } from '@grafana/alerting/src/types/grafana/rules/api';
+import type { PrometheusRuleGroupResponse as VanillaPrometheusRuleGroupResponse } from '@grafana/alerting/src/types/prometheus/rules/api';
+
+type GroupType = GrafanaPrometheusRuleGroupResponse | VanillaPrometheusRuleGroupResponse;
+
 import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { BaseQueryFnArgs } from '../../api/alertingApi';
@@ -44,8 +48,8 @@ export function useGrafanaGroupsGenerator() {
 // This might look a bit complex but it allows us to have one API for paginated and non-paginated Prometheus data sources
 // For unpaginated data sources we fetch everything in one go
 // For paginated we fetch the next page when needed
-async function* genericGroupsGenerator<GroupResponse extends PrometheusRuleGroupResponse>(
-  fetchGroups: TypedLazyQueryTrigger<GroupResponse, FetchGroupsOptions, BaseQueryFn<BaseQueryFnArgs>>,
+async function* genericGroupsGenerator<TGroup extends GroupType>(
+  fetchGroups: TypedLazyQueryTrigger<TGroup, FetchGroupsOptions, BaseQueryFn<BaseQueryFnArgs>>,
   groupLimit: number
 ) {
   const response = await fetchGroups({ groupLimit });

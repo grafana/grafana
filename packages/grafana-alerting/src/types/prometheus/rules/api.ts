@@ -7,19 +7,21 @@ import { PrometheusSuccessResponse } from '../api';
  */
 type RuleHealth = 'ok' | 'unknown' | 'err';
 
+interface BasePrometheusRule {
+  name: string;
+  query: string;
+  labels: Labels;
+  health: RuleHealth;
+  lastError?: string; // Only present if health === "err"
+  evaluationTime: number; // milliseconds
+  lastEvaluation: string; // ISO date string
+}
+
 /**
  * RecordingRule
  * https://github.com/prometheus/prometheus/blob/475092ff79741aed3d28594662876fca02b9553c/web/api/v1/api.go#L1458-L1468
  */
-export interface PrometheusRecordingRule {
-  name: string;
-  query: string;
-  labels: Labels;
-  alerts?: never; // recording rule can't have alerts
-  health: RuleHealth;
-  lastError?: string;
-  evaluationTime: number; // milliseconds
-  lastEvaluation: string; // ISO date string
+export interface PrometheusRecordingRule extends BasePrometheusRule {
   type: 'recording';
 }
 
@@ -27,20 +29,12 @@ export interface PrometheusRecordingRule {
  * AlertingRule
  * https://github.com/prometheus/prometheus/blob/475092ff79741aed3d28594662876fca02b9553c/web/api/v1/api.go#L1440-L1456
  */
-export interface PrometheusAlertingRule {
+export interface PrometheusAlertingRule extends BasePrometheusRule {
+  type: 'alerting';
   state: RuleState;
-  name: string;
-  query: string;
-  duration: number;
-  keepFiringFor: number;
-  labels: Labels;
+  duration: number; // pending period (also know as "for") in seconds
   annotations: Annotations;
   alerts: PrometheusAlert[];
-  health: RuleHealth;
-  lastError?: string;
-  evaluationTime: number; // milliseconds
-  lastEvaluation: string; // ISO date string
-  type: 'alerting';
 }
 
 export type PrometheusRule = PrometheusRecordingRule | PrometheusAlertingRule;
@@ -63,7 +57,7 @@ export interface PrometheusRuleGroup {
   file: string;
   rules: PrometheusRule[];
   interval: number;
-  // limit?: number; // no clue what this is used for?
+  limit?: number;
 
   evaluationTime: number; // milliseconds
   lastEvaluation: string; // ISO date string
@@ -82,5 +76,5 @@ export interface PrometheusAlert {
   value: string;
 }
 
-export type RuleState = 'inactive' | 'pending' | 'firing';
-export type AlertState = 'inactive' | 'pending' | 'firing';
+type RuleState = 'inactive' | 'pending' | 'firing';
+type AlertState = 'inactive' | 'pending' | 'firing';
