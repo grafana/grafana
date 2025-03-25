@@ -150,7 +150,8 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       flexDirection: 'column',
       paddingTop: hasActions ? TOP_BAR_LEVEL_HEIGHT * 2 : TOP_BAR_LEVEL_HEIGHT,
       flexGrow: 1,
-      height: 'auto',
+      height: '100vh',
+      overflow: 'hidden',
     }),
     contentChromeless: css({
       paddingTop: 0,
@@ -194,6 +195,9 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       flexDirection: 'column',
       flexGrow: 1,
       label: 'page-panes',
+      height: '100%',
+      overflow: 'hidden',
+      position: 'relative',
     }),
     pageContainerMenuDocked: css({
       paddingLeft: MENU_WIDTH,
@@ -206,6 +210,9 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      overflow: 'auto',
+      height: '100%',
+      minHeight: 0,
     }),
     skipLink: css({
       position: 'fixed',

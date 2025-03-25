@@ -40,11 +40,6 @@ export function getElementStyles(theme: GrafanaTheme2) {
       position: 'unset',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
-      // react select tries prevent scrolling by setting overflow/padding-right on the body
-      // Need type assertion here due to the use of !important
-      // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      overflowY: 'auto !important' as 'auto',
       paddingRight: '0 !important',
       '@media print': {
         overflow: 'visible',
