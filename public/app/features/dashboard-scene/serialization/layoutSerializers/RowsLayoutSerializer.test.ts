@@ -238,9 +238,7 @@ describe('serialization', () => {
             columnWidth: 'standard',
             rowHeight: 'standard',
             maxColumnCount: 4,
-            layout: new ResponsiveGridLayout({
-              children: [],
-            }),
+            layout: new ResponsiveGridLayout({}),
           }),
         }),
         new RowItem({
@@ -272,6 +270,9 @@ describe('serialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
+                  columnWidth: undefined,
+                  rowHeight: undefined,
+                  fillScreen: false,
                   rowHeightMode: 'standard',
                   columnWidthMode: 'standard',
                   maxColumnCount: 4,
