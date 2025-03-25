@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +15,9 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -32,6 +36,9 @@ type FolderUnifiedStoreImpl struct {
 	log         log.Logger
 	k8sclient   client.K8sHandler
 	userService user.Service
+	// TODO(JP):  add TTL
+	listCache *localcache.CacheService
+	getCache  *localcache.CacheService
 }
 
 // sqlStore implements the store interface.
@@ -42,6 +49,8 @@ func ProvideUnifiedStore(k8sHandler client.K8sHandler, userService user.Service)
 		k8sclient:   k8sHandler,
 		log:         log.New("folder-store"),
 		userService: userService,
+		listCache:   localcache.New(time.Second*30, time.Second*10),
+		getCache:    localcache.New(time.Second*30, time.Second*10),
 	}
 }
 
@@ -132,6 +141,11 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 //
 // The full path of C is "A/B\/C".
 func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
+	cacheKey := cacheKeyGet(q)
+	if c, exist := ss.getCache.Get(cacheKey); exist {
+		ss.log.Debug("Folder cache hit", "key", cacheKey)
+		return c.(*folder.Folder), nil
+	}
 	out, err := ss.k8sclient.Get(ctx, *q.UID, q.OrgID, v1.GetOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
@@ -139,7 +153,12 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 		return nil, dashboards.ErrFolderNotFound
 	}
 
-	return ss.UnstructuredToLegacyFolder(ctx, out)
+	res, err := ss.UnstructuredToLegacyFolder(ctx, out)
+	if err != nil {
+		return nil, err
+	}
+	ss.getCache.Set(cacheKey, res, 0)
+	return res, nil
 }
 
 func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
@@ -308,6 +327,10 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 // The full path UIDs of B is "uid1/uid2".
 // The full path UIDs of A is "uid1".
 func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
+	cacheKey := cacheKeyList(q)
+	if c, exist := ss.listCache.Get(cacheKey); exist {
+		return c.([]*folder.Folder), nil
+	}
 	out, err := ss.k8sclient.List(ctx, q.OrgID, v1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -342,7 +365,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 				hits = append(hits, f)
 			}
 		}
-
+		ss.getCache.Set(cacheKey, hits, 0)
 		return hits, nil
 	}
 
@@ -358,6 +381,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		hits = append(hits, f)
 	}
 
+	ss.getCache.Set(cacheKey, hits, 0)
 	return hits, nil
 }
 
@@ -454,4 +478,22 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 		fullpathUIDs[i] = p.UID
 	}
 	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
+}
+
+func cacheKeyList(q folder.GetFoldersFromStoreQuery) string {
+	sortedUIDs := make([]string, len(q.UIDs))
+	copy(sortedUIDs, q.UIDs)
+	sort.Strings(sortedUIDs)
+
+	return fmt.Sprintf(
+		"GetFolders:%s:fullpath:%t:fullpathUIDs:%t:uids:%s",
+		q.OrgID,
+		q.WithFullpath,
+		q.WithFullpathUIDs,
+		strings.Join(sortedUIDs, ","),
+	)
+}
+
+func cacheKeyGet(q folder.GetFolderQuery) string {
+	return fmt.Sprintf("GetFolder:%s:%s", q.OrgID, *q.UID)
 }
