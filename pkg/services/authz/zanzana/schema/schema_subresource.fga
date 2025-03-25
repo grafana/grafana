@@ -25,6 +25,6 @@ extend type team
     define resource_update: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
     define resource_delete: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
 
-condition subresource_filter(requested_group: string, group_resources: list<string>) {
-  requested_group in group_resources
+condition subresource_filter(subresource: string, subresources: list<string>) {
+  subresource in subresources
 }

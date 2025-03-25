@@ -118,8 +118,8 @@ func IsFolderResourceTuple(t *openfgav1.TupleKey) bool {
 }
 
 func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
-	va := a.Condition.Context.Fields["group_resources"]
-	vb := b.Condition.Context.Fields["group_resources"]
+	va := a.Condition.Context.Fields["subresources"]
+	vb := b.Condition.Context.Fields["subresources"]
 	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
 }
 

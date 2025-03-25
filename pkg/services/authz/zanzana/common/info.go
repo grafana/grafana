@@ -142,6 +142,7 @@ func (r ResourceInfo) Context() *structpb.Struct {
 	return &structpb.Struct{
 		Fields: map[string]*structpb.Value{
 			"requested_group": structpb.NewStringValue(r.GroupResource()),
+			"subresource":     structpb.NewStringValue(r.GroupResource()),
 		},
 	}
 }

@@ -212,7 +212,7 @@ func NewFolderResourceTuple(subject, relation, group, resource, subresource, fol
 			Name: "subresource_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"group_resources": structpb.NewListValue(&structpb.ListValue{
+					"subresources": structpb.NewListValue(&structpb.ListValue{
 						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource, subresource))},
 					}),
 				},
@@ -236,7 +236,7 @@ func NewTeamResourceTuple(subject, relation, group, resource, subresource, name 
 			Name: "subresource_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"group_resources": structpb.NewListValue(&structpb.ListValue{
+					"subresources": structpb.NewListValue(&structpb.ListValue{
 						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource, subresource))},
 					}),
 				},
