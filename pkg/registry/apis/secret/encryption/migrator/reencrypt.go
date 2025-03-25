@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -37,7 +37,7 @@ func (s simpleSecret) ReEncrypt(ctx context.Context, namespace string, secretsSr
 				return err
 			}
 
-			encrypted, err := secretsSrv.Encrypt(ctx, namespace, decrypted, encryption.WithoutScope())
+			encrypted, err := secretsSrv.Encrypt(ctx, namespace, decrypted, contracts.EncryptWithoutScope())
 			if err != nil {
 				logger.Warn("Could not encrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
 				return err

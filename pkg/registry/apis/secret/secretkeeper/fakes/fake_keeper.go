@@ -9,8 +9,6 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
-	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
 var ErrSecretNotFound = errors.New("secret not found")
@@ -21,7 +19,7 @@ type FakeKeeper struct {
 
 var _ contracts.Keeper = (*FakeKeeper)(nil)
 
-func NewFakeKeeper(tracer tracing.Tracer, encryptionManager *manager.EncryptionManager, store encryptionstorage.EncryptedValueStorage) (*FakeKeeper, error) {
+func NewFakeKeeper(tracer tracing.Tracer, encryptionManager contracts.EncryptionManager, store contracts.EncryptedValueStorage) (*FakeKeeper, error) {
 	return &FakeKeeper{
 		values: make(map[string]map[string]string),
 	}, nil
