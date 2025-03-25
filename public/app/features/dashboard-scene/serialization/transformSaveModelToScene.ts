@@ -176,7 +176,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
-  const uid = dto.uid;
+  const uid = oldModel.uid;
   const serializerVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
 
   if (oldModel.templating?.list?.length) {
