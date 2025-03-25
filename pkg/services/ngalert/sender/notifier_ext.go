@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -145,7 +146,8 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 
 			// Extension: added headers parameter.
 			go func(client *http.Client, url string, headers http.Header) {
-				if err := n.sendOne(ctx, client, url, payload, headers); err != nil {
+				// Treat cancellations as a success, so that we don't increment error or dropped counters.
+				if err := n.sendOne(ctx, client, url, payload, headers); err != nil && !errors.Is(err, context.Canceled) {
 					level.Error(n.logger).Log("alertmanager", url, "count", len(alerts), "msg", "Error sending alert", "err", err)
 					n.metrics.errors.WithLabelValues(url).Inc()
 				} else {
