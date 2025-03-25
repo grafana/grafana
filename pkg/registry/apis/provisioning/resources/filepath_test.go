@@ -61,7 +61,7 @@ func TestIsPathSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := IsPathSupported(tt.path)
+			err := IsFilePathSupported(tt.path)
 			if tt.expectedErr != nil {
 				require.ErrorIs(t, err, tt.expectedErr)
 			} else {

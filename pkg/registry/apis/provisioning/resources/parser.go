@@ -115,7 +115,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		Repo: r.repo,
 	}
 
-	if err := IsPathSupported(info.Path); err != nil {
+	if err := IsFilePathSupported(info.Path); err != nil {
 		return parsed, err
 	}
 

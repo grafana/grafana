@@ -333,7 +333,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			return err
 		}
 
-		if err := resources.IsPathSupported(change.Path); err != nil {
+		if err := resources.IsFilePathSupported(change.Path); err != nil {
 			r.progress.Record(ctx, jobs.JobResourceResult{
 				Path:   change.Path,
 				Action: repository.FileActionIgnored,

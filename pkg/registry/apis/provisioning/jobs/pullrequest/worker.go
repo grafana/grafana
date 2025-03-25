@@ -98,7 +98,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 			Path: f.Path,
 		}
 
-		if err := resources.IsPathSupported(f.Path); err != nil {
+		if err := resources.IsFilePathSupported(f.Path); err != nil {
 			result.Action = repository.FileActionIgnored
 			progress.Record(ctx, result)
 			continue

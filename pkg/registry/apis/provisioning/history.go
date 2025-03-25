@@ -76,7 +76,7 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 			return
 		}
 
-		if err := resources.IsPathSupported(filePath); err != nil {
+		if err := resources.IsFilePathSupported(filePath); err != nil {
 			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}
