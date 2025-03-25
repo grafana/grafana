@@ -7,10 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
-	cloudwatchtypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
-
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
@@ -43,7 +41,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			assert.Len(t, aggregatedResponse[idA].Metrics[0].Values, 10)
 		})
 		t.Run("should have statuscode 'Complete'", func(t *testing.T) {
-			assert.Equal(t, cloudwatchtypes.StatusCodeComplete, aggregatedResponse[idA].StatusCode)
+			assert.Equal(t, "Complete", aggregatedResponse[idA].StatusCode)
 		})
 		t.Run("should have exceeded request limit", func(t *testing.T) {
 			assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxMetricsExceeded"])
@@ -65,7 +63,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		idB := "b"
 		t.Run("should have statuscode is 'PartialData'", func(t *testing.T) {
-			assert.Equal(t, cloudwatchtypes.StatusCodePartialData, aggregatedResponse[idB].StatusCode)
+			assert.Equal(t, "PartialData", aggregatedResponse[idB].StatusCode)
 		})
 		t.Run("should have an arithmetic error and an error message", func(t *testing.T) {
 			assert.True(t, aggregatedResponse[idB].HasArithmeticError)
@@ -87,7 +85,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			assert.Len(t, aggregatedResponse[idA].Metrics[0].Values, 6)
 		})
 		t.Run("should have statuscode 'Complete'", func(t *testing.T) {
-			assert.Equal(t, cloudwatchtypes.StatusCodeComplete, aggregatedResponse[idA].StatusCode)
+			assert.Equal(t, "Complete", aggregatedResponse[idA].StatusCode)
 		})
 	})
 
@@ -155,36 +153,36 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 	t.Run("using multi filter", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
 					Label: aws.String("lb1|&|lb1"),
-					Timestamps: []time.Time{
-						timestamp,
-						timestamp.Add(time.Minute),
-						timestamp.Add(3 * time.Minute),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
-					Values: []float64{
-						10,
-						20,
-						30,
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
 					},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					StatusCode: aws.String("Complete"),
 				},
 				{
 					Id:    aws.String("id2"),
 					Label: aws.String("lb2|&|lb2"),
-					Timestamps: []time.Time{
-						timestamp,
-						timestamp.Add(time.Minute),
-						timestamp.Add(3 * time.Minute),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
-					Values: []float64{
-						10,
-						20,
-						30,
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
 					},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -225,36 +223,36 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 	t.Run("using multiple wildcard filters", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("some label lb3|&|inst1|&|balancer 1"),
-					Timestamps: []time.Time{
-						timestamp,
-						timestamp.Add(time.Minute),
-						timestamp.Add(3 * time.Minute),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
-					Values: []float64{
-						10,
-						20,
-						30,
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
 					},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					StatusCode: aws.String("Complete"),
 				},
 				{
 					Id:    aws.String("lb4"),
 					Label: aws.String("some label lb4|&|inst2|&|balancer 2"),
-					Timestamps: []time.Time{
-						timestamp,
-						timestamp.Add(time.Minute),
-						timestamp.Add(3 * time.Minute),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
-					Values: []float64{
-						10,
-						20,
-						30,
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
 					},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -296,17 +294,17 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		// When there are no results, CloudWatch sets the label values to --
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("some label|&|--"),
-					Timestamps: []time.Time{
-						timestamp,
-						timestamp.Add(time.Minute),
-						timestamp.Add(3 * time.Minute),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
-					Values:     []float64{},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					Values:     []*float64{},
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -339,17 +337,17 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		// When there are no results, CloudWatch sets the label values to --
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("some label|&|--"),
-					Timestamps: []time.Time{
-						timestamp,
-						timestamp.Add(time.Minute),
-						timestamp.Add(3 * time.Minute),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
-					Values:     []float64{},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					Values:     []*float64{},
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -389,15 +387,15 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 	t.Run("when not using multi-value dimension filters on a `MetricSearch` query", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("some label"),
-					Timestamps: []time.Time{
-						timestamp,
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
 					},
-					Values:     []float64{23},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -431,15 +429,15 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 	t.Run("when non-static label set on a `MetricSearch` query", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("some label|&|res"),
-					Timestamps: []time.Time{
-						timestamp,
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
 					},
-					Values:     []float64{23},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -474,15 +472,15 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 	t.Run("when static label set on a `MetricSearch` query", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("some label|&|res"),
-					Timestamps: []time.Time{
-						timestamp,
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
 					},
-					Values:     []float64{23},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -517,15 +515,15 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 	t.Run("when code editor used for `MetricSearch` query add fallback label", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("some label"),
-					Timestamps: []time.Time{
-						timestamp,
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
 					},
-					Values:     []float64{23},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -555,24 +553,24 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 	t.Run("when `MetricQuery` query has no label set and `GROUP BY` clause has multiple fields", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("query1"),
 					Label: aws.String("EC2 vCPU"),
-					Timestamps: []time.Time{
-						timestamp,
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
 					},
-					Values:     []float64{23},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
 				},
 				{
 					Id:    aws.String("query2"),
 					Label: aws.String("Elastic Loading Balancing ApplicationLoadBalancersPerRegion"),
-					Timestamps: []time.Time{
-						timestamp,
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
 					},
-					Values:     []float64{23},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -603,15 +601,15 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 	t.Run("when `MetricQuery` query has no `GROUP BY` clause", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("query1"),
 					Label: aws.String("cloudwatch-default-label"),
-					Timestamps: []time.Time{
-						timestamp,
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
 					},
-					Values:     []float64{23},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -637,15 +635,15 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 	t.Run("ignore dimensions for raw mode query", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("some label"),
-					Timestamps: []time.Time{
-						timestamp,
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
 					},
-					Values:     []float64{23},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -677,21 +675,21 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 	t.Run("Parse cloudwatch response", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
-			Metrics: []*cloudwatchtypes.MetricDataResult{
+			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
 					Label: aws.String("some label"),
-					Timestamps: []time.Time{
-						timestamp,
-						timestamp.Add(time.Minute),
-						timestamp.Add(3 * time.Minute),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
-					Values: []float64{
-						10,
-						20,
-						30,
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
 					},
-					StatusCode: cloudwatchtypes.StatusCodeComplete,
+					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
@@ -719,9 +717,9 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		assert.Equal(t, "some label", frame.Name)
 		assert.Equal(t, "Time", frame.Fields[0].Name)
 		assert.Equal(t, "lb", frame.Fields[1].Labels["LoadBalancer"])
-		assert.Equal(t, 10.0, frame.Fields[1].At(0).(float64))
-		assert.Equal(t, 20.0, frame.Fields[1].At(1).(float64))
-		assert.Equal(t, 30.0, frame.Fields[1].At(2).(float64))
+		assert.Equal(t, 10.0, *frame.Fields[1].At(0).(*float64))
+		assert.Equal(t, 20.0, *frame.Fields[1].At(1).(*float64))
+		assert.Equal(t, 30.0, *frame.Fields[1].At(2).(*float64))
 		assert.Equal(t, "Value", frame.Fields[1].Name)
 		assert.Equal(t, "", frame.Fields[1].Config.DisplayName)
 	})

@@ -1,32 +1,32 @@
 package models
 
 import (
-	cloudwatchtypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 )
 
-// QueryRowResponse represents the GetMetricData response for a query row in the query editor.
+// queryRowResponse represents the GetMetricData response for a query row in the query editor.
 type QueryRowResponse struct {
-	partialDataSet         map[string]*cloudwatchtypes.MetricDataResult
+	partialDataSet         map[string]*cloudwatch.MetricDataResult
 	ErrorCodes             map[string]bool
 	HasArithmeticError     bool
 	ArithmeticErrorMessage string
 	HasPermissionError     bool
 	PermissionErrorMessage string
-	Metrics                []*cloudwatchtypes.MetricDataResult
-	StatusCode             cloudwatchtypes.StatusCode
+	Metrics                []*cloudwatch.MetricDataResult
+	StatusCode             string
 }
 
 func NewQueryRowResponse(errors map[string]bool) QueryRowResponse {
 	return QueryRowResponse{
-		partialDataSet:         make(map[string]*cloudwatchtypes.MetricDataResult),
+		partialDataSet:         make(map[string]*cloudwatch.MetricDataResult),
 		ErrorCodes:             errors,
 		HasArithmeticError:     false,
 		ArithmeticErrorMessage: "",
-		Metrics:                []*cloudwatchtypes.MetricDataResult{},
+		Metrics:                []*cloudwatch.MetricDataResult{},
 	}
 }
 
-func (q *QueryRowResponse) AddMetricDataResult(mdr *cloudwatchtypes.MetricDataResult) {
+func (q *QueryRowResponse) AddMetricDataResult(mdr *cloudwatch.MetricDataResult) {
 	if mdr.Label == nil {
 		return
 	}
@@ -34,16 +34,16 @@ func (q *QueryRowResponse) AddMetricDataResult(mdr *cloudwatchtypes.MetricDataRe
 	if partialData, ok := q.partialDataSet[*mdr.Label]; ok {
 		partialData.Timestamps = append(partialData.Timestamps, mdr.Timestamps...)
 		partialData.Values = append(partialData.Values, mdr.Values...)
-		q.StatusCode = mdr.StatusCode
-		if mdr.StatusCode != cloudwatchtypes.StatusCodePartialData {
+		q.StatusCode = *mdr.StatusCode
+		if *mdr.StatusCode != "PartialData" {
 			delete(q.partialDataSet, *mdr.Label)
 		}
 		return
 	}
 
 	q.Metrics = append(q.Metrics, mdr)
-	q.StatusCode = mdr.StatusCode
-	if mdr.StatusCode == cloudwatchtypes.StatusCodePartialData {
+	q.StatusCode = *mdr.StatusCode
+	if *mdr.StatusCode == "PartialData" {
 		q.partialDataSet[*mdr.Label] = mdr
 	}
 }
