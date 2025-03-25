@@ -14,15 +14,12 @@ interface MigrationSummaryProps {
   disconnectIsLoading: boolean;
   onDisconnect: () => void;
 
-  showBuildSnapshot: boolean;
-  buildSnapshotIsLoading: boolean;
-  onBuildSnapshot: () => void;
-
   showUploadSnapshot: boolean;
   uploadSnapshotIsLoading: boolean;
   onUploadSnapshot: () => void;
 
   showRebuildSnapshot: boolean;
+  onRebuildSnapshot: () => void;
 }
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
@@ -38,15 +35,12 @@ export function MigrationSummary(props: MigrationSummaryProps) {
     disconnectIsLoading,
     onDisconnect,
 
-    showBuildSnapshot,
-    buildSnapshotIsLoading,
-    onBuildSnapshot,
-
     showUploadSnapshot,
     uploadSnapshotIsLoading,
     onUploadSnapshot,
 
     showRebuildSnapshot,
+    onRebuildSnapshot,
   } = props;
 
   const totalCount = snapshot?.stats?.total ?? 0;
@@ -103,20 +97,9 @@ export function MigrationSummary(props: MigrationSummaryProps) {
       </Stack>
 
       <Stack gap={2} wrap justifyContent="flex-end">
-        {showBuildSnapshot && (
-          <Button disabled={isBusy} onClick={onBuildSnapshot} icon={buildSnapshotIsLoading ? 'spinner' : undefined}>
-            <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
-          </Button>
-        )}
-
         {showRebuildSnapshot && (
-          <Button
-            disabled={isBusy}
-            onClick={onBuildSnapshot}
-            icon={buildSnapshotIsLoading ? 'spinner' : undefined}
-            variant="secondary"
-          >
-            <Trans i18nKey="migrate-to-cloud.summary.rebuild-snapshot">Rebuild snapshot</Trans>
+          <Button disabled={isBusy || uploadSnapshotIsLoading} onClick={onRebuildSnapshot} variant="secondary">
+            <Trans i18nKey="migrate-to-cloud.summary.rebuild-snapshot">Reconfigure snapshot</Trans>
           </Button>
         )}
 

@@ -3084,11 +3084,6 @@
     }
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
-      "title": "No snapshot exists",
-      "when-complete": "Once the snapshot is complete, you will be able to upload it to your cloud stack."
-    },
     "building-snapshot": {
       "description": "We're creating a point-in-time snapshot of the current state of this installation. Once the snapshot is complete. you'll be able to upload it to Grafana Cloud.",
       "description-eta": "Creating a snapshot typically takes less than two minutes.",
@@ -3098,6 +3093,11 @@
       "body": "Once you connect this installation to a cloud stack, you'll be able to upload data sources and dashboards.",
       "link-title": "Learn about migrating other settings",
       "title": "Can I move this installation to Grafana Cloud?"
+    },
+    "configure-snapshot": {
+      "description": "Select which resources you want to include in the snapshot. Some resources may depend on others and will be automatically selected or deselected.",
+      "resource-include-all": "Include all",
+      "title": "Configure snapshot"
     },
     "connect-modal": {
       "body-cloud-stack": "You'll also need a cloud stack. If you just signed up, we'll automatically create your first stack. If you have an account, you'll need to select or create a stack.",
@@ -3134,14 +3134,6 @@
       "confirm-button": "Delete token",
       "error-title": "Error deleting token",
       "title": "Delete migration token"
-    },
-    "disconnect-modal": {
-      "body": "This will remove the migration token from this installation. If you wish to upload more resources in the future, you will need to enter a new migration token.",
-      "cancel": "Cancel",
-      "disconnect": "Disconnect",
-      "disconnecting": "Disconnecting...",
-      "error": "There was an error disconnecting",
-      "title": "Disconnect from cloud stack"
     },
     "get-started": {
       "body": "The migration process must be started from your self-managed Grafana instance.",
@@ -3285,7 +3277,7 @@
       "disconnect": "Disconnect",
       "errored-resource-count": "Errors",
       "page-loading": "Loading...",
-      "rebuild-snapshot": "Rebuild snapshot",
+      "rebuild-snapshot": "Reconfigure snapshot",
       "snapshot-date": "Snapshot timestamp",
       "snapshot-not-created": "Not yet created",
       "start-migration": "Build snapshot",
