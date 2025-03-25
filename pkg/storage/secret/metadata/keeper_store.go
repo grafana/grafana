@@ -297,3 +297,33 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(sess *sqlstore.DBS
 
 	return nil
 }
+
+func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
+	// Check if keeper is default sql.
+	if name == contracts.DefaultSQLKeeper {
+		return contracts.SQLKeeperType, nil, nil
+	}
+
+	// Load keeper config from metadata store, or TODO: keeper cache.
+	kp := &keeperDB{Namespace: namespace, Name: name}
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		found, err := sess.Get(kp)
+		if err != nil {
+			return fmt.Errorf("failed to get row: %w", err)
+		}
+		if !found {
+			return contracts.ErrKeeperNotFound
+		}
+
+		return nil
+	})
+	if err != nil {
+		return "", nil, fmt.Errorf("db failure: %w", err)
+	}
+
+	keeperConfig := toProvider(kp.Type, kp.Payload)
+
+	// TODO: this would be a good place to check if credentials are secure values and load them.
+
+	return kp.Type, keeperConfig, nil
+}

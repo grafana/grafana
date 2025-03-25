@@ -20,7 +20,12 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func ProvideSecureValueMetadataStorage(db db.DB, features featuremgmt.FeatureToggles, accessClient claims.AccessClient, keeperService secretkeeper.Service) (contracts.SecureValueMetadataStorage, error) {
+func ProvideSecureValueMetadataStorage(
+	db db.DB,
+	features featuremgmt.FeatureToggles,
+	accessClient claims.AccessClient,
+	keeperService secretkeeper.Service,
+	keeperMetadataStorage contracts.KeeperMetadataStorage) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueMetadataStorage{}, nil
@@ -37,14 +42,20 @@ func ProvideSecureValueMetadataStorage(db db.DB, features featuremgmt.FeatureTog
 		return nil, fmt.Errorf("failed to get keepers: %w", err)
 	}
 
-	return &secureValueMetadataStorage{db: db, accessClient: accessClient, keepers: keepers}, nil
+	return &secureValueMetadataStorage{
+		db:                    db,
+		accessClient:          accessClient,
+		keepers:               keepers,
+		keeperMetadataStorage: keeperMetadataStorage,
+	}, nil
 }
 
 // secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueMetadataStorage struct {
-	db           db.DB
-	accessClient claims.AccessClient
-	keepers      map[contracts.KeeperType]contracts.Keeper
+	db                    db.DB
+	accessClient          claims.AccessClient
+	keepers               map[contracts.KeeperType]contracts.Keeper
+	keeperMetadataStorage contracts.KeeperMetadataStorage
 }
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
@@ -311,4 +322,12 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	return &secretv0alpha1.SecureValueList{
 		Items: secureValues,
 	}, nil
+}
+
+func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
+	panic("TODO: secureValueMetadataStorage.SetExternalID")
+}
+
+func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+	panic("TODO: secureValueMetadataStorage.SetStatusSucceeded")
 }

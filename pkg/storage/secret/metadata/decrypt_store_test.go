@@ -302,15 +302,18 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	keeperService, err := secretkeeper.ProvideService(tracer, encValueStore, encryptionManager)
 	require.NoError(t, err)
 
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(db, features, accessClient)
+	require.NoError(t, err)
+
 	// Initialize the secure value storage
-	svStorage, err := ProvideSecureValueMetadataStorage(db, features, accessClient, keeperService)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(db, features, accessClient, keeperService, keeperMetadataStorage)
 	require.NoError(t, err)
 
 	// Initialize the decrypt storage
-	decryptSvc, err := ProvideDecryptStorage(db, features, keeperService, svStorage, allowList)
+	decryptSvc, err := ProvideDecryptStorage(db, features, keeperService, keeperMetadataStorage, secureValueMetadataStorage, allowList)
 	require.NoError(t, err)
 
-	return decryptSvc.(*decryptStorage), svStorage
+	return decryptSvc.(*decryptStorage), secureValueMetadataStorage
 }
 
 func createAuthContext(ctx context.Context, namespace string, permissions []string, identityType types.IdentityType) context.Context {
