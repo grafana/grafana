@@ -264,7 +264,7 @@
       "dependabot[bot]",
       "grafana-delivery-bot[bot]",
       "grafanabot",
-      "alerting-team"
+      "alerting-team[bot]"
     ],
     "action": "updateLabel",
     "addLabel": "pr/external"
