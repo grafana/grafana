@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -262,7 +261,6 @@ func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.File
 			(treePath == "" && strings.HasPrefix(path, ".git/")) {
 			return err
 		}
-		slog.Info("path", "treePath", treePath, "path", path)
 		if treePath != "" {
 			path = strings.TrimPrefix(path, treePath)
 		}
