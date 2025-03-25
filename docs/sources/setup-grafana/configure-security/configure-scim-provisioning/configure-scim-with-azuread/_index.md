@@ -44,7 +44,7 @@ Before configuring SCIM with Azure AD, ensure you have:
 
 ## Configure SCIM in Grafana
 
-To enable SCIM provisioning in Grafana, create a service account and generate an access token that will be used to authenticate SCIM requests from Azure AD.
+To enable SCIM provisioning in Grafana, create a service account and generate a service account token that will be used to authenticate SCIM requests from Azure AD.
 
 ### Create a service account
 
