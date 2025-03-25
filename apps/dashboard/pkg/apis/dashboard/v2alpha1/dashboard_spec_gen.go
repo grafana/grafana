@@ -965,20 +965,20 @@ func NewDashboardResponsiveGridLayoutKind() *DashboardResponsiveGridLayoutKind {
 
 // +k8s:openapi-gen=true
 type DashboardResponsiveGridLayoutSpec struct {
-	MaxColumnCount     *float64                                            `json:"maxColumnCount,omitempty"`
-	MinColumnWidthMode DashboardResponsiveGridLayoutSpecMinColumnWidthMode `json:"minColumnWidthMode"`
-	MinColumnWidth     *float64                                            `json:"minColumnWidth,omitempty"`
-	MinRowHeightMode   DashboardResponsiveGridLayoutSpecMinRowHeightMode   `json:"minRowHeightMode"`
-	MinRowHeight       *float64                                            `json:"minRowHeight,omitempty"`
-	HeightFill         *bool                                               `json:"heightFill,omitempty"`
-	Items              []DashboardResponsiveGridLayoutItemKind             `json:"items"`
+	MaxColumnCount  *float64                                         `json:"maxColumnCount,omitempty"`
+	ColumnWidthMode DashboardResponsiveGridLayoutSpecColumnWidthMode `json:"columnWidthMode"`
+	ColumnWidth     *float64                                         `json:"columnWidth,omitempty"`
+	RowHeightMode   DashboardResponsiveGridLayoutSpecRowHeightMode   `json:"rowHeightMode"`
+	RowHeight       *float64                                         `json:"rowHeight,omitempty"`
+	FillScreen      *bool                                            `json:"fillScreen,omitempty"`
+	Items           []DashboardResponsiveGridLayoutItemKind          `json:"items"`
 }
 
 // NewDashboardResponsiveGridLayoutSpec creates a new DashboardResponsiveGridLayoutSpec object.
 func NewDashboardResponsiveGridLayoutSpec() *DashboardResponsiveGridLayoutSpec {
 	return &DashboardResponsiveGridLayoutSpec{
 		MaxColumnCount: (func(input float64) *float64 { return &input })(3),
-		HeightFill:     (func(input bool) *bool { return &input })(false),
+		FillScreen:     (func(input bool) *bool { return &input })(false),
 	}
 }
 
@@ -1803,23 +1803,23 @@ const (
 )
 
 // +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutSpecMinColumnWidthMode string
+type DashboardResponsiveGridLayoutSpecColumnWidthMode string
 
 const (
-	DashboardResponsiveGridLayoutSpecMinColumnWidthModeNarrow   DashboardResponsiveGridLayoutSpecMinColumnWidthMode = "narrow"
-	DashboardResponsiveGridLayoutSpecMinColumnWidthModeStandard DashboardResponsiveGridLayoutSpecMinColumnWidthMode = "standard"
-	DashboardResponsiveGridLayoutSpecMinColumnWidthModeWide     DashboardResponsiveGridLayoutSpecMinColumnWidthMode = "wide"
-	DashboardResponsiveGridLayoutSpecMinColumnWidthModeCustom   DashboardResponsiveGridLayoutSpecMinColumnWidthMode = "custom"
+	DashboardResponsiveGridLayoutSpecColumnWidthModeNarrow   DashboardResponsiveGridLayoutSpecColumnWidthMode = "narrow"
+	DashboardResponsiveGridLayoutSpecColumnWidthModeStandard DashboardResponsiveGridLayoutSpecColumnWidthMode = "standard"
+	DashboardResponsiveGridLayoutSpecColumnWidthModeWide     DashboardResponsiveGridLayoutSpecColumnWidthMode = "wide"
+	DashboardResponsiveGridLayoutSpecColumnWidthModeCustom   DashboardResponsiveGridLayoutSpecColumnWidthMode = "custom"
 )
 
 // +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutSpecMinRowHeightMode string
+type DashboardResponsiveGridLayoutSpecRowHeightMode string
 
 const (
-	DashboardResponsiveGridLayoutSpecMinRowHeightModeShort    DashboardResponsiveGridLayoutSpecMinRowHeightMode = "short"
-	DashboardResponsiveGridLayoutSpecMinRowHeightModeStandard DashboardResponsiveGridLayoutSpecMinRowHeightMode = "standard"
-	DashboardResponsiveGridLayoutSpecMinRowHeightModeTall     DashboardResponsiveGridLayoutSpecMinRowHeightMode = "tall"
-	DashboardResponsiveGridLayoutSpecMinRowHeightModeCustom   DashboardResponsiveGridLayoutSpecMinRowHeightMode = "custom"
+	DashboardResponsiveGridLayoutSpecRowHeightModeShort    DashboardResponsiveGridLayoutSpecRowHeightMode = "short"
+	DashboardResponsiveGridLayoutSpecRowHeightModeStandard DashboardResponsiveGridLayoutSpecRowHeightMode = "standard"
+	DashboardResponsiveGridLayoutSpecRowHeightModeTall     DashboardResponsiveGridLayoutSpecRowHeightMode = "tall"
+	DashboardResponsiveGridLayoutSpecRowHeightModeCustom   DashboardResponsiveGridLayoutSpecRowHeightMode = "custom"
 )
 
 // +k8s:openapi-gen=true

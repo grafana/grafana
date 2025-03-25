@@ -825,19 +825,19 @@ export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => (
 
 export interface ResponsiveGridLayoutSpec {
 	maxColumnCount?: number;
-	minColumnWidthMode: "narrow" | "standard" | "wide" | "custom";
-	minColumnWidth?: number;
-	minRowHeightMode: "short" | "standard" | "tall" | "custom";
-	minRowHeight?: number;
-	heightFill?: boolean;
+	columnWidthMode: "narrow" | "standard" | "wide" | "custom";
+	columnWidth?: number;
+	rowHeightMode: "short" | "standard" | "tall" | "custom";
+	rowHeight?: number;
+	fillScreen?: boolean;
 	items: ResponsiveGridLayoutItemKind[];
 }
 
 export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => ({
 	maxColumnCount: 3,
-	minColumnWidthMode: "standard",
-	minRowHeightMode: "standard",
-	heightFill: false,
+	columnWidthMode: "standard",
+	rowHeightMode: "standard",
+	fillScreen: false,
 	items: [],
 });
 

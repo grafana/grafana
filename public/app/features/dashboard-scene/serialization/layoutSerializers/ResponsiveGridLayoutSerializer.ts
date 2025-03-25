@@ -3,8 +3,13 @@ import { DashboardV2Spec, ResponsiveGridLayoutItemKind } from '@grafana/schema/d
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
 import {
-  AutoGridMinColumnWidth,
-  AutoGridMinRowHeight,
+  AUTO_GRID_DEFAULT_COLUMN_WIDTH,
+  AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT,
+  AUTO_GRID_DEFAULT_ROW_HEIGHT,
+  AutoGridColumnWidth,
+  AutoGridRowHeight,
+  getAutoRowsTemplate,
+  getTemplateColumnsTemplate,
   ResponsiveGridLayoutManager,
 } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
@@ -19,8 +24,9 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
       kind: 'ResponsiveGridLayout',
       spec: {
         maxColumnCount: layoutManager.state.maxColumnCount,
-        ...serializeAutoGridColumnWidth(layoutManager.state.minColumnWidth),
-        ...serializeAutoGridRowHeight(layoutManager.state.minRowHeight),
+        fillScreen: layoutManager.state.fillScreen,
+        ...serializeAutoGridColumnWidth(layoutManager.state.columnWidth),
+        ...serializeAutoGridRowHeight(layoutManager.state.rowHeight),
         items: layoutManager.state.layout.state.children.map((child) => {
           if (!(child instanceof ResponsiveGridItem)) {
             throw new Error('Expected ResponsiveGridItem');
@@ -77,26 +83,34 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
 
     return new ResponsiveGridLayoutManager({
       maxColumnCount: layout.spec.maxColumnCount,
-      minColumnWidth:
-        layout.spec.minColumnWidthMode === 'custom' ? layout.spec.minColumnWidth : layout.spec.minColumnWidthMode,
-      minRowHeight: layout.spec.minRowHeightMode === 'custom' ? layout.spec.minRowHeight : layout.spec.minRowHeightMode,
+      columnWidth: layout.spec.columnWidthMode === 'custom' ? layout.spec.columnWidth : layout.spec.columnWidthMode,
+      rowHeight: layout.spec.rowHeightMode === 'custom' ? layout.spec.rowHeight : layout.spec.rowHeightMode,
+      fillScreen: layout.spec.fillScreen,
       layout: new ResponsiveGridLayout({
+        templateColumns: getTemplateColumnsTemplate(
+          layout.spec.maxColumnCount ?? AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT,
+          layout.spec.columnWidth ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH
+        ),
+        autoRows: getAutoRowsTemplate(
+          layout.spec.rowHeight ?? AUTO_GRID_DEFAULT_ROW_HEIGHT,
+          layout.spec.fillScreen ?? false
+        ),
         children,
       }),
     });
   }
 }
 
-function serializeAutoGridColumnWidth(minColumnWidth: AutoGridMinColumnWidth) {
+function serializeAutoGridColumnWidth(columnWidth: AutoGridColumnWidth) {
   return {
-    minColumnWidthMode: typeof minColumnWidth === 'number' ? 'custom' : minColumnWidth,
-    minColumnWidth: typeof minColumnWidth === 'number' ? minColumnWidth : undefined,
+    columnWidthMode: typeof columnWidth === 'number' ? 'custom' : columnWidth,
+    columnWidth: typeof columnWidth === 'number' ? columnWidth : undefined,
   };
 }
 
-function serializeAutoGridRowHeight(minRowHeight: AutoGridMinRowHeight) {
+function serializeAutoGridRowHeight(rowHeight: AutoGridRowHeight) {
   return {
-    minRowHeightMode: typeof minRowHeight === 'number' ? 'custom' : minRowHeight,
-    minRowHeight: typeof minRowHeight === 'number' ? minRowHeight : undefined,
+    rowHeightMode: typeof rowHeight === 'number' ? 'custom' : rowHeight,
+    rowHeight: typeof rowHeight === 'number' ? rowHeight : undefined,
   };
 }

@@ -22,17 +22,17 @@ import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: ResponsiveGridLayout;
   maxColumnCount: number;
-  minRowHeight: AutoGridMinRowHeight;
-  minColumnWidth: AutoGridMinColumnWidth;
-  heightFill: boolean;
+  rowHeight: AutoGridRowHeight;
+  columnWidth: AutoGridColumnWidth;
+  fillScreen: boolean;
 }
 
-export type AutoGridMinColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
-export type AutoGridMinRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
+export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
+export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
 
 export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
-export const AUTO_GRID_DEFAULT_MIN_COLUMN_WIDTH = 'standard';
-export const AUTO_GRID_DEFAULT_MIN_ROW_HEIGHT = 'standard';
+export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
+export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
 export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
@@ -59,21 +59,21 @@ export class ResponsiveGridLayoutManager
 
   public constructor(state: Partial<ResponsiveGridLayoutManagerState>) {
     const maxColumnCount = state.maxColumnCount ?? AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT;
-    const minColumnWidth = state.minColumnWidth ?? AUTO_GRID_DEFAULT_MIN_COLUMN_WIDTH;
-    const minRowHeight = state.minRowHeight ?? AUTO_GRID_DEFAULT_MIN_ROW_HEIGHT;
-    const heightFill = state.heightFill ?? false;
+    const columnWidth = state.columnWidth ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH;
+    const rowHeight = state.rowHeight ?? AUTO_GRID_DEFAULT_ROW_HEIGHT;
+    const fillScreen = state.fillScreen ?? false;
 
     super({
       ...state,
       maxColumnCount,
-      minColumnWidth,
-      minRowHeight,
-      heightFill,
+      columnWidth,
+      rowHeight,
+      fillScreen,
       layout:
         state.layout ??
         new ResponsiveGridLayout({
-          templateColumns: getTemplateColumnsTemplate(maxColumnCount, minColumnWidth),
-          autoRows: getAutoRowsTemplate(minRowHeight, heightFill),
+          templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
+          autoRows: getAutoRowsTemplate(rowHeight, fillScreen),
         }),
     });
 
@@ -194,36 +194,36 @@ export class ResponsiveGridLayoutManager
   public onMaxColumnCountChanged(maxColumnCount: number) {
     this.setState({ maxColumnCount: maxColumnCount });
     this.state.layout.setState({
-      templateColumns: getTemplateColumnsTemplate(maxColumnCount, this.state.minColumnWidth),
+      templateColumns: getTemplateColumnsTemplate(maxColumnCount, this.state.columnWidth),
     });
   }
 
-  public onMinColumnWidthChanged(minColumnWidth: AutoGridMinColumnWidth) {
-    if (minColumnWidth === 'custom') {
-      minColumnWidth = getNamedColumWidthInPixels(this.state.minColumnWidth);
+  public onColumnWidthChanged(columnWidth: AutoGridColumnWidth) {
+    if (columnWidth === 'custom') {
+      columnWidth = getNamedColumWidthInPixels(this.state.columnWidth);
     }
 
-    this.setState({ minColumnWidth: minColumnWidth });
+    this.setState({ columnWidth: columnWidth });
     this.state.layout.setState({
-      templateColumns: getTemplateColumnsTemplate(this.state.maxColumnCount, this.state.minColumnWidth),
+      templateColumns: getTemplateColumnsTemplate(this.state.maxColumnCount, this.state.columnWidth),
     });
   }
 
-  public onHeightFillChanged(heightFill: boolean) {
-    this.setState({ heightFill });
+  public onFillScreenChanged(fillScreen: boolean) {
+    this.setState({ fillScreen });
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(this.state.minRowHeight, heightFill),
+      autoRows: getAutoRowsTemplate(this.state.rowHeight, fillScreen),
     });
   }
 
-  public onMinRowHeightChanged(minRowHeight: AutoGridMinRowHeight) {
-    if (minRowHeight === 'custom') {
-      minRowHeight = getNamedHeightInPixels(this.state.minRowHeight);
+  public onRowHeightChanged(rowHeight: AutoGridRowHeight) {
+    if (rowHeight === 'custom') {
+      rowHeight = getNamedHeightInPixels(this.state.rowHeight);
     }
 
-    this.setState({ minRowHeight });
+    this.setState({ rowHeight });
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(minRowHeight, this.state.heightFill),
+      autoRows: getAutoRowsTemplate(rowHeight, this.state.fillScreen),
     });
   }
 
@@ -250,16 +250,16 @@ function ResponsiveGridLayoutManagerRenderer({ model }: SceneComponentProps<Resp
   return <model.state.layout.Component model={model.state.layout} />;
 }
 
-function getTemplateColumnsTemplate(maxColumnCount: number, minColumnWidth: AutoGridMinColumnWidth) {
-  return `repeat(auto-fit, minmax(min(max(100% / ${maxColumnCount} - ${GRID_CELL_VMARGIN}px, ${getNamedColumWidthInPixels(minColumnWidth)}px), 100%), 1fr))`;
+export function getTemplateColumnsTemplate(maxColumnCount: number, columnWidth: AutoGridColumnWidth) {
+  return `repeat(auto-fit, minmax(min(max(100% / ${maxColumnCount} - ${GRID_CELL_VMARGIN}px, ${getNamedColumWidthInPixels(columnWidth)}px), 100%), 1fr))`;
 }
 
-function getNamedColumWidthInPixels(minColumnWidth: AutoGridMinColumnWidth) {
-  if (typeof minColumnWidth === 'number') {
-    return minColumnWidth;
+function getNamedColumWidthInPixels(columnWidth: AutoGridColumnWidth) {
+  if (typeof columnWidth === 'number') {
+    return columnWidth;
   }
 
-  switch (minColumnWidth) {
+  switch (columnWidth) {
     case 'narrow':
       return 192;
     case 'wide':
@@ -271,12 +271,12 @@ function getNamedColumWidthInPixels(minColumnWidth: AutoGridMinColumnWidth) {
   }
 }
 
-function getNamedHeightInPixels(minRowHeight: AutoGridMinRowHeight) {
-  if (typeof minRowHeight === 'number') {
-    return minRowHeight;
+function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
+  if (typeof rowHeight === 'number') {
+    return rowHeight;
   }
 
-  switch (minRowHeight) {
+  switch (rowHeight) {
     case 'short':
       return 128;
     case 'tall':
@@ -288,8 +288,8 @@ function getNamedHeightInPixels(minRowHeight: AutoGridMinRowHeight) {
   }
 }
 
-function getAutoRowsTemplate(minRowHeight: AutoGridMinRowHeight, heightFill: boolean) {
-  const minRowHeightPixels = getNamedHeightInPixels(minRowHeight);
-  const maxRowHeightValue = heightFill ? 'auto' : `${minRowHeightPixels}px`;
-  return `minmax(${minRowHeightPixels}px, ${maxRowHeightValue})`;
+export function getAutoRowsTemplate(rowHeight: AutoGridRowHeight, fillScreen: boolean) {
+  const rowHeightPixels = getNamedHeightInPixels(rowHeight);
+  const maxRowHeightValue = fillScreen ? 'auto' : `${rowHeightPixels}px`;
+  return `minmax(${rowHeightPixels}px, ${maxRowHeightValue})`;
 }

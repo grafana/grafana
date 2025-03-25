@@ -631,9 +631,10 @@ describe('dynamic layouts', () => {
     const scene = setupDashboardScene(
       getMinimalSceneState(
         new ResponsiveGridLayoutManager({
-          minColumnWidth: 100,
-          minRowHeight: 'standard',
+          columnWidth: 100,
+          rowHeight: 'standard',
           maxColumnCount: 4,
+          fillScreen: true,
           layout: new ResponsiveGridLayout({
             children: [
               new ResponsiveGridItem({
@@ -650,11 +651,12 @@ describe('dynamic layouts', () => {
     const result = transformSceneToSaveModelSchemaV2(scene);
     expect(result.layout.kind).toBe('ResponsiveGridLayout');
     const respGridLayout = result.layout.spec as ResponsiveGridLayoutSpec;
-    expect(respGridLayout.minColumnWidthMode).toBe('custom');
-    expect(respGridLayout.minColumnWidth).toBe(100);
-    expect(respGridLayout.minRowHeightMode).toBe('standard');
-    expect(respGridLayout.minRowHeight).toBeUndefined();
+    expect(respGridLayout.columnWidthMode).toBe('custom');
+    expect(respGridLayout.columnWidth).toBe(100);
+    expect(respGridLayout.rowHeightMode).toBe('standard');
+    expect(respGridLayout.rowHeight).toBeUndefined();
     expect(respGridLayout.maxColumnCount).toBe(4);
+    expect(respGridLayout.fillScreen).toBe(true);
     expect(respGridLayout.items.length).toBe(2);
     expect(respGridLayout.items[0].kind).toBe('ResponsiveGridLayoutItem');
   });
