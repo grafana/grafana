@@ -30,7 +30,7 @@ jobs:
             exit 1
         fi
   lint-frontend-prettier:
-    name: Prettier
+    name: Lint
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
