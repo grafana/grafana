@@ -27,7 +27,6 @@ import {
 import { TableCellInspectorMode } from '../..';
 import { getTextColorForAlphaBackground } from '../../../utils';
 
-import { countMultiLines } from './canvas-hypertxt-mod';
 import { TABLE } from './constants';
 import {
   CellColors,
@@ -40,6 +39,7 @@ import {
   Comparator,
   TableFooterCalc,
 } from './types';
+import { uWrap } from './uWrap';
 
 /* ---------------------------- Cell calculations --------------------------- */
 // NOTE: This is now a fallback in case canvas-hypertxt fails
@@ -99,22 +99,29 @@ export function getCellHeight(
   return defaultRowHeight;
 }
 
-export function calculateCellHeight(
-  text: string,
-  font: string,
-  cellWidth: number,
+export type CellHeightCalculator = (text: string, cellWidth: number) => number;
+
+export function getCellHeightCalculator(
+  // should be pre-configured with font and letterSpacing
   ctx: CanvasRenderingContext2D,
   lineHeight: number,
   defaultRowHeight: number,
   padding = 0
 ) {
-  const effectiveCellWidth = Math.max(cellWidth, 20); // Minimum width to work with
-  const TOTAL_PADDING = padding * 2;
+  let uw = uWrap(ctx);
 
-  const numLines = countMultiLines(ctx, text, font, effectiveCellWidth, true);
+  return (text: string, cellWidth: number) => {
+    const effectiveCellWidth = Math.max(cellWidth, 20); // Minimum width to work with
+    const TOTAL_PADDING = padding * 2;
 
-  const totalHeight = numLines * lineHeight + TOTAL_PADDING;
-  return Math.max(totalHeight, defaultRowHeight);
+    let numLines = 0;
+    uw.each(text, effectiveCellWidth, () => {
+      numLines++;
+    });
+
+    const totalHeight = numLines * lineHeight + TOTAL_PADDING;
+    return Math.max(totalHeight, defaultRowHeight);
+  };
 }
 
 export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellHeight | undefined): number {
@@ -139,12 +146,9 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellH
  */
 export function getRowHeight(
   row: TableRow,
-  ctx: CanvasRenderingContext2D,
-  font: string,
+  calc: CellHeightCalculator,
   avgCharWidth: number,
-  lineHeight: number,
   defaultRowHeight: number,
-  padding: number,
   fieldsData: {
     headersLength: number;
     textWraps: { [key: string]: boolean };
@@ -176,17 +180,7 @@ export function getRowHeight(
     }
   }
 
-  return maxLinesCol === ''
-    ? defaultRowHeight
-    : calculateCellHeight(
-        row[maxLinesCol] as string,
-        font,
-        fieldsData.columnWidths[maxLinesCol],
-        ctx,
-        lineHeight,
-        defaultRowHeight,
-        padding
-      );
+  return maxLinesCol === '' ? defaultRowHeight : calc(row[maxLinesCol] as string, fieldsData.columnWidths[maxLinesCol]);
 }
 
 export function isTextCell(key: string, columnTypes: Record<string, string>): boolean {

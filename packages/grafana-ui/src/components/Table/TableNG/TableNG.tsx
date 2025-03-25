@@ -43,6 +43,7 @@ import {
 } from './types';
 import {
   frameToRecords,
+  getCellHeightCalculator,
   getComparator,
   getDefaultRowHeight,
   getFooterItemNG,
@@ -386,15 +387,19 @@ export function TableNG(props: TableNGProps) {
     setResizeTrigger((prev) => prev + 1);
   };
 
-  const { ctx, avgCharWidth, font } = useMemo(() => {
+  const { ctx, avgCharWidth } = useMemo(() => {
     const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
+    // set in grafana/data in createTypography.ts
+    const letterSpacing = 0.15;
+
+    ctx.letterSpacing = `${letterSpacing}px`;
     ctx.font = font;
     let txt =
       "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
-    const txtWidth = ctx.measureText(txt).width * devicePixelRatio;
-    const avgCharWidth = txtWidth / txt.length;
+    const txtWidth = ctx.measureText(txt).width;
+    const avgCharWidth = txtWidth / txt.length + letterSpacing;
 
     return {
       ctx,
@@ -460,6 +465,10 @@ export function TableNG(props: TableNGProps) {
     );
   };
 
+  const cellHeightCalc = useMemo(() => {
+    return getCellHeightCalculator(ctx, defaultLineHeight, defaultRowHeight, TABLE.CELL_PADDING);
+  }, [ctx, defaultLineHeight, defaultRowHeight]);
+
   const calculateRowHeight = useCallback(
     (row: TableRow) => {
       // Logic for sub-tables
@@ -469,18 +478,9 @@ export function TableNG(props: TableNGProps) {
         const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
         return defaultRowHeight * (row.data?.length ?? 0 + headerCount); // TODO this probably isn't very robust
       }
-      return getRowHeight(
-        row,
-        ctx,
-        font,
-        avgCharWidth,
-        defaultLineHeight,
-        defaultRowHeight,
-        TABLE.CELL_PADDING,
-        fieldsData
-      );
+      return getRowHeight(row, cellHeightCalc, avgCharWidth, defaultRowHeight, fieldsData);
     },
-    [expandedRows, ctx, font, avgCharWidth, defaultLineHeight, defaultRowHeight, fieldsData]
+    [expandedRows, avgCharWidth, defaultRowHeight, fieldsData, cellHeightCalc]
   );
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
