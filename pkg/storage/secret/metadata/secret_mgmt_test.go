@@ -161,26 +161,6 @@ func Test_SecretMgmt_DeleteInKeeper(t *testing.T) {
 	})
 }
 
-func Test_SecretMgmt_GetKeeperConfig(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-	s := setupTestService(t).(*secureValueMetadataStorage)
-
-	t.Run("get default sql keeper config", func(t *testing.T) {
-		keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, "default", "kp-default-sql")
-		require.NoError(t, err)
-		require.Equal(t, contracts.SQLKeeperType, keeperType)
-		require.Nil(t, keeperConfig)
-	})
-
-	t.Run("get test keeper config", func(t *testing.T) {
-		keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, "default", "kp-test")
-		require.NoError(t, err)
-		require.Equal(t, contracts.SQLKeeperType, keeperType)
-		require.NotNil(t, keeperConfig)
-	})
-}
-
 func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
@@ -229,7 +209,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
 
 	// Initialize the keeper storage and add a test keeper
-	keeperStorage, err := ProvideKeeperMetadataStorage(testDB, features, accessClient)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(testDB, features, accessClient)
 	require.NoError(t, err)
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
@@ -239,11 +219,11 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	}
 	testKeeper.Name = "kp-test"
 	testKeeper.Namespace = "default"
-	_, err = keeperStorage.Create(ctx, testKeeper)
+	_, err = keeperMetadataStorage.Create(ctx, testKeeper)
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperService)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperService, keeperMetadataStorage)
 	require.NoError(t, err)
 
 	return secureValueMetadataStorage
