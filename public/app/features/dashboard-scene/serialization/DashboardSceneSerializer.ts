@@ -60,7 +60,7 @@ interface DashboardTrackingInfo {
   settings_livenow?: boolean;
 }
 
-interface DSReferencesMapping {
+export interface DSReferencesMapping {
   panels: Map<string, Set<string>>;
   variables: Set<string>;
   annotations: Set<string>;

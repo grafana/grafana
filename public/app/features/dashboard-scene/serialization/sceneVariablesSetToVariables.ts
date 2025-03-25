@@ -22,6 +22,7 @@ import {
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
+import { DSReferencesMapping } from './DashboardSceneSerializer';
 import { getDataQueryKind, getDataQuerySpec, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
   transformVariableRefreshToEnum,
@@ -225,7 +226,8 @@ function variableValueOptionsToVariableOptions(varState: MultiValueVariable['sta
 
 export function sceneVariablesSetToSchemaV2Variables(
   set: SceneVariables,
-  keepQueryOptions?: boolean
+  keepQueryOptions?: boolean,
+  dsReferencesMapping?: DSReferencesMapping
 ): Array<
   | QueryVariableKind
   | TextVariableKind
@@ -294,7 +296,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           options,
           query: dataQuery,
           definition: variable.state.definition,
-          datasource: getElementDatasource(set, variable, 'variable'),
+          datasource: getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping),
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex,

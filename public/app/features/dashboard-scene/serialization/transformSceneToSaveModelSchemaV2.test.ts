@@ -514,12 +514,19 @@ describe('getElementDatasource', () => {
       datasource: { uid: 'default-ds', type: 'default' },
     });
 
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
+    };
+
     // Call the function with the panel and query with DS
-    const resultWithDS = getElementDatasource(vizPanel, queryWithDS, 'panel', queryRunner);
+    const resultWithDS = getElementDatasource(vizPanel, queryWithDS, 'panel', queryRunner, dsReferencesMapping);
     expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
 
     // Call the function with the panel and query without DS
-    const resultWithoutDS = getElementDatasource(vizPanel, queryWithoutDS, 'panel', queryRunner);
+    const resultWithoutDS = getElementDatasource(vizPanel, queryWithoutDS, 'panel', queryRunner, dsReferencesMapping);
     expect(resultWithoutDS).toBeUndefined();
   });
 
@@ -544,9 +551,22 @@ describe('getElementDatasource', () => {
     // Variable without DS
     const variableWithoutDS = variableSet.getByName('A');
 
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
+      variables: new Set<string>(['A']),
+      annotations: new Set<string>(),
+    };
+
     // Call the function with variables
     if (variableWithDS && sceneUtils.isQueryVariable(variableWithDS)) {
-      const resultWithDS = getElementDatasource(variableSet, variableWithDS, 'variable');
+      const resultWithDS = getElementDatasource(
+        variableSet,
+        variableWithDS,
+        'variable',
+        undefined,
+        dsReferencesMapping
+      );
       expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
     }
 

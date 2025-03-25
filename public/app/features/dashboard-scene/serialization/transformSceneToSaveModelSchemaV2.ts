@@ -49,14 +49,9 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import {
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-  isLibraryPanel,
-} from '../utils/utils';
+import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
+import { DSReferencesMapping } from './DashboardSceneSerializer';
 import { getLayout } from './layoutSerializers/utils';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
@@ -74,6 +69,8 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
   const controlsState = sceneDash.controls?.state;
   const refreshPicker = controlsState?.refreshPicker;
+
+  const dsReferencesMapping: DSReferencesMapping = scene.serializer.getDSReferencesMapping();
 
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
@@ -103,11 +100,11 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF time settings
 
     // variables
-    variables: getVariables(sceneDash),
+    variables: getVariables(sceneDash, dsReferencesMapping),
     // EOF variables
 
     // elements
-    elements: getElements(scene),
+    elements: getElements(scene, dsReferencesMapping),
     // EOF elements
 
     // annotations
@@ -150,14 +147,18 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(scene: DashboardScene) {
+function getElements(scene: DashboardScene, dsReferencesMapping: DSReferencesMapping) {
   const panels = scene.state.body.getVizPanels() ?? [];
-
-  const panelsArray = panels.map(vizPanelToSchemaV2);
+  const panelsArray = panels.map((vizPanel) => {
+    return vizPanelToSchemaV2(vizPanel, dsReferencesMapping);
+  });
   return createElements(panelsArray, scene);
 }
 
-export function vizPanelToSchemaV2(vizPanel: VizPanel): PanelKind | LibraryPanelKind {
+export function vizPanelToSchemaV2(
+  vizPanel: VizPanel,
+  dsReferencesMapping?: DSReferencesMapping
+): PanelKind | LibraryPanelKind {
   if (isLibraryPanel(vizPanel)) {
     const behavior = getLibraryPanelBehavior(vizPanel)!;
     const elementSpec: LibraryPanelKind = {
@@ -219,7 +220,7 @@ export function vizPanelToSchemaV2(vizPanel: VizPanel): PanelKind | LibraryPanel
       data: {
         kind: 'QueryGroup',
         spec: {
-          queries: getVizPanelQueries(vizPanel),
+          queries: getVizPanelQueries(vizPanel, dsReferencesMapping),
           transformations: getVizPanelTransformations(vizPanel),
           queryOptions: getVizPanelQueryOptions(vizPanel),
         },
@@ -245,14 +246,14 @@ function getPanelLinks(panel: VizPanel): DataLink[] {
   return [];
 }
 
-function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
+function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferencesMapping): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
 
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
-      const queryDatasource = getElementDatasource(vizPanel, query, 'panel', queryRunner);
+      const queryDatasource = getElementDatasource(vizPanel, query, 'panel', queryRunner, dsReferencesMapping);
       const dataQuery: DataQueryKind = {
         kind: getDataQueryKind(query),
         spec: omit(query, 'datasource', 'refId', 'hide'),
@@ -359,7 +360,7 @@ function createElements(panels: Element[], scene: DashboardScene): Record<string
   }, {});
 }
 
-function getVariables(oldDash: DashboardSceneState) {
+function getVariables(oldDash: DashboardSceneState, dsReferencesMapping?: DSReferencesMapping) {
   const variablesSet = oldDash.$variables;
 
   // variables is an array of all variables kind (union)
@@ -375,7 +376,7 @@ function getVariables(oldDash: DashboardSceneState) {
   > = [];
 
   if (variablesSet instanceof SceneVariableSet) {
-    variables = sceneVariablesSetToSchemaV2Variables(variablesSet);
+    variables = sceneVariablesSetToSchemaV2Variables(variablesSet, false, dsReferencesMapping);
   }
 
   return variables;
@@ -597,14 +598,15 @@ function validateRowsLayout(layout: unknown) {
 
 function getAutoAssignedDSRef(
   element: VizPanel | SceneVariables,
-  type: 'panels' | 'variables'
-): Set<string> | undefined {
-  const scene = getDashboardSceneFor(element);
-  const elementMapReferences = scene.serializer.getDSReferencesMapping();
-
+  type: 'panels' | 'variables',
+  elementMapReferences?: DSReferencesMapping
+): Set<string> {
+  if (!elementMapReferences) {
+    return new Set();
+  }
   if (type === 'panels' && isVizPanel(element)) {
     const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(element);
-    return elementMapReferences.panels.get(elementKey);
+    return elementMapReferences.panels.get(elementKey) || new Set();
   }
 
   return elementMapReferences.variables;
@@ -615,7 +617,7 @@ function getAutoAssignedDSRef(
  */
 export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable>(
   element: T,
-  autoAssignedDsRef: Set<string> | undefined,
+  autoAssignedDsRef: Set<string>,
   type: 'query' | 'variable',
   context?: SceneQueryRunner
 ): DataSourceRef | undefined {
@@ -687,50 +689,32 @@ export function getElementDatasource(
   element: VizPanel | SceneVariables,
   queryElement: SceneDataQuery | QueryVariable,
   type: 'panel' | 'variable',
-  queryRunner?: SceneQueryRunner
+  queryRunner?: SceneQueryRunner,
+  dsReferencesMapping?: DSReferencesMapping
 ): DataSourceRef | undefined {
-  try {
-    if (type === 'panel') {
-      if (!queryRunner || !isVizPanel(element) || !isSceneDataQuery(queryElement)) {
-        return undefined;
-      }
-      // Get datasource for panel query
-      const autoAssignedRefs = getAutoAssignedDSRef(element, 'panels');
-      return getPersistedDSFor(queryElement, autoAssignedRefs, 'query', queryRunner);
+  if (type === 'panel') {
+    if (!queryRunner || !isVizPanel(element) || !isSceneDataQuery(queryElement)) {
+      return undefined;
     }
-
-    if (type === 'variable') {
-      if (!isSceneVariables(element) || isSceneDataQuery(queryElement)) {
-        return undefined;
-      }
-      // Get datasource for variable
-      if (!sceneUtils.isQueryVariable(queryElement)) {
-        return undefined;
-      }
-      const autoAssignedRefs = getAutoAssignedDSRef(element, 'variables');
-      // Important: Only return the datasource if it's not in auto-assigned refs
-      // and if the result would not be an empty object
-      const result = getPersistedDSFor(queryElement, autoAssignedRefs, 'variable');
-      return Object.keys(result || {}).length > 0 ? result : undefined;
-    }
-
-    return undefined;
-  } catch (error) {
-    // If no dashboard scene is found, fall back to the original behavior
-    // this is neeeded because nowadays we could have variables and viz panels without a dashboard scene
-    // if we don't have a dashboard scene, it means we don't have a serializer with the logic of
-    // ds references auto-assigned mapping
-    // we want to keep the original behavior for backwards compatibility
-    if (type === 'panel' && isSceneDataQuery(queryElement)) {
-      return queryElement.datasource || queryRunner?.state?.datasource;
-    }
-
-    if (type === 'variable' && !isSceneDataQuery(queryElement) && sceneUtils.isQueryVariable(queryElement)) {
-      // Only return the datasource if it exists and is not empty
-      const ds = queryElement.state.datasource;
-      return ds && Object.keys(ds).length > 0 ? ds : undefined;
-    }
-
-    return undefined;
+    // Get datasource for panel query
+    const autoAssignedRefs = getAutoAssignedDSRef(element, 'panels', dsReferencesMapping);
+    return getPersistedDSFor(queryElement, autoAssignedRefs, 'query', queryRunner);
   }
+
+  if (type === 'variable') {
+    if (!isSceneVariables(element) || isSceneDataQuery(queryElement)) {
+      return undefined;
+    }
+    // Get datasource for variable
+    if (!sceneUtils.isQueryVariable(queryElement)) {
+      return undefined;
+    }
+    const autoAssignedRefs = getAutoAssignedDSRef(element, 'variables', dsReferencesMapping);
+    // Important: Only return the datasource if it's not in auto-assigned refs
+    // and if the result would not be an empty object
+    const result = getPersistedDSFor(queryElement, autoAssignedRefs, 'variable');
+    return Object.keys(result || {}).length > 0 ? result : undefined;
+  }
+
+  return undefined;
 }
