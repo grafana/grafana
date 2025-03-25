@@ -3,6 +3,7 @@ package sync
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -29,6 +30,11 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 			}
 			continue
 		}
+		// TODO: why do we have to do this here?
+		if item.Group != folders.GROUP && !strings.HasSuffix(item.Path, "/") {
+			item.Path = item.Path + "/"
+		}
+
 		lookup[item.Path] = &item
 	}
 
