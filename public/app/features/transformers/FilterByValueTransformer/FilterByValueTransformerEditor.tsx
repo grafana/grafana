@@ -19,7 +19,7 @@ import {
   FilterByValueMatch,
   FilterByValueTransformerOptions,
   FilterByValueType,
-} from '@grafana/data/src/transformations/transformers/filterByValue';
+} from '@grafana/data/internal';
 import { Button, RadioButtonGroup, InlineField, Box } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
