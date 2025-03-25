@@ -340,12 +340,6 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 				if _, err := r.folders.EnsureFolderPathExist(ctx, unhiddenPath); err != nil {
 					return fmt.Errorf("unable to create empty file folder: %w", err)
 				}
-
-				r.progress.Record(ctx, jobs.JobResourceResult{
-					Path:   change.Path,
-					Action: repository.FileActionCreated,
-				})
-				continue
 			}
 
 			r.progress.Record(ctx, jobs.JobResourceResult{
