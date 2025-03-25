@@ -64,7 +64,9 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
 
   const templateVariables = getTemplateSrv().getVariables();
   useEffect(() => {
-    setTraceQlQuery(datasource.languageProvider.generateQueryFromFilters(interpolateFilters(query.filters || [])));
+    setTraceQlQuery(
+      datasource.languageProvider.generateQueryFromFilters({ traceqlFilters: interpolateFilters(query.filters || []) })
+    );
   }, [datasource.languageProvider, query, templateVariables]);
 
   const findFilter = useCallback((id: string) => query.filters?.find((f) => f.id === id), [query.filters]);
@@ -123,7 +125,9 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
       return traceQlQuery;
     }
     const filtersAfterRemoval = query.filters?.filter((f) => f.id !== filter.id) || [];
-    return datasource.languageProvider.generateQueryFromFilters(interpolateFilters(filtersAfterRemoval || []));
+    return datasource.languageProvider.generateQueryFromFilters({
+      traceqlFilters: interpolateFilters(filtersAfterRemoval || []),
+    });
   };
 
   return (
@@ -260,7 +264,9 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               });
 
               onClearResults();
-              const traceQlQuery = datasource.languageProvider.generateQueryFromFilters(query.filters || []);
+              const traceQlQuery = datasource.languageProvider.generateQueryFromFilters({
+                traceqlFilters: query.filters || [],
+              });
               onChange({
                 ...query,
                 query: traceQlQuery,
