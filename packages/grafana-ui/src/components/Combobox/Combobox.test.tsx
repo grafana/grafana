@@ -15,8 +15,8 @@ const options: ComboboxOption[] = [
   { label: 'Option 4', value: '4' },
 ];
 const optionsWithGroups: ComboboxOption[] = [
-  { label: 'Option 1', value: '1' },
-  { label: 'Option 2', value: '2', group: 'Group 1' },
+  { label: 'Option 1', value: '1', group: 'Group 1' },
+  { label: 'Option 2', value: '2' },
   { label: 'Option 3', value: '3', group: 'Group 1' },
   { label: 'Option 4', value: '4' },
   { label: 'Option 5', value: '5', group: 'Group 2' },
@@ -201,7 +201,7 @@ describe('Combobox', () => {
       );
     });
 
-    it('puts ungrouped options at the end', async () => {
+    it('puts ungrouped options relative to first occurrence', async () => {
       render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
@@ -209,7 +209,7 @@ describe('Combobox', () => {
 
       const listbox = await screen.findByRole('listbox');
       expect(listbox).toHaveTextContent(
-        ['Group 1', 'Option 2', 'Option 3', 'Group 2', 'Option 5', 'Option 6', 'Option 1', 'Option 4'].join('')
+        ['Group 1', 'Option 1', 'Option 3', 'Option 2', 'Option 4', 'Group 2', 'Option 5', 'Option 6'].join('')
       );
     });
 
@@ -221,8 +221,8 @@ describe('Combobox', () => {
 
       const allHeaders = await screen.findAllByRole('presentation');
 
-      expect(allHeaders[1]).toHaveTextContent('Group 2');
-      expect(allHeaders[2]).toHaveTextContent('');
+      expect(allHeaders[0]).toHaveTextContent('Group 1');
+      expect(allHeaders[1]).toHaveTextContent('');
     });
 
     it('does not render a top border for the first group header', async () => {

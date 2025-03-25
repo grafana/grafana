@@ -110,9 +110,9 @@ export const CustomValue: Story = {
 export const GroupsWithMixedLabels: Story = {
   args: {
     options: [
-      { label: 'One', value: 'one' },
+      { label: 'One', value: 'one', group: 'Group 1' },
       { label: 'Two', value: 'two', group: 'Group 1' },
-      { label: 'Three', value: 'three', group: 'Group 1' },
+      { label: 'Three', value: 'three', group: 'Group 3' },
       { label: 'Four', value: 'four', group: 'Group 1' },
       { label: 'Five', value: 'five' },
       { label: 'Six', value: 'six' },
