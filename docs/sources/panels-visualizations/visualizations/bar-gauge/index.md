@@ -148,11 +148,8 @@ Adjust how the gauge is displayed.
 
 Set the sizes of the following text elements in pixels:
 
-- **Title** - The name of each bar.
-- **Value**
-- **Percentage change** - When the bar gauge has the following configuration, you can set the size of the percentage change text:
-  - [Display mode](#bar-gauge-options) - **Gradient** or **Retro LCD**
-  - [Thresholds mode](#thresholds) - **Percentage**
+- **Title** - Bar name
+- **Value** - Bar value
 
 ### Standard options
 
