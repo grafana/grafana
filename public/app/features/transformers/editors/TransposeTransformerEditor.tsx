@@ -7,6 +7,7 @@ import {
 } from '@grafana/data';
 import { TransposeTransformerOptions } from '@grafana/data/internal';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
   return (
@@ -14,7 +15,7 @@ export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIPr
       <InlineFieldRow>
         <InlineField label={'First field name'} labelWidth={24}>
           <Input
-            placeholder="Field"
+            placeholder={t('transformers.transpose-transfomer-editor.placeholder-field', 'Field')}
             value={options.firstFieldName}
             onChange={(e) => onChange({ ...options, firstFieldName: e.currentTarget.value })}
             width={25}
@@ -24,7 +25,7 @@ export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIPr
       <InlineFieldRow>
         <InlineField label={'Remaining fields name'} tooltip={'Name for value fields'} labelWidth={24}>
           <Input
-            placeholder="Value"
+            placeholder={t('transformers.transpose-transfomer-editor.placeholder-value', 'Value')}
             value={options.restFieldsName}
             onChange={(e) => onChange({ ...options, restFieldsName: e.currentTarget.value })}
             width={25}

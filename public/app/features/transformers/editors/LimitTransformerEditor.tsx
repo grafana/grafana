@@ -9,6 +9,7 @@ import {
 } from '@grafana/data';
 import { LimitTransformerOptions } from '@grafana/data/internal';
 import { InlineFieldRow } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
@@ -36,7 +37,7 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
           error={'Value needs to be an integer or a variable'}
           value={String(options.limitField)}
           onChange={onSetVariableLimit}
-          placeholder="Value or variable"
+          placeholder={t('transformers.limit-transformer-editor.placeholder-value-or-variable', 'Value or variable')}
           suggestions={getVariableSuggestions()}
         ></SuggestionsInput>
       </InlineFieldRow>
