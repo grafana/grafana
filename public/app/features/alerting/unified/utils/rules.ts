@@ -29,6 +29,7 @@ import {
   GrafanaRecordingRuleDefinition,
   PostableRuleDTO,
   PromAlertingRuleState,
+  PromRuleDTO,
   PromRuleType,
   RulerAlertingRuleDTO,
   RulerCloudRuleDTO,
@@ -200,7 +201,7 @@ export interface RulePluginOrigin {
   pluginId: string;
 }
 
-export function getRulePluginOrigin(rule?: Rule | RulerRuleDTO): RulePluginOrigin | undefined {
+export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): RulePluginOrigin | undefined {
   if (!rule) {
     return undefined;
   }
@@ -233,7 +234,7 @@ export function isPluginProvidedGroup(group: RulerRuleGroupDTO): boolean {
   return group.rules.some((rule) => isPluginProvidedRule(rule));
 }
 
-export function isPluginProvidedRule(rule?: Rule | RulerRuleDTO): boolean {
+export function isPluginProvidedRule(rule?: Rule | PromRuleDTO | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
 }
 

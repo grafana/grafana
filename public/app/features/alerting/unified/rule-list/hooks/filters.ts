@@ -7,7 +7,7 @@ import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { parseMatcher } from '../../utils/matchers';
-import { prometheusRuleType } from '../../utils/rules';
+import { isPluginProvidedRule, prometheusRuleType } from '../../utils/rules';
 
 /**
  * @returns True if the group matches the filter, false otherwise. Keeps rules intact
@@ -15,11 +15,12 @@ import { prometheusRuleType } from '../../utils/rules';
 export function groupFilter(group: PromRuleGroupDTO, filterState: RulesFilter): boolean {
   const { name, file } = group;
 
-  // TODO Add fuzzy filtering or not
+  // Add fuzzy search for namespace
   if (filterState.namespace && !file.toLowerCase().includes(filterState.namespace)) {
     return false;
   }
 
+  // Add fuzzy search for group name
   if (filterState.groupName && !name.toLowerCase().includes(filterState.groupName)) {
     return false;
   }
@@ -35,26 +36,39 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
 
   const nameLower = name.toLowerCase();
 
+  // Free form words filter (matches if any word is part of the rule name)
   if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => nameLower.includes(word))) {
     return false;
   }
 
+  // Rule name filter (exact match)
   if (filterState.ruleName && !nameLower.includes(filterState.ruleName)) {
     return false;
   }
 
+  // Labels filter
   if (filterState.labels.length > 0) {
     const matchers = compact(filterState.labels.map(looseParseMatcher));
     const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(labels, matchers);
-    if (!doRuleLabelsMatchQuery) {
+
+    // Also check alerts if they exist
+    const doAlertsContainMatchingLabels =
+      matchers.length > 0 &&
+      prometheusRuleType.alertingRule(rule) &&
+      rule.alerts &&
+      rule.alerts.some((alert) => labelsMatchMatchers(alert.labels || {}, matchers));
+
+    if (!doRuleLabelsMatchQuery && !doAlertsContainMatchingLabels) {
       return false;
     }
   }
 
+  // Rule type filter
   if (filterState.ruleType && type !== filterState.ruleType) {
     return false;
   }
 
+  // Rule state filter (for alerting rules only)
   if (filterState.ruleState) {
     if (!prometheusRuleType.alertingRule(rule)) {
       return false;
@@ -64,13 +78,32 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     }
   }
 
+  // Rule health filter
   if (filterState.ruleHealth && health !== filterState.ruleHealth) {
     return false;
   }
 
+  // Dashboard UID filter
   if (filterState.dashboardUid) {
-    return rule.labels ? rule.labels[Annotation.dashboardUID] === filterState.dashboardUid : false;
+    if (!prometheusRuleType.alertingRule(rule)) {
+      return false;
+    }
+
+    const dashboardAnnotation = rule.annotations?.[Annotation.dashboardUID];
+    if (dashboardAnnotation !== filterState.dashboardUid) {
+      return false;
+    }
   }
+
+  // Plugins filter - hide plugin-provided rules when set to 'hide'
+  if (filterState.plugins === 'hide' && isPluginProvidedRule(rule)) {
+    return false;
+  }
+
+  // Note: We can't implement these filters from reduceGroups because they rely on rulerRule property
+  // which is not available in PromRuleDTO:
+  // - contactPoint filter
+  // - dataSourceNames filter
 
   return true;
 }

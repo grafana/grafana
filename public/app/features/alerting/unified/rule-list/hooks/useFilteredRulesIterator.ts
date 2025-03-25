@@ -56,15 +56,13 @@ export function useFilteredRulesIteratorProvider() {
       : allExternalRulesSources;
 
     const grafanaIterator = from(grafanaGroupsGenerator(groupLimit, normalizedFilterState)).pipe(
-      // filter((group) => groupFilter(group, normalizedFilterState)),
       flatMap((group) => group.rules.map((rule) => [group, rule] as const)),
-      filter(([_, rule]) => ruleFilter(rule, normalizedFilterState)),
       map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule)),
       catchError(() => empty())
     );
 
     const sourceIterables = ruleSourcesToFetchFrom.map((ds) => {
-      const generator = prometheusGroupsGenerator(ds, groupLimit);
+      const generator = prometheusGroupsGenerator(ds, groupLimit, normalizedFilterState);
       return from(generator).pipe(
         map((group) => [ds, group] as const),
         catchError(() => empty())
@@ -76,9 +74,7 @@ export function useFilteredRulesIteratorProvider() {
     const otherIterables = sourceIterables.slice(1);
 
     const dataSourcesIterator = merge(source, ...otherIterables).pipe(
-      // filter(([_, group]) => groupFilter(group, normalizedFilterState)),
       flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
-      // filter(([_, __, rule]) => ruleFilter(rule, filterState)),
       map(([rulesSource, group, rule]) => mapRuleToRuleWithOrigin(rulesSource, group, rule))
     );
 
