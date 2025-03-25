@@ -256,6 +256,7 @@ export const availableIconsIndex = {
   'vertical-align-top': true,
   'web-section-alt': true,
   'wrap-text': true,
+  layers: true,
   wrench: true,
   rss: true,
   x: true,

@@ -3,9 +3,10 @@ import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { getDefaultVizPanel, useDashboardState } from '../../utils/utils';
+import { addNewRowTo, addNewTabTo } from '../layouts-shared/addNew';
 
 import { ResponsiveGridLayout, ResponsiveGridLayoutState } from './ResponsiveGridLayout';
 import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
@@ -19,6 +20,7 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
   const activeLayoutItem = activeLayoutItemRef?.resolve();
   const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
   const layoutManager = sceneGraph.getAncestor(model, ResponsiveGridLayoutManager);
+  const { fillScreen } = layoutManager.useState();
 
   useEffect(() => {
     if (model.containerRef.current) {
@@ -40,7 +42,10 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
   }
 
   return (
-    <div className={cx(styles.container, isEditing && styles.containerEditing)} ref={model.containerRef}>
+    <div
+      className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
+      ref={model.containerRef}
+    >
       <div
         style={{
           gridRow: model.activeGridCell.row,
@@ -84,6 +89,35 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
           >
             Add panel
           </Button>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item
+                  icon="list-ul"
+                  label="Group into rows"
+                  onClick={() => {
+                    addNewRowTo(layoutManager);
+                  }}
+                ></Menu.Item>
+                <Menu.Item
+                  icon="layers"
+                  label="Group into tabs"
+                  onClick={() => {
+                    addNewTabTo(layoutManager);
+                  }}
+                ></Menu.Item>
+              </Menu>
+            }
+          >
+            <Button
+              variant="primary"
+              fill="text"
+              icon="plus"
+              onClick={() => layoutManager.addPanel(getDefaultVizPanel())}
+            >
+              Grouping
+            </Button>
+          </Dropdown>
         </div>
       )}
     </div>
@@ -102,7 +136,6 @@ const getStyles = (theme: GrafanaTheme2, state: ResponsiveGridLayoutState) => ({
     justifyItems: state.justifyItems || 'unset',
     alignItems: state.alignItems || 'unset',
     justifyContent: state.justifyContent || 'unset',
-    flexGrow: 1,
     [theme.breakpoints.down('md')]: state.md
       ? {
           gridTemplateRows: state.md.templateRows,
@@ -120,6 +153,10 @@ const getStyles = (theme: GrafanaTheme2, state: ResponsiveGridLayoutState) => ({
         opacity: 1,
       },
     },
+  }),
+  containerFillScreen: css({
+    paddingBottom: theme.spacing(5),
+    position: 'relative',
   }),
   containerEditing: css({
     paddingBottom: theme.spacing(5),

@@ -70,6 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tabContentContainer: css({
     backgroundColor: 'transparent',
     display: 'flex',
+    flexDirection: 'column',
     flex: 1,
     minHeight: 0,
     paddingTop: theme.spacing(1),
