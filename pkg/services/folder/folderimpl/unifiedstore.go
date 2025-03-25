@@ -484,7 +484,7 @@ func cacheKeyList(q folder.GetFoldersFromStoreQuery) string {
 	sort.Strings(sortedUIDs)
 
 	return fmt.Sprintf(
-		"GetFolders:%s:fullpath:%t:fullpathUIDs:%t:uids:%s",
+		"GetFolders:%d:fullpath:%t:fullpathUIDs:%t:uids:%s",
 		q.OrgID,
 		q.WithFullpath,
 		q.WithFullpathUIDs,
@@ -493,5 +493,5 @@ func cacheKeyList(q folder.GetFoldersFromStoreQuery) string {
 }
 
 func cacheKeyGet(q folder.GetFolderQuery) string {
-	return fmt.Sprintf("GetFolder:%s:%s", q.OrgID, *q.UID)
+	return fmt.Sprintf("GetFolder:%d:%s", q.OrgID, *q.UID)
 }
