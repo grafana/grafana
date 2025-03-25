@@ -58,8 +58,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       };
     }
 
-    if (dashboard.uid) {
-      obj.metadata.name = dashboard.uid;
+    if (obj.metadata.name) {
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     return this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));

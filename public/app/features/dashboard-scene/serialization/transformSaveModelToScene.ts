@@ -26,7 +26,7 @@ import { isWeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { DashboardDTO, DashboardDataDTO } from 'app/types';
+import { DashboardDTO, DashboardDataDTO, DashboardMeta } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -70,9 +70,9 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
+  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, rsp.meta);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
-  scene.setInitialSaveModel(rsp.dashboard);
+  scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
 
   return scene;
 }
@@ -172,11 +172,16 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
   });
 }
 
-export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel, dto: DashboardDataDTO) {
+export function createDashboardSceneFromDashboardModel(
+  oldModel: DashboardModel,
+  dto: DashboardDataDTO,
+  metadata?: DashboardMeta
+) {
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
-  const uid = oldModel.uid;
+  const uid = config.featureToggles.kubernetesDashboards ? metadata?.k8s?.name : oldModel.uid;
+  const version = config.featureToggles.kubernetesDashboards ? metadata?.k8s?.generation : oldModel.version;
   const serializerVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
 
   if (oldModel.templating?.list?.length) {
@@ -259,7 +264,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       meta: oldModel.meta,
       tags: oldModel.tags || [],
       title: oldModel.title,
-      version: oldModel.version,
+      version,
       scopeMeta,
       body: new DefaultGridLayoutManager({
         grid: new SceneGridLayout({
