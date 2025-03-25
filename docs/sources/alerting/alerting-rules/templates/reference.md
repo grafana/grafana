@@ -84,7 +84,7 @@ The following variables are available when templating annotations and labels:
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [$labels](#labels) | Contains all labels from the query, only query labels.                                                                                                                                                                                                                               |
 | [$values](#values) | Contains the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs.                                                                                                                                                                      |
-| [$value](#value)   | A string containing the labels and values of all instant queries; threshold, reduce and math expressions, and classic conditions in the alert rule. When a single data source is used, it returns the value of the query. Using [$values](#values) instead is generally recommended. |
+| [$value](#value)   | A string containing the labels and values of all instant queries; threshold, reduce and math expressions, and classic conditions in the alert rule. When a single data source is used, it returns the value of the query. It is generally recommended to use [$values](#values). |
 
 ### $labels
 
