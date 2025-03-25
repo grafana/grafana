@@ -1,13 +1,13 @@
-go 1.23.7
+go 1.24.1
 
 // The `skip:golangci-lint` comment tag is used to exclude the package from the `golangci-lint` GitHub Action.
 // The module at the root of the repo (`.`) is excluded because ./pkg/... is included manually in the `golangci-lint` configuration.
 
 use (
-	//./.citools/bra
-	//./.citools/golangci-lint
-	//./.citools/jb
-	//./.citools/lefthook
+	./.citools/bra
+	./.citools/golangci-lint
+	./.citools/jb
+	./.citools/lefthook
 	./pkg/apimachinery
 	./pkg/apiserver
 	./pkg/build
