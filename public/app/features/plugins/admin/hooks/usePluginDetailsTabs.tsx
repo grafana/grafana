@@ -42,7 +42,6 @@ export const usePluginDetailsTabs = (
   const navModelChildren = useMemo(() => {
     const canConfigurePlugins = plugin && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
     const navModelChildren: NavModelItem[] = [];
-
     // currently the versions available of core plugins are not consistent
     if (isPublished && !plugin?.isCore) {
       navModelChildren.push({

@@ -65,6 +65,10 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isProvisioned?: boolean;
   url?: string;
 }
+export interface Screenshots {
+  path: string;
+  name: string;
+}
 
 export interface CatalogPluginDetails {
   readme?: string;
@@ -84,10 +88,7 @@ export interface CatalogPluginDetails {
   raiseAnIssueUrl?: string;
   signatureType?: PluginSignatureType;
   signature?: PluginSignatureStatus;
-  screenshots?: Array<{
-    path: string;
-    name: string;
-  }> | null;
+  screenshots?: Screenshots[] | null;
 }
 
 export interface CatalogPluginInfo {
@@ -116,10 +117,7 @@ export type RemotePlugin = {
         name: string;
         url: string;
       }>;
-      screenshots?: Array<{
-        path: string;
-        name: string;
-      }> | null;
+      screenshots?: Screenshots[] | null;
     };
   };
   links: Array<{ rel: string; href: string }>;
