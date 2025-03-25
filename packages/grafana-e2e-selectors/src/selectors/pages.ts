@@ -925,12 +925,6 @@ export const versionedPages = {
     },
   },
   BrowseDashboards: {
-    toggleView: {
-        [MIN_GRAFANA_VERSION]:`data-testid radio-button`,
-    },
-    listView: {
-      '10.2.0': 'data-testid radio-button > '
-    },
     table: {
       body: {
         '10.2.0': 'data-testid browse-dashboards-table',
@@ -958,9 +952,6 @@ export const versionedPages = {
     table: {
         '10.2.0': 'Search results table',
     },
-    searchInput: {
-      '10.4.0': '[data-test-id="input-wrapper"',
-    }
   },
   Search: {
     url: {
