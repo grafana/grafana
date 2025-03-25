@@ -353,9 +353,20 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			// Maintain the unhidden path if valid until the next full pulling even if folders are empty
 			unhiddenPath := safepath.UnhiddenPath(change.Path)
 			if unhiddenPath != "" && resources.IsPathSupported(unhiddenPath) == nil {
-				if _, err := r.folders.EnsureFolderPathExist(ctx, unhiddenPath); err != nil {
+				folder, err := r.folders.EnsureFolderPathExist(ctx, unhiddenPath)
+				if err != nil {
 					return fmt.Errorf("unable to create empty file folder: %w", err)
 				}
+
+				r.progress.Record(ctx, jobs.JobResourceResult{
+					Path:     unhiddenPath,
+					Action:   repository.FileActionCreated,
+					Resource: folders.RESOURCE,
+					Group:    folders.GROUP,
+					Name:     folder,
+				})
+
+				continue
 			}
 
 			r.progress.Record(ctx, jobs.JobResourceResult{
