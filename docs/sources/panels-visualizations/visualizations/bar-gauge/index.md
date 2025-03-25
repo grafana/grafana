@@ -151,8 +151,8 @@ Set the sizes of the following text elements in pixels:
 - **Title** - The name of each bar.
 - **Value**
 - **Percentage change** - When the bar gauge has the following configuration, you can set the size of the percentage change text:
-  - **Display mode** - **Gradient** or **Retro LCD**
-  - **Threshold mode** - **Percentage**
+  - [Display mode](#bar-gauge-options) - **Gradient** or **Retro LCD**
+  - [Thresholds mode](#thresholds) - **Percentage**
 
 ### Standard options
 
@@ -169,8 +169,6 @@ Set the sizes of the following text elements in pixels:
 ### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-Colors of the bar gauge thresholds can be configured as described above.
 
 ### Field overrides
 
