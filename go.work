@@ -6,9 +6,9 @@ go 1.24.1
 use (
 	. // skip:golangci-lint
 	./.citools/bra
-	./.citools/cog
-	./.citools/cue
-	./.citools/drone
+	//./.citools/cog
+	//./.citools/cue
+	//./.citools/drone
 	./.citools/golangci-lint
 	./.citools/jb
 	./.citools/lefthook
