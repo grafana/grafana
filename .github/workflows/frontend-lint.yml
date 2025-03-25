@@ -41,6 +41,7 @@ jobs:
         cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
     - run: yarn run prettier:check
+    - run: yarn run lint
   lint-fronetnd-typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
