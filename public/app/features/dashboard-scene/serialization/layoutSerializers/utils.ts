@@ -200,7 +200,7 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : datasource;
 }
 
-export function geVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
+export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
   let datasource: DataSourceRef | undefined = undefined;
 
   if (!datasource) {
