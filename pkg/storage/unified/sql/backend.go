@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -142,6 +143,8 @@ type backend struct {
 
 	historyPruner pruner
 	withPruner    bool
+
+	readCache *localcache.CacheService
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -190,6 +193,8 @@ func (b *backend) initLocked(ctx context.Context) error {
 	if err := b.initPruner(ctx); err != nil {
 		return fmt.Errorf("failed to create pruner: %w", err)
 	}
+
+	b.readCache = localcache.New(time.Second*10, time.Second*5)
 
 	return nil
 }
@@ -489,6 +494,11 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 	_, span := b.tracer.Start(ctx, tracePrefix+".Read")
 	defer span.End()
 
+	cacheKey := fmt.Sprintf("%s/%s/%s/%s", req.Key.Namespace, req.Key.Group, req.Key.Resource, req.Key.Name)
+	if c, exists := b.readCache.Get(cacheKey); exists {
+		return c.(*resource.BackendReadResponse)
+	}
+
 	// TODO: validate key ?
 
 	readReq := &sqlResourceReadRequest{
@@ -517,7 +527,7 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 	} else if err != nil {
 		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
 	}
-
+	b.readCache.Set(cacheKey, res, 0)
 	return res
 }
 
