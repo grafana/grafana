@@ -1846,7 +1846,9 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 	meta.SetSourceProperties(s)
 
 	// Update will create if not exists (upsert!)
-	out, err := dr.k8sclient.Update(ctx, obj, cmd.OrgID)
+	out, err := dr.k8sclient.Update(ctx, obj, cmd.OrgID, v1.UpdateOptions{
+		FieldValidation: v1.FieldValidationIgnore, // ignore the schema version validation errors
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -1863,7 +1865,9 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
 	// Update will create if not exists (upsert!)
-	out, err := dr.k8sclient.Update(ctx, obj, orgID)
+	out, err := dr.k8sclient.Update(ctx, obj, orgID, v1.UpdateOptions{
+		FieldValidation: v1.FieldValidationIgnore, // ignore the schema version validation errors
+	})
 	if err != nil {
 		return nil, err
 	}
