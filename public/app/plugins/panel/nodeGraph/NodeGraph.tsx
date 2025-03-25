@@ -71,8 +71,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     pointerEvents: 'none',
   }),
-  layoutSelector: css({
-    label: 'layoutSelector',
+  layoutAlgorithm: css({
+    label: 'layoutAlgorithm',
     pointerEvents: 'all',
     position: 'absolute',
     top: '8px',
@@ -227,7 +227,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
       ) : null}
 
       {!layoutAlgorithm && (
-        <div className={styles.layoutSelector}>
+        <div className={styles.layoutAlgorithm}>
           <RadioButtonGroup
             size="sm"
             options={[

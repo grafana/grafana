@@ -11,13 +11,6 @@ function getStyles() {
       label: 'wrapper',
       pointerEvents: 'all',
     }),
-    layoutSelector: css({
-      pointerEvents: 'all',
-      position: 'absolute',
-      top: '8px',
-      right: '8px',
-      zIndex: 1,
-    }),
   };
 }
 
