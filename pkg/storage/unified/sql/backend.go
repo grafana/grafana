@@ -708,9 +708,10 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	return iter.listRV, err
 }
 
-// getHistory fetches the resources from the resource table.
-func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	// Backwards compatibility for ResourceVersionMatch
+// MigrateVersionMatch handles backwards compatibility for ResourceVersionMatch
+// by migrating from the deprecated version_match to version_match_v2.
+// It returns an error if the version match is unknown.
+func MigrateVersionMatch(req *resource.ListRequest, logger log.Logger) error {
 	if req.VersionMatch != nil && req.GetVersionMatchV2() == resource.ResourceVersionMatchV2_UNKNOWN {
 		switch req.GetVersionMatch() {
 		case resource.ResourceVersionMatch_DEPRECATED_NotOlderThan:
@@ -719,13 +720,21 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 		case resource.ResourceVersionMatch_DEPRECATED_Exact:
 			req.VersionMatchV2 = resource.ResourceVersionMatchV2_Exact
 		default:
-			return 0, fmt.Errorf("unknown version match: %v", req.GetVersionMatch())
+			return fmt.Errorf("unknown version match: %v", req.GetVersionMatch())
 		}
 
-		// Log the migration for debugging purposes
-		b.log.Debug("Old client request received, migrating from version_match to version_match_v2",
+		// Log the migration to measure whether we have successfully migrated all clients
+		logger.Info("Old client request received, migrating from version_match to version_match_v2",
 			"oldValue", req.GetVersionMatch(),
 			"newValue", req.GetVersionMatchV2())
+	}
+	return nil
+}
+
+// getHistory fetches the resources from the resource table.
+func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	if err := MigrateVersionMatch(req, b.log); err != nil {
+		return 0, err
 	}
 
 	listReq := sqlGetHistoryRequest{
