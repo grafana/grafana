@@ -91,14 +91,14 @@ export const namespaces: Record<string, RulerRuleGroupDTO[]> = {
 
 //-------------------- for alert history tests we reuse these constants --------------------
 export const time_0 = 1718368710000;
-// time1 + 30 seg
-export const time_plus_30 = 1718368740000;
 // time1 + 5 seg
-export const time_plus_5 = 1718368715000;
+export const time_plus_5 = time_0 + 5 * 1000;
 // time1 + 15 seg
-export const time_plus_15 = 1718368725000;
+export const time_plus_15 = time_0 + 15 * 1000;
 // time1 + 10 seg
-export const time_plus_10 = 1718368720000;
+export const time_plus_10 = time_0 + 10 * 1000;
+// time1 + 30 seg
+export const time_plus_30 = time_0 + 30 * 1000;
 
 // returns 4 transitions. times is an array of 4 timestamps.
 export const getHistoryResponse = (times: number[]) => ({
