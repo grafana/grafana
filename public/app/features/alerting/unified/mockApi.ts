@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 
-import { PrometheusAPI } from '@grafana/alerting/types';
+import { API } from '@grafana/alerting/types';
 import { setBackendSrv } from '@grafana/runtime';
 import { AlertGroupUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
@@ -161,10 +161,8 @@ export const getMockConfig = (configure: (builder: AlertmanagerConfigBuilder) =>
 
 export function mockAlertRuleApi(server: SetupServer) {
   return {
-    prometheusRuleNamespaces: (dsName: string, response: PrometheusAPI.Response) => {
-      server.use(
-        http.get(`api/prometheus/${dsName}/api/v1/rules`, () => HttpResponse.json<PrometheusAPI.Response>(response))
-      );
+    prometheusRuleNamespaces: (dsName: string, response: API.Response) => {
+      server.use(http.get(`api/prometheus/${dsName}/api/v1/rules`, () => HttpResponse.json<API.Response>(response)));
     },
     rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
       server.use(http.get(`/api/ruler/${dsName}/api/v1/rules`, () => HttpResponse.json(response)));

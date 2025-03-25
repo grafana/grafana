@@ -1,5 +1,5 @@
+import { SuccessResponse } from '../../common/api';
 import { Annotations, Labels } from '../../common/rules';
-import { SuccessResponse as SuccessResponse } from '../api';
 
 /**
  * RuleHealth

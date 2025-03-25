@@ -1,7 +1,7 @@
 import { render } from 'test/test-utils';
 import { byTestId, byText } from 'testing-library-selector';
 
-import { PrometheusAPI } from '@grafana/alerting/types';
+import { API } from '@grafana/alerting/types';
 import { PromOptions } from '@grafana/prometheus';
 import { setPluginLinksHook } from '@grafana/runtime';
 import config from 'app/core/config';
@@ -71,7 +71,7 @@ const mocks = {
 const renderAlertTabContent = (dashboard: DashboardModel, panel: PanelModel) =>
   render(<PanelAlertTabContent dashboard={dashboard} panel={panel} />);
 
-const promResponse: PrometheusAPI.SuccessResponse = {
+const promResponse: API.SuccessResponse = {
   status: 'success',
   data: {
     groups: [
