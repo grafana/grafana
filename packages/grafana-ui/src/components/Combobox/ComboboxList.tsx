@@ -7,7 +7,7 @@ import { useStyles2 } from '../../themes';
 import { Checkbox } from '../Forms/Checkbox';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { NotFoundError } from './MessageRows';
+import { AsyncError, NotFoundError } from './MessageRows';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ALL_OPTION_VALUE, ComboboxOption } from './types';
 import { isNewGroup } from './utils';
@@ -22,6 +22,7 @@ interface ComboboxListProps<T extends string | number> {
   getItemProps: UseComboboxPropGetters<ComboboxOption<T>>['getItemProps'];
   enableAllOption?: boolean;
   isMultiSelect?: boolean;
+  error?: boolean;
 }
 
 export const ComboboxList = <T extends string | number>({
@@ -32,6 +33,7 @@ export const ComboboxList = <T extends string | number>({
   getItemProps,
   enableAllOption,
   isMultiSelect = false,
+  error = false,
 }: ComboboxListProps<T>) => {
   const styles = useStyles2(getComboboxStyles);
 
@@ -138,12 +140,7 @@ export const ComboboxList = <T extends string | number>({
                   </div>
                 )}
 
-                {/* <div className={styles.optionAccessory}>
-                  <Icon name="external-link-alt" />
-                </div> */}
-
                 <div className={styles.optionBody}>
-                  {/* TODO: need to add back the 'select all' thing */}
                   <div className={styles.optionLabel}>{item.label ?? item.value}</div>
 
                   {item.description && <div className={styles.optionDescription}>{item.description}</div>}
@@ -154,8 +151,10 @@ export const ComboboxList = <T extends string | number>({
         })}
       </div>
 
-      {/* TODO: missing other messages, like async error? */}
-      <div aria-live="polite">{options.length === 0 && <NotFoundError />}</div>
+      <div aria-live="polite">
+        {error && <AsyncError />}
+        {options.length === 0 && !error && <NotFoundError />}
+      </div>
     </ScrollContainer>
   );
 };
