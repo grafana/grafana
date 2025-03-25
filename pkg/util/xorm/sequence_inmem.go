@@ -44,3 +44,11 @@ func (g *inMemSequenceGenerator) Next(_ context.Context, table, column string) (
 	g.nextValues[key] = seq + 1
 	return int64(seq), nil
 }
+
+type snowflakeSequenceGenerator struct{}
+
+func (g *snowflakeSequenceGenerator) Reset() {}
+func (g *snowflakeSequenceGenerator) Next(_ context.Context, table, column string) (int64, error) {
+	snowflakeID := rand.Int64()
+	return snowflakeID, nil
+}

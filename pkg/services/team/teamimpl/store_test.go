@@ -37,8 +37,14 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest())
 		require.NoError(t, err)
+		quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+		require.NoError(t, err)
+		// testOrgID, err := orgSvc.GetOrCreate(context.Background(), fmt.Sprintf("testOrg-%d", rand.Int64()))
+		testOrgID := int64(1)
+		require.NoError(t, err)
 		testUser := &user.SignedInUser{
-			OrgID: 1,
+			OrgID: testOrgID,
 			Permissions: map[int64]map[string][]string{
 				1: {
 					ac.ActionTeamsRead:         []string{ac.ScopeTeamsAll},
@@ -47,9 +53,6 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				},
 			},
 		}
-		quotaService := quotaimpl.ProvideService(sqlStore, cfg)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
-		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(),
@@ -58,7 +61,6 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 		t.Run("Given saved users and two teams", func(t *testing.T) {
 			var userIds []int64
-			const testOrgID int64 = 1
 			var team1, team2 team.Team
 			var usr *user.User
 			var userCmd user.CreateUserCommand
@@ -88,6 +90,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, query.Page, 1)
 
+				t.Fatal(queryResult, testOrgID)
 				team1 := queryResult.Teams[0]
 				require.Equal(t, team1.Name, "group1 name")
 				require.Equal(t, team1.Email, "test1@test.com")
@@ -488,13 +491,24 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		expectedTeamCount int
 	}
 
+	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+	testOrgID := int64(1)
+
+	// Seed 10 teams
+	for i := 1; i <= 10; i++ {
+		_, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%d", i), fmt.Sprintf("team-%d@example.org", i), testOrgID)
+		require.NoError(t, err)
+	}
+
 	tests := []searchTeamsTestCase{
 		{
 			desc: "should return all teams",
 			query: &team.SearchTeamsQuery{
-				OrgID: 1,
+				OrgID: testOrgID,
 				SignedInUser: &user.SignedInUser{
-					OrgID:       1,
+					OrgID:       testOrgID,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
 				},
 			},
@@ -503,9 +517,9 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		{
 			desc: "should return no teams",
 			query: &team.SearchTeamsQuery{
-				OrgID: 1,
+				OrgID: testOrgID,
 				SignedInUser: &user.SignedInUser{
-					OrgID:       1,
+					OrgID:       testOrgID,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {""}}},
 				},
 			},
@@ -514,9 +528,9 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		{
 			desc: "should return some teams",
 			query: &team.SearchTeamsQuery{
-				OrgID: 1,
+				OrgID: testOrgID,
 				SignedInUser: &user.SignedInUser{
-					OrgID: 1,
+					OrgID: testOrgID,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {
 						"teams:id:1",
 						"teams:id:5",
@@ -526,16 +540,6 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 			},
 			expectedTeamCount: 3,
 		},
-	}
-
-	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
-	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
-	require.NoError(t, err)
-
-	// Seed 10 teams
-	for i := 1; i <= 10; i++ {
-		_, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%d", i), fmt.Sprintf("team-%d@example.org", i), 1)
-		require.NoError(t, err)
 	}
 
 	for _, tt := range tests {
