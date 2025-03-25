@@ -5,7 +5,12 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import {
+  forceRenderChildren,
+  getGridItemKeyForPanelId,
+  getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
+} from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -44,14 +49,6 @@ export class ResponsiveGridLayoutManager
     templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
     autoRows: 'minmax(300px, auto)',
   };
-
-  public constructor(state: ResponsiveGridLayoutManagerState) {
-    super(state);
-
-    // @ts-ignore
-    this.state.layout.getDragClassCancel = () => 'drag-cancel';
-    this.state.layout.isDraggable = () => true;
-  }
 
   public addPanel(vizPanel: VizPanel) {
     const panelId = dashboardSceneGraph.getNextPanelId(this);
@@ -129,6 +126,11 @@ export class ResponsiveGridLayoutManager
     }
 
     return panels;
+  }
+
+  public editModeChanged(isEditing: boolean) {
+    this.state.layout.setState({ isDraggable: isEditing });
+    forceRenderChildren(this.state.layout, true);
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
