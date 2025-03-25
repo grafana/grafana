@@ -91,7 +91,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               )}
             </span>
           </button>
-          {!isClone && isEditing && <RowItemMenu model={model} />}
+          {/* {!isClone && isEditing && <RowItemMenu model={model} />} */}
         </div>
       )}
       {!isCollapsed && <layout.Component model={layout} />}

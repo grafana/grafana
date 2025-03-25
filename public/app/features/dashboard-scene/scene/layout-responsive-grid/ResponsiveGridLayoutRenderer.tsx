@@ -2,21 +2,23 @@ import { css, cx } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LazyLoader, SceneComponentProps } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { LazyLoader, SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { Button, useStyles2 } from '@grafana/ui';
 
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getDefaultVizPanel, useDashboardState } from '../../utils/utils';
 
 import { ResponsiveGridLayout, ResponsiveGridLayoutState } from './ResponsiveGridLayout';
+import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
 
 export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<ResponsiveGridLayout>) {
   const { children, isHidden, isLazy } = model.useState();
   const styles = useStyles2(getStyles, model.state);
-  const { layoutOrchestrator } = getDashboardSceneFor(model).state;
+  const { layoutOrchestrator, isEditing } = useDashboardState(model);
 
   const { activeLayoutItemRef } = layoutOrchestrator.useState();
   const activeLayoutItem = activeLayoutItemRef?.resolve();
   const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
+  const layoutManager = sceneGraph.getAncestor(model, ResponsiveGridLayoutManager);
 
   useEffect(() => {
     if (model.containerRef.current) {
@@ -38,7 +40,7 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
   }
 
   return (
-    <div className={styles.container} ref={model.containerRef}>
+    <div className={cx(styles.container, isEditing && styles.containerEditing)} ref={model.containerRef}>
       <div
         style={{
           gridRow: model.activeGridCell.row,
@@ -72,6 +74,18 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
           </Wrapper>
         );
       })}
+      {isEditing && (
+        <div className={cx(styles.addAction, 'dashboard-canvas-add-button')}>
+          <Button
+            variant="primary"
+            fill="text"
+            icon="plus"
+            onClick={() => layoutManager.addPanel(getDefaultVizPanel())}
+          >
+            Add panel
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -89,7 +103,6 @@ const getStyles = (theme: GrafanaTheme2, state: ResponsiveGridLayoutState) => ({
     alignItems: state.alignItems || 'unset',
     justifyContent: state.justifyContent || 'unset',
     flexGrow: 1,
-
     [theme.breakpoints.down('md')]: state.md
       ? {
           gridTemplateRows: state.md.templateRows,
@@ -101,12 +114,34 @@ const getStyles = (theme: GrafanaTheme2, state: ResponsiveGridLayoutState) => ({
           justifyContent: state.md.justifyContent,
         }
       : undefined,
+    // Show add action when hovering over the grid
+    '&:hover': {
+      '.dashboard-canvas-add-button': {
+        opacity: 1,
+      },
+    },
+  }),
+  containerEditing: css({
+    paddingBottom: theme.spacing(5),
+    position: 'relative',
   }),
   wrapper: css({
     display: 'grid',
     position: 'relative',
     width: '100%',
     height: '100%',
+  }),
+  addAction: css({
+    position: 'absolute',
+    padding: theme.spacing(1, 0),
+    height: theme.spacing(5),
+    bottom: 0,
+    left: 0,
+    right: 0,
+    opacity: 0,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create('opacity'),
+    },
   }),
   dragging: css({
     position: 'fixed',

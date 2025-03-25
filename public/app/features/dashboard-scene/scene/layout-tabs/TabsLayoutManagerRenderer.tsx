@@ -47,11 +47,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   tabsBar: css({
     overflow: 'hidden',
+    // ':hover': {
+    //   '.dashboard-canvas-add-button': {
+    //     opacity: 1,
+    //   },
+    // },
   }),
   tabsRow: css({
-    justifyContent: 'space-between',
     display: 'flex',
     width: '100%',
+    alignItems: 'center',
   }),
   tabsContainer: css({
     display: 'flex',

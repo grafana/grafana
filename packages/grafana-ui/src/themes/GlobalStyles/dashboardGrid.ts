@@ -92,6 +92,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
 
     '.dashboard-canvas-add-button': {
       opacity: 0,
+      transition: theme.transitions.create('opacity'),
 
       '&:hover': {
         opacity: 1,
