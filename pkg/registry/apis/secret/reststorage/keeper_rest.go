@@ -9,12 +9,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -35,13 +37,14 @@ var (
 // KeeperRest is an implementation of CRUDL operations on a `keeper` backed by TODO.
 type KeeperRest struct {
 	storage        contracts.KeeperMetadataStorage
+	accessClient   claims.AccessClient
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewKeeperRest is a returns a constructed `*KeeperRest`.
-func NewKeeperRest(storage contracts.KeeperMetadataStorage, resource utils.ResourceInfo) *KeeperRest {
-	return &KeeperRest{storage, resource, resource.TableConverter()}
+func NewKeeperRest(storage contracts.KeeperMetadataStorage, accessClient claims.AccessClient, resource utils.ResourceInfo) *KeeperRest {
+	return &KeeperRest{storage, accessClient, resource, resource.TableConverter()}
 }
 
 // New returns an empty `*Keeper` that is used by the `Create` method.
@@ -79,12 +82,47 @@ func (s *KeeperRest) List(ctx context.Context, options *internalversion.ListOpti
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	keepersList, err := s.storage.List(ctx, xkube.Namespace(namespace), options)
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
+		Group:     secretv0alpha1.GROUP,
+		Resource:  secretv0alpha1.KeeperResourceInfo.GetName(),
+		Namespace: namespace,
+		Verb:      utils.VerbGet,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile checker: %w", err)
+	}
+
+	labelSelector := options.LabelSelector
+	if labelSelector == nil {
+		labelSelector = labels.Everything()
+	}
+
+	keepers, err := s.storage.List(ctx, xkube.Namespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list keepers: %w", err)
 	}
 
-	return keepersList, nil
+	checkedKeepers := make([]secretv0alpha1.Keeper, 0)
+
+	for _, keeper := range keepers {
+		// Check whether the user has permission to access this specific Keeper in the namespace.
+		if !hasPermissionFor(keeper.Name, "") {
+			continue
+		}
+
+		if labelSelector.Matches(labels.Set(keeper.Labels)) {
+			checkedKeepers = append(checkedKeepers, keeper)
+		}
+	}
+
+	return &secretv0alpha1.KeeperList{
+		Items: checkedKeepers,
+	}, nil
 }
 
 // Get calls the inner `store` (persistence) and returns a `Keeper` by `name`.

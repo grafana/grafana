@@ -19,8 +19,6 @@ import (
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
@@ -224,12 +222,8 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encValueStore, encMgr)
 	require.NoError(t, err)
 
-	// Initialize access client + access control
-	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
-	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
-
 	// Initialize the keeper storage and add a test keeper
-	keeperStorage, err := ProvideKeeperMetadataStorage(testDB, features, accessClient)
+	keeperStorage, err := ProvideKeeperMetadataStorage(testDB, features)
 	require.NoError(t, err)
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
@@ -243,7 +237,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperService)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, features, keeperService)
 	require.NoError(t, err)
 
 	return secureValueMetadataStorage
