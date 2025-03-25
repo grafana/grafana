@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestNotHiddenPath(t *testing.T) {
+func TestUnhiddenPath(t *testing.T) {
 	tests := []struct {
 		name     string
 		filePath string
@@ -54,9 +54,9 @@ func TestNotHiddenPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NotHiddenPath(tt.filePath)
+			got := UnhiddenPath(tt.filePath)
 			if got != tt.want {
-				t.Errorf("NotHiddenPath(%q) = %q, want %q", tt.filePath, got, tt.want)
+				t.Errorf("UnhiddenPath(%q) = %q, want %q", tt.filePath, got, tt.want)
 			}
 		})
 	}
