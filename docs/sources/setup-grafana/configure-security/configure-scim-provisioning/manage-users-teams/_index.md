@@ -52,7 +52,7 @@ SCIM uses two identifiers to establish and maintain user identity between the id
 
 2. Identity provider user ID:
    - Unique, permanent identifier from the identity provider
-   - Stored as `externalId` in SCIM
+   - Shared as `externalId` from the IdP when using SCIM
    - Must match between SAML assertions and SCIM
    - Prevents security issues from email changes
 
