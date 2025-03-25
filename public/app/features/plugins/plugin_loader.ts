@@ -9,6 +9,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import { getI18next } from 'app/core/internationalization';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
@@ -82,6 +83,7 @@ type PluginImportInfo = {
   version?: string;
   isAngular?: boolean;
   moduleHash?: string;
+  locales?: Record<string, string>;
 };
 
 export async function importPluginModule({
@@ -91,9 +93,15 @@ export async function importPluginModule({
   version,
   isAngular,
   moduleHash,
+  locales,
 }: PluginImportInfo): Promise<System.Module> {
   if (version) {
     registerPluginInCache({ path, version, loadingStrategy });
+  }
+
+  // Add locales to i18n for a plugin if the feature toggle is enabled and the plugin has locales
+  if (config.featureToggles.localizationForPlugins && locales) {
+    await addLocalesToI18n(pluginId, locales);
   }
 
   const builtIn = builtInPlugins[path];
@@ -152,6 +160,7 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
     moduleHash: meta.moduleHash,
+    locales: meta.locales,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin: GenericDataSourcePlugin = pluginExports.plugin;
@@ -190,6 +199,7 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     isAngular: meta.angular?.detected ?? meta.angularDetected,
     loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
     moduleHash: meta.moduleHash,
+    locales: meta.locales,
   });
 
   const { plugin = new AppPlugin() } = pluginExports;
@@ -217,4 +227,22 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   importedAppPlugins[pluginId] = plugin;
 
   return plugin;
+}
+
+// exported for testing only
+export async function addLocalesToI18n(pluginId: string, locales: Record<string, string>): Promise<void[]> {
+  const promises = Object.entries(locales).map(async ([lang, path]) => {
+    try {
+      const module = await SystemJS.import(resolveModulePath(path));
+      if (!module.default) {
+        return;
+      }
+
+      getI18next().addResourceBundle(lang, pluginId, module.default, undefined, true);
+    } catch (e) {
+      console.warn('Could not load locale for plugin', pluginId, lang, e);
+    }
+  });
+
+  return Promise.all(promises);
 }

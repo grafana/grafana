@@ -64,6 +64,7 @@ function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
     moduleHash: meta.moduleHash,
+    locales: meta.locales,
   })
     .then((pluginExports) => {
       if (pluginExports.plugin) {
