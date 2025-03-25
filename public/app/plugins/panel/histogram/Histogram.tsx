@@ -9,11 +9,9 @@ import {
   getFieldSeriesColor,
   GrafanaTheme2,
   roundDecimals,
-} from '@grafana/data';
-import {
   histogramBucketSizes,
   histogramFrameBucketMaxFieldName,
-} from '@grafana/data/src/transformations/transformers/histogram';
+} from '@grafana/data';
 import { VizLegendOptions, ScaleDistribution, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   Themeable2,

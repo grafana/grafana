@@ -3555,7 +3555,7 @@ __metadata:
     "@grafana/runtime": "npm:12.0.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:12.0.0-pre"
-    "@react-awesome-query-builder/ui": "npm:6.6.4"
+    "@react-awesome-query-builder/ui": "npm:6.6.13"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:16.2.0"
@@ -6434,9 +6434,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/core@npm:^6.6.4":
-  version: 6.6.4
-  resolution: "@react-awesome-query-builder/core@npm:6.6.4"
+"@react-awesome-query-builder/core@npm:^6.6.13":
+  version: 6.6.13
+  resolution: "@react-awesome-query-builder/core@npm:6.6.13"
   dependencies:
     "@babel/runtime": "npm:^7.24.5"
     clone: "npm:^2.1.2"
@@ -6447,15 +6447,15 @@ __metadata:
     moment: "npm:^2.30.1"
     spel2js: "npm:^0.2.8"
     sqlstring: "npm:^2.3.3"
-  checksum: 10/bd0299a5ae7db3ae69c21fc631500d52c679cda8d9b64122ecc86dedb9f0ebb7c3f6fc98c33621f8f34727b3c7c84774b3f2099e75ed7a38bde068c7dcb0730e
+  checksum: 10/65fdc8f0574e8e81db8db98239852097aa407898c2d7bb2f32280baf9530faee94b2f78ada7273a048eb4cde1d5f9e60233669c63496e09e42f5c81cea5beab7
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/ui@npm:6.6.4":
-  version: 6.6.4
-  resolution: "@react-awesome-query-builder/ui@npm:6.6.4"
+"@react-awesome-query-builder/ui@npm:6.6.13":
+  version: 6.6.13
+  resolution: "@react-awesome-query-builder/ui@npm:6.6.13"
   dependencies:
-    "@react-awesome-query-builder/core": "npm:^6.6.4"
+    "@react-awesome-query-builder/core": "npm:^6.6.13"
     classnames: "npm:^2.5.1"
     lodash: "npm:^4.17.21"
     prop-types: "npm:^15.8.1"
@@ -6464,7 +6464,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.4 || ^17.0.1 || ^18.0.0
     react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
-  checksum: 10/f376a30397ca28b5064079da25577a0e8ff98e7025c3b163f84dc351bb6c4a9474fa807ec4f107e51aaff085aa9392412ca497c2c949ca6c3cf828ae76a18718
+  checksum: 10/c139f76ee13326bc5e2c97779a9899240231a8fc2071f84ca3f7378b975196d7326a914dce0943d9b3856973272ec6d5607c4abdbd9b4e845df4cef0e414fcf0
   languageName: node
   linkType: hard
 
@@ -17723,7 +17723,7 @@ __metadata:
     "@react-aria/focus": "npm:3.19.1"
     "@react-aria/overlays": "npm:3.25.0"
     "@react-aria/utils": "npm:3.27.0"
-    "@react-awesome-query-builder/ui": "npm:6.6.4"
+    "@react-awesome-query-builder/ui": "npm:6.6.13"
     "@react-types/button": "npm:3.10.2"
     "@react-types/menu": "npm:3.9.14"
     "@react-types/overlays": "npm:3.8.12"
