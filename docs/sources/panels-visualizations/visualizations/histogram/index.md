@@ -92,31 +92,35 @@ The data is converted as follows:
 
 {{< figure src="/static/img/docs/histogram-panel/histogram-example-height-weight.png" max-width="1025px" alt="A histogram visualization showing the male height and weight distribution" >}}
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Histogram options
+### Histogram options
 
 Use the following options to refine your histogram visualization.
 
-### Bucket count
+#### Bucket count
 
 Specifies the number of bins used to group your data in the histogram, affecting the granularity of the displayed distribution. Leave this empty for automatic bucket count of 30.
 
-### Bucket size
+#### Bucket size
 
 The size of the buckets. Leave this empty for automatic bucket sizing (~10% of the full range).
 
-### Bucket offset
+#### Bucket offset
 
 If the first bucket should not start at zero. A non-zero offset has the effect of shifting the aggregation window. For example, 5-sized buckets that are 0-5, 5-10, 10-15 with a default 0 offset would become 2-7, 7-12, 12-17 with an offset of 2; offsets of 0, 5, or 10, in this case, would effectively do nothing. Typically, this option would be used with an explicitly defined bucket size rather than automatic. For this setting to affect, the offset amount should be greater than 0 and less than the bucket size; values outside this range will have the same effect as values within this range.
 
-### Combine series
+#### Combine series
 
 This will merge all series and fields into a combined histogram.
 
-### Stacking
+#### Stacking
 
 Controls how multiple series are displayed in the histogram. Choose from the following:
 
@@ -124,15 +128,15 @@ Controls how multiple series are displayed in the histogram. Choose from the fol
 - **Normal** - Series are stacked on top of each other, showing cumulative values.
 - **100%** - Series are stacked to fill 100% of the chart, showing the relative proportion of each series.
 
-### Line width
+#### Line width
 
 Controls line width of the bars.
 
-### Fill opacity
+#### Fill opacity
 
 Controls the fill opacity bars.
 
-### Gradient mode
+#### Gradient mode
 
 Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme](ref:color-scheme) field option.
 
@@ -145,30 +149,30 @@ Choose from the following:
 - **Hue** - Gradient color is generated based on the hue of the line color.
 - **Scheme** - The selected [color palette](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/#color-scheme) is applied to the histogram bars.
 
-## Tooltip options
+### Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Legend options
+### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Standard options
+### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links and actions
+### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Thresholds
+### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
