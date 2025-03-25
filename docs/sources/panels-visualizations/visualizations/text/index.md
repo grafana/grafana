@@ -38,7 +38,7 @@ You can include [variables](ref:variables) in the content, which are expanded fo
 
 For example, if you want to display important links on your dashboard, you can use a text visualization to add these links:
 
-{{< figure src="/static/img/docs/text-panel/text-panel.png" max-width="1025px" alt="A text panel showing important links" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-text-visualization-v11.6.png" max-width="750px" alt="A text panel showing important links" >}}
 
 {{< docs/play title="Text Panel" url="https://play.grafana.org/d/adl33bxy1ih34b/" >}}
 
