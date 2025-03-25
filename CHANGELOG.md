@@ -1,6 +1,6 @@
-<!-- 11.6.0 START -->
+<!-- 11.6.1 START -->
 
-# 11.6.0 (2025-03-25)
+# 11.6.1 (2025-03-25)
 
 ### Features and enhancements
 
@@ -158,7 +158,7 @@
 - **Multi/Combobox:** Use pointer cursor when not focused [#100878](https://github.com/grafana/grafana/pull/100878), [@tskarhed](https://github.com/tskarhed)
 - **Slider:** Fix text input box being too wide [#100138](https://github.com/grafana/grafana/pull/100138), [@joshhunt](https://github.com/joshhunt)
 
-<!-- 11.6.0 END -->
+<!-- 11.6.1 END -->
 <!-- 11.5.2 START -->
 
 # 11.5.2 (2025-02-18)
@@ -286,7 +286,7 @@
 
 ### Features and enhancements
 
-- ** CloudMigration:** Create authapi service [#96581](https://github.com/grafana/grafana/pull/96581), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **CloudMigration:** Create authapi service [#96581](https://github.com/grafana/grafana/pull/96581), [@leandro-deveikis](https://github.com/leandro-deveikis)
 - **Alerting:** Add new button for exporting new alert rule in HCL format [#96785](https://github.com/grafana/grafana/pull/96785), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
 - **Alerting:** Add option to show inactive alerts in alert list panel [#96888](https://github.com/grafana/grafana/pull/96888), [@bradleypettit](https://github.com/bradleypettit)
 - **Alerting:** Add state_periodic_save_batch_size config option [#98019](https://github.com/grafana/grafana/pull/98019), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
@@ -1437,7 +1437,7 @@
 - **VizTooltip:** Allow setting the `maxWidth` option. [#88652](https://github.com/grafana/grafana/issues/88652), [@adela-almasan](https://github.com/adela-almasan)
 - **Auth:** Add org to role mappings support to GitHub integration . [#88537](https://github.com/grafana/grafana/issues/88537), [@mgyongyosi](https://github.com/mgyongyosi)
 - **CloudWatch:** Handle permissions error and update docs. [#88524](https://github.com/grafana/grafana/issues/88524), [@iwysiu](https://github.com/iwysiu)
-- ** Alerting:** Correctly handle duplicating notification templates. [#88487](https://github.com/grafana/grafana/issues/88487), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Correctly handle duplicating notification templates. [#88487](https://github.com/grafana/grafana/issues/88487), [@gillesdemey](https://github.com/gillesdemey)
 - **Alerting:** Mute Timing service to prevent changing provenance status to none. [#88462](https://github.com/grafana/grafana/issues/88462), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **Alerting:** Ensure we fetch AM config before saving new configuration. [#88458](https://github.com/grafana/grafana/issues/88458), [@tomratcliffe](https://github.com/tomratcliffe)
 - **Alerting:** Remove regex reference in silences filter tooltip. [#88455](https://github.com/grafana/grafana/issues/88455), [@tomratcliffe](https://github.com/tomratcliffe)
@@ -2013,9 +2013,9 @@ We've removed the Loki tab from the Tempo data source. You can still access Logs
 
 The `query` option in `splitOpen` was deprecated in `10.1` and is now being removed. Issue [#83973](https://github.com/grafana/grafana/issues/83973)
 
-Since https://github.com/grafana/grafana/pull/38942 (Grafana `8.2.0`) the `ExploreQueryFieldProps` type was deprecated and is now removed. Issue [#83972](https://github.com/grafana/grafana/issues/83972)
+Since <https://github.com/grafana/grafana/pull/38942> (Grafana `8.2.0`) the `ExploreQueryFieldProps` type was deprecated and is now removed. Issue [#83972](https://github.com/grafana/grafana/issues/83972)
 
-Since https://github.com/grafana/grafana/pull/38942 `exploreId` is no longer supplied to query editors in Explore. The property was deprecated in `10.3.0` and is now removed. If your query editor needs to know from which app is being rendered, you can check the `app` prop in `QueryEditorProps`. Issue [#83971](https://github.com/grafana/grafana/issues/83971)
+Since <https://github.com/grafana/grafana/pull/38942> `exploreId` is no longer supplied to query editors in Explore. The property was deprecated in `10.3.0` and is now removed. If your query editor needs to know from which app is being rendered, you can check the `app` prop in `QueryEditorProps`. Issue [#83971](https://github.com/grafana/grafana/issues/83971)
 
 The Vector interface that was deprecated in Grafana 10 has been further deprecated. Using it will now generate build-time Typescript errors, but remain working at runtime. If you're still using ArrayVector in your code, it should be removed immediately and replaced with plain arrays. Plugins compiled against older versions and depend on calling get/set will continue to work because the Array prototype still has a modified prototype. This will be removed in the future Issue [#83681](https://github.com/grafana/grafana/issues/83681)
 
@@ -2030,13 +2030,13 @@ In Grafana 11 the legacy alerting reaches the end-of-life. Users cannot enable i
 - setting `[unified_alerting].evaluation_timeout` does not fall back to the legacy setting `[alerting].evaluation_timeout_seconds` in the case when it is either invalid or has the default value. Now, if the setting is invalid, it will cause Grafana to exit.
 - setting `[unified_alerting].min_interval` does not fall back to the legacy setting `[alerting].min_interval_seconds` in the case when it is either invalid or has the default value. Now, if the setting is invalid, it will cause Grafana to exit. Issue [#83651](https://github.com/grafana/grafana/issues/83651)
 
-We've removed React 17 as a peer dependency from our packages. Anyone using the new versions of these packages should ensure they've upgraded to React 18 following the upgrade steps: https://react.dev/blog/2022/03/08/react-18-upgrade-guide Issue [#83524](https://github.com/grafana/grafana/issues/83524)
+We've removed React 17 as a peer dependency from our packages. Anyone using the new versions of these packages should ensure they've upgraded to React 18 following the upgrade steps: <https://react.dev/blog/2022/03/08/react-18-upgrade-guide> Issue [#83524](https://github.com/grafana/grafana/issues/83524)
 
 We're adding a validation between the response of the ID token HD parameter and the list of allowed domains as an extra layer of security. In the event that the HD parameter doesn't match the list of allowed domains, we're denying access to Grafana.
 
 If you set Google OAuth configuration using `api_url,` you might be using the legacy implementation of OAuth, which doesn't have the HD parameter describing the organisation the approved token comes from. This could break your login flow.
 
-This feature can be turned off through the configuration toggle `validate_hd `. Anyone using the legacy Google OAuth configuration should turn off this validation if the ID Token response doesn't have the HD parameter. Issue [#83229](https://github.com/grafana/grafana/issues/83229)
+This feature can be turned off through the configuration toggle `validate_hd`. Anyone using the legacy Google OAuth configuration should turn off this validation if the ID Token response doesn't have the HD parameter. Issue [#83229](https://github.com/grafana/grafana/issues/83229)
 
 The direct input datasource plugin has been removed in Grafana 11. It has been in alpha for 4 years and is superseded by [TestData](https://grafana.com/docs/grafana/latest/datasources/testdata/) that ships with Grafana.
 
