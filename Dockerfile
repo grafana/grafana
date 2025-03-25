@@ -59,11 +59,8 @@ WORKDIR /tmp/grafana
 COPY go.* ./
 COPY .bingo .bingo
 COPY .citools/bra .citools/bra
-COPY .citools/cue .citools/cue
-COPY .citools/cog .citools/cog
 COPY .citools/lefthook .citools/lefthook
 COPY .citools/jb .citools/jb
-COPY .citools/drone .citools/drone
 COPY .citools/golangci-lint .citools/golangci-lint
 
 # Include vendored dependencies
