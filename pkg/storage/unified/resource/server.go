@@ -757,11 +757,8 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 				}
 				if iter.Next() {
 					rsp.NextPageToken = t
-				} else if err := iter.Error(); err != nil {
-					return err
 				}
-
-				return nil
+				return iter.Error()
 			}
 		}
 		return iter.Error()
