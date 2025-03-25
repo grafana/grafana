@@ -28,7 +28,13 @@ describe('deserialization', () => {
         tabs: [
           {
             kind: 'TabsLayoutTab',
-            spec: { title: 'Tab 1', layout: { kind: 'ResponsiveGridLayout', spec: { row: '', col: '', items: [] } } },
+            spec: {
+              title: 'Tab 1',
+              layout: {
+                kind: 'ResponsiveGridLayout',
+                spec: { columnWidthMode: 'standard', rowHeightMode: 'standard', maxColumnCount: 4, items: [] },
+              },
+            },
           },
         ],
       },
@@ -64,7 +70,13 @@ describe('deserialization', () => {
         tabs: [
           {
             kind: 'TabsLayoutTab',
-            spec: { title: 'Tab 1', layout: { kind: 'ResponsiveGridLayout', spec: { row: '', col: '', items: [] } } },
+            spec: {
+              title: 'Tab 1',
+              layout: {
+                kind: 'ResponsiveGridLayout',
+                spec: { columnWidthMode: 'standard', rowHeightMode: 'standard', maxColumnCount: 4, items: [] },
+              },
+            },
           },
           { kind: 'TabsLayoutTab', spec: { title: 'Tab 2', layout: { kind: 'GridLayout', spec: { items: [] } } } },
         ],

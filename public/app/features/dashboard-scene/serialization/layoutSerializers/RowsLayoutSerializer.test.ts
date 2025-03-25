@@ -46,8 +46,9 @@ describe('deserialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  row: 'minmax(min-content, max-content)',
-                  col: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  columnWidthMode: 'standard',
+                  rowHeightMode: 'standard',
+                  maxColumnCount: 4,
                   items: [],
                 },
               },
@@ -75,8 +76,9 @@ describe('deserialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  row: 'minmax(min-content, max-content)',
-                  col: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  columnWidthMode: 'standard',
+                  rowHeightMode: 'standard',
+                  maxColumnCount: 4,
                   items: [],
                 },
               },
@@ -233,11 +235,10 @@ describe('serialization', () => {
           title: 'Row 1',
           isCollapsed: false,
           layout: new ResponsiveGridLayoutManager({
-            layout: new ResponsiveGridLayout({
-              children: [],
-              templateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-              autoRows: 'minmax(min-content, max-content)',
-            }),
+            columnWidth: 'standard',
+            rowHeight: 'standard',
+            maxColumnCount: 4,
+            layout: new ResponsiveGridLayout({}),
           }),
         }),
         new RowItem({
@@ -269,8 +270,12 @@ describe('serialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  row: 'minmax(min-content, max-content)',
-                  col: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  columnWidth: undefined,
+                  rowHeight: undefined,
+                  fillScreen: false,
+                  rowHeightMode: 'standard',
+                  columnWidthMode: 'standard',
+                  maxColumnCount: 4,
                   items: [],
                 },
               },

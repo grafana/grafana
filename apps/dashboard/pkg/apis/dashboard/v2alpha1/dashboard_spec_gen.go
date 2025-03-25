@@ -965,14 +965,21 @@ func NewDashboardResponsiveGridLayoutKind() *DashboardResponsiveGridLayoutKind {
 
 // +k8s:openapi-gen=true
 type DashboardResponsiveGridLayoutSpec struct {
-	Row   string                                  `json:"row"`
-	Col   string                                  `json:"col"`
-	Items []DashboardResponsiveGridLayoutItemKind `json:"items"`
+	MaxColumnCount  *float64                                         `json:"maxColumnCount,omitempty"`
+	ColumnWidthMode DashboardResponsiveGridLayoutSpecColumnWidthMode `json:"columnWidthMode"`
+	ColumnWidth     *float64                                         `json:"columnWidth,omitempty"`
+	RowHeightMode   DashboardResponsiveGridLayoutSpecRowHeightMode   `json:"rowHeightMode"`
+	RowHeight       *float64                                         `json:"rowHeight,omitempty"`
+	FillScreen      *bool                                            `json:"fillScreen,omitempty"`
+	Items           []DashboardResponsiveGridLayoutItemKind          `json:"items"`
 }
 
 // NewDashboardResponsiveGridLayoutSpec creates a new DashboardResponsiveGridLayoutSpec object.
 func NewDashboardResponsiveGridLayoutSpec() *DashboardResponsiveGridLayoutSpec {
-	return &DashboardResponsiveGridLayoutSpec{}
+	return &DashboardResponsiveGridLayoutSpec{
+		MaxColumnCount: (func(input float64) *float64 { return &input })(3),
+		FillScreen:     (func(input bool) *bool { return &input })(false),
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -1793,6 +1800,26 @@ type DashboardConditionalRenderingVariableSpecOperator string
 const (
 	DashboardConditionalRenderingVariableSpecOperatorEquals    DashboardConditionalRenderingVariableSpecOperator = "equals"
 	DashboardConditionalRenderingVariableSpecOperatorNotEquals DashboardConditionalRenderingVariableSpecOperator = "notEquals"
+)
+
+// +k8s:openapi-gen=true
+type DashboardResponsiveGridLayoutSpecColumnWidthMode string
+
+const (
+	DashboardResponsiveGridLayoutSpecColumnWidthModeNarrow   DashboardResponsiveGridLayoutSpecColumnWidthMode = "narrow"
+	DashboardResponsiveGridLayoutSpecColumnWidthModeStandard DashboardResponsiveGridLayoutSpecColumnWidthMode = "standard"
+	DashboardResponsiveGridLayoutSpecColumnWidthModeWide     DashboardResponsiveGridLayoutSpecColumnWidthMode = "wide"
+	DashboardResponsiveGridLayoutSpecColumnWidthModeCustom   DashboardResponsiveGridLayoutSpecColumnWidthMode = "custom"
+)
+
+// +k8s:openapi-gen=true
+type DashboardResponsiveGridLayoutSpecRowHeightMode string
+
+const (
+	DashboardResponsiveGridLayoutSpecRowHeightModeShort    DashboardResponsiveGridLayoutSpecRowHeightMode = "short"
+	DashboardResponsiveGridLayoutSpecRowHeightModeStandard DashboardResponsiveGridLayoutSpecRowHeightMode = "standard"
+	DashboardResponsiveGridLayoutSpecRowHeightModeTall     DashboardResponsiveGridLayoutSpecRowHeightMode = "tall"
+	DashboardResponsiveGridLayoutSpecRowHeightModeCustom   DashboardResponsiveGridLayoutSpecRowHeightMode = "custom"
 )
 
 // +k8s:openapi-gen=true
