@@ -307,7 +307,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 			folder, err := r.folders.EnsureFolderPathExist(ctx, change.Path)
 			if err != nil {
-				result.Error = fmt.Errorf("unable to create empty file folder: %w", err)
+				result.Error = fmt.Errorf("create folder: %w", err)
 				r.progress.Record(ctx, result)
 				continue
 			}
