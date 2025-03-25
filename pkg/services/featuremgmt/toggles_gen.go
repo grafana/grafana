@@ -243,10 +243,6 @@ const (
 	// Enables response streaming of TraceQL queries of the Tempo data source
 	FlagTraceQLStreaming = "traceQLStreaming"
 
-	// FlagMetricsSummary
-	// Enables metrics summary queries in the Tempo data source
-	FlagMetricsSummary = "metricsSummary"
-
 	// FlagDatasourceAPIServers
 	// Expose some datasources as apiservers.
 	FlagDatasourceAPIServers = "datasourceAPIServers"
@@ -683,9 +679,9 @@ const (
 	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
 	FlagNewFiltersUI = "newFiltersUI"
 
-	// FlagTableNG
+	// FlagTableNextGen
 	// Allows access to the new react-data-grid based table component.
-	FlagTableNG = "tableNG"
+	FlagTableNextGen = "tableNextGen"
 
 	// FlagLokiSendDashboardPanelNames
 	// Send dashboard and panel names to Loki when querying

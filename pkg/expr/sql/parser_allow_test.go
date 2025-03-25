@@ -32,6 +32,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    example_all_allowed_functions,
 			err:  nil,
 		},
+		{
+			name: "paren select allowed",
+			q:    `(SELECT * FROM a_table) UNION ALL (SELECT * FROM a_table2)`,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -33,6 +33,7 @@ export function TableCellNG(props: TableCellNGProps) {
     setContextMenuProps,
     cellInspect,
     getActions,
+    rowBg,
   } = props;
 
   const { config: fieldConfig } = field;
@@ -42,7 +43,12 @@ export function TableCellNG(props: TableCellNGProps) {
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
   const displayValue = field.display!(value);
-  const colors = useMemo(() => getCellColors(theme, cellOptions, displayValue), [theme, cellOptions, displayValue]);
+  let colors: CellColors = { bgColor: '', textColor: '', bgHoverColor: '' };
+  if (rowBg) {
+    colors = rowBg(rowIdx);
+  } else {
+    colors = useMemo(() => getCellColors(theme, cellOptions, displayValue), [theme, cellOptions, displayValue]);
+  }
   const styles = useStyles2(getStyles, isRightAligned, colors);
 
   // TODO

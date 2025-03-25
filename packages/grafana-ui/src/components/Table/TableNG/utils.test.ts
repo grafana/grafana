@@ -19,6 +19,9 @@ import {
   TableCellHeight,
 } from '@grafana/schema';
 
+import { Trans } from '../../../utils/i18n';
+import { PanelContext } from '../../PanelChrome';
+
 import { mapFrameToDataGrid, myRowRenderer } from './TableNG';
 import { COLUMN, TABLE } from './constants';
 import { TableColumn } from './types';
@@ -291,7 +294,9 @@ describe('TableNG utils', () => {
 
       // Check that we have two spans with correct content
       const [countSpan, valueSpan] = divElement.props.children;
-      expect(countSpan.props.children).toBe('Count');
+      expect(countSpan.type).toBe('span');
+      expect(countSpan.props.children.type).toBe(Trans);
+      expect(countSpan.props.children.props.i18nKey).toBe('grafana-ui.table.count');
       expect(valueSpan.props.children).toBe('3');
     });
   });
@@ -1042,8 +1047,8 @@ describe('TableNG utils', () => {
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        false, // cellInspect,
-        TableCellDisplayMode.Auto
+        false, // cellInspect
+        TableCellDisplayMode.Auto // cellType
       );
 
       expect(result).toBe(true);
@@ -1069,7 +1074,7 @@ describe('TableNG utils', () => {
         8, // padding
         false, // textWrap
         false, // cellInspect
-        TableCellDisplayMode.Auto
+        TableCellDisplayMode.Auto // cellType
       );
 
       expect(result).toBe(false);
@@ -1094,7 +1099,7 @@ describe('TableNG utils', () => {
         8, // padding
         true, // textWrap ENABLED
         false, // cellInspect
-        TableCellDisplayMode.Auto
+        TableCellDisplayMode.Auto // cellType
       );
 
       expect(result).toBe(false);
@@ -1119,7 +1124,7 @@ describe('TableNG utils', () => {
         8, // padding
         false, // textWrap
         true, // cellInspect ENABLED
-        TableCellDisplayMode.Auto
+        TableCellDisplayMode.Auto // cellType
       );
 
       expect(result).toBe(false);
@@ -1716,11 +1721,38 @@ describe('TableNG utils', () => {
       } as any;
     };
 
+    const mockPanelContext = {
+      id: 1,
+      title: 'Test Panel',
+      description: 'Test Description',
+      width: 800,
+      height: 600,
+      timeRange: { from: 'now-6h', to: 'now' },
+      timeZone: 'browser',
+      onTimeRangeChange: jest.fn(),
+      onOptionsChange: jest.fn(),
+      onFieldConfigChange: jest.fn(),
+      onInstanceStateChange: jest.fn(),
+      replaceVariables: jest.fn(),
+      eventBus: {
+        publish: jest.fn(),
+        subscribe: jest.fn(),
+        unsubscribe: jest.fn(),
+      },
+    } as unknown as PanelContext;
+
+    const mockData = createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [] },
+        { name: 'Value', type: FieldType.number, values: [] },
+      ],
+    });
+
     it('returns null for non-expanded child rows', () => {
       const props = createMockProps(1, false, 0);
       const expandedRows: number[] = []; // No expanded rows
 
-      const result = myRowRenderer('key-0', props, expandedRows);
+      const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false);
 
       expect(result).toBeNull();
     });
@@ -1729,7 +1761,7 @@ describe('TableNG utils', () => {
       const props = createMockProps(1, false, 0);
       const expandedRows: number[] = [0]; // Row 0 is expanded
 
-      const result = myRowRenderer('key-0', props, expandedRows);
+      const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false);
 
       expect(result).not.toBeNull();
     });
@@ -1738,7 +1770,7 @@ describe('TableNG utils', () => {
       const props = createMockProps(0, true, 0);
       const expandedRows: number[] = [0]; // Row 0 is expanded
 
-      const result = myRowRenderer('key-0', props, expandedRows) as JSX.Element;
+      const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false) as JSX.Element;
 
       expect(result.props['aria-expanded']).toBe(true);
     });
@@ -1747,7 +1779,7 @@ describe('TableNG utils', () => {
       const props = createMockProps(0, true, 0);
       const expandedRows: number[] = []; // No expanded rows
 
-      const result = myRowRenderer('key-0', props, expandedRows) as JSX.Element;
+      const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false) as JSX.Element;
 
       expect(result.props['aria-expanded']).toBe(false);
     });
@@ -1756,7 +1788,7 @@ describe('TableNG utils', () => {
       const props = createMockProps(0, false, 0);
       const expandedRows: number[] = [];
 
-      const result = myRowRenderer('key-0', props, expandedRows) as JSX.Element;
+      const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false) as JSX.Element;
 
       expect(result.props['aria-expanded']).toBeUndefined();
     });

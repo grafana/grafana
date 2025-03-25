@@ -442,13 +442,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "metricsSummary",
-			Description:  "Enables metrics summary queries in the Tempo data source",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
 			Name:            "datasourceAPIServers",
 			Description:     "Expose some datasources as apiservers.",
 			Stage:           FeatureStageExperimental,
@@ -1291,7 +1284,7 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:        "tableNG",
+			Name:        "tableNextGen",
 			Description: "Allows access to the new react-data-grid based table component.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatavizSquad,
