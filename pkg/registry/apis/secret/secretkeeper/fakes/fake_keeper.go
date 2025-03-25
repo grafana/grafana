@@ -19,10 +19,10 @@ type FakeKeeper struct {
 
 var _ contracts.Keeper = (*FakeKeeper)(nil)
 
-func NewFakeKeeper(tracer tracing.Tracer, encryptionManager contracts.EncryptionManager, store contracts.EncryptedValueStorage) (*FakeKeeper, error) {
+func NewFakeKeeper(tracer tracing.Tracer, encryptionManager contracts.EncryptionManager, store contracts.EncryptedValueStorage) *FakeKeeper {
 	return &FakeKeeper{
 		values: make(map[string]map[string]string),
-	}, nil
+	}
 }
 
 func (s *FakeKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
