@@ -411,11 +411,11 @@ email =  "mail"
 
 In the previous example, SSL is enabled and an encrypted port has been configured. If your Active Directory doesn't support SSL, use `enable_ssl = false` and `port = 389` instead.
 
-Inspect your Active Directory configuration and documentation to find the correct settings. For more information about Active Directory and port requirements see [link](<https://technet.microsoft.com/en-us/library/dd772723(v=ws.10)>).
+Inspect your Active Directory configuration and documentation to find the correct settings. For more information about Active Directory and port requirements, refer to the [Microsoft documentation](https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/service-overview-and-network-port-requirements#active-directory-local-security-authority).
 
 ## Troubleshooting
 
-To troubleshoot and get more log info enable LDAP debug logging in the [main config file](../../../configure-grafana/).
+To troubleshoot and get more log information, enable LDAP debug logging in the [grafana.ini or custom.ini](../../../configure-grafana/) file:
 
 ```bash
 [log]
