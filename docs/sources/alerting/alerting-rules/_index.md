@@ -45,10 +45,6 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/templates/
 ---
 
-{{< admonition type="note" >}}
-In Grafana 11.6.0, alerting performs migrations on the `alert_rule_versions` table. If your upgrade to 11.6.0 causes a migration failure, then your `alert_rule_versions` table has too many rows and needs to be truncated to for the migration to complete
-{{< /admonition >}}
-
 # Configure alert rules
 
 [Alert rules](ref:alert-rules) are the central component of your alerting system.
