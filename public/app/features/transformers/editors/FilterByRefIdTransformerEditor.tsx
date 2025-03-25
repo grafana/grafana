@@ -6,7 +6,7 @@ import {
   TransformerCategory,
   FrameMatcherID,
 } from '@grafana/data';
-import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByRefId';
+import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/internal';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

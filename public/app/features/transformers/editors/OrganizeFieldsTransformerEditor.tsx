@@ -10,8 +10,7 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
-import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
+import { createOrderFieldsComparer, OrganizeFieldsTransformerOptions } from '@grafana/data/internal';
 import {
   Input,
   IconButton,

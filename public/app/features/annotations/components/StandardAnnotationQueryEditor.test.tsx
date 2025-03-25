@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 
-import { AnnotationQuery, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data/src';
+import { AnnotationQuery, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 
 import StandardAnnotationQueryEditor, { Props as EditorProps } from './StandardAnnotationQueryEditor';
 
