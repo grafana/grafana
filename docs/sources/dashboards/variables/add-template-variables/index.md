@@ -401,7 +401,7 @@ You can use this variable in URLs, as well. For example, you can send a user to 
 
 ### `$__url_time_range`
 
-It is also possible to utilise the complete time range by employing the variable `$__url_time_range`. This will result in the expression `from=XXXX&to=XXXX` in which Unix timestamps are used. 
+It is also possible to utilise the complete time range by employing the variable `$__url_time_range`. This will result in the expression `from=XXXX&to=XXXX&timezone=XXX`. 
 
 ### `$__interval`
 
