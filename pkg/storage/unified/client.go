@@ -1,9 +1,7 @@
 package unified
 
 import (
-	"context"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	otgrpc "github.com/opentracing-contrib/go-grpc"
@@ -11,7 +9,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
