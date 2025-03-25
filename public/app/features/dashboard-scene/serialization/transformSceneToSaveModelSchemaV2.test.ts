@@ -631,9 +631,10 @@ describe('dynamic layouts', () => {
     const scene = setupDashboardScene(
       getMinimalSceneState(
         new ResponsiveGridLayoutManager({
+          minColumnWidth: 100,
+          minRowHeight: 'standard',
+          maxColumnCount: 4,
           layout: new ResponsiveGridLayout({
-            autoRows: 'rowString',
-            templateColumns: 'colString',
             children: [
               new ResponsiveGridItem({
                 body: new VizPanel({}),
@@ -649,8 +650,11 @@ describe('dynamic layouts', () => {
     const result = transformSceneToSaveModelSchemaV2(scene);
     expect(result.layout.kind).toBe('ResponsiveGridLayout');
     const respGridLayout = result.layout.spec as ResponsiveGridLayoutSpec;
-    expect(respGridLayout.col).toBe('colString');
-    expect(respGridLayout.row).toBe('rowString');
+    expect(respGridLayout.minColumnWidthMode).toBe('custom');
+    expect(respGridLayout.minColumnWidth).toBe(100);
+    expect(respGridLayout.minRowHeightMode).toBe('standard');
+    expect(respGridLayout.minRowHeight).toBeUndefined();
+    expect(respGridLayout.maxColumnCount).toBe(4);
     expect(respGridLayout.items.length).toBe(2);
     expect(respGridLayout.items[0].kind).toBe('ResponsiveGridLayoutItem');
   });

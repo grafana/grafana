@@ -1528,6 +1528,12 @@
       },
       "name": "Auto grid",
       "options": {
+        "custom-min-height": {
+          "clear": "Clear"
+        },
+        "custom-min-width": {
+          "clear": "Clear"
+        },
         "height-fill": "Fill screen",
         "max-columns": "Max columns",
         "min-height": "Row height",

@@ -21,7 +21,7 @@ import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: ResponsiveGridLayout;
-  maxColumnCount: string;
+  maxColumnCount: number;
   minRowHeight: AutoGridMinRowHeight;
   minColumnWidth: AutoGridMinColumnWidth;
   heightFill: boolean;
@@ -30,7 +30,7 @@ interface ResponsiveGridLayoutManagerState extends SceneObjectState {
 export type AutoGridMinColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
 export type AutoGridMinRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
 
-export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = '3';
+export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_MIN_COLUMN_WIDTH = 'standard';
 export const AUTO_GRID_DEFAULT_MIN_ROW_HEIGHT = 'standard';
 
@@ -191,7 +191,7 @@ export class ResponsiveGridLayoutManager
     return getEditOptions(this);
   }
 
-  public onMaxColumnCountChanged(maxColumnCount: string) {
+  public onMaxColumnCountChanged(maxColumnCount: number) {
     this.setState({ maxColumnCount: maxColumnCount });
     this.state.layout.setState({
       templateColumns: getTemplateColumnsTemplate(maxColumnCount, this.state.minColumnWidth),
@@ -250,7 +250,7 @@ function ResponsiveGridLayoutManagerRenderer({ model }: SceneComponentProps<Resp
   return <model.state.layout.Component model={model.state.layout} />;
 }
 
-function getTemplateColumnsTemplate(maxColumnCount: string, minColumnWidth: AutoGridMinColumnWidth) {
+function getTemplateColumnsTemplate(maxColumnCount: number, minColumnWidth: AutoGridMinColumnWidth) {
   return `repeat(auto-fit, minmax(min(max(100% / ${maxColumnCount} - ${GRID_CELL_VMARGIN}px, ${getNamedColumWidthInPixels(minColumnWidth)}px), 100%), 1fr))`;
 }
 

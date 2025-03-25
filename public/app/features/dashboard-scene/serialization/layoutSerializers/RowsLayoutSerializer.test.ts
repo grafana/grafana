@@ -46,8 +46,9 @@ describe('deserialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  row: 'minmax(min-content, max-content)',
-                  col: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  minColumnWidthMode: 'standard',
+                  minRowHeightMode: 'standard',
+                  maxColumnCount: 4,
                   items: [],
                 },
               },
@@ -75,8 +76,9 @@ describe('deserialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  row: 'minmax(min-content, max-content)',
-                  col: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  minColumnWidthMode: 'standard',
+                  minRowHeightMode: 'standard',
+                  maxColumnCount: 4,
                   items: [],
                 },
               },
@@ -233,10 +235,11 @@ describe('serialization', () => {
           title: 'Row 1',
           isCollapsed: false,
           layout: new ResponsiveGridLayoutManager({
+            minColumnWidth: 'standard',
+            minRowHeight: 'standard',
+            maxColumnCount: 4,
             layout: new ResponsiveGridLayout({
               children: [],
-              templateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-              autoRows: 'minmax(min-content, max-content)',
             }),
           }),
         }),
@@ -269,8 +272,9 @@ describe('serialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  row: 'minmax(min-content, max-content)',
-                  col: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  minRowHeightMode: 'standard',
+                  minColumnWidthMode: 'standard',
+                  maxColumnCount: 4,
                   items: [],
                 },
               },
