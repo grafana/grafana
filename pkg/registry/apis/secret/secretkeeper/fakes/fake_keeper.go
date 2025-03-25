@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
@@ -19,7 +18,7 @@ type FakeKeeper struct {
 
 var _ contracts.Keeper = (*FakeKeeper)(nil)
 
-func NewFakeKeeper(tracer tracing.Tracer, encryptionManager contracts.EncryptionManager, store contracts.EncryptedValueStorage) *FakeKeeper {
+func NewFakeKeeper() *FakeKeeper {
 	return &FakeKeeper{
 		values: make(map[string]map[string]string),
 	}
