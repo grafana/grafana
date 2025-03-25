@@ -46,8 +46,8 @@ describe('deserialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  minColumnWidthMode: 'standard',
-                  minRowHeightMode: 'standard',
+                  columnWidthMode: 'standard',
+                  rowHeightMode: 'standard',
                   maxColumnCount: 4,
                   items: [],
                 },
@@ -76,8 +76,8 @@ describe('deserialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  minColumnWidthMode: 'standard',
-                  minRowHeightMode: 'standard',
+                  columnWidthMode: 'standard',
+                  rowHeightMode: 'standard',
                   maxColumnCount: 4,
                   items: [],
                 },
@@ -235,8 +235,8 @@ describe('serialization', () => {
           title: 'Row 1',
           isCollapsed: false,
           layout: new ResponsiveGridLayoutManager({
-            minColumnWidth: 'standard',
-            minRowHeight: 'standard',
+            columnWidth: 'standard',
+            rowHeight: 'standard',
             maxColumnCount: 4,
             layout: new ResponsiveGridLayout({
               children: [],
@@ -272,8 +272,8 @@ describe('serialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  minRowHeightMode: 'standard',
-                  minColumnWidthMode: 'standard',
+                  rowHeightMode: 'standard',
+                  columnWidthMode: 'standard',
                   maxColumnCount: 4,
                   items: [],
                 },

@@ -32,7 +32,7 @@ describe('deserialization', () => {
               title: 'Tab 1',
               layout: {
                 kind: 'ResponsiveGridLayout',
-                spec: { minColumnWidthMode: 'standard', minRowHeightMode: 'standard', maxColumnCount: 4, items: [] },
+                spec: { columnWidthMode: 'standard', rowHeightMode: 'standard', maxColumnCount: 4, items: [] },
               },
             },
           },
@@ -74,7 +74,7 @@ describe('deserialization', () => {
               title: 'Tab 1',
               layout: {
                 kind: 'ResponsiveGridLayout',
-                spec: { minColumnWidthMode: 'standard', minRowHeightMode: 'standard', maxColumnCount: 4, items: [] },
+                spec: { columnWidthMode: 'standard', rowHeightMode: 'standard', maxColumnCount: 4, items: [] },
               },
             },
           },

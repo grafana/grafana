@@ -508,9 +508,9 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           kind: 'ResponsiveGridLayout',
           spec: {
             maxColumnCount: 4,
-            minColumnWidthMode: 'custom',
-            minColumnWidth: 100,
-            minRowHeightMode: 'standard',
+            columnWidthMode: 'custom',
+            columnWidth: 100,
+            rowHeightMode: 'standard',
             items: [
               {
                 kind: 'ResponsiveGridLayoutItem',
@@ -528,8 +528,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         const layoutManager = scene.state.body as ResponsiveGridLayoutManager;
         expect(layoutManager.descriptor.kind).toBe('ResponsiveGridLayout');
         expect(layoutManager.state.maxColumnCount).toBe(4);
-        expect(layoutManager.state.minColumnWidth).toBe(100);
-        expect(layoutManager.state.minRowHeight).toBe('standard');
+        expect(layoutManager.state.columnWidth).toBe(100);
+        expect(layoutManager.state.rowHeight).toBe('standard');
         expect(layoutManager.state.layout.state.children.length).toBe(1);
         const gridItem = layoutManager.state.layout.state.children[0] as ResponsiveGridItem;
         expect(gridItem.state.body.state.key).toBe('panel-1');
@@ -549,8 +549,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                     kind: 'ResponsiveGridLayout',
                     spec: {
                       maxColumnCount: 4,
-                      minColumnWidthMode: 'standard',
-                      minRowHeightMode: 'standard',
+                      columnWidthMode: 'standard',
+                      rowHeightMode: 'standard',
                       items: [
                         {
                           kind: 'ResponsiveGridLayoutItem',
@@ -576,8 +576,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(layoutManager.state.tabs[0].state.title).toBe('tab1');
         const gridLayoutManager = layoutManager.state.tabs[0].state.layout as ResponsiveGridLayoutManager;
         expect(gridLayoutManager.state.maxColumnCount).toBe(4);
-        expect(gridLayoutManager.state.minColumnWidth).toBe('standard');
-        expect(gridLayoutManager.state.minRowHeight).toBe('standard');
+        expect(gridLayoutManager.state.columnWidth).toBe('standard');
+        expect(gridLayoutManager.state.rowHeight).toBe('standard');
         expect(gridLayoutManager.state.layout.state.children.length).toBe(1);
         const gridItem = gridLayoutManager.state.layout.state.children[0] as ResponsiveGridItem;
         expect(gridItem.state.body.state.key).toBe('panel-1');
@@ -598,8 +598,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                     kind: 'ResponsiveGridLayout',
                     spec: {
                       maxColumnCount: 4,
-                      minColumnWidthMode: 'standard',
-                      minRowHeightMode: 'standard',
+                      columnWidthMode: 'standard',
+                      rowHeightMode: 'standard',
                       items: [
                         {
                           kind: 'ResponsiveGridLayoutItem',
@@ -652,8 +652,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         const row1Manager = layoutManager.state.rows[0].state.layout as ResponsiveGridLayoutManager;
         expect(row1Manager.descriptor.kind).toBe('ResponsiveGridLayout');
         expect(row1Manager.state.maxColumnCount).toBe(4);
-        expect(row1Manager.state.minColumnWidth).toBe('standard');
-        expect(row1Manager.state.minColumnWidth).toBe('standard');
+        expect(row1Manager.state.columnWidth).toBe('standard');
+        expect(row1Manager.state.rowHeight).toBe('standard');
         const row1GridItem = row1Manager.state.layout.state.children[0] as ResponsiveGridItem;
         expect(row1GridItem.state.body.state.key).toBe('panel-1');
 

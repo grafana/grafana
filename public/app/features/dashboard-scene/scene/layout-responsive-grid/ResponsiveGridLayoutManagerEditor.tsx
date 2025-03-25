@@ -5,11 +5,7 @@ import { Button, Combobox, ComboboxOption, Field, InlineSwitch, Input, Stack } f
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import {
-  AutoGridMinColumnWidth,
-  AutoGridMinRowHeight,
-  ResponsiveGridLayoutManager,
-} from './ResponsiveGridLayoutManager';
+import { AutoGridColumnWidth, AutoGridRowHeight, ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
 
 export function getEditOptions(layoutManager: ResponsiveGridLayoutManager): OptionsPaneItemDescriptor[] {
   const options: OptionsPaneItemDescriptor[] = [];
@@ -34,7 +30,7 @@ export function getEditOptions(layoutManager: ResponsiveGridLayoutManager): Opti
 }
 
 function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLayoutManager }) {
-  const { maxColumnCount, minColumnWidth } = layoutManager.useState();
+  const { maxColumnCount, columnWidth } = layoutManager.useState();
   const [inputRef, setInputRef] = React.useState<HTMLInputElement | null>(null);
   const [focusInput, setFocusInput] = React.useState(false);
   const [customMinWidthError, setCustomMinWidthError] = React.useState(false);
@@ -46,7 +42,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
     }
   }, [focusInput, inputRef]);
 
-  const minWidthOptions: Array<ComboboxOption<AutoGridMinColumnWidth>> = [
+  const minWidthOptions: Array<ComboboxOption<AutoGridColumnWidth>> = [
     'narrow' as const,
     'standard' as const,
     'wide' as const,
@@ -56,7 +52,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
     value,
   }));
 
-  const isStandardMinWidth = typeof minColumnWidth === 'string';
+  const isStandardMinWidth = typeof columnWidth === 'string';
 
   const minWidthLabel = isStandardMinWidth
     ? t('dashboard.responsive-layout.options.min-width', 'Min column width')
@@ -72,14 +68,14 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
       setCustomMinWidthError(false);
     }
 
-    layoutManager.onMinColumnWidthChanged(pixels);
+    layoutManager.onColumnWidthChanged(pixels);
   };
 
-  const onNamedMinWidthChanged = (value: ComboboxOption<AutoGridMinColumnWidth>) => {
+  const onNamedMinWidthChanged = (value: ComboboxOption<AutoGridColumnWidth>) => {
     if (value.value === 'custom') {
       setFocusInput(true);
     }
-    layoutManager.onMinColumnWidthChanged(value.value);
+    layoutManager.onColumnWidthChanged(value.value);
   };
 
   const onClearCustomMinWidth = () => {
@@ -87,7 +83,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
       setCustomMinWidthError(false);
     }
 
-    layoutManager.onMinColumnWidthChanged('standard');
+    layoutManager.onColumnWidthChanged('standard');
   };
 
   return (
@@ -102,10 +98,10 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
         }
       >
         {isStandardMinWidth ? (
-          <Combobox options={minWidthOptions} value={minColumnWidth} onChange={onNamedMinWidthChanged} />
+          <Combobox options={minWidthOptions} value={columnWidth} onChange={onNamedMinWidthChanged} />
         ) : (
           <Input
-            defaultValue={minColumnWidth}
+            defaultValue={columnWidth}
             onBlur={onCustomMinWidthChanged}
             ref={(ref) => setInputRef(ref)}
             type="number"
@@ -141,7 +137,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: ResponsiveGridLay
 }
 
 function GridLayoutRows({ layoutManager }: { layoutManager: ResponsiveGridLayoutManager }) {
-  const { minRowHeight, heightFill } = layoutManager.useState();
+  const { rowHeight, heightFill } = layoutManager.useState();
   const [inputRef, setInputRef] = React.useState<HTMLInputElement | null>(null);
   const [focusInput, setFocusInput] = React.useState(false);
   const [customMinWidthError, setCustomMinWidthError] = React.useState(false);
@@ -153,7 +149,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: ResponsiveGridLayout
     }
   }, [focusInput, inputRef]);
 
-  const minWidthOptions: Array<ComboboxOption<AutoGridMinRowHeight>> = [
+  const minWidthOptions: Array<ComboboxOption<AutoGridRowHeight>> = [
     'short' as const,
     'standard' as const,
     'tall' as const,
@@ -163,8 +159,8 @@ function GridLayoutRows({ layoutManager }: { layoutManager: ResponsiveGridLayout
     value,
   }));
 
-  const isStandardHeight = typeof minRowHeight === 'string';
-  const rowHeightLabel = minRowHeight
+  const isStandardHeight = typeof rowHeight === 'string';
+  const rowHeightLabel = rowHeight
     ? t('dashboard.responsive-layout.options.min-height', 'Row height')
     : t('dashboard.responsive-layout.options.min-height-custom', 'Custom row height');
 
@@ -177,14 +173,14 @@ function GridLayoutRows({ layoutManager }: { layoutManager: ResponsiveGridLayout
       setCustomMinWidthError(false);
     }
 
-    layoutManager.onMinRowHeightChanged(pixels);
+    layoutManager.onRowHeightChanged(pixels);
   };
 
-  const onNamedMinHeightChanged = (value: ComboboxOption<AutoGridMinRowHeight>) => {
+  const onNamedMinHeightChanged = (value: ComboboxOption<AutoGridRowHeight>) => {
     if (value.value === 'custom') {
       setFocusInput(true);
     }
-    layoutManager.onMinRowHeightChanged(value.value);
+    layoutManager.onRowHeightChanged(value.value);
   };
 
   const onClearCustomRowHeight = () => {
@@ -192,7 +188,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: ResponsiveGridLayout
       setCustomMinWidthError(false);
     }
 
-    layoutManager.onMinRowHeightChanged('standard');
+    layoutManager.onRowHeightChanged('standard');
   };
 
   return (
@@ -207,10 +203,10 @@ function GridLayoutRows({ layoutManager }: { layoutManager: ResponsiveGridLayout
         }
       >
         {isStandardHeight ? (
-          <Combobox options={minWidthOptions} value={minRowHeight} onChange={onNamedMinHeightChanged} width={18} />
+          <Combobox options={minWidthOptions} value={rowHeight} onChange={onNamedMinHeightChanged} width={18} />
         ) : (
           <Input
-            defaultValue={minRowHeight}
+            defaultValue={rowHeight}
             onBlur={onCustomHeightChanged}
             ref={(ref) => setInputRef(ref)}
             width={18}
