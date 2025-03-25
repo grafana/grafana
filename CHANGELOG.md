@@ -1,3 +1,19 @@
+<!-- 11.4.3 START -->
+
+# 11.4.3 (2025-03-25)
+
+### Features and enhancements
+
+- **Chore:** Bump Go to 1.23.7 [#101582](https://github.com/grafana/grafana/pull/101582), [@macabu](https://github.com/macabu)
+- **Chore:** Bump Go to 1.23.7 (Enterprise)
+
+### Bug fixes
+
+- **Alerting:** Fix token-based Slack image upload to work with channel names [#101072](https://github.com/grafana/grafana/pull/101072), [@JacobsonMT](https://github.com/JacobsonMT)
+- **InfluxDB:** Improve handling of template variables contained in regular expressions (InfluxQL) [#100987](https://github.com/grafana/grafana/pull/100987), [@aangelisc](https://github.com/aangelisc)
+- **Service Accounts:** Do not show error pop-ups for Service Account and Renderer UI flows [#101790](https://github.com/grafana/grafana/pull/101790), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+<!-- 11.4.3 END -->
 <!-- 11.3.5 START -->
 
 # 11.3.5 (2025-03-25)
@@ -5,10 +21,6 @@
 ### Features and enhancements
 
 - **Chore:** Bump Go to 1.23.7 [#101583](https://github.com/grafana/grafana/pull/101583), [@macabu](https://github.com/macabu)
-- **Chore:** Bump Go to 1.23.7 (Enterprise)
-
-### Bug fixes
-
 - **Alerting:** Fix token-based Slack image upload to work with channel names [#101488](https://github.com/grafana/grafana/pull/101488), [@moustafab](https://github.com/moustafab)
 - **Service Accounts:** Do not show error pop-ups for Service Account and Renderer UI flows [#101791](https://github.com/grafana/grafana/pull/101791), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 
