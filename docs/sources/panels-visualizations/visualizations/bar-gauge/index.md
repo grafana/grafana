@@ -134,9 +134,9 @@ Adjust how the gauge is displayed.
 | Name placement | Set the name placement mode when the bar gauge orientation is **Auto** or **Horizontal**. Choose from:<ul><li>**Auto** - Grafana determines the best placement.</li><li>**Top** - Names are placed on top of each bar gauge.</li><li>**Left** - Names are placed to the left of each bar gauge.</li><li>**Hidden** - Names are hidden.</li></ul> <p>When the bar gauge is in the vertical orientation, choose from **Auto** (names are always placed at the bottom of each bar) or **Hidden**.</p>|
 | Show unfilled area | Select if you want to render the unfilled region of the bars as dark gray. Not applicable to **Retro LCD** display mode. |
 | Bar size | Choose a bar size mode:<ul><li>**Auto** - Grafana determines the best bar size.</li><li>**Manual** - Manually configure the bar size.</li></ul> |
-| Min width | Limit the minimum width of the bar column when the gauge is oriented vertically. Automatically shows the x-axis scroll bar when there's a large amount of data.<p>This option only applies when the **Bar size** mode is set to **Manual**.</p> |
-| Min height | Limit the minimum height of the bar row when the bar gauge is oriented horizontally. Automatically shows the y-axis scroll bar when there's a large amount of data. <p>This option only applies when the **Bar size** mode is set to **Manual**.</p> |
-| Max height | Limit the maximum height of the bar row when the bar gauge is oriented horizontally. Automatically shows the y-axis scroll bar when there's a large amount of data. <p>This option only applies when the **Bar size** mode is set to **Manual**.</p> |
+| Min width | Limit the minimum width of the bar column when the gauge is oriented vertically or is in **Auto** mode. Automatically shows the x-axis scroll bar when there's a large amount of data.<p>This option only applies when the **Bar size** mode is set to **Manual**.</p> |
+| Min height | Limit the minimum height of the bar row when the bar gauge is oriented horizontally or is in **Auto** mode. Automatically shows the y-axis scroll bar when there's a large amount of data. <p>This option only applies when the **Bar size** mode is set to **Manual**.</p> |
+| Max height | Limit the maximum height of the bar row when the bar gauge is oriented horizontally or is in **Auto** mode. Automatically shows the y-axis scroll bar when there's a large amount of data. <p>This option only applies when the **Bar size** mode is set to **Manual**.</p> |
 
 <!-- prettier-ignore-end -->
 
@@ -146,9 +146,13 @@ Adjust how the gauge is displayed.
 
 ### Text size options
 
-Title -
-Value -
-Percentage change -
+Set the sizes of the following text elements in pixels:
+
+- **Title** - The name of each bar.
+- **Value**
+- **Percentage change** - When the bar gauge has the following configuration, you can set the size of the percentage change text:
+  - **Display mode** - **Gradient** or **Retro LCD**
+  - **Threshold mode** - **Percentage**
 
 ### Standard options
 
