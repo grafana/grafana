@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { Button, HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
 
-import { LayoutType } from './types';
+import { LayoutAlgorithm } from './panelcfg.gen';
 
 function getStyles() {
   return {
@@ -66,7 +66,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
         <HorizontalGroup spacing="xs">
           <Button
             icon={'code-branch'}
-            onClick={() => onConfigChange({ ...config, gridLayout: false, layoutType: LayoutType.Layered })}
+            onClick={() => onConfigChange({ ...config, gridLayout: false, layoutAlgorithm: LayoutAlgorithm.Layered })}
             size={'md'}
             title={'Default layout'}
             variant="secondary"
@@ -74,7 +74,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
           />
           <Button
             icon={'apps'}
-            onClick={() => onConfigChange({ ...config, gridLayout: true, layoutType: undefined })}
+            onClick={() => onConfigChange({ ...config, gridLayout: true, layoutAlgorithm: undefined })}
             size={'md'}
             title={'Grid layout'}
             variant="secondary"

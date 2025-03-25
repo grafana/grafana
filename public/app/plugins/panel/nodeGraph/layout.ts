@@ -6,12 +6,13 @@ import useMountedState from 'react-use/lib/useMountedState';
 import { Field } from '@grafana/data';
 
 import { createWorker, createMsaglWorker } from './createLayoutWorker';
-import { EdgeDatum, EdgeDatumLayout, LayoutType, NodeDatum } from './types';
+import { LayoutAlgorithm } from './panelcfg.gen';
+import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
 import { useNodeLimit } from './useNodeLimit';
 import { graphBounds } from './utils';
 
 export interface Config {
-  layoutType: LayoutType;
+  layoutAlgorithm: LayoutAlgorithm;
   linkDistance: number;
   linkStrength: number;
   forceX: number;
@@ -30,7 +31,7 @@ export interface Config {
 // if you programmatically enable the config editor (for development only) see ViewControls. These could be moved to
 // panel configuration at some point (apart from gridLayout as that can be switched be user right now.).
 export const defaultConfig: Config = {
-  layoutType: LayoutType.Layered,
+  layoutAlgorithm: LayoutAlgorithm.Layered,
   linkDistance: 150,
   linkStrength: 0.5,
   forceX: 2000,
@@ -51,7 +52,8 @@ export function useLayout(
   nodeCountLimit: number,
   width: number,
   rootNodeId?: string,
-  hasFixedPositions?: boolean
+  hasFixedPositions?: boolean,
+  layoutAlgorithm?: LayoutAlgorithm
 ) {
   const [nodesGraph, setNodesGraph] = useState<NodeDatum[]>([]);
   const [edgesGraph, setEdgesGraph] = useState<EdgeDatumLayout[]>([]);
@@ -105,7 +107,20 @@ export function useLayout(
     }
 
     // Layered layout is better but also more expensive, so we switch to default force based layout for bigger graphs.
-    const layoutType = rawNodes.length <= 500 && config.layoutType === LayoutType.Layered ? 'layered' : 'default';
+    let layoutType: 'default' | 'layered' = 'default';
+    if (rawNodes.length <= 500) {
+      // custom, coming from panel
+      if (layoutAlgorithm) {
+        if (layoutAlgorithm === LayoutAlgorithm.Layered) {
+          layoutType = 'layered';
+        }
+      } else {
+        // default config mostly for explore
+        if (config.layoutAlgorithm === LayoutAlgorithm.Layered) {
+          layoutType = 'layered';
+        }
+      }
+    }
 
     setLoading(true);
     // This is async but as I wanted to still run the sync grid layout, and you cannot return promise from effect so
@@ -119,7 +134,7 @@ export function useLayout(
     });
     layoutWorkerCancelRef.current = cancel;
     return cancel;
-  }, [hasFixedPositions, rawNodes, rawEdges, isMounted, config.layoutType]);
+  }, [hasFixedPositions, rawNodes, rawEdges, isMounted, config.layoutAlgorithm, layoutAlgorithm]);
 
   // Compute grid separately as it is sync and do not need to be inside effect. Also it is dependant on width while
   // default layout does not care and we don't want to recalculate that on panel resize.

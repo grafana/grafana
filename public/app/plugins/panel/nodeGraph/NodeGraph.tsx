@@ -13,7 +13,8 @@ import { Marker } from './Marker';
 import { Node } from './Node';
 import { ViewControls } from './ViewControls';
 import { Config, defaultConfig, useLayout } from './layout';
-import { EdgeDatumLayout, LayoutType, NodeDatum, NodesMarker, ZoomMode } from './types';
+import { LayoutAlgorithm } from './panelcfg.gen';
+import { EdgeDatumLayout, NodeDatum, NodesMarker, ZoomMode } from './types';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { useContextMenu } from './useContextMenu';
 import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
@@ -121,8 +122,9 @@ interface Props {
   nodeLimit?: number;
   panelId?: string;
   zoomMode?: ZoomMode;
+  layoutAlgorithm?: LayoutAlgorithm;
 }
-export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }: Props) {
+export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, layoutAlgorithm }: Props) {
   const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
 
@@ -174,7 +176,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }
     nodeCountLimit,
     width,
     focusedNodeId,
-    processed.hasFixedPositions
+    processed.hasFixedPositions,
+    layoutAlgorithm
   );
 
   // If we move from grid to graph layout, and we have focused node lets get its position to center there. We want to
@@ -208,7 +211,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }
   const highlightId = useHighlight(focusedNodeId);
 
   const handleLayoutChange = (cfg: Config) => {
-    if (cfg.layoutType !== config.layoutType) {
+    if (cfg.layoutAlgorithm !== config.layoutAlgorithm) {
       setFocusedNodeId(undefined);
     }
     setConfig(cfg);
@@ -223,23 +226,25 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }
         </div>
       ) : null}
 
-      <div className={styles.layoutSelector}>
-        <RadioButtonGroup
-          size="sm"
-          options={[
-            { label: 'Layered', value: LayoutType.Layered },
-            { label: 'Force', value: LayoutType.Force },
-          ]}
-          value={config.layoutType}
-          onChange={(value) => {
-            handleLayoutChange({
-              ...config,
-              gridLayout: false,
-              layoutType: value,
-            });
-          }}
-        />
-      </div>
+      {!layoutAlgorithm && (
+        <div className={styles.layoutSelector}>
+          <RadioButtonGroup
+            size="sm"
+            options={[
+              { label: 'Layered', value: LayoutAlgorithm.Layered },
+              { label: 'Force', value: LayoutAlgorithm.Force },
+            ]}
+            value={config.layoutAlgorithm}
+            onChange={(value) => {
+              handleLayoutChange({
+                ...config,
+                gridLayout: false,
+                layoutAlgorithm: value,
+              });
+            }}
+          />
+        </div>
+      )}
 
       {dataFrames.length && processed.nodes.length ? (
         <svg
