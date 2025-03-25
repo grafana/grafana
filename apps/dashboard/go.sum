@@ -86,10 +86,10 @@ github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e h1:JKmoR8x90Iww1
 github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
 github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
-github.com/grafana/grafana-app-sdk v0.35.0 h1:OeG42gDQSy5/NFpTScLhlek/dZ3IH0tB9T8tn854IGE=
-github.com/grafana/grafana-app-sdk v0.35.0/go.mod h1:ZHtNVDjB9fN0bWg5Hcpo+dbAuucNMGV5HbW+rJiNyyc=
-github.com/grafana/grafana-app-sdk/logging v0.34.0 h1:c3I7iy57rJ5JUkexgv1PY3a4gZfPrDtyj7UYzhSH/eA=
-github.com/grafana/grafana-app-sdk/logging v0.34.0/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
+github.com/grafana/grafana-app-sdk v0.35.1-0.20250325141034-dd7d3019f4f0 h1:l5rPmG5J05KlfL7kMLGZr1i1njROd9vaEDeXmXJ814Q=
+github.com/grafana/grafana-app-sdk v0.35.1-0.20250325141034-dd7d3019f4f0/go.mod h1:Zx5MkVppYK+ElSDUAR6+fjzOVo6I/cIgk+ty+LmNOxI=
+github.com/grafana/grafana-app-sdk/logging v0.35.0 h1:I7idbLxj5JPc5hS9oauNRK1CgHLnY7ui66A3AsX5FyM=
+github.com/grafana/grafana-app-sdk/logging v0.35.0/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
 github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0 h1:qVdhLR+XkVdTQ2Sr7+VnRfGM8RMp8oPe25nghsSpQms=
 github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0/go.mod h1:jV+CTjXqXYuaz8FgSG7ALOib3sgiDo/00dfsQFVTSpM=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432 h1:/0MLOGx9Ow7ihR4smlUYHFvomXBpdpf/jLWHKNfEUiI=

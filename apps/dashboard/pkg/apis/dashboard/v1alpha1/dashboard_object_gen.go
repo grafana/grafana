@@ -294,17 +294,7 @@ var _ resource.ListObject = &DashboardList{}
 
 // Copy methods for all subresource types
 
-// DeepCopy creates a full deep copy of Spec
-func (s *DashboardSpec) DeepCopy() *DashboardSpec {
-	cpy := &DashboardSpec{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
 
-// DeepCopyInto deep copies Spec into another Spec object
-func (s *DashboardSpec) DeepCopyInto(dst *DashboardSpec) {
-	resource.CopyObjectInto(dst, s)
-}
 
 // DeepCopy creates a full deep copy of DashboardStatus
 func (s *DashboardStatus) DeepCopy() *DashboardStatus {
