@@ -1,10 +1,8 @@
-import { groupBy } from 'lodash';
 import { useState } from 'react';
 
 import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
-import { truncateTitle } from 'app/features/plugins/extensions/utils';
 
-import { getIdFromComponentMeta, useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import { getComponentIdFromComponentMeta, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 
 export function ExtensionToolbarItem() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +28,7 @@ export function ExtensionToolbarItem() {
         variant={dockedComponentId ? 'active' : 'default'}
         tooltip={components[0].description}
         onClick={() => {
-          setDockedComponentId(getIdFromComponentMeta(components[0].pluginId, components[0]));
+          setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
         }}
       />
     );
@@ -39,7 +37,7 @@ export function ExtensionToolbarItem() {
   const MenuItems = (
     <Menu>
       {components.map((c) => {
-        const id = getIdFromComponentMeta(c.pluginId, c);
+        const id = getComponentIdFromComponentMeta(c.pluginId, c);
         return (
           <Menu.Item
             key={id}

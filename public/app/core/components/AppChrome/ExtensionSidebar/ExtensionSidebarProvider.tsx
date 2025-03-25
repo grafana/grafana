@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 import { store, type ExtensionInfo } from '@grafana/data';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
@@ -8,8 +8,17 @@ const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extension
 const ENABLED_EXTENSION_SIDEBAR_PLUGINS = ['grafana-investigations-app'];
 
 type ExtensionSidebarContextType = {
+  /**
+   * The id of the component that is currently docked in the sidebar. If the id is undefined, nothing will be rendered.
+   */
   dockedComponentId: string | undefined;
+  /**
+   * Sest the id of the component that will be rendered in the extension sidebar.
+   */
   setDockedComponentId: (componentId: string | undefined) => void;
+  /**
+   * A map of all components that are available for the extension point.
+   */
   availableComponents: Map<
     string,
     {
@@ -42,7 +51,30 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     )
   );
 
-  const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(undefined);
+  // check if the stored docked component is still available
+  let defaultDockedComponentId: string | undefined;
+  if (storedDockedPluginId) {
+    const dockedMeta = getComponentMetaFromComponentId(storedDockedPluginId);
+    if (dockedMeta) {
+      const plugin = availableComponents.get(dockedMeta.pluginId);
+      if (plugin) {
+        const component = plugin.exposedComponents.find((c) => c.title === dockedMeta.componentTitle);
+        if (component) {
+          defaultDockedComponentId = storedDockedPluginId;
+        }
+      }
+    }
+  }
+  const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(defaultDockedComponentId);
+
+  // update the stored docked component id when it changes
+  useEffect(() => {
+    if (dockedComponentId) {
+      store.set(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, dockedComponentId);
+    } else {
+      store.delete(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
+    }
+  }, [dockedComponentId]);
 
   return (
     <ExtensionSidebarContext.Provider value={{ dockedComponentId, setDockedComponentId, availableComponents }}>
@@ -51,11 +83,13 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   );
 };
 
-export function getIdFromComponentMeta(pluginId: string, component: ExtensionInfo) {
+export function getComponentIdFromComponentMeta(pluginId: string, component: ExtensionInfo) {
   return JSON.stringify({ pluginId, componentTitle: component.title });
 }
 
-export function getComponentMetaFromId(componentId: string): { pluginId: string; componentTitle: string } | undefined {
+export function getComponentMetaFromComponentId(
+  componentId: string
+): { pluginId: string; componentTitle: string } | undefined {
   try {
     const parsed = JSON.parse(componentId);
     if (

@@ -6,7 +6,7 @@ import { useTheme2 } from '@grafana/ui';
 
 import {
   EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
-  getComponentMetaFromId,
+  getComponentMetaFromComponentId,
   useExtensionSidebarContext,
 } from './ExtensionSidebarProvider';
 
@@ -21,7 +21,7 @@ export function ExtensionSidebar() {
     return null;
   }
 
-  const dockedMeta = getComponentMetaFromId(dockedComponentId);
+  const dockedMeta = getComponentMetaFromComponentId(dockedComponentId);
   if (!dockedMeta) {
     return null;
   }
