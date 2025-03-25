@@ -3395,18 +3395,42 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardResponsiveGridLayoutSpec(ref co
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"row": {
+					"maxColumnCount": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"columnWidthMode": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
 						},
 					},
-					"col": {
+					"columnWidth": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"rowHeightMode": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
+						},
+					},
+					"rowHeight": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"fillScreen": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 					"items": {
@@ -3423,7 +3447,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardResponsiveGridLayoutSpec(ref co
 						},
 					},
 				},
-				Required: []string{"row", "col", "items"},
+				Required: []string{"columnWidthMode", "rowHeightMode", "items"},
 			},
 		},
 		Dependencies: []string{

@@ -1528,13 +1528,21 @@
       },
       "name": "Auto grid",
       "options": {
-        "columns": "Columns",
-        "fixed": "Fixed: {{size}}px",
-        "min": "Min: {{size}}px",
-        "one-column": "1 column",
-        "rows": "Rows",
-        "three-columns": "3 columns",
-        "two-columns": "2 columns"
+        "custom-min-height": {
+          "clear": "Clear"
+        },
+        "custom-min-width": {
+          "clear": "Clear"
+        },
+        "height-fill": "Fill screen",
+        "max-columns": "Max columns",
+        "min-height": "Row height",
+        "min-height-custom": "Custom row height",
+        "min-height-error": "A number between 50 and 2000 is required",
+        "min-width": "Min column width",
+        "min-width-custom": "Custom min width",
+        "min-width-custom-clear": "Back to standard min column width",
+        "min-width-error": "A number between 50 and 2000 is required"
       }
     },
     "rows-layout": {

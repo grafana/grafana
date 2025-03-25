@@ -333,13 +333,13 @@ export const defaultValueMapping = (): ValueMapping => (defaultValueMap());
 // Maps text values to a color or different display text and color.
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
 export interface ValueMap {
-	type: MappingType & "value";
+	type: unknown;
 	// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
 	options: Record<string, ValueMappingResult>;
 }
 
 export const defaultValueMap = (): ValueMap => ({
-	type: "value",
+	type: "unknown",
 	options: {},
 });
 
@@ -370,7 +370,7 @@ export const defaultValueMappingResult = (): ValueMappingResult => ({
 // Maps numerical ranges to a display text and color.
 // For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 export interface RangeMap {
-	type: MappingType & "range";
+	type: unknown;
 	// Range to match against and the result to apply when the value is within the range
 	options: {
 		// Min value of the range. It can be null which means -Infinity
@@ -383,7 +383,7 @@ export interface RangeMap {
 }
 
 export const defaultRangeMap = (): RangeMap => ({
-	type: "range",
+	type: "unknown",
 	options: {
 	from: 0,
 	to: 0,
@@ -394,7 +394,7 @@ export const defaultRangeMap = (): RangeMap => ({
 // Maps regular expressions to replacement text and a color.
 // For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 export interface RegexMap {
-	type: MappingType & "regex";
+	type: unknown;
 	// Regular expression to match against and the result to apply when the value matches the regex
 	options: {
 		// Regular expression to match against
@@ -405,7 +405,7 @@ export interface RegexMap {
 }
 
 export const defaultRegexMap = (): RegexMap => ({
-	type: "regex",
+	type: "unknown",
 	options: {
 	pattern: "",
 	result: defaultValueMappingResult(),
@@ -416,7 +416,7 @@ export const defaultRegexMap = (): RegexMap => ({
 // See SpecialValueMatch to see the list of special values.
 // For example, you can configure a special value mapping so that null values appear as N/A.
 export interface SpecialValueMap {
-	type: MappingType & "special";
+	type: unknown;
 	options: {
 		// Special value to match against
 		match: SpecialValueMatch;
@@ -426,7 +426,7 @@ export interface SpecialValueMap {
 }
 
 export const defaultSpecialValueMap = (): SpecialValueMap => ({
-	type: "special",
+	type: "unknown",
 	options: {
 	match: "true",
 	result: defaultValueMappingResult(),
@@ -691,7 +691,7 @@ export interface RowsLayoutRowSpec {
 	collapsed: boolean;
 	conditionalRendering?: ConditionalRenderingGroupKind;
 	repeat?: RowRepeatOptions;
-	layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
+	layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -788,14 +788,20 @@ export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => (
 });
 
 export interface ResponsiveGridLayoutSpec {
-	row: string;
-	col: string;
+	maxColumnCount?: number;
+	columnWidthMode: "narrow" | "standard" | "wide" | "custom";
+	columnWidth?: number;
+	rowHeightMode: "short" | "standard" | "tall" | "custom";
+	rowHeight?: number;
+	fillScreen?: boolean;
 	items: ResponsiveGridLayoutItemKind[];
 }
 
 export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => ({
-	row: "",
-	col: "",
+	maxColumnCount: 3,
+	columnWidthMode: "standard",
+	rowHeightMode: "standard",
+	fillScreen: false,
 	items: [],
 });
 
@@ -859,7 +865,7 @@ export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
 
 export interface TabsLayoutTabSpec {
 	title?: string;
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
