@@ -50,7 +50,7 @@ describe('logRecordsToDataFrame', () => {
     const stateField = frame.fields[1];
     expect(stateField.config.mappings).toHaveLength(3);
     expect(stateField.config.mappings![0].options).toMatchObject({
-      pattern: '/Normal/',
+      pattern: '/^normal/i',
       result: { color: theme.colors.success.main },
     });
     expect(stateField.config.mappings![1].options).toMatchObject({
