@@ -11,22 +11,28 @@ export const prometheusRuleType = {
   recordingRule: isRecordingRule,
 };
 
-// for API response objects
+/* Check if the given rule is a AlertingRule API response object */
 function isAlertingRule(rule: Rule): rule is AlertingRule {
-  return 'type' in rule && rule.type === 'alerting';
+  return rule.type === 'alerting';
 }
 
-// for API response objects
+/* Check if the given rule is a RecordingRule API response object */
 function isRecordingRule(rule: Rule): rule is RecordingRule {
-  return 'type' in rule && rule.type === 'recording';
+  return rule.type === 'recording';
 }
 
-// for YAML definitions (these don't include a "type")
+/*
+ * Check if the given rule defintion is a AlertingRule definition
+ * Used for YAML / JSON definitions (these don't include a "type")
+ */
 export function isAlertingRuleDefinition(rule: PrometheusRuleDefinition): rule is PrometheusAlertingRuleDefinition {
   return 'alert' in rule;
 }
 
-// for YAML definitions (these don't include a "type")
+/*
+ * Check if the given rule defintion is a RecordingRule definition
+ * Used for YAML / JSON definitions (these don't include a "type")
+ */
 export function isRecordingRuleDefinition(rule: PrometheusRuleDefinition): rule is PrometheusRecordingRuleDefinition {
   return 'record' in rule;
 }
