@@ -153,6 +153,9 @@ ReduceDataOptions: {
 	calcs: [...string]
 	// Which fields to show.  By default this is only numeric fields
 	fields?: string
+	// what sort order, if any, to give to the final display of the values
+	sort?: SortOrder
+  	
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -214,7 +217,7 @@ VizTextDisplayOptions: {
 TooltipDisplayMode: "single" | "multi" | "none" @cuetsy(kind="enum")
 
 // TODO docs
-SortOrder: "asc" | "desc" | "none" @cuetsy(kind="enum",memberNames="Ascending|Descending|None")
+SortOrder: "asc" | "desc" | "none" | "value" | "fieldOrder" @cuetsy(kind="enum",memberNames="Ascending|Descending|None|Value|FieldOrder")
 
 // TODO docs
 GraphFieldConfig: {
