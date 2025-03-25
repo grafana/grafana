@@ -1,6 +1,7 @@
 import { PureComponent } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { Team } from 'app/types';
 
 export interface Props {
@@ -13,7 +14,7 @@ export class UserTeams extends PureComponent<Props> {
     const { isLoading, teams } = this.props;
 
     if (isLoading) {
-      return <LoadingPlaceholder text="Loading teams..." />;
+      return <LoadingPlaceholder text={t('profile.user-teams.text-loading-teams', 'Loading teams...')} />;
     }
 
     if (teams.length === 0) {
@@ -22,14 +23,25 @@ export class UserTeams extends PureComponent<Props> {
 
     return (
       <div>
-        <h3 className="page-sub-heading">Teams</h3>
-        <table className="filter-table form-inline" aria-label="User teams table">
+        <h3 className="page-sub-heading">
+          <Trans i18nKey="profile.user-teams.teams">Teams</Trans>
+        </h3>
+        <table
+          className="filter-table form-inline"
+          aria-label={t('profile.user-teams.aria-label-user-teams-table', 'User teams table')}
+        >
           <thead>
             <tr>
               <th />
-              <th>Name</th>
-              <th>Email</th>
-              <th>Members</th>
+              <th>
+                <Trans i18nKey="profile.user-teams.name">Name</Trans>
+              </th>
+              <th>
+                <Trans i18nKey="profile.user-teams.email">Email</Trans>
+              </th>
+              <th>
+                <Trans i18nKey="profile.user-teams.members">Members</Trans>
+              </th>
             </tr>
           </thead>
           <tbody>

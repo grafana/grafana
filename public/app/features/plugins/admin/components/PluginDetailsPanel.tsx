@@ -213,6 +213,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                 This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email
                 us at:{' '}
               </Trans>
+              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <TextLink href="mailto:integrations+report-plugin@grafana.com">integrations@grafana.com</TextLink>
             </Text>
             <Text>

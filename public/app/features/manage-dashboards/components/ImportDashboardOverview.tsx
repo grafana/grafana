@@ -5,6 +5,7 @@ import { dateTimeFormat } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Legend } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
+import { Trans } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
@@ -82,11 +83,19 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
             <table className="filter-table form-inline">
               <tbody>
                 <tr>
-                  <td>Published by</td>
+                  <td>
+                    <Trans i18nKey="manage-dashboards.import-dashboard-overview-un-connected.published-by">
+                      Published by
+                    </Trans>
+                  </td>
                   <td>{meta.orgName}</td>
                 </tr>
                 <tr>
-                  <td>Updated on</td>
+                  <td>
+                    <Trans i18nKey="manage-dashboards.import-dashboard-overview-un-connected.updated-on">
+                      Updated on
+                    </Trans>
+                  </td>
                   <td>{dateTimeFormat(meta.updatedAt)}</td>
                 </tr>
               </tbody>

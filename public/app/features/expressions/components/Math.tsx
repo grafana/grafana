@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, InlineField, InlineLabel, TextArea, Toggletip, useStyles2, Stack } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { ExpressionQuery } from '../types';
 
@@ -46,7 +47,9 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
                     <br />
                     Example: <code>$A + $B</code>
                   </div>
-                  <header className={styles.documentationHeader}>Available Math functions</header>
+                  <header className={styles.documentationHeader}>
+                    <Trans i18nKey="expressions.math.available-math-functions">Available math functions</Trans>
+                  </header>
                   <div className={styles.documentationFunctions}>
                     <DocumentedFunction
                       name="abs"

@@ -9,6 +9,7 @@ import { Button, Field, Input, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
+import { t, Trans } from 'app/core/internationalization';
 
 import { w3cStandardEmailValidator } from '../admin/utils';
 
@@ -76,8 +77,13 @@ export const SignupInvitedPage = () => {
         <Form defaultValues={initFormModel} onSubmit={onSubmit}>
           {({ register, errors }) => (
             <>
-              <Field invalid={!!errors.email} error={errors.email && errors.email.message} label="Email">
+              <Field
+                invalid={!!errors.email}
+                error={errors.email && errors.email.message}
+                label={t('invites.signup-invited-page.label-email', 'Email')}
+              >
                 <Input
+                  // eslint-disable-next-line @grafana/no-untranslated-strings
                   placeholder="email@example.com"
                   {...register('email', {
                     required: 'Email is required',
@@ -88,21 +94,41 @@ export const SignupInvitedPage = () => {
                   })}
                 />
               </Field>
-              <Field invalid={!!errors.name} error={errors.name && errors.name.message} label="Name">
-                <Input placeholder="Name (optional)" {...register('name')} />
+              <Field
+                invalid={!!errors.name}
+                error={errors.name && errors.name.message}
+                label={t('invites.signup-invited-page.label-name', 'Name')}
+              >
+                <Input
+                  placeholder={t('invites.signup-invited-page.placeholder-name-optional', 'Name (optional)')}
+                  {...register('name')}
+                />
               </Field>
-              <Field invalid={!!errors.username} error={errors.username && errors.username.message} label="Username">
-                <Input {...register('username', { required: 'Username is required' })} placeholder="Username" />
+              <Field
+                invalid={!!errors.username}
+                error={errors.username && errors.username.message}
+                label={t('invites.signup-invited-page.label-username', 'Username')}
+              >
+                <Input
+                  {...register('username', { required: 'Username is required' })}
+                  placeholder={t('invites.signup-invited-page.placeholder-username', 'Username')}
+                />
               </Field>
-              <Field invalid={!!errors.password} error={errors.password && errors.password.message} label="Password">
+              <Field
+                invalid={!!errors.password}
+                error={errors.password && errors.password.message}
+                label={t('invites.signup-invited-page.label-password', 'Password')}
+              >
                 <Input
                   {...register('password', { required: 'Password is required' })}
                   type="password"
-                  placeholder="Password"
+                  placeholder={t('invites.signup-invited-page.placeholder-password', 'Password')}
                 />
               </Field>
 
-              <Button type="submit">Sign up</Button>
+              <Button type="submit">
+                <Trans i18nKey="invites.signup-invited-page.sign-up">Sign up</Trans>
+              </Button>
             </>
           )}
         </Form>

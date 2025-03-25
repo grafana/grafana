@@ -47,7 +47,14 @@ export const VersionInstallButton = ({
   }, [installedVersion, version.version]);
 
   if (version.version === installedVersion) {
-    return <Badge className={styles.badge} text="Installed" icon="check" color="green" />;
+    return (
+      <Badge
+        className={styles.badge}
+        text={t('plugins.version-install-button.text-installed', 'Installed')}
+        icon="check"
+        color="green"
+      />
+    );
   }
 
   const performInstallation = () => {
