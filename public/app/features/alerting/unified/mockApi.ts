@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 
-import { PrometheusRuleGroupResponse } from '@grafana/alerting/src/types/prometheus/rules/api';
+import { PrometheusRuleGroupResponse } from '@grafana/alerting/src/types';
 import { setBackendSrv } from '@grafana/runtime';
 import { AlertGroupUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';

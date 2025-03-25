@@ -5,7 +5,7 @@ import { PrometheusSuccessResponse } from '../api';
  * RuleHealth
  * https://github.com/prometheus/prometheus/blob/bd5b2ea95ce14fba11db871b4068313408465207/rules/rule.go#L29-L34
  */
-type RuleHealth = 'ok' | 'unknown' | 'err';
+export type RuleHealth = 'ok' | 'unknown' | 'err';
 
 interface BasePrometheusRule {
   name: string;
@@ -76,5 +76,5 @@ export interface PrometheusAlert {
   value: string;
 }
 
-type RuleState = 'inactive' | 'pending' | 'firing';
-type AlertState = 'inactive' | 'pending' | 'firing';
+export type RuleState = 'inactive' | 'pending' | 'firing';
+export type AlertState = 'inactive' | 'pending' | 'firing';

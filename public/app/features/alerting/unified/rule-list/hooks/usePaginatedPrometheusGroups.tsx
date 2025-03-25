@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type * as GrafanaFlavor from '@grafana/alerting/src/types/grafana/rules/api';
 import type * as VanillaFlavor from '@grafana/alerting/src/types/prometheus/rules/api';
 
-type RuleGroupResponse = GrafanaFlavor.PrometheusRuleGroupResponse | VanillaFlavor.PrometheusRuleGroupResponse;
+type PrometheusRuleGroup = GrafanaFlavor.PrometheusRuleGroup | VanillaFlavor.PrometheusRuleGroup;
 
 import { isLoading, useAsync } from '../../hooks/useAsync';
 
@@ -17,17 +17,17 @@ import { isLoading, useAsync } from '../../hooks/useAsync';
  * @returns Pagination state and controls for navigating through rule groups
  */
 
-export function usePaginatedPrometheusGroups(
-  groupsGenerator: AsyncGenerator<RuleGroupResponse, void, unknown>,
+export function usePaginatedPrometheusGroups<GroupType extends PrometheusRuleGroup>(
+  groupsGenerator: AsyncGenerator<GroupType, void, unknown>,
   pageSize: number
 ) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [groups, setGroups] = useState<RuleGroupResponse[]>([]);
+  const [groups, setGroups] = useState<GroupType[]>([]);
   const [lastPage, setLastPage] = useState<number | undefined>(undefined);
 
   const [{ execute: fetchMoreGroups }, groupsRequestState] = useAsync(async (groupsCount: number) => {
     let done = false;
-    const currentGroups: RuleGroupResponse[] = [];
+    const currentGroups: GroupType[] = [];
 
     while (currentGroups.length < groupsCount) {
       const generatorResult = await groupsGenerator.next();

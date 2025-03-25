@@ -1,9 +1,5 @@
 import { Annotations, Labels } from '../../common';
 
-/**
- * --- alerting and recording rules ---
- */
-
 export type PrometheusRuleDefinition = PrometheusRecordingRuleDefinition | PrometheusAlertingRuleDefinition;
 
 interface BaseRuleDefinition {
