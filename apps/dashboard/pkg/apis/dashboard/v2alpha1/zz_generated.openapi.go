@@ -3427,7 +3427,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardResponsiveGridLayoutSpec(ref co
 							Format: "double",
 						},
 					},
-					"heightFill": {
+					"fillScreen": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
 							Format: "",

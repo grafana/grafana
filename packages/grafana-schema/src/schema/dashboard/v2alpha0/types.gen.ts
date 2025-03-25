@@ -829,7 +829,7 @@ export interface ResponsiveGridLayoutSpec {
 	columnWidth?: number;
 	rowHeightMode: "short" | "standard" | "tall" | "custom";
 	rowHeight?: number;
-	heightFill?: boolean;
+	fillScreen?: boolean;
 	items: ResponsiveGridLayoutItemKind[];
 }
 
@@ -837,7 +837,7 @@ export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => (
 	maxColumnCount: 3,
 	columnWidthMode: "standard",
 	rowHeightMode: "standard",
-	heightFill: false,
+	fillScreen: false,
 	items: [],
 });
 

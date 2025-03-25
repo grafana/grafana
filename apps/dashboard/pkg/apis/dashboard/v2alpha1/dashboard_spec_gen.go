@@ -970,7 +970,7 @@ type DashboardResponsiveGridLayoutSpec struct {
 	ColumnWidth     *float64                                         `json:"columnWidth,omitempty"`
 	RowHeightMode   DashboardResponsiveGridLayoutSpecRowHeightMode   `json:"rowHeightMode"`
 	RowHeight       *float64                                         `json:"rowHeight,omitempty"`
-	HeightFill      *bool                                            `json:"heightFill,omitempty"`
+	FillScreen      *bool                                            `json:"fillScreen,omitempty"`
 	Items           []DashboardResponsiveGridLayoutItemKind          `json:"items"`
 }
 
@@ -978,7 +978,7 @@ type DashboardResponsiveGridLayoutSpec struct {
 func NewDashboardResponsiveGridLayoutSpec() *DashboardResponsiveGridLayoutSpec {
 	return &DashboardResponsiveGridLayoutSpec{
 		MaxColumnCount: (func(input float64) *float64 { return &input })(3),
-		HeightFill:     (func(input bool) *bool { return &input })(false),
+		FillScreen:     (func(input bool) *bool { return &input })(false),
 	}
 }
 

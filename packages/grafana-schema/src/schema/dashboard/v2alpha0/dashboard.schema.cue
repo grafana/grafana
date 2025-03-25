@@ -568,7 +568,7 @@ ResponsiveGridLayoutSpec: {
 	columnWidth?: number
 	rowHeightMode: "short" | *"standard" | "tall" | "custom"
 	rowHeight?: number
-	heightFill?: bool | *false
+	fillScreen?: bool | *false
 	items: [...ResponsiveGridLayoutItemKind]
 }
 
