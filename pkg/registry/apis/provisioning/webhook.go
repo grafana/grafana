@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -106,7 +107,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 				Spec: *rsp.Job,
 			}
 			job, err := s.jobs.Insert(ctx, job)
-			if err != nil {
+			if err != nil && !apierrors.IsAlreadyExists(err) {
 				responder.Error(err)
 				return
 			}
