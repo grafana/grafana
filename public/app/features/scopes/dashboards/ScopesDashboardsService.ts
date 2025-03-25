@@ -159,13 +159,13 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
           target[navigation.spec.dashboard] = {
             url: '/d/' + navigation.spec.dashboard,
             title: navigation.status.dashboardTitle,
-            name: navigation.spec.dashboard,
+            id: navigation.spec.dashboard,
           };
         } else if ('url' in navigation.spec && 'title' in navigation.status && !target[navigation.spec.url]) {
           target[navigation.spec.url] = {
             title: navigation.status.title || navigation.metadata.name,
             url: navigation.spec.url,
-            name: navigation.metadata.name,
+            id: navigation.metadata.name,
           };
         }
       });

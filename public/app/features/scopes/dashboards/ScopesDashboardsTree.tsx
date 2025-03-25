@@ -30,10 +30,10 @@ export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: Sc
       ))}
       {Object.values(folder.suggestedNavigations).map((navigation) => (
         <ScopesNavigationTreeLink
-          key={navigation.name}
+          key={navigation.id}
           to={urlUtil.renderUrl(navigation.url, queryParams)}
           title={navigation.title}
-          id={navigation.name}
+          id={navigation.id}
         />
       ))}
     </div>

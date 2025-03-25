@@ -493,7 +493,7 @@ describe('Dashboards list', () => {
                     'Dashboard ID': {
                       url: '/d/Dashboard ID',
                       title: 'Dashboard Title',
-                      name: 'Dashboard ID',
+                      id: 'Dashboard ID',
                     },
                   },
                 },
@@ -505,7 +505,7 @@ describe('Dashboards list', () => {
                     'Dashboard ID': {
                       url: '/d/Dashboard ID',
                       title: 'Dashboard Title',
-                      name: 'Dashboard ID',
+                      id: 'Dashboard ID',
                     },
                   },
                 },
@@ -514,7 +514,7 @@ describe('Dashboards list', () => {
                 'Dashboard ID': {
                   url: '/d/Dashboard ID',
                   title: 'Dashboard Title',
-                  name: 'Dashboard ID',
+                  id: 'Dashboard ID',
                 },
               },
             },
@@ -572,7 +572,7 @@ describe('Dashboards list', () => {
                     'Dashboard ID': {
                       url: '/d/Dashboard ID',
                       title: 'Dashboard Title',
-                      name: 'Dashboard ID',
+                      id: 'Dashboard ID',
                     },
                   },
                 },
@@ -584,7 +584,7 @@ describe('Dashboards list', () => {
                     'Random ID': {
                       url: '/d/Random ID',
                       title: 'Random Title',
-                      name: 'Random ID',
+                      id: 'Random ID',
                     },
                   },
                 },
@@ -593,12 +593,12 @@ describe('Dashboards list', () => {
                 'Dashboard ID': {
                   url: '/d/Dashboard ID',
                   title: 'Dashboard Title',
-                  name: 'Dashboard ID',
+                  id: 'Dashboard ID',
                 },
                 'Random ID': {
                   url: '/d/Random ID',
                   title: 'Random Title',
-                  name: 'Random ID',
+                  id: 'Random ID',
                 },
               },
             },

@@ -29,7 +29,7 @@ export interface SuggestedNavigation {
   title: string;
   url: string;
   // Used for testid and keys
-  name: string;
+  id: string;
 }
 
 export interface SuggestedNavigationsFolder {
