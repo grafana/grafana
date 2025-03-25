@@ -1,6 +1,6 @@
-<!-- 11.6.1 START -->
+<!-- 11.6.0 START -->
 
-# 11.6.1 (2025-03-25)
+# 11.6.0 (2025-03-25)
 
 ### Features and enhancements
 
@@ -158,7 +158,7 @@
 - **Multi/Combobox:** Use pointer cursor when not focused [#100878](https://github.com/grafana/grafana/pull/100878), [@tskarhed](https://github.com/tskarhed)
 - **Slider:** Fix text input box being too wide [#100138](https://github.com/grafana/grafana/pull/100138), [@joshhunt](https://github.com/joshhunt)
 
-<!-- 11.6.1 END -->
+<!-- 11.6.0 END -->
 <!-- 11.5.2 START -->
 
 # 11.5.2 (2025-02-18)
