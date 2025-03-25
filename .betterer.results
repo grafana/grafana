@@ -533,9 +533,6 @@ exports[`better eslint`] = {
     "packages/grafana-sql/src/components/query-editor-raw/QueryToolbox.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
-    "packages/grafana-sql/src/components/visual-query-builder/AwesomeQueryBuilder.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
