@@ -111,6 +111,7 @@ When using SSO (Single Sign-On) authentication methods, Grafana handles sessions
 
 - After successful SAML authentication, Grafana creates a session with the default session lifetime.
 - If SAML Single Logout (SLO) is properly configured, the session will be revoked when the user's access is revoked on the IdP side.
+- If SAML Single Logout (SLO) is properly configured, the session will be revoked when the user's access is revoked on the IdP side. For more information on configuring SAML and SLO, refer to the [SAML configuration documentation](./saml/#configure-single-logout).
 
 ## Settings
 
