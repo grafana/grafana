@@ -74,7 +74,7 @@ func (c *migrateConnector) Connect(
 				Migrate:    &options,
 			},
 		})
-		if err != nil && !apierrors.IsAlreadyExists(err) {
+		if err != nil {
 			responder.Error(err)
 			return
 		}

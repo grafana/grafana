@@ -68,7 +68,7 @@ func (c *exportConnector) Connect(ctx context.Context, name string, opts runtime
 				Push:       options,
 			},
 		})
-		if err != nil && !apierrors.IsAlreadyExists(err) {
+		if err != nil {
 			responder.Error(err)
 		} else {
 			responder.Object(http.StatusAccepted, job)

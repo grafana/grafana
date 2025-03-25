@@ -57,7 +57,9 @@ var (
 type Queue interface {
 	// Insert adds a new job to the queue.
 	//
-	// This saves it if it is a new job, or fails with ErrJobAlreadyExists if one with the same name already exists.
+	// The job name is not honoured. It will be overwritten with a name that fits the job.
+	//
+	// This saves it if it is a new job, or fails with `apierrors.IsAlreadyExists(err) == true` if one already exists.
 	Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
 }
 
@@ -374,28 +376,12 @@ func (s *persistentStore) cleanupClaims(ctx context.Context) error {
 	return nil
 }
 
-// Insert adds a new job to the queue.
-//
-// The job name is not honoured. It will be overwritten with a name that fits the job.
-//
-// This saves it if it is a new job, or fails with `apierrors.IsAlreadyExists(err) == true` if one already exists.
-// If one already exists, it is read and returned.
 func (s *persistentStore) Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
 	s.generateJobName(job) // Side-effect: updates the job's name.
 
 	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
-		obj, err = s.jobStore.Get(ctx, job.GetName(), &metav1.GetOptions{})
-		if err != nil {
-			return nil, apifmt.Errorf("job '%s' in '%s' already exists but failed to get it: %w", job.GetName(), job.GetNamespace(), err)
-		}
-
-		existing, ok := obj.(*provisioning.Job)
-		if !ok {
-			return nil, apifmt.Errorf("unexpected object type %T", obj)
-		}
-
-		return existing, apifmt.Errorf("job '%s' in '%s' already exists: %w", job.GetName(), job.GetNamespace(), err)
+		return nil, apifmt.Errorf("job '%s' in '%s' already exists: %w", job.GetName(), job.GetNamespace(), err)
 	}
 	if err != nil {
 		return nil, apifmt.Errorf("failed to create job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)

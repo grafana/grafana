@@ -72,7 +72,7 @@ func (c *syncConnector) Connect(
 				Pull:       &options,
 			},
 		})
-		if err != nil && !apierrors.IsAlreadyExists(err) {
+		if err != nil {
 			responder.Error(err)
 			return
 		}
