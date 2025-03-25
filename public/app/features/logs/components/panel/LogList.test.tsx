@@ -10,7 +10,7 @@ import { LogList } from './LogList';
 const logs: LogRowModel[] = [createLogRow({ uid: '1' }), createLogRow({ uid: '2' })];
 
 describe('LogList', () => {
-  test('Renders a list of logs without ', async () => {
+  test('Renders a list of logs without controls ', async () => {
     const containerElement = document.createElement('div');
     render(
       <LogList
