@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { DataSourceInstanceSettings, DataSourceVariableModel } from '@grafana/data';
-import { getMockPlugins } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getMockPlugins } from '@grafana/data/test';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
