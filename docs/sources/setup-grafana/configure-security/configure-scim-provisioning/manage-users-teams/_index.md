@@ -42,19 +42,22 @@ For detailed configuration steps specific to the identity provider, see:
 
 ### How SCIM identifies users
 
-SCIM uses two identifiers to establish and maintain user identity between the identity provider and Grafana:
+SCIM uses a specific process to establish and maintain user identity between the identity provider and Grafana:
 
-1. Email address:
+1. Initial user lookup:
+   - The identity provider looks up users in Grafana using the user's login and the Unique identifier field (configurable at IdP)
+   - The identity provider expects a single result from Grafana for each user
 
-   - Used for initial user matching
-   - Can change over time
-   - Included in SAML NameID
+2. Identity linking:
+   - The identity provider learns the relationship between the found Grafana user and Grafana's internal ID
+   - The identity provider updates Grafana with the External ID
+   - Grafana updates its authentication validations to expect this External ID
 
-2. Identity provider user ID:
-   - Unique, permanent identifier from the identity provider
-   - Shared as `externalId` from the IdP when using SCIM
-   - Must match between SAML assertions and SCIM
-   - Prevents security issues from email changes
+3. Authentication validation:
+   - Grafana expects the SAML integration to return the same External ID in SAML assertions
+   - This External ID is used to validate that the logged-in user matches the provisioned user
+
+This process ensures secure and consistent user identification across both systems, preventing security issues that could arise from email changes or other user attribute modifications.
 
 ### Existing Grafana users
 
@@ -64,7 +67,7 @@ Existing users must be assigned to the Grafana app in the identity provider to m
 
 For users who already exist in the Grafana instance:
 
-- SCIM matches them by email address
+- SCIM establishes the relationship through the External ID matching process
 - Creates a secure link with the identity provider identity
 - Preserves all existing settings and access
 - Keeps the account active and unchanged until assigned in the identity provider
