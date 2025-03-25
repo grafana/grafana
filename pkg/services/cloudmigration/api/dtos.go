@@ -313,17 +313,17 @@ type GetSnapshotParams struct {
 	// default: 100
 	ResultLimit int `json:"resultLimit"`
 
-	// ResultSortColumn can be used to override the default system sort. It should be one of the values in the ResultSortColumn enum.
+	// ResultSortColumn can be used to override the default system sort. Valid values are "default", "name", "type", and "status".
 	// in:query
 	// required:false
 	// default: default
-	ResultSortColumn ResultSortColumn `json:"resultSortColumn"`
+	ResultSortColumn string `json:"resultSortColumn"`
 
 	// ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC.
 	// in:query
 	// required:false
 	// default: ASC
-	ResultSortOrder ResultSortDirection `json:"resultSortOrder"`
+	ResultSortOrder string `json:"resultSortOrder"`
 
 	// Session UID of a session
 	// in: path
