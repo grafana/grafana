@@ -248,6 +248,11 @@ export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: 
   return dimensions;
 };
 
+export const TRUNCATION_LINE_COUNT = 4;
+export function getTruncationLength() {
+  return (window.innerWidth / measureTextWidth('e')) * TRUNCATION_LINE_COUNT;
+}
+
 export function hasUnderOrOverflow(element: HTMLDivElement, calculatedHeight?: number): number | null {
   const height = calculatedHeight ?? element.clientHeight;
   if (element.scrollHeight > height) {
