@@ -249,16 +249,20 @@ func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.File
 	if g.config.Spec.GitHub.Path != "" {
 		treePath = g.config.Spec.GitHub.Path
 	}
-
-	// TODO: do we really need this?
-	if !strings.HasPrefix(treePath, "/") {
-		treePath = "/" + treePath
-	}
+	treePath = safepath.Clean(treePath)
 
 	entries := make([]repository.FileTreeEntry, 0, 100)
 	err := util.Walk(g.tree.Filesystem, treePath, func(path string, info fs.FileInfo, err error) error {
-		if err != nil || path == "/" {
+		// We already have an error, just pass it onwards.
+		if err != nil ||
+			// This is the root of the repository (or should pretend to be)
+			safepath.Clean(path) == "" || path == treePath ||
+			// This is the Git data
+			(treePath == "" && strings.HasPrefix(path, ".git/")) {
 			return err
+		}
+		if treePath != "" {
+			path = strings.TrimPrefix(path, treePath)
 		}
 		entry := repository.FileTreeEntry{
 			Path: strings.TrimLeft(path, "/"),
