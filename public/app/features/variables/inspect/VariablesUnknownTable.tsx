@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { CollapsableSection, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2, VerticalGroup } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { VariableModel } from '../types';
@@ -57,7 +58,9 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
         {loading && (
           <VerticalGroup justify="center">
             <HorizontalGroup justify="center">
-              <span>Loading...</span>
+              <span>
+                <Trans i18nKey="variables.variables-unknown-table.loading">Loading...</Trans>
+              </span>
               <Spinner />
             </HorizontalGroup>
           </VerticalGroup>
@@ -86,7 +89,13 @@ function CollapseLabel(): ReactElement {
 }
 
 function NoUnknowns(): ReactElement {
-  return <span>No renamed or missing variables found.</span>;
+  return (
+    <span>
+      <Trans i18nKey="variables.no-unknowns.no-renamed-or-missing-variables-found">
+        No renamed or missing variables found.
+      </Trans>
+    </span>
+  );
 }
 
 function UnknownTable({ usages }: { usages: UsagesToNetwork[] }): ReactElement {
@@ -95,7 +104,9 @@ function UnknownTable({ usages }: { usages: UsagesToNetwork[] }): ReactElement {
     <table className="filter-table filter-table--hover">
       <thead>
         <tr>
-          <th>Variable</th>
+          <th>
+            <Trans i18nKey="variables.unknown-table.variable">Variable</Trans>
+          </th>
           <th colSpan={5} />
         </tr>
       </thead>

@@ -20,6 +20,7 @@ import {
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/internal';
 import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
@@ -101,7 +102,10 @@ export const GroupToNestedTableTransformerEditor = ({
         ))}
       </div>
       <Field
-        label="Show field names in nested tables"
+        label={t(
+          'transformers.group-to-nested-table-transformer-editor.label-show-field-names-in-nested-tables',
+          'Show field names in nested tables'
+        )}
         description="If enabled nested tables will show field names as a table header"
       >
         <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
@@ -133,13 +137,19 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
     <InlineField className={styles.label} label={fieldName} grow shrink>
       <Stack gap={0.5} direction="row" wrap={false}>
         <div className={styles.operation}>
-          <Select options={options} value={config?.operation} placeholder="Ignored" onChange={onChange} isClearable />
+          <Select
+            options={options}
+            value={config?.operation}
+            placeholder={t('transformers.group-by-field-configuration.placeholder-ignored', 'Ignored')}
+            onChange={onChange}
+            isClearable
+          />
         </div>
 
         {config?.operation === GroupByOperationID.aggregate && (
           <StatsPicker
             className={styles.aggregations}
-            placeholder="Select Stats"
+            placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
             allowMultiple
             stats={config.aggregations}
             onChange={(stats) => {

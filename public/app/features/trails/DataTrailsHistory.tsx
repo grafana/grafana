@@ -16,6 +16,7 @@ import {
 } from '@grafana/scenes';
 import { Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { Trans } from 'app/core/internationalization';
 import { RecordHistoryEntryEvent } from 'app/types/events';
 
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
@@ -305,7 +306,9 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     return (
       <div className={styles.container}>
-        <div className={styles.heading}>History</div>
+        <div className={styles.heading}>
+          <Trans i18nKey="trails.data-trail-history.history">History</Trans>
+        </div>
         {steps.map((step, index) => {
           let stepType = step.type;
 

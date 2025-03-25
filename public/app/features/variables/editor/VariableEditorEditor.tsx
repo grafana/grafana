@@ -7,6 +7,7 @@ import { GrafanaTheme2, LoadingState, SelectableValue, VariableHide, VariableTyp
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, Themeable2, withTheme2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { StoreState, ThunkDispatch } from '../../../types';
 import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
@@ -158,16 +159,27 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
 
     return (
       <>
-        <form aria-label="Variable editor Form" onSubmit={this.onHandleSubmit}>
+        <form
+          aria-label={t(
+            'variables.variable-editor-editor-un-connected.aria-label-variable-editor-form',
+            'Variable editor Form'
+          )}
+          onSubmit={this.onHandleSubmit}
+        >
           <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
 
-          <VariableLegend>General</VariableLegend>
+          <VariableLegend>
+            <Trans i18nKey="variables.variable-editor-editor-un-connected.general">General</Trans>
+          </VariableLegend>
           <VariableTextField
             value={this.props.editor.name}
             onChange={this.onNameChange}
             name="Name"
-            placeholder="Variable name"
-            description="The name of the template variable. (Max. 50 characters)"
+            placeholder={t('variables.variable-editor-editor-un-connected.placeholder-variable-name', 'Variable name')}
+            description={t(
+              'variables.variable-editor-editor-un-connected.description-template-variable-characters',
+              'The name of the template variable. (Max. 50 characters)'
+            )}
             invalid={!!this.props.editor.errors.name}
             error={this.props.editor.errors.name}
             testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
@@ -177,16 +189,22 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
 
           <VariableTextField
             name="Label"
-            description="Optional display name"
+            description={t(
+              'variables.variable-editor-editor-un-connected.description-optional-display-name',
+              'Optional display name'
+            )}
             value={this.props.variable.label ?? ''}
-            placeholder="Label name"
+            placeholder={t('variables.variable-editor-editor-un-connected.placeholder-label-name', 'Label name')}
             onChange={this.onLabelChange}
             testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
           />
           <VariableTextAreaField
             name="Description"
             value={variable.description ?? ''}
-            placeholder="Descriptive text"
+            placeholder={t(
+              'variables.variable-editor-editor-un-connected.placeholder-descriptive-text',
+              'Descriptive text'
+            )}
             onChange={this.onDescriptionChange}
             width={52}
           />
@@ -203,7 +221,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
           <div style={{ marginTop: '16px' }}>
             <HorizontalGroup spacing="md" height="inherit">
               <Button variant="destructive" fill="outline" onClick={this.onModalOpen}>
-                Delete
+                <Trans i18nKey="variables.variable-editor-editor-un-connected.delete">Delete</Trans>
               </Button>
               <Button
                 type="submit"
@@ -226,7 +244,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
                 onClick={this.onApply}
                 data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
               >
-                Apply
+                <Trans i18nKey="variables.variable-editor-editor-un-connected.apply">Apply</Trans>
               </Button>
             </HorizontalGroup>
           </div>

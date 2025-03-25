@@ -4327,6 +4327,73 @@
       "title": "You haven't created any service accounts yet"
     }
   },
+  "serviceaccounts": {
+    "create-token-modal": {
+      "close": "Close",
+      "copy-clipboard": "Copy to clipboard",
+      "copy-to-clipboard-and-close": "Copy to clipboard and close",
+      "description-name-to-easily-identify-the-token": "Name to easily identify the token",
+      "generate-token": "Generate token",
+      "label-display-name": "Display name",
+      "label-expiration": "Expiration",
+      "label-expiration-date": "Expiration date",
+      "label-token": "Token"
+    },
+    "get-actions-cell": {
+      "add-token": "Add token",
+      "disable": "Disable",
+      "enable": "Enable"
+    },
+    "get-role-cell": {
+      "aria-label-role": "Role"
+    },
+    "service-account-list-item": {
+      "add-token": "Add token",
+      "aria-label-role": "Role",
+      "disable": "Disable",
+      "enable": "Enable",
+      "title-tokens": "Tokens"
+    },
+    "service-account-page-unconnected": {
+      "add-service-account-token": "Add service account token",
+      "delete-service-account": "Delete service account",
+      "disable-service-account": "Disable service account",
+      "enable-service-account": "Enable service account",
+      "title-delete-service-account": "Delete service account",
+      "title-disable-service-account": "Disable service account",
+      "tokens": "Tokens"
+    },
+    "service-account-permissions": {
+      "title-permissions": "Permissions"
+    },
+    "service-account-profile": {
+      "information": "Information",
+      "label-creation-date": "Creation date",
+      "label-id": "ID",
+      "label-name": "Name",
+      "label-numerical-identifier": "Numerical identifier",
+      "label-roles": "Roles",
+      "used-by": "Used by"
+    },
+    "service-account-role-row": {
+      "aria-label-role": "Role"
+    },
+    "service-account-tokens-table": {
+      "created": "Created",
+      "expires": "Expires",
+      "last-used-at": "Last used at",
+      "name": "Name"
+    },
+    "service-accounts-list-page-unconnected": {
+      "add-service-account": "Add service account",
+      "placeholder-search-service-account-by-name": "Search service account by name",
+      "title-delete-service-account": "Delete service account",
+      "title-disable-service-account": "Disable service account"
+    },
+    "token-expiration": {
+      "never": "Never"
+    }
+  },
   "share-dashboard": {
     "menu": {
       "export-json-title": "Export as JSON",
@@ -4707,11 +4774,34 @@
     }
   },
   "trails": {
+    "add-to-filters-graph-action": {
+      "add-to-filters": "Add to filters"
+    },
     "bookmarks": {
       "or-view-bookmarks": "Or view bookmarks"
     },
+    "breakdown-search-scene": {
+      "placeholder-search-for-value": "Search for value"
+    },
+    "build-normal-layout": {
+      "text-loading": "Loading..."
+    },
     "card": {
       "date-created": "Date created: "
+    },
+    "create-bookmark-saved-notification": {
+      "view-bookmarks": "View bookmarks"
+    },
+    "data-trail-card": {
+      "deleteButton-tooltip-remove-bookmark": "Remove bookmark"
+    },
+    "data-trail-history": {
+      "history": "History"
+    },
+    "data-trail-settings": {
+      "render-popover": {
+        "settings": "Settings"
+      }
     },
     "home": {
       "learn-more": "Learn more",
@@ -4719,11 +4809,31 @@
       "start-your-metrics-exploration": "Start your metrics exploration!",
       "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
     },
+    "label-breakdown-scene": {
+      "label-search": "Search",
+      "label-view": "View"
+    },
+    "metric-action-bar": {
+      "open": "Open",
+      "select-new-metric": "Select new metric",
+      "tooltip-open-in-explore": "Open in explore",
+      "tooltip-remove-existing-metric-choose": "Remove existing metric and choose a new metric"
+    },
     "metric-select": {
       "filter-by": "Filter by",
       "native-histogram": "Native Histogram",
       "new-badge": "New",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "metric-select-scene": {
+      "label-otel-experience": "OTel experience",
+      "placeholder-search-metrics": "Search metrics",
+      "title-unable-to-retrieve-all-metric-names": "Unable to retrieve all metric names",
+      "unable-to-retrieve-metric-names": "Unable to retrieve metric names"
+    },
+    "metrics-header": {
+      "explore-prometheuscompatible-metrics-without-writing-query": "Explore your Prometheus-compatible metrics without writing a query",
+      "metrics": "Metrics"
     },
     "native-histogram-banner": {
       "ch-heatmap": "Classic Histogram displayed as heatmap:",
@@ -4745,12 +4855,245 @@
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
       "show-previews-of-metric-graphs": "Show previews of metric graphs"
+    },
+    "sort-by-scene": {
+      "tooltip-sorts-values-using-standard-smart-series": "Sorts values using standard or smart time series calculations."
     }
   },
   "transformations": {
     "empty": {
       "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
       "add-transformation-header": "Start transforming data"
+    }
+  },
+  "transformers": {
+    "axis-editor": {
+      "placeholder-auto": "Auto"
+    },
+    "basic-matcher-editor": {
+      "placeholder-value-or-variable": "Value or variable"
+    },
+    "binary-operation-options-editor": {
+      "label-operation": "Operation",
+      "placeholder-field-or-number": "Field or number",
+      "placeholder-fields-or-number": "Field(s) or number"
+    },
+    "calculate-field-transformer-editor": {
+      "label-alias": "Alias",
+      "label-mode": "Mode",
+      "label-replace-all-fields": "Replace all fields"
+    },
+    "concatenate-transformer-editor": {
+      "label-label": "Label",
+      "label-name": "Name",
+      "placeholder-frame": "Frame"
+    },
+    "config-from-query-transformer-editor": {
+      "label-apply-to": "Apply to",
+      "label-apply-to-options": "Apply to options",
+      "label-config-query": "Config query"
+    },
+    "convert-field-type-transformer-editor": {
+      "label-date-format": "Date format",
+      "label-input-format": "Input format",
+      "label-join-with": "Join with",
+      "label-set-timezone": "Set timezone",
+      "tooltip-explicit-separator-joining-array-values": "Use an explicit separator when joining array values",
+      "tooltip-specify-the-output-format": "Specify the output format.",
+      "tooltip-timezone-manually": "Set the timezone of the date manually"
+    },
+    "cumulative-options-editor": {
+      "label-calculation": "Calculation",
+      "label-field": "Field",
+      "placeholder-field": "Field"
+    },
+    "draggable-field-name": {
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
+    },
+    "enum-mapping-editor": {
+      "add-enum-value": "Add enum value",
+      "generate-enum-values-from-data": "Generate enum values from data"
+    },
+    "enum-mapping-row": {
+      "remove-enum-row-aria-label-delete-enum-row": "Delete enum row",
+      "remove-enum-row-tooltip-delete": "Delete"
+    },
+    "extract-fields-transformer-editor": {
+      "label-delimiter": "Delimiter",
+      "placeholder-select-delimiter": "Select delimiter..."
+    },
+    "field-to-config-mapping-editor": {
+      "additional-settings": "Additional settings",
+      "field": "Field",
+      "select": "Select",
+      "use-as": "Use as"
+    },
+    "filter-by-name-transformer-editor": {
+      "label-from-variable": "From variable",
+      "label-identifier": "Identifier",
+      "label-use-variable": "Use variable",
+      "label-variable": "Variable",
+      "placeholder-regular-expression-pattern": "Regular expression pattern"
+    },
+    "filter-by-value-filter-editor": {
+      "label-field": "Field",
+      "label-match": "Match",
+      "label-value": "Value",
+      "placeholder-field-name": "Field name",
+      "placeholder-select-test": "Select test"
+    },
+    "filter-by-value-transformer-editor": {
+      "add-condition": "Add condition",
+      "label-conditions": "Conditions",
+      "label-filter-type": "Filter type"
+    },
+    "format-string-transfomer-editor": {
+      "label-format": "Format",
+      "label-substring-range": "Substring range"
+    },
+    "format-time-transfomer-editor": {
+      "label-format": "Format",
+      "label-set-timezone": "Set timezone",
+      "label-time-field": "Time field",
+      "tooltip-timezone-manually": "Set the timezone of the date manually"
+    },
+    "get-tooltips": {
+      "json-value": "JSON Value:"
+    },
+    "group-by-field-configuration": {
+      "placeholder-ignored": "Ignored",
+      "placeholder-select-stats": "Select stats"
+    },
+    "group-to-nested-table-transformer-editor": {
+      "label-show-field-names-in-nested-tables": "Show field names in nested tables"
+    },
+    "grouping-to-matrix-transformer-editor": {
+      "label-cell-value": "Cell value",
+      "label-column": "Column",
+      "label-empty-value": "Empty value",
+      "label-row": "Row"
+    },
+    "histogram-transformer-editor": {
+      "placeholder-default": "Default: 30"
+    },
+    "index-options-editor": {
+      "label-as-percentile": "As percentile",
+      "tooltip-transform-index-percentile": "Transform the row index as a percentile."
+    },
+    "join-by-labels-transformer-editor": {
+      "info": {
+        "input-contain-labels": "The input does not contain any labels",
+        "no-input-or-labels-found": "No input (or labels) found",
+        "title-no-input-found": "No input found",
+        "title-no-labels-found": "No labels found"
+      },
+      "tooltip-select-label-indicating-values": "Select the label indicating the values name"
+    },
+    "jsonpath-editor": {
+      "add-path": "Add path",
+      "label-alias": "Alias",
+      "label-field": "Field",
+      "placeholder-valid-objectvalue": "A valid json path, e.g. \"object.value1\" or \"object.value2[0]\"",
+      "tooltip-remove-path": "Remove path"
+    },
+    "labels-as-fields-transformer-editor": {
+      "placeholder-optional-select-label": "(Optional) Select label",
+      "tooltip-replace-value-field-label": "Replace the value field name with a label"
+    },
+    "limit-transformer-editor": {
+      "placeholder-value-or-variable": "Value or variable"
+    },
+    "long-info": {
+      "ascending-order-duplicates": "Time in ascending order, but may have duplicates",
+      "multiple-value-fields-may-exist": "Multiple value fields may exist",
+      "single-frame": "Single frame",
+      "st-field-is-time": "1st field is time field"
+    },
+    "merge-transformer-editor": {
+      "merge-effect-applied-single-frame": "Merge has no effect when applied on a single frame."
+    },
+    "multi-info": {
+      "all-values-are-numeric": "All values are numeric",
+      "multiple-frames": "Multiple frames",
+      "string-values-are-represented-as-labels": "String values are represented as labels",
+      "time-in-ascending-order": "Time in ascending order"
+    },
+    "partition-by-values-editor": {
+      "label-field": "Field",
+      "label-select-field": "Select field",
+      "partition-values-works-single-frame": "Partition by values only works with a single frame."
+    },
+    "prepare-time-series-editor": {
+      "label-format": "Format",
+      "label-info": "Info"
+    },
+    "range-matcher-editor": {
+      "and": "and",
+      "placeholder-from": "From",
+      "placeholder-to": "To"
+    },
+    "reduce-row-options-editor": {
+      "label-calculation": "Calculation",
+      "label-operation": "Operation"
+    },
+    "reduce-transformer-editor": {
+      "label-calculations": "Calculations",
+      "label-include-time": "Include time",
+      "label-labels-to-fields": "Labels to fields",
+      "label-mode": "Mode",
+      "placeholder-choose-stat": "Choose stat"
+    },
+    "regex-matcher-editor": {
+      "placeholder-value-or-variable": "Value or variable"
+    },
+    "regression-transformer-editor": {
+      "label-degree": "Degree",
+      "label-model-type": "Model type",
+      "label-predicted-points": "Predicted points",
+      "label-x-field": "X field",
+      "label-y-field": "Y field"
+    },
+    "rename-by-regex-transformer-editor": {
+      "label-match": "Match",
+      "label-replace": "Replace",
+      "placeholder-regular-expression-pattern": "Regular expression pattern",
+      "placeholder-replacement-pattern": "Replacement pattern"
+    },
+    "series-to-fields-transformer-editor": {
+      "label-field": "Field",
+      "label-mode": "Mode"
+    },
+    "sort-by-transformer-editor": {
+      "label-field": "Field",
+      "label-reverse": "Reverse",
+      "placeholder-select-field": "Select field"
+    },
+    "time-series-table-transform-editor": {
+      "label-stat": "Stat",
+      "label-time-field": "Time field",
+      "tooltip-statistic-should-calculated-series": "The statistic that should be calculated for this time series."
+    },
+    "transpose-transfomer-editor": {
+      "placeholder-field": "Field",
+      "placeholder-value": "Value"
+    },
+    "unary-operation-editor": {
+      "label-operation": "Operation",
+      "placeholder-field": "Field"
+    },
+    "wide-info": {
+      "multiple-value-fields-of-any-type": "Multiple value fields of any type",
+      "single-frame": "Single frame",
+      "st-field-is-shared-time": "1st field is shared time field",
+      "time-in-ascending-order": "Time in ascending order"
+    },
+    "window-options-editor": {
+      "label-calculation": "Calculation",
+      "label-field": "Field",
+      "label-type": "Type",
+      "label-window-size-mode": "Window size mode",
+      "placeholder-auto": "Auto",
+      "placeholder-field": "Field"
     }
   },
   "upgrade-box": {
@@ -4794,6 +5137,13 @@
   "users": {
     "empty-state": {
       "message": "No users found"
+    },
+    "token-revoked-modal": {
+      "sign-in": "Sign in"
+    },
+    "users-action-bar-unconnected": {
+      "invite": "Invite",
+      "placeholder-search-login-email": "Search user by login, email or name"
     }
   },
   "users-access-list": {
@@ -4820,17 +5170,85 @@
     }
   },
   "variables": {
+    "ad-hoc-filter": {
+      "label-and": "AND"
+    },
+    "confirm-delete-modal": {
+      "title-delete-variable": "Delete variable"
+    },
     "empty-state": {
       "button-title": "Add variable",
       "info-box-content": "Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names in your metric queries you can use variables in their place. Variables are shown as list boxes at the top of the dashboard. These drop-down lists make it easy to change the data being displayed in your dashboard.",
       "info-box-content-2": "Check out the <2>Templates and variables documentation</2> for more information.",
       "title": "There are no variables added yet"
     },
+    "legacy-variable-query-editor": {
+      "placeholder-metric-name-or-tags-query": "Metric name or tags query"
+    },
+    "no-unknowns": {
+      "no-renamed-or-missing-variables-found": "No renamed or missing variables found."
+    },
+    "query-variable-refresh-select": {
+      "description-update-values-variable": "When to update the values of this variable",
+      "label-refresh": "Refresh"
+    },
+    "query-variable-sort-select": {
+      "description-values-variable": "How to sort the values of this variable"
+    },
+    "text-box-variable-editor": {
+      "placeholder-default-value-if-any": "default value, if any",
+      "text-options": "Text options"
+    },
     "unknown-table": {
       "loading": "Loading...",
       "no-unknowns": "No renamed or missing variables found.",
       "renamed-or-missing-variables": "Renamed or missing variables",
       "variable": "Variable"
+    },
+    "variable-check-indicator": {
+      "title-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
+      "title-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
+    },
+    "variable-editor-editor-un-connected": {
+      "apply": "Apply",
+      "aria-label-variable-editor-form": "Variable editor Form",
+      "delete": "Delete",
+      "description-optional-display-name": "Optional display name",
+      "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
+      "general": "General",
+      "placeholder-descriptive-text": "Descriptive text",
+      "placeholder-label-name": "Label name",
+      "placeholder-variable-name": "Variable name"
+    },
+    "variable-editor-list": {
+      "definition": "Definition",
+      "new-variable": "New variable",
+      "variable": "Variable"
+    },
+    "variable-editor-list-row": {
+      "tooltip-duplicate-variable": "Duplicate variable",
+      "tooltip-remove-variable": "Remove variable"
+    },
+    "variable-options": {
+      "aria-label-toggle-all-values": "Toggle all values"
+    },
+    "variable-usages-button": {
+      "tooltip-show-usages": "Show usages"
+    },
+    "variables-dependencies-button": {
+      "show-dependencies": "Show dependencies",
+      "title-dependencies": "Dependencies"
+    },
+    "variables-unknown-button": {
+      "VariablesUnknownButton-tooltip-show-usages": "Show usages"
+    },
+    "variables-unknown-table": {
+      "loading": "Loading..."
+    }
+  },
+  "visualization": {
+    "data-hover-view": {
+      "link": "Link"
     }
   }
 }

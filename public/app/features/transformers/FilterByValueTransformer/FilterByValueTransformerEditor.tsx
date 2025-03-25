@@ -21,6 +21,7 @@ import {
   FilterByValueType,
 } from '@grafana/data/internal';
 import { Button, RadioButtonGroup, InlineField, Box } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -101,12 +102,18 @@ export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterB
 
   return (
     <div>
-      <InlineField label="Filter type" labelWidth={16}>
+      <InlineField
+        label={t('transformers.filter-by-value-transformer-editor.label-filter-type', 'Filter type')}
+        labelWidth={16}
+      >
         <div className="width-15">
           <RadioButtonGroup options={filterTypes} value={options.type} onChange={onChangeType} fullWidth />
         </div>
       </InlineField>
-      <InlineField label="Conditions" labelWidth={16}>
+      <InlineField
+        label={t('transformers.filter-by-value-transformer-editor.label-conditions', 'Conditions')}
+        labelWidth={16}
+      >
         <div className="width-15">
           <RadioButtonGroup options={filterMatch} value={options.match} onChange={onChangeMatch} fullWidth />
         </div>
@@ -122,7 +129,7 @@ export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterB
           />
         ))}
         <Button icon="plus" size="sm" onClick={onAddFilter} variant="secondary">
-          Add condition
+          <Trans i18nKey="transformers.filter-by-value-transformer-editor.add-condition">Add condition</Trans>
         </Button>
       </Box>
     </div>
