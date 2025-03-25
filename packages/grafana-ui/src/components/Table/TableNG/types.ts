@@ -147,6 +147,7 @@ export interface TableCellNGProps {
   theme: GrafanaTheme2;
   timeRange: TimeRange;
   value: TableCellValue;
+  rowBg: Function | undefined;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */

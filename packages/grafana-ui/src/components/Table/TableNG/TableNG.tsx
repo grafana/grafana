@@ -40,9 +40,11 @@ import {
   TableColumn,
   TableFieldOptionsType,
   ScrollPosition,
+  CellColors,
 } from './types';
 import {
   frameToRecords,
+  getCellColors,
   getComparator,
   getDefaultRowHeight,
   getFooterItemNG,
@@ -363,7 +365,8 @@ export function TableNG(props: TableNGProps) {
           headerCellRefs,
           isCountRowsSet,
           osContext,
-          rows,
+          // INFO: sortedRows is for correct row indexing for cell background coloring
+          rows: sortedRows,
           setContextMenuProps,
           setFilter,
           setIsInspecting,
@@ -382,7 +385,7 @@ export function TableNG(props: TableNGProps) {
         // Adjust table width to account for the scroll bar width
         availableWidth: width - (hasScroll ? TABLE.SCROLL_BAR_WIDTH + TABLE.SCROLL_BAR_MARGIN : 0),
       }),
-    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions, width, hasScroll] // eslint-disable-line react-hooks/exhaustive-deps
+    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions, width, hasScroll, sortedRows] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // This effect needed to set header cells refs before row height calculation
@@ -647,6 +650,25 @@ export function mapFrameToDataGrid({
     availableWidth -= COLUMN.EXPANDER_WIDTH;
   }
 
+  // Row background color function
+  let rowBg: Function | undefined = undefined;
+  for (const field of frame.fields) {
+    const fieldOptions = field.config.custom;
+    const cellOptionsExist = fieldOptions !== undefined && fieldOptions.cellOptions !== undefined;
+
+    if (
+      cellOptionsExist &&
+      fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground &&
+      fieldOptions.cellOptions.applyToRow
+    ) {
+      rowBg = (rowIndex: number): CellColors => {
+        const display = field.display!(field.values.get(rows[rowIndex].__index));
+        const colors = getCellColors(theme, fieldOptions.cellOptions, display);
+        return colors;
+      };
+    }
+  }
+
   let fieldCountWithoutWidth = 0;
   frame.fields.map((field, fieldIndex) => {
     if (field.type === FieldType.nestedFrames) {
@@ -706,6 +728,7 @@ export function mapFrameToDataGrid({
             setContextMenuProps={setContextMenuProps}
             cellInspect={cellInspect}
             getActions={getActions}
+            rowBg={rowBg}
           />
         );
       },
