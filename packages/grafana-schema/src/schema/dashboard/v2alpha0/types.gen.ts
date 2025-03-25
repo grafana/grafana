@@ -825,9 +825,9 @@ export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => (
 
 export interface ResponsiveGridLayoutSpec {
 	maxColumnCount?: number;
-	columnWidthMode: "narrow" | "standard" | "wide" | "custom";
+	columnWidthMode?: "narrow" | "standard" | "wide" | "custom";
 	columnWidth?: number;
-	rowHeightMode: "short" | "standard" | "tall" | "custom";
+	rowHeightMode?: "short" | "standard" | "tall" | "custom";
 	rowHeight?: number;
 	fillScreen?: boolean;
 	items: ResponsiveGridLayoutItemKind[];

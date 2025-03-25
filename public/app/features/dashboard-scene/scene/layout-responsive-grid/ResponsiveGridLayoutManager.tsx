@@ -1,4 +1,5 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { ResponsiveGridLayoutSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -27,8 +28,8 @@ interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   fillScreen: boolean;
 }
 
-export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
-export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
+export type AutoGridColumnWidth = ResponsiveGridLayoutSpec['columnWidthMode'] | number;
+export type AutoGridRowHeight = ResponsiveGridLayoutSpec['rowHeightMode'] | number;
 
 export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';

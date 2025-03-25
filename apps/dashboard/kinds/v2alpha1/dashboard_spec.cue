@@ -564,9 +564,9 @@ ResponsiveGridLayoutKind: {
 
 ResponsiveGridLayoutSpec: {
 	maxColumnCount?: number | *3
-	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
+	columnWidthMode?: "narrow" | *"standard" | "wide" | "custom"
 	columnWidth?: number
-	rowHeightMode: "short" | *"standard" | "tall" | "custom"
+	rowHeightMode?: "short" | *"standard" | "tall" | "custom"
 	rowHeight?: number
 	fillScreen?: bool | *false
 	items: [...ResponsiveGridLayoutItemKind]

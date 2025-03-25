@@ -1,4 +1,8 @@
-import { DashboardV2Spec, ResponsiveGridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  DashboardV2Spec,
+  defaultResponsiveGridLayoutSpec,
+  ResponsiveGridLayoutItemKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
@@ -20,14 +24,17 @@ import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './uti
 
 export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: ResponsiveGridLayoutManager): DashboardV2Spec['layout'] {
+    const defaults = defaultResponsiveGridLayoutSpec();
+    const { maxColumnCount, columnWidth, rowHeight, fillScreen, layout } = layoutManager.state;
+
     return {
       kind: 'ResponsiveGridLayout',
       spec: {
-        maxColumnCount: layoutManager.state.maxColumnCount,
-        fillScreen: layoutManager.state.fillScreen,
-        ...serializeAutoGridColumnWidth(layoutManager.state.columnWidth),
-        ...serializeAutoGridRowHeight(layoutManager.state.rowHeight),
-        items: layoutManager.state.layout.state.children.map((child) => {
+        maxColumnCount: maxColumnCount === defaults.maxColumnCount ? undefined : maxColumnCount,
+        fillScreen: fillScreen === defaults.fillScreen ? undefined : fillScreen,
+        ...serializeAutoGridColumnWidth(columnWidth),
+        ...serializeAutoGridRowHeight(rowHeight),
+        items: layout.state.children.map((child) => {
           if (!(child instanceof ResponsiveGridItem)) {
             throw new Error('Expected ResponsiveGridItem');
           }
@@ -81,10 +88,15 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
       });
     });
 
+    const defaults = defaultResponsiveGridLayoutSpec();
+    const columnWidthMode = layout.spec.columnWidthMode ?? defaults.columnWidthMode;
+    const rowHeightMode = layout.spec.rowHeightMode ?? defaults.rowHeightMode;
+    const maxColumnCount = layout.spec.maxColumnCount ?? defaults.maxColumnCount;
+
     return new ResponsiveGridLayoutManager({
-      maxColumnCount: layout.spec.maxColumnCount,
-      columnWidth: layout.spec.columnWidthMode === 'custom' ? layout.spec.columnWidth : layout.spec.columnWidthMode,
-      rowHeight: layout.spec.rowHeightMode === 'custom' ? layout.spec.rowHeight : layout.spec.rowHeightMode,
+      maxColumnCount,
+      columnWidth: columnWidthMode === 'custom' ? layout.spec.columnWidth : layout.spec.columnWidthMode,
+      rowHeight: rowHeightMode === 'custom' ? layout.spec.rowHeight : layout.spec.rowHeightMode,
       fillScreen: layout.spec.fillScreen,
       layout: new ResponsiveGridLayout({
         templateColumns: getTemplateColumnsTemplate(
@@ -102,6 +114,10 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
 }
 
 function serializeAutoGridColumnWidth(columnWidth: AutoGridColumnWidth) {
+  if (columnWidth === 'standard') {
+    return {};
+  }
+
   return {
     columnWidthMode: typeof columnWidth === 'number' ? 'custom' : columnWidth,
     columnWidth: typeof columnWidth === 'number' ? columnWidth : undefined,
@@ -109,6 +125,10 @@ function serializeAutoGridColumnWidth(columnWidth: AutoGridColumnWidth) {
 }
 
 function serializeAutoGridRowHeight(rowHeight: AutoGridRowHeight) {
+  if (rowHeight === 'standard') {
+    return {};
+  }
+
   return {
     rowHeightMode: typeof rowHeight === 'number' ? 'custom' : rowHeight,
     rowHeight: typeof rowHeight === 'number' ? rowHeight : undefined,
