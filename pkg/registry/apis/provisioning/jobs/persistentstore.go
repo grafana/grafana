@@ -57,7 +57,9 @@ var (
 type Queue interface {
 	// Insert adds a new job to the queue.
 	//
-	// This saves it if it is a new job, or fails with ErrJobAlreadyExists if one with the same name already exists.
+	// The job name is not honoured. It will be overwritten with a name that fits the job.
+	//
+	// This saves it if it is a new job, or fails with `apierrors.IsAlreadyExists(err) == true` if one already exists.
 	Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
 }
 
@@ -374,11 +376,6 @@ func (s *persistentStore) cleanupClaims(ctx context.Context) error {
 	return nil
 }
 
-// Insert adds a new job to the queue.
-//
-// The job name is not honoured. It will be overwritten with a name that fits the job.
-//
-// This saves it if it is a new job, or fails with `apierrors.IsAlreadyExists(err) == true` if one already exists.
 func (s *persistentStore) Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
 	s.generateJobName(job) // Side-effect: updates the job's name.
 

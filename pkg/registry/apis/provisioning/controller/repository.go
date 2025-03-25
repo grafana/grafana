@@ -371,6 +371,10 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 			Pull:       syncOptions,
 		},
 	})
+	if apierrors.IsAlreadyExists(err) {
+		logging.FromContext(ctx).Info("sync job already exists, nothing triggered")
+		return nil
+	}
 	if err != nil {
 		// FIXME: should we update the status of the repository if we fail to add the job?
 		return fmt.Errorf("error adding sync job: %w", err)
