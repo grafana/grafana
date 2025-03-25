@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { historySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
@@ -56,8 +57,7 @@ describe('VersionSettings', () => {
   });
 
   test('renders a header and a loading indicator followed by results in a table', async () => {
-    // @ts-ignore
-    historySrv.getHistoryList.mockResolvedValue(versions);
+    historySrv.getHistoryList = jest.fn().mockResolvedValue(versions);
     setup();
 
     expect(screen.getByRole('heading', { name: /versions/i })).toBeInTheDocument();
@@ -75,8 +75,7 @@ describe('VersionSettings', () => {
   });
 
   test('does not render buttons if versions === 1', async () => {
-    // @ts-ignore
-    historySrv.getHistoryList.mockResolvedValue({
+    historySrv.getHistoryList = jest.fn().mockResolvedValue({
       continueToken: versions.continueToken,
       versions: versions.versions.slice(0, 1),
     });
@@ -93,8 +92,7 @@ describe('VersionSettings', () => {
   });
 
   test('does not render show more button if versions < VERSIONS_FETCH_LIMIT', async () => {
-    // @ts-ignore
-    historySrv.getHistoryList.mockResolvedValue({
+    historySrv.getHistoryList = jest.fn().mockResolvedValue({
       continueToken: versions.continueToken,
       versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT - 5),
     });
@@ -111,8 +109,7 @@ describe('VersionSettings', () => {
   });
 
   test('renders buttons if versions >= VERSIONS_FETCH_LIMIT', async () => {
-    // @ts-ignore
-    historySrv.getHistoryList.mockResolvedValue({
+    historySrv.getHistoryList = jest.fn().mockResolvedValue({
       continueToken: versions.continueToken,
       versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT),
     });
@@ -134,8 +131,8 @@ describe('VersionSettings', () => {
   });
 
   test('clicking show more appends results to the table', async () => {
-    historySrv.getHistoryList
-      // @ts-ignore
+    historySrv.getHistoryList = jest
+      .fn()
       .mockImplementationOnce(() =>
         Promise.resolve({
           continueToken: versions.continueToken,
@@ -170,14 +167,47 @@ describe('VersionSettings', () => {
     });
   });
 
+  test('does not show more button when receiving partial page without version 1', async () => {
+    // Mock a partial page response (less than VERSIONS_FETCH_LIMIT)
+    historySrv.getHistoryList = jest.fn().mockResolvedValueOnce({
+      continueToken: '',
+      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT - 5),
+    });
+
+    setup();
+
+    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+    // Verify that show more button is not present since we got a partial page
+    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
+    // Verify that compare button is still present
+    expect(screen.getByRole('button', { name: /compare versions/i })).toBeInTheDocument();
+  });
+
+  test('does not show more button when kubernetesClientDashboardsFolders is enabled and continueToken is empty', async () => {
+    config.featureToggles.kubernetesClientDashboardsFolders = true;
+    historySrv.getHistoryList = jest.fn().mockResolvedValueOnce({
+      continueToken: '',
+      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT - 1),
+    });
+
+    setup();
+
+    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /compare versions/i })).toBeInTheDocument();
+
+    config.featureToggles.kubernetesClientDashboardsFolders = false;
+  });
+
   test('selecting two versions and clicking compare button should render compare view', async () => {
-    // @ts-ignore
-    historySrv.getHistoryList.mockResolvedValue({
+    historySrv.getHistoryList = jest.fn().mockResolvedValue({
       continueToken: versions.continueToken,
       versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT),
     });
-    historySrv.getDashboardVersion
-      // @ts-ignore
+    historySrv.getDashboardVersion = jest
+      .fn()
       .mockImplementationOnce(() => Promise.resolve(diffs.lhs))
       .mockImplementationOnce(() => Promise.resolve(diffs.rhs));
 
