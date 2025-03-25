@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/dashboard
 go 1.24.1
 
 require (
-	github.com/grafana/grafana-app-sdk v0.35.1-0.20250325141034-dd7d3019f4f0
+	github.com/grafana/grafana-app-sdk v0.35.1
 	github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432
 	github.com/stretchr/testify v1.10.0

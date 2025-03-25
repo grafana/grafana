@@ -6,7 +6,7 @@ replace github.com/grafana/grafana => ../../..
 
 require (
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
-	github.com/grafana/grafana-app-sdk v0.35.1-0.20250325141034-dd7d3019f4f0
+	github.com/grafana/grafana-app-sdk v0.35.1
 	k8s.io/apimachinery v0.32.3
 	k8s.io/apiserver v0.32.3
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f
