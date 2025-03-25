@@ -7,7 +7,8 @@ use (
 	. // skip:golangci-lint
 	./.citools/bra
 	./.citools/cog
-	./.citools/cue
+	//
+	//./.citools/cue
 	./.citools/drone
 	./.citools/golangci-lint
 	./.citools/jb
