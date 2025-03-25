@@ -787,9 +787,9 @@ func TestQueryDataResponseToExecutionResults(t *testing.T) {
 		require.Len(t, evaluatedResults, 1)
 		result := evaluatedResults[0]
 
-		// Validate that datasource types were correctly set
-		require.Equal(t, expr.TypeDatasourceNode, result.Values["A"].Type)
-		require.Equal(t, expr.TypeCMDNode, result.Values["B"].Type)
+		// Validate that IsDatasourceNode were correctly set
+		require.True(t, result.Values["A"].IsDatasourceNode)
+		require.False(t, result.Values["B"].IsDatasourceNode)
 	})
 }
 
@@ -1154,10 +1154,10 @@ func TestEvaluate(t *testing.T) {
 							Meta: &data.FrameMeta{
 								Custom: []NumberValueCapture{
 									{
-										Var:    "B",
-										Type:   expr.TypeCMDNode,
-										Labels: data.Labels{"foo": "bar"},
-										Value:  util.Pointer(15.0),
+										Var:              "B",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            util.Pointer(15.0),
 									},
 								},
 							},
@@ -1177,16 +1177,16 @@ func TestEvaluate(t *testing.T) {
 							Meta: &data.FrameMeta{
 								Custom: []NumberValueCapture{
 									{
-										Var:    "B",
-										Type:   expr.TypeCMDNode,
-										Labels: data.Labels{"foo": "bar"},
-										Value:  util.Pointer(15.0),
+										Var:              "B",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            util.Pointer(15.0),
 									},
 									{
-										Var:    "C",
-										Type:   expr.TypeCMDNode,
-										Labels: data.Labels{"foo": "bar"},
-										Value:  util.Pointer(1.0),
+										Var:              "C",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            util.Pointer(1.0),
 									},
 								},
 							},
@@ -1201,16 +1201,16 @@ func TestEvaluate(t *testing.T) {
 				},
 				Values: map[string]NumberValueCapture{
 					"B": {
-						Var:    "B",
-						Type:   expr.TypeCMDNode,
-						Labels: data.Labels{"foo": "bar"},
-						Value:  util.Pointer(15.0),
+						Var:              "B",
+						IsDatasourceNode: false,
+						Labels:           data.Labels{"foo": "bar"},
+						Value:            util.Pointer(15.0),
 					},
 					"C": {
-						Var:    "C",
-						Type:   expr.TypeCMDNode,
-						Labels: data.Labels{"foo": "bar"},
-						Value:  util.Pointer(1.0),
+						Var:              "C",
+						IsDatasourceNode: false,
+						Labels:           data.Labels{"foo": "bar"},
+						Value:            util.Pointer(1.0),
 					},
 				},
 				// Note the absence of "A" in the EvaluationString.

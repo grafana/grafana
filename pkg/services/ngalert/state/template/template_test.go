@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -78,10 +77,10 @@ func TestNewData(t *testing.T) {
 			EvaluationString: "[ var='A' labels={instance=foo} value=10 ]",
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:    "A",
-					Type:   expr.TypeCMDNode,
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(10.0),
+					Var:              "A",
+					IsDatasourceNode: false,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
 				},
 			},
 		}
@@ -95,16 +94,16 @@ func TestNewData(t *testing.T) {
 			EvaluationString: "[ var='A' labels={instance=foo} value=10 ]",
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:    "A",
-					Type:   expr.TypeDatasourceNode,
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(10.0),
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
 				},
 				"B": {
-					Var:    "B",
-					Type:   expr.TypeCMDNode,
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(20.0),
+					Var:              "B",
+					IsDatasourceNode: false,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(20.0),
 				},
 			},
 		}
@@ -118,16 +117,16 @@ func TestNewData(t *testing.T) {
 			EvaluationString: "[ var='A' labels={instance=foo} value=10 ]",
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:    "A",
-					Type:   expr.TypeDatasourceNode,
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(10.0),
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
 				},
 				"B": {
-					Var:    "B",
-					Type:   expr.TypeDatasourceNode,
-					Labels: data.Labels{"instance": "bar"},
-					Value:  util.Pointer(20.0),
+					Var:              "B",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "bar"},
+					Value:            util.Pointer(20.0),
 				},
 			},
 		}
@@ -150,10 +149,10 @@ func TestDatasourceValueInTemplating(t *testing.T) {
 			EvaluationString: "[ var='A' labels={instance=foo} value=no data ]",
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:    "A",
-					Type:   expr.TypeDatasourceNode,
-					Labels: data.Labels{"instance": "foo"},
-					Value:  nil, // nil value
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            nil, // nil value
 				},
 			},
 		}
@@ -168,22 +167,22 @@ func TestDatasourceValueInTemplating(t *testing.T) {
 			EvaluationString: "[ var='A' labels={instance=foo} value=10, var='B' labels={instance=foo} value=20, var='C' labels={instance=foo} value=30 ]",
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:    "A",
-					Type:   expr.TypeDatasourceNode,
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(10.0),
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
 				},
 				"B": {
-					Var:    "B",
-					Type:   expr.TypeCMDNode,
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(20.0),
+					Var:              "B",
+					IsDatasourceNode: false,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(20.0),
 				},
 				"C": {
-					Var:    "C",
-					Type:   expr.TypeCMDNode,
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(30.0),
+					Var:              "C",
+					IsDatasourceNode: false,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(30.0),
 				},
 			},
 		}
@@ -198,22 +197,22 @@ func TestDatasourceValueInTemplating(t *testing.T) {
 			EvaluationString: evalStr,
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:    "A",
-					Type:   expr.TypeDatasourceNode,
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(10.0),
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
 				},
 				"B": {
-					Var:    "B",
-					Type:   expr.TypeDatasourceNode,
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(20.0),
+					Var:              "B",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(20.0),
 				},
 				"C": {
-					Var:    "C",
-					Type:   expr.TypeCMDNode,
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(30.0),
+					Var:              "C",
+					IsDatasourceNode: false,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(30.0),
 				},
 			},
 		}
@@ -264,10 +263,10 @@ func TestExpandTemplate(t *testing.T) {
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:    "A",
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(1.1),
-					Type:   expr.TypeDatasourceNode,
+					Var:              "A",
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(1.1),
+					IsDatasourceNode: true,
 				},
 			},
 		},
@@ -278,10 +277,10 @@ func TestExpandTemplate(t *testing.T) {
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:    "A",
-					Labels: data.Labels{},
-					Value:  util.Pointer(1.0),
-					Type:   expr.TypeDatasourceNode,
+					Var:              "A",
+					Labels:           data.Labels{},
+					Value:            util.Pointer(1.0),
+					IsDatasourceNode: true,
 				},
 			},
 		},
@@ -308,16 +307,16 @@ func TestExpandTemplate(t *testing.T) {
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
 				"query": {
-					Var:    "query",
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(10.123),
-					Type:   expr.TypeDatasourceNode,
+					Var:              "query",
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.123),
+					IsDatasourceNode: true,
 				},
 				"math": {
-					Var:    "math",
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(10.0),
-					Type:   expr.TypeCMDNode,
+					Var:              "math",
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
+					IsDatasourceNode: false,
 				},
 			},
 			EvaluationString: "[ var='query' labels={instance=foo} value=10.123, var='math' labels={instance=foo} value=10 ]",
@@ -334,16 +333,16 @@ func TestExpandTemplate(t *testing.T) {
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
 				"query": {
-					Var:    "query",
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(10.123),
-					Type:   expr.TypeDatasourceNode,
+					Var:              "query",
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.123),
+					IsDatasourceNode: true,
 				},
 				"second-query": {
-					Var:    "second-query",
-					Labels: data.Labels{"instance": "bar"},
-					Value:  util.Pointer(20.456),
-					Type:   expr.TypeDatasourceNode,
+					Var:              "second-query",
+					Labels:           data.Labels{"instance": "bar"},
+					Value:            util.Pointer(20.456),
+					IsDatasourceNode: true,
 				},
 			},
 			EvaluationString: "[ var='query' labels={instance=foo} value=10.123, var='second-query' labels={instance=bar} value=20.456 ]",

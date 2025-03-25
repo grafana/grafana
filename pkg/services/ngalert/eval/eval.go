@@ -434,9 +434,9 @@ func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheSe
 }
 
 type NumberValueCapture struct {
-	Var    string // RefID
-	Type   expr.NodeType
-	Labels data.Labels
+	Var              string // RefID
+	IsDatasourceNode bool
+	Labels           data.Labels
 
 	Value *float64
 }
@@ -469,10 +469,10 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 		}
 		fp := labels.Fingerprint()
 		m[fp] = NumberValueCapture{
-			Var:    refID,
-			Type:   datasourceType,
-			Value:  value,
-			Labels: labels.Copy(),
+			Var:              refID,
+			IsDatasourceNode: datasourceType == expr.TypeDatasourceNode,
+			Value:            value,
+			Labels:           labels.Copy(),
 		}
 		captures[refID] = m
 	}

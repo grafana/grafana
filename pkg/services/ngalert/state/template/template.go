@@ -15,7 +15,6 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/template"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
@@ -43,9 +42,9 @@ func (l Labels) String() string {
 // Value contains the labels and value of a Reduce, Math or Threshold
 // expression for a series.
 type Value struct {
-	Labels   Labels
-	Value    float64
-	nodeType expr.NodeType
+	Labels           Labels
+	Value            float64
+	isDatasourceNode bool
 }
 
 func (v Value) String() string {
@@ -65,9 +64,9 @@ func NewValues(captures map[string]eval.NumberValueCapture) map[string]Value {
 			f = math.NaN()
 		}
 		values[refID] = Value{
-			Labels:   Labels(capture.Labels),
-			Value:    f,
-			nodeType: capture.Type,
+			Labels:           Labels(capture.Labels),
+			Value:            f,
+			isDatasourceNode: capture.IsDatasourceNode,
 		}
 	}
 	return values
@@ -95,7 +94,7 @@ func NewData(labels map[string]string, res eval.Result) Data {
 	datasourceNodeCount := 0
 	var datasourceNodeValue Value
 	for _, v := range values {
-		if v.nodeType == expr.TypeDatasourceNode {
+		if v.isDatasourceNode {
 			datasourceNodeCount++
 			if datasourceNodeCount > 1 {
 				// Multiple datasource nodes found, we'll use the evaluation string
