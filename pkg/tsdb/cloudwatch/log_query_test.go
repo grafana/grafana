@@ -5,10 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
-	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
-
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/stretchr/testify/assert"
@@ -21,63 +19,63 @@ import (
 
 func TestLogsResultsToDataframes(t *testing.T) {
 	fakeCloudwatchResponse := &cloudwatchlogs.GetQueryResultsOutput{
-		Results: [][]cloudwatchlogstypes.ResultField{
+		Results: [][]*cloudwatchlogs.ResultField{
 			{
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@ptr"),
 					Value: aws.String("fake ptr"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@timestamp"),
 					Value: aws.String("2020-03-02 15:04:05.000"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("line"),
 					Value: aws.String("test message 1"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@logStream"),
 					Value: aws.String("fakelogstream"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@log"),
 					Value: aws.String("fakelog"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String(logStreamIdentifierInternal),
 					Value: aws.String("fakelogstream"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String(logIdentifierInternal),
 					Value: aws.String("fakelog"),
 				},
 			},
 			{
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@ptr"),
 					Value: aws.String("fake ptr"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@timestamp"),
 					Value: aws.String("2020-03-02 16:04:05.000"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("line"),
 					Value: aws.String("test message 2"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@logStream"),
 					Value: aws.String("fakelogstream"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@log"),
 					Value: aws.String("fakelog"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String(logStreamIdentifierInternal),
 					Value: aws.String("fakelogstream"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String(logIdentifierInternal),
 					Value: aws.String("fakelog"),
 				},
@@ -86,47 +84,47 @@ func TestLogsResultsToDataframes(t *testing.T) {
 			{},
 			// or rows with only timestamp
 			{
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@timestamp"),
 					Value: aws.String("2020-03-02 17:04:05.000"),
 				},
 			},
 			{
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@ptr"),
 					Value: aws.String("fake ptr"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@timestamp"),
 					Value: aws.String("2020-03-02 17:04:05.000"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("line"),
 					Value: aws.String("test message 3"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@logStream"),
 					Value: aws.String("fakelogstream"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@log"),
 					Value: aws.String("fakelog"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String(logStreamIdentifierInternal),
 					Value: aws.String("fakelogstream"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String(logIdentifierInternal),
 					Value: aws.String("fakelog"),
 				},
 			},
 		},
-		Status: "ok",
-		Statistics: &cloudwatchlogstypes.QueryStatistics{
-			BytesScanned:   2000,
-			RecordsMatched: 3,
-			RecordsScanned: 5000,
+		Status: aws.String("ok"),
+		Statistics: &cloudwatchlogs.QueryStatistics{
+			BytesScanned:   aws.Float64(2000),
+			RecordsMatched: aws.Float64(3),
+			RecordsScanned: aws.Float64(5000),
 		},
 	}
 
@@ -226,33 +224,33 @@ func TestLogsResultsToDataframes(t *testing.T) {
 
 func TestLogsResultsToDataframes_MixedTypes_NumericValuesMixedWithStringFallBackToStringValues(t *testing.T) {
 	dataframes, err := logsResultsToDataframes(&cloudwatchlogs.GetQueryResultsOutput{
-		Results: [][]cloudwatchlogstypes.ResultField{
+		Results: [][]*cloudwatchlogs.ResultField{
 			{
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("numberOrString"),
 					Value: aws.String("-1.234"),
 				},
 			},
 			{
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("numberOrString"),
 					Value: aws.String("1"),
 				},
 			},
 			{
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("numberOrString"),
 					Value: aws.String("not a number"),
 				},
 			},
 			{
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("numberOrString"),
 					Value: aws.String("2.000"),
 				},
 			},
 		},
-		Status: "ok",
+		Status: aws.String("ok"),
 	}, []string{})
 	require.NoError(t, err)
 
@@ -286,27 +284,27 @@ func TestLogsResultsToDataframes_With_Millisecond_Timestamps(t *testing.T) {
 	ingestionTimeField := int64(1732790372916)
 
 	dataframes, err := logsResultsToDataframes(&cloudwatchlogs.GetQueryResultsOutput{
-		Results: [][]cloudwatchlogstypes.ResultField{
+		Results: [][]*cloudwatchlogs.ResultField{
 			{
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@timestamp"),
 					Value: aws.String(fmt.Sprintf("%d", timestampField)),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@ingestionTime"),
 					Value: aws.String(fmt.Sprintf("%d", ingestionTimeField)),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("stringTimeField"),
 					Value: aws.String(stringTimeField),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("message"),
 					Value: aws.String("log message"),
 				},
 			},
 		},
-		Status: "ok",
+		Status: aws.String("ok"),
 	}, []string{})
 	require.NoError(t, err)
 
@@ -350,23 +348,23 @@ func TestLogsResultsToDataframes_With_Int_Grouping_Field(t *testing.T) {
 	timestampField := int64(1732749534876)
 
 	dataframes, err := logsResultsToDataframes(&cloudwatchlogs.GetQueryResultsOutput{
-		Results: [][]cloudwatchlogstypes.ResultField{
+		Results: [][]*cloudwatchlogs.ResultField{
 			{
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@timestamp"),
 					Value: aws.String(fmt.Sprintf("%d", timestampField)),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("numberField"),
 					Value: aws.String("8"),
 				},
-				cloudwatchlogstypes.ResultField{
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("groupingNumber"),
 					Value: aws.String("100"),
 				},
 			},
 		},
-		Status: "ok",
+		Status: aws.String("ok"),
 	}, []string{"groupingNumber"})
 	require.NoError(t, err)
 

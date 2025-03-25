@@ -824,14 +824,20 @@ export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => (
 });
 
 export interface ResponsiveGridLayoutSpec {
-	row: string;
-	col: string;
+	maxColumnCount?: number;
+	columnWidthMode: "narrow" | "standard" | "wide" | "custom";
+	columnWidth?: number;
+	rowHeightMode: "short" | "standard" | "tall" | "custom";
+	rowHeight?: number;
+	fillScreen?: boolean;
 	items: ResponsiveGridLayoutItemKind[];
 }
 
 export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => ({
-	row: "",
-	col: "",
+	maxColumnCount: 3,
+	columnWidthMode: "standard",
+	rowHeightMode: "standard",
+	fillScreen: false,
 	items: [],
 });
 

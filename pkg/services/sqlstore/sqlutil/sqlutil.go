@@ -161,7 +161,7 @@ func spannerTestDB() (*TestDB, error) {
 
 	spannerDB := os.Getenv("SPANNER_DB")
 	if spannerDB == "" {
-		return nil, errors.New("SPANNER_DB environment variable not set")
+		spannerDB = "emulator"
 	}
 
 	if spannerDB == "spannertest" {

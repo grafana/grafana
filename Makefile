@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .bingo/Variables.mk
 
 GO = go
-GO_VERSION = 1.23.7
+GO_VERSION = 1.24.1
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -315,7 +315,7 @@ test-go-integration-memcached: ## Run integration tests for memcached cache.
 test-go-integration-spanner: ## Run integration tests for Spanner backend with flags. Uses spanner-emulator on localhost:9010 and localhost:9020.
 	@if [ "${WIRE_TAGS}" != "enterprise" ]; then echo "Spanner integration test require enterprise setup"; exit 1; fi
 	@echo "test backend integration spanner tests"
-	GRAFANA_TEST_DB=spanner SPANNER_DB=emulator \
+	GRAFANA_TEST_DB=spanner \
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -v -run "^TestIntegration" -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-js

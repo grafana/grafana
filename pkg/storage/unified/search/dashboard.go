@@ -8,7 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -208,7 +208,7 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 		}
 	}
 	return resource.DocumentBuilderInfo{
-		GroupResource: v0alpha1.DashboardResourceInfo.GroupResource(),
+		GroupResource: v1alpha1.DashboardResourceInfo.GroupResource(),
 		Fields:        fields,
 		Namespaced:    namespaced,
 	}, err
