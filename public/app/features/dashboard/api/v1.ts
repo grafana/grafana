@@ -58,7 +58,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       };
     }
 
-    if (obj.metadata.name) {
+    if (dashboard.uid) {
+      obj.metadata.name = dashboard.uid;
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     return this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
@@ -107,9 +108,12 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           isFolder: false,
           uid: dash.metadata.name,
           k8s: dash.metadata,
-          version: parseInt(dash.metadata.resourceVersion, 10),
         },
-        dashboard: dash.spec,
+        dashboard: {
+          ...dash.spec,
+          version: dash.metadata.generation,
+          uid: dash.metadata.name,
+        },
       };
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
