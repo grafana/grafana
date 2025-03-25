@@ -27,6 +27,7 @@ import (
 const tracePrefix = "sql.resource."
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
+const defaultPrunerHistoryLimit = 20
 
 type Backend interface {
 	resource.StorageBackend
@@ -211,7 +212,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 			return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 					SQLTemplate:  sqltemplate.New(b.dialect),
-					HistoryLimit: 100,
+					HistoryLimit: defaultPrunerHistoryLimit,
 					Key: &resource.ResourceKey{
 						Namespace: key.namespace,
 						Group:     key.group,
