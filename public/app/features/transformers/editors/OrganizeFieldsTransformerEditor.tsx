@@ -12,11 +12,11 @@ import {
 } from '@grafana/data';
 import {
   createOrderFieldsComparer,
-  FieldOrdering,
   LabelSort,
   Order,
-} from '@grafana/data/src/transformations/transformers/order';
-import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
+  FieldOrdering,
+  OrganizeFieldsTransformerOptions,
+} from '@grafana/data/internal';
 import {
   Input,
   IconButton,
@@ -31,6 +31,7 @@ import {
   InlineFieldRow,
   RadioButtonGroup,
 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
@@ -275,7 +276,15 @@ const DraggableFieldName = ({
             <Stack gap={0} justifyContent="flex-start" alignItems="center" width="100%">
               {!isDragDisabled && (
                 <span {...provided.dragHandleProps}>
-                  <Icon name="draggabledots" title="Drag and drop to reorder" size="lg" className={styles.draggable} />
+                  <Icon
+                    name="draggabledots"
+                    title={t(
+                      'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
+                      'Drag and drop to reorder'
+                    )}
+                    size="lg"
+                    className={styles.draggable}
+                  />
                 </span>
               )}
               <IconButton

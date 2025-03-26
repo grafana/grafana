@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/metric_find_query.ts
 import { chain, map as _map, uniq } from 'lodash';
 
-import { getDefaultTimeRange, MetricFindValue, TimeRange } from '@grafana/data';
+import { MetricFindValue, TimeRange } from '@grafana/data';
 
 import { PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';
@@ -15,19 +15,15 @@ import {
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 export class PrometheusMetricFindQuery {
-  range: TimeRange;
-
   constructor(
     private datasource: PrometheusDatasource,
     private query: string
   ) {
     this.datasource = datasource;
     this.query = query;
-    this.range = getDefaultTimeRange();
   }
 
   process(timeRange: TimeRange): Promise<MetricFindValue[]> {
-    this.range = timeRange;
     const labelNamesRegex = PrometheusLabelNamesRegex;
     const labelNamesRegexWithMatch = PrometheusLabelNamesRegexWithMatch;
     const labelValuesRegex = PrometheusLabelValuesRegex;
@@ -38,7 +34,7 @@ export class PrometheusMetricFindQuery {
 
     if (labelNamesMatchQuery) {
       const selector = `{__name__=~".*${labelNamesMatchQuery[1]}.*"}`;
-      return this.datasource.languageProvider.getSeriesLabels(selector, []).then((results) =>
+      return this.datasource.languageProvider.getSeriesLabels(timeRange, selector, []).then((results) =>
         results.map((result) => ({
           text: result,
         }))
@@ -54,35 +50,35 @@ export class PrometheusMetricFindQuery {
       const filter = labelValuesQuery[1];
       const label = labelValuesQuery[2];
       if (isFilterDefined(filter)) {
-        return this.labelValuesQuery(label, filter);
+        return this.labelValuesQuery(label, timeRange, filter);
       } else {
         // Exclude the filter part of the expression because it is blank or empty
-        return this.labelValuesQuery(label);
+        return this.labelValuesQuery(label, timeRange);
       }
     }
 
     const metricNamesQuery = this.query.match(metricNamesRegex);
     if (metricNamesQuery) {
-      return this.metricNameQuery(metricNamesQuery[1]);
+      return this.metricNameQuery(metricNamesQuery[1], timeRange);
     }
 
     const queryResultQuery = this.query.match(queryResultRegex);
     if (queryResultQuery) {
-      return this.queryResultQuery(queryResultQuery[1]);
+      return this.queryResultQuery(queryResultQuery[1], timeRange);
     }
 
     // if query contains full metric name, return metric name and label list
     const expressions = ['label_values()', 'metrics()', 'query_result()'];
     if (!expressions.includes(this.query)) {
-      return this.metricNameAndLabelsQuery(this.query);
+      return this.metricNameAndLabelsQuery(this.query, timeRange);
     }
 
     return Promise.resolve([]);
   }
 
-  labelValuesQuery(label: string, metric?: string) {
-    const start = getPrometheusTime(this.range.from, false);
-    const end = getPrometheusTime(this.range.to, true);
+  labelValuesQuery(label: string, range: TimeRange, metric?: string) {
+    const start = getPrometheusTime(range.from, false);
+    const end = getPrometheusTime(range.to, true);
     const params = { ...(metric && { 'match[]': metric }), start: start.toString(), end: end.toString() };
 
     let escapedLabel = label;
@@ -118,9 +114,9 @@ export class PrometheusMetricFindQuery {
     }
   }
 
-  metricNameQuery(metricFilterPattern: string) {
-    const start = getPrometheusTime(this.range.from, false);
-    const end = getPrometheusTime(this.range.to, true);
+  metricNameQuery(metricFilterPattern: string, range: TimeRange) {
+    const start = getPrometheusTime(range.from, false);
+    const end = getPrometheusTime(range.to, true);
     const params = {
       start: start.toString(),
       end: end.toString(),
@@ -143,11 +139,11 @@ export class PrometheusMetricFindQuery {
     });
   }
 
-  queryResultQuery(query: string) {
+  queryResultQuery(query: string, range: TimeRange) {
     const url = '/api/v1/query';
     const params = {
       query,
-      time: getPrometheusTime(this.range.to, true).toString(),
+      time: getPrometheusTime(range.to, true).toString(),
     };
     return this.datasource.metadataRequest(url, params).then((result) => {
       switch (result.data.data.resultType) {
@@ -182,9 +178,9 @@ export class PrometheusMetricFindQuery {
     });
   }
 
-  metricNameAndLabelsQuery(query: string): Promise<MetricFindValue[]> {
-    const start = getPrometheusTime(this.range.from, false);
-    const end = getPrometheusTime(this.range.to, true);
+  metricNameAndLabelsQuery(query: string, range: TimeRange): Promise<MetricFindValue[]> {
+    const start = getPrometheusTime(range.from, false);
+    const end = getPrometheusTime(range.to, true);
     const params = {
       'match[]': query,
       start: start.toString(),
