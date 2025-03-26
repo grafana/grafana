@@ -92,8 +92,8 @@ var RelationsSubresource = []string{
 	RelationSubresourceSetPermissions,
 }
 
-// RelationsFolder are relations that can be added on type "folder".
-var RelationsFolder = append(
+// RelationsTyped are relations that can be added to typed resources (folders, teams, users, etc).
+var RelationsTyped = append(
 	RelationsSubresource,
 	RelationGet,
 	RelationUpdate,
