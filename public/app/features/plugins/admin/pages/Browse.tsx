@@ -51,10 +51,6 @@ export default function Browse() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const disableUpdateAllButton = updatablePlugins.length <= 0 || areUpdatesLoading;
 
-  const onSortByChange = (value: SelectableValue<string>) => {
-    history.push({ query: { sortBy: value.value } });
-  };
-
   const onFilterByChange = (value: string) => {
     history.push({ query: { filterBy: value } });
   };
@@ -141,23 +137,6 @@ export default function Browse() {
                 </div>
               </Tooltip>
             )}
-
-            {/* Sorting */}
-            <Field label="Sort">
-              <Select
-                aria-label="Sort Plugins List"
-                width={24}
-                value={sortBy}
-                onChange={onSortByChange}
-                options={[
-                  { value: 'nameAsc', label: 'By name (A-Z)' },
-                  { value: 'nameDesc', label: 'By name (Z-A)' },
-                  { value: 'updated', label: 'By updated date' },
-                  { value: 'published', label: 'By published date' },
-                  { value: 'downloads', label: 'By downloads' },
-                ]}
-              />
-            </Field>
           </HorizontalGroup>
         </HorizontalGroup>
         <div className={styles.listWrap}>
