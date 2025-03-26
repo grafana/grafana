@@ -465,13 +465,6 @@
       "without-soft-delete": "Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
     },
     "deleted-rules": {
-      "delete-modal": {
-        "body": "Are you sure you want to delete permanently this alert rule? This action cannot be undone.",
-        "confirm": "Yes, deleted permanently",
-        "error": "Could not delete alert rule permanently",
-        "success": "Alert rule deleted permanently",
-        "title": "Delete permanently an alert rule"
-      },
       "empty-state-title": "No recently deleted rules found",
       "errorloading": "Failed to load alert deleted rules",
       "restore": "Restore",
