@@ -1563,8 +1563,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20250310104713-16b885f1c79e h1:noJzp/qZGIto4XdZkvj2EKQ1bQeqCRs0bedxdJN17sQ=
-github.com/grafana/alerting v0.0.0-20250310104713-16b885f1c79e/go.mod h1:HfvjmU3UqCIpoy9Z2wgKGrZ4A5vz+yQlP9ZXvCfEkiA=
+github.com/grafana/alerting v0.0.0-20250325165008-58ba6c617ff0 h1:Px9S1OTPnPyXFcCQNjlghEkBLCrKZXNoDrnqHyC+Trw=
+github.com/grafana/alerting v0.0.0-20250325165008-58ba6c617ff0/go.mod h1:IClWv5buV1QUQLbpkROr9XzdK83ofGF6K74UGep+t4o=
 github.com/grafana/authlib v0.0.0-20250305132846-37f49eb947fa h1:08Wh/svkv8WpDuOBBKAzSPa14gKjYLZvQJsHWXLjPuc=
 github.com/grafana/authlib v0.0.0-20250305132846-37f49eb947fa/go.mod h1:XVpdLhaeYqz414FmGnW00/0vTe1x8c0GRH3KaeRtyg0=
 github.com/grafana/authlib/types v0.0.0-20250224151205-5ef97131cc82 h1:DnRUYiAotHXnrfYJCvhH1NkiyWVcPm5Pd+P7Ugqt/d8=
@@ -1635,8 +1635,8 @@ github.com/grafana/loki/v3 v3.2.1 h1:VB7u+KHfvL5aHAxgoVBvz5wVhsdGuqKC7uuOFOOe7jw
 github.com/grafana/loki/v3 v3.2.1/go.mod h1:WvdLl6wOS+yahaeQY+xhD2m2XzkHDfKr5FZaX7D/X2Y=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3 h1:6D2gGAwyQBElSrp3E+9lSr7k8gLuP3Aiy20rweLWeBw=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3/go.mod h1:YeND+6FDA7OuFgDzYODN8kfPhXLCehcpxe4T9mdnpCY=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20250325133853-820cb26e127a h1:nqT3xW4njhELeaW8rv5F9TP4jDDnmaHJfcRC2ekfWgE=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20250325133853-820cb26e127a/go.mod h1:FGdGvhI40Dq+CTQaSzK9evuve774cgOUdGfVO04OXkw=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8 h1:iwOtYXeeVSAeYefJNaxDytgjKtUuKQbJqgAIjlnicKg=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8/go.mod h1:2+l7K7twW49Ct4wFluZD3tZ6e0SjanjcUUBPVD/UuGU=
 github.com/grafana/pyroscope/api v1.0.0 h1:RWK3kpv8EAnB7JpOqnf//xwE84DdKF03N/iFxpFAoHY=
@@ -2410,6 +2410,7 @@ github.com/tjhop/slog-gokit v0.1.3 h1:6SdexP3UIeg93KLFeiM1Wp1caRwdTLgsD/THxBUy1+
 github.com/tjhop/slog-gokit v0.1.3/go.mod h1:Bbu5v2748qpAWH7k6gse/kw3076IJf6owJmh7yArmJs=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 h1:6fotK7otjonDflCTK0BCfls4SPy3NcCVb5dqqmbRknE=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75/go.mod h1:KO6IkyS8Y3j8OdNO85qEYBsRPuteD+YciPomcXdrMnk=
+github.com/trivago/tgo v1.0.7/go.mod h1:w4dpD+3tzNIIiIfkWWa85w5/B77tlvdZckQ+6PkFnhc=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90 h1:rB0J+hLNltG1Qv+UF+MkdFz89XMps5BOAFJN4xWjc+s=
 github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90/go.mod h1:BUbeWZiieNxAuuADTBNb3/aeje6on3DhU3rpWsQSB1E=
