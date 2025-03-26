@@ -32,10 +32,10 @@ export const ConfirmRestoreDeletedRuleModal = ({
   onRestoreError,
 }: ModalProps) => {
   const [restoreMethod, { error }] = useRestoreDeletedRule();
-  const title = t('alerting.deletedRules.restore-modal.title', 'Restore deleted alert rule');
-  const errorTitle = t('alerting.deletedRules.restore-modal.error', 'Could not restore deleted alert rule');
+  const title = t('alerting.deleted-rules.restore-modal.title', 'Restore deleted alert rule');
+  const errorTitle = t('alerting.deleted-rules.restore-modal.error', 'Could not restore deleted alert rule');
   const confirmText = !error
-    ? t('alerting.deletedRules.restore-modal.confirm', 'Yes, restore deleted rule')
+    ? t('alerting.deleted-rules.restore-modal.confirm', 'Yes, restore deleted rule')
     : 'Manually restore the rule';
 
   const styles = useStyles2(getStyles);
@@ -71,14 +71,14 @@ export const ConfirmRestoreDeletedRuleModal = ({
       confirmButtonVariant={!error ? 'destructive' : 'primary'}
       body={
         <Stack direction="column" gap={2}>
-          <Trans i18nKey="alerting.deletedRules.restore-modal.body">
+          <Trans i18nKey="alerting.deleted-rules.restore-modal.body">
             Are you sure you want to restore this deleted alert rule definition?
           </Trans>
 
           <div>{ruleToRestore && <RulePreview rule={ruleToRestore} />}</div>
           {error && (
             <Alert severity="warning" title={errorTitle}>
-              <Trans i18nKey="alerting.alertVersionHistory.restore-deleted-manually">
+              <Trans i18nKey="alerting.deleted-rules.restore-deleted-manually">
                 Your alert rule could not be restored. This may be due to changes to other entities such as contact
                 points, data sources etc. Please manually restore the deleted rule by editing the rule and saving it.
               </Trans>

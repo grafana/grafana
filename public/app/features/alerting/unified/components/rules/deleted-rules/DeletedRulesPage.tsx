@@ -25,7 +25,7 @@ function DeletedrulesPage() {
     <AlertingPageWrapper navId="alerts/recently-deleted" isLoading={isLoading}>
       <>
         {error && (
-          <Alert title={t('alerting.deletedRules.errorloading', 'Failed to load alert deleted rules')}>
+          <Alert title={t('alerting.deleted-rules.errorloading', 'Failed to load alert deleted rules')}>
             {stringifyErrorLike(error)}
           </Alert>)}
 
