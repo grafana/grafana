@@ -20,7 +20,7 @@
       "method": "GET",
       "path": "alertmanager/api/v2/silences",
       "reqRole": "Viewer",
-      "reqAction": "alert.silences:read"
+      "reqAction": "alert.instances.external:read"
     },
     {
       "method": "POST",
