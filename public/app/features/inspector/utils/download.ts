@@ -4,6 +4,7 @@ import {
   CSVConfig,
   DataFrame,
   DataTransformerID,
+  dateTime,
   dateTimeFormat,
   LogsModel,
   MutableDataFrame,
@@ -30,7 +31,7 @@ export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows
   textToDownload = textToDownload + '\n\n';
 
   logsModel.rows.forEach((row) => {
-    const newRow = row.timeEpochMs + '\t' + row.entry + '\n';
+    const newRow = row.timeEpochMs + '\t' + dateTime(row.timeEpochMs).toISOString() + '\t' + row.entry + '\n';
     textToDownload = textToDownload + newRow;
   });
 
