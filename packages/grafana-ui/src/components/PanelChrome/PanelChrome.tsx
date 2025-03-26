@@ -151,11 +151,7 @@ export function PanelChrome({
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
-  const pointerStatus = useRef({
-    pointerDown: false,
-    dragStarted: false,
-    initialPosition: { x: 0, y: 0 },
-  });
+  const pointerDownLocation = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const hasHeader = !hoverHeader;
 
@@ -163,6 +159,8 @@ export function PanelChrome({
 
   // Highlight the full panel when hovering over header
   const [selectableHighlight, setSelectableHighlight] = useState(false);
+  const onHeaderEnter = React.useCallback(() => setSelectableHighlight(true), []);
+  const onHeaderLeave = React.useCallback(() => setSelectableHighlight(false), []);
 
   // if collapsed is not defined, then component is uncontrolled and state is managed internally
   if (collapsed === undefined) {
@@ -200,78 +198,37 @@ export function PanelChrome({
 
   // Handle drag & selection events
   // Mainly the tricky bit of differentiating between dragging and selecting
-  // mouseEnter and mouseLeave are necessary to avoid triggering dragging by mistake on various scenarios (i.e., text selection on screen)
-  // The mechanism is pretty straightforward:
-  //   - when clicking the pointer, mark the click
-  //   - if we leave/reenter the area, we don't trigger neither the select nor the drag
-  //   - if we move > 10 units, we trigger the drag
-  //   - if we move <= 10 units, we trigger the select
-
-  const resetPointerStatus = () => {
-    pointerStatus.current = { pointerDown: false, dragStarted: false, initialPosition: { x: 0, y: 0 } };
-  };
-
-  const onHeaderEnter = React.useCallback(() => {
-    resetPointerStatus();
-
-    if (isSelectable && !selectableHighlight) {
-      setSelectableHighlight(true);
-    }
-  }, [isSelectable, selectableHighlight]);
-
-  const onHeaderLeave = React.useCallback(() => {
-    resetPointerStatus();
-
-    if (isSelectable && selectableHighlight) {
-      setSelectableHighlight(false);
-    }
-  }, [isSelectable, selectableHighlight]);
-
   const onPointerUp = React.useCallback(
     (evt: React.PointerEvent) => {
-      const dragStarted = pointerStatus.current.dragStarted;
-
-      resetPointerStatus();
+      const distance = Math.hypot(
+        evt.clientX - pointerDownLocation.current.x,
+        evt.clientY - pointerDownLocation.current.y
+      );
 
       if (
-        dragStarted ||
+        distance > 10 ||
         (dragClassCancel && evt.target instanceof Element && evt.target.closest(`.${dragClassCancel}`))
       ) {
         return;
       }
 
-      onSelect?.(evt);
+      // setTimeout is needed here because onSelect stops the event propagation
+      // By doing so, the event won't get to the document and drag will never be stopped
+      setTimeout(() => onSelect?.(evt));
     },
     [dragClassCancel, onSelect]
   );
 
-  const onPointerMove = React.useCallback(
+  const onPointerDown = React.useCallback(
     (evt: React.PointerEvent) => {
-      const { pointerDown, dragStarted, initialPosition } = pointerStatus.current;
+      evt.stopPropagation();
 
-      if (!pointerDown || dragStarted) {
-        return;
-      }
+      pointerDownLocation.current = { x: evt.clientX, y: evt.clientY };
 
-      const distance = Math.hypot(initialPosition.x - evt.screenX, initialPosition.y - evt.screenY);
-
-      if (distance > 10) {
-        pointerStatus.current = { pointerDown: true, dragStarted: true, initialPosition };
-        onDragStart?.(evt);
-      }
+      onDragStart?.(evt);
     },
     [onDragStart]
   );
-
-  const onPointerDown = React.useCallback((evt: React.PointerEvent) => {
-    evt.stopPropagation();
-
-    pointerStatus.current = {
-      pointerDown: true,
-      dragStarted: false,
-      initialPosition: { x: evt.screenX, y: evt.screenY },
-    };
-  }, []);
 
   const headerContent = (
     <>
@@ -399,9 +356,8 @@ export function PanelChrome({
           style={headerStyles}
           data-testid="header-container"
           onPointerDown={onPointerDown}
-          onMouseEnter={onHeaderEnter}
-          onMouseLeave={onHeaderLeave}
-          onPointerMove={onPointerMove}
+          onMouseEnter={isSelectable ? onHeaderEnter : undefined}
+          onMouseLeave={isSelectable ? onHeaderLeave : undefined}
           onPointerUp={onPointerUp}
         >
           {statusMessage && (

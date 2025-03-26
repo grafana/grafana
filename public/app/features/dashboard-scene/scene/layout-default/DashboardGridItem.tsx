@@ -52,8 +52,6 @@ export class DashboardGridItem
 
   private _gridSizeSub: Unsubscribable | undefined;
 
-  public containerRef: HTMLElement | null = null;
-
   public constructor(state: DashboardGridItemState) {
     super(state);
 
@@ -246,9 +244,5 @@ export class DashboardGridItem
 
   public isRepeated(): boolean {
     return this.state.variableName !== undefined;
-  }
-
-  public setRef(ref: HTMLElement | null) {
-    this.containerRef = ref;
   }
 }

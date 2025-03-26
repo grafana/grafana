@@ -14,11 +14,7 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
 
   if (!variableName) {
     if (body instanceof VizPanel) {
-      return (
-        <div ref={(ref) => model.setRef(ref)}>
-          <body.Component model={body} key={body.state.key} />
-        </div>
-      );
+      return <body.Component model={body} key={body.state.key} />;
     }
   }
 

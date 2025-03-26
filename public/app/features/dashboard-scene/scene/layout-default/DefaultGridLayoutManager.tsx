@@ -33,7 +33,6 @@ import {
   useDashboard,
   getLayoutOrchestratorFor,
 } from '../../utils/utils';
-import { isDashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -77,17 +76,9 @@ export class DefaultGridLayoutManager
   private _activationHandler() {
     if (config.featureToggles.dashboardNewLayouts) {
       this._subs.add(
-        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
-          const gridItem = this.state.grid.state.children.find((child) =>
-            sceneGraph.findDescendents(child, VizPanel).includes(panel)
-          )!;
-
-          if (!gridItem || !isDashboardLayoutItem(gridItem)) {
-            return;
-          }
-
-          getLayoutOrchestratorFor(this)?.startDraggingSync(evt, panel, gridItem);
-        })
+        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) =>
+          getLayoutOrchestratorFor(this)?.startDraggingSync(evt, panel)
+        )
       );
     }
 
