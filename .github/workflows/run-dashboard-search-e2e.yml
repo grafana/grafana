@@ -103,7 +103,7 @@ jobs:
 
         - name: Run tests for ${{ matrix.ini_file }}
           run: |
-            cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/${{ matrix.ini_file }} ${{ github.workspace }}/scripts/grafana-server/custom.ini
+            cp -rf ${{ matrix.ini_file }} ${{ github.workspace }}/scripts/grafana-server/custom.ini
             yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
         - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
           if: failure()
