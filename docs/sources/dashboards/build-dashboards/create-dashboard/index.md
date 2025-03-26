@@ -97,7 +97,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. On the empty dashboard, click **+ Add visualization**.
 
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
-   
+
 {{< /shared >}}
 
 1. In the dialog box that opens, do one of the following:
