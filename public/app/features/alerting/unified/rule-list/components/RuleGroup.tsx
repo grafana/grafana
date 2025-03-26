@@ -66,7 +66,7 @@ export const EvaluationGroupLoader = ({
                 state={PromAlertingRuleState.Inactive}
                 name={rule.name}
                 href={'/'}
-                summary={prometheusRuleType.alertingRule(rule) ? rule.annotations?.[Annotation.summary] : undefined}
+                summary={prometheusRuleType.isAlertingRule(rule) ? rule.annotations?.[Annotation.summary] : undefined}
               />;
 
               return null;

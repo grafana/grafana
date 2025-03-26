@@ -91,7 +91,7 @@ export function normalizeRuleGroup(group: PrometheusAPI.RuleGroup): PrometheusAP
   return produce(group, (draft) => {
     draft.rules.forEach((rule) => {
       rule.query = rule.query || '';
-      if (prometheusRuleType.alertingRule(rule)) {
+      if (prometheusRuleType.isAlertingRule(rule)) {
         // There's a possibility that a custom/unexpected datasource might response with
         // `type: alerting` but no state
         // In this case, we fall back to `Inactive` state so that elsewhere in the UI we don't fail/have to handle the edge case

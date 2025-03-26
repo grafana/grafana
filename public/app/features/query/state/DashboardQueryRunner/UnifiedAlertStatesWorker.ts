@@ -82,7 +82,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
         const panelIdToAlertState: Record<number, AlertStateInfo> = {};
         groups.forEach((group) =>
           group.rules.forEach((rule) => {
-            if (prometheusRuleType.alertingRule(rule) && rule.annotations && rule.annotations[Annotation.panelID]) {
+            if (prometheusRuleType.isAlertingRule(rule) && rule.annotations && rule.annotations[Annotation.panelID]) {
               this.hasAlertRules[dashboard.uid] = true;
               const panelId = Number(rule.annotations[Annotation.panelID]);
               const state = promAlertStateToAlertState(rule.state);

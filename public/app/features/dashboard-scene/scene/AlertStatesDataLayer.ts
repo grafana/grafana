@@ -96,7 +96,7 @@ export class AlertStatesDataLayer
         const panelIdToAlertState: Record<number, AlertStateInfo> = {};
         groups.forEach((group) =>
           group.rules.forEach((rule) => {
-            if (prometheusRuleType.alertingRule(rule) && rule.annotations?.[Annotation.panelID]) {
+            if (prometheusRuleType.isAlertingRule(rule) && rule.annotations?.[Annotation.panelID]) {
               this.hasAlertRules = true;
               const panelId = Number(rule.annotations[Annotation.panelID]);
               const state = promAlertStateToAlertState(rule.state);

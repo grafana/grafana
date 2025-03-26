@@ -51,7 +51,7 @@ export const GroupBy = (props: Props) => {
     const allLabels = Object.keys(promRulesByDatasource)
       .flatMap((datasource) => promRulesByDatasource[datasource].result ?? [])
       .flatMap((rules) => rules.groups)
-      .flatMap((group) => group.rules.filter((rule) => prometheusRuleType.alertingRule(rule)))
+      .flatMap((group) => group.rules.filter((rule) => prometheusRuleType.isAlertingRule(rule)))
       .flatMap((rule) => rule.alerts ?? [])
       .map((alert) => Object.keys(alert.labels ?? {}))
       .flatMap((labels) => labels.filter((label) => !isPrivateLabelKey(label)));
