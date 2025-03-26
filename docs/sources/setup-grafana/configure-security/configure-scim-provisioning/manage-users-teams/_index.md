@@ -125,6 +125,10 @@ Choose one synchronization method:
 - If you enable SCIM, disable Team Sync and use SCIM for team management
 - If you prefer Team Sync, do not enable SCIM provisioning
 
+{{< admonition type="warning" >}}
+**Migration Considerations:** Currently, there is no official migration path or tooling available for transitioning from Team Sync to SCIM. Attempting to migrate without proper tooling can lead to service disruption, loss of team permissions, and potential access issues. We recommend keeping your existing Team Sync setup until official migration tooling becomes available.
+{{< /admonition >}}
+
 ### Key differences
 
 SCIM Group Sync provides several advantages over Team Sync:
@@ -154,42 +158,3 @@ Team membership maintenance:
 - Continuously syncs team memberships
 - Removes users from teams when removed from groups
 - Updates team memberships when groups change
-
-### Migrating from Team Sync to SCIM
-
-When transitioning from Team Sync to SCIM, consider the following important points:
-
-{{< admonition type="warning" >}}
-Team names must be unique in Grafana. You cannot have two teams with the same name, even if one is managed by Team Sync and the other by SCIM.
-{{< /admonition >}}
-
-#### Existing teams and permissions
-
-When migrating from Team Sync to SCIM:
-
-- Existing teams must be deleted before SCIM can create new teams with the same names
-- Team memberships will be managed by SCIM after migration
-- Team permissions must be manually reassigned through Terraform, Grafana API or Grafana UI
-- Document current team permissions before migration
-- Plan the migration to minimize service disruption
-
-#### Migration process
-
-While SCIM manages team memberships automatically, team permissions must be managed separately through your existing provisioning methods.
-
-1. Document current team structure:
-
-   - List all existing teams
-   - Record current team memberships
-   - Document team permissions and access levels
-
-2. Prepare for migration:
-
-   - Disable Team Sync
-   - Delete existing teams (after documenting their configuration)
-   - Enable SCIM
-
-3. Restore team permissions:
-   - Use your preferred method (Terraform, API, or UI) to reassign permissions
-   - Verify access levels are correctly restored
-   - Test team access for key users
