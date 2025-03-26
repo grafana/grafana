@@ -229,7 +229,6 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 
 	// Reset the results after the export as pull will operate on the same resources
 	progress.ResetResults()
-
 	progress.SetMessage(ctx, "pulling resources")
 	err = w.syncWorker.Process(ctx, repo, provisioning.Job{
 		Spec: provisioning.JobSpec{
@@ -241,6 +240,8 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 	if err != nil {
 		return fmt.Errorf("pull resources: %w", err)
 	}
+
+	// Use generic client to remove all unprovisioned resources
 
 	folderClient, err := parser.Clients().Folder()
 	if err != nil {
@@ -306,6 +307,7 @@ func newMigrationJob(ctx context.Context,
 	}, nil
 }
 
+// TODO: this is copied from the export job
 func (j *migrationJob) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
 	if j.userInfo == nil {
 		return ctx

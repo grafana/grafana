@@ -83,6 +83,8 @@ func (j *migrationJob) migrateLegacyFolders(ctx context.Context) error {
 			Path:     p,
 		}
 
+		// TODO: should this be part of the dual writer?
+		// or with a single create method in the repository?
 		_, err := j.target.Read(ctx, p, "")
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			result.Error = fmt.Errorf("failed to check if folder exists before writing: %w", err)

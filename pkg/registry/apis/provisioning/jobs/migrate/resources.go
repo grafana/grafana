@@ -10,8 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -54,6 +54,7 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{})
 	parsed.Meta.SetSourceProperties(utils.SourceProperties{})
 
+	// TODO: this seems to be same logic as the export job
 	if result := r.job.write(ctx, parsed.Obj); result.Error != nil {
 		r.job.progress.Record(ctx, result)
 		if err := r.job.progress.TooManyErrors(); err != nil {
@@ -65,19 +66,17 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 }
 
 func (j *migrationJob) migrateLegacyResources(ctx context.Context) error {
-	kinds := []schema.GroupVersionResource{{
-		Group:    dashboard.GROUP,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-		Version:  "v1alpha1",
-	}}
+	for _, kind := range resources.SupportedResources {
+		// Skip folders, they are handled separately
+		if kind.Resource == folders.RESOURCE {
+			continue
+		}
 
-	for _, kind := range kinds {
 		j.progress.SetMessage(ctx, fmt.Sprintf("migrate %s resource", kind.Resource))
-		gr := kind.GroupResource()
 		opts := legacy.MigrateOptions{
 			Namespace:   j.namespace,
 			WithHistory: j.options.History,
-			Resources:   []schema.GroupResource{gr},
+			Resources:   []schema.GroupResource{kind},
 			Store:       parquet.NewBulkResourceWriterClient(&resourceReader{job: j}),
 			OnlyCount:   true, // first get the count
 		}
@@ -106,6 +105,7 @@ func (j *migrationJob) migrateLegacyResources(ctx context.Context) error {
 }
 
 func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
+	// TODO: this is copied from the export job
 	gvk := obj.GroupVersionKind()
 	result := jobs.JobResourceResult{
 		Name:     obj.GetName(),
@@ -190,6 +190,7 @@ func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured
 	return result
 }
 
+// TODO: should this be part of resources package?
 func removeUnprovisioned(ctx context.Context, client dynamic.ResourceInterface, progress jobs.JobProgressRecorder) error {
 	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
 	if err != nil {

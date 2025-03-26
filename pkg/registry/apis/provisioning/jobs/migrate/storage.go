@@ -6,26 +6,15 @@ import (
 	"time"
 
 	"google.golang.org/grpc/metadata"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// called when an error exists
 func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) error {
-	kinds := []schema.GroupResource{{
-		Group:    folders.GROUP,
-		Resource: folders.RESOURCE,
-	}, {
-		Group:    dashboard.GROUP,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-	}}
-
-	for _, gr := range kinds {
+	for _, gr := range resources.SupportedResources {
 		status, _ := dual.Status(ctx, gr)
 		status.ReadUnified = false
 		status.Migrated = 0
@@ -35,19 +24,12 @@ func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) erro
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (j *migrationJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service) error {
-	kinds := []schema.GroupResource{{
-		Group:    folders.GROUP,
-		Resource: folders.RESOURCE,
-	}, {
-		Group:    dashboard.GROUP,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-	}}
-
-	for _, gr := range kinds {
+	for _, gr := range resources.SupportedResources {
 		status, _ := dual.Status(ctx, gr)
 		if status.ReadUnified {
 			return fmt.Errorf("unexpected state - already using unified storage for: %s", gr)

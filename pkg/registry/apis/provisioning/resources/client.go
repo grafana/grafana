@@ -165,3 +165,11 @@ func (c *ResourceClients) Dashboard() (dynamic.ResourceInterface, error) {
 	})
 	return v, err
 }
+
+var SupportedResources = []schema.GroupResource{{
+	Group:    folders.GROUP,
+	Resource: folders.RESOURCE,
+}, {
+	Group:    dashboard.GROUP,
+	Resource: dashboard.DASHBOARD_RESOURCE,
+}}
