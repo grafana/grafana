@@ -16,6 +16,7 @@ import {
   Stack,
   Switch,
 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
 import { Page } from '../../core/components/Page/Page';
@@ -54,7 +55,10 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const additionalActionsMenu = (
     <Menu>
       <Menu.Item
-        label="Reset to default values"
+        label={t(
+          'auth-config.provider-config-form.additional-actions-menu.label-reset-to-default-values',
+          'Reset to default values'
+        )}
         icon="history-alt"
         onClick={() => {
           setResetConfig(true);
@@ -163,7 +167,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             reset();
           }}
         />
-        <Field label="Enabled" hidden={true}>
+        <Field label={t('auth-config.provider-config-form.label-enabled', 'Enabled')} hidden={true}>
           <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
         </Field>
         <Stack gap={2} direction={'column'}>
@@ -210,13 +214,13 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
               {isSaving ? 'Saving...' : 'Save'}
             </Button>
             <LinkButton href={'/admin/authentication'} variant={'secondary'}>
-              Discard
+              <Trans i18nKey="auth-config.provider-config-form.discard">Discard</Trans>
             </LinkButton>
 
             <Dropdown overlay={additionalActionsMenu} placement="bottom-start">
               <IconButton
-                tooltip="More actions"
-                title="More actions"
+                tooltip={t('auth-config.provider-config-form.tooltip-more-actions', 'More actions')}
+                title={t('auth-config.provider-config-form.title-more-actions', 'More actions')}
                 tooltipPlacement="top"
                 size="md"
                 variant="secondary"
@@ -231,10 +235,14 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
         <ConfirmModal
           isOpen
           icon="trash-alt"
-          title="Reset"
+          title={t('auth-config.provider-config-form.title-reset', 'Reset')}
           body={
             <Stack direction={'column'} gap={3}>
-              <span>Are you sure you want to reset this configuration?</span>
+              <span>
+                <Trans i18nKey="auth-config.provider-config-form.reset-configuration">
+                  Are you sure you want to reset this configuration?
+                </Trans>
+              </span>
               <small>
                 After resetting these settings Grafana will use the provider configuration from the system (config
                 file/environment variables) if any.
