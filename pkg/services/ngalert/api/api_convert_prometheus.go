@@ -114,8 +114,6 @@ type ConvertPrometheusSrv struct {
 	alertRuleService *provisioning.AlertRuleService
 	featureToggles   featuremgmt.FeatureToggles
 	xactManager      provisioning.TransactionManager
-
-	rulerSrv *RulerSrv
 }
 
 func NewConvertPrometheusSrv(
@@ -126,7 +124,6 @@ func NewConvertPrometheusSrv(
 	alertRuleService *provisioning.AlertRuleService,
 	featureToggles featuremgmt.FeatureToggles,
 	xactManager provisioning.TransactionManager,
-	rulerSrv *RulerSrv,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -136,7 +133,6 @@ func NewConvertPrometheusSrv(
 		alertRuleService: alertRuleService,
 		featureToggles:   featureToggles,
 		xactManager:      xactManager,
-		rulerSrv:         rulerSrv,
 	}
 }
 
@@ -393,7 +389,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 		return errorToResponse(err)
 	}
 
-	group, err := srv.convertToGrafanaRuleGroup(c, ds, tds, ns.UID, promGroup, keepOriginalRuleDefinition, pauseRecordingRules, pauseAlertRules, logger)
+	group, err := srv.convertToGrafanaRuleGroup(c, ds, tds, ns.UID, promGroup, pauseRecordingRules, pauseAlertRules, keepOriginalRuleDefinition, logger)
 	if err != nil {
 		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 		return errorToResponse(err)
