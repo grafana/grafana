@@ -883,14 +883,17 @@
     {
       "metadata": {
         "name": "azureMonitorLogsBuilderEditor",
-        "resourceVersion": "1742424709998",
-        "creationTimestamp": "2025-03-19T22:51:49Z"
+        "resourceVersion": "1743001017970",
+        "creationTimestamp": "2025-03-19T22:51:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-26 14:56:57.970732 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the logs builder mode for the Azure Monitor data source",
         "stage": "preview",
         "codeowner": "@grafana/partner-datasources",
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
