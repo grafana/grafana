@@ -107,6 +107,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		paging.page = 1
 	}
 
+	// only admins can add this to the query, otherwise we may return parent folder names that are not visible to the user
 	if user.GetOrgRole() == org.RoleAdmin && options.LabelSelector != nil && options.LabelSelector.Matches(labels.Set{utils.AnnoKeyFullpath: "true"}) {
 		query.WithFullpath = true
 		query.WithFullpathUIDs = true
