@@ -1284,6 +1284,12 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
+			Name:        "tableNextGen",
+			Description: "Allows access to the new react-data-grid based table component.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+		},
+		{
 			Name:        "lokiSendDashboardPanelNames",
 			Description: "Send dashboard and panel names to Loki when querying",
 			Stage:       FeatureStageExperimental,

@@ -2647,6 +2647,7 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "copy": "Copy to Clipboard",
+      "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",

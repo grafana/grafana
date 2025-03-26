@@ -5,11 +5,11 @@ import * as React from 'react';
 import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../../themes';
+import { EXPANDER_WIDTH } from '../utils';
 
 import { Table } from './Table';
 import { TableStyles } from './styles';
-import { EXPANDER_WIDTH } from './utils';
 
 export interface Props {
   nestedData: Field;
