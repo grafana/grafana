@@ -643,6 +643,9 @@ var _ resource.ListIterator = (*listIter)(nil)
 
 // listLatest fetches the resources from the resource table.
 func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"listLatest")
+	defer span.End()
+
 	if req.NextPageToken != "" {
 		return 0, fmt.Errorf("only works for the first page")
 	}
@@ -653,7 +656,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 	iter := &listIter{sortAsc: false}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
-		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
+		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
 		}
@@ -744,6 +747,8 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 
 // getHistory fetches the resources from the resource table.
 func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"getHistory")
+	defer span.End()
 	listReq := sqlGetHistoryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Key:         req.Options.Key,
@@ -781,7 +786,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
-		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
+		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
 		}
@@ -838,7 +843,9 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 }
 
 // fetchLatestRV returns the current maximum RV in the resource table
-func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
+func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"fetchLatestRV")
+	defer span.End()
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
 		SQLTemplate: sqltemplate.New(d),
 		Group:       group,
