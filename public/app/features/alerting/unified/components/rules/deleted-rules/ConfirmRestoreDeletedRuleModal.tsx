@@ -75,7 +75,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
             Are you sure you want to restore this deleted alert rule definition?
           </Trans>
 
-          <div>{ruleToRestore && <RulePeview rule={ruleToRestore} />}</div>
+          <div>{ruleToRestore && <RulePreview rule={ruleToRestore} />}</div>
           {error && (
             <Alert severity="warning" title={errorTitle}>
               <Trans i18nKey="alerting.alertVersionHistory.restore-deleted-manually">
@@ -95,7 +95,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
   );
 };
 
-function RulePeview({ rule }: { rule: RulerRuleDTO }) {
+function RulePreview({ rule }: { rule: RulerRuleDTO }) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.content}>

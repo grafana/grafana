@@ -3410,9 +3410,9 @@
       "subtitle": "Alerting and incident management apps",
       "title": "Alerts & IRM"
     },
-    "alerts-trash": {
-      "subtitle": "See deleted alerts rules",
-      "title": "Trash"
+    "alerts-recently-deleted": {
+      "subtitle": "See recently deleted alert rules",
+      "title": "Recently deleted"
     },
     "api-keys": {
       "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
