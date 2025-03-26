@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-func (r *exportJob) loadResources(ctx context.Context) error {
+func (r *exportJob) exportResourcesFromAPIServer(ctx context.Context) error {
 	kinds := []schema.GroupVersionResource{{
 		Group:    dashboard.GROUP,
 		Resource: dashboard.DASHBOARD_RESOURCE,
@@ -27,14 +27,14 @@ func (r *exportJob) loadResources(ctx context.Context) error {
 
 	for _, kind := range kinds {
 		r.progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
-		if err := r.loadResourcesFromAPIServer(ctx, kind); err != nil {
+		if err := r.exportResourceKindFromAPIServer(ctx, kind); err != nil {
 			return fmt.Errorf("error loading %s %w", kind.Resource, err)
 		}
 	}
 	return nil
 }
 
-func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.GroupVersionResource) error {
+func (r *exportJob) exportResourceKindFromAPIServer(ctx context.Context, kind schema.GroupVersionResource) error {
 	client, _, err := r.client.ForResource(kind)
 	if err != nil {
 		return err

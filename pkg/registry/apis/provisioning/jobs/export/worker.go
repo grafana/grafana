@@ -99,13 +99,13 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	// Load and write all folders
 	progress.SetMessage(ctx, "start folder export")
-	err = worker.exportUnifiedStorageFolders(ctx)
+	err = worker.exportFoldersFromAPIServer(ctx)
 	if err != nil {
 		return err
 	}
 
 	progress.SetMessage(ctx, "start resource export")
-	err = worker.loadResources(ctx)
+	err = worker.exportResourcesFromAPIServer(ctx)
 	if err != nil {
 		return err
 	}

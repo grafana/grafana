@@ -16,7 +16,7 @@ import (
 )
 
 // FIXME: revise logging in this method
-func (r *exportJob) exportUnifiedStorageFolders(ctx context.Context) error {
+func (r *exportJob) exportFoldersFromAPIServer(ctx context.Context) error {
 	logger := r.logger
 	r.progress.SetMessage(ctx, "reading folder tree")
 
