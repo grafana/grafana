@@ -115,7 +115,7 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
               icon="plus"
               onClick={() => layoutManager.addPanel(getDefaultVizPanel())}
             >
-              Grouping
+              Add grouping
             </Button>
           </Dropdown>
         </div>
@@ -151,12 +151,12 @@ const getStyles = (theme: GrafanaTheme2, state: ResponsiveGridLayoutState) => ({
     '&:hover': {
       '.dashboard-canvas-add-button': {
         opacity: 1,
+        filter: 'unset',
       },
     },
   }),
   containerFillScreen: css({
-    paddingBottom: theme.spacing(5),
-    position: 'relative',
+    flexGrow: 1,
   }),
   containerEditing: css({
     paddingBottom: theme.spacing(5),
