@@ -151,5 +151,9 @@ func initResourceTables(mg *migrator.Migrator) string {
 
 	mg.AddMigration("Migrate DeletionMarkers to real Resource objects", &deletionMarkerMigrator{})
 
+	mg.AddMigration("Add index to resource_history for get trash", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Cols: []string{"namespace", "group", "resource", "action", "resource_version"}, Type: migrator.IndexType,
+	}))
+
 	return marker
 }
