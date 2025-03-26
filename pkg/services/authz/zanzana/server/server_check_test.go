@@ -184,5 +184,4 @@ func testCheck(t *testing.T, server *Server) {
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 	})
-
 }
