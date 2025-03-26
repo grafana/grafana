@@ -107,7 +107,7 @@ export const OptionsPaneCategory = React.memo(
         {/* this just provides a better experience for mouse users */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={headerStyles} onClick={onToggle}>
-          <h6 id={`button-${id}`} className={styles.title}>
+          <h6 id={`button-${id}`} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
             {renderTitle(isExpanded)}
           </h6>
 
@@ -149,6 +149,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: '1rem',
     fontWeight: theme.typography.fontWeightMedium,
     margin: 0,
+    color: theme.colors.text.secondary,
+  }),
+  titleExpanded: css({
+    color: theme.colors.text.primary,
   }),
   header: css({
     display: 'flex',
