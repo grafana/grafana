@@ -72,6 +72,14 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
 	// as the only user identifier
 
+	if v.Fullpath != "" {
+		meta.SetFullpath(v.Fullpath)
+	}
+
+	if v.FullpathUIDs != "" {
+		meta.SetFullpathUIDs(v.FullpathUIDs)
+	}
+
 	if v.CreatedBy != 0 {
 		meta.SetCreatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(v.CreatedBy, 10)))
 	}
