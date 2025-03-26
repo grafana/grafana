@@ -217,6 +217,10 @@
      },
      "type": "object"
     },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
+    },
     "noDataState": {
      "enum": [
       "Alerting",
@@ -1630,6 +1634,10 @@
     "metadata": {
      "$ref": "#/definitions/AlertRuleMetadata"
     },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
+    },
     "namespace_uid": {
      "type": "string"
     },
@@ -1779,26 +1787,6 @@
     "uptime",
     "versionInfo"
    ],
-   "type": "object"
-  },
-  "GettableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
-    }
-   },
    "type": "object"
   },
   "GettableUserConfig": {
@@ -2864,6 +2852,12 @@
     "metadata": {
      "$ref": "#/definitions/AlertRuleMetadata"
     },
+    "missing_series_evals_to_resolve": {
+     "description": "Number of consecutive evaluation intervals with no data for a dimension must pass\nbefore the alert state is considered stale and automatically resolved.\nIf set to 0, the value is reset to the default.",
+     "example": 3,
+     "format": "int64",
+     "type": "integer"
+    },
     "no_data_state": {
      "enum": [
       "Alerting",
@@ -2932,23 +2926,6 @@
       "type": "string"
      },
      "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "PostableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
     }
    },
    "type": "object"
@@ -3149,6 +3126,11 @@
       "team": "sre-team-1"
      },
      "type": "object"
+    },
+    "missingSeriesEvalsToResolve": {
+     "example": 2,
+     "format": "int64",
+     "type": "integer"
     },
     "noDataState": {
      "enum": [
@@ -4473,55 +4455,6 @@
    "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
    "type": "object"
   },
-  "TimeIntervalItem": {
-   "properties": {
-    "days_of_month": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "location": {
-     "type": "string"
-    },
-    "months": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "times": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalTimeRange"
-     },
-     "type": "array"
-    },
-    "weekdays": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "years": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "TimeIntervalTimeRange": {
-   "properties": {
-    "end_time": {
-     "type": "string"
-    },
-    "start_time": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "TimeRange": {
    "description": "Redefining this to avoid an import cycle",
    "properties": {
@@ -4976,6 +4909,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -5100,7 +5034,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"
@@ -6541,36 +6474,6 @@
   "application/json"
  ],
  "responses": {
-  "GetAllIntervalsResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableTimeIntervals"
-    },
-    "type": "array"
-   }
-  },
-  "GetIntervalsByNameResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableTimeIntervals"
-   }
-  },
-  "GetReceiverResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableApiReceiver"
-   }
-  },
-  "GetReceiversResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableApiReceiver"
-    },
-    "type": "array"
-   }
-  },
   "GettableHistoricUserConfigs": {
    "description": "",
    "schema": {

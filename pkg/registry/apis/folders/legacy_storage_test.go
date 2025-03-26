@@ -8,13 +8,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"encoding/base64"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -117,5 +120,77 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 		require.Equal(t, "2|2", string(token))
 		require.Equal(t, int64(2), folderService.LastQuery.Limit)
 		require.Equal(t, int64(1), folderService.LastQuery.Page)
+	})
+}
+
+func TestLegacyStorage_List_LabelSelector(t *testing.T) {
+	usr := &user.SignedInUser{UserID: 1, OrgRole: org.RoleAdmin}
+	ctx := identity.WithRequester(context.Background(), usr)
+	folderService := &foldertest.FakeService{}
+	storage := legacyStorage{
+		service:    folderService,
+		namespacer: func(_ int64) string { return "1" },
+	}
+
+	t.Run("should handle nil label selector", func(t *testing.T) {
+		options := &metainternalversion.ListOptions{
+			LabelSelector: nil,
+		}
+
+		folders := []*folder.Folder{
+			{
+				UID:   "folder-1",
+				Title: "Folder 1",
+			},
+		}
+		folderService.ExpectedFolders = folders
+
+		result, err := storage.List(ctx, options)
+		require.NoError(t, err)
+
+		// verify we queried the service correctly
+		require.False(t, folderService.LastQuery.WithFullpath)
+		require.False(t, folderService.LastQuery.WithFullpathUIDs)
+
+		list, ok := result.(*v0alpha1.FolderList)
+		require.True(t, ok)
+		require.Len(t, list.Items, 1)
+	})
+
+	t.Run("should set fullpath query parameters when label selector matches", func(t *testing.T) {
+		selector, err := labels.Parse(utils.AnnoKeyFullpath + "=true")
+		require.NoError(t, err)
+		options := &metainternalversion.ListOptions{
+			LabelSelector: selector,
+		}
+
+		folders := []*folder.Folder{
+			{
+				UID:          "folder-1",
+				Title:        "Folder 1",
+				Fullpath:     "/Folder 1",
+				FullpathUIDs: "/folder-1",
+			},
+		}
+		folderService.ExpectedFolders = folders
+
+		result, err := storage.List(ctx, options)
+		require.NoError(t, err)
+
+		// verify we queried the service correctly
+		require.True(t, folderService.LastQuery.WithFullpath)
+		require.True(t, folderService.LastQuery.WithFullpathUIDs)
+
+		list, ok := result.(*v0alpha1.FolderList)
+		require.True(t, ok)
+		require.Len(t, list.Items, 1)
+
+		folder := list.Items[0]
+		meta, err := utils.MetaAccessor(&folder)
+		require.NoError(t, err)
+
+		// make sure the annotations are set
+		require.Equal(t, "/Folder 1", meta.GetFullpath())
+		require.Equal(t, "/folder-1", meta.GetFullpathUIDs())
 	})
 }

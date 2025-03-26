@@ -58,6 +58,7 @@ export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     name: 'dashboard-uid',
     namespace: 'default',
     labels: {},
+    generation: 123,
     resourceVersion: '123',
     creationTimestamp: 'creationTs',
     annotations: {
@@ -593,7 +594,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 kind: 'RowsLayoutRow',
                 spec: {
                   title: 'row1',
-                  collapsed: false,
+                  collapse: false,
                   layout: {
                     kind: 'ResponsiveGridLayout',
                     spec: {
@@ -619,7 +620,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 kind: 'RowsLayoutRow',
                 spec: {
                   title: 'row2',
-                  collapsed: true,
+                  collapse: true,
                   layout: {
                     kind: 'GridLayout',
                     spec: {

@@ -1284,6 +1284,12 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
+			Name:        "tableNextGen",
+			Description: "Allows access to the new react-data-grid based table component.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+		},
+		{
 			Name:        "lokiSendDashboardPanelNames",
 			Description: "Send dashboard and panel names to Loki when querying",
 			Stage:       FeatureStageExperimental,
@@ -1676,24 +1682,6 @@ var (
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
-		},
-		{
-			Name:              "alertingAlertmanagerExtraDedupStage",
-			Description:       "enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			RequiresRestart:   true,
-		},
-		{
-			Name:              "alertingAlertmanagerExtraDedupStageStopPipeline",
-			Description:       "works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			RequiresRestart:   true,
 		},
 		{
 			Name:         "newLogsPanel",
