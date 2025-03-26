@@ -166,6 +166,8 @@ func (s *spanner) SqlType(col *core.Column) string {
 			return fmt.Sprintf("STRING(%d)", l)
 		}
 		return "STRING(MAX)"
+	case core.Jsonb:
+		return "STRING(MAX)"
 	case core.Bool, core.TinyInt:
 		return "BOOL"
 	case core.Float, core.Double:
