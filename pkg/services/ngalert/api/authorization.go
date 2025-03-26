@@ -134,7 +134,7 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 		)
 
-	case http.MethodPost + "/api/convert/{DatasourceUID}/config/v1/rules":
+	case http.MethodPost + "/api/convert/prometheus/config/v1/rules":
 		eval = ac.EvalAll(
 			ac.EvalPermission(dashboards.ActionFoldersRead),
 			ac.EvalPermission(ac.ActionAlertingRuleCreate),

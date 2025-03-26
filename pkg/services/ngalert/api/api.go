@@ -192,7 +192,6 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 				api.AlertRules,
 				api.FeatureManager,
 				api.TransactionManager,
-				NewLotexRuler(proxy, logger),
 				rulerSrv,
 			),
 		), m)
