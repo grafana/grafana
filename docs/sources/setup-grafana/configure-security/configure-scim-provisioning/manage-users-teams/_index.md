@@ -45,10 +45,12 @@ For detailed configuration steps specific to the identity provider, see:
 SCIM uses a specific process to establish and maintain user identity between the identity provider and Grafana:
 
 1. Initial user lookup:
+
    - The identity provider looks up users in Grafana using the user's login and the Unique identifier field (configurable at IdP)
    - The identity provider expects a single result from Grafana for each user
 
 2. Identity linking:
+
    - The identity provider learns the relationship between the found Grafana user and Grafana's internal ID
    - The identity provider updates Grafana with the External ID
    - Grafana updates its authentication validations to expect this External ID
