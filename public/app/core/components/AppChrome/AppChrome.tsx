@@ -27,11 +27,10 @@ export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
-  const { dockedComponentId: dockedPluginId } = useExtensionSidebarContext();
+  const { isOpen: isExtensionSidebarOpen } = useExtensionSidebarContext();
   const state = chrome.useState();
   const theme = useTheme2();
   const scopes = useScopes();
-  const styles = useStyles2(getStyles, Boolean(state.actions) || !!scopes?.state.enabled);
 
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
@@ -39,6 +38,7 @@ export function AppChrome({ children }: Props) {
   const isScopesDashboardsOpen = Boolean(
     scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
+  const styles = useStyles2(getStyles, Boolean(state.actions) || !!scopes?.state.enabled, isExtensionSidebarOpen);
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
@@ -123,7 +123,7 @@ export function AppChrome({ children }: Props) {
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-              [styles.pageContainerMenuDockedExtensionSidebar]: dockedPluginId !== undefined,
+              [styles.pageContainerMenuDockedExtensionSidebar]: isExtensionSidebarOpen,
             })}
             id="pageContent"
           >
@@ -143,15 +143,15 @@ export function AppChrome({ children }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
+const getStyles = (theme: GrafanaTheme2, hasActions: boolean, isExtensionSidebarOpen: boolean) => {
+  // styles depend if the extension sidebar is open or not. if it is closed, we want the body to scroll
   return {
     content: css({
       display: 'flex',
       flexDirection: 'column',
       paddingTop: hasActions ? TOP_BAR_LEVEL_HEIGHT * 2 : TOP_BAR_LEVEL_HEIGHT,
       flexGrow: 1,
-      height: '100vh',
-      overflow: 'hidden',
+      ...(isExtensionSidebarOpen ? { height: '100vh', overflow: 'hidden' } : { height: 'auto' }),
     }),
     contentChromeless: css({
       paddingTop: 0,
@@ -195,9 +195,7 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       flexDirection: 'column',
       flexGrow: 1,
       label: 'page-panes',
-      height: '100%',
-      overflow: 'hidden',
-      position: 'relative',
+      ...(isExtensionSidebarOpen ? { height: '100%', overflow: 'hidden', position: 'relative' } : {}),
     }),
     pageContainerMenuDocked: css({
       paddingLeft: MENU_WIDTH,
@@ -210,9 +208,7 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
-      overflow: 'auto',
-      height: '100%',
-      minHeight: 0,
+      ...(isExtensionSidebarOpen ? { overflow: 'auto', height: '100%', minHeight: 0 } : {}),
     }),
     skipLink: css({
       position: 'fixed',

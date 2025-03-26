@@ -4,7 +4,13 @@ import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 
 import { getFocusStyles } from '../mixins';
 
-export function getElementStyles(theme: GrafanaTheme2) {
+export function getElementStyles(theme: GrafanaTheme2, isExtensionSidebarOpen?: boolean) {
+  // in case the sidebar is closed, we want the body to scroll
+  // react select tries prevent scrolling by setting overflow/padding-right on the body
+  // Need type assertion here due to the use of !important
+  // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const bodyOverflow = isExtensionSidebarOpen ? {} : { overflowY: 'auto !important' as 'auto' };
   return css({
     '*, *::before, *::after': {
       boxSizing: 'inherit',
@@ -54,6 +60,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
       // see https://github.com/rsms/inter/issues/222
       fontVariantLigatures: 'no-contextual',
       ...theme.typography.body,
+      ...bodyOverflow,
     },
 
     'h1, .h1': getVariantStyles(theme.typography.h1),

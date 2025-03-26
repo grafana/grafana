@@ -9,6 +9,10 @@ const ENABLED_EXTENSION_SIDEBAR_PLUGINS = ['grafana-investigations-app'];
 
 type ExtensionSidebarContextType = {
   /**
+   * Whether the extension sidebar is open.
+   */
+  isOpen: boolean;
+  /**
    * The id of the component that is currently docked in the sidebar. If the id is undefined, nothing will be rendered.
    */
   dockedComponentId: string | undefined;
@@ -29,6 +33,7 @@ type ExtensionSidebarContextType = {
 };
 
 export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
+  isOpen: false,
   dockedComponentId: undefined,
   setDockedComponentId: () => {},
   availableComponents: new Map(),
@@ -77,7 +82,9 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   }, [dockedComponentId]);
 
   return (
-    <ExtensionSidebarContext.Provider value={{ dockedComponentId, setDockedComponentId, availableComponents }}>
+    <ExtensionSidebarContext.Provider
+      value={{ isOpen: dockedComponentId !== undefined, dockedComponentId, setDockedComponentId, availableComponents }}
+    >
       {children}
     </ExtensionSidebarContext.Provider>
   );
