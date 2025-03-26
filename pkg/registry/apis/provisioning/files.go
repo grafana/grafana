@@ -51,7 +51,6 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 // TODO: document the synchronous write and delete on the API Spec
-// TODO: Move dual write logic to `resources` package and keep this connector simple
 func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
@@ -61,11 +60,17 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, err
 	}
 
-	reader, ok := repo.(repository.Reader)
+	readWriter, ok := repo.(repository.ReaderWriter)
 	if !ok {
-		return nil, apierrors.NewBadRequest("repository does not support read")
+		return nil, apierrors.NewBadRequest("repository does not support read-writing")
 	}
 
+	parser, err := s.parsers.GetParser(ctx, readWriter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get parser: %w", err)
+	}
+
+	dualReadWriter := resources.NewDualReadWriter(readWriter, parser)
 	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		ref := query.Get("ref")
@@ -93,7 +98,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			}
 
 			// TODO: Add pagination
-			rsp, err := reader.ReadTree(ctx, ref)
+			rsp, err := readWriter.ReadTree(ctx, ref)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -129,20 +134,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
-			parser, err := s.parsers.GetParser(ctx, reader)
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-
-			readWriter, ok := repo.(repository.ReaderWriter)
-			if !ok {
-				responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
-				return
-			}
-
-			resourceRepo := resources.NewResourceRepository(readWriter, parser)
-			resource, err := resourceRepo.Read(ctx, filePath, ref)
+			resource, err := dualReadWriter.Read(ctx, filePath, ref)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -155,19 +147,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			}
 		case http.MethodPost:
 			if isDir {
-				parser, err := s.parsers.GetParser(ctx, reader)
-				if err != nil {
-					responder.Error(err)
-					return
-				}
-
-				readWriter, ok := repo.(repository.ReaderWriter)
-				if !ok {
-					responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
-					return
-				}
-				resourceRepo := resources.NewResourceRepository(readWriter, parser)
-				obj, err = resourceRepo.CreateFolder(ctx, filePath, ref, message)
+				obj, err = dualReadWriter.CreateFolder(ctx, filePath, ref, message)
 			} else {
 				data, err := readBody(r, filesMaxBodySize)
 				if err != nil {
@@ -175,19 +155,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 					return
 				}
 
-				readWriter, ok := repo.(repository.ReaderWriter)
-				if !ok {
-					responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
-					return
-				}
-
-				parser, err := s.parsers.GetParser(ctx, readWriter)
-				if err != nil {
-					responder.Error(err)
-					return
-				}
-				resourceRepo := resources.NewResourceRepository(readWriter, parser)
-				resource, err := resourceRepo.CreateResource(ctx, filePath, ref, message, data)
+				resource, err := dualReadWriter.CreateResource(ctx, filePath, ref, message, data)
 				if err != nil {
 					responder.Error(err)
 					return
@@ -205,19 +173,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 					return
 				}
 
-				readWriter, ok := repo.(repository.ReaderWriter)
-				if !ok {
-					responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
-					return
-				}
-
-				parser, err := s.parsers.GetParser(ctx, readWriter)
-				if err != nil {
-					responder.Error(err)
-					return
-				}
-				resourceRepo := resources.NewResourceRepository(readWriter, parser)
-				resource, err := resourceRepo.UpdateResource(ctx, filePath, ref, message, data)
+				resource, err := dualReadWriter.UpdateResource(ctx, filePath, ref, message, data)
 				if err != nil {
 					responder.Error(err)
 					return
@@ -225,20 +181,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				obj = resource.AsResourceWrapper()
 			}
 		case http.MethodDelete:
-			parser, err := s.parsers.GetParser(ctx, reader)
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-
-			readWriter, ok := repo.(repository.ReaderWriter)
-			if !ok {
-				responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
-				return
-			}
-
-			resourceRepo := resources.NewResourceRepository(readWriter, parser)
-			resource, err := resourceRepo.Delete(ctx, filePath, ref, message)
+			resource, err := dualReadWriter.Delete(ctx, filePath, ref, message)
 			if err != nil {
 				responder.Error(err)
 				return

@@ -13,18 +13,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// ResourceRepository is a wrapper around a repository that can read and write resources
+// DualReadWriter is a wrapper around a repository that can read and write resources
 // TODO: it does not support folders yet
-type ResourceRepository struct {
+type DualReadWriter struct {
 	repo   repository.ReaderWriter
 	parser *Parser
 }
 
-func NewResourceRepository(repo repository.ReaderWriter, parser *Parser) *ResourceRepository {
-	return &ResourceRepository{repo: repo, parser: parser}
+func NewDualReadWriter(repo repository.ReaderWriter, parser *Parser) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser}
 }
 
-func (r *ResourceRepository) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
+func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
 	// TODO: implement this
 	if safepath.IsDir(path) {
 		return nil, fmt.Errorf("folder read not supported")
@@ -54,7 +54,7 @@ func (r *ResourceRepository) Read(ctx context.Context, path string, ref string) 
 	return parsed, nil
 }
 
-func (r *ResourceRepository) Delete(ctx context.Context, path string, ref string, message string) (*ParsedResource, error) {
+func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, message string) (*ParsedResource, error) {
 	if err := repository.IsWriteAllowed(r.repo.Config(), ref); err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (r *ResourceRepository) Delete(ctx context.Context, path string, ref string
 
 // CreateFolder creates a new folder in the repository
 // FIXME: fix signature to return ParsedResource
-func (r *ResourceRepository) CreateFolder(ctx context.Context, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
+func (r *DualReadWriter) CreateFolder(ctx context.Context, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
 	if err := repository.IsWriteAllowed(r.repo.Config(), ref); err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (r *ResourceRepository) CreateFolder(ctx context.Context, path string, ref 
 }
 
 // CreateResource creates a new resource in the repository
-func (r *ResourceRepository) CreateResource(ctx context.Context, path string, ref string, message string, data []byte) (*ParsedResource, error) {
+func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref string, message string, data []byte) (*ParsedResource, error) {
 	if err := repository.IsWriteAllowed(r.repo.Config(), ref); err != nil {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func (r *ResourceRepository) CreateResource(ctx context.Context, path string, re
 }
 
 // UpdateResource updates a resource in the repository
-func (r *ResourceRepository) UpdateResource(ctx context.Context, path string, ref string, message string, data []byte) (*ParsedResource, error) {
+func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref string, message string, data []byte) (*ParsedResource, error) {
 	if err := repository.IsWriteAllowed(r.repo.Config(), ref); err != nil {
 		return nil, err
 	}
