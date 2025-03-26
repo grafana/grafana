@@ -56,7 +56,7 @@ jobs:
             conf/
             e2e/test-plugins/
             devenv/
-          key: ${{ runner.os }}-grafana-${{ hashFiles('go.mod', 'package-lock.json', 'Makefile') }}
+          key: ${{ runner.os }}-grafana-${{ hashFiles('go.mod', 'package-lock.json', 'Makefile', 'pkg/storage/**/*.go', 'public/app/features/search/**/*.ts', 'public/app/features/search/**/*.tsx') }}
 
       - name: Build Grafana (Runs Only If Not Cached)
         if: steps.cache-grafana.outputs.cache-hit != 'true'
@@ -100,8 +100,14 @@ jobs:
               e2e/test-plugins/
               devenv/
             key: ${{ runner.os }}-grafana-${{ github.sha }}
-
-        - name: Run tests for $(basename "${{ matrix.ini_file }}")
+        - name: Prettify the name
+          run: echo "Running tests for $(basename "${{ matrix.ini_file }}")"
+        - name: Set the step name
+          id: set_file_name
+          run: |
+            FILE_NAME=$(basename "${{ matrix.ini_file }}" .ini)
+            echo "FILE_NAME=$FILE_NAME" >> $GITHUB_ENV
+        - name: Run tests for ${{ env.FILE_NAME }}
           run: |
             cp -rf ${{ matrix.ini_file }} ${{ github.workspace }}/scripts/grafana-server/custom.ini
             yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
