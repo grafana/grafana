@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { Field, GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { Button, ColorPicker, useStyles2 } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { FieldNamePicker } from '@grafana/ui/internal';
 
 import { ArcOption, NodeGraphOptions } from '../types';
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { Alert, useStyles2 } from '@grafana/ui/src';
+import { Alert, useStyles2 } from '@grafana/ui';
 
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';

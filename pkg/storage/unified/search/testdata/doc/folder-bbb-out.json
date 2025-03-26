@@ -15,5 +15,6 @@
   "manager": {
     "kind": "repo",
     "id": "MyGIT"
-  }
+  },
+  "managedBy": "repo:MyGIT"
 }

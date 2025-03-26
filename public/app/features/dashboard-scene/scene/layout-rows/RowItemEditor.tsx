@@ -10,26 +10,17 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { EditPaneHeader } from '../../edit-pane/EditPaneHeader';
-import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
-import { DashboardScene } from '../DashboardScene';
-import { DashboardLayoutSelector } from '../layouts-shared/DashboardLayoutSelector';
+import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
+import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
+import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
+import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { RowItem } from './RowItem';
 
 export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] {
   const { layout } = model.useState();
   const rowOptions = useMemo(() => {
-    const dashboard = getDashboardSceneFor(model);
-
-    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.rows-layout.item-name', 'Row'),
-      id: 'row-options',
-      isOpenable: false,
-      renderTitle: () => (
-        <EditPaneHeader title={t('dashboard.rows-layout.item-name', 'Row')} onDelete={() => model.onDelete()} />
-      ),
-    })
+    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.option.title', 'Title'),
@@ -41,25 +32,13 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
           title: t('dashboard.rows-layout.option.height', 'Height'),
           render: () => <RowHeightSelect row={model} />,
         })
-      )
-      .addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.layout.common.layout', 'Layout'),
-          render: () => <DashboardLayoutSelector layoutManager={layout} />,
-        })
       );
-
-    if (layout.getOptions) {
-      for (const option of layout.getOptions()) {
-        editPaneHeaderOptions.addItem(option);
-      }
-    }
 
     editPaneHeaderOptions
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.option.repeat', 'Repeat for'),
-          render: () => <RowRepeatSelect row={model} dashboard={dashboard} />,
+          render: () => <RowRepeatSelect row={model} />,
         })
       )
       .addItem(
@@ -70,16 +49,30 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
       );
 
     return editPaneHeaderOptions;
-  }, [layout, model]);
+  }, [model]);
 
-  return [rowOptions];
+  const layoutCategory = useLayoutCategory(layout);
+
+  const conditionalRenderingOptions = useMemo(() => {
+    return useConditionalRenderingEditor(model.state.conditionalRendering);
+  }, [model]);
+
+  const editOptions = [rowOptions, layoutCategory];
+
+  if (conditionalRenderingOptions) {
+    editOptions.push(conditionalRenderingOptions);
+  }
+
+  return editOptions;
 }
 
 function RowTitleInput({ row }: { row: RowItem }) {
   const { title } = row.useState();
+  const ref = useEditPaneInputAutoFocus();
 
   return (
     <Input
+      ref={ref}
       title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
       value={title}
       onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
@@ -104,8 +97,9 @@ function RowHeightSelect({ row }: { row: RowItem }) {
   return <RadioButtonGroup options={options} value={height} onChange={(option) => row.onChangeHeight(option)} />;
 }
 
-function RowRepeatSelect({ row, dashboard }: { row: RowItem; dashboard: DashboardScene }) {
+function RowRepeatSelect({ row }: { row: RowItem }) {
   const { layout } = row.useState();
+  const dashboard = useDashboard(row);
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);

@@ -31,6 +31,8 @@ import (
 const (
 	// datasourceUIDHeader is the name of the header that specifies the UID of the datasource to be used for the rules.
 	datasourceUIDHeader = "X-Grafana-Alerting-Datasource-UID"
+	// targetDatasourceUIDHeader is the name of the header that specifies the UID of the target datasource to be used for recording rules.
+	targetDatasourceUIDHeader = "X-Grafana-Alerting-Target-Datasource-UID"
 
 	// If the folderUIDHeader is present, namespaces and rule groups will be created in the specified folder.
 	// If not, the root folder will be used as the default.
@@ -188,11 +190,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 	}
 	logger.Info("Deleting all Prometheus-imported rule groups", "folder_uid", namespace.UID, "folder_title", namespaceTitle)
 
+	provenance := getProvenance(c)
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:          []string{namespace.UID},
 		ImportedPrometheusRule: util.Pointer(true),
 	}
-	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, models.ProvenanceConvertedPrometheus, filterOpts)
+	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -218,7 +221,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 	}
 	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
 
-	err = srv.alertRuleService.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folder.UID, group, models.ProvenanceConvertedPrometheus)
+	provenance := getProvenance(c)
+	err = srv.alertRuleService.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folder.UID, group, provenance)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -349,16 +353,35 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 	ds, err := srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), datasourceUID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		logger.Error("Failed to get datasource", "datasource_uid", datasourceUID, "error", err)
-		return errorToResponse(err)
+		return errorToResponse(fmt.Errorf("failed to get datasource: %w", err))
 	}
 
-	group, err := srv.convertToGrafanaRuleGroup(c, ds, ns.UID, promGroup, logger)
+	// By default the target datasource is the same as the query datasource,
+	// but if the header "X-Grafana-Alerting-Target-Datasource-UID" is present, we use that instead.
+	tds := ds
+	if uid := strings.TrimSpace(c.Req.Header.Get(targetDatasourceUIDHeader)); uid != "" {
+		tds, err = srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), uid, c.SignedInUser, c.SkipDSCache)
+		if err != nil {
+			logger.Error("Failed to get target datasource for recording rules", "datasource_uid", uid, "error", err)
+			return errorToResponse(fmt.Errorf("failed to get recording rules target datasource: %w", err))
+		}
+	}
+
+	provenance := getProvenance(c)
+
+	// If the provenance is not ConvertedPrometheus, we don't keep the original rule definition.
+	// This is because the rules can be modified through the UI, which may break compatibility
+	// with the Prometheus format. We only preserve the original rule definition
+	// to ensure we can return them in this API in Prometheus format.
+	keepOriginalRuleDefinition := provenance == models.ProvenanceConvertedPrometheus
+
+	group, err := srv.convertToGrafanaRuleGroup(c, ds, tds, ns.UID, promGroup, keepOriginalRuleDefinition, logger)
 	if err != nil {
 		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 		return errorToResponse(err)
 	}
 
-	err = srv.alertRuleService.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, *group, models.ProvenanceConvertedPrometheus)
+	err = srv.alertRuleService.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, *group, provenance)
 	if err != nil {
 		logger.Error("Failed to replace rule group", "error", err)
 		return errorToResponse(err)
@@ -387,7 +410,15 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 	return ns, nil
 }
 
-func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(c *contextmodel.ReqContext, ds *datasources.DataSource, namespaceUID string, promGroup apimodels.PrometheusRuleGroup, logger log.Logger) (*models.AlertRuleGroup, error) {
+func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
+	c *contextmodel.ReqContext,
+	ds *datasources.DataSource,
+	tds *datasources.DataSource,
+	namespaceUID string,
+	promGroup apimodels.PrometheusRuleGroup,
+	keepOriginalRuleDefinition bool,
+	logger log.Logger,
+) (*models.AlertRuleGroup, error) {
 	logger.Info("Converting Prometheus rules to Grafana rules", "rules", len(promGroup.Rules), "folder_uid", namespaceUID, "datasource_uid", ds.UID, "datasource_type", ds.Type)
 
 	rules := make([]prom.PrometheusRule, len(promGroup.Rules))
@@ -420,15 +451,18 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(c *contextmodel.ReqCo
 
 	converter, err := prom.NewConverter(
 		prom.Config{
-			DatasourceUID:   ds.UID,
-			DatasourceType:  ds.Type,
-			DefaultInterval: srv.cfg.DefaultRuleEvaluationInterval,
+			DatasourceUID:        ds.UID,
+			DatasourceType:       ds.Type,
+			TargetDatasourceUID:  tds.UID,
+			TargetDatasourceType: tds.Type,
+			DefaultInterval:      srv.cfg.DefaultRuleEvaluationInterval,
 			RecordingRules: prom.RulesConfig{
 				IsPaused: pauseRecordingRules,
 			},
 			AlertRules: prom.RulesConfig{
 				IsPaused: pauseAlertRules,
 			},
+			KeepOriginalRuleDefinition: util.Pointer(keepOriginalRuleDefinition),
 		},
 	)
 	if err != nil {
@@ -536,4 +570,14 @@ func promGroupHasRecordingRules(promGroup apimodels.PrometheusRuleGroup) bool {
 		}
 	}
 	return false
+}
+
+// getProvenance determines the provenance value to use for rules created via the Prometheus conversion API.
+// If the X-Disable-Provenance header is present in the request, returns ProvenanceNone,
+// otherwise returns ProvenanceConvertedPrometheus.
+func getProvenance(ctx *contextmodel.ReqContext) models.Provenance {
+	if _, disabled := ctx.Req.Header[disableProvenanceHeaderName]; disabled {
+		return models.ProvenanceNone
+	}
+	return models.ProvenanceConvertedPrometheus
 }

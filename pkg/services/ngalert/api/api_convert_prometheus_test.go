@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -123,15 +122,13 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		expectedRules := make(map[string]string)
 		for _, rule := range simpleGroup.Rules {
 			if rule.Alert != "" {
-				title := fmt.Sprintf("[%s] %s", simpleGroup.Name, rule.Alert)
 				promRuleYAML, err := yaml.Marshal(rule)
 				require.NoError(t, err)
-				expectedRules[title] = string(promRuleYAML)
+				expectedRules[rule.Alert] = string(promRuleYAML)
 			} else if rule.Record != "" {
-				title := fmt.Sprintf("[%s] %s", simpleGroup.Name, rule.Record)
 				promRuleYAML, err := yaml.Marshal(rule)
 				require.NoError(t, err)
-				expectedRules[title] = string(promRuleYAML)
+				expectedRules[rule.Record] = string(promRuleYAML)
 			}
 		}
 
@@ -144,6 +141,11 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			promDefinition, err := r.PrometheusRuleDefinition()
 			require.NoError(t, err)
 			require.Equal(t, expectedDef, promDefinition)
+
+			// Verify provenance was set to ProvenanceConvertedPrometheus
+			prov, err := provenanceStore.GetProvenance(context.Background(), r, 1)
+			require.NoError(t, err)
+			require.Equal(t, models.ProvenanceConvertedPrometheus, prov)
 		}
 	})
 
@@ -340,6 +342,88 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 				require.Equal(t, tc.expectedStatus, response.Status())
 			})
 		}
+	})
+
+	t.Run("with disable provenance header should use ProvenanceNone", func(t *testing.T) {
+		provenanceStore := fakes.NewFakeProvisioningStore()
+		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore))
+
+		// Create a folder in the root
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		// Create request with the X-Disable-Provenance header
+		rc := createRequestCtx()
+		rc.Req.Header.Set("X-Disable-Provenance", "true")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, fldr.Title, simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Get the created rules
+		rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 2)
+
+		// Verify provenance was set to ProvenanceNone
+		for _, r := range rules {
+			prov, err := provenanceStore.GetProvenance(context.Background(), r, 1)
+			require.NoError(t, err)
+			require.Equal(t, models.ProvenanceNone, prov, "Provenance should be ProvenanceNone when X-Disable-Provenance header is set")
+			// Prometheus rule definition should not be saved when provenance is disabled
+			require.Nil(t, r.Metadata.PrometheusStyleRule)
+		}
+	})
+
+	t.Run("returns error when target datasource does not exist", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		rc.Req.Header.Set(targetDatasourceUIDHeader, "some-data-source")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusNotFound, response.Status())
+		require.Contains(t, string(response.Body()), "failed to get recording rules target datasource")
+	})
+
+	t.Run("uses target datasource for recording rules", func(t *testing.T) {
+		srv, dsCache, ruleStore, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		targetDSUID := util.GenerateShortUID()
+		ds := &datasources.DataSource{
+			UID:  targetDSUID,
+			Type: datasources.DS_PROMETHEUS,
+		}
+		dsCache.DataSources = append(dsCache.DataSources, ds)
+		rc.Req.Header.Set(targetDatasourceUIDHeader, targetDSUID)
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Record: "recorded-metric",
+					Expr:   "vector(1)",
+					Labels: map[string]string{
+						"severity": "warning",
+					},
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		remaining, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, remaining, 1)
+		require.NotNil(t, remaining[0].Record)
+		require.Equal(t, targetDSUID, remaining[0].Record.TargetDatasourceUID)
 	})
 }
 
@@ -743,6 +827,29 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, remaining)
 		})
+
+		t.Run("with disable provenance header should still be able to delete rules", func(t *testing.T) {
+			provenanceStore := fakes.NewFakeProvisioningStore()
+			srv, ruleStore, fldr, rule := initNamespace("prometheus definition", withProvenanceStore(provenanceStore))
+
+			// Mark the rule as provisioned with API provenance
+			err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceConvertedPrometheus)
+			require.NoError(t, err)
+
+			rc := createRequestCtx()
+			rc.Req.Header.Set("X-Disable-Provenance", "true")
+
+			response := srv.RouteConvertPrometheusDeleteNamespace(rc, fldr.Title)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			// Verify the rule was deleted
+			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+				UID:   rule.UID,
+				OrgID: rule.OrgID,
+			})
+			require.Error(t, err)
+			require.Nil(t, remaining)
+		})
 	})
 }
 
@@ -854,6 +961,29 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, remaining)
 		})
+
+		t.Run("with disable provenance header should still be able to delete rules", func(t *testing.T) {
+			provenanceStore := fakes.NewFakeProvisioningStore()
+			srv, ruleStore, fldr, rule := initGroup("", groupName, withProvenanceStore(provenanceStore))
+
+			// Mark the rule as provisioned with API provenance
+			err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceConvertedPrometheus)
+			require.NoError(t, err)
+
+			rc := createRequestCtx()
+			rc.Req.Header.Set("X-Disable-Provenance", "true")
+
+			response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, groupName)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			// Verify the rule was deleted
+			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+				UID:   rule.UID,
+				OrgID: rule.OrgID,
+			})
+			require.Error(t, err)
+			require.Nil(t, remaining)
+		})
 	})
 }
 
@@ -890,7 +1020,7 @@ func withFeatureToggles(toggles featuremgmt.FeatureToggles) convertPrometheusSrv
 	}
 }
 
-func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, datasources.CacheService, *fakes.RuleStore, *foldertest.FakeService) {
+func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, *dsfakes.FakeCacheService, *fakes.RuleStore, *foldertest.FakeService) {
 	t.Helper()
 
 	// By default the quota checker will allow the operation
@@ -993,5 +1123,34 @@ func TestGetWorkingFolderUID(t *testing.T) {
 
 		folderUID := getWorkingFolderUID(rc)
 		require.Equal(t, specifiedFolderUID, folderUID)
+	})
+}
+
+func TestGetProvenance(t *testing.T) {
+	t.Run("should return ProvenanceConvertedPrometheus when header is not present", func(t *testing.T) {
+		rc := createRequestCtx()
+		// Ensure the header is not present
+		rc.Req.Header.Del(disableProvenanceHeaderName)
+
+		provenance := getProvenance(rc)
+		require.Equal(t, models.ProvenanceConvertedPrometheus, provenance)
+	})
+
+	t.Run("should return ProvenanceNone when header is present", func(t *testing.T) {
+		rc := createRequestCtx()
+		// Set the disable provenance header
+		rc.Req.Header.Set(disableProvenanceHeaderName, "true")
+
+		provenance := getProvenance(rc)
+		require.Equal(t, models.ProvenanceNone, provenance)
+	})
+
+	t.Run("should return ProvenanceNone when header is present with any value", func(t *testing.T) {
+		rc := createRequestCtx()
+		// Set the disable provenance header with an empty value
+		rc.Req.Header.Set(disableProvenanceHeaderName, "")
+
+		provenance := getProvenance(rc)
+		require.Equal(t, models.ProvenanceNone, provenance)
 	})
 }

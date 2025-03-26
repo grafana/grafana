@@ -19,11 +19,12 @@ type SQLCommand struct {
 	query       string
 	varsToQuery []string
 	refID       string
+	limit       int64
 	format      string
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, format, rawSQL string) (*SQLCommand, error) {
+func NewSQLCommand(refID, format, rawSQL string, limit int64) (*SQLCommand, error) {
 	if rawSQL == "" {
 		return nil, errutil.BadRequest("sql-missing-query",
 			errutil.WithPublicMessage("missing SQL query"))
@@ -41,16 +42,18 @@ func NewSQLCommand(refID, format, rawSQL string) (*SQLCommand, error) {
 	if tables != nil {
 		logger.Debug("REF tables", "tables", tables, "sql", rawSQL)
 	}
+
 	return &SQLCommand{
 		query:       rawSQL,
 		varsToQuery: tables,
 		refID:       refID,
+		limit:       limit,
 		format:      format,
 	}, nil
 }
 
 // UnmarshalSQLCommand creates a SQLCommand from Grafana's frontend query.
-func UnmarshalSQLCommand(rn *rawNode) (*SQLCommand, error) {
+func UnmarshalSQLCommand(rn *rawNode, limit int64) (*SQLCommand, error) {
 	if rn.TimeRange == nil {
 		logger.Error("time range must be specified for refID", "refID", rn.RefID)
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
@@ -73,7 +76,7 @@ func UnmarshalSQLCommand(rn *rawNode) (*SQLCommand, error) {
 		format = ""
 	}
 
-	return NewSQLCommand(rn.RefID, format, expression)
+	return NewSQLCommand(rn.RefID, format, expression, limit)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -99,12 +102,23 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		allFrames = append(allFrames, frames...)
 	}
 
-	rsp := mathexp.Results{}
-
-	db := sql.DB{}
+	totalCells := totalCells(allFrames)
+	// limit of 0 or less means no limit (following convention)
+	if gr.limit > 0 && totalCells > gr.limit {
+		return mathexp.Results{},
+			fmt.Errorf(
+				"SQL expression: total cell count across all input tables exceeds limit of %d. Total cells: %d",
+				gr.limit,
+				totalCells,
+			)
+	}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
+
+	db := sql.DB{}
 	frame, err := db.QueryFrames(ctx, gr.refID, gr.query, allFrames)
+
+	rsp := mathexp.Results{}
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err
@@ -143,4 +157,16 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 func (gr *SQLCommand) Type() string {
 	return TypeSQL.String()
+}
+
+func totalCells(frames []*data.Frame) (total int64) {
+	for _, frame := range frames {
+		if frame != nil {
+			// Calculate cells as rows × columns
+			rows := int64(frame.Rows())
+			cols := int64(len(frame.Fields))
+			total += rows * cols
+		}
+	}
+	return
 }
