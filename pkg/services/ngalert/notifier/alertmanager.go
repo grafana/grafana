@@ -11,7 +11,6 @@ import (
 
 	alertingHttp "github.com/grafana/alerting/http"
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/notify/stages"
 	"github.com/grafana/alerting/receivers"
 	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/config"
@@ -125,15 +124,6 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		},
 	}
 	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
-	action := stages.Disabled
-	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerExtraDedupStage) {
-		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerExtraDedupStageStopPipeline) {
-			action = stages.StopPipeline
-		} else {
-			action = stages.LogOnly
-		}
-		l.Info("Initializing Alertmanager", "extra_dedup_stage", action)
-	}
 
 	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
 		ExternalURL:        cfg.AppURL,
@@ -145,7 +135,6 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			MaxSilences:         cfg.UnifiedAlerting.AlertmanagerMaxSilencesCount,
 			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
 		},
-		PipelineAndStateTimestampsMismatchAction: action,
 	}
 
 	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l))
