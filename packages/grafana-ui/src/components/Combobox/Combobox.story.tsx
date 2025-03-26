@@ -107,6 +107,26 @@ export const CustomValue: Story = {
   render: BaseCombobox,
 };
 
+export const GroupsWithMixedLabels: Story = {
+  args: {
+    options: [
+      { label: 'One', value: 'one', group: 'Group 1' },
+      { label: 'Two', value: 'two', group: 'Group 1' },
+      { label: 'Three', value: 'three', group: 'Group 3' },
+      { label: 'Four', value: 'four', group: 'Group 1' },
+      { label: 'Five', value: 'five' },
+      { label: 'Six', value: 'six' },
+      { label: 'Seven', value: 'seven', group: 'Group 2' },
+      { label: 'Eight', value: 'eight', group: 'Group 3' },
+      { label: 'Nine', value: 'nine', group: 'Group 3' },
+      { label: 'Ten', value: 'ten', group: 'Group 3' },
+      { label: 'Eleven', value: 'eleven' },
+    ],
+    value: '',
+  },
+  render: BaseCombobox,
+};
+
 export const Groups: Story = {
   args: {
     options: await generateGroupingOptions(500),

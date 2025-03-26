@@ -14,6 +14,14 @@ const options: ComboboxOption[] = [
   { label: 'Option 3', value: '3', description: 'This is option 3' },
   { label: 'Option 4', value: '4' },
 ];
+const optionsWithGroups: ComboboxOption[] = [
+  { label: 'Option 1', value: '1', group: 'Group 1' },
+  { label: 'Option 2', value: '2' },
+  { label: 'Option 3', value: '3', group: 'Group 1' },
+  { label: 'Option 4', value: '4' },
+  { label: 'Option 5', value: '5', group: 'Group 2' },
+  { label: 'Option 6', value: '6', group: 'Group 2' },
+];
 
 describe('Combobox', () => {
   const onChangeHandler = jest.fn();
@@ -191,6 +199,41 @@ describe('Combobox', () => {
       expect(listbox).toHaveTextContent(
         ['Group 1', 'Option 1', 'Option 3', 'Option 6', 'Group 2', 'Option 2', 'Option 4', 'Option 5'].join('')
       );
+    });
+
+    it('puts ungrouped options relative to first occurrence', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const listbox = await screen.findByRole('listbox');
+      expect(listbox).toHaveTextContent(
+        ['Group 1', 'Option 1', 'Option 3', 'Option 2', 'Option 4', 'Group 2', 'Option 5', 'Option 6'].join('')
+      );
+    });
+
+    it('does not render group header labels for ungrouped options', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const allHeaders = await screen.findAllByRole('presentation');
+
+      expect(allHeaders[0]).toHaveTextContent('Group 1');
+      expect(allHeaders[1]).toHaveTextContent('');
+    });
+
+    it('does not render a top border for the first group header', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const allHeaders = await screen.findAllByRole('presentation');
+
+      expect(allHeaders[0]).toHaveStyle('border-top: none');
     });
   });
 

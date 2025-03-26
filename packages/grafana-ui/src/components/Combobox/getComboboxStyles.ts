@@ -43,6 +43,10 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     // New class used in single combobox group headers
     newOptionGroup: css({
       label: 'combobox-new-option-group',
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+    }),
+
+    newOptionGroupLabel: css({
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       letterSpacing: 0,
@@ -50,7 +54,10 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightLight,
       padding: MENU_ITEM_PADDING,
-      borderTop: `1px solid ${theme.colors.border.weak}`,
+    }),
+
+    newOptionGroupNoBorder: css({
+      borderTop: 'none',
     }),
 
     optionBasic: css({
