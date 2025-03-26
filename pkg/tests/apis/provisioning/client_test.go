@@ -29,7 +29,7 @@ func TestIntegrationProvisioning_Client(t *testing.T) {
 		client, _, err := clients.ForResource(schema.GroupVersionResource{
 			Group:    "dashboard.grafana.app",
 			Resource: "dashboards",
-			Version:  "v0alpha1",
+			Version:  "v1alpha1",
 		})
 		require.NoError(t, err)
 		require.Equal(t, dash, client, "expecting the default dashboard to be version0")
