@@ -587,7 +587,7 @@ function validateRowsLayout(layout: unknown) {
   if (!('spec' in layout) || typeof layout.spec !== 'object' || layout.spec === null) {
     throw new Error('Layout spec is not an object or is null');
   }
-  if (!('rows' in layout.spec) || !Array.isArray(layout.spec.rows)) {
+  if (!('items' in layout.spec) || !Array.isArray(layout.spec.items)) {
     throw new Error('Layout spec items is not an array');
   }
 }

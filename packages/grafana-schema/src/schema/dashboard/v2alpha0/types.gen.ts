@@ -705,11 +705,11 @@ export const defaultRowsLayoutKind = (): RowsLayoutKind => ({
 });
 
 export interface RowsLayoutSpec {
-	rows: RowsLayoutRowKind[];
+	items: RowsLayoutRowKind[];
 }
 
 export const defaultRowsLayoutSpec = (): RowsLayoutSpec => ({
-	rows: [],
+	items: [],
 });
 
 export interface RowsLayoutRowKind {
@@ -882,11 +882,11 @@ export const defaultTabsLayoutKind = (): TabsLayoutKind => ({
 });
 
 export interface TabsLayoutSpec {
-	tabs: TabsLayoutTabKind[];
+	items: TabsLayoutTabKind[];
 }
 
 export const defaultTabsLayoutSpec = (): TabsLayoutSpec => ({
-	tabs: [],
+	items: [],
 });
 
 export interface TabsLayoutTabKind {

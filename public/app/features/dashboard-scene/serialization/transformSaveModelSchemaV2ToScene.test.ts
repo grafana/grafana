@@ -540,7 +540,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         dashboard.spec.layout = {
           kind: 'TabsLayout',
           spec: {
-            tabs: [
+            items: [
               {
                 kind: 'TabsLayoutTab',
                 spec: {
@@ -588,7 +588,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         dashboard.spec.layout = {
           kind: 'RowsLayout',
           spec: {
-            rows: [
+            items: [
               {
                 kind: 'RowsLayoutRow',
                 spec: {

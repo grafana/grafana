@@ -14,7 +14,7 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
     return {
       kind: 'RowsLayout',
       spec: {
-        rows: layoutManager.state.rows.map((row) => {
+        items: layoutManager.state.rows.map((row) => {
           const layout = getLayout(row.state.layout);
           const rowKind: RowsLayoutRowKind = {
             kind: 'RowsLayoutRow',
@@ -55,7 +55,7 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
     if (layout.kind !== 'RowsLayout') {
       throw new Error('Invalid layout kind');
     }
-    const rows = layout.spec.rows.map((row) => {
+    const rows = layout.spec.items.map((row) => {
       const layout = row.spec.layout;
       const behaviors: SceneObject[] = [];
       if (row.spec.repeat) {

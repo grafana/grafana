@@ -574,9 +574,9 @@ describe('dynamic layouts', () => {
     const result = transformSceneToSaveModelSchemaV2(scene);
     expect(result.layout.kind).toBe('RowsLayout');
     const rowsLayout = result.layout.spec as RowsLayoutSpec;
-    expect(rowsLayout.rows.length).toBe(1);
-    expect(rowsLayout.rows[0].kind).toBe('RowsLayoutRow');
-    expect(rowsLayout.rows[0].spec.layout.kind).toBe('GridLayout');
+    expect(rowsLayout.items.length).toBe(1);
+    expect(rowsLayout.items[0].kind).toBe('RowsLayoutRow');
+    expect(rowsLayout.items[0].spec.layout.kind).toBe('GridLayout');
   });
 
   it('should transform scene with rows layout with multiple rows with different grids to save model schema v2', () => {
@@ -616,14 +616,14 @@ describe('dynamic layouts', () => {
     const result = transformSceneToSaveModelSchemaV2(scene);
     expect(result.layout.kind).toBe('RowsLayout');
     const rowsLayout = result.layout.spec as RowsLayoutSpec;
-    expect(rowsLayout.rows.length).toBe(2);
-    expect(rowsLayout.rows[0].kind).toBe('RowsLayoutRow');
-    expect(rowsLayout.rows[0].spec.layout.kind).toBe('ResponsiveGridLayout');
-    const layout1 = rowsLayout.rows[0].spec.layout.spec as ResponsiveGridLayoutSpec;
+    expect(rowsLayout.items.length).toBe(2);
+    expect(rowsLayout.items[0].kind).toBe('RowsLayoutRow');
+    expect(rowsLayout.items[0].spec.layout.kind).toBe('ResponsiveGridLayout');
+    const layout1 = rowsLayout.items[0].spec.layout.spec as ResponsiveGridLayoutSpec;
     expect(layout1.items[0].kind).toBe('ResponsiveGridLayoutItem');
 
-    expect(rowsLayout.rows[1].spec.layout.kind).toBe('GridLayout');
-    const layout2 = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
+    expect(rowsLayout.items[1].spec.layout.kind).toBe('GridLayout');
+    const layout2 = rowsLayout.items[1].spec.layout.spec as GridLayoutSpec;
     expect(layout2.items[0].kind).toBe('GridLayoutItem');
   });
 
@@ -682,9 +682,9 @@ describe('dynamic layouts', () => {
     const result = transformSceneToSaveModelSchemaV2(scene);
     expect(result.layout.kind).toBe('TabsLayout');
     const tabsLayout = result.layout.spec as TabsLayoutSpec;
-    expect(tabsLayout.tabs.length).toBe(1);
-    expect(tabsLayout.tabs[0].kind).toBe('TabsLayoutTab');
-    expect(tabsLayout.tabs[0].spec.layout.kind).toBe('GridLayout');
+    expect(tabsLayout.items.length).toBe(1);
+    expect(tabsLayout.items[0].kind).toBe('TabsLayoutTab');
+    expect(tabsLayout.items[0].spec.layout.kind).toBe('GridLayout');
   });
 });
 
