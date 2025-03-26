@@ -20,6 +20,7 @@ import {
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
+import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
@@ -63,6 +64,8 @@ export enum ActiveTab {
   Details = 'details',
   VersionHistory = 'version-history',
 }
+
+const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
@@ -286,6 +289,7 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
 function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }) {
   const [ref, { width }] = useMeasure<HTMLDivElement>();
 
+  const { data: dsFeatures } = useDiscoverDsFeaturesQuery({ rulesSourceName: ruleIdentifier.ruleSourceName });
   const { result: ruleLocation } = useRuleLocation(ruleIdentifier);
   const { waitForGroupConsistency, groupConsistent } = useRuleGroupConsistencyCheck();
 
@@ -294,10 +298,10 @@ function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleId
   });
 
   useEffect(() => {
-    if (ruleLocation) {
+    if (ruleLocation && Boolean(dsFeatures?.rulerConfig)) {
       waitAction.execute(ruleLocation.groupIdentifier);
     }
-  }, [ruleLocation, waitAction]);
+  }, [ruleLocation, waitAction, dsFeatures?.rulerConfig]);
 
   if (isError(waitState)) {
     return (
@@ -308,6 +312,7 @@ function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleId
   }
 
   // If groupConsistent is undefined, it means that the rule is still being checked and we don't know if it's consistent or not
+  // To prevent the inconsistency banner from blinking, we only show it if groupConsistent is false
   if (groupConsistent === false) {
     return (
       <Stack direction="column" gap={0} ref={ref}>

@@ -103,24 +103,15 @@ async function* genericGroupsGenerator<TGroup>(
   fetchGroups: (options: FetchGroupsOptions) => Promise<PromRulesResponse<TGroup>>,
   groupLimit: number
 ) {
-  let response: PromRulesResponse<TGroup> | undefined;
-  try {
-    response = await fetchGroups({ groupLimit });
-    yield* response.data.groups;
-  } catch (error) {
-    throw error;
-  }
+  let response = await fetchGroups({ groupLimit });
+  yield* response.data.groups;
 
   let lastToken: string | undefined = response.data?.groupNextToken;
 
   while (lastToken) {
-    try {
-      response = await fetchGroups({ groupNextToken: lastToken, groupLimit: groupLimit });
+    response = await fetchGroups({ groupNextToken: lastToken, groupLimit: groupLimit });
 
-      yield* response.data.groups;
-      lastToken = response.data?.groupNextToken;
-    } catch (error) {
-      throw error;
-    }
+    yield* response.data.groups;
+    lastToken = response.data?.groupNextToken;
   }
 }
