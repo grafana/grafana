@@ -68,7 +68,10 @@ export function NestedFolderList({
   const handleLoadMore = useCallback(
     (startIndex: number, endIndex: number) => {
       const { parentUID } = items[startIndex];
-      requestLoadMore(parentUID);
+      if (!parentUID) {
+        // Only necessary for the root folder?
+        requestLoadMore(parentUID);
+      }
     },
     [requestLoadMore, items]
   );
