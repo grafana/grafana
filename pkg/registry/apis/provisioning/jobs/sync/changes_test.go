@@ -1,7 +1,6 @@
 package sync
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,17 +11,25 @@ import (
 
 func TestChanges(t *testing.T) {
 	t.Run("start the same", func(t *testing.T) {
-		source, target := getBase(t)
+		source := []repository.FileTreeEntry{
+			{Path: "simplelocal/dashboard.json", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "simplelocal/dashboard.json", Hash: "xyz"},
+			},
+		}
+
 		changes, err := Changes(source, target)
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
 
 	t.Run("create a source file", func(t *testing.T) {
-		source, target := getBase(t)
-		source = append(source, repository.FileTreeEntry{
-			Path: "muta.json", Hash: "xyz", Blob: true,
-		})
+		source := []repository.FileTreeEntry{
+			{Path: "muta.json", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
 
 		changes, err := Changes(source, target)
 		require.NoError(t, err)
@@ -34,8 +41,12 @@ func TestChanges(t *testing.T) {
 	})
 
 	t.Run("delete a source file", func(t *testing.T) {
-		source, target := getBase(t)
-		source = []repository.FileTreeEntry{source[0]}
+		source := []repository.FileTreeEntry{}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "adsl62h.yaml", Hash: "xyz", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "adsl62h-hrw-f-fvlt2dghp-gufrc4lisksgmq-c"},
+			},
+		}
 
 		changes, err := Changes(source, target)
 		require.NoError(t, err)
@@ -48,7 +59,7 @@ func TestChanges(t *testing.T) {
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
 				Name:     "adsl62h-hrw-f-fvlt2dghp-gufrc4lisksgmq-c",
-				Hash:     "ce5d497c4deadde6831162ce8509e2b2b1776237",
+				Hash:     "xyz",
 			},
 		}, changes[0])
 	})
@@ -84,8 +95,20 @@ func TestChanges(t *testing.T) {
 	})
 
 	t.Run("modify a file", func(t *testing.T) {
-		source, target := getBase(t)
-		source[1].Hash = "different"
+		source := []repository.FileTreeEntry{
+			{Path: "adsl62h.yaml", Hash: "modified", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{
+					Path:     "adsl62h.yaml",
+					Group:    "dashboard.grafana.app",
+					Resource: "dashboards",
+					Name:     "adsl62h-hrw-f-fvlt2dghp-gufrc4lisksgmq-c",
+					Hash:     "original",
+				},
+			},
+		}
 
 		changes, err := Changes(source, target)
 		require.NoError(t, err)
@@ -98,7 +121,7 @@ func TestChanges(t *testing.T) {
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
 				Name:     "adsl62h-hrw-f-fvlt2dghp-gufrc4lisksgmq-c",
-				Hash:     "ce5d497c4deadde6831162ce8509e2b2b1776237",
+				Hash:     "original",
 			},
 		}, changes[0])
 	})
@@ -198,44 +221,4 @@ func TestChanges(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
-}
-
-func getBase(t *testing.T) (source []repository.FileTreeEntry, target *provisioning.ResourceList) {
-	target = &provisioning.ResourceList{}
-	err := json.Unmarshal([]byte(`{
-		"kind": "ResourceList",
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"metadata": {},
-		"items": [
-			{
-				"path": "",
-				"group": "folder.grafana.app",
-				"resource": "folders",
-				"name": "simplelocal-3794ab9",
-				"hash": ""
-			},
-			{
-				"path": "ad4lwp2.yaml",
-				"group": "dashboard.grafana.app",
-				"resource": "dashboards",
-				"name": "ad4lwp2-xofjsuo-mr5blr1zwimlfi0ds0pyrrpd",
-				"hash": "ca83d64b9c4a23fed975aacdf47e7de8878b4ae0"
-			},
-			{
-				"path": "adsl62h.yaml",
-				"group": "dashboard.grafana.app",
-				"resource": "dashboards",
-				"name": "adsl62h-hrw-f-fvlt2dghp-gufrc4lisksgmq-c",
-				"hash": "ce5d497c4deadde6831162ce8509e2b2b1776237"
-			}
-		]
-	}`), target)
-	require.NoError(t, err)
-
-	source = []repository.FileTreeEntry{
-		{Path: "ad4lwp2.yaml", Hash: "ca83d64b9c4a23fed975aacdf47e7de8878b4ae0", Blob: true},
-		{Path: "adsl62h.yaml", Hash: "ce5d497c4deadde6831162ce8509e2b2b1776237", Blob: true},
-	}
-
-	return // named values!
 }

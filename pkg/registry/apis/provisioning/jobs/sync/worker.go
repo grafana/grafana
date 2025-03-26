@@ -298,7 +298,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			continue
 		}
 
-		// If folder create it
+		// If folder ensure it exists
 		if safepath.IsDir(change.Path) {
 			result := jobs.JobResourceResult{
 				Path:   change.Path,

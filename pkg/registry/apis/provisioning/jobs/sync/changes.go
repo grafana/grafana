@@ -30,8 +30,9 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 			}
 			continue
 		}
+
 		// TODO: why do we have to do this here?
-		if item.Group != folders.GROUP && !strings.HasSuffix(item.Path, "/") {
+		if item.Group == folders.GROUP && !strings.HasSuffix(item.Path, "/") {
 			item.Path = item.Path + "/"
 		}
 
