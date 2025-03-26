@@ -3,6 +3,7 @@ package dbimpl
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
@@ -29,11 +30,20 @@ func (d sqlDB) DriverName() string {
 }
 
 func (d sqlDB) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {
-	return d.DB.QueryContext(ctx, query, args...)
+	stm, err := d.DB.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	return stm.QueryContext(ctx, args...)
 }
 
 func (d sqlDB) QueryRowContext(ctx context.Context, query string, args ...any) db.Row {
-	return d.DB.QueryRowContext(ctx, query, args...)
+	stm, err := d.DB.PrepareContext(ctx, query)
+	if err != nil {
+		fmt.Printf("Could not prepare query row statement %v\n", err)
+		return nil
+	}
+	return stm.QueryRowContext(ctx, args...)
 }
 
 func (d sqlDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) {
