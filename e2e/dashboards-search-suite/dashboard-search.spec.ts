@@ -19,18 +19,11 @@ describe('Dashboard search', () => {
 
   it('Search - Filter by search input', () => {
 
-    // cy.intercept('/api/search/**', (req) => {
-    //   req.alias = 'search';
-    //   req.continue();
-    // });
-
     e2e.pages.Dashboards.visit();
 
     toggleSearchView();
 
     assertResultsCount(24);
-
-    // cy.get('@search').then(console.log)
 
     // prefix match
     cy.get(searchInput).type('Datasource tests - MySQL');

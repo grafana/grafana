@@ -3,10 +3,10 @@ name: Run dashboard search e2e
 on:
   push:
     branches:
-      - search-e2e
+      - main
   pull_request:
     branches:
-      - '**' 
+      - main
 
 env:
   ARCH: linux-amd64
