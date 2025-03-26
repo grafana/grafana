@@ -3,8 +3,9 @@ import { Annotations, Labels } from '../../common/rules';
 
 /**
  * Rule health in Grafana-flavored Prometheus indicates the evaluation status of a rule, which can be "ok", "unknown", or "error".
+ * @see {@link https://github.com/grafana/grafana/blob/f7b9f1ce69457fd2a110d529b731411e8fc8dc3c/pkg/services/ngalert/models/alert_rule.go#L106-L111|source}
  */
-type RuleHealth = 'ok' | 'unknown' | 'error';
+type RuleHealth = 'alerting' | 'error' | 'ok' | 'keeplast';
 
 /**
  * Base rule object shared between alerting and recording rules
