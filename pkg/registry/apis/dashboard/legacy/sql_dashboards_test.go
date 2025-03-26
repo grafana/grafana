@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -132,7 +132,7 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 	}
 	dash := &dashboard.Dashboard{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "dashboard.grafana.app/v0alpha1",
+			APIVersion: "dashboard.grafana.app/v1alpha1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-dash",
@@ -170,7 +170,7 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 		&dashboards.Dashboard{
 			ID:         1234,
 			Version:    2,
-			APIVersion: "dashboard.grafana.app/v0alpha1",
+			APIVersion: "dashboard.grafana.app/v1alpha1",
 		}, nil).Once()
 	cmd, created, err = access.buildSaveDashboardCommand(ctx, 1, dash)
 	require.NoError(t, err)
@@ -179,7 +179,7 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 	require.Equal(t, "test-dash", cmd.Dashboard.Get("uid").MustString())
 	require.Equal(t, cmd.Dashboard.Get("id").MustInt64(), int64(1234))       // should set to existing ID
 	require.Equal(t, cmd.Dashboard.Get("version").MustFloat64(), float64(2)) // version must be set - otherwise seen as a new dashboard in NewDashboardFromJson
-	require.Equal(t, cmd.APIVersion, "v0alpha1")                             // should trim prefix
+	require.Equal(t, cmd.APIVersion, "v1alpha1")                             // should trim prefix
 	require.Equal(t, cmd.OrgID, int64(1))
 	require.True(t, cmd.Overwrite)
 }

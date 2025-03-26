@@ -197,7 +197,9 @@ export const ServiceAccountsListPageUnconnected = ({
         <>
           {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
             <LinkButton href="org/serviceaccounts/create" variant="primary">
-              Add service account
+              <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.add-service-account">
+                Add service account
+              </Trans>
             </LinkButton>
           )}
         </>
@@ -208,7 +210,10 @@ export const ServiceAccountsListPageUnconnected = ({
           <InlineField grow>
             <FilterInput
               className={styles.filterInput}
-              placeholder="Search service account by name"
+              placeholder={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.placeholder-search-service-account-by-name',
+                'Search service account by name'
+              )}
               value={query}
               onChange={onQueryChange}
             />
@@ -277,13 +282,19 @@ export const ServiceAccountsListPageUnconnected = ({
                   : ''
               }?`}
               confirmText="Delete"
-              title="Delete service account"
+              title={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.title-delete-service-account',
+                'Delete service account'
+              )}
               onConfirm={onServiceAccountRemove}
               onDismiss={onRemoveModalClose}
             />
             <ConfirmModal
               isOpen={isDisableModalOpen}
-              title="Disable service account"
+              title={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.title-disable-service-account',
+                'Disable service account'
+              )}
               body={`Are you sure you want to disable '${currentServiceAccount.name}'?`}
               confirmText="Disable service account"
               onConfirm={onDisable}
