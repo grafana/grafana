@@ -22,6 +22,8 @@ type ListFoldersRequest = QueryActionCreatorResult<
   >
 >;
 
+const PENDING_STATUS = 'pending';
+
 const listAllFoldersSelector = createSelector(
   [(state: RootState) => state, (state: RootState, requests: ListFoldersRequest[]) => requests],
   (state: RootState, requests: ListFoldersRequest[]) => {
@@ -43,7 +45,7 @@ const listAllFoldersSelector = createSelector(
         permission: req.arg.permission,
       })(state);
 
-      if (page.status === 'pending') {
+      if (page.status === PENDING_STATUS) {
         isLoading = true;
       }
 
@@ -113,7 +115,7 @@ export function useFoldersQuery(
 
       // Check if the last page is still loading
       const lastPage = pages?.at(-1);
-      if (lastPage?.status === 'pending') {
+      if (lastPage?.status === PENDING_STATUS) {
         return;
       }
 
