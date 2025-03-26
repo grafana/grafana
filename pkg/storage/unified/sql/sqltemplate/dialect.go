@@ -67,10 +67,6 @@ type Dialect interface {
 
 	// CurrentEpoch returns the current epoch value for the database in microseconds.
 	CurrentEpoch() string
-
-	// IsRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
-	// This is used to determine if the error is a UNIQUE constraint violation (or whatever the dialect's equivalent is).
-	IsRowAlreadyExistsError(error) bool
 }
 
 // RowLockingClause represents a row-locking clause in a SELECT statement.
