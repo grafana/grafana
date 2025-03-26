@@ -110,7 +110,8 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
     >
       <button className={styles.headerCellLabel} onClick={handleSort}>
         {showTypeIcons && <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" />}
-        <div>{field.state?.displayName}</div>
+        {/* Used cached displayName if available, otherwise use the column name (nested tables) */}
+        <div>{field.state?.displayName ?? column.name}</div>
         {direction && (direction === 'ASC' ? <Icon name="arrow-up" size="lg" /> : <Icon name="arrow-down" size="lg" />)}
       </button>
 
