@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Box, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { Box, Card, Icon, IconButton, IconName, useStyles2 } from '@grafana/ui';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
@@ -84,22 +85,35 @@ export function DashboardAddPane({ editPane }: Props) {
   ];
 
   return (
-    <Box display="flex" direction="column" gap={1} padding={2}>
-      {cards.map(({ icon, heading, title, testId, onClick, hide }) =>
-        hide ? null : (
-          <Card onClick={onClick} data-testid={testId} title={title} key={title}>
-            <Card.Heading>{heading}</Card.Heading>
-            <Card.Figure className={styles.figure}>
-              <Icon name={icon} size="xl" />
-            </Card.Figure>
-          </Card>
-        )
-      )}
-    </Box>
+    <>
+      <div className={styles.header}>
+        <IconButton name="arrow-left" size="lg" onClick={() => editPane.toggleAddPane()} aria-label="Close add pane" />
+        {t('dashboard.edit-pane.add.title', 'Add element')}
+      </div>
+      <Box display="flex" direction="column" gap={1} padding={2}>
+        {cards.map(({ icon, heading, title, testId, onClick, hide }) =>
+          hide ? null : (
+            <Card onClick={onClick} data-testid={testId} title={title} key={title}>
+              <Card.Heading>{heading}</Card.Heading>
+              <Card.Figure className={styles.figure}>
+                <Icon name={icon} size="xl" />
+              </Card.Figure>
+            </Card>
+          )
+        )}
+      </Box>
+    </>
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
+  header: css({
+    display: 'flex',
+    alignItems: 'center',
+    padding: theme.spacing(1, 2),
+    gap: theme.spacing(1),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+  }),
   figure: css({
     pointerEvents: 'none',
   }),

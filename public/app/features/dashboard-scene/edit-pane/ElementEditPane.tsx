@@ -1,20 +1,37 @@
-import { Stack } from '@grafana/ui';
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
+import { DashboardEditPane } from './DashboardEditPane';
 import { EditPaneHeader } from './EditPaneHeader';
 
 export interface Props {
   element: EditableDashboardElement;
+  editPane: DashboardEditPane;
 }
 
-export function ElementEditPane({ element }: Props) {
+export function ElementEditPane({ element, editPane }: Props) {
   const categories = element.useEditPaneOptions ? element.useEditPaneOptions() : [];
+  const styles = useStyles2(getStyles);
 
   return (
-    <Stack direction="column" gap={0}>
-      <EditPaneHeader element={element} />
-      {categories.map((cat) => cat.render())}
-    </Stack>
+    <div className={styles.wrapper}>
+      <EditPaneHeader element={element} editPane={editPane} />
+      <ScrollContainer showScrollIndicators={true}>{categories.map((cat) => cat.render())}</ScrollContainer>
+    </div>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    wrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '1 1 0',
+      height: '100%',
+    }),
+  };
 }

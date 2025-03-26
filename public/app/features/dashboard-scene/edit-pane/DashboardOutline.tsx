@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Box, Icon, IconButton, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Box, Icon, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { isInCloneChain } from '../utils/clone';
@@ -21,7 +21,7 @@ export function DashboardOutline({ editPane }: Props) {
   const dashboard = getDashboardSceneFor(editPane);
 
   return (
-    <Box padding={1} gap={0.5} display="flex" direction="column">
+    <Box padding={1} gap={0.25} display="flex" direction="column">
       <DashboardOutlineNode sceneObject={dashboard} expandable />
     </Box>
   );
@@ -40,34 +40,19 @@ function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneO
 
   return (
     <>
-      <Stack
-        direction="row"
-        gap={0.5}
-        alignItems="center"
-        role="presentation"
-        aria-expanded={expandable ? isExpanded : undefined}
-        aria-owns={expandable ? key : undefined}
+      <button
+        role="treeitem"
+        className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
+        onPointerDown={(evt) => {
+          onSelect?.(evt);
+          setIsExpanded(!isExpanded);
+        }}
       >
-        {expandable && (
-          <IconButton
-            name={isExpanded ? 'angle-down' : 'angle-right'}
-            onClick={() => setIsExpanded(!isExpanded)}
-            aria-label={
-              isExpanded
-                ? t('dashboard.outline.tree.item.collapse', 'Collapse item')
-                : t('dashboard.outline.tree.item.expand', 'Expand item')
-            }
-          />
-        )}
-        <button
-          role="treeitem"
-          className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
-          onPointerDown={(evt) => onSelect?.(evt)}
-        >
-          <Icon name={elementInfo.icon} />
-          <span>{elementInfo.instanceName}</span>
-        </button>
-      </Stack>
+        {expandable && <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />}
+        <Icon size="sm" name={elementInfo.icon} />
+        <span>{elementInfo.instanceName}</span>
+      </button>
+
       {expandable && isExpanded && (
         <div className={styles.container} role="group">
           {children.length > 0 ? (
@@ -94,7 +79,7 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       marginLeft: theme.spacing(1),
       paddingLeft: theme.spacing(1.5),
       borderLeft: `1px solid ${theme.colors.border.medium}`,
@@ -105,12 +90,16 @@ function getStyles(theme: GrafanaTheme2) {
       background: 'transparent',
       padding: theme.spacing(0.25, 1),
       borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.secondary,
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       overflow: 'hidden',
       '&:hover': {
-        backgroundColor: theme.colors.action.hover,
+        color: theme.colors.text.primary,
+        outline: `1px dashed ${theme.colors.border.strong}`,
+        outlineOffset: '0px',
+        backgroundColor: theme.colors.emphasize(theme.colors.background.canvas, 0.08),
       },
       '> span': {
         whiteSpace: 'nowrap',
@@ -119,7 +108,12 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     nodeButtonSelected: css({
-      color: theme.colors.primary.text,
+      color: theme.colors.text.primary,
+      outline: `1px dashed ${theme.colors.primary.border}`,
+      outlineOffset: '0px',
+      '&:hover': {
+        outline: `1px dashed ${theme.colors.primary.border}`,
+      },
     }),
     nodeButtonClone: css({
       color: theme.colors.text.secondary,
