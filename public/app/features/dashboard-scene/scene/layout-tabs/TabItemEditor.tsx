@@ -30,8 +30,8 @@ export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] 
 }
 
 function TabTitleInput({ tab }: { tab: TabItem }) {
-  const { title } = tab.useState();
-  const ref = useEditPaneInputAutoFocus();
+  const { title, isNew } = tab.useState();
+  const ref = useEditPaneInputAutoFocus({ autoFocus: isNew });
 
   return <Input ref={ref} value={title} onChange={(e) => tab.onChangeTitle(e.currentTarget.value)} />;
 }

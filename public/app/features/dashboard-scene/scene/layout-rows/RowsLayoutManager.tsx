@@ -87,7 +87,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public addNewRow(): RowItem {
-    const row = new RowItem();
+    const row = new RowItem({ isNew: true });
     this.setState({ rows: [...this.state.rows, row] });
     this.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
     return row;

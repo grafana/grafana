@@ -19,6 +19,10 @@ import { TabsLayoutManager } from './TabsLayoutManager';
 export interface TabItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
+  /**
+   * Used to auto focus the title input
+   */
+  isNew?: boolean;
 }
 
 export class TabItem
@@ -112,7 +116,7 @@ export class TabItem
   }
 
   public onChangeTitle(title: string) {
-    this.setState({ title });
+    this.setState({ title, isNew: false });
   }
 
   public getParentLayout(): TabsLayoutManager {
