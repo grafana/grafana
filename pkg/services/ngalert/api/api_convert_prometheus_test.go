@@ -14,9 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -993,9 +991,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 	srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
 
-	orgID := int64(1)
-	permissions := createPermissionsToImportPrometheusRules(orgID)
-	req := createRequestContextWithPerms(orgID, permissions, nil)
+	req := createRequestCtx()
 	req.Req.Header.Set(datasourceUIDHeader, existingDSUID)
 
 	// Create test prometheus rules
@@ -1247,7 +1243,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 		require.Len(t, rules, 4)
 
 		for _, rule := range rules {
-			parentFolders, err := folderService.GetParents(context.Background(), folder.GetParentsQuery{UID: rule.NamespaceUID, OrgID: orgID})
+			parentFolders, err := folderService.GetParents(context.Background(), folder.GetParentsQuery{UID: rule.NamespaceUID, OrgID: 1})
 			require.NoError(t, err)
 			require.Len(t, parentFolders, 1)
 			require.Equal(t, fldr.UID, parentFolders[0].UID)
@@ -1421,21 +1417,4 @@ func TestGetProvenance(t *testing.T) {
 		provenance := getProvenance(rc)
 		require.Equal(t, models.ProvenanceNone, provenance)
 	})
-}
-
-func createPermissionsToImportPrometheusRules(orgID int64) map[int64]map[string][]string {
-	permissions := map[int64]map[string][]string{}
-
-	permissions[orgID] = map[string][]string{
-		dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
-		dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
-		datasources.ActionQuery:        {datasources.ScopeAll},
-
-		ac.ActionAlertingRuleCreate: {dashboards.ScopeFoldersAll},
-		ac.ActionAlertingRuleUpdate: {dashboards.ScopeFoldersAll},
-		ac.ActionAlertingRuleDelete: {dashboards.ScopeFoldersAll},
-		ac.ActionAlertingRuleRead:   {dashboards.ScopeFoldersAll},
-	}
-
-	return permissions
 }
