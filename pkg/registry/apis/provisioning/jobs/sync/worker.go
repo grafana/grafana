@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -145,18 +144,12 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.Reader, prog
 		return nil, fmt.Errorf("unable to get folder client: %w", err)
 	}
 
-	dashboardClient, err := parser.Clients().Dashboard()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get dashboard client: %w", err)
-	}
-
 	job := &syncJob{
 		repository:      repo,
 		progress:        progress,
 		parser:          parser,
 		lister:          r.lister,
 		folders:         resources.NewFolderManager(repo, folderClient),
-		dashboards:      dashboardClient,
 		resourcesLookup: map[resourceID]string{},
 	}
 
@@ -191,7 +184,6 @@ type syncJob struct {
 	parser          *resources.Parser
 	lister          resources.ResourceLister
 	folders         *resources.FolderManager
-	dashboards      dynamic.ResourceInterface
 	folderLookup    *resources.FolderTree
 	resourcesLookup map[resourceID]string // the path with this k8s name
 }
