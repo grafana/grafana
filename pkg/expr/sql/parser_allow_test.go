@@ -37,6 +37,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    `(SELECT * FROM a_table) UNION ALL (SELECT * FROM a_table2)`,
 			err:  nil,
 		},
+		{
+			name: "allows keywords 'is', 'not', 'null'",
+			q:    `SELECT * FROM a_table WHERE a_column IS NOT NULL`,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
