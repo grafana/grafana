@@ -213,7 +213,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     if (layout instanceof TabsLayoutManager) {
       for (const tab of layout.state.tabs) {
-        rows.push(new RowItem({ layout: tab.state.layout, title: tab.state.title }));
+        rows.push(new RowItem({ layout: tab.state.layout.clone(), title: tab.state.title }));
       }
     } else if (layout instanceof DefaultGridLayoutManager) {
       const config: Array<{
