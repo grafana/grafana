@@ -1,8 +1,16 @@
 module core
 
 type user
+  relations
+    define get: [user, service-account, team#member, role#assignee]
+    define update: [user, service-account, team#member, role#assignee]
+    define delete: [user, service-account, team#member, role#assignee]
 
 type service-account
+  relations
+    define get: [user, service-account, team#member, role#assignee]
+    define update: [user, service-account, team#member, role#assignee]
+    define delete: [user, service-account, team#member, role#assignee]
 
 type render
 
@@ -11,6 +19,10 @@ type anonymous
 type role
   relations
     define assignee: [user, service-account, anonymous, team#member, role#assignee]
+
+    define get: [user, service-account, team#member, role#assignee]
+    define update: [user, service-account, team#member, role#assignee]
+    define delete: [user, service-account, team#member, role#assignee]
 
 type team
   relations

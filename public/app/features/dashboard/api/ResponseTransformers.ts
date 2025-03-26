@@ -204,7 +204,7 @@ export function ensureV1Response(
         isFolder: false,
         uid: dashboard.metadata.name,
         k8s: dashboard.metadata,
-        version: parseInt(dashboard.metadata.resourceVersion, 10),
+        version: dashboard.metadata.generation,
       },
       dashboard: spec,
     };
@@ -256,7 +256,7 @@ export function ensureV1Response(
         },
         fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
         weekStart: spec.timeSettings.weekStart,
-        version: parseInt(dashboard.metadata.resourceVersion, 10),
+        version: dashboard.metadata.generation,
         links: spec.links,
         annotations: { list: annotations },
         panels,
@@ -375,6 +375,8 @@ function yOffsetInRows(p: Panel, rowY: number): number {
 }
 
 function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
+  const element_identifier = `panel-${p.id}`;
+
   if (p.libraryPanel) {
     // LibraryPanelKind
     const panelKind: LibraryPanelKind = {
@@ -389,7 +391,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
       },
     };
 
-    return [panelKind, `panel-${p.id}`];
+    return [panelKind, element_identifier];
   } else {
     // PanelKind
 
@@ -438,8 +440,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
         },
       },
     };
-
-    return [panelKind, `panel-${p.id}`];
+    return [panelKind, element_identifier];
   }
 }
 

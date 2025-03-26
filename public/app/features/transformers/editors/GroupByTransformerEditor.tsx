@@ -11,12 +11,9 @@ import {
   TransformerCategory,
   GrafanaTheme2,
 } from '@grafana/data';
-import {
-  GroupByFieldOptions,
-  GroupByOperationID,
-  GroupByTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/groupBy';
+import { GroupByFieldOptions, GroupByOperationID, GroupByTransformerOptions } from '@grafana/data/internal';
 import { useTheme2, Select, StatsPicker, InlineField, Stack, Alert } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
@@ -32,7 +29,7 @@ export const GroupByTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<GroupByTransformerOptions>) => {
-  const fieldNames = useAllFieldNamesFromDataFrames(input);
+  const fieldNames = useAllFieldNamesFromDataFrames(input, true);
 
   const onConfigChange = useCallback(
     (fieldName: string) => (config: GroupByFieldOptions) => {
@@ -106,13 +103,19 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
     <InlineField className={styles.label} label={fieldName} grow shrink>
       <Stack gap={0.5} direction="row">
         <div className={styles.operation}>
-          <Select options={options} value={config?.operation} placeholder="Ignored" onChange={onChange} isClearable />
+          <Select
+            options={options}
+            value={config?.operation}
+            placeholder={t('transformers.group-by-field-configuration.placeholder-ignored', 'Ignored')}
+            onChange={onChange}
+            isClearable
+          />
         </div>
 
         {config?.operation === GroupByOperationID.aggregate && (
           <StatsPicker
             className={styles.aggregations}
-            placeholder="Select Stats"
+            placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
             allowMultiple
             stats={config.aggregations}
             onChange={(stats) => {
