@@ -36,7 +36,7 @@ type Plugin struct {
 
 	ExternalService *auth.ExternalService
 
-	Locales map[string]string
+	Translations map[string]string
 }
 
 func (p Plugin) SupportsStreaming() bool {
@@ -78,7 +78,7 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		BaseURL:           p.BaseURL,
 		ExternalService:   p.ExternalService,
 		Angular:           p.Angular,
-		Locales:           p.Locales,
+		Translations:      p.Translations,
 	}
 
 	if p.Parent != nil {

@@ -154,17 +154,21 @@ func getBaseDir(pluginDir string) string {
 	return baseDir
 }
 
-func (s *Service) GetLocales(n PluginInfo) (map[string]string, error) {
+func (s *Service) GetTranslations(n PluginInfo) (map[string]string, error) {
 	pathToLocales, err := s.RelativeURL(n, "locales/")
 	if err != nil {
 		return nil, fmt.Errorf("get locales: %w", err)
 	}
 
-	// loop through all the locales specified in the plugin.json and add them to the list
-	locales := map[string]string{}
-	for _, locale := range n.pluginJSON.Locales {
-		locales[locale] = fmt.Sprintf("%s/%s/%s.json", pathToLocales, locale, n.pluginJSON.ID)
+	// loop through all the languages specified in the plugin.json and add them to the list
+	translations := map[string]string{}
+	for _, language := range n.pluginJSON.Languages {
+		file := fmt.Sprintf("%s.json", n.pluginJSON.ID)
+		translations[language], err = url.JoinPath(pathToLocales, language, file)
+		if err != nil {
+			return nil, fmt.Errorf("join path: %w", err)
+		}
 	}
 
-	return locales, nil
+	return translations, nil
 }

@@ -275,7 +275,7 @@ type PluginMetaDTO struct {
 	MultiValueFilterOperators bool              `json:"multiValueFilterOperators"`
 	LoadingStrategy           LoadingStrategy   `json:"loadingStrategy"`
 	Extensions                Extensions        `json:"extensions"`
-	Locales                   map[string]string `json:"locales,omitempty"`
+	Translations              map[string]string `json:"translations,omitempty"`
 }
 
 type DataSourceDTO struct {
@@ -325,7 +325,7 @@ type PanelDTO struct {
 	Angular         AngularMeta       `json:"angular"`
 	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
 	ModuleHash      string            `json:"moduleHash,omitempty"`
-	Locales         map[string]string `json:"locales,omitempty"`
+	Translations    map[string]string `json:"translations,omitempty"`
 }
 
 type AppDTO struct {
@@ -338,7 +338,7 @@ type AppDTO struct {
 	Extensions      Extensions        `json:"extensions"`
 	Dependencies    Dependencies      `json:"dependencies"`
 	ModuleHash      string            `json:"moduleHash,omitempty"`
-	Locales         map[string]string `json:"locales,omitempty"`
+	Translations    map[string]string `json:"translations,omitempty"`
 }
 
 const (

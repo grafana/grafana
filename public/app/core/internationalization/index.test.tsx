@@ -11,10 +11,10 @@ import {
 
 import { getI18next, Trans, useTranslateInternal } from './index';
 
-const id = 'frontend-test-locales-plugin';
+const id = 'frontend-test-languages-plugin';
 const mockedMeta: PluginMeta = {
   id,
-  name: 'Frontend Test Locales Plugin',
+  name: 'Frontend Test Languages Plugin',
   type: PluginType.panel,
   info: {
     author: { name: 'Test Author' },

@@ -462,7 +462,7 @@ func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
 	}
 }
 
-func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
+func TestHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 	type settings struct {
 		Datasources map[string]plugins.DataSourceDTO `json:"datasources"`
 		Panels      map[string]*plugins.PanelDTO     `json:"panels"`
@@ -476,7 +476,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 		signedInUser *user.SignedInUser
 	}{
 		{
-			desc: "built in datasource plugin with locales",
+			desc: "built in datasource plugin with translations",
 			pluginStore: func() pluginstore.Store {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
@@ -488,7 +488,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 								Type:    plugins.TypeDataSource,
 								BuiltIn: true,
 							},
-							Locales: map[string]string{
+							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
@@ -509,7 +509,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 								BuiltIn: true,
 							},
 							Module: "/test-app/module.js",
-							Locales: map[string]string{
+							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
@@ -521,7 +521,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 			},
 		},
 		{
-			desc: "non-builtin datasource plugin with locales",
+			desc: "non-builtin datasource plugin with translations",
 			pluginStore: func() pluginstore.Store {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
@@ -532,7 +532,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 								Info: plugins.Info{Version: "0.5.0"},
 								Type: plugins.TypeDataSource,
 							},
-							Locales: map[string]string{
+							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
@@ -558,7 +558,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 								Type: plugins.TypeDataSource,
 							},
 							LoadingStrategy: "script",
-							Locales: map[string]string{
+							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
@@ -570,7 +570,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 			},
 		},
 		{
-			desc: "panel plugin with locales",
+			desc: "panel plugin with translations",
 			pluginStore: func() pluginstore.Store {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
@@ -581,7 +581,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 								Info: plugins.Info{Version: "0.5.0"},
 								Type: plugins.TypePanel,
 							},
-							Locales: map[string]string{
+							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
@@ -599,7 +599,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 						Module:          "/test-app/module.js",
 						LoadingStrategy: "script",
 						ModuleHash:      "",
-						Locales: map[string]string{
+						Translations: map[string]string{
 							"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 							"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 						},
@@ -609,7 +609,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 			},
 		},
 		{
-			desc: "app plugin with locales",
+			desc: "app plugin with translations",
 			pluginStore: func() pluginstore.Store {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
@@ -620,7 +620,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 								Info: plugins.Info{Version: "0.5.0"},
 								Type: plugins.TypeApp,
 							},
-							Locales: map[string]string{
+							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
@@ -638,7 +638,7 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 						ModuleHash:      "",
 						Path:            "/test-app/module.js",
 						Version:         "0.5.0",
-						Locales: map[string]string{
+						Translations: map[string]string{
 							"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 							"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 						},

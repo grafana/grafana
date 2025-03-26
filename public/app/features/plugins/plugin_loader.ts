@@ -83,7 +83,7 @@ type PluginImportInfo = {
   version?: string;
   isAngular?: boolean;
   moduleHash?: string;
-  locales?: Record<string, string>;
+  translations?: Record<string, string>;
 };
 
 export async function importPluginModule({
@@ -93,15 +93,15 @@ export async function importPluginModule({
   version,
   isAngular,
   moduleHash,
-  locales,
+  translations,
 }: PluginImportInfo): Promise<System.Module> {
   if (version) {
     registerPluginInCache({ path, version, loadingStrategy });
   }
 
   // Add locales to i18n for a plugin if the feature toggle is enabled and the plugin has locales
-  if (config.featureToggles.localizationForPlugins && locales) {
-    await addLocalesToI18n(pluginId, locales);
+  if (config.featureToggles.localizationForPlugins && translations) {
+    await addTranslationsToI18n(pluginId, translations);
   }
 
   const builtIn = builtInPlugins[path];
@@ -160,7 +160,7 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
     moduleHash: meta.moduleHash,
-    locales: meta.locales,
+    translations: meta.translations,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin: GenericDataSourcePlugin = pluginExports.plugin;
@@ -199,7 +199,7 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     isAngular: meta.angular?.detected ?? meta.angularDetected,
     loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
     moduleHash: meta.moduleHash,
-    locales: meta.locales,
+    translations: meta.translations,
   });
 
   const { plugin = new AppPlugin() } = pluginExports;
@@ -230,8 +230,8 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
 }
 
 // exported for testing only
-export async function addLocalesToI18n(pluginId: string, locales: Record<string, string>): Promise<void[]> {
-  const promises = Object.entries(locales).map(async ([lang, path]) => {
+export async function addTranslationsToI18n(pluginId: string, translations: Record<string, string>): Promise<void[]> {
+  const promises = Object.entries(translations).map(async ([lang, path]) => {
     try {
       const module = await SystemJS.import(resolveModulePath(path));
       if (!module.default) {
@@ -240,7 +240,7 @@ export async function addLocalesToI18n(pluginId: string, locales: Record<string,
 
       getI18next().addResourceBundle(lang, pluginId, module.default, undefined, true);
     } catch (e) {
-      console.warn('Could not load locale for plugin', pluginId, lang, e);
+      console.warn('Could not load translation for plugin', pluginId, lang, e);
     }
   });
 

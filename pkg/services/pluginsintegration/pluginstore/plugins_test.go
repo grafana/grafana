@@ -9,14 +9,14 @@ import (
 
 func TestToGrafanaDTO(t *testing.T) {
 	plugin := &plugins.Plugin{
-		Locales: map[string]string{
+		Translations: map[string]string{
 			"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 			"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 		},
 	}
 
-	t.Run("Locales", func(t *testing.T) {
+	t.Run("Translations", func(t *testing.T) {
 		dto := ToGrafanaDTO(plugin)
-		require.Equal(t, plugin.Locales, dto.Locales)
+		require.Equal(t, plugin.Translations, dto.Translations)
 	})
 }

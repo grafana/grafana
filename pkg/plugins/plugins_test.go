@@ -404,21 +404,21 @@ func Test_ReadPluginJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "can read locales in a datasource plugin",
+			name: "can read languages in a datasource plugin",
 			pluginJSON: func(t *testing.T) io.ReadCloser {
 				pJSON := `{
-					"id": "myorg-locales-datasource",
-					"name": "Locales Datasource",
+					"id": "myorg-languages-datasource",
+					"name": "Languages Datasource",
 					"type": "datasource",
-					"locales": ["en-US", "pt-BR"]
+					"languages": ["en-US", "pt-BR"]
 				}`
 				return io.NopCloser(strings.NewReader(pJSON))
 			},
 			expected: JSONData{
-				ID:      "myorg-locales-datasource",
-				Name:    "Locales Datasource",
-				Type:    TypeDataSource,
-				Locales: []string{"en-US", "pt-BR"},
+				ID:        "myorg-languages-datasource",
+				Name:      "Languages Datasource",
+				Type:      TypeDataSource,
+				Languages: []string{"en-US", "pt-BR"},
 
 				Extensions: Extensions{
 					AddedLinks:        []AddedLink{},
@@ -438,21 +438,21 @@ func Test_ReadPluginJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "can read locales in a panel plugin",
+			name: "can read languages in a panel plugin",
 			pluginJSON: func(t *testing.T) io.ReadCloser {
 				pJSON := `{
-					"id": "myorg-locales-panel",
-					"name": "Locales Panel",
+					"id": "myorg-languages-panel",
+					"name": "Languages Panel",
 					"type": "panel",
-					"locales": ["en-US", "pt-BR"]
+					"languages": ["en-US", "pt-BR"]
 				}`
 				return io.NopCloser(strings.NewReader(pJSON))
 			},
 			expected: JSONData{
-				ID:      "myorg-locales-panel",
-				Name:    "Locales Panel",
-				Type:    TypePanel,
-				Locales: []string{"en-US", "pt-BR"},
+				ID:        "myorg-languages-panel",
+				Name:      "Languages Panel",
+				Type:      TypePanel,
+				Languages: []string{"en-US", "pt-BR"},
 
 				Extensions: Extensions{
 					AddedLinks:        []AddedLink{},
@@ -472,21 +472,21 @@ func Test_ReadPluginJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "can read locales in an app plugin",
+			name: "can read languages in an app plugin",
 			pluginJSON: func(t *testing.T) io.ReadCloser {
 				pJSON := `{
-					"id": "myorg-locales-app",
-					"name": "Locales App",
+					"id": "myorg-languages-app",
+					"name": "Languages App",
 					"type": "app",
-					"locales": ["en-US", "pt-BR"]
+					"languages": ["en-US", "pt-BR"]
 				}`
 				return io.NopCloser(strings.NewReader(pJSON))
 			},
 			expected: JSONData{
-				ID:      "myorg-locales-app",
-				Name:    "Locales App",
-				Type:    TypeApp,
-				Locales: []string{"en-US", "pt-BR"},
+				ID:        "myorg-languages-app",
+				Name:      "Languages App",
+				Type:      TypeApp,
+				Languages: []string{"en-US", "pt-BR"},
 
 				Extensions: Extensions{
 					AddedLinks:        []AddedLink{},

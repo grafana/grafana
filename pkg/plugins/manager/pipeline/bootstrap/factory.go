@@ -78,7 +78,7 @@ func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Cl
 	}
 
 	if f.features.LocalizationForPlugins {
-		if err := setLocales(plugin, f.assetPath, info); err != nil {
+		if err := setTranslations(plugin, f.assetPath, info); err != nil {
 			return nil, err
 		}
 	}
@@ -109,12 +109,12 @@ func setImages(p *plugins.Plugin, assetPath *assetpath.Service, info assetpath.P
 	return nil
 }
 
-func setLocales(p *plugins.Plugin, assetPath *assetpath.Service, info assetpath.PluginInfo) error {
-	locales, err := assetPath.GetLocales(info)
+func setTranslations(p *plugins.Plugin, assetPath *assetpath.Service, info assetpath.PluginInfo) error {
+	translations, err := assetPath.GetTranslations(info)
 	if err != nil {
-		return fmt.Errorf("set locales: %w", err)
+		return fmt.Errorf("set translations: %w", err)
 	}
 
-	p.Locales = locales
+	p.Translations = translations
 	return nil
 }

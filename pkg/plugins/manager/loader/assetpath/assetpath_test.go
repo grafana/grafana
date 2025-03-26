@@ -191,10 +191,10 @@ func TestService(t *testing.T) {
 				require.Equal(t, oneCDNRelativeURL, u)
 			})
 
-			t.Run("GetLocales", func(t *testing.T) {
+			t.Run("GetTranslations", func(t *testing.T) {
 				pluginInfo := NewPluginInfo(jsonData["one"], plugins.ClassExternal, pluginFS("one"), nil)
-				pluginInfo.pluginJSON.Locales = []string{"en-US", "pt-BR"}
-				locales, err := svc.GetLocales(pluginInfo)
+				pluginInfo.pluginJSON.Languages = []string{"en-US", "pt-BR"}
+				translations, err := svc.GetTranslations(pluginInfo)
 				require.NoError(t, err)
 				oneCDNURL, err := url.JoinPath(tc.cdnBaseURL, "/one/1.0.0/public/plugins/one")
 				require.NoError(t, err)
@@ -203,7 +203,7 @@ func TestService(t *testing.T) {
 				ptBRURL, err := url.JoinPath(oneCDNURL, "locales/pt-BR/one.json")
 				require.NoError(t, err)
 
-				require.Equal(t, map[string]string{"en-US": enURL, "pt-BR": ptBRURL}, locales)
+				require.Equal(t, map[string]string{"en-US": enURL, "pt-BR": ptBRURL}, translations)
 			})
 		})
 	}

@@ -1,22 +1,22 @@
 import { getI18next } from 'app/core/internationalization';
 
 import { SystemJS } from './loader/systemjs';
-import { addLocalesToI18n } from './plugin_loader';
+import { addTranslationsToI18n } from './plugin_loader';
 
 describe('plugin_loader', () => {
-  describe('addLocalesToI18n', () => {
+  describe('addTranslationsToI18n', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
 
-    it('should add locales to i18n that exist', async () => {
-      const locales = {
+    it('should add translations to i18n that exist', async () => {
+      const translations = {
         'en-US': '/public/plugins/test-panel/locales/en-US/test-panel.json',
         'pt-BR': '/public/plugins/test-panel/locales/pt-BR/test-panel.json',
       };
 
       jest.spyOn(SystemJS, 'import').mockImplementation((path) => {
-        if (path === locales['en-US']) {
+        if (path === translations['en-US']) {
           return Promise.resolve({ default: { testKey: 'testValue' } });
         }
         return Promise.resolve({ default: { testKey: 'valorDeTeste' } });
@@ -24,7 +24,7 @@ describe('plugin_loader', () => {
 
       const addResourceBundleSpy = jest.spyOn(getI18next(), 'addResourceBundle');
 
-      await addLocalesToI18n('pluginId', locales);
+      await addTranslationsToI18n('pluginId', translations);
 
       expect(addResourceBundleSpy).toHaveBeenCalledTimes(2);
       expect(addResourceBundleSpy).toHaveBeenNthCalledWith(
@@ -45,14 +45,14 @@ describe('plugin_loader', () => {
       );
     });
 
-    it('should add locales to i18n even if some locales do not exist', async () => {
-      const locales = {
+    it('should add translations to i18n even if some translations do not exist', async () => {
+      const translations = {
         'en-US': '/public/plugins/test-panel/locales/en-US/test-panel.json',
         'pt-BR': '/public/plugins/test-panel/locales/pt-BR/test-panel.json',
       };
 
       jest.spyOn(SystemJS, 'import').mockImplementation((path) => {
-        if (path === locales['en-US']) {
+        if (path === translations['en-US']) {
           return Promise.reject(new Error('File not found'));
         }
         return Promise.resolve({ default: { testKey: 'valorDeTeste' } });
@@ -60,7 +60,7 @@ describe('plugin_loader', () => {
       const consoleErrorSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       const addResourceBundleSpy = jest.spyOn(getI18next(), 'addResourceBundle');
 
-      await addLocalesToI18n('pluginId', locales);
+      await addTranslationsToI18n('pluginId', translations);
 
       expect(addResourceBundleSpy).toHaveBeenCalledTimes(1);
       expect(addResourceBundleSpy).toHaveBeenNthCalledWith(
@@ -72,7 +72,7 @@ describe('plugin_loader', () => {
         true
       );
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Could not load locale for plugin',
+        'Could not load translation for plugin',
         'pluginId',
         'en-US',
         new Error('File not found')
