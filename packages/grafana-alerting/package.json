@@ -74,7 +74,7 @@
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-esbuild": "6.2.0",
     "tsd": "^0.31.2",
-    "typescript": "5.7.3"
+    "typescript": "^5.8.2"
   },
   "peerDependencies": {
     "react": "^18.0.0",
