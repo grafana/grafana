@@ -8,13 +8,11 @@ import {
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorGroupByExpression,
   BuilderQueryEditorPropertyType,
-  BuilderQueryExpression,
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
-import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import { GroupByItem } from './GroupByItem';
-import { getAggregations, getFilters } from './utils';
+import { buildAndUpdateQuery } from './utils';
 
 interface GroupBySectionProps {
   query: AzureMonitorQuery;
@@ -76,107 +74,41 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
   }
 
   const handleGroupByChange = (newItems: Array<Partial<BuilderQueryEditorGroupByExpression>>) => {
-    let cleaned: BuilderQueryEditorGroupByExpression[] = newItems.map((g) => ({
+    const cleaned: BuilderQueryEditorGroupByExpression[] = newItems.map((g) => ({
       type: BuilderQueryEditorExpressionType.Group_by,
       property: g.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
       interval: g.interval,
       focus: g.focus ?? false,
     }));
-
+  
     setGroupBys(cleaned);
-
-    if (cleaned[0].property.name === '') {
+  
+    if (cleaned[0]?.property.name === '') {
       return;
     }
-
-    let groupByClauses: string[] = [];
-
-    cleaned.forEach((gb) => {
-      if (gb.property?.name) {
-        const isDatetime = allColumns.find((col) => col.name === gb.property?.name)?.type === 'datetime';
-
-        if (isDatetime) {
-          groupByClauses.push(`bin(${gb.property.name}, 1m)`);
-        } else {
-          groupByClauses.push(gb.property.name);
-        }
-      }
-    });
-
-    const updatedBuilderQuery = {
-      ...builderQuery,
-      groupBy: {
-        expressions: cleaned,
-        type: BuilderQueryEditorExpressionType.Group_by,
-      },
-    };
-
-    const aggregation = getAggregations(builderQuery.reduce?.expressions);
-    const filters = getFilters(builderQuery.where?.expressions);
-    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
-      updatedBuilderQuery,
+  
+    buildAndUpdateQuery({
+      query,
+      onQueryUpdate,
       allColumns,
-      aggregation,
-      filters
-    );
-
-    onQueryUpdate({
-      ...query,
-      azureLogAnalytics: {
-        ...query.azureLogAnalytics,
-        builderQuery: updatedBuilderQuery,
-        query: updatedQueryString,
-      },
+      groupBy: cleaned,
     });
-  };
+  };  
 
   const onDeleteGroupBy = (propertyName: string) => {
     setGroupBys((prevGroupBys) => {
       const updatedGroupBys = prevGroupBys.filter((gb) => gb.property.name !== propertyName);
-      const hasSelectedDatetime = updatedGroupBys.some(
-        (g) => g.property?.type === BuilderQueryEditorPropertyType.Datetime
-      );
-      const shouldIncludeTime = !updatedGroupBys.length || hasSelectedDatetime;
-
-      let groupByClauses = updatedGroupBys.map((gb) => gb.property.name);
-
-      if (updatedGroupBys.length === 0) {
-        groupByClauses = [];
-      } else {
-        if (!shouldIncludeTime) {
-          groupByClauses = groupByClauses.filter((g) => g !== `bin(TimeGenerated, 1m)`);
-        }
-      }
-
-      const updatedBuilderQuery: BuilderQueryExpression = {
-        ...builderQuery,
-        groupBy: {
-          expressions: updatedGroupBys,
-          type: BuilderQueryEditorExpressionType.Group_by,
-        },
-      };
-
-      const aggregation = getAggregations(builderQuery.reduce?.expressions);
-      const filters = getFilters(builderQuery.where?.expressions);
-      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
-        updatedBuilderQuery,
+  
+      buildAndUpdateQuery({
+        query,
+        onQueryUpdate,
         allColumns,
-        aggregation,
-        filters
-      );
-
-      onQueryUpdate({
-        ...query,
-        azureLogAnalytics: {
-          ...query.azureLogAnalytics,
-          builderQuery: updatedBuilderQuery,
-          query: updatedQueryString,
-        },
+        groupBy: updatedGroupBys,
       });
-
+  
       return updatedGroupBys;
     });
-  };
+  };  
 
   return (
     <EditorRow>

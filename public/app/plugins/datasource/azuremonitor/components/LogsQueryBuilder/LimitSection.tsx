@@ -3,12 +3,28 @@ import { useState } from 'react';
 import { EditorRow, EditorFieldGroup, EditorField } from '@grafana/plugin-ui';
 import { Icon, Input, Tooltip } from '@grafana/ui';
 
+import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+
+import { buildAndUpdateQuery } from './utils';
+
 interface LimitSectionProps {
-  handleQueryLimitUpdate: (limit: number) => void;
+  query: AzureMonitorQuery;
+  allColumns: AzureLogAnalyticsMetadataColumn[];
+  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
 }
 
-export const LimitSection: React.FC<LimitSectionProps> = ({ handleQueryLimitUpdate }) => {
+export const LimitSection: React.FC<LimitSectionProps> = (props) => {
+  const {query, allColumns, onQueryUpdate} = props;
   const [limit, setLimit] = useState<number>();
+
+  const handleQueryLimitUpdate = (newLimit: number) => {
+    buildAndUpdateQuery({
+      query,
+      onQueryUpdate,
+      allColumns,
+      limit: newLimit,
+    });
+  };
 
   return (
     <EditorRow>

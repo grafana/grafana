@@ -9,8 +9,12 @@ import {
   BuilderQueryEditorReduceExpression,
   BuilderQueryEditorWhereExpression,
   BuilderQueryEditorOrderByOptions,
+  BuilderQueryEditorGroupByExpression,
+  BuilderQueryEditorOrderByExpression,
 } from '../../dataquery.gen';
-import { QueryEditorPropertyType } from '../../types';
+import { AzureLogAnalyticsMetadataColumn, QueryEditorPropertyType, AzureMonitorQuery } from '../../types';
+
+import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 
 const DYNAMIC_TYPE_ARRAY_DELIMITER = '["`indexer`"]';
 
@@ -306,3 +310,73 @@ export const removeExtraQuotes = (value: string): string => {
   }
   return strValue;
 };
+export interface BuildAndUpdateOptions {
+  query: AzureMonitorQuery;
+  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+  allColumns: AzureLogAnalyticsMetadataColumn[];
+  limit?: number;
+  reduce?: BuilderQueryEditorReduceExpression[];
+  where?: BuilderQueryEditorWhereExpression[];
+  groupBy?: BuilderQueryEditorGroupByExpression[];
+  orderBy?: BuilderQueryEditorOrderByExpression[];
+  columns?: string[];
+}
+
+export function buildAndUpdateQuery({
+  query,
+  onQueryUpdate,
+  allColumns,
+  limit,
+  reduce,
+  where,
+  groupBy,
+  orderBy,
+  columns,
+}: BuildAndUpdateOptions) {
+  const builderQuery = query.azureLogAnalytics?.builderQuery;
+
+  const updatedBuilderQuery: BuilderQueryExpression = {
+    ...builderQuery,
+    ...(limit !== undefined ? { limit } : {}),
+    ...(reduce !== undefined
+      ? { reduce: { expressions: reduce, type: BuilderQueryEditorExpressionType.Reduce } }
+      : {}),
+    ...(where !== undefined
+      ? { where: { expressions: where, type: BuilderQueryEditorExpressionType.And } }
+      : {}),
+    ...(groupBy !== undefined
+      ? { groupBy: { expressions: groupBy, type: BuilderQueryEditorExpressionType.Group_by } }
+      : {}),
+    ...(orderBy !== undefined
+      ? { orderBy: { expressions: orderBy, type: BuilderQueryEditorExpressionType.Order_by } }
+      : {}),
+    ...(columns !== undefined
+      ? { columns: { columns, type: BuilderQueryEditorExpressionType.Property } }
+      : {}),
+  };
+
+  const aggregation = reduce
+    ?.map((agg) => `${agg.reduce?.name}(${agg.property?.name})`)
+    .join(', ');
+
+  const filterStr = where
+    ?.map((w) => `${w.property?.name} ${w.operator?.name} '${w.operator?.value}'`)
+    .join(' and ');
+
+  const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
+    updatedBuilderQuery,
+    allColumns,
+    aggregation,
+    filterStr
+  );
+
+  onQueryUpdate({
+    ...query,
+    azureLogAnalytics: {
+      ...query.azureLogAnalytics,
+      builderQuery: updatedBuilderQuery,
+      query: updatedQueryString,
+    },
+  });
+}
+

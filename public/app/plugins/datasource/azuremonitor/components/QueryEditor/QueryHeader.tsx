@@ -97,7 +97,7 @@ export const QueryHeader = ({ query, onQueryChange, setAzureLogsCheatSheetModalO
           </Button>
         )}
         <FlexItem grow={1} />
-        {(query.queryType === AzureQueryType.LogAnalytics && !!config.featureToggles.azureMonitorLogsBuilderEditor) && (
+        {query.queryType === AzureQueryType.LogAnalytics && !!config.featureToggles.azureMonitorLogsBuilderEditor && (
           <RadioButtonGroup
             size="sm"
             options={EDITOR_MODES}

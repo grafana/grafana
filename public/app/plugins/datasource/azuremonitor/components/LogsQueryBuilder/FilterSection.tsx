@@ -9,13 +9,11 @@ import {
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorWhereExpression,
-  BuilderQueryExpression,
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
-import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import {
-  getAggregations,
+  buildAndUpdateQuery,
   isOperatorExpression,
   removeExtraQuotes,
   toOperatorOptions,
@@ -106,110 +104,49 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     return;
   }
 
-  const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
-    return filters
-      .filter((f) => f.column && f.operator && f.value.trim() !== '')
-      .map((f) => {
-        let value = removeExtraQuotes(f.value.trim());
-
-        return `${f.column} ${f.operator} '${value}'`;
-      })
-      .join(' and ');
-  };
-
   const onChangeFilter = (index: number, key: keyof (typeof filters)[0], value: string) => {
     let updatedFilters = [...filters];
-
+  
     if (index === -1) {
       updatedFilters.push({ column: '', operator: '==', value: '' });
       index = updatedFilters.length - 1;
     } else {
       updatedFilters[index] = { ...updatedFilters[index], [key]: value || '' };
     }
-
+  
     setFilters(updatedFilters);
-
-    if (builderQuery?.where?.expressions) {
-      let updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = [];
-
-      if (updatedFilters.length > 0) {
-        updatedWhereExpressions = updatedFilters.map((filter) => ({
-          type: BuilderQueryEditorExpressionType.Operator,
-          operator: { name: filter.operator, value: filter.value },
-          property: { name: filter.column, type: BuilderQueryEditorPropertyType.String },
-        }));
-      }
-
-      const updatedBuilderQuery: BuilderQueryExpression = {
-        ...builderQuery,
-        where: updatedWhereExpressions.length
-          ? { ...builderQuery.where, expressions: updatedWhereExpressions }
-          : undefined,
-      };
-
-      const formattedFilters = updatedFilters.length ? formatFilters(updatedFilters) : '';
-
-      const aggregation = getAggregations(builderQuery.reduce?.expressions);
-      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
-        updatedBuilderQuery,
-        allColumns,
-        aggregation,
-        formattedFilters
-      );
-
-      onQueryUpdate({
-        ...query,
-        azureLogAnalytics: {
-          ...query.azureLogAnalytics,
-          builderQuery: updatedBuilderQuery,
-          query: updatedQueryString,
-        },
-      });
-    }
-  };
+  
+    const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = updatedFilters.map((filter) => ({
+      type: BuilderQueryEditorExpressionType.Operator,
+      operator: { name: filter.operator, value: filter.value },
+      property: { name: filter.column, type: BuilderQueryEditorPropertyType.String },
+    }));
+  
+    buildAndUpdateQuery({
+      query,
+      onQueryUpdate,
+      allColumns,
+      where: updatedWhereExpressions,
+    });
+  };  
 
   const onDeleteFilter = (index: number) => {
     const newFilters = filters.filter((_, i) => i !== index);
     setFilters(newFilters);
-
-    if (builderQuery?.where?.expressions) {
-      let updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = [];
-
-      if (newFilters.length > 0) {
-        updatedWhereExpressions = newFilters.map((filter) => ({
-          type: BuilderQueryEditorExpressionType.Operator,
-          operator: { name: filter.operator, value: filter.value },
-          property: { name: filter.column, type: BuilderQueryEditorPropertyType.String },
-        }));
-      }
-
-      const updatedBuilderQuery: BuilderQueryExpression = {
-        ...builderQuery,
-        where: updatedWhereExpressions.length
-          ? { ...builderQuery.where, expressions: updatedWhereExpressions }
-          : undefined,
-      };
-
-      const formattedFilters = newFilters.length ? formatFilters(newFilters) : '';
-
-      const aggregation = getAggregations(builderQuery.reduce?.expressions);
-      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
-        updatedBuilderQuery,
-        allColumns,
-        aggregation,
-        formattedFilters
-      );
-
-      onQueryUpdate({
-        ...query,
-        azureLogAnalytics: {
-          ...query.azureLogAnalytics,
-          builderQuery: updatedBuilderQuery,
-          query: updatedQueryString,
-        },
-      });
-    }
-  };
+  
+    const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = newFilters.map((filter) => ({
+      type: BuilderQueryEditorExpressionType.Operator,
+      operator: { name: filter.operator, value: filter.value },
+      property: { name: filter.column, type: BuilderQueryEditorPropertyType.String },
+    }));
+  
+    buildAndUpdateQuery({
+      query,
+      onQueryUpdate,
+      allColumns,
+      where: updatedWhereExpressions,
+    });
+  };  
 
   return (
     <EditorRow>

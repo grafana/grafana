@@ -11,8 +11,7 @@ import {
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
-import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
-import { getAggregations, getFilters, isOperatorExpression, removeExtraQuotes } from './utils';
+import { buildAndUpdateQuery, isOperatorExpression, removeExtraQuotes } from './utils';
 
 interface FuzzySearchProps {
   query: AzureMonitorQuery;
@@ -81,90 +80,41 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
   const handleChange = (newSearchTerm: string, column: string) => {
     setSearchTerm(newSearchTerm);
     setSelectedColumn(column);
-
-    if (query.azureLogAnalytics?.builderQuery) {
-      const updatedBuilderQuery = { ...query.azureLogAnalytics.builderQuery };
-
-      if (
-        updatedBuilderQuery.where &&
-        updatedBuilderQuery.where.expressions &&
-        Array.isArray(updatedBuilderQuery.where.expressions)
-      ) {
-        const isOperatorExpression = (exp: BuilderQueryEditorWhereExpression) => {
-          return exp?.type === BuilderQueryEditorExpressionType.Operator && 'operator' in exp && 'property' in exp;
-        };
-
-        updatedBuilderQuery.where.expressions = updatedBuilderQuery.where.expressions.filter(
-          (condition) => !(isOperatorExpression(condition) && condition.operator?.name === 'has')
-        );
-
-        updatedBuilderQuery.where.expressions.push({
-          type: BuilderQueryEditorExpressionType.Operator,
-          operator: { name: 'has', value: newSearchTerm },
-          property: { name: column || '*', type: BuilderQueryEditorPropertyType.String },
-        });
-
-        const aggregation = getAggregations(updatedBuilderQuery.reduce?.expressions);
-        const filters = getFilters(updatedBuilderQuery.where?.expressions);
-        const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
-          updatedBuilderQuery,
-          allColumns,
-          aggregation,
-          filters
-        );
-
-        onQueryUpdate({
-          ...query,
-          azureLogAnalytics: {
-            ...query.azureLogAnalytics,
-            builderQuery: updatedBuilderQuery,
-            query: updatedQueryString,
-          },
-        });
-      }
-    }
+  
+    const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = (builderQuery?.where?.expressions || [])
+      .filter((condition) => !(isOperatorExpression(condition) && condition.operator?.name === 'has'))
+      .map((exp) => exp);
+  
+    updatedWhereExpressions.push({
+      type: BuilderQueryEditorExpressionType.Operator,
+      operator: { name: 'has', value: newSearchTerm },
+      property: { name: column || '*', type: BuilderQueryEditorPropertyType.String },
+    });
+  
+    buildAndUpdateQuery({
+      query,
+      onQueryUpdate,
+      allColumns,
+      where: updatedWhereExpressions,
+    });
   };
 
-  const onDeleteFuzzySearch = () => {
-    setSearchTerm('');
-    setSelectedColumn('');
-    setIsOpen(false);
+const onDeleteFuzzySearch = () => {
+  setSearchTerm('');
+  setSelectedColumn('');
+  setIsOpen(false);
 
-    if (builderQuery.where?.expressions) {
-      const updatedBuilderQuery = { ...builderQuery };
+  const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = (builderQuery?.where?.expressions || [])
+    .filter(isOperatorExpression)
+    .filter((condition) => condition.operator?.name !== 'has');
 
-      if (!updatedBuilderQuery.where) {
-        updatedBuilderQuery.where = { expressions: [], type: BuilderQueryEditorExpressionType.And };
-      }
-
-      let updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = updatedBuilderQuery.where.expressions
-        .filter(isOperatorExpression)
-        .filter((condition) => condition.operator?.name !== 'has');
-
-      updatedBuilderQuery.where =
-        updatedWhereExpressions.length > 0
-          ? { expressions: updatedWhereExpressions, type: BuilderQueryEditorExpressionType.And }
-          : undefined;
-
-      const aggregation = getAggregations(updatedBuilderQuery.reduce?.expressions);
-      const filters = getFilters(updatedWhereExpressions);
-      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
-        updatedBuilderQuery,
-        allColumns,
-        aggregation,
-        filters
-      );
-
-      onQueryUpdate({
-        ...query,
-        azureLogAnalytics: {
-          ...query.azureLogAnalytics,
-          builderQuery: updatedBuilderQuery,
-          query: updatedQueryString,
-        },
-      });
-    }
-  };
+  buildAndUpdateQuery({
+    query,
+    onQueryUpdate,
+    allColumns,
+    where: updatedWhereExpressions,
+  });
+};
 
   return (
     <EditorRow>

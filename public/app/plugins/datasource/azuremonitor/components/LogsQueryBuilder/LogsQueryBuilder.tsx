@@ -5,15 +5,12 @@ import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
 
 import {
-  BuilderQueryEditorExpressionType,
-  BuilderQueryEditorPropertyType,
   BuilderQueryExpression,
 } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 import { AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from '../../types';
 
 import { AggregateSection } from './AggregationSection';
-import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import { FilterSection } from './FilterSection';
 import { FuzzySearch } from './FuzzySearch';
 import { GroupBySection } from './GroupBySection';
@@ -66,31 +63,6 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     return selectedTable?.columns || [];
   }, [builderQuery, tables]);
 
-  const handleQueryLimitUpdate = (limit: number) => {
-    const updatedBuilderQuery: BuilderQueryExpression = {
-      ...query.azureLogAnalytics?.builderQuery,
-      reduce: query.azureLogAnalytics?.builderQuery?.reduce,
-      from: {
-        property: {
-          name: query.azureLogAnalytics?.builderQuery?.from?.property.name!,
-          type: BuilderQueryEditorPropertyType.String,
-        },
-        type: BuilderQueryEditorExpressionType.Property,
-      },
-      limit: limit,
-    };
-
-    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery, allColumns);
-
-    onQueryChange({
-      ...query,
-      azureLogAnalytics: {
-        ...query.azureLogAnalytics,
-        builderQuery: updatedBuilderQuery,
-        query: updatedQueryString,
-      },
-    });
-  };
 
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
@@ -104,7 +76,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         <GroupBySection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <OrderBySection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <FuzzySearch {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
-        <LimitSection handleQueryLimitUpdate={handleQueryLimitUpdate} />
+        <LimitSection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
         <KQLPreview
           query={query.azureLogAnalytics?.query || ''}
           hidden={isKQLPreviewHidden}

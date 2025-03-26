@@ -5,15 +5,13 @@ import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/p
 import { Icon, Tooltip } from '@grafana/ui';
 
 import {
-  BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorReduceExpression,
-  BuilderQueryExpression,
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
 import AggregateItem from './AggregateItem';
-import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
+import { buildAndUpdateQuery } from './utils';
 
 interface AggregateSectionProps {
   query: AzureMonitorQuery;
@@ -97,74 +95,20 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
 
   const onDeleteAggregate = (aggregateToDelete: Partial<BuilderQueryEditorReduceExpression>) => {
     setAggregates((prevAggregates) => {
-      const updatedAggregates = prevAggregates.filter((agg) => agg.property?.name !== aggregateToDelete.property?.name);
-
-      if (updatedAggregates.length === 0) {
-        updateAggregatesAndQuery([]);
-      } else {
-        updateAggregatesAndQuery(updatedAggregates);
-      }
-
+      const updatedAggregates = prevAggregates.filter(
+        (agg) => agg.property?.name !== aggregateToDelete.property?.name
+      );
+  
+      buildAndUpdateQuery({
+        query,
+        onQueryUpdate,
+        allColumns,
+        reduce: updatedAggregates.length === 0 ? [] : updatedAggregates,
+      });
+  
       return updatedAggregates;
     });
-  };
-
-  const updateAggregatesAndQuery = (newAggregates: BuilderQueryEditorReduceExpression[]) => {
-    const validAggregates = newAggregates.filter((agg) => agg.reduce?.name);
-
-    const aggregation =
-      validAggregates.length > 0
-        ? validAggregates
-            .map((agg) => {
-              if (agg.reduce?.name === 'percentile' && agg.parameters && agg.parameters.length >= 2) {
-                const percentileValue = agg.parameters[0]?.value;
-                const columnName = agg.property.name;
-
-                return `percentile(${columnName}, ${percentileValue})`;
-              } else if (agg.reduce?.name === 'count' && agg.property?.name) {
-                return `count(${agg.property.name})`;
-              } else if (agg.reduce?.name === 'count') {
-                return `count()`;
-              }
-              return `${agg.reduce.name}(${agg.property?.name})`;
-            })
-            .join(', ')
-        : '';
-
-    const updatedBuilderQuery: BuilderQueryExpression = {
-      ...builderQuery,
-      reduce: {
-        expressions: validAggregates,
-        type: BuilderQueryEditorExpressionType.Reduce,
-      },
-    };
-
-    const filters = builderQuery.where?.expressions
-      ?.map((exp) => {
-        if ('property' in exp && exp.property?.name && exp.operator?.name && exp.operator?.value !== undefined) {
-          return `${exp.property.name} ${exp.operator.name} ${exp.operator.value}`;
-        }
-        return null;
-      })
-      .filter((filter) => filter !== null)
-      .join(' and ');
-
-    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
-      updatedBuilderQuery,
-      allColumns,
-      aggregation,
-      filters
-    );
-
-    onQueryUpdate({
-      ...query,
-      azureLogAnalytics: {
-        ...query.azureLogAnalytics,
-        builderQuery: updatedBuilderQuery,
-        query: updatedQueryString,
-      },
-    });
-  };
+  };  
 
   const onChange = (newItems: Array<Partial<BuilderQueryEditorReduceExpression>>) => {
     const cleaned = newItems.map(
@@ -177,7 +121,12 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
     );
 
     setAggregates(cleaned);
-    updateAggregatesAndQuery(cleaned);
+    buildAndUpdateQuery({
+      query,
+      onQueryUpdate,
+      allColumns,
+      reduce: cleaned,
+    });    
   };
 
   return (

@@ -9,12 +9,10 @@ import {
   BuilderQueryEditorOrderByExpression,
   BuilderQueryEditorOrderByOptions,
   BuilderQueryEditorPropertyType,
-  BuilderQueryExpression,
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
-import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
-import { getAggregations, getFilters } from './utils';
+import { buildAndUpdateQuery } from './utils';
 
 interface OrderBySectionProps {
   query: AzureMonitorQuery;
@@ -75,7 +73,7 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
   const handleOrderByChange = (index: number, key: 'column' | 'order', value: string) => {
     setOrderBy((prev) => {
       const updated = [...prev];
-
+  
       if (index === -1) {
         updated.push({
           property: { name: value, type: BuilderQueryEditorPropertyType.String },
@@ -94,8 +92,14 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
               : updated[index].order,
         };
       }
-
-      updateQuery(updated);
+  
+      buildAndUpdateQuery({
+        query,
+        onQueryUpdate,
+        allColumns,
+        orderBy: updated,
+      });
+  
       return updated;
     });
   };
@@ -103,43 +107,17 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
   const onDeleteOrderBy = (index: number) => {
     setOrderBy((prev) => {
       const updated = prev.filter((_, i) => i !== index);
-      updateQuery(updated);
+  
+      buildAndUpdateQuery({
+        query,
+        onQueryUpdate,
+        allColumns,
+        orderBy: updated,
+      });
+  
       return updated;
     });
-  };
-
-  const updateQuery = (updatedOrderBy: BuilderQueryEditorOrderByExpression[]) => {
-    if (updatedOrderBy && updatedOrderBy[0]?.property) {
-      if (updatedOrderBy[0]?.property?.name === '') {
-        return;
-      }
-    }
-    const updatedBuilderQuery: BuilderQueryExpression = {
-      ...builderQuery,
-      orderBy:
-        updatedOrderBy.length > 0
-          ? { expressions: updatedOrderBy, type: BuilderQueryEditorExpressionType.Order_by }
-          : undefined,
-    };
-
-    const aggregation = getAggregations(updatedBuilderQuery.reduce?.expressions);
-    const filters = getFilters(updatedBuilderQuery.where?.expressions);
-    const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
-      updatedBuilderQuery,
-      allColumns,
-      aggregation,
-      filters
-    );
-
-    onQueryUpdate({
-      ...query,
-      azureLogAnalytics: {
-        ...query.azureLogAnalytics,
-        builderQuery: updatedBuilderQuery,
-        query: updatedQueryString,
-      },
-    });
-  };
+  };  
 
   return (
     <EditorRow>
