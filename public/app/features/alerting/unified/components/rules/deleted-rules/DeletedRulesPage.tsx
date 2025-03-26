@@ -27,7 +27,8 @@ function DeletedrulesPage() {
         {error && (
           <Alert title={t('alerting.deleted-rules.errorloading', 'Failed to load alert deleted rules')}>
             {stringifyErrorLike(error)}
-          </Alert>)}
+          </Alert>
+        )}
 
         <DeletedRules deletedRules={deletedRules} />
       </>

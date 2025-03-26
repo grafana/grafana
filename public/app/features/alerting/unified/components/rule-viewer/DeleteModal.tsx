@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { EditableRuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
@@ -72,8 +73,8 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
         title="Delete rule"
         body={
           isSoftDeleteEnabled
-            ? 'Are you sure you want to delete this rule? This rule will be recoverable from the Recently deleted page by a user with an admin role.'
-            : 'Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?'
+            ? t("alerting.delete-rule-modal.with-soft-delete", 'Are you sure you want to delete this rule? This rule will be recoverable from the Recently deleted page by a user with an admin role.')
+            : t("alerting.delete-rule-modal.without-soft-delete", 'Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?')
         }
         confirmText="Yes, delete"
         icon="exclamation-triangle"

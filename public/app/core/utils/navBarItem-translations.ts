@@ -256,7 +256,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'groups':
       return t('nav.alerting-groups.subtitle', 'See grouped alerts with active notifications');
     case 'alerts/recently-deleted':
-        return t('nav.alerts-recently-deleted.subtitle', 'See recently deleted alert rules');
+      return t('nav.alerts-recently-deleted.subtitle', 'See recently deleted alert rules');
     case 'datasources':
       return t('nav.datasources.subtitle', 'Add and configure data sources');
     case 'correlations':

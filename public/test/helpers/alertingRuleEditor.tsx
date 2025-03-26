@@ -46,10 +46,16 @@ export const ui = {
     preview: byRole('button', { name: /^Preview$/ }),
   },
 };
-export function renderRuleEditor(identifier?: string, recording?: 'recording' | 'grafana-recording', restoreFrom?: string) {
+export function renderRuleEditor(
+  identifier?: string,
+  recording?: 'recording' | 'grafana-recording',
+  restoreFrom?: string
+) {
   const isManualRestore = Boolean(restoreFrom);
   const restoreFromEncoded = restoreFrom ? encodeURIComponent(restoreFrom) : '';
-  const newAlertRuleRoute = `/alerting/new/${recording ?? 'alerting'}` + (isManualRestore ? `?isManualRestore=true&defaults=${restoreFromEncoded}` : '');
+  const newAlertRuleRoute =
+    `/alerting/new/${recording ?? 'alerting'}` +
+    (isManualRestore ? `?isManualRestore=true&defaults=${restoreFromEncoded}` : '');
   const initialEntries = [identifier ? `/alerting/${identifier}/edit` : newAlertRuleRoute];
   return render(
     <>

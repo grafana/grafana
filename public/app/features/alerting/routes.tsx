@@ -215,15 +215,14 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/recently-deleted/',
       roles: () => ['Admin'],
-      component:
-        shouldIAllowRecoveringDeletedRules()
-          ? importAlertingComponent(
+      component: shouldIAllowRecoveringDeletedRules()
+        ? importAlertingComponent(
             () =>
               import(
-                  /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
+                /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
               )
           )
-          : () => <Navigate replace to="/alerting/list" />,
+        : () => <Navigate replace to="/alerting/list" />,
     },
     {
       path: '/alerting/new/:type?',

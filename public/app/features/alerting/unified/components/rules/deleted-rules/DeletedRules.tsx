@@ -10,10 +10,10 @@ import { UpdatedByUser } from '../../rule-viewer/tabs/version-history/UpdatedBy'
 
 import { ConfirmRestoreDeletedRuleModal } from './ConfirmRestoreDeletedRuleModal';
 
-export const DELETED_RULES_PAGE_SIZE = 30;
+const DELETED_RULES_PAGE_SIZE = 30;
 
 interface DeletedRulesProps {
-  deletedRules: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>
+  deletedRules: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>;
 }
 export function DeletedRules({ deletedRules }: DeletedRulesProps) {
   const [confirmRestore, setConfirmRestore] = useState(false);
@@ -22,9 +22,7 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
   const unknown = t('alerting.deleted-rules.unknown', 'Unknown');
 
   const showConfirmation = (id: string) => {
-    const ruleTorestore = deletedRules.find(
-      (rule) => getRowId(rule.grafana_alert) === id
-    );
+    const ruleTorestore = deletedRules.find((rule) => getRowId(rule.grafana_alert) === id);
     if (!ruleTorestore) {
       return;
     }
@@ -93,8 +91,7 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
               size="sm"
               icon="history"
               onClick={() => {
-                showConfirmation(getRowId(row.original.grafana_alert)
-                );
+                showConfirmation(getRowId(row.original.grafana_alert));
               }}
             >
               <Trans i18nKey="alerting.deleted-rules.restore">Restore</Trans>

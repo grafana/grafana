@@ -1,6 +1,5 @@
 import { render, screen } from 'test/test-utils';
 
-
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -38,15 +37,17 @@ describe('render Deleted rules page', () => {
       <>
         <AppNotificationList />
         <DeletedRules deletedRules={[grafanaRulerRule]} />
-      </>);
+      </>
+    );
     expect(screen.getByText('Grafana-rule')).toBeInTheDocument();
 
-    const restoreButtons = screen.getAllByRole('button', { name: /restore/i })
+    const restoreButtons = screen.getAllByRole('button', { name: /restore/i });
     await user.click(restoreButtons[0]);
-    expect(screen.getByText(/are you sure you want to restore this deleted alert rule definition\?/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/are you sure you want to restore this deleted alert rule definition\?/i)
+    ).toBeInTheDocument();
 
     await user.click(screen.getByText(/yes, restore deleted rule/i));
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
-
   });
 });
