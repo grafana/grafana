@@ -19,6 +19,12 @@ jest.mock('../ScheduledBackups/ScheduledBackups.service');
 jest.mock('../BackupInventory/BackupInventory.service');
 jest.mock('./AddBackupPage.service');
 jest.mock('app/percona/backup/components/StorageLocations/StorageLocations.service');
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useLocation: () => ({
+    pathname: 'http://localhost/graph/pmm-database-checks/all-checks',
+  })
+}));
 
 const AddBackupPageWrapper: FC<PropsWithChildren> = ({ children }) =>
   wrapWithGrafanaContextMock(
@@ -66,7 +72,7 @@ describe('AddBackupPage', () => {
     expect(screen.getAllByTestId('service-select-label')).toHaveLength(1);
     const textboxes = screen.getAllByRole('textbox');
     expect(textboxes.filter((textbox) => textbox.tagName === 'INPUT')).toHaveLength(2);
-    expect(screen.queryByTestId('advanced-backup-fields')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('advanced-backup-fields')).toBeNull();
 
     expect(screen.queryByText(Messages.advanceSettings)).toBeInTheDocument();
     expect(screen.queryAllByText('Incremental')).toHaveLength(0);
@@ -84,6 +90,8 @@ describe('AddBackupPage', () => {
       </AddBackupPageWrapper>
     );
 
+    
+
     await waitFor(() => expect(screen.getAllByText('Choose')).toHaveLength(2));
     expect(screen.getByTestId('advanced-backup-fields')).toBeInTheDocument();
     expect(screen.getByTestId('multi-select-field-div-wrapper').children).not.toHaveLength(0);
@@ -91,7 +99,7 @@ describe('AddBackupPage', () => {
   });
 
   it('should render backup mode selector when in schedule mode', async () => {
-    render(
+   render(
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
