@@ -10,7 +10,7 @@ export interface OptionsPaneCategoryDescriptorProps {
   title: string;
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   isOpenDefault?: boolean;
-  forceOpen?: number;
+  forceOpen?: boolean;
   className?: string;
   isNested?: boolean;
   itemsCount?: number;
