@@ -15,10 +15,11 @@ const mockDashboardDto: DashboardWithAccessInfo<DashboardDataDTO> = {
     resourceVersion: '1',
     creationTimestamp: '1',
     annotations: {},
+    generation: 1,
   },
   spec: {
-    title: 'test',
-    uid: 'test',
+    title: '',
+    uid: '',
     schemaVersion: 0,
   },
   access: {},
@@ -140,6 +141,16 @@ describe('v1 dashboard API', () => {
     expect(result.meta.folderTitle).toBe('New Folder');
     expect(result.meta.folderUrl).toBe('/folder/url');
     expect(result.meta.folderUid).toBe('new-folder');
+  });
+
+  it('should correctly set uid and version in the spec', async () => {
+    const api = new K8sDashboardAPI();
+    // we are fetching the mockDashboardDTO, which doesn't have a uid or version
+    // and this is what v1 endpoint returns
+    // getDashboardDTO should set the uid and version from the metadata.name (uid) and metadata.generation (version)
+    const result = await api.getDashboardDTO('dash-uid');
+    expect(result.dashboard.uid).toBe('dash-uid');
+    expect(result.dashboard.version).toBe(1);
   });
 
   it('throws an error if folder is not found', async () => {
