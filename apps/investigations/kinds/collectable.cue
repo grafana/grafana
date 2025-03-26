@@ -2,27 +2,27 @@ package investigations
 
 // Collectable represents an item collected during investigation
 #Collectable: {
-	id:             string
-	createdAt:      string
-	
-	title:          string
-	origin:         string
-	type:           string
-	queries:        [...#Query] // +listType=atomic
-	timeRange:      #TimeRange
-	datasource:     #DatasourceRef
-	url:            string
-	logoPath?:      string
+	id:        string
+	createdAt: string
 
-	note: 	        string
-	noteUpdatedAt:  string
+	title:  string
+	origin: string
+	type:   string
+	queries: [...#Query] // +listType=atomic
+	timeRange:           #TimeRange
+	datasource:          #DatasourceRef
+	url:                 string
+	logoPath?:           string
+
+	note:          string
+	noteUpdatedAt: string
 }
 
 #CollectableSummary: {
-	id: string
-	title: string
+	id:       string
+	title:    string
 	logoPath: string
-	origin: string
+	origin:   string
 }
 
 // Query represents a data query
@@ -32,8 +32,8 @@ package investigations
 	editorMode:          string
 	supportingQueryType: string
 	legendFormat:        string
-	expr:               string
-} 
+	expr:                string
+}
 
 // TimeRange represents a time range with both absolute and relative values
 #TimeRange: {
@@ -43,9 +43,9 @@ package investigations
 		from: string
 		to:   string
 	}
-} 
+}
 
 // DatasourceRef is a reference to a datasource
 #DatasourceRef: {
 	uid: string
-} 
+}

@@ -2,24 +2,20 @@ package investigations
 
 investigationIndex: {
 	kind:       "InvestigationIndex"
-	group:      "investigations.grafana.app"
-	apiResource: {
-		groupOverride: "investigations.grafana.app"
-	}
 	pluralName: "InvestigationIndexes"
-	current:    "v0alpha1"
+
+	codegen: {
+		ts: {
+			enabled: true
+		}
+		go: {
+			enabled: true
+		}
+	}
+
+	current: "v0alpha1"
 	versions: {
 		"v0alpha1": {
-			codegen: {
-				frontend: true
-				backend:  true
-				options: {
-					generateObjectMeta: true
-					generateClient:     true
-					k8sLike:           true
-					package:           "github.com/grafana/grafana/apps/investigations"
-				}
-			}
 			schema: {
 				spec: {
 					// Title of the index, e.g. 'Favorites' or 'My Investigations'

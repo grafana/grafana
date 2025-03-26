@@ -1,15 +1,21 @@
 package advisor
 
 check: {
-	kind:	   "Check"
+	kind:       "Check"
 	pluralName: "Checks"
-	current:	"v0alpha1"
+	current:    "v0alpha1"
+
+	codegen: {
+		go: {
+			enabled: true
+		}
+		ts: {
+			enabled: false
+		}
+	}
+
 	versions: {
 		"v0alpha1": {
-			codegen: {
-				frontend: true
-				backend:  true
-			}
 			validation: {
 				operations: [
 					"CREATE",
@@ -26,7 +32,7 @@ check: {
 					url: string
 					// Human readable error message
 					message: string
- 				}
+				}
 				#ReportFailure: {
 					// Severity of the failure
 					severity: "high" | "low"
@@ -36,12 +42,12 @@ check: {
 					item: string
 					// Links to actions that can be taken to resolve the failure
 					links: [...#ErrorLink]
-				}	
+				}
 				#Report: {
-						// Number of elements analyzed
-						count: int
-						// List of failures
-						failures: [...#ReportFailure]
+					// Number of elements analyzed
+					count: int
+					// List of failures
+					failures: [...#ReportFailure]
 				}
 				spec: #Data
 				status: {

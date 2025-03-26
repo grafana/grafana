@@ -4,12 +4,18 @@ playlist: {
 	kind:       "Playlist"
 	pluralName: "Playlists"
 	current:    "v0alpha1"
+
+	codegen: {
+		ts: {
+			enabled: false
+		}
+		go: {
+			enabled: true
+		}
+	}
+
 	versions: {
 		"v0alpha1": {
-			codegen: {
-				frontend: false
-				backend:  true
-			}
 			validation: {
 				operations: [
 					"CREATE",
@@ -25,7 +31,7 @@ playlist: {
 			schema: {
 				#Item: {
 					// type of the item.
-					type: "dashboard_by_tag" | "dashboard_by_uid" | "dashboard_by_id" @cuetsy(kind="enum")
+					type: "dashboard_by_tag" | "dashboard_by_uid" | "dashboard_by_id" @cog(kind="enum")
 					// Value depends on type and describes the playlist item.
 					//  - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
 					//  is not portable as the numerical identifier is non-deterministic between different instances.
