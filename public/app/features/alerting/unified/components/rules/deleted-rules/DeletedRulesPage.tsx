@@ -18,8 +18,6 @@ function DeletedrulesPage() {
     rulerConfig: GRAFANA_RULER_CONFIG,
     filter: {}, // todo: add filters, and limit?????
   });
-  const values = Object.values(currentData);
-  const deletedRules = values.length > 0 ? values[0][0]?.rules : [];
 
   return (
     <AlertingPageWrapper navId="alerts/recently-deleted" isLoading={isLoading}>
@@ -29,8 +27,7 @@ function DeletedrulesPage() {
             {stringifyErrorLike(error)}
           </Alert>
         )}
-
-        <DeletedRules deletedRules={deletedRules} />
+        <DeletedRules deletedRules={currentData} />
       </>
     </AlertingPageWrapper>
   );

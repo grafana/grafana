@@ -21,6 +21,15 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
 
   const unknown = t('alerting.deleted-rules.unknown', 'Unknown');
 
+  if (deletedRules.length === 0) {
+    return (
+      <EmptyState
+        message={t('alerting.deleted-rules.empty-state-title', 'No recently deleted rules found')}
+        variant="not-found"
+      />
+    );
+  }
+
   const showConfirmation = (id: string) => {
     const ruleTorestore = deletedRules.find((rule) => getRowId(rule.grafana_alert) === id);
     if (!ruleTorestore) {
@@ -101,14 +110,6 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
       },
     },
   ];
-  if (deletedRules.length === 0) {
-    return (
-      <EmptyState
-        message={t('alerting.deleted-rules.empty-state-title', 'No recently deleted rules found')}
-        variant="not-found"
-      />
-    );
-  }
 
   return (
     <>
