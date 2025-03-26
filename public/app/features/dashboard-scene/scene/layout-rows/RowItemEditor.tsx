@@ -93,7 +93,7 @@ function RowTitleInput({ row }: { row: RowItem }) {
 }
 
 function RowHeaderSwitch({ row }: { row: RowItem }) {
-  const { isHeaderHidden = false } = row.useState();
+  const { hideHeader: isHeaderHidden = false } = row.useState();
 
   return <Switch value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
 }

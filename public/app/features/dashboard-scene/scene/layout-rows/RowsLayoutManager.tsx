@@ -261,7 +261,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         (rowConfig) =>
           new RowItem({
             title: rowConfig.title,
-            isCollapsed: !!rowConfig.isCollapsed,
+            collapse: !!rowConfig.isCollapsed,
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
               rowConfig.isDraggable,

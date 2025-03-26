@@ -20,8 +20,10 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
             kind: 'RowsLayoutRow',
             spec: {
               title: row.state.title,
-              collapsed: row.state.isCollapsed ?? false,
+              collapse: row.state.collapse,
               layout: layout,
+              fillScreen: row.state.fillScreen,
+              hideHeader: row.state.hideHeader,
             },
           };
 
@@ -64,7 +66,9 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
 
       return new RowItem({
         title: row.spec.title,
-        isCollapsed: row.spec.collapsed,
+        collapse: row.spec.collapse,
+        hideHeader: row.spec.hideHeader,
+        fillScreen: row.spec.fillScreen,
         $behaviors: behaviors,
         layout: layoutSerializerRegistry.get(layout.kind).serializer.deserialize(layout, elements, preload),
         conditionalRendering: getConditionalRendering(row),
