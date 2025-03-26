@@ -1,4 +1,13 @@
 import { generatedAPI } from './endpoints.gen';
 
 export const playlistAPI = generatedAPI;
-export const { useGetPlaylistQuery, useListPlaylistQuery } = playlistAPI;
+export const {
+  useCreatePlaylistMutation,
+  useDeletePlaylistMutation,
+  useGetPlaylistQuery,
+  useListPlaylistQuery,
+  useUpdatePlaylistMutation,
+} = playlistAPI;
+
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export type { Playlist } from './endpoints.gen';
