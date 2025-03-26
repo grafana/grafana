@@ -5,10 +5,22 @@
   "metrics": false,
   "routes": [
     {
+      "method": "GET",
+      "path": "alertmanager/api/v2/silences",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },    
+    {
       "method": "POST",
       "path": "alertmanager/api/v2/silences",
       "reqRole": "Editor",
       "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/silence",
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:read"
     },
     {
       "method": "DELETE",
@@ -17,25 +29,22 @@
       "reqAction": "alert.instances.external:write"
     },
     {
-      "method": "GET",
-      "path": "alertmanager/api/v2/silences",
-      "reqRole": "Viewer",
-      "reqAction": "alert.instances.external:read"
-    },
-    {
       "method": "POST",
-      "reqRole": "Editor",
-      "reqAction": "alert.instances.external:write"
+      "reqRole": "Editor"
     },
     {
       "method": "PUT",
-      "reqRole": "Editor",
-      "reqAction": "alert.silences:write"
+      "reqRole": "Editor"
     },
     {
       "method": "DELETE",
-      "reqRole": "Editor",
-      "reqAction": "alert.silences:write"
+      "reqRole": "Editor"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/alerts/groups",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
     },
     {
       "method": "GET",
@@ -44,9 +53,16 @@
       "reqAction": "alert.instances.external:read"
     },
     {
+      "method": "POST",
+      "path": "alertmanager/api/v2/alerts",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:write"
+    },
+    {
       "method": "GET",
       "path": "api/v1/alerts",
-      "reqRole": "Admin"
+      "reqRole": "Admin",
+      "reqAction": "alert.instances.external:read"      
     }
   ],
   "info": {
