@@ -839,11 +839,6 @@ export interface FeatureToggles {
   */
   prometheusUsesCombobox?: boolean;
   /**
-  * Enables the user storage API
-  * @default true
-  */
-  userStorageAPI?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
