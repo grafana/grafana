@@ -153,7 +153,9 @@ const redirectToRestoreForm = async (ruleToRecover: RulerGrafanaRuleDTO) => {
     throw new Error(message);
   }
 
-  const urlPath = rulerRuleType.grafana.recordingRule(ruleToRecover) ? '/alerting/new/grafana-recording' : '/alerting/new';
+  const urlPath = rulerRuleType.grafana.recordingRule(ruleToRecover)
+    ? '/alerting/new/grafana-recording'
+    : '/alerting/new';
 
   const ruleFormUrl = createRelativeUrl(urlPath, {
     isManualRestore: 'true',

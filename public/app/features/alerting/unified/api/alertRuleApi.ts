@@ -428,7 +428,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const values = Object.values(response);
         const deletedRules = values.length > 0 ? values[0][0]?.rules : [];
         return deletedRules;
-      }
+      },
     }),
   }),
 });

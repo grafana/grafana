@@ -217,11 +217,11 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: () => ['Admin'],
       component: shouldAllowRecoveringDeletedRules()
         ? importAlertingComponent(
-          () =>
-            import(
+            () =>
+              import(
                 /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
-            )
-        )
+              )
+          )
         : () => <Navigate replace to="/alerting/list" />,
     },
     {
