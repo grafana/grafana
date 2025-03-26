@@ -1652,7 +1652,6 @@ var (
 			Owner:           grafanaObservabilityMetricsSquad,
 			FrontendOnly:    false,
 			RequiresRestart: true,
-			HideFromDocs:    false,
 		},
 		{
 			Name:            "datasourceConnectionsTab",
