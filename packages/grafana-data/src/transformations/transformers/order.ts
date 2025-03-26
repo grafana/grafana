@@ -105,7 +105,5 @@ const createFieldsOrdererAuto =
       return fields;
     }
 
-    return clone(fields).sort((a, b) => {
-      return 1;
-    });
+    return clone(fields);
   };
