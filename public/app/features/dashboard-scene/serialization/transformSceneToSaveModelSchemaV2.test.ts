@@ -19,6 +19,7 @@ import {
   VizPanel,
   SceneDataQuery,
   SceneQueryRunner,
+  sceneUtils,
 } from '@grafana/scenes';
 import {
   DashboardCursorSync as DashboardCursorSyncV1,
@@ -50,7 +51,11 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
-import { getPersistedDSForQuery, transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import {
+  getPersistedDSFor,
+  getElementDatasource,
+  transformSceneToSaveModelSchemaV2,
+} from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
 jest.mock('../utils/dashboardSceneGraph', () => {
@@ -411,7 +416,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
   });
 
-  describe('getPersistedDSForQuery', () => {
+  describe('getPersistedDSFor query', () => {
     it('should respect datasource reference mapping when determining query datasource', () => {
       // Setup test data
       const queryWithoutDS: SceneDataQuery = {
@@ -433,11 +438,11 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       const dsReferencesMap = new Set(['A']);
 
       // Test the query without DS originally - should return undefined
-      const resultA = getPersistedDSForQuery(queryWithoutDS, queryRunner, dsReferencesMap);
+      const resultA = getPersistedDSFor(queryWithoutDS, dsReferencesMap, 'query', queryRunner);
       expect(resultA).toBeUndefined();
 
       // Test the query with DS originally - should return the original datasource
-      const resultB = getPersistedDSForQuery(queryWithDS, queryRunner, dsReferencesMap);
+      const resultB = getPersistedDSFor(queryWithDS, dsReferencesMap, 'query', queryRunner);
       expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
 
       // Test a query with no DS originally but not in the mapping - should get the runner's datasource
@@ -445,48 +450,197 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         refId: 'C',
         // No datasource, but not in mapping
       };
-      const resultC = getPersistedDSForQuery(queryNotInMapping, queryRunner, dsReferencesMap);
+      const resultC = getPersistedDSFor(queryNotInMapping, dsReferencesMap, 'query', queryRunner);
       expect(resultC).toEqual({ uid: 'default-ds', type: 'default' });
     });
   });
 
-  describe('getDatasourceForQueries', () => {
-    it('should respect datasource reference mapping when determining which queries should have datasources saved', () => {
-      // Setup test data
-      const queryWithoutDS: SceneDataQuery = {
-        refId: 'A',
+  describe('getPersistedDSFor variable', () => {
+    it('should respect datasource reference mapping when determining variable datasource', () => {
+      // Setup test data - variable without datasource
+      const variableWithoutDS = new QueryVariable({
+        name: 'A',
         // No datasource defined originally
-      };
-      const queryWithDS: SceneDataQuery = {
-        refId: 'B',
-        datasource: { uid: 'prometheus', type: 'prometheus' },
-      };
+      });
 
-      // Mock query runner with runtime-resolved datasource
-      const queryRunner = new SceneQueryRunner({
-        queries: [queryWithoutDS, queryWithDS],
-        datasource: { uid: 'default-ds', type: 'default' },
+      // Variable with datasource
+      const variableWithDS = new QueryVariable({
+        name: 'B',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
       });
 
       // Get a reference to the DS references mapping
       const dsReferencesMap = new Set(['A']);
 
-      // Test the query without DS originally - should return undefined
-      const resultA = getPersistedDSForQuery(queryWithoutDS, queryRunner, dsReferencesMap);
+      // Test the variable without DS originally - should return undefined
+      const resultA = getPersistedDSFor(variableWithoutDS, dsReferencesMap, 'variable');
       expect(resultA).toBeUndefined();
 
-      // Test the query with DS originally - should return the original datasource
-      const resultB = getPersistedDSForQuery(queryWithDS, queryRunner, dsReferencesMap);
+      // Test the variable with DS originally - should return the original datasource
+      const resultB = getPersistedDSFor(variableWithDS, dsReferencesMap, 'variable');
       expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
 
-      // Test a query with no DS originally but not in the mapping - should get the runner's datasource
-      const queryNotInMapping: SceneDataQuery = {
-        refId: 'C',
+      // Test a variable with no DS originally but not in the mapping - should get empty object
+      const variableNotInMapping = new QueryVariable({
+        name: 'C',
         // No datasource, but not in mapping
-      };
-      const resultC = getPersistedDSForQuery(queryNotInMapping, queryRunner, dsReferencesMap);
-      expect(resultC).toEqual({ uid: 'default-ds', type: 'default' });
+      });
+      const resultC = getPersistedDSFor(variableNotInMapping, dsReferencesMap, 'variable');
+      expect(resultC).toEqual({});
     });
+  });
+});
+
+describe('getElementDatasource', () => {
+  it('should handle panel query datasources correctly', () => {
+    // Create test elements
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    const queryWithDS: SceneDataQuery = {
+      refId: 'B',
+      datasource: { uid: 'prometheus', type: 'prometheus' },
+    };
+
+    const queryWithoutDS: SceneDataQuery = {
+      refId: 'A',
+    };
+
+    // Mock query runner
+    const queryRunner = new SceneQueryRunner({
+      queries: [queryWithoutDS, queryWithDS],
+      datasource: { uid: 'default-ds', type: 'default' },
+    });
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
+    };
+
+    // Call the function with the panel and query with DS
+    const resultWithDS = getElementDatasource(vizPanel, queryWithDS, 'panel', queryRunner, dsReferencesMapping);
+    expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+    // Call the function with the panel and query without DS
+    const resultWithoutDS = getElementDatasource(vizPanel, queryWithoutDS, 'panel', queryRunner, dsReferencesMapping);
+    expect(resultWithoutDS).toBeUndefined();
+  });
+
+  it('should handle variable datasources correctly', () => {
+    // Create a variable set
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new QueryVariable({
+          name: 'A',
+          // No datasource
+        }),
+        new QueryVariable({
+          name: 'B',
+          datasource: { uid: 'prometheus', type: 'prometheus' },
+        }),
+      ],
+    });
+
+    // Variable with DS
+    const variableWithDS = variableSet.getByName('B');
+
+    // Variable without DS
+    const variableWithoutDS = variableSet.getByName('A');
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
+      variables: new Set<string>(['A']),
+      annotations: new Set<string>(),
+    };
+
+    // Call the function with variables
+    if (variableWithDS && sceneUtils.isQueryVariable(variableWithDS)) {
+      const resultWithDS = getElementDatasource(
+        variableSet,
+        variableWithDS,
+        'variable',
+        undefined,
+        dsReferencesMapping
+      );
+      expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
+    }
+
+    if (variableWithoutDS && sceneUtils.isQueryVariable(variableWithoutDS)) {
+      // Test with auto-assigned variable (in the mapping)
+      const resultWithoutDS = getElementDatasource(variableSet, variableWithoutDS, 'variable');
+      expect(resultWithoutDS).toEqual(undefined);
+    }
+  });
+
+  it('should return undefined for non-query variables', () => {
+    // Create a variable set with non-query variable
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new ConstantVariable({
+          name: 'constant',
+          value: 'value',
+        }),
+      ],
+    });
+
+    // Non-query variable
+    const constantVar = variableSet.getByName('constant');
+
+    // Call the function
+    // @ts-expect-error
+    const result = getElementDatasource(variableSet, constantVar, 'variable');
+    expect(result).toBeUndefined();
+  });
+
+  it('should return undefined for non-query variables', () => {
+    // Create a variable set with non-query variable types
+    const variableSet = new SceneVariableSet({
+      variables: [
+        // Use TextBoxVariable which is not a QueryVariable
+        new TextBoxVariable({
+          name: 'textVar',
+          value: 'text-value',
+        }),
+      ],
+    });
+
+    // Non-query variable - this is safe because getElementDatasource checks if it's a query variable
+    const textVar = variableSet.getByName('textVar');
+
+    // Call the function
+    // @ts-expect-error
+    const result = getElementDatasource(variableSet, textVar, 'variable');
+    expect(result).toBeUndefined();
+  });
+
+  it('should handle invalid input combinations', () => {
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new QueryVariable({
+          name: 'A',
+        }),
+      ],
+    });
+
+    const variable = variableSet.getByName('A');
+    const query: SceneDataQuery = { refId: 'A' };
+
+    if (variable && sceneUtils.isQueryVariable(variable)) {
+      // Panel with variable
+      expect(getElementDatasource(vizPanel, variable, 'panel')).toBeUndefined();
+    }
+    // Variable set with query
+    expect(getElementDatasource(variableSet, query, 'variable')).toBeUndefined();
   });
 });
 
