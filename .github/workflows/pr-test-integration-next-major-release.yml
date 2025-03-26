@@ -10,15 +10,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  NEXT_MAJOR_RELEASE_FEATURE_TOGGLES: kubernetesClientDashboardsFolders,kubernetesDashboards
-
 jobs:
   sqlite:
     name: Sqlite with Next Major Release config
     runs-on: ubuntu-latest-8-cores
     env:
-      GF_FEATURE_TOGGLES_ENABLE: ${{ env.NEXT_MAJOR_RELEASE_FEATURE_TOGGLES }}
+      GF_FEATURE_TOGGLES_ENABLE: kubernetesClientDashboardsFolders,kubernetesDashboards
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -49,7 +46,7 @@ jobs:
     env:
       GRAFANA_TEST_DB: mysql
       MYSQL_HOST: 127.0.0.1
-      GF_FEATURE_TOGGLES_ENABLE: ${{ env.NEXT_MAJOR_RELEASE_FEATURE_TOGGLES }}
+      GF_FEATURE_TOGGLES_ENABLE: kubernetesClientDashboardsFolders,kubernetesDashboards
     services:
       mysql:
         image: mysql:8.0.32
@@ -94,7 +91,7 @@ jobs:
       GRAFANA_TEST_DB: postgres
       PGPASSWORD: grafanatest
       POSTGRES_HOST: 127.0.0.1
-      GF_FEATURE_TOGGLES_ENABLE: ${{ env.NEXT_MAJOR_RELEASE_FEATURE_TOGGLES }}
+      GF_FEATURE_TOGGLES_ENABLE: kubernetesClientDashboardsFolders,kubernetesDashboards
     services:
       postgres:
         image: postgres:12.3-alpine
