@@ -14,7 +14,7 @@
       "method": "DELETE",
       "path": "alertmanager/api/v2/silence",
       "reqRole": "Editor",
-      "reqAction": "alert.silences:write"
+      "reqAction": "alert.instances.external:write"
     },
     {
       "method": "GET",
