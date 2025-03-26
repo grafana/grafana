@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -106,7 +107,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		paging.page = 1
 	}
 
-	if user.GetOrgRole() == org.RoleAdmin {
+	if user.GetOrgRole() == org.RoleAdmin && options.LabelSelector != nil && options.LabelSelector.Matches(labels.Set{utils.AnnoKeyFullpath: "true"}) {
 		query.WithFullpath = true
 		query.WithFullpathUIDs = true
 	}
