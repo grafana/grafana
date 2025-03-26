@@ -9,7 +9,7 @@ import (
 	gokitlog "github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"d
+	"github.com/stretchr/testify/require"
 )
 
 func TestLogger(t *testing.T) {

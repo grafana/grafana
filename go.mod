@@ -606,3 +606,6 @@ exclude k8s.io/client-go v12.0.0+incompatible
 
 // k8s.io/apiserver fails due to incompatibility with cel-go 0.23, can be removed once apiserver v0.33.x is released.
 replace github.com/google/cel-go => github.com/google/cel-go v0.22.1
+
+// Need to keep this replace directive while grafana/grafana is not updated to use the new logging package
+replace github.com/grafana/grafana/pkg/infra/log => ./pkg/infra/log
