@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -227,6 +229,29 @@ func TestBackend_create(t *testing.T) {
 		v, err := b.create(ctx, event)
 		require.NoError(t, err)
 		require.Equal(t, int64(200), v)
+	})
+
+	t.Run("resource already exists", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+		b.SQLMock.ExpectBegin()
+		expectSuccessfulResourceVersionExec(t, b.TestDBProvider,
+			func() { b.ExecWithResult("insert resource", 0, 1) },
+			func() { b.ExecWithResult("insert resource_history", 0, 1) },
+		)
+		b.SQLMock.ExpectCommit()
+		b.SQLMock.ExpectBegin()
+		b.SQLMock.ExpectExec("insert resource").WillReturnError(sqlite3.Error{Code: sqlite3.ErrConstraint, ExtendedCode: sqlite3.ErrConstraintUnique})
+		b.SQLMock.ExpectRollback()
+
+		// First we insert the resource successfully. This is what the happy path test does as well.
+		v, err := b.create(ctx, event)
+		require.NoError(t, err)
+		require.Equal(t, int64(200), v)
+
+		// Then we try to insert the same resource again. This should fail.
+		_, err = b.create(ctx, event)
+		require.ErrorIs(t, err, ErrResourceAlreadyExists)
 	})
 
 	t.Run("error inserting into resource", func(t *testing.T) {
@@ -640,6 +665,12 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 		require.Equal(t, rv60, listRv, "Head version should be the latest resource version (rv60)")
 		require.Equal(t, expectedVersions, items, "Items should be in ASC order even with ResourceVersion=0")
 	})
+}
+
+func TestErrResourceAlreadyExistsIsRecognisable(t *testing.T) {
+	t.Parallel()
+
+	require.True(t, apierrors.IsAlreadyExists(ErrResourceAlreadyExists), "ErrResourceAlreadyExists should be recognised as an AlreadyExists error")
 }
 
 // setupHistoryTest creates the necessary mock expectations for a history test
