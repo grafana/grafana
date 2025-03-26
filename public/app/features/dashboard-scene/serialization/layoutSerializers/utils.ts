@@ -59,7 +59,7 @@ export function buildVizPanel(panel: PanelKind): VizPanel {
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.spec.id),
-    title: panel.spec.title,
+    title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
     options: panel.spec.vizConfig.spec.options,
