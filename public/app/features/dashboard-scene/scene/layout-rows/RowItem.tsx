@@ -105,14 +105,6 @@ export class RowItem
     this.getLayout().addPanel(panel);
   }
 
-  public onAddRowAbove() {
-    this._getParentLayout().addRowAbove(this);
-  }
-
-  public onAddRowBelow() {
-    this._getParentLayout().addRowBelow(this);
-  }
-
   public onMoveUp() {
     this._getParentLayout().moveRowUp(this);
   }

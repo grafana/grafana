@@ -87,14 +87,6 @@ export class TabItem
     this.getLayout().addPanel(panel);
   }
 
-  public onAddTabBefore() {
-    this._getParentLayout().addTabBefore(this);
-  }
-
-  public onAddTabAfter() {
-    this._getParentLayout().addTabAfter(this);
-  }
-
   public onAddTab() {
     this._getParentLayout().addNewTab();
   }

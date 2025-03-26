@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { getDefaultVizPanel, useDashboardState } from '../../utils/utils';
 import { addNewRowTo, addNewTabTo } from '../layouts-shared/addNew';
@@ -87,21 +88,21 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
             icon="plus"
             onClick={() => layoutManager.addPanel(getDefaultVizPanel())}
           >
-            Add panel
+            <Trans i18nKey="dashboard.canvas-actions.add-panel">Add panel</Trans>
           </Button>
           <Dropdown
             overlay={
               <Menu>
                 <Menu.Item
                   icon="list-ul"
-                  label="Group into rows"
+                  label="Group into row"
                   onClick={() => {
                     addNewRowTo(layoutManager);
                   }}
                 ></Menu.Item>
                 <Menu.Item
                   icon="layers"
-                  label="Group into tabs"
+                  label="Group into tab"
                   onClick={() => {
                     addNewTabTo(layoutManager);
                   }}
@@ -112,10 +113,10 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
             <Button
               variant="primary"
               fill="text"
-              icon="plus"
+              icon="layers"
               onClick={() => layoutManager.addPanel(getDefaultVizPanel())}
             >
-              Add grouping
+              <Trans i18nKey="dashboard.canvas-actions.group-panels">Group panels</Trans>
             </Button>
           </Dropdown>
         </div>

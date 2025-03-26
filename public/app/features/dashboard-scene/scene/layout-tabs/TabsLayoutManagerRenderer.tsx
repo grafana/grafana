@@ -3,11 +3,11 @@ import { Fragment } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { TabItemMenu } from './TabItemMenu';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
@@ -29,7 +29,13 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
               </Fragment>
             ))}
           </div>
-          {isEditing && <TabItemMenu model={currentTab} />}
+          {isEditing && (
+            <div className="dashboard-canvas-add-button">
+              <Button icon="plus" variant="primary" fill="text" onClick={() => model.addNewTab()}>
+                <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
+              </Button>
+            </div>
+          )}
         </div>
       </TabsBar>
       <TabContent className={styles.tabContentContainer}>
@@ -47,11 +53,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   tabsBar: css({
     overflow: 'hidden',
-    // ':hover': {
-    //   '.dashboard-canvas-add-button': {
-    //     opacity: 1,
-    //   },
-    // },
+    '&:hover': {
+      '.dashboard-canvas-add-button': {
+        filter: 'unset',
+        opacity: 1,
+      },
+    },
   }),
   tabsRow: css({
     display: 'flex',

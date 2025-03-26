@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { useDashboardState } from '../../utils/utils';
 
@@ -20,15 +21,8 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
       ))}
       {isEditing && (
         <div className="dashboard-canvas-add-button">
-          <Button
-            aria-label="Add row"
-            title="Add row"
-            icon="plus"
-            variant="primary"
-            fill="text"
-            onClick={() => model.addNewRow()}
-          >
-            Add row
+          <Button icon="plus" variant="primary" fill="text" onClick={() => model.addNewRow()}>
+            <Trans i18nKey="dashboard.canvas-actions.new-row">New row</Trans>
           </Button>
         </div>
       )}
