@@ -63,8 +63,12 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     );
     titleItems.push(new PanelNotices());
 
+    const timeOverrideShown = (libPanelModel.timeFrom || libPanelModel.timeShift) && !libPanelModel.hideTimeOverride;
+    const title = vizPanel.state.title ?? libPanelModel.title;
+
     const vizPanelState: VizPanelState = {
-      title: vizPanel.state.title ?? libPanelModel.title,
+      title,
+      hoverHeader: !title && !timeOverrideShown,
       options: libPanelModel.options ?? {},
       fieldConfig: libPanelModel.fieldConfig,
       pluginId: libPanelModel.type,

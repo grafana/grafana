@@ -6,7 +6,7 @@ import { FIELD_CONFIG_CUSTOM_KEY, FIELD_CONFIG_OVERRIDES_KEY, PanelLogEvents } f
 interface PanelLogInfo {
   panelId: string;
   panelType: string;
-  panelTitle: string;
+  panelTitle?: string;
 }
 
 export class PanelOptionsLogger {
@@ -37,7 +37,7 @@ export class PanelOptionsLogger {
       key: newKey,
       newValue: newVal,
       oldValue: oldVal ?? '',
-      panelTitle: this.panelLogInfo.panelTitle,
+      panelTitle: this.panelLogInfo.panelTitle ?? '',
       panelId: this.panelLogInfo.panelId,
       panelType: this.panelLogInfo.panelType,
     };
