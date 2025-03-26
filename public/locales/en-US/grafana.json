@@ -1496,6 +1496,10 @@
         "layout": "Layout"
       }
     },
+    "new-panel": {
+      "configure-button": "Configure panel"
+    },
+    "new-panel-title": "New panel",
     "options": {
       "description": "Description",
       "title-option": "Title"
@@ -1725,9 +1729,8 @@
     },
     "viz-panel": {
       "options": {
+        "configure-button-tooltip": "Edit queries and visualization options",
         "description": "Description",
-        "open-edit": "Open panel editor",
-        "plugin-type-image": "Image of plugin type",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }
