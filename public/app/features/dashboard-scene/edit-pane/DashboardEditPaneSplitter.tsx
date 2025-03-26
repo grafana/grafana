@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useStyles2 } from '@grafana/ui';
+import { useExtensionSidebarContext } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 
 import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter';
@@ -24,7 +25,8 @@ interface Props {
 export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const { isOpen: isExtensionSidebarOpen } = useExtensionSidebarContext();
+  const styles = useStyles2(getStyles, headerHeight ?? 0, isExtensionSidebarOpen);
   const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
   if (!config.featureToggles.dashboardNewLayouts) {
@@ -113,7 +115,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   );
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number, isExtensionSidebarOpen: boolean) {
   return {
     canvasWrappperOld: css({
       label: 'canvas-wrapper-old',
@@ -167,7 +169,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
         position: 'sticky',
         zIndex: theme.zIndex.activePanel,
         background: theme.colors.background.canvas,
-        top: '0px',
+        top: isExtensionSidebarOpen ? '0px' : headerHeight,
       },
     }),
   };
