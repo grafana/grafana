@@ -210,9 +210,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     let tabs: TabItem[] = [];
 
     if (layout instanceof RowsLayoutManager) {
-      tabs = layout.state.rows.map((row) => new TabItem({ layout: row.state.layout.clone(), title: row.state.title }));
+      for (const row of layout.state.rows) {
+        tabs.push(new TabItem({ layout: row.state.layout.clone(), title: row.state.title }));
+      }
     } else {
-      tabs.push(new TabItem({ layout: layout.clone() }));
+      layout.clearParent();
+      tabs.push(new TabItem({ layout: layout }));
     }
 
     return new TabsLayoutManager({ tabs });
