@@ -9,7 +9,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
+	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -337,6 +341,9 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			Folder:      folder,
 			GUID:        guid,
 		}); err != nil {
+			if isRowAlreadyExistsError(err) {
+				return guid, unifiedbackend.ErrResourceAlreadyExists
+			}
 			return guid, fmt.Errorf("insert into resource: %w", err)
 		}
 
@@ -375,6 +382,28 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	})
 
 	return rv, nil
+}
+
+// isRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
+func isRowAlreadyExistsError(err error) bool {
+	var sqlite sqlite3.Error
+	if errors.As(err, &sqlite) {
+		return sqlite.ExtendedCode == sqlite3.ErrConstraintUnique
+	}
+
+	var pg *pgconn.PgError
+	if errors.As(err, &pg) {
+		// https://www.postgresql.org/docs/current/errcodes-appendix.html
+		return pg.Code == "23505" // unique_violation
+	}
+
+	var mysqlerr *mysql.MySQLError
+	if errors.As(err, &mysqlerr) {
+		// https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html
+		return mysqlerr.Number == 1062 // ER_DUP_ENTRY
+	}
+
+	return false
 }
 
 func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64, error) {

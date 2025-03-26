@@ -480,6 +480,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	if found != nil && len(found.Value) > 0 {
 		rsp.Error = &ErrorResult{
 			Code:    http.StatusConflict,
+			Reason:  string(metav1.StatusReasonAlreadyExists),
 			Message: "key already exists", // TODO?? soft delete replace?
 		}
 		return rsp, nil
