@@ -1,5 +1,7 @@
 import { config } from '@grafana/runtime';
 
+import { isAdmin } from './utils/misc';
+
 export const shouldUsePrometheusRulesPrimary = () => config.featureToggles.alertingPrometheusRulesPrimary ?? false;
 
-export const isRecoverDeletedRulesEnabled = () => (config.featureToggles.alertingRuleRecoverDeleted && config.featureToggles.alertRuleRestore)?? false;
+export const shouldIAllowRecoveringDeletedRules = () => (isAdmin() && config.featureToggles.alertingRuleRecoverDeleted && config.featureToggles.alertRuleRestore)?? false;

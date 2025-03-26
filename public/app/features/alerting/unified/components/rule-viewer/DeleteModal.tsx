@@ -5,7 +5,7 @@ import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { EditableRuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
-import { isRecoverDeletedRulesEnabled, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
+import { shouldIAllowRecoveringDeletedRules, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { fetchPromAndRulerRulesAction, fetchRulerRulesAction } from '../../state/actions';
@@ -25,7 +25,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<DeleteRuleInfo>();
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const { waitForRemoval } = usePrometheusConsistencyCheck();
-  const isSoftDeleteEnabled = isRecoverDeletedRulesEnabled();
+  const isSoftDeleteEnabled = shouldIAllowRecoveringDeletedRules();
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);
@@ -72,7 +72,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
         title="Delete rule"
         body={
           isSoftDeleteEnabled
-            ? 'Are you sure you want to delete this rule? This rule will be recoverable from the Recently deleted page.'
+            ? 'Are you sure you want to delete this rule? This rule will be recoverable from the Recently deleted page by a user with an admin role.'
             : 'Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?'
         }
         confirmText="Yes, delete"

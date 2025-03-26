@@ -80,7 +80,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
             <Alert severity="warning" title={errorTitle}>
               <Trans i18nKey="alerting.alertVersionHistory.restore-deleted-manually">
                 Your alert rule could not be restored. This may be due to changes to other entities such as contact
-                points, data sources etc. Please manually restore the deleted rule.
+                points, data sources etc. Please manually restore the deleted rule by editing the rule and saving it.
               </Trans>
               <pre style={{ marginBottom: 0 }}>
                 <code>{stringifyErrorLike(error)}</code>
