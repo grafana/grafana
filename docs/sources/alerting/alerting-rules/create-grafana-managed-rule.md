@@ -280,7 +280,6 @@ Complete the following steps to set up notifications.
 
 {{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-
 ## Restore deleted alert rules
 
 Deleted alert rules are stored for 30 days. Admins can restore deleted Grafana-managed alert rules.

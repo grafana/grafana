@@ -103,7 +103,7 @@ For more information, refer to the [Mimir Ruler API](/docs/mimir/latest/referenc
 
 ### Permissions
 
-Alert rules for Mimir or Loki instances can be edited or deleted by users with **Editor** or **Admin** roles. 
+Alert rules for Mimir or Loki instances can be edited or deleted by users with **Editor** or **Admin** roles.
 
 If you do not want to manage alert rules for a particular data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
 
