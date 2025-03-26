@@ -37,6 +37,10 @@
     "./unstable": {
       "import": "./src/unstable.ts",
       "require": "./src/unstable.ts"
+    },
+    "./mocks": {
+      "import": "./src/mocks.ts",
+      "require": "./src/mocks.ts"
     }
   },
   "publishConfig": {

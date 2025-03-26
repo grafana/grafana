@@ -1,6 +1,6 @@
 import { Annotations, Labels } from '../../common/rules';
 
-export type PrometheusRuleDefinition = PrometheusRecordingRuleDefinition | PrometheusAlertingRuleDefinition;
+export type RuleDefinition = RecordingRuleDefinition | AlertingRuleDefinition;
 
 interface BaseRuleDefinition {
   expr: string;
@@ -8,13 +8,13 @@ interface BaseRuleDefinition {
 }
 
 /** Recording rules store computed expressions as new time series */
-export interface PrometheusRecordingRuleDefinition extends BaseRuleDefinition {
+export interface RecordingRuleDefinition extends BaseRuleDefinition {
   record: string; // Name of the new time series
   alert?: never;
 }
 
 /** Alerting rules trigger alerts based on conditions */
-export interface PrometheusAlertingRuleDefinition extends BaseRuleDefinition {
+export interface AlertingRuleDefinition extends BaseRuleDefinition {
   alert: string; // Alert name
   for?: string; // Duration before the alert triggers (e.g., "5m")
   annotations?: Annotations; // Metadata like descriptions or summaries
@@ -25,7 +25,7 @@ export interface PrometheusAlertingRuleDefinition extends BaseRuleDefinition {
  * Rule group definitions (YAML)
  * https://github.com/prometheus/prometheus/blob/475092ff79741aed3d28594662876fca02b9553c/model/rulefmt/rulefmt.go#L151-L159
  */
-export interface PrometheusRuleGroupDefinition<RuleDefinition = PrometheusRuleDefinition> {
+export interface RuleGroupDefinition<RuleType = RuleDefinition> {
   // rule can produce. 0 is no limit.
   name: string;
   // How often rules in the group are evaluated.
@@ -37,5 +37,5 @@ export interface PrometheusRuleGroupDefinition<RuleDefinition = PrometheusRuleDe
   // Labels to add or overwrite before storing the result for its rules.
   // Labels defined in <rule> will override the key if it has a collision.
   labels?: Labels; // <labelname>: <labelvalue>
-  rules: RuleDefinition[];
+  rules: RuleType[];
 }
