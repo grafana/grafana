@@ -24,6 +24,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
+          cache: true
       - run: go version
       - uses: actions/setup-node@v4
         with:
@@ -55,7 +56,7 @@ jobs:
             conf/
             e2e/test-plugins/
             devenv/
-          key: ${{ runner.os }}-grafana-${{ github.sha }}
+          key: ${{ runner.os }}-grafana-${{ hashFiles('go.mod', 'package-lock.json', 'Makefile') }}
 
       - name: Build Grafana (Runs Only If Not Cached)
         if: steps.cache-grafana.outputs.cache-hit != 'true'
@@ -75,7 +76,7 @@ jobs:
       # if: github.event.pull_request.draft == false
       strategy:
         matrix:
-          ini_file: ${{ fromJson(needs.setup.outputs.get_files.outputs.ini_files) }}
+          ini_file: ${{ fromJson(needs.setup.outputs.ini_files) }}
 
       steps:
         - name: Checkout repository
