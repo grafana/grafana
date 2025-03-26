@@ -426,9 +426,9 @@ The Entra ID `App registration` must include the following API permissions for g
 
 Admin consent is required for the `GroupMember.Read.All` permission. To grant admin consent, navigate to **API permissions** in the **App registration** and select **Grant admin consent for [your-organization]**.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You can make Grafana always get group information from the Microsoft Graph API by turning on the [`force_use_graph_api`](./#force-fetching-groups-from-microsoft-graph-api) setting in the configuration.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Configure the required Graph API permissions
 
