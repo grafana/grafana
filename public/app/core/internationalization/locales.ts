@@ -5,7 +5,7 @@ interface Locale {
     code: string;
 }
 
-const momentLocales: Locale[] = [
+export const LOCALES: Locale[] = [
     { name: 'Afrikaans', code: 'af' },
     { name: 'Albanian', code: 'sq' },
     { name: 'Arabic', code: 'ar' },

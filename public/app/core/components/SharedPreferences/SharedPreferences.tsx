@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import moment from 'moment';
 import { PureComponent } from 'react';
 import * as React from 'react';
 
@@ -24,6 +25,7 @@ import {
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
+import { LOCALES } from 'app/core/internationalization/locales';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
@@ -39,7 +41,6 @@ export interface Props {
 export type State = UserPreferencesDTO & {
   isLoading: boolean;
 };
-
 function getLanguageOptions(): ComboboxOption[] {
   const languageOptions = LANGUAGES.map((v) => ({
     value: v.code,
@@ -67,6 +68,17 @@ function getLanguageOptions(): ComboboxOption[] {
   return options;
 }
 
+function getLocaleOptions(): ComboboxOption[] {
+  const localeOptions = LOCALES.map((v) => ({
+    value: v.code,
+    label: v.name,
+  })).sort((a, b) => {
+    return a.label.localeCompare(b.label);
+  });
+
+  return localeOptions;
+}
+
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: ComboboxOption[];
@@ -81,6 +93,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: '',
       weekStart: '',
       language: '',
+      locale: '',
       queryHistory: { homeTab: '' },
       navbar: { bookmarkUrls: [] },
     };
@@ -109,6 +122,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: prefs.timezone,
       weekStart: prefs.weekStart,
       language: prefs.language,
+      locale: prefs.locale,
       queryHistory: prefs.queryHistory,
       navbar: prefs.navbar,
     });
@@ -119,13 +133,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
 
     if (confirmationResult) {
-      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar } = this.state;
+      const { homeDashboardUID, theme, timezone, weekStart, language, locale, queryHistory, navbar } = this.state;
       reportInteraction('grafana_preferences_save_button_clicked', {
         preferenceType: this.props.preferenceType,
         theme,
         language,
       });
-      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar });
+      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, locale, queryHistory, navbar });
       window.location.reload();
     }
   };
@@ -166,11 +180,16 @@ export class SharedPreferences extends PureComponent<Props, State> {
     });
   };
 
+  onLocaleChanged = (locale: string) => {
+    this.setState({ locale });
+  };
+
   render() {
-    const { theme, timezone, weekStart, homeDashboardUID, language, isLoading } = this.state;
+    const { theme, timezone, weekStart, homeDashboardUID, language, isLoading, locale } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
     const languages = getLanguageOptions();
+    const locales = getLocaleOptions();
     const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
 
     return (
@@ -273,6 +292,30 @@ export class SharedPreferences extends PureComponent<Props, State> {
               id="locale-select"
             />
           </Field>
+          {config.featureToggles.localeFormatPreference && (
+            <Field
+              loading={isLoading}
+              disabled={isLoading}
+              label={
+                <Label htmlFor="locale-select">
+                <span className={styles.labelText}>
+                  <Trans i18nKey="shared-preferences.fields.locale-format-label">Region format</Trans>
+                </span>
+                <FeatureBadge featureState={FeatureState.experimental} />
+              </Label>
+              }
+              description={t('shared-preferences.fields.locale-format-description', 'Choose your region to see the corresponding date, time and number format')}
+              data-testid="User preferences locale format drop down"
+            >
+              <Combobox 
+              value={locales.find((loc) => loc.value === locale)?.value || moment.locale()}
+              onChange={(locale: ComboboxOption | null) => this.onLocaleChanged(locale?.value ?? '')}
+              options={locales}
+              placeholder={t('shared-preferences.fields.locale-format-placeholder', 'Choose region')}
+              id="locale-format-select"
+              />
+            </Field>
+          )}
         </FieldSet>
         <Button type="submit" variant="primary" data-testid={selectors.components.UserProfile.preferencesSaveButton}>
           <Trans i18nKey="common.save">Save</Trans>
