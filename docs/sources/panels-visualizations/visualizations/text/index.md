@@ -34,7 +34,6 @@ refs:
 
 Text visualizations let you include text or HTML in your dashboards.
 This can be used to add contextual information and descriptions or embed complex HTML.
-You can include [variables](ref:variables) in the content, which are expanded for display.
 
 For example, if you want to display important links on your dashboard, you can use a text visualization to add these links:
 
@@ -64,7 +63,7 @@ Use the following options to refine your text visualization.
 
 | Option | Description |
 | ------ | ----------- |
-| Mode | Determines how embedded content appears. Choose from:<ul><li>**Markdown** - Formats the content as [markdown](https://en.wikipedia.org/wiki/Markdown).</li><li>**HTML** - Renders the content as [sanitized](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the [disable_sanitize_html](ref:disable_sanitize_html) flag which enables you to directly enter HTML.</li><li>**Code** - Renders content inside a read-only code editor.</li></ul><p>To allow embedding of iframes and other websites, you need set `allow_embedding = true` in your Grafana `config.ini` or environment variables (depending on your employment).</p> |
+| Mode | Determines how embedded content appears. Choose from:<ul><li>**Markdown** - Formats the content as [markdown](https://en.wikipedia.org/wiki/Markdown).</li><li>**HTML** - Renders the content as [sanitized](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the [disable_sanitize_html](ref:disable_sanitize_html) flag which enables you to directly enter HTML.</li><li>**Code** - Renders content inside a read-only code editor. Included [variables](ref:variables) are expanded for display.</li></ul><p>To allow embedding of iframes and other websites, you need set `allow_embedding = true` in your Grafana `config.ini` or environment variables (depending on your employment).</p> |
 | Language | When you choose **Code** as your text mode, select an appropriate language to apply syntax highlighting to the embedded text. |
 | Show line numbers | Displays line numbers in the panel preview when you choose **Code** as your text mode. |
 | Show mini map | Displays a small outline of the embedded text in the panel preview when you choose **Code** as your text mode. |
