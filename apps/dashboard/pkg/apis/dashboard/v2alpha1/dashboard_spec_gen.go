@@ -837,7 +837,9 @@ func NewDashboardRowsLayoutRowKind() *DashboardRowsLayoutRowKind {
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutRowSpec struct {
 	Title                *string                                                                           `json:"title,omitempty"`
-	Collapsed            bool                                                                              `json:"collapsed"`
+	Collapse             *bool                                                                             `json:"collapse,omitempty"`
+	HideHeader           *bool                                                                             `json:"hideHeader,omitempty"`
+	FillScreen           *bool                                                                             `json:"fillScreen,omitempty"`
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                           `json:"conditionalRendering,omitempty"`
 	Repeat               *DashboardRowRepeatOptions                                                        `json:"repeat,omitempty"`
 	Layout               DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`

@@ -733,14 +733,15 @@ export const defaultRowsLayoutRowKind = (): RowsLayoutRowKind => ({
 
 export interface RowsLayoutRowSpec {
 	title?: string;
-	collapsed: boolean;
+	collapse?: boolean;
+	hideHeader?: boolean;
+	fillScreen?: boolean;
 	repeat?: RowRepeatOptions;
 	conditionalRendering?: ConditionalRenderingGroupKind;
 	layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
-	collapsed: false,
 	layout: defaultGridLayoutKind(),
 });
 
