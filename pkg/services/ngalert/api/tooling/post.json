@@ -1789,26 +1789,6 @@
    ],
    "type": "object"
   },
-  "GettableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "GettableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -2946,23 +2926,6 @@
       "type": "string"
      },
      "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "PostableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
     }
    },
    "type": "object"
@@ -4490,55 +4453,6 @@
     }
    },
    "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
-   "type": "object"
-  },
-  "TimeIntervalItem": {
-   "properties": {
-    "days_of_month": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "location": {
-     "type": "string"
-    },
-    "months": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "times": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalTimeRange"
-     },
-     "type": "array"
-    },
-    "weekdays": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "years": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "TimeIntervalTimeRange": {
-   "properties": {
-    "end_time": {
-     "type": "string"
-    },
-    "start_time": {
-     "type": "string"
-    }
-   },
    "type": "object"
   },
   "TimeRange": {
@@ -8029,155 +7943,6 @@
     ]
    }
   },
-  "/v1/notifications/receivers": {
-   "get": {
-    "deprecated": true,
-    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-    "operationId": "RouteGetReceivers",
-    "parameters": [
-     {
-      "in": "query",
-      "items": {
-       "type": "string"
-      },
-      "name": "names",
-      "type": "array"
-     },
-     {
-      "format": "int64",
-      "in": "query",
-      "name": "limit",
-      "type": "integer"
-     },
-     {
-      "format": "int64",
-      "in": "query",
-      "name": "offset",
-      "type": "integer"
-     },
-     {
-      "in": "query",
-      "name": "decrypt",
-      "type": "boolean"
-     }
-    ],
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetReceiversResponse"
-     },
-     "403": {
-      "description": "PermissionDenied",
-      "schema": {
-       "$ref": "#/definitions/PermissionDenied"
-      }
-     }
-    },
-    "summary": "Get all receivers.",
-    "tags": [
-     "notifications"
-    ]
-   }
-  },
-  "/v1/notifications/receivers/{Name}": {
-   "get": {
-    "deprecated": true,
-    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-    "operationId": "RouteGetReceiver",
-    "parameters": [
-     {
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "query",
-      "name": "decrypt",
-      "type": "boolean"
-     }
-    ],
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetReceiverResponse"
-     },
-     "403": {
-      "description": "PermissionDenied",
-      "schema": {
-       "$ref": "#/definitions/PermissionDenied"
-      }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
-     }
-    },
-    "summary": "Get a receiver by name.",
-    "tags": [
-     "notifications"
-    ]
-   }
-  },
-  "/v1/notifications/time-intervals": {
-   "get": {
-    "deprecated": true,
-    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-    "operationId": "RouteNotificationsGetTimeIntervals",
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetAllIntervalsResponse"
-     },
-     "403": {
-      "description": "ForbiddenError",
-      "schema": {
-       "$ref": "#/definitions/ForbiddenError"
-      }
-     }
-    },
-    "summary": "Get all the time intervals",
-    "tags": [
-     "notifications"
-    ]
-   }
-  },
-  "/v1/notifications/time-intervals/{name}": {
-   "get": {
-    "deprecated": true,
-    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-    "operationId": "RouteNotificationsGetTimeInterval",
-    "parameters": [
-     {
-      "description": "Time interval name",
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetIntervalsByNameResponse"
-     },
-     "403": {
-      "description": "ForbiddenError",
-      "schema": {
-       "$ref": "#/definitions/ForbiddenError"
-      }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
-     }
-    },
-    "summary": "Get a time interval by name.",
-    "tags": [
-     "notifications"
-    ]
-   }
-  },
   "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
@@ -9557,36 +9322,6 @@
   "application/json"
  ],
  "responses": {
-  "GetAllIntervalsResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableTimeIntervals"
-    },
-    "type": "array"
-   }
-  },
-  "GetIntervalsByNameResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableTimeIntervals"
-   }
-  },
-  "GetReceiverResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableApiReceiver"
-   }
-  },
-  "GetReceiversResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableApiReceiver"
-    },
-    "type": "array"
-   }
-  },
   "GettableHistoricUserConfigs": {
    "description": "",
    "schema": {

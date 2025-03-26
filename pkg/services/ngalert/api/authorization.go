@@ -72,21 +72,6 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/v1/rules/history":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 
-	// Grafana receivers paths
-	case http.MethodGet + "/api/v1/notifications/receivers":
-		// additional authorization is done at the service level
-		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversList),
-			ac.EvalPermission(ac.ActionAlertingReceiversRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
-		)
-	case http.MethodGet + "/api/v1/notifications/receivers/{Name}":
-		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingReceiversRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
-		)
-
 	// Grafana, Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
@@ -441,14 +426,6 @@ func (api *API) authorize(method, path string) web.Handler {
 				ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
 				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 			),
-		)
-	case http.MethodGet + "/api/v1/notifications/time-intervals/{name}",
-		http.MethodGet + "/api/v1/notifications/time-intervals":
-		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
-			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
-			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 		)
 	}
 
