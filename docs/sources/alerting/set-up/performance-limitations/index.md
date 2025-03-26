@@ -80,3 +80,7 @@ If Grafana crashes or is force killed, then the database can be up to `state_per
 When Grafana restarts, the UI might show incorrect state for some alerts until the alerts are re-evaluated.
 In some cases, alerts that were firing before the crash might fire again.
 If this happens, Grafana might send duplicate notifications for firing alerts.
+
+## Alert rule migrations for Grafana 11.6.0
+
+When you upgrade to Grafana 11.6.0, a migration is performed on the `alert_rule_versions` table. If you experience a 11.6.0 upgrade that causes a migration failure, then your `alert_rule_versions` table has too many rows. To fix this, you need to truncated the `alert_rule_versions` table for the migration to complete.
