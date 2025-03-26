@@ -1,20 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
-import * as React from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '..';
-import { useStyles2, useTheme2 } from '../../themes';
-import { t, Trans } from '../../utils/i18n';
+import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '../../..';
+import { useStyles2, useTheme2 } from '../../../../themes';
+import { Trans } from '../../../../utils/i18n';
+import { FilterType } from '../types';
 
 import { FilterList } from './FilterList';
-import { TableStyles } from './styles';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
 
 interface Props {
-  column: any;
-  tableStyles: TableStyles;
+  name: string;
+  rows: any[];
+  filterValue: any;
+  setFilter: (value: any) => void;
   onClose: () => void;
   field?: Field;
   searchFilter: string;
@@ -24,7 +25,10 @@ interface Props {
 }
 
 export const FilterPopup = ({
-  column: { preFilteredRows, filterValue, setFilter },
+  name,
+  rows,
+  filterValue,
+  setFilter,
   onClose,
   field,
   searchFilter,
@@ -33,7 +37,7 @@ export const FilterPopup = ({
   setOperator,
 }: Props) => {
   const theme = useTheme2();
-  const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
+  const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
@@ -43,20 +47,36 @@ export const FilterPopup = ({
 
   const onFilter = useCallback(
     (event: React.MouseEvent) => {
-      const filtered = values.length ? values : undefined;
+      if (values.length !== 0) {
+        // create a Set for faster filtering
+        const filteredSet = new Set(values.map((item) => item.value));
 
-      setFilter(filtered);
+        setFilter((filter: FilterType) => ({
+          ...filter,
+          [name]: { filtered: values, filteredSet, searchFilter, operator },
+        }));
+      } else {
+        setFilter((filter: FilterType) => {
+          const newFilter = { ...filter };
+          delete newFilter[name];
+          return newFilter;
+        });
+      }
       onClose();
     },
-    [setFilter, values, onClose]
+    [setFilter, values, onClose] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const onClearFilter = useCallback(
     (event: React.MouseEvent) => {
-      setFilter(undefined);
+      setFilter((filter: FilterType) => {
+        const newFilter = { ...filter };
+        delete newFilter[name];
+        return newFilter;
+      });
       onClose();
     },
-    [setFilter, onClose]
+    [setFilter, onClose] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
@@ -75,7 +95,7 @@ export const FilterPopup = ({
               </Label>
               <IconButton
                 name="text-fields"
-                tooltip={t('grafana-ui.table.filter-popup-match-case', 'Match case')}
+                tooltip="Match case"
                 style={{ color: matchCase ? theme.colors.text.link : theme.colors.text.disabled }}
                 onClick={() => {
                   setMatchCase((s) => !s);
