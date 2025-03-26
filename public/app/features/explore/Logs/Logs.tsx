@@ -48,8 +48,8 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
-import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils';
-import { Trans } from 'app/core/internationalization';
+import { mapMouseEventToMode } from '@grafana/ui/internal';
+import { Trans, t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -75,14 +75,14 @@ import {
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
-import { changeQueries } from '../state/query';
+import { changeQueries, runQueries } from '../state/query';
 
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { canKeepDisplayedFields, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 
 interface Props extends Themeable2 {
   width: number;
@@ -225,7 +225,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
-  const prevLogsQueries = usePrevious(logsQueries);
 
   const tableHeight = getLogsTableHeight();
   const styles = getStyles(theme, wrapLogMessage, tableHeight);
@@ -409,20 +408,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     ]
   );
 
-  useEffect(() => {
-    if (!prevLogsQueries) {
-      // Initial load, ignore
-      return;
-    }
-    if (!canKeepDisplayedFields(logsQueries, prevLogsQueries)) {
-      setDisplayedFields([]);
-      updatePanelState({
-        ...panelState?.logs,
-        displayedFields: [],
-      });
-    }
-  }, [logsQueries, panelState?.logs, prevLogsQueries, updatePanelState]);
-
   // actions
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
@@ -478,12 +463,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           if (query.datasource?.type !== 'loki' || !isLokiQuery(query)) {
             return query;
           }
-          hasLokiQueries = true;
-
           if (query.direction === LokiQueryDirection.Scan) {
             // Don't override Scan. When the direction is Scan it means that the user specifically assigned this direction to the query.
             return query;
           }
+          hasLokiQueries = true;
           const newDirection =
             newSortOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
           if (newDirection !== query.direction) {
@@ -494,6 +478,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
         if (hasLokiQueries) {
           dispatch(changeQueries({ exploreId, queries: newQueries }));
+          dispatch(runQueries({ exploreId }));
         }
       }
 
@@ -819,7 +804,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         />
       )}
       <PanelChrome
-        title="Logs volume"
+        title={t('explore.unthemed-logs.title-logs-volume', 'Logs volume')}
         collapsible
         collapsed={!logsVolumeEnabled}
         onToggleCollapse={onToggleLogsVolumeCollapse}
@@ -844,7 +829,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         titleItems={[
           config.featureToggles.logsExploreTableVisualisation ? (
             visualisationType === 'logs' ? null : (
-              <PanelChrome.TitleItem title="Feedback" key="A">
+              <PanelChrome.TitleItem title={t('explore.unthemed-logs.title-feedback', 'Feedback')} key="A">
                 <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
               </PanelChrome.TitleItem>
             )
@@ -883,7 +868,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           {visualisationType !== 'table' && (
             <div className={styles.logOptions}>
               <InlineFieldRow>
-                <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-time', 'Time')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
                   <InlineSwitch
                     value={showTime}
                     onChange={onChangeShowTime}
@@ -892,7 +881,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     id={`show-time_${exploreId}`}
                   />
                 </InlineField>
-                <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-unique-labels', 'Unique labels')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
                   <InlineSwitch
                     value={showLabels}
                     onChange={onChangeLabels}
@@ -901,7 +894,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     id={`unique-labels_${exploreId}`}
                   />
                 </InlineField>
-                <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-wrap-lines', 'Wrap lines')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
                   <InlineSwitch
                     value={wrapLogMessage}
                     onChange={onChangeWrapLogMessage}
@@ -910,7 +907,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     id={`wrap-lines_${exploreId}`}
                   />
                 </InlineField>
-                <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-prettify-json', 'Prettify JSON')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
                   <InlineSwitch
                     value={prettifyLogMessage}
                     onChange={onChangePrettifyLogMessage}
@@ -919,7 +920,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     id={`prettify_${exploreId}`}
                   />
                 </InlineField>
-                <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-deduplication', 'Deduplication')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
                   <RadioButtonGroup
                     options={DEDUP_OPTIONS.map((dedupType) => ({
                       label: capitalize(dedupType),
@@ -935,7 +940,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
               <div>
                 <InlineField
-                  label="Display results"
+                  label={t('explore.unthemed-logs.label-display-results', 'Display results')}
                   className={styles.horizontalInlineLabel}
                   transparent
                   disabled={isFlipping || loading}
@@ -1063,18 +1068,30 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </>
           )}
-          {visualisationType === 'logs' && config.featureToggles.newLogsPanel && (
+          {visualisationType === 'logs' && hasData && config.featureToggles.newLogsPanel && (
             <>
-              <div data-testid="logRows" ref={logsContainerRef} className={styles.logRows}>
+              <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
                 {logsContainerRef.current && (
                   <LogList
                     app={CoreApp.Explore}
+                    logSupportsContext={showContextToggle}
                     containerElement={logsContainerRef.current}
+                    displayedFields={displayedFields}
                     eventBus={eventBus}
                     forceEscape={forceEscape}
+                    getFieldLinks={getFieldLinks}
+                    getRowContextQuery={getRowContextQuery}
+                    loadMore={loadMoreLogs}
                     logs={dedupedRows}
+                    onOpenContext={onOpenContext}
+                    onPermalinkClick={onPermalinkClick}
+                    onPinLine={onPinToContentOutlineClick}
+                    onUnpinLine={onPinToContentOutlineClick}
+                    pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                    pinnedLogs={pinnedLogs}
                     showTime={showTime}
                     sortOrder={logsSortOrder}
+                    timeRange={props.range}
                     timeZone={timeZone}
                     wrapLogMessage={wrapLogMessage}
                   />
@@ -1179,6 +1196,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     logRows: css({
       overflowX: `${wrapLogMessage ? 'unset' : 'scroll'}`,
       overflowY: 'visible',
+      width: '100%',
+    }),
+    logRowsWrapper: css({
       width: '100%',
     }),
     visualisationType: css({

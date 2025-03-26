@@ -39,6 +39,10 @@ func (ss *FolderStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCo
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
 	}
 
+	if cmd.UID == cmd.ParentUID {
+		return nil, folder.ErrFolderCannotBeParentOfItself
+	}
+
 	var foldr *folder.Folder
 	/*
 		version := 1
@@ -494,7 +498,11 @@ func (ss *FolderStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFr
 			}
 
 			if len(q.AncestorUIDs) == 0 {
-				if q.OrderByTitle {
+				if q.Limit > 0 {
+					s.WriteString(` ORDER BY f0.title ASC`)
+					s.WriteString(` LIMIT ? OFFSET ?`)
+					args = append(args, q.Limit, (q.Page-1)*q.Limit)
+				} else if q.OrderByTitle {
 					s.WriteString(` ORDER BY f0.title ASC`)
 				}
 
@@ -599,9 +607,9 @@ func (ss *FolderStoreImpl) GetDescendants(ctx context.Context, orgID int64, ance
 }
 
 func getFullpathSQL(dialect migrator.Dialect) string {
-	escaped := "\\/"
-	if dialect.DriverName() == migrator.MySQL {
-		escaped = "\\\\/"
+	escaped := `\/`
+	if dialect.DriverName() == migrator.MySQL || dialect.DriverName() == migrator.Spanner {
+		escaped = `\\/`
 	}
 	concatCols := make([]string, 0, folder.MaxNestedFolderDepth)
 	concatCols = append(concatCols, fmt.Sprintf("COALESCE(REPLACE(f0.title, '/', '%s'), '')", escaped))

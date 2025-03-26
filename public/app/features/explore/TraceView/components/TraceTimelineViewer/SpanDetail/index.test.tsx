@@ -19,7 +19,7 @@ import userEvent from '@testing-library/user-event';
 
 import { createDataFrame, DataSourceInstanceSettings } from '@grafana/data';
 import { data } from '@grafana/flamegraph';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import traceGenerator from '../../demo/trace-generators';
@@ -70,6 +70,12 @@ describe('<SpanDetail>', () => {
     createFocusSpanLink: jest.fn().mockReturnValue({}),
     traceFlameGraphs: { [span.spanID]: createDataFrame(data) },
     setRedrawListView: jest.fn(),
+    timeRange: {
+      raw: {
+        from: 0,
+        to: 1000000000000,
+      },
+    },
   };
 
   span.tags = [
@@ -156,6 +162,11 @@ describe('<SpanDetail>', () => {
     props.logsToggle.mockReset();
     props.logItemToggle.mockReset();
 
+    setPluginLinksHook(() => ({
+      isLoading: false,
+      links: [],
+    }));
+
     setDataSourceSrv({
       getList() {
         return [pyroSettings];
@@ -205,13 +216,13 @@ describe('<SpanDetail>', () => {
 
   it('renders the span tags', async () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-    await userEvent.click(screen.getByRole('switch', { name: /Span Attributes/ }));
+    await userEvent.click(screen.getByRole('switch', { name: /Span attributes/ }));
     expect(props.tagsToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders the process tags', async () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-    await userEvent.click(screen.getByRole('switch', { name: /Resource Attributes/ }));
+    await userEvent.click(screen.getByRole('switch', { name: /Resource attributes/ }));
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 

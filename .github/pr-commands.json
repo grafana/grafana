@@ -247,7 +247,8 @@
       "/pkg/services/sqlstore/migrations/ualert/**/*",
       "/pkg/services/alerting/**/*",
       "/public/app/features/alerting/**/*",
-      "/pkg/tests/api/alerting/**/*"
+      "/pkg/tests/api/alerting/**/*",
+      "/pkg/tests/alertmanager/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "area/alerting"

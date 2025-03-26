@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,17 +14,18 @@ import (
 	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
+	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -69,8 +70,9 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
 	softDelete bool,
+	sorter sort.Service,
 ) DashboardAccess {
-	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore)
+	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
 		sql:                   sql,
 		namespacer:            namespacer,
@@ -254,6 +256,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 	var createdBy sql.NullString
 	var createdByID sql.NullInt64
 	var message sql.NullString
+	var apiVersion sql.NullString
 
 	var plugin_id sql.NullString
 	var origin_name sql.NullString
@@ -268,8 +271,11 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
 		&created, &createdBy, &createdByID,
 		&updated, &updatedBy, &updatedByID,
-		&version, &message, &data,
+		&version, &message, &data, &apiVersion,
 	)
+	if apiVersion.String == "" {
+		apiVersion.String = "v0alpha1" // default value
+	}
 
 	row.token = &continueToken{orgId: orgId, id: dashboard_id}
 	// when listing from the history table, we want to use the version as the ID to continue from
@@ -280,6 +286,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		row.RV = version
 		dash.ResourceVersion = fmt.Sprintf("%d", row.RV)
 		dash.Namespace = a.namespacer(orgId)
+		dash.APIVersion = fmt.Sprintf("%s/%s", dashboard.GROUP, apiVersion.String)
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
 		dash.SetCreationTimestamp(metav1.NewTime(created))
 		meta, err := utils.MetaAccessor(dash)
@@ -309,30 +316,23 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		}
 
 		if origin_name.String != "" {
-			ts := time.Unix(origin_ts.Int64, 0)
-
-			repo := &utils.ResourceRepositoryInfo{
-				Name:      origin_name.String,
-				Hash:      origin_hash.String,
-				Timestamp: &ts,
-			}
 			// if the reader cannot be found, it may be an orphaned provisioned dashboard
 			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
 			if resolvedPath != "" {
-				originPath, err := filepath.Rel(
-					resolvedPath,
-					origin_path.String,
-				)
-				if err != nil {
-					return nil, err
-				}
-				repo.Path = originPath
+				meta.SetSourceProperties(utils.SourceProperties{
+					Path:            origin_path.String,
+					Checksum:        origin_hash.String,
+					TimestampMillis: origin_ts.Int64,
+				})
+				meta.SetManagerProperties(utils.ManagerProperties{
+					Kind:     utils.ManagerKindClassicFP, // nolint:staticcheck
+					Identity: origin_name.String,
+				})
 			}
-			meta.SetRepositoryInfo(repo)
 		} else if plugin_id.String != "" {
-			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-				Name: "plugin",
-				Path: plugin_id.String,
+			meta.SetManagerProperties(utils.ManagerProperties{
+				Kind:     utils.ManagerKindPlugin,
+				Identity: plugin_id.String,
 			})
 		}
 
@@ -342,7 +342,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 				return row, fmt.Errorf("JSON unmarshal error for: %s // %w", dash.Name, err)
 			}
 		}
-		dash.Spec.Remove("id")
+		// Ignore any saved values for id/version/uid
+		delete(dash.Spec.Object, "id")
+		delete(dash.Spec.Object, "version")
+		delete(dash.Spec.Object, "uid")
 	}
 	return row, err
 }
@@ -384,8 +387,7 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 	return dash, true, nil
 }
 
-// SaveDashboard implements DashboardAccess.
-func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error) {
+func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboards.SaveDashboardCommand, bool, error) {
 	created := false
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -402,6 +404,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		})
 		if old != nil {
 			dash.Spec.Set("id", old.ID)
+			dash.Spec.Set("version", float64(old.Version))
 		} else {
 			dash.Spec.Remove("id") // existing of "id" makes it an update
 			created = true
@@ -416,23 +419,40 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		var err error
 		userID, err = identity.UserIdentifier(user.GetSubject())
 		if err != nil {
-			return nil, false, err
+			return nil, created, err
 		}
 	}
 
+	apiVersion := strings.TrimPrefix(dash.APIVersion, dashboard.GROUP+"/")
 	meta, err := utils.MetaAccessor(dash)
 	if err != nil {
-		return nil, false, err
+		return nil, created, err
 	}
-	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
-		OrgID:     orgId,
-		Message:   meta.GetMessage(),
-		PluginID:  service.GetPluginIDFromMeta(meta),
-		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
-		FolderUID: meta.GetFolder(),
-		Overwrite: true, // already passed the revisionVersion checks!
-		UserID:    userID,
-	})
+
+	return &dashboards.SaveDashboardCommand{
+		OrgID:      orgId,
+		Message:    meta.GetMessage(),
+		PluginID:   dashboardOG.GetPluginIDFromMeta(meta),
+		Dashboard:  simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
+		FolderUID:  meta.GetFolder(),
+		Overwrite:  true, // already passed the revisionVersion checks!
+		UserID:     userID,
+		APIVersion: apiVersion,
+	}, created, nil
+}
+
+func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error) {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return nil, false, fmt.Errorf("no user found in context")
+	}
+
+	cmd, created, err := a.buildSaveDashboardCommand(ctx, orgId, dash)
+	if err != nil {
+		return nil, created, err
+	}
+
+	out, err := a.dashStore.SaveDashboard(ctx, *cmd)
 	if err != nil {
 		return nil, false, err
 	}
@@ -442,6 +462,8 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	dash, _, err = a.GetDashboard(ctx, orgId, out.UID, 0)
 	if err != nil {
 		return nil, false, err
+	} else if dash == nil {
+		return nil, false, fmt.Errorf("unable to retrieve dashboard after save")
 	}
 
 	// stash the raw value in context (if requested)

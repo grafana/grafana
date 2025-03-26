@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 func ProvideService(
@@ -57,6 +58,7 @@ func ProvideService(
 	orgService org.Service,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	dual dualwrite.Service,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -94,7 +96,7 @@ func ProvideService(
 
 func (ps *ProvisioningServiceImpl) setDashboardProvisioner() error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService)
+	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService, ps.dual)
 	if err != nil {
 		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
 	}
@@ -164,6 +166,7 @@ type ProvisioningServiceImpl struct {
 	folderService                folder.Service
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
 	tracer                       tracing.Tracer
+	dual                         dualwrite.Service
 	onceInitProvisioners         sync.Once
 }
 

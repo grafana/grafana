@@ -2,10 +2,14 @@ package userimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/mattn/go-sqlite3"
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -72,7 +76,7 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 		return nil
 	})
 	if err != nil {
-		return 0, err
+		return 0, handleSQLError(err)
 	}
 
 	return cmd.ID, nil
@@ -370,6 +374,7 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 			Theme:          usr.Theme,
 			IsGrafanaAdmin: usr.IsAdmin,
 			IsDisabled:     usr.IsDisabled,
+			IsProvisioned:  usr.IsProvisioned,
 			OrgID:          usr.OrgID,
 			UpdatedAt:      usr.Updated,
 			CreatedAt:      usr.Created,
@@ -464,7 +469,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		sess := dbSess.Table("user").Alias("u")
 
 		whereConditions = append(whereConditions, "u.is_service_account = ?")
-		whereParams = append(whereParams, ss.dialect.BooleanStr(false))
+		whereParams = append(whereParams, ss.dialect.BooleanValue(false))
 
 		// Join with only most recent auth module
 		joinCondition := `(
@@ -522,7 +527,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			sess.Limit(query.Limit, offset)
 		}
 
-		sess.Cols("u.id", "u.uid", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
+		sess.Cols("u.id", "u.uid", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module", "u.is_provisioned")
 
 		if len(query.SortOpts) > 0 {
 			for i := range query.SortOpts {
@@ -579,4 +584,31 @@ func setOptional[T any](v *T, add func(v T)) {
 	if v != nil {
 		add(*v)
 	}
+}
+
+func handleSQLError(err error) error {
+	if isUniqueConstraintError(err) {
+		return user.ErrUserAlreadyExists
+	}
+	return err
+}
+
+func isUniqueConstraintError(err error) bool {
+	// check mysql error code
+	var me *mysql.MySQLError
+	if errors.As(err, &me) && me.Number == 1062 {
+		return true
+	}
+
+	// for postgres we check the error message
+	if strings.Contains(err.Error(), "duplicate key value") {
+		return true
+	}
+
+	var se sqlite3.Error
+	if errors.As(err, &se) && se.ExtendedCode == sqlite3.ErrConstraintUnique {
+		return true
+	}
+
+	return false
 }

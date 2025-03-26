@@ -140,7 +140,7 @@ export class DashboardModel implements TimeModel {
     this.events = new EventBusSrv();
     this.id = data.id || null;
     // UID is not there for newly created dashboards
-    this.uid = data.uid || null;
+    this.uid = data.uid || meta?.uid || null;
     this.revision = data.revision ?? undefined;
     this.title = data.title ?? 'No Title';
     this.description = data.description;
@@ -286,6 +286,8 @@ export class DashboardModel implements TimeModel {
    *
    * @internal and experimental
    */
+  // TODO: remove this as it's not being used anymore
+  // Also remove public/app/features/dashboard/utils/panelMerge.ts
   updatePanels(panels: IPanelModel[]): PanelMergeInfo {
     const info = mergePanels(this.panels, panels ?? []);
     if (info.changed) {

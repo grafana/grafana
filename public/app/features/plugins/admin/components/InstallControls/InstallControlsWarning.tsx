@@ -33,16 +33,6 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
     );
   }
 
-  if (plugin.type === PluginType.secretsmanager) {
-    return (
-      <Alert
-        severity="warning"
-        title="Secrets manager plugins cannot be managed by the Plugin Catalog."
-        className={styles.alert}
-      />
-    );
-  }
-
   if (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) {
     return (
       <Alert severity="warning" title="" className={styles.alert}>

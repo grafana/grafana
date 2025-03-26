@@ -7,10 +7,12 @@ import {
   dataLayers,
   SceneDataQuery,
   SceneDataTransformer,
+  SceneQueryRunner,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import {
   DashboardV2Spec,
@@ -45,10 +47,10 @@ import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
+  getDashboardSceneFor,
   getLibraryPanelBehavior,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
-  getVizPanelKeyForPanelId,
   isLibraryPanel,
 } from '../utils/utils';
 
@@ -73,7 +75,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
     title: sceneDash.title,
-    description: sceneDash.description ?? '',
+    description: sceneDash.description,
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload,
@@ -93,6 +95,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       weekStart: timeRange.weekStart,
       fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
       nowDelay: timeRange.UNSAFE_nowDelay,
+      quickRanges: controlsState?.timePicker.state.quickRanges,
     },
     // EOF time settings
 
@@ -101,7 +104,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF variables
 
     // elements
-    elements: getElements(sceneDash),
+    elements: getElements(scene),
     // EOF elements
 
     // annotations
@@ -116,7 +119,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   try {
     // validateDashboardSchemaV2 will throw an error if the dashboard is not valid
     if (validateDashboardSchemaV2(dashboardSchemaV2)) {
-      return dashboardSchemaV2;
+      return sortedDeepCloneWithoutNulls(dashboardSchemaV2);
     }
     // should never reach this point, validation should throw an error
     throw new Error('Error we could transform the dashboard to schema v2: ' + dashboardSchemaV2);
@@ -144,89 +147,91 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(state: DashboardSceneState) {
-  const panels = state.body.getVizPanels() ?? [];
+function getElements(scene: DashboardScene) {
+  const panels = scene.state.body.getVizPanels() ?? [];
 
-  const panelsArray = panels.map((vizPanel: VizPanel) => {
-    if (isLibraryPanel(vizPanel)) {
-      const behavior = getLibraryPanelBehavior(vizPanel)!;
-      const elementSpec: LibraryPanelKind = {
-        kind: 'LibraryPanel',
-        spec: {
-          id: getPanelIdForVizPanel(vizPanel),
-          title: vizPanel.state.title,
-          libraryPanel: {
-            uid: behavior.state.uid,
-            name: behavior.state.name,
-          },
+  const panelsArray = panels.map(vizPanelToSchemaV2);
+  return createElements(panelsArray, scene);
+}
+
+export function vizPanelToSchemaV2(vizPanel: VizPanel): PanelKind | LibraryPanelKind {
+  if (isLibraryPanel(vizPanel)) {
+    const behavior = getLibraryPanelBehavior(vizPanel)!;
+    const elementSpec: LibraryPanelKind = {
+      kind: 'LibraryPanel',
+      spec: {
+        id: getPanelIdForVizPanel(vizPanel),
+        title: vizPanel.state.title,
+        libraryPanel: {
+          uid: behavior.state.uid,
+          name: behavior.state.name,
         },
+      },
+    };
+    return elementSpec;
+  }
+
+  // Handle type conversion for color mode
+  const rawColor = vizPanel.state.fieldConfig.defaults.color;
+  let color: FieldColor | undefined;
+
+  if (rawColor) {
+    const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
+
+    if (convertedMode) {
+      color = {
+        ...rawColor,
+        mode: convertedMode,
       };
-      return elementSpec;
-    } else {
-      // Handle type conversion for color mode
-      const rawColor = vizPanel.state.fieldConfig.defaults.color;
-      let color: FieldColor | undefined;
-
-      if (rawColor) {
-        const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
-
-        if (convertedMode) {
-          color = {
-            ...rawColor,
-            mode: convertedMode,
-          };
-        }
-      }
-
-      // Remove null from the defaults because schema V2 doesn't support null for these fields
-      const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
-      const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
-      const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
-
-      const defaults: FieldConfig = Object.fromEntries(
-        Object.entries({
-          ...vizPanel.state.fieldConfig.defaults,
-          decimals,
-          min,
-          max,
-          color,
-        }).filter(([_, value]) => value !== undefined)
-      );
-
-      const vizFieldConfig: FieldConfigSource = {
-        ...vizPanel.state.fieldConfig,
-        defaults,
-      };
-
-      const elementSpec: PanelKind = {
-        kind: 'Panel',
-        spec: {
-          id: getPanelIdForVizPanel(vizPanel),
-          title: vizPanel.state.title,
-          description: vizPanel.state.description ?? '',
-          links: getPanelLinks(vizPanel),
-          data: {
-            kind: 'QueryGroup',
-            spec: {
-              queries: getVizPanelQueries(vizPanel),
-              transformations: getVizPanelTransformations(vizPanel),
-              queryOptions: getVizPanelQueryOptions(vizPanel),
-            },
-          },
-          vizConfig: {
-            kind: vizPanel.state.pluginId,
-            spec: {
-              pluginVersion: vizPanel.state.pluginVersion ?? '',
-              options: vizPanel.state.options,
-              fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
-            },
-          },
-        },
-      };
-      return elementSpec;
     }
-  });
-  return createElements(panelsArray);
+  }
+
+  // Remove null from the defaults because schema V2 doesn't support null for these fields
+  const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
+  const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
+  const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
+
+  const defaults: FieldConfig = Object.fromEntries(
+    Object.entries({
+      ...vizPanel.state.fieldConfig.defaults,
+      decimals,
+      min,
+      max,
+      color,
+    }).filter(([_, value]) => value !== undefined)
+  );
+
+  const vizFieldConfig: FieldConfigSource = {
+    ...vizPanel.state.fieldConfig,
+    defaults,
+  };
+
+  const elementSpec: PanelKind = {
+    kind: 'Panel',
+    spec: {
+      id: getPanelIdForVizPanel(vizPanel),
+      title: vizPanel.state.title,
+      description: vizPanel.state.description ?? '',
+      links: getPanelLinks(vizPanel),
+      data: {
+        kind: 'QueryGroup',
+        spec: {
+          queries: getVizPanelQueries(vizPanel),
+          transformations: getVizPanelTransformations(vizPanel),
+          queryOptions: getVizPanelQueryOptions(vizPanel),
+        },
+      },
+      vizConfig: {
+        kind: vizPanel.state.pluginId,
+        spec: {
+          pluginVersion: vizPanel.state.pluginVersion ?? '',
+          options: vizPanel.state.options,
+          fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
+        },
+      },
+    },
+  };
+  return elementSpec;
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
@@ -241,16 +246,16 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
-  const datasource = queryRunner?.state.datasource;
-
+  const autoAssignedPanelDSRef = getAutoAssignedPanelDSRef(vizPanel);
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
+      const queryDatasource = getPersistedDSForQuery(query, queryRunner, autoAssignedPanelDSRef);
       const dataQuery: DataQueryKind = {
         kind: getDataQueryKind(query),
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
-        datasource: datasource ?? getDefaultDataSourceRef(),
+        datasource: queryDatasource,
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
@@ -343,9 +348,10 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   return queryOptions;
 }
 
-function createElements(panels: Element[]): Record<string, Element> {
+function createElements(panels: Element[], scene: DashboardScene): Record<string, Element> {
   return panels.reduce<Record<string, Element>>((elements, panel) => {
-    elements[getVizPanelKeyForPanelId(panel.spec.id)] = panel;
+    let elementKey = scene.serializer.getElementIdForPanel(panel.spec.id);
+    elements[elementKey!] = panel;
     return elements;
   }, {});
 }
@@ -446,7 +452,7 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if ('title' in dash && typeof dash.title !== 'string') {
     throw new Error('Title is not a string');
   }
-  if ('description' in dash && typeof dash.description !== 'string') {
+  if ('description' in dash && dash.description !== undefined && typeof dash.description !== 'string') {
     throw new Error('Description is not a string');
   }
   if ('cursorSync' in dash && typeof dash.cursorSync !== 'string') {
@@ -584,4 +590,42 @@ function validateRowsLayout(layout: unknown) {
   if (!('rows' in layout.spec) || !Array.isArray(layout.spec.rows)) {
     throw new Error('Layout spec items is not an array');
   }
+}
+
+/**
+ * Get a collection of panel queries refIds
+ * the refIds are the ones which did not have a datasource set
+ * @returns a set of panel queries refIds
+ */
+function getAutoAssignedPanelDSRef(vizPanel: VizPanel) {
+  const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
+  const scene = getDashboardSceneFor(vizPanel);
+  const elementMapReferences = scene.serializer.getDSReferencesMapping();
+
+  const panelQueries = elementMapReferences.panels.get(elementKey);
+  return panelQueries;
+}
+
+/**
+ * Get the persisted datasource for a query
+ * When a query is created it could not have a datasource set
+ * we want to respect that and not overwrite it with the auto assigned datasources
+ * resolved in runtime
+ * @param query
+ * @param queryRunner
+ * @param autoAssignedPanelDsRef
+ * @returns
+ */
+export function getPersistedDSForQuery(
+  query: SceneDataQuery,
+  queryRunner: SceneQueryRunner,
+  autoAssignedPanelDsRef: Set<string> | undefined
+) {
+  // if the query has a refId and it is in the panelDsReferences then it did NOT have a datasource
+  const hasMatchingRefId = autoAssignedPanelDsRef?.has(query.refId);
+  if (hasMatchingRefId) {
+    return undefined;
+  }
+
+  return query.datasource || queryRunner?.state?.datasource;
 }

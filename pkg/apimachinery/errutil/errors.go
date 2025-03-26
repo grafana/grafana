@@ -71,6 +71,17 @@ func UnprocessableEntity(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusUnprocessableEntity, msgID, opts...)
 }
 
+// UnsupportedMediaType initializes a new [Base] error with reason StatusUnsupportedMediaType
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	plugin.unsupportedMediaType
+func UnsupportedMediaType(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusUnsupportedMediaType, msgID, opts...)
+}
+
 // Conflict initializes a new [Base] error with reason StatusConflict
 // that is used to construct [Error]. The msgID is passed to the caller
 // to serve as the base for user facing error messages.
@@ -114,7 +125,7 @@ func ValidationFailed(msgID string, opts ...BaseOpt) Base {
 // msgID should be structured as component.errorBrief, for example
 //
 //	sqleng.connectionError
-//	plugin.downstreamError
+//	plugin.requestFailureError
 func Internal(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusInternal, msgID, opts...)
 }

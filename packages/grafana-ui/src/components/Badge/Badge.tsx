@@ -10,15 +10,16 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types';
 import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
+import { PopoverContent } from '../Tooltip';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';
+export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple' | 'darkgrey';
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   text: React.ReactNode;
   color: BadgeColor;
   icon?: IconName;
-  tooltip?: string;
+  tooltip?: PopoverContent;
 }
 
 const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
@@ -79,7 +80,7 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       border: `1px solid ${borderColor}`,
       color: textColor,
       fontWeight: theme.typography.fontWeightRegular,
-      gap: '2px',
+      gap: theme.spacing(0.5),
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
       alignItems: 'center',

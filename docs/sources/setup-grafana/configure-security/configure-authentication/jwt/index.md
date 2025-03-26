@@ -31,7 +31,7 @@ Grafana does not currently support refresh tokens.
 
 To use JWT authentication:
 
-1. Enable JWT in the [main config file]({{< relref "../../../configure-grafana" >}}).
+1. Enable JWT in the [main config file](../../../configure-grafana/).
 1. Specify the header name that contains a token.
 
 ```ini
@@ -106,7 +106,7 @@ provided in the HTTP header and a reverse proxy should rewrite requests to the
 Grafana instance to include the JWT in the request's headers.
 
 {{% admonition type="note" %}}
-For embedding to work, you must enable `allow_embedding` in the [security section]({{< relref "../../../configure-grafana#allow_embedding" >}}). This setting is not available in Grafana Cloud.
+For embedding to work, you must enable `allow_embedding` in the [security section](../../../configure-grafana/#allow_embedding). This setting is not available in Grafana Cloud.
 {{% /admonition %}}
 
 In a scenario where it is not possible to rewrite the request headers you
@@ -200,15 +200,21 @@ expect_claims = {"iss": "https://your-token-issuer", "your-custom-claim": "foo"}
 Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to JWT token claims. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `None`, `Viewer`, `Editor` or `Admin`.
 
 To assign the role to a specific organization include the `X-Grafana-Org-Id` header along with your JWT when making API requests to Grafana.
-To learn more about the header, please refer to the [documentation]({{< relref "../../../../developers/http_api#x-grafana-org-id-header" >}}).
+To learn more about the header, please refer to the [documentation](../../../../developers/http_api/#x-grafana-org-id-header).
 
-### JMESPath examples
+### Configure role mapping
 
-To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
+Unless `skip_org_role_sync` option is enabled, the user's role will be set to the role retrieved from the JWT.
 
-### Role mapping
+The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option.
+To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
 
-If the `role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role by default. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
+If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../configure-grafana/#auto_assign_org_role).
+You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned after evaluating the `role_attribute_path` and the `org_mapping` expressions.
+
+You can use the `org_attribute_path` and `org_mapping` configuration options to assign the user to organizations and specify their role. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If both org role mapping (`org_mapping`) and the regular role mapping (`role_attribute_path`) are specified, then the user will get the highest of the two mapped roles.
+
+To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
 
 **Basic example:**
 
@@ -224,9 +230,9 @@ Payload:
 }
 ```
 
-Config:
+Configuration:
 
-```bash
+```ini
 role_attribute_path = role
 ```
 
@@ -251,10 +257,38 @@ Payload:
 }
 ```
 
-Config:
+Configuration:
 
-```bash
+```ini
 role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
+```
+
+**Org roles mapping example**
+
+In the following example, the , the user has been granted the role of a `Viewer` in the `org_foo` organization, and the role of an `Editor` in the `org_bar` and `org_baz` organizations.
+
+Payload:
+
+```json
+{
+    ...
+    "info": {
+        ...
+        "orgs": [
+            "engineer",
+            "admin",
+        ],
+        ...
+    },
+    ...
+}
+```
+
+Configuration:
+
+```ini
+org_attribute_path = info.orgs
+org_mapping = engineer:org_foo:Viewer admin:org_bar:Editor *:org_baz:Editor
 ```
 
 ### Grafana Admin Role

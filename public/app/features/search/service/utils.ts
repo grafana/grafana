@@ -49,6 +49,10 @@ export function getIconForKind(kind: string, isOpen?: boolean): IconName {
     return isOpen ? 'folder-open' : 'folder';
   }
 
+  if (kind === 'sharedwithme') {
+    return 'users-alt';
+  }
+
   return 'question-circle';
 }
 
@@ -102,6 +106,7 @@ export function queryResultToViewItem(
     title: item.name,
     url: item.url,
     tags: item.tags ?? [],
+    managedBy: item.managedBy,
   };
 
   // Set enterprise sort value property

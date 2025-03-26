@@ -22,6 +22,7 @@ import { AccessControlAction, DashboardRoutes } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
+import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
@@ -96,8 +97,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dashboard-solo/:type/:slug',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
+      component: SafeDynamicImport(() =>
+        config.featureToggles.dashboardSceneSolo
+          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
+          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
     },
     {
@@ -159,6 +162,10 @@ export function getAppRoutes(): RouteDescriptor[] {
           ? import(/* webpackChunkName: "explore" */ 'app/features/explore/ExplorePage')
           : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
       ),
+    },
+    {
+      path: '/drilldown',
+      component: () => <NavLandingPage navId="drilldown" />,
     },
     {
       path: '/apps',
@@ -543,6 +550,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
+    ...getProvisioningRoutes(),
     {
       path: '/goto/*',
       component: HandleGoToRedirect,

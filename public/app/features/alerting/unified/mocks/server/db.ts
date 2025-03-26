@@ -2,19 +2,21 @@ import { Factory } from 'fishery';
 import { uniqueId } from 'lodash';
 
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
-import { config, setDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { FolderDTO } from 'app/types';
 import {
+  GrafanaRecordingRuleDefinition,
   PromAlertingRuleDTO,
   PromAlertingRuleState,
   PromRuleGroupDTO,
   PromRuleType,
   RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { MockDataSourceSrv } from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 
 const prometheusRuleFactory = Factory.define<PromAlertingRuleDTO>(({ sequence }) => ({
@@ -62,7 +64,7 @@ const prometheusRuleGroupFactory = Factory.define<PromRuleGroupDTO>(({ sequence 
 const dataSourceFactory = Factory.define<DataSourceInstanceSettings>(({ sequence, params, afterBuild }) => {
   afterBuild((dataSource) => {
     config.datasources[dataSource.name] = dataSource;
-    setDataSourceSrv(new MockDataSourceSrv(config.datasources));
+    setupDataSources(...Object.values(config.datasources));
   });
 
   const uid = params.uid ?? `mock-ds-${sequence}`;
@@ -114,6 +116,25 @@ const grafanaFolderFactory = Factory.define<FolderDTO>(({ sequence }) => ({
   updatedBy: '',
 }));
 
+const grafanaRecordingRule = Factory.define<RulerGrafanaRuleDTO<GrafanaRecordingRuleDefinition>>(({ sequence }) => ({
+  grafana_alert: {
+    id: String(sequence),
+    uid: uniqueId(),
+    title: `Recording rule ${sequence}`,
+    namespace_uid: 'test-namespace',
+    rule_group: 'test-group',
+    condition: 'A',
+    data: [],
+    record: {
+      from: 'vector(1)',
+      metric: `recording_rule_${sequence}`,
+    },
+  },
+  for: '5m',
+  labels: { 'label-key-1': 'label-value-1' },
+  annotations: {}, // @TODO recording rules don't have annotations, we need to fix this type definition
+}));
+
 export const alertingFactory = {
   folder: grafanaFolderFactory,
   prometheus: {
@@ -124,6 +145,9 @@ export const alertingFactory = {
     group: rulerRuleGroupFactory,
     alertingRule: rulerAlertingRuleFactory,
     recordingRule: rulerRecordingRuleFactory,
+    grafana: {
+      recordingRule: grafanaRecordingRule,
+    },
   },
   dataSource: dataSourceFactory,
 };

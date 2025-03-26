@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, OneClickMode } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions';
@@ -98,7 +98,6 @@ export const droneTopItem: CanvasElementItem = {
         fixed: 'transparent',
       },
     },
-    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 

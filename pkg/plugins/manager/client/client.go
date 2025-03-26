@@ -30,6 +30,14 @@ var (
 	errNilSender  = errors.New("sender cannot be nil")
 )
 
+// passthroughErrors contains a list of errors that should be returned directly to the caller without wrapping
+var passthroughErrors = []error{
+	plugins.ErrPluginUnavailable,
+	plugins.ErrMethodNotImplemented,
+	plugins.ErrPluginGrpcResourceExhaustedBase,
+	plugins.ErrPluginGrpcConnectionUnavailableBase,
+}
+
 type Service struct {
 	pluginRegistry registry.Service
 }
@@ -52,12 +60,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	resp, err := p.QueryData(ctx, req)
 	if err != nil {
-		if errors.Is(err, plugins.ErrMethodNotImplemented) {
-			return nil, err
-		}
-
-		if errors.Is(err, plugins.ErrPluginUnavailable) {
-			return nil, err
+		for _, e := range passthroughErrors {
+			if errors.Is(err, e) {
+				return nil, err
+			}
 		}
 
 		if errors.Is(err, context.Canceled) {
@@ -68,7 +74,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
 		}
 
-		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to query data: %w", err)
+		return nil, plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to query data: %w", err)
 	}
 
 	for refID, res := range resp.Responses {
@@ -127,7 +133,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			return plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: call resource request canceled: %w", err)
 		}
 
-		return plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to call resources: %w", err)
+		return plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to call resources: %w", err)
 	}
 
 	return nil
@@ -149,7 +155,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: collect metrics request canceled: %w", err)
 		}
 
-		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to collect metrics: %w", err)
+		return nil, plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to collect metrics: %w", err)
 	}
 
 	return resp, nil

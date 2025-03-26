@@ -10,7 +10,6 @@ import {
 import cx from 'classnames';
 import { produce } from 'immer';
 import { useCallback, useEffect, useState } from 'react';
-import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Button, Icon, Modal, Tooltip, useStyles2 } from '@grafana/ui';
@@ -31,12 +30,7 @@ import { SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';
 import { fetchRulerRulesAction } from '../../state/actions';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { hashRulerRule } from '../../utils/rule-id';
-import {
-  isAlertingRulerRule,
-  isGrafanaRulerRule,
-  isRecordingRulerRule,
-  rulesSourceToDataSourceName,
-} from '../../utils/rules';
+import { getRuleName, rulerRuleType, rulesSourceToDataSourceName } from '../../utils/rules';
 
 interface ModalProps {
   namespace: CombinedRuleNamespace;
@@ -189,14 +183,16 @@ const ListItem = ({ provided, rule, isClone = false, isDragging = false }: ListI
       {...provided.draggableProps}
       {...provided.dragHandleProps}
     >
-      {isGrafanaRulerRule(rule) && <div className={styles.listItemName}>{rule.grafana_alert.title}</div>}
-      {isRecordingRulerRule(rule) && (
-        <>
-          <div className={styles.listItemName}>{rule.record}</div>
-          <Badge text="Recording" color="purple" />
-        </>
-      )}
-      {isAlertingRulerRule(rule) && <div className={styles.listItemName}>{rule.alert}</div>}
+      <div className={styles.listItemName}>
+        {getRuleName(rule)}
+        {rulerRuleType.any.recordingRule(rule) && (
+          <>
+            {' '}
+            <Badge text="Recording" color="purple" />
+          </>
+        )}
+      </div>
+      {rulerRuleType.dataSource.alertingRule(rule) && <div className={styles.listItemName}>{rule.alert}</div>}
       <Icon name="draggabledots" />
     </div>
   );
