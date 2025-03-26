@@ -139,7 +139,7 @@ test.describe('edit panel plugin settings', () => {
     const panelOptions = panelEditPage.getPanelOptions();
     const title = panelOptions.getTextInput('Title');
 
-    await expect(title).toHaveValue('Panel Title');
+    await expect(title).toHaveValue('New panel');
     await title.clear();
     await expect(title).toHaveValue('');
   });
