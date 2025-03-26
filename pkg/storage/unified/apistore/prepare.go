@@ -59,7 +59,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
 	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+		return nil, "", apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 	}
 
 	grantPermisions := obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
