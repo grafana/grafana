@@ -2,12 +2,6 @@ import { SuccessResponse } from '../../common/api';
 import { Annotations, Labels } from '../../common/rules';
 
 /**
- * Rule health in Grafana-flavored Prometheus indicates the evaluation status of a rule, which can be "ok", "unknown", or "error".
- * @see {@link https://github.com/grafana/grafana/blob/f7b9f1ce69457fd2a110d529b731411e8fc8dc3c/pkg/services/ngalert/models/alert_rule.go#L106-L111|source}
- */
-type RuleHealth = 'alerting' | 'error' | 'ok' | 'keeplast';
-
-/**
  * Base rule object shared between alerting and recording rules
  * @see {@link https://github.com/grafana/grafana/blob/55f28124665e73f0ced273f854fe1eabfe225a8c/pkg/services/ngalert/api/tooling/definitions/prom.go#L168-L187|source}
  */
@@ -91,8 +85,18 @@ export interface AlertInstance {
 
 // ⚠️ do NOT confuse rule state with alert state
 export type RuleState = 'inactive' | 'pending' | 'firing';
+/**
+ * Rule health in Grafana-flavored Prometheus indicates the evaluation status of a rule.
+ * @see {@link https://github.com/grafana/grafana/blob/f7b9f1ce69457fd2a110d529b731411e8fc8dc3c/pkg/services/ngalert/models/alert_rule.go#L106-L111|source}
+ */
+export type RuleHealth = 'error' | 'ok' | 'nodata';
 export type AlertInstanceState = AlertInstanceStateWithoutReason | AlertInstanceStateWithReason;
-export type AlertInstanceStateWithoutReason = 'Normal' | 'Alerting' | 'Pending' | 'NoData' | 'Error';
+
+/**
+ * The state of a Grafana rule alert instance reflects its current condition
+ * @see {@link https://github.com/grafana/grafana/blob/a4e8bd16de9c0db419730263531df738dcb8c34c/pkg/services/ngalert/models/instance.go#L28-L44|source}
+ */
+export type AlertInstanceStateWithoutReason = 'Normal' | 'Alerting' | 'Pending' | 'NoData' | 'Error' | 'Recovering';
 export type AlertInstanceStateWithReason = `${AlertInstanceStateWithoutReason} (${StateReason})`;
 
 /**
