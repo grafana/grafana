@@ -70,7 +70,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
     () => (
       <ConfirmModal
         isOpen={Boolean(ruleToDelete)}
-        title="Delete rule"
+        title={t("alerting.delete-rule-modal.title", "Delete rule")}
         body={
           isSoftDeleteEnabled
             ? t("alerting.delete-rule-modal.with-soft-delete", 'Are you sure you want to delete this rule? This rule will be recoverable from the Recently deleted page by a user with an admin role.')

@@ -460,6 +460,7 @@
       "self-reference": "You can't link an expression to itself"
     },
     "delete-rule-modal": {
+      "title": "Delete rule",
       "with-soft-delete": "Are you sure you want to delete this rule? This rule will be recoverable from the Recently deleted page by a user with an admin role.",
       "without-soft-delete": "Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
     },
