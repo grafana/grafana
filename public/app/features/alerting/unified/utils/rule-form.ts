@@ -373,39 +373,38 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
   const duration = rule.for;
   const annotations = rule.annotations;
   const labels = rule.labels;
+
+  const commonProperties = {
+    ...defaultFormValues,
+    name: ga.title,
+    queries: ga.data,
+    condition: ga.condition,
+    annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(annotations, false)),
+    labels: listifyLabelsOrAnnotations(labels, true),
+    folder: { title: namespace, uid: ga.namespace_uid },
+    isPaused: ga.is_paused,
+  };
+
   if (rulerRuleType.grafana.recordingRule(rule)) {
     // grafana recording rule
     return {
-      ...defaultFormValues,
-      name: ga.title,
+      ...commonProperties,
       type: RuleFormType.grafanaRecording,
       group: ga.rule_group,
-      queries: ga.data,
-      condition: ga.condition,
-      annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
-      labels: listifyLabelsOrAnnotations(rule.labels, true),
-      folder: { title: namespace, uid: ga.namespace_uid },
-      isPaused: ga.is_paused,
       metric: ga.record?.metric,
     };
   }
+
   // grafana alerting rule
   const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
   if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
     return {
-      ...defaultFormValues,
-      name: ga.title,
+      ...commonProperties,
       type: RuleFormType.grafana,
       group: ga.rule_group,
       evaluateFor: duration || '0',
       noDataState: ga.no_data_state,
       execErrState: ga.exec_err_state,
-      queries: ga.data,
-      condition: ga.condition,
-      annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(annotations, false)),
-      labels: listifyLabelsOrAnnotations(labels, true),
-      folder: { title: namespace, uid: ga.namespace_uid },
-      isPaused: ga.is_paused,
 
       contactPoints: routingSettings,
       manualRouting: Boolean(routingSettings),
