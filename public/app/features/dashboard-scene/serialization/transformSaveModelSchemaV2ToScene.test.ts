@@ -58,6 +58,7 @@ export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     name: 'dashboard-uid',
     namespace: 'default',
     labels: {},
+    generation: 123,
     resourceVersion: '123',
     creationTimestamp: 'creationTs',
     annotations: {

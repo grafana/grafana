@@ -457,12 +457,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   ): DashboardScene | null {
     const fromCache = this.getSceneFromCache(options.uid);
 
-    // TODO[schema v2]: Dashboard scene state is incorrectly save, it must use the resourceVersion
-    if (
-      fromCache &&
-      rsp?.metadata.resourceVersion &&
-      fromCache.state.version === parseInt(rsp?.metadata.resourceVersion, 10)
-    ) {
+    if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
       return fromCache;
     }
 
