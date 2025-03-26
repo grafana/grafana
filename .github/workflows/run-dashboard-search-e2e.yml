@@ -14,6 +14,7 @@ env:
 jobs:
   setup:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     outputs:
       ini_files: ${{ steps.get_files.outputs.ini_files }}
 
@@ -37,8 +38,7 @@ jobs:
           path: |
             node_modules
             /home/runner/.cache/Cypress
-          # key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          key: foo
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: yarn install --immutable
@@ -76,7 +76,7 @@ jobs:
       needs: setup
       runs-on: ubuntu-latest
       continue-on-error: true
-      # if: github.event.pull_request.draft == false
+      if: github.event.pull_request.draft == false
       strategy:
         matrix:
           ini_file: ${{ fromJson(needs.setup.outputs.ini_files) }}
