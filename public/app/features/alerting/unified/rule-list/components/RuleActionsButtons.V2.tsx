@@ -16,7 +16,7 @@ import { createRelativeUrl } from '../../utils/url';
 
 interface Props {
   rule: RulerRuleDTO;
-  promRule: Rule;
+  promRule?: Rule;
   groupIdentifier: RuleGroupIdentifierV2;
   /**
    * Should we show the buttons in a "compact" state?
