@@ -25,7 +25,7 @@
     {
       "method": "POST",
       "reqRole": "Editor",
-      "reqAction": "alert.silences:create"
+      "reqAction": "alert.instances.external:write"
     },
     {
       "method": "PUT",
