@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/log/term"
 	"github.com/grafana/grafana/pkg/infra/log/text"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -447,7 +446,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	}
 
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
-	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
+	defaultFilters := getFilters(SplitString(cfg.Section("log").Key("filters").String()))
 
 	configLoggers := make([]logWithFilters, 0, len(modes))
 	for _, mode := range modes {
@@ -460,7 +459,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 
 		// Log level.
 		_, leveloption := getLogLevelFromConfig("log."+mode, defaultLevelName, cfg)
-		modeFilters := getFilters(util.SplitString(sec.Key("filters").String()))
+		modeFilters := getFilters(SplitString(sec.Key("filters").String()))
 
 		format := getLogFormat(sec.Key("format").MustString(""))
 
