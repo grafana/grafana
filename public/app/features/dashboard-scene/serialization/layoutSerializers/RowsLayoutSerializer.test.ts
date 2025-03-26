@@ -33,6 +33,33 @@ describe('deserialization', () => {
     expect(deserialized.state.rows[0].state.layout).toBeInstanceOf(DefaultGridLayoutManager);
   });
 
+  it('should deserialize rows layout with collapse and hideHeader properly set', () => {
+    const layout: DashboardV2Spec['layout'] = {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Row 1',
+              collapse: true,
+              hideHeader: true,
+              fillScreen: true,
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+            },
+          },
+        ],
+      },
+    };
+    const serializer = new RowsLayoutSerializer();
+    const deserialized = serializer.deserialize(layout, {}, false);
+    expect(deserialized).toBeInstanceOf(RowsLayoutManager);
+    expect(deserialized.state.rows[0].state.layout).toBeInstanceOf(DefaultGridLayoutManager);
+    expect(deserialized.state.rows[0].state.collapse).toBe(true);
+    expect(deserialized.state.rows[0].state.hideHeader).toBe(true);
+    expect(deserialized.state.rows[0].state.fillScreen).toBe(true);
+  });
+
   it('should deserialize rows layout with responsive grid child', () => {
     const layout: DashboardV2Spec['layout'] = {
       kind: 'RowsLayout',
@@ -73,6 +100,8 @@ describe('deserialization', () => {
             spec: {
               title: 'Row 1',
               collapse: false,
+              hideHeader: undefined,
+              fillScreen: undefined,
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
@@ -89,6 +118,8 @@ describe('deserialization', () => {
             spec: {
               title: 'Row 2',
               collapse: true,
+              hideHeader: undefined,
+              fillScreen: undefined,
               layout: { kind: 'GridLayout', spec: { items: [] } },
             },
           },
@@ -128,6 +159,8 @@ describe('deserialization', () => {
             spec: {
               title: 'Repeated Row',
               collapse: false,
+              hideHeader: undefined,
+              fillScreen: undefined,
               layout: { kind: 'GridLayout', spec: { items: [] } },
               repeat: { value: 'foo', mode: 'variable' },
             },
@@ -180,7 +213,50 @@ describe('serialization', () => {
             kind: 'RowsLayoutRow',
             spec: {
               title: 'Row 1',
-              collapsed: false,
+              collapse: false,
+              hideHeader: undefined,
+              fillScreen: undefined,
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+            },
+          },
+        ],
+      },
+    });
+  });
+
+  it('should serialize basic row layout with collapse and hideHeader', () => {
+    const rowsLayout = new RowsLayoutManager({
+      rows: [
+        new RowItem({
+          title: 'Row 1',
+          collapse: true,
+          hideHeader: true,
+          fillScreen: true,
+          layout: new DefaultGridLayoutManager({
+            grid: new SceneGridLayout({
+              children: [],
+              isDraggable: true,
+              isResizable: true,
+            }),
+          }),
+        }),
+      ],
+    });
+
+    const serializer = new RowsLayoutSerializer();
+    const serialized = serializer.serialize(rowsLayout);
+
+    expect(serialized).toEqual({
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Row 1',
+              collapse: true,
+              hideHeader: true,
+              fillScreen: true,
               layout: { kind: 'GridLayout', spec: { items: [] } },
             },
           },
@@ -218,7 +294,9 @@ describe('serialization', () => {
             kind: 'RowsLayoutRow',
             spec: {
               title: 'Repeated Row',
-              collapsed: false,
+              collapse: false,
+              hideHeader: undefined,
+              fillScreen: undefined,
               layout: { kind: 'GridLayout', spec: { items: [] } },
               repeat: { value: 'foo', mode: 'variable' },
             },
@@ -234,6 +312,8 @@ describe('serialization', () => {
         new RowItem({
           title: 'Row 1',
           collapse: false,
+          hideHeader: undefined,
+          fillScreen: undefined,
           layout: new ResponsiveGridLayoutManager({
             columnWidth: 'standard',
             rowHeight: 'standard',
@@ -266,7 +346,9 @@ describe('serialization', () => {
             kind: 'RowsLayoutRow',
             spec: {
               title: 'Row 1',
-              collapsed: false,
+              collapse: false,
+              hideHeader: undefined,
+              fillScreen: undefined,
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
@@ -285,7 +367,9 @@ describe('serialization', () => {
             kind: 'RowsLayoutRow',
             spec: {
               title: 'Row 2',
-              collapsed: true,
+              collapse: true,
+              hideHeader: undefined,
+              fillScreen: undefined,
               layout: { kind: 'GridLayout', spec: { items: [] } },
             },
           },
