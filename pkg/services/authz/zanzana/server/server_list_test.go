@@ -118,4 +118,41 @@ func testList(t *testing.T, server *Server) {
 		assert.Contains(t, res.GetFolders(), "5")
 		assert.Contains(t, res.GetFolders(), "6")
 	})
+
+	t.Run("user:13 should be able to list all subresources in folder 5 and 6", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:13", folderGroup, folderResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetItems(), 2)
+		assert.Len(t, res.GetFolders(), 0)
+
+		assert.Contains(t, res.GetItems(), "5")
+		assert.Contains(t, res.GetItems(), "6")
+	})
+
+	t.Run("user:14 should be able to list all subresources for team 1", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:14", teamGroup, teamResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetItems(), 1)
+		assert.Len(t, res.GetFolders(), 0)
+
+		assert.Contains(t, res.GetItems(), "1")
+	})
+
+	t.Run("user:15 should be able to list all subresources for user 1", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:15", userGroup, userResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetItems(), 1)
+		assert.Len(t, res.GetFolders(), 0)
+
+		assert.Contains(t, res.GetItems(), "1")
+	})
+
+	t.Run("user:16 should be able to list all subresources for service-account 1", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:16", serviceAccountGroup, serviceAccountResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetItems(), 1)
+		assert.Len(t, res.GetFolders(), 0)
+
+		assert.Contains(t, res.GetItems(), "1")
+	})
 }

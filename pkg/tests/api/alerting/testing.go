@@ -1019,24 +1019,6 @@ func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.
 	return sendRequestJSON[data.Frame](t, req, http.StatusOK)
 }
 
-func (a apiClient) GetAllTimeIntervalsWithStatus(t *testing.T) ([]apimodels.GettableTimeIntervals, int, string) {
-	t.Helper()
-
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals", a.url), nil)
-	require.NoError(t, err)
-
-	return sendRequestJSON[[]apimodels.GettableTimeIntervals](t, req, http.StatusOK)
-}
-
-func (a apiClient) GetTimeIntervalByNameWithStatus(t *testing.T, name string) (apimodels.GettableTimeIntervals, int, string) {
-	t.Helper()
-
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals/%s", a.url, name), nil)
-	require.NoError(t, err)
-
-	return sendRequestJSON[apimodels.GettableTimeIntervals](t, req, http.StatusOK)
-}
-
 func (a apiClient) CreateReceiverWithStatus(t *testing.T, receiver apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, int, string) {
 	t.Helper()
 
@@ -1145,16 +1127,26 @@ func (a apiClient) RawConvertPrometheusPostRuleGroup(t *testing.T, namespaceTitl
 		path = "%s/api/convert/api/prom/rules/%s"
 	}
 
-	data, err := yaml.Marshal(promGroup)
-	require.NoError(t, err)
+	// Based on the content-type header, marshal the data to JSON or YAML
+	contentType := headers["Content-Type"]
+	var data []byte
+	var err error
+	if contentType == "application/json" {
+		data, err = json.Marshal(promGroup)
+		require.NoError(t, err)
+	} else {
+		data, err = yaml.Marshal(promGroup)
+		require.NoError(t, err)
+	}
+
 	buf := bytes.NewReader(data)
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(path, a.url, namespaceTitle), buf)
 	require.NoError(t, err)
-	req.Header.Add("X-Grafana-Alerting-Datasource-UID", datasourceUID)
+	req.Header.Set("X-Grafana-Alerting-Datasource-UID", datasourceUID)
 
 	for key, value := range headers {
-		req.Header.Add(key, value)
+		req.Header.Set(key, value)
 	}
 
 	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
