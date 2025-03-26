@@ -5,8 +5,8 @@ import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { getComponentIdFromComponentMeta, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 
 export function ExtensionToolbarItem() {
-  const [isOpen, setIsOpen] = useState(false);
-  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { availableComponents, dockedComponentId, setDockedComponentId, isOpen } = useExtensionSidebarContext();
 
   if (availableComponents.size === 0) {
     return null;
@@ -25,10 +25,14 @@ export function ExtensionToolbarItem() {
     return (
       <ToolbarButton
         icon="web-section"
-        variant={dockedComponentId ? 'active' : 'default'}
+        variant={isOpen ? 'active' : 'default'}
         tooltip={components[0].description}
         onClick={() => {
-          setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
+          if (isOpen) {
+            setDockedComponentId(undefined);
+          } else {
+            setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
+          }
         }}
       />
     );
@@ -44,7 +48,11 @@ export function ExtensionToolbarItem() {
             active={dockedComponentId === id}
             label={c.title}
             onClick={() => {
-              setDockedComponentId(dockedComponentId === id ? undefined : id);
+              if (isOpen) {
+                setDockedComponentId(undefined);
+              } else {
+                setDockedComponentId(id);
+              }
             }}
           />
         );
@@ -52,8 +60,8 @@ export function ExtensionToolbarItem() {
     </Menu>
   );
   return (
-    <Dropdown overlay={MenuItems} onVisibleChange={setIsOpen} placement="bottom-end">
-      <ToolbarButton icon="web-section" isOpen={isOpen} variant={dockedComponentId ? 'active' : 'default'} />
+    <Dropdown overlay={MenuItems} onVisibleChange={setIsMenuOpen} placement="bottom-end">
+      <ToolbarButton icon="web-section" isOpen={isMenuOpen} variant={isOpen ? 'active' : 'default'} />
     </Dropdown>
   );
 }
