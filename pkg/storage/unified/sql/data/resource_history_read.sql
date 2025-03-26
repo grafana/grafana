@@ -17,9 +17,6 @@ SELECT
       {{ if gt .Request.ResourceVersion 0 }}
         AND {{ .Ident "resource_version" }} <= {{ .Arg .Request.ResourceVersion }}
       {{ end }}
-      {{ if gt .Request.EventType 0 }}
-        AND {{ .Ident "action" }} = {{ .Arg .Request.EventType }}
-      {{ end }}
     ORDER BY {{ .Ident "resource_version" }} DESC
     LIMIT 1
 ;

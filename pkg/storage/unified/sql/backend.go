@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"net/http"
 	"sync"
 	"time"
 
@@ -523,7 +522,7 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 	// TODO: validate key ?
 
 	if req.ResourceVersion > 0 {
-		return b.readHistory(ctx, req.Key, req.ResourceVersion, resource.WatchEvent_UNKNOWN)
+		return b.readHistory(ctx, req.Key, req.ResourceVersion)
 	}
 
 	readReq := &sqlResourceReadRequest{
@@ -744,7 +743,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 }
 
 // readHistory fetches the resource history from the resource_history table.
-func (b *backend) readHistory(ctx context.Context, key *resource.ResourceKey, rv int64, eventType resource.WatchEvent_Type) *resource.BackendReadResponse {
+func (b *backend) readHistory(ctx context.Context, key *resource.ResourceKey, rv int64) *resource.BackendReadResponse {
 	_, span := b.tracer.Start(ctx, tracePrefix+".ReadHistory")
 	defer span.End()
 
@@ -753,7 +752,6 @@ func (b *backend) readHistory(ctx context.Context, key *resource.ResourceKey, rv
 		Request: &historyReadRequest{
 			Key:             key,
 			ResourceVersion: rv,
-			EventType:       eventType,
 		},
 		Response: NewReadResponse(),
 	}
@@ -814,21 +812,22 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 		listReq.MinRV = req.ResourceVersion
 	}
 
-	if listReq.MinRV == 0 && !listReq.Trash && req.VersionMatchV2 != resource.ResourceVersionMatchV2_Exact {
-		res := b.readHistory(ctx, listReq.Key, listReq.StartRV, resource.WatchEvent_DELETED)
-		if res.Error != nil {
-			if res.Error.Code != http.StatusNotFound {
-				return 0, fmt.Errorf("failed to read last deleted history record: %s", res.Error.Message)
-			}
-		}
-		listReq.MinRV = res.ResourceVersion + 1
-	}
+	// Ignore last deleted history record when listing the trash, using exact matching or not older than matching with a specific RV
+	useLatestDeletionAsMinRV := listReq.MinRV == 0 && !listReq.Trash && req.VersionMatchV2 != resource.ResourceVersionMatchV2_Exact
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
+		}
+
+		if useLatestDeletionAsMinRV {
+			latestDeletedRV, err := b.fetchLatestHistoryRV(ctx, tx, b.dialect, req.Options.Key, resource.WatchEvent_DELETED)
+			if err != nil {
+				return err
+			}
+			listReq.MinRV = latestDeletedRV + 1
 		}
 
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
@@ -895,6 +894,26 @@ func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqlte
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return 1, nil
+	} else if err != nil {
+		return 0, fmt.Errorf("get resource version: %w", err)
+	}
+	return res.ResourceVersion, nil
+}
+
+// fetchLatestHistoryRV returns the current maximum RV in the resource_history table
+func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey, eventType resource.WatchEvent_Type) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"fetchLatestHistoryRV")
+	defer span.End()
+	res, err := dbutil.QueryRow(ctx, x, sqlResourceHistoryReadLatestRV, sqlResourceHistoryReadLatestRVRequest{
+		SQLTemplate: sqltemplate.New(d),
+		Request: &historyReadLatestRVRequest{
+			Key:       key,
+			EventType: eventType,
+		},
+		Response: new(resourceHistoryReadLatestRVResponse),
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
 	} else if err != nil {
 		return 0, fmt.Errorf("get resource version: %w", err)
 	}

@@ -603,6 +603,45 @@ func TestBackend_getHistory(t *testing.T) {
 		require.Equal(t, expectedListRv, listRv)
 	})
 
+	t.Run("with ResourceVersionMatch_Unset (default)", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		expectedResults := []getHistoryRow{
+			{resourceVersion: rv3, namespace: "ns", name: "nm", folder: "folder", value: "rv-300"},
+			{resourceVersion: rv2, namespace: "ns", name: "nm", folder: "folder", value: "rv-200"},
+		}
+		expectedListRv := rv3
+		req := &resource.ListRequest{
+			Options:         &resource.ListOptions{Key: key},
+			ResourceVersion: rv2,
+			VersionMatchV2:  resource.ResourceVersionMatchV2_Unset,
+			Source:          resource.ListRequest_HISTORY,
+		}
+
+		b.SQLMock.ExpectBegin()
+		b.SQLMock.ExpectQuery("SELECT .* FROM resource_version").
+			WillReturnRows(sqlmock.NewRows(getResourceVersionColumns).
+				AddRow(expectedListRv, 0))
+		historyRows := sqlmock.NewRows(getHistoryColumns)
+		for _, result := range expectedResults {
+			historyRows.AddRow(
+				result.resourceVersion,
+				result.namespace,
+				result.name,
+				result.folder,
+				result.value,
+			)
+		}
+		b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").WillReturnRows(historyRows)
+		b.SQLMock.ExpectCommit()
+
+		callback := getCallback(t, expectedResults)
+		listRv, err := b.getHistory(ctx, req, callback)
+		require.NoError(t, err)
+		require.Equal(t, expectedListRv, listRv)
+	})
+
 	t.Run("with ResourceVersionMatchV2_Exact", func(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
