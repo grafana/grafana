@@ -101,7 +101,7 @@ jobs:
               devenv/
             key: ${{ runner.os }}-grafana-${{ github.sha }}
 
-        - name: Run tests for ${{ matrix.ini_file }}
+        - name: Run tests for $(basename "${{ matrix.ini_file }}")
           run: |
             cp -rf ${{ matrix.ini_file }} ${{ github.workspace }}/scripts/grafana-server/custom.ini
             yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
