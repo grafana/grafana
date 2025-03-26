@@ -5,10 +5,10 @@ import { Alert, ControlledCollapse, LinkButton, Spinner, Stack, Text } from '@gr
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
 
 import ProgressBar from '../Shared/ProgressBar';
+import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 import { getRepoHref } from '../utils/git';
 
 import { JobSummary } from './JobSummary';
-import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 
 export interface JobStatusProps {
   name: string;
