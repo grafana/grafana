@@ -76,18 +76,17 @@ func (r *Runner) Run(ctx context.Context) error {
 	lastCreated, err := r.checkLastCreated(ctx)
 	if err != nil {
 		r.log.Error("Error getting last check creation time", "error", err)
-	} else {
 		// Wait for interval to create the next scheduled check
 		lastCreated = time.Now()
-	}
-
-	// do an initial creation if necessary
-	if lastCreated.IsZero() {
-		err = r.createChecks(ctx)
-		if err != nil {
-			klog.Error("Error creating new check reports", "error", err)
-		} else {
-			lastCreated = time.Now()
+	} else {
+		// do an initial creation if necessary
+		if lastCreated.IsZero() {
+			err = r.createChecks(ctx)
+			if err != nil {
+				klog.Error("Error creating new check reports", "error", err)
+			} else {
+				lastCreated = time.Now()
+			}
 		}
 	}
 
@@ -117,7 +116,6 @@ func (r *Runner) Run(ctx context.Context) error {
 			}
 			ticker.Reset(nextSendInterval)
 		case <-ctx.Done():
-			// Mark orphaned checks (not processed) as errored
 			r.markUnprocessedChecksAsErrored(ctx)
 			return ctx.Err()
 		}
