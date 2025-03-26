@@ -150,20 +150,12 @@ export function sortByGroup<T extends string | number>(options: Array<ComboboxOp
 
   let currentIndex = 0;
 
-  // Fill result array with grouped options
+  // Fill result array with grouped and undefined grouped options
   for (const [group, groupOptions] of groupedOptions) {
     if (group) {
       groupStartIndices.set(group, currentIndex);
-      for (const option of groupOptions) {
-        result[currentIndex++] = option;
-      }
     }
-  }
-
-  // Add ungrouped options at the end
-  const ungrouped = groupedOptions.get(undefined);
-  if (ungrouped) {
-    for (const option of ungrouped) {
+    for (const option of groupOptions) {
       result[currentIndex++] = option;
     }
   }
