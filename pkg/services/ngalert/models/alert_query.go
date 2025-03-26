@@ -290,12 +290,10 @@ func (aq *AlertQuery) PreSave() error {
 		return fmt.Errorf("failed to set query type to query model: %w", err)
 	}
 
-	// override model
-	model, err := aq.GetModel()
-	if err != nil {
+	// Initialize defaults, which also overrides the model
+	if err := aq.InitDefaults(); err != nil {
 		return err
 	}
-	aq.Model = model
 
 	isExpression, err := aq.IsExpression()
 	if err != nil {
@@ -305,5 +303,16 @@ func (aq *AlertQuery) PreSave() error {
 	if ok := isExpression || aq.RelativeTimeRange.isValid(); !ok {
 		return ErrInvalidRelativeTimeRange(aq.RefID, aq.RelativeTimeRange)
 	}
+	return nil
+}
+
+// InitDefaults ensures all default parameters are set in the query model.
+// This helps maintain consistent query models for comparisons.
+func (aq *AlertQuery) InitDefaults() error {
+	model, err := aq.GetModel()
+	if err != nil {
+		return err
+	}
+	aq.Model = model
 	return nil
 }
