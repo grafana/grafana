@@ -1,108 +1,18 @@
 import { useState, ChangeEvent } from 'react';
 
-import { Button, Icon, IconName, Stack, Checkbox, Text, Box } from '@grafana/ui';
+import { Button, Icon, Stack, Checkbox, Text, Box, IconName } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { ResourceDependencyDto } from '../api';
 
-import { ResourceTableItem } from './types';
-
-type ResourceTypeId = ResourceTableItem['type'];
+import { ResourceTypeId, buildDependencyMaps, handleSelection, handleDeselection } from './resourceDependency';
+import { iconNameForResource, pluralizeResourceName } from './resourceInfo';
 
 interface ConfigureSnapshotProps {
   disabled: boolean;
   isLoading: boolean;
   onClick: (resourceTypes: ResourceTypeId[]) => void;
   resourceDependencies: ResourceDependencyDto[] | never[];
-}
-
-interface ResourceType {
-  id: ResourceTypeId;
-  name: string;
-  icon: IconName;
-}
-
-const RESOURCE_TYPES: ResourceType[] = [
-  { id: 'FOLDER', name: 'Folders', icon: 'folder' },
-  { id: 'DASHBOARD', name: 'Dashboards', icon: 'dashboard' },
-  { id: 'DATASOURCE', name: 'Data Sources', icon: 'database' },
-  { id: 'LIBRARY_ELEMENT', name: 'Library Elements', icon: 'library-panel' },
-  { id: 'ALERT_RULE', name: 'Alert Rules', icon: 'bell' },
-  { id: 'ALERT_RULE_GROUP', name: 'Alert Rule Groups', icon: 'bell' },
-  { id: 'CONTACT_POINT', name: 'Contact Points', icon: 'at' },
-  { id: 'NOTIFICATION_POLICY', name: 'Notification Policies', icon: 'comment-alt' },
-  { id: 'NOTIFICATION_TEMPLATE', name: 'Notification Templates', icon: 'file-alt' },
-  { id: 'MUTE_TIMING', name: 'Mute Timings', icon: 'clock-nine' },
-  { id: 'PLUGIN', name: 'Plugins', icon: 'plug' },
-];
-
-function buildDependencyMaps(resourceDependencies: ResourceDependencyDto[]) {
-  const dependencyMap = new Map<ResourceTypeId, ResourceTypeId[]>();
-  const dependentMap = new Map<ResourceTypeId, ResourceTypeId[]>();
-
-  for (const dependency of resourceDependencies) {
-    const resourceType = dependency.resourceType as ResourceTypeId;
-    const dependencies = (dependency.dependencies || []) as ResourceTypeId[];
-
-    dependencyMap.set(resourceType, dependencies);
-
-    // Build reverse mapping (what depends on what)
-    for (const dep of dependencies) {
-      if (!dependentMap.has(dep)) {
-        dependentMap.set(dep, []);
-      }
-
-      dependentMap.get(dep)?.push(resourceType);
-    }
-  }
-
-  return { dependencyMap, dependentMap };
-}
-
-function handleSelection(
-  dependencyMap: Map<ResourceTypeId, ResourceTypeId[]>,
-  selectedTypes: Set<ResourceTypeId>,
-  resourceToSelect: ResourceTypeId
-): Set<ResourceTypeId> {
-  const result = new Set(selectedTypes);
-
-  function selectWithDependencies(resourceType: ResourceTypeId, visited: Set<ResourceTypeId>) {
-    if (visited.has(resourceType)) {
-      return;
-    }
-
-    visited.add(resourceType);
-    result.add(resourceType);
-
-    dependencyMap.get(resourceType)?.forEach((dep) => selectWithDependencies(dep, visited));
-  }
-
-  selectWithDependencies(resourceToSelect, new Set());
-
-  return result;
-}
-
-function handleDeselection(
-  dependentMap: Map<ResourceTypeId, ResourceTypeId[]>,
-  selectedTypes: Set<ResourceTypeId>,
-  resourceToDeselect: ResourceTypeId
-): Set<ResourceTypeId> {
-  const result = new Set(selectedTypes);
-
-  function processDeselection(resourceType: ResourceTypeId, visited: Set<ResourceTypeId>) {
-    if (visited.has(resourceType)) {
-      return;
-    }
-
-    visited.add(resourceType);
-    result.delete(resourceType);
-
-    dependentMap.get(resourceType)?.forEach((dep) => processDeselection(dep, visited));
-  }
-
-  processDeselection(resourceToDeselect, new Set());
-
-  return result;
 }
 
 export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
@@ -112,13 +22,15 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
 
   const { dependencyMap, dependentMap } = buildDependencyMaps(resourceDependencies);
 
+  const resourceTypes = Array.from(dependencyMap.keys()).sort();
+
   const handleIncludeAllChange = (e: ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
 
     setIncludeAll(checked);
     if (checked) {
       // When directly checking include all, select all other items as well.
-      setSelectedTypes(new Set(RESOURCE_TYPES.map((t) => t.id)));
+      setSelectedTypes(new Set(resourceTypes));
     } else {
       // When directly unchecking include all, clear all other items as well.
       setSelectedTypes(new Set());
@@ -131,7 +43,7 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
       : handleDeselection(dependentMap, selectedTypes, id);
 
     setSelectedTypes(updatedList);
-    setIncludeAll(updatedList.size === RESOURCE_TYPES.length);
+    setIncludeAll(updatedList.size === resourceTypes.length);
   };
 
   const handleBuildSnapshot = () => {
@@ -171,16 +83,16 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
             />
           </Stack>
 
-          {RESOURCE_TYPES.map((type) => (
-            <Stack key={type.id} gap={1} alignItems="center">
+          {resourceTypes.map((type) => (
+            <Stack key={type} gap={1} alignItems="center">
               <Checkbox
-                value={selectedTypes.has(type.id)}
-                onChange={handleTypeChange(type.id)}
+                value={selectedTypes.has(type)}
+                onChange={handleTypeChange(type)}
                 //@ts-ignore
                 label={
                   <Stack gap={1} alignItems="center">
-                    <Icon name={type.icon} size="xl" />
-                    <Text variant="h5">{type.name}</Text>
+                    <Icon name={iconNameForResource(type) as IconName} size="xl" />
+                    <Text variant="h5">{pluralizeResourceName(type) ?? type}</Text>
                   </Stack>
                 }
               />
