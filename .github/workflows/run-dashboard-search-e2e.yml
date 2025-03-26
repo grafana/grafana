@@ -38,9 +38,6 @@ jobs:
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: yarn install --immutable
-      - name: Install Cypress (Runs in Background)
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: npm install cypress --save-dev &
       - name: Install Cypress dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         uses: cypress-io/github-action@v6
@@ -68,17 +65,17 @@ jobs:
         id: get_files
         run: |
           INI_FILES=$(ls ${{ github.workspace }}/e2e/dashboards-search-suite/*.ini | jq -R -s -c 'split("\n")[:-1]')
-          echo "ini_files=$INI_FILES" >> $GITHUB_ENV
-          echo "::set-output name=ini_files::$INI_FILES"
+          echo "ini_files=$INI_FILES" >> $GITHUB_OUTPUT
+        shell: bash
 
   run_tests:
       needs: setup
       runs-on: ubuntu-latest
       continue-on-error: true
-      if: github.event.pull_request.draft == false
+      # if: github.event.pull_request.draft == false
       strategy:
         matrix:
-          ini_file: ${{ fromJson(needs.setup.outputs.ini_files) }}
+          ini_file: ${{ fromJson(needs.setup.outputs.get_files.outputs.ini_files) }}
 
       steps:
         - name: Checkout repository
