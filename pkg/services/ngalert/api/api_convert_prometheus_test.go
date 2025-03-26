@@ -992,8 +992,6 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 
 func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 	srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
-	srv.rulerSrv = createService(ruleStore)
-	srv.xactManager = ruleStore
 
 	orgID := int64(1)
 	permissions := createPermissionsToImportPrometheusRules(orgID)
@@ -1342,7 +1340,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, nil, nil)
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, ruleStore, createService(ruleStore))
 
 	return srv, dsCache, ruleStore, folderService
 }
