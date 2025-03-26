@@ -71,43 +71,43 @@ jobs:
           echo "ini_files=$INI_FILES" >> $GITHUB_ENV
           echo "::set-output name=ini_files::$INI_FILES"
 
-run_tests:
-    needs: setup
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    if: github.event.pull_request.draft == false
-    strategy:
-      matrix:
-        ini_file: ${{ fromJson(needs.setup.outputs.ini_files) }}
+  run_tests:
+      needs: setup
+      runs-on: ubuntu-latest
+      continue-on-error: true
+      if: github.event.pull_request.draft == false
+      strategy:
+        matrix:
+          ini_file: ${{ fromJson(needs.setup.outputs.ini_files) }}
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
 
-      - name: Restore Cached Node Modules
-        uses: actions/cache@v3
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+        - name: Restore Cached Node Modules
+          uses: actions/cache@v3
+          with:
+            path: node_modules
+            key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 
-      - name: Restore Cached Grafana Build and Dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            bin/
-            scripts/grafana-server/
-            tools/
-            public/
-            conf/
-            e2e/test-plugins/
-            devenv/
-          key: ${{ runner.os }}-grafana-${{ github.sha }}
+        - name: Restore Cached Grafana Build and Dependencies
+          uses: actions/cache@v3
+          with:
+            path: |
+              bin/
+              scripts/grafana-server/
+              tools/
+              public/
+              conf/
+              e2e/test-plugins/
+              devenv/
+            key: ${{ runner.os }}-grafana-${{ github.sha }}
 
-      - name: Run tests for ${{ matrix.ini_file }}
-        run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/${{ matrix.ini_file }} ${{ github.workspace }}/scripts/grafana-server/custom.ini
-          yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
-            - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
-      - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
-        if: failure()
-        run: exit 0
+        - name: Run tests for ${{ matrix.ini_file }}
+          run: |
+            cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/${{ matrix.ini_file }} ${{ github.workspace }}/scripts/grafana-server/custom.ini
+            yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
+              - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
+        - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
+          if: failure()
+          run: exit 0
