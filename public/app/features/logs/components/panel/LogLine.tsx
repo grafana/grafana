@@ -142,7 +142,7 @@ export function getGridTemplateColumns(dimensions: LogFieldDimension[]) {
 export type LogLineStyles = ReturnType<typeof getStyles>;
 export const getStyles = (theme: GrafanaTheme2) => {
   const colors = {
-    critical: '#f22f44',
+    critical: '#B877D9',
     error: '#f22f44',
     warning: '#FBAD37',
     debug: '#6CCF8E',
