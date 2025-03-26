@@ -3,7 +3,7 @@ name: Run dashboard search e2e
 on:
   push:
     branches:
-      - grafana-e2e
+      - main
   pull_request:
     branches:
       - main
@@ -60,7 +60,7 @@ jobs:
             e2e/test-plugins/
             devenv/
           key: ${{ runner.os }}-grafana-${{ hashFiles('go.mod', 'package-lock.json', 'Makefile', 'pkg/storage/**/*.go', 'public/app/features/search/**/*.ts', 'public/app/features/search/**/*.tsx') }}
-
+      # only rebuild grafana if search files have changed ( or dependencies )
       - name: Build Grafana (Runs Only If Not Cached)
         if: steps.cache-grafana.outputs.cache-hit != 'true'
         run: make build
