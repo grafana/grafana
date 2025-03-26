@@ -3,6 +3,7 @@ package sync
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -29,19 +30,21 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 			}
 			continue
 		}
+
+		// TODO: why do we have to do this here?
+		if item.Group == folders.GROUP && !strings.HasSuffix(item.Path, "/") {
+			item.Path = item.Path + "/"
+		}
+
 		lookup[item.Path] = &item
 	}
 
 	keep := safepath.NewTrie()
 	changes := make([]ResourceFileChange, 0, len(source))
 	for _, file := range source {
-		if !file.Blob {
-			continue // skip folder references?
-		}
-
 		check, ok := lookup[file.Path]
 		if ok {
-			if check.Hash != file.Hash {
+			if check.Hash != file.Hash && check.Resource != folders.RESOURCE {
 				changes = append(changes, ResourceFileChange{
 					Action:   repository.FileActionUpdated,
 					Path:     check.Path,
@@ -53,15 +56,45 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
-			delete(lookup, file.Path)
+			if check.Resource != folders.RESOURCE {
+				delete(lookup, file.Path)
+			}
+
 			continue
 		}
 
-		// TODO: does this work with empty folders?
 		if resources.IsPathSupported(file.Path) == nil {
 			changes = append(changes, ResourceFileChange{
 				Action: repository.FileActionCreated, // or previously ignored/failed
 				Path:   file.Path,
+			})
+
+			if err := keep.Add(file.Path); err != nil {
+				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+			}
+
+			continue
+		}
+
+		// Maintain the safe segment for empty folders
+		safeSegment := safepath.SafeSegment(file.Path)
+		if !safepath.IsDir(safeSegment) {
+			safeSegment = safepath.Dir(safeSegment)
+		}
+
+		if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
+			if err := keep.Add(safeSegment); err != nil {
+				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+			}
+
+			_, ok := lookup[safeSegment]
+			if ok {
+				continue
+			}
+
+			changes = append(changes, ResourceFileChange{
+				Action: repository.FileActionCreated, // or previously ignored/failed
+				Path:   safeSegment,
 			})
 		}
 	}
