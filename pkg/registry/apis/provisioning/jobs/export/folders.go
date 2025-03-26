@@ -16,7 +16,7 @@ import (
 )
 
 // FIXME: revise logging in this method
-func (r *exportJob) loadFolders(ctx context.Context) error {
+func (r *exportJob) exportUnifiedStorageFolders(ctx context.Context) error {
 	logger := r.logger
 	r.progress.SetMessage(ctx, "reading folder tree")
 
@@ -65,6 +65,8 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 			Group:    folders.GROUP,
 			Path:     p,
 		}
+
+		// TODO: should this be part of the dual writer or use the folder manager?
 
 		_, err := r.target.Read(ctx, p, r.ref)
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {

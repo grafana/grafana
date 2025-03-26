@@ -99,7 +99,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	// Load and write all folders
 	progress.SetMessage(ctx, "start folder export")
-	err = worker.loadFolders(ctx)
+	err = worker.exportUnifiedStorageFolders(ctx)
 	if err != nil {
 		return err
 	}
