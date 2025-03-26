@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -87,6 +88,17 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 	id := newID()
 	if err != nil {
 		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)
+		// Return 404s for dashboard not found errors, our plugins rely on being able to distinguish between access denied and not found.
+		var dashboardErr dashboardaccess.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			if c.IsApiRequest() && dashboardErr.StatusCode == http.StatusNotFound {
+				c.JSON(http.StatusNotFound, map[string]string{
+					"title":   "Not found", // the component needs to pick this up
+					"message": dashboardErr.Error(),
+				})
+				return
+			}
+		}
 	} else {
 		c.Logger.Info(
 			"Access denied",
