@@ -54,7 +54,6 @@ export type Rule = RecordingRule | AlertingRule;
 /**
  * A rule group response in Prometheus API contains metadata and evaluation results for a group of alerting and recording rules, including their evaluation interval, health status, and individual rule details.
  * @description Response from the /api/v1/rules endpoint
- * @see {@link https://github.com/prometheus/prometheus/blob/34bed4608b4b1518e81e68f8690f6caad16c8bf9/web/api/v1/api.go#L1418-L1422|source}
  */
 export type RuleGroupResponse = SuccessResponse<{
   groups: RuleGroup[];
