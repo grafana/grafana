@@ -158,7 +158,7 @@ func TestLegacyStorage_List_LabelSelector(t *testing.T) {
 	})
 
 	t.Run("should set fullpath query parameters when label selector matches", func(t *testing.T) {
-		selector, err := labels.Parse(utils.AnnoKeyFullpath + "=true")
+		selector, err := labels.Parse(utils.LabelGetFullpath + "=true")
 		require.NoError(t, err)
 		options := &metainternalversion.ListOptions{
 			LabelSelector: selector,

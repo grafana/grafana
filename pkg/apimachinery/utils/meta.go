@@ -58,6 +58,9 @@ const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
+// Only used in modes 0-2 (legacy db) for returning the folder fullpath
+
+const LabelGetFullpath = "grafana.app/fullpath"
 const AnnoKeyFullpath = "grafana.app/fullpath"
 const AnnoKeyFullpathUIDs = "grafana.app/fullpathUIDs"
 

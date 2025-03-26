@@ -371,7 +371,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 
 	// Make sure the command labels are not saved
 	for k := range obj.GetLabels() {
-		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash {
+		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash || k == utils.LabelGetFullpath {
 			return nil, NewBadRequestError("can not save label: " + k)
 		}
 	}
