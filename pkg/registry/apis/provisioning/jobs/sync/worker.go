@@ -244,8 +244,6 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 	if err != nil {
 		return fmt.Errorf("error calculating changes: %w", err)
 	}
-	logger := logging.FromContext(ctx)
-	logger.Info("KAKA changes", "changes", changes, "source", source, "target", target)
 
 	if len(changes) == 0 {
 		r.progress.SetFinalMessage(ctx, "no changes to sync")
