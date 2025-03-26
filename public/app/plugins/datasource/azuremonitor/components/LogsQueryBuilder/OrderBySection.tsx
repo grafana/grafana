@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, Select, Label, Icon, Tooltip } from '@grafana/ui';
+import { Button, Select, Label } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -73,7 +73,7 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
   const handleOrderByChange = (index: number, key: 'column' | 'order', value: string) => {
     setOrderBy((prev) => {
       const updated = [...prev];
-  
+
       if (index === -1) {
         updated.push({
           property: { name: value, type: BuilderQueryEditorPropertyType.String },
@@ -92,14 +92,14 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
               : updated[index].order,
         };
       }
-  
+
       buildAndUpdateQuery({
         query,
         onQueryUpdate,
         allColumns,
         orderBy: updated,
       });
-  
+
       return updated;
     });
   };
@@ -107,22 +107,26 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
   const onDeleteOrderBy = (index: number) => {
     setOrderBy((prev) => {
       const updated = prev.filter((_, i) => i !== index);
-  
+
       buildAndUpdateQuery({
         query,
         onQueryUpdate,
         allColumns,
         orderBy: updated,
       });
-  
+
       return updated;
     });
-  };  
+  };
 
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Order By" optional={true}>
+        <EditorField
+          label="Order By"
+          optional={true}
+          tooltip={`Sort results based on one or more columns in ascending or descending order.`}
+        >
           <>
             {orderBy.length > 0 && (
               <div>
@@ -152,13 +156,6 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
             <Button variant="secondary" onClick={() => handleOrderByChange(-1, 'column', '')} icon="plus" />
           </>
         </EditorField>
-        <Tooltip
-          content={<>Sort results based on one or more columns in ascending or descending order.</>}
-          placement="right"
-          interactive={true}
-        >
-          <Icon name="info-circle" />
-        </Tooltip>
       </EditorFieldGroup>
     </EditorRow>
   );

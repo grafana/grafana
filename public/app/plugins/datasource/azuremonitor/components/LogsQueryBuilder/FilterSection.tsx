@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, Icon, Input, Label, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Input, Label, Select, useStyles2 } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -106,52 +106,58 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
 
   const onChangeFilter = (index: number, key: keyof (typeof filters)[0], value: string) => {
     let updatedFilters = [...filters];
-  
+
     if (index === -1) {
       updatedFilters.push({ column: '', operator: '==', value: '' });
       index = updatedFilters.length - 1;
     } else {
       updatedFilters[index] = { ...updatedFilters[index], [key]: value || '' };
     }
-  
+
     setFilters(updatedFilters);
-  
+
     const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = updatedFilters.map((filter) => ({
       type: BuilderQueryEditorExpressionType.Operator,
       operator: { name: filter.operator, value: filter.value },
       property: { name: filter.column, type: BuilderQueryEditorPropertyType.String },
     }));
-  
+
     buildAndUpdateQuery({
       query,
       onQueryUpdate,
       allColumns,
       where: updatedWhereExpressions,
     });
-  };  
+  };
 
   const onDeleteFilter = (index: number) => {
     const newFilters = filters.filter((_, i) => i !== index);
     setFilters(newFilters);
-  
+
     const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = newFilters.map((filter) => ({
       type: BuilderQueryEditorExpressionType.Operator,
       operator: { name: filter.operator, value: filter.value },
       property: { name: filter.column, type: BuilderQueryEditorPropertyType.String },
     }));
-  
+
     buildAndUpdateQuery({
       query,
       onQueryUpdate,
       allColumns,
       where: updatedWhereExpressions,
     });
-  };  
+  };
 
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Filters" optional={true}>
+        <EditorField
+          label="Filters"
+          optional={true}
+          tooltip={`Narrow results by applying conditions to specific columns. Filters help focus on relevant data by using
+              operators such as equals, not equals, greater than, less than, or contains to define criteria that rows
+              must match to be included in the results.`}
+        >
           <>
             {filters.length > 0 && (
               <div className={styles.filters}>
@@ -191,19 +197,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
             <Button variant="secondary" onClick={() => onChangeFilter(-1, 'column', '')} icon="plus" />
           </>
         </EditorField>
-        <Tooltip
-          content={
-            <>
-              Narrow results by applying conditions to specific columns. Filters help focus on relevant data by using
-              operators such as equals, not equals, greater than, less than, or contains to define criteria that rows
-              must match to be included in the results.
-            </>
-          }
-          placement="right"
-          interactive={true}
-        >
-          <Icon name="info-circle" />
-        </Tooltip>
       </EditorFieldGroup>
     </EditorRow>
   );

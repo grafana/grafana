@@ -11,6 +11,8 @@ import {
   BuilderQueryEditorReduceExpression,
 } from '../../dataquery.gen';
 
+import { aggregateOptions } from './utils';
+
 interface AggregateItemProps {
   aggregate: Partial<BuilderQueryEditorReduceExpression>;
   columns: Array<SelectableValue<string>>;
@@ -28,7 +30,6 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
 }) => {
   const [isPercentile, setIsPercentile] = useState(aggregate.reduce?.name.includes('percentile'));
   const [isCountAggregate, setIsCountAggregate] = useState(aggregate.reduce?.name.includes('count'));
-
   const [percentileValue, setPercentileValue] = useState(aggregate.parameters?.[0]?.value || '');
   const [columnValue, setColumnValue] = useState(aggregate.property?.name || '');
 
@@ -37,39 +38,86 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
     setIsCountAggregate(aggregate.reduce?.name.includes('count'));
   }, [aggregate.reduce?.name]);
 
-  const safeTemplateVariables: Array<SelectableValue<string>> =
-    templateVariableOptions && templateVariableOptions.value
-      ? Array.isArray(templateVariableOptions)
-        ? templateVariableOptions
-        : [templateVariableOptions]
-      : [];
+  const safeTemplateVariables = Array.isArray(templateVariableOptions)
+    ? templateVariableOptions
+    : [templateVariableOptions];
 
   const selectableOptions = columns.concat(safeTemplateVariables);
 
-  const updateAggregate = (percentile?: string, column?: string) => {
+  // ✅ Extracted: Handle function change
+  const handleFunctionChange = (funcName?: string) => {
     onChange({
       ...aggregate,
       reduce: {
-        name: 'percentile',
+        name: funcName || '',
         type: BuilderQueryEditorPropertyType.Function,
       },
       property: {
-        name: column || columnValue || '',
+        name: aggregate.property?.name || '',
+        type: aggregate.property?.type || BuilderQueryEditorPropertyType.String,
+      },
+    });
+  };
+
+  // ✅ Extracted: Handle percentile update
+  const handlePercentileChange = (value?: string) => {
+    setPercentileValue(value || '');
+    onChange({
+      ...aggregate,
+      reduce: { name: 'percentile', type: BuilderQueryEditorPropertyType.Function },
+      property: {
+        name: columnValue || '',
         type: aggregate.property?.type || BuilderQueryEditorPropertyType.String,
       },
       parameters: [
         {
           type: BuilderQueryEditorExpressionType.Function_parameter,
           fieldType: BuilderQueryEditorPropertyType.Number,
-          value: percentile || percentileValue || '',
+          value: value || '',
         },
         {
           type: BuilderQueryEditorExpressionType.Function_parameter,
           fieldType: BuilderQueryEditorPropertyType.String,
-          value: column || columnValue || '',
+          value: columnValue || '',
         },
       ],
     });
+  };
+
+  // ✅ Extracted: Handle column change
+  const handleColumnChange = (value?: string) => {
+    setColumnValue(value || '');
+    if (isPercentile) {
+      onChange({
+        ...aggregate,
+        reduce: { name: 'percentile', type: BuilderQueryEditorPropertyType.Function },
+        property: {
+          name: value || '',
+          type: BuilderQueryEditorPropertyType.String,
+        },
+        parameters: [
+          {
+            type: BuilderQueryEditorExpressionType.Function_parameter,
+            fieldType: BuilderQueryEditorPropertyType.Number,
+            value: percentileValue || '',
+          },
+          {
+            type: BuilderQueryEditorExpressionType.Function_parameter,
+            fieldType: BuilderQueryEditorPropertyType.String,
+            value: value || '',
+          },
+        ],
+      });
+    } else {
+      onChange({
+        ...aggregate,
+        property: {
+          name: value || '',
+          type: BuilderQueryEditorPropertyType.String,
+        },
+        reduce: aggregate.reduce || { name: '', type: BuilderQueryEditorPropertyType.String },
+      });
+    }
   };
 
   return (
@@ -78,30 +126,8 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
         aria-label="aggregate function"
         width="auto"
         value={aggregate.reduce?.name ? { label: aggregate.reduce?.name, value: aggregate.reduce?.name } : null}
-        options={[
-          { label: 'sum', value: 'sum' },
-          { label: 'avg', value: 'avg' },
-          { label: 'percentile', value: 'percentile' },
-          { label: 'count', value: 'count' },
-          { label: 'min', value: 'min' },
-          { label: 'max', value: 'max' },
-          { label: 'dcount', value: 'dcount' },
-          { label: 'stdev', value: 'stdev' },
-        ]}
-        onChange={(e) => {
-          const newAggregate = e.value;
-          onChange({
-            ...aggregate,
-            reduce: {
-              name: newAggregate || '',
-              type: BuilderQueryEditorPropertyType.Function,
-            },
-            property: {
-              name: aggregate.property?.name || '',
-              type: aggregate.property?.type || BuilderQueryEditorPropertyType.String,
-            },
-          });
-        }}
+        options={aggregateOptions}
+        onChange={(e) => handleFunctionChange(e.value)}
       />
 
       {isPercentile ? (
@@ -111,10 +137,7 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
             options={range(0, 101, 5).map((n) => ({ label: n.toString(), value: n.toString() }))}
             value={percentileValue ? { label: percentileValue, value: percentileValue } : ''}
             width="auto"
-            onChange={(e) => {
-              setPercentileValue(e.value || '');
-              updateAggregate(e.value);
-            }}
+            onChange={(e) => handlePercentileChange(e.value)}
           />
           <Label style={{ margin: '9px 9px 0 9px' }}>OF</Label>
         </>
@@ -128,21 +151,7 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
           width="auto"
           value={columnValue ? { label: columnValue, value: columnValue } : null}
           options={selectableOptions}
-          onChange={(e) => {
-            setColumnValue(e.value || '');
-            if (isPercentile) {
-              updateAggregate(undefined, e.value);
-            } else {
-              onChange({
-                ...aggregate,
-                property: {
-                  name: e.value || '',
-                  type: aggregate.property?.type || BuilderQueryEditorPropertyType.String,
-                },
-                reduce: aggregate.reduce || { name: '', type: BuilderQueryEditorPropertyType.String },
-              });
-            }
-          }}
+          onChange={(e) => handleColumnChange(e.value)}
         />
       ) : (
         <></>

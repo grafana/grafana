@@ -4,6 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Select } from '@grafana/ui';
 
+import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType } from '../../dataquery.gen';
 import { AzureMonitorQuery, AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types';
 
 import { buildAndUpdateQuery } from './utils';
@@ -51,17 +52,20 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     const selectedTable = tables.find((t) => t.name === selected.value);
     if (!selectedTable) {
       return;
-    };
+    }
 
     buildAndUpdateQuery({
       query,
       onQueryUpdate,
       allColumns,
-      groupBy: undefined,
-      reduce: undefined,
-      where: undefined,
-      columns: undefined,
-    });    
+      from: {
+        property: {
+          name: selectedTable.name,
+          type: BuilderQueryEditorPropertyType.String,
+        },
+        type: BuilderQueryEditorExpressionType.Property,
+      },
+    });
   };
 
   const handleColumnsChange = (selected: SelectableValue<string> | Array<SelectableValue<string>>) => {
@@ -87,7 +91,6 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       columns: [],
     });
   };
-
 
   return (
     <EditorRow>

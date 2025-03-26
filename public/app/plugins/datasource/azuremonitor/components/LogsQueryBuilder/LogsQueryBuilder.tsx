@@ -4,9 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
 
-import {
-  BuilderQueryExpression,
-} from '../../dataquery.gen';
+import { BuilderQueryExpression } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 import { AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from '../../types';
 
@@ -62,7 +60,6 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     const selectedTable = tables.find((table) => table.name === builderQuery!.from?.property.name);
     return selectedTable?.columns || [];
   }, [builderQuery, tables]);
-
 
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>

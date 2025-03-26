@@ -11,6 +11,7 @@ import {
   BuilderQueryEditorOrderByOptions,
   BuilderQueryEditorGroupByExpression,
   BuilderQueryEditorOrderByExpression,
+  BuilderQueryEditorPropertyExpression,
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, QueryEditorPropertyType, AzureMonitorQuery } from '../../types';
 
@@ -320,6 +321,7 @@ export interface BuildAndUpdateOptions {
   groupBy?: BuilderQueryEditorGroupByExpression[];
   orderBy?: BuilderQueryEditorOrderByExpression[];
   columns?: string[];
+  from?: BuilderQueryEditorPropertyExpression;
 }
 
 export function buildAndUpdateQuery({
@@ -332,36 +334,28 @@ export function buildAndUpdateQuery({
   groupBy,
   orderBy,
   columns,
+  from,
 }: BuildAndUpdateOptions) {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
 
   const updatedBuilderQuery: BuilderQueryExpression = {
     ...builderQuery,
     ...(limit !== undefined ? { limit } : {}),
-    ...(reduce !== undefined
-      ? { reduce: { expressions: reduce, type: BuilderQueryEditorExpressionType.Reduce } }
-      : {}),
-    ...(where !== undefined
-      ? { where: { expressions: where, type: BuilderQueryEditorExpressionType.And } }
-      : {}),
+    ...(reduce !== undefined ? { reduce: { expressions: reduce, type: BuilderQueryEditorExpressionType.Reduce } } : {}),
+    ...(where !== undefined ? { where: { expressions: where, type: BuilderQueryEditorExpressionType.And } } : {}),
     ...(groupBy !== undefined
       ? { groupBy: { expressions: groupBy, type: BuilderQueryEditorExpressionType.Group_by } }
       : {}),
     ...(orderBy !== undefined
       ? { orderBy: { expressions: orderBy, type: BuilderQueryEditorExpressionType.Order_by } }
       : {}),
-    ...(columns !== undefined
-      ? { columns: { columns, type: BuilderQueryEditorExpressionType.Property } }
-      : {}),
+    ...(columns !== undefined ? { columns: { columns, type: BuilderQueryEditorExpressionType.Property } } : {}),
+    ...(from !== undefined ? { from } : {}), // ✅ Apply `from`
   };
 
-  const aggregation = reduce
-    ?.map((agg) => `${agg.reduce?.name}(${agg.property?.name})`)
-    .join(', ');
+  const aggregation = reduce?.map((agg) => `${agg.reduce?.name}(${agg.property?.name})`).join(', ');
 
-  const filterStr = where
-    ?.map((w) => `${w.property?.name} ${w.operator?.name} '${w.operator?.value}'`)
-    .join(' and ');
+  const filterStr = where?.map((w) => `${w.property?.name} ${w.operator?.name} '${w.operator?.value}'`).join(' and ');
 
   const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(
     updatedBuilderQuery,
@@ -380,3 +374,13 @@ export function buildAndUpdateQuery({
   });
 }
 
+export const aggregateOptions = [
+  { label: 'sum', value: 'sum' },
+  { label: 'avg', value: 'avg' },
+  { label: 'percentile', value: 'percentile' },
+  { label: 'count', value: 'count' },
+  { label: 'min', value: 'min' },
+  { label: 'max', value: 'max' },
+  { label: 'dcount', value: 'dcount' },
+  { label: 'stdev', value: 'stdev' },
+];

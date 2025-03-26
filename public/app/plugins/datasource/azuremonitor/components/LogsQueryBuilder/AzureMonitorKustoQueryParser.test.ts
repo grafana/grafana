@@ -90,9 +90,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       from: { property: { name: 'Logs' } },
       columns: { columns: ['TimeGenerated', 'Level'] },
       orderBy: {
-        expressions: [
-          { property: { name: 'TimeGenerated' }, order: 'desc' },
-        ],
+        expressions: [{ property: { name: 'TimeGenerated' }, order: 'desc' }],
       },
     };
 

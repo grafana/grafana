@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorRow, EditorFieldGroup, EditorField, InputGroup } from '@grafana/plugin-ui';
-import { Button, Icon, Input, Select, Tooltip } from '@grafana/ui';
+import { Button, Input, Select } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -80,17 +80,17 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
   const handleChange = (newSearchTerm: string, column: string) => {
     setSearchTerm(newSearchTerm);
     setSelectedColumn(column);
-  
+
     const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = (builderQuery?.where?.expressions || [])
       .filter((condition) => !(isOperatorExpression(condition) && condition.operator?.name === 'has'))
       .map((exp) => exp);
-  
+
     updatedWhereExpressions.push({
       type: BuilderQueryEditorExpressionType.Operator,
       operator: { name: 'has', value: newSearchTerm },
       property: { name: column || '*', type: BuilderQueryEditorPropertyType.String },
     });
-  
+
     buildAndUpdateQuery({
       query,
       onQueryUpdate,
@@ -99,27 +99,33 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
     });
   };
 
-const onDeleteFuzzySearch = () => {
-  setSearchTerm('');
-  setSelectedColumn('');
-  setIsOpen(false);
+  const onDeleteFuzzySearch = () => {
+    setSearchTerm('');
+    setSelectedColumn('');
+    setIsOpen(false);
 
-  const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = (builderQuery?.where?.expressions || [])
-    .filter(isOperatorExpression)
-    .filter((condition) => condition.operator?.name !== 'has');
+    const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = (builderQuery?.where?.expressions || [])
+      .filter(isOperatorExpression)
+      .filter((condition) => condition.operator?.name !== 'has');
 
-  buildAndUpdateQuery({
-    query,
-    onQueryUpdate,
-    allColumns,
-    where: updatedWhereExpressions,
-  });
-};
+    buildAndUpdateQuery({
+      query,
+      onQueryUpdate,
+      allColumns,
+      where: updatedWhereExpressions,
+    });
+  };
 
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Fuzzy Search" optional={true}>
+        <EditorField
+          label="Fuzzy Search"
+          optional={true}
+          tooltip={`Find approximate text matches with tolerance for spelling variations. By default, fuzzy search scans all
+              columns (*) in the entire table, not just specific fields. This enables locating content across the
+              dataset even when exact spelling or column location is unknown.`}
+        >
           <InputGroup>
             {isOpen ? (
               <>
@@ -145,19 +151,6 @@ const onDeleteFuzzySearch = () => {
             {!isOpen ? <Button variant="secondary" onClick={() => setIsOpen(true)} icon="plus" /> : <></>}
           </InputGroup>
         </EditorField>
-        <Tooltip
-          content={
-            <>
-              Find approximate text matches with tolerance for spelling variations. By default, fuzzy search scans all
-              columns (*) in the entire table, not just specific fields. This enables locating content across the
-              dataset even when exact spelling or column location is unknown.
-            </>
-          }
-          placement="right"
-          interactive={true}
-        >
-          <Icon name="info-circle" />
-        </Tooltip>
       </EditorFieldGroup>
     </EditorRow>
   );

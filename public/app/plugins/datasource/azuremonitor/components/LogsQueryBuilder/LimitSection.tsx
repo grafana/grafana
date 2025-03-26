@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { EditorRow, EditorFieldGroup, EditorField } from '@grafana/plugin-ui';
-import { Icon, Input, Tooltip } from '@grafana/ui';
+import { Input } from '@grafana/ui';
 
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
@@ -14,7 +14,7 @@ interface LimitSectionProps {
 }
 
 export const LimitSection: React.FC<LimitSectionProps> = (props) => {
-  const {query, allColumns, onQueryUpdate} = props;
+  const { query, allColumns, onQueryUpdate } = props;
   const [limit, setLimit] = useState<number>();
 
   const handleQueryLimitUpdate = (newLimit: number) => {
@@ -29,7 +29,7 @@ export const LimitSection: React.FC<LimitSectionProps> = (props) => {
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Limit" optional={true}>
+        <EditorField label="Limit" optional={true} tooltip={`Restrict the number of rows returned (default is 1000).`}>
           <Input
             className="width-5"
             type="number"
@@ -42,13 +42,6 @@ export const LimitSection: React.FC<LimitSectionProps> = (props) => {
             }}
           />
         </EditorField>
-        <Tooltip
-          content={<>Restrict the number of rows returned (default is 1000).</>}
-          placement="right"
-          interactive={true}
-        >
-          <Icon name="info-circle" />
-        </Tooltip>
       </EditorFieldGroup>
     </EditorRow>
   );

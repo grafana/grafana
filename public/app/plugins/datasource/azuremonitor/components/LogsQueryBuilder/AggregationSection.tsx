@@ -2,12 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
-import { Icon, Tooltip } from '@grafana/ui';
 
-import {
-  BuilderQueryEditorPropertyType,
-  BuilderQueryEditorReduceExpression,
-} from '../../dataquery.gen';
+import { BuilderQueryEditorPropertyType, BuilderQueryEditorReduceExpression } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
 import AggregateItem from './AggregateItem';
@@ -95,20 +91,18 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
 
   const onDeleteAggregate = (aggregateToDelete: Partial<BuilderQueryEditorReduceExpression>) => {
     setAggregates((prevAggregates) => {
-      const updatedAggregates = prevAggregates.filter(
-        (agg) => agg.property?.name !== aggregateToDelete.property?.name
-      );
-  
+      const updatedAggregates = prevAggregates.filter((agg) => agg.property?.name !== aggregateToDelete.property?.name);
+
       buildAndUpdateQuery({
         query,
         onQueryUpdate,
         allColumns,
         reduce: updatedAggregates.length === 0 ? [] : updatedAggregates,
       });
-  
+
       return updatedAggregates;
     });
-  };  
+  };
 
   const onChange = (newItems: Array<Partial<BuilderQueryEditorReduceExpression>>) => {
     const cleaned = newItems.map(
@@ -126,33 +120,26 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
       onQueryUpdate,
       allColumns,
       reduce: cleaned,
-    });    
+    });
   };
 
   return (
     <div data-testid="aggregate-section">
       <EditorRow>
         <EditorFieldGroup>
-          <EditorField label="Aggregate" optional={true}>
+          <EditorField
+            label="Aggregate"
+            optional={true}
+            tooltip={`Perform calculations across rows of data, such as count, sum, average, minimum, maximum, standard
+                deviation or percentiles. Aggregates condense multiple rows into a single value based on mathematical
+                operations applied to the data.`}
+          >
             <EditorList
               items={aggregates}
               onChange={onChange}
               renderItem={makeRenderAggregate(availableColumns, onDeleteAggregate, templateVariableOptions)}
             />
           </EditorField>
-          <Tooltip
-            content={
-              <>
-                Perform calculations across rows of data, such as count, sum, average, minimum, maximum, standard
-                deviation or percentiles. Aggregates condense multiple rows into a single value based on mathematical
-                operations applied to the data.{' '}
-              </>
-            }
-            placement="right"
-            interactive={true}
-          >
-            <Icon name="info-circle" />
-          </Tooltip>
         </EditorFieldGroup>
       </EditorRow>
     </div>

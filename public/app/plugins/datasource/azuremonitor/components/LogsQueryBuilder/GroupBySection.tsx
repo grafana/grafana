@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, Icon, Tooltip } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -80,40 +80,46 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
       interval: g.interval,
       focus: g.focus ?? false,
     }));
-  
+
     setGroupBys(cleaned);
-  
+
     if (cleaned[0]?.property.name === '') {
       return;
     }
-  
+
     buildAndUpdateQuery({
       query,
       onQueryUpdate,
       allColumns,
       groupBy: cleaned,
     });
-  };  
+  };
 
   const onDeleteGroupBy = (propertyName: string) => {
     setGroupBys((prevGroupBys) => {
       const updatedGroupBys = prevGroupBys.filter((gb) => gb.property.name !== propertyName);
-  
+
       buildAndUpdateQuery({
         query,
         onQueryUpdate,
         allColumns,
         groupBy: updatedGroupBys,
       });
-  
+
       return updatedGroupBys;
     });
-  };  
+  };
 
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Group by" optional={true}>
+        <EditorField
+          label="Group by"
+          optional={true}
+          tooltip={`Organize results into categories based on specified columns. Group by can be used independently to list
+              unique values in selected columns, or combined with aggregate functions to produce summary statistics for
+              each group. When used alone, it returns distinct combinations of the specified columns.`}
+        >
           <InputGroup>
             {groupBys.length > 0 ? (
               <EditorList
@@ -137,19 +143,6 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
             )}
           </InputGroup>
         </EditorField>
-        <Tooltip
-          content={
-            <>
-              Organize results into categories based on specified columns. Group by can be used independently to list
-              unique values in selected columns, or combined with aggregate functions to produce summary statistics for
-              each group. When used alone, it returns distinct combinations of the specified columns.{' '}
-            </>
-          }
-          placement="right"
-          interactive={true}
-        >
-          <Icon name="info-circle" />
-        </Tooltip>
       </EditorFieldGroup>
     </EditorRow>
   );
