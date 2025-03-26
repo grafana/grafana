@@ -46,7 +46,6 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 		Data: value,
 	}, false)
 	if err != nil {
-		// TODO: should we fail the entire execution?
 		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
 	}
 
@@ -104,8 +103,8 @@ func (j *migrationJob) migrateLegacyResources(ctx context.Context) error {
 	return nil
 }
 
+// TODO: this is copied from the export job
 func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
-	// TODO: this is copied from the export job
 	gvk := obj.GroupVersionKind()
 	result := jobs.JobResourceResult{
 		Name:     obj.GetName(),
