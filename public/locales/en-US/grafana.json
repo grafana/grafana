@@ -338,7 +338,7 @@
       "provisioning-change-description": "Version update was made via provisioning",
       "queryAndAlertCondition": "Query and alert condition",
       "restore": "Restore",
-      "restore-deleted-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the deleted rule.",
+      "restore-deleted-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the deleted rule by editing the rule and saving it.",
       "restore-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the rule version",
       "restore-modal": {
         "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
