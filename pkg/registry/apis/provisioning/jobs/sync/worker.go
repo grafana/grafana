@@ -244,6 +244,8 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 	if err != nil {
 		return fmt.Errorf("error calculating changes: %w", err)
 	}
+	logger := logging.FromContext(ctx)
+	logger.Info("KAKA changes", "changes", changes, "source", source, "target", target)
 
 	if len(changes) == 0 {
 		r.progress.SetFinalMessage(ctx, "no changes to sync")
@@ -265,7 +267,6 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	r.progress.SetTotal(ctx, len(changes))
 	r.progress.SetMessage(ctx, "replicating changes")
 
-	// Create folder structure first
 	for _, change := range changes {
 		if err := r.progress.TooManyErrors(); err != nil {
 			return err
@@ -350,16 +351,20 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		}
 
 		if err := resources.IsPathSupported(change.Path); err != nil {
-			// Maintain the unhidden path if valid until the next full pulling even if folders are empty
-			unhiddenPath := safepath.UnhiddenPath(change.Path)
-			if unhiddenPath != "" && resources.IsPathSupported(unhiddenPath) == nil {
-				folder, err := r.folders.EnsureFolderPathExist(ctx, unhiddenPath)
+			// Maintain the safe segment for empty folders
+			safeSegment := safepath.SafeSegment(change.Path)
+			if !safepath.IsDir(safeSegment) {
+				safeSegment = safepath.Dir(safeSegment)
+			}
+
+			if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
+				folder, err := r.folders.EnsureFolderPathExist(ctx, safeSegment)
 				if err != nil {
 					return fmt.Errorf("unable to create empty file folder: %w", err)
 				}
 
 				r.progress.Record(ctx, jobs.JobResourceResult{
-					Path:     unhiddenPath,
+					Path:     safeSegment,
 					Action:   repository.FileActionCreated,
 					Resource: folders.RESOURCE,
 					Group:    folders.GROUP,

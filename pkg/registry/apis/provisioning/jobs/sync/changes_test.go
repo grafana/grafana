@@ -40,6 +40,71 @@ func TestChanges(t *testing.T) {
 		}, changes[0])
 	})
 
+	t.Run("create empty folder structure for folders with unsupported file types", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "one/two/first.md", Hash: "xyz", Blob: true},
+			{Path: "other/second.md", Hash: "xyz", Blob: true},
+		}
+
+		target := &provisioning.ResourceList{}
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Len(t, changes, 2)
+
+		require.Equal(t, ResourceFileChange{
+			Action: repository.FileActionCreated,
+			Path:   "one/two/",
+		}, changes[0])
+		require.Equal(t, ResourceFileChange{
+			Action: repository.FileActionCreated,
+			Path:   "other/",
+		}, changes[1])
+	})
+
+	t.Run("keep empty folders when unsupported file types are present", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "one/two/first.md", Hash: "xyz", Blob: true},
+			{Path: "other/second.md", Hash: "xyz", Blob: true},
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "one/two/", Resource: "folders"},
+				{Path: "other/", Resource: "folders"},
+			},
+		}
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Empty(t, changes)
+	})
+	t.Run("keep common path to unsupported file types", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "common/first.md", Hash: "xyz", Blob: true},
+			{Path: "alsocommon/second.md", Hash: "xyz", Blob: true},
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "common/", Resource: "folders"},
+				{Path: "common/not-common/", Resource: "folders", Name: "uncommon-name", Hash: "xyz"},
+				{Path: "alsocommon/", Resource: "folders"},
+			},
+		}
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Len(t, changes, 1)
+		require.Equal(t, ResourceFileChange{
+			Action: repository.FileActionDeleted,
+			Path:   "common/not-common/",
+			Existing: &provisioning.ResourceListItem{
+				Path:     "common/not-common/",
+				Resource: "folders",
+				Name:     "uncommon-name",
+				Hash:     "xyz",
+			},
+		}, changes[0], "the uncommon path should be deleted")
+	})
+
 	t.Run("delete a source file", func(t *testing.T) {
 		source := []repository.FileTreeEntry{}
 		target := &provisioning.ResourceList{
