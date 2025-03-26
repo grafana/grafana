@@ -58,6 +58,9 @@ const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
+const AnnoKeyFullpath = "grafana.app/fullpath"
+const AnnoKeyFullpathUIDs = "grafana.app/fullpathUIDs"
+
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
@@ -96,6 +99,11 @@ type GrafanaMetaAccessor interface {
 
 	// Deprecated: This will be removed in Grafana 13
 	SetDeprecatedInternalID(id int64)
+
+	GetFullpath() string
+	SetFullpath(path string)
+	GetFullpathUIDs() string
+	SetFullpathUIDs(uids string)
 
 	GetSpec() (any, error)
 	SetSpec(any) error
@@ -315,6 +323,22 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 
 	labels[LabelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
 	m.obj.SetLabels(labels)
+}
+
+func (m *grafanaMetaAccessor) GetFullpath() string {
+	return m.get(AnnoKeyFullpath)
+}
+
+func (m *grafanaMetaAccessor) SetFullpath(path string) {
+	m.SetAnnotation(AnnoKeyFullpath, path)
+}
+
+func (m *grafanaMetaAccessor) GetFullpathUIDs() string {
+	return m.get(AnnoKeyFullpathUIDs)
+}
+
+func (m *grafanaMetaAccessor) SetFullpathUIDs(uids string) {
+	m.SetAnnotation(AnnoKeyFullpathUIDs, uids)
 }
 
 // GetAnnotations implements GrafanaMetaAccessor.

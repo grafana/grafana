@@ -58,6 +58,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 	if updater.UID == "" {
 		updater = creator
 	}
+
 	manager, _ := meta.GetManagerProperties()
 	return &folder.Folder{
 		UID:         uid,
@@ -68,12 +69,14 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		Version:     int(meta.GetGeneration()),
 		ManagedBy:   manager.Kind,
 
-		URL:       url,
-		Created:   created,
-		Updated:   *updated,
-		OrgID:     info.OrgID,
-		CreatedBy: creator.ID,
-		UpdatedBy: updater.ID,
+		Fullpath:     meta.GetFullpath(),
+		FullpathUIDs: meta.GetFullpathUIDs(),
+		URL:          url,
+		Created:      created,
+		Updated:      *updated,
+		OrgID:        info.OrgID,
+		CreatedBy:    creator.ID,
+		UpdatedBy:    updater.ID,
 	}, nil
 }
 
