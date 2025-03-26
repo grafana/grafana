@@ -40,8 +40,8 @@ export interface AlertingRule extends BaseRule {
   annotations: Annotations;
   activeAt?: string; // ISO date string
   alerts: AlertInstance[];
-  totals?: Totals<Lowercase<AlertStateWithoutReason>>;
-  totalsFiltered?: Totals<Lowercase<AlertStateWithoutReason>>;
+  totals?: Totals<Lowercase<AlertInstanceStateWithoutReason>>;
+  totalsFiltered?: Totals<Lowercase<AlertInstanceStateWithoutReason>>;
   type: 'alerting';
 }
 
@@ -78,15 +78,16 @@ export interface RuleGroup {
 export interface AlertInstance {
   labels: Labels;
   annotations: Annotations;
-  state: AlertStateWithoutReason | AlertStateWithReason;
+  state: AlertInstanceState;
   activeAt: string; // ISO timestamp
   value: string;
 }
 
 // ⚠️ do NOT confuse rule state with alert state
 export type RuleState = 'inactive' | 'pending' | 'firing';
-export type AlertStateWithoutReason = 'Normal' | 'Alerting' | 'Pending' | 'NoData' | 'Error';
-export type AlertStateWithReason = AlertStateWithoutReason | `${AlertStateWithoutReason} (${StateReason})`;
+export type AlertInstanceState = AlertInstanceStateWithoutReason | AlertInstanceStateWithReason;
+export type AlertInstanceStateWithoutReason = 'Normal' | 'Alerting' | 'Pending' | 'NoData' | 'Error';
+export type AlertInstanceStateWithReason = `${AlertInstanceStateWithoutReason} (${StateReason})`;
 
 // StateReason
 // https://github.com/grafana/grafana/blob/4d6f9900ecc683796512ce2bfd49fbc92a78d66d/pkg/services/ngalert/models/alert_rule.go#L165-L173
