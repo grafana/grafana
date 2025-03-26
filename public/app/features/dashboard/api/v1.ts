@@ -110,7 +110,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           k8s: dash.metadata,
           version: dash.metadata.generation,
         },
-        dashboard: dash.spec,
+        dashboard: {
+          ...dash.spec,
+          version: dash.metadata.generation,
+          uid: dash.metadata.name,
+        },
       };
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
