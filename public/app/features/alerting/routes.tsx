@@ -217,7 +217,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: () => ['Admin'],
       component:
         isRecoverDeletedRulesEnabled()
-          ? SafeDynamicImport(
+          ? importAlertingComponent(
             () =>
               import(
                   /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
