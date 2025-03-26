@@ -1,52 +1,6 @@
 {
   "components": {
     "responses": {
-      "GetAllIntervalsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/GettableTimeIntervals"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetIntervalsByNameResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GettableTimeIntervals"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetReceiverResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GettableApiReceiver"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetReceiversResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/GettableApiReceiver"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "GettableHistoricUserConfigs": {
         "content": {
           "application/json": {
@@ -6333,26 +6287,6 @@
         ],
         "type": "object"
       },
-      "GettableTimeIntervals": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "provenance": {
-            "$ref": "#/components/schemas/Provenance"
-          },
-          "time_intervals": {
-            "items": {
-              "$ref": "#/components/schemas/TimeIntervalItem"
-            },
-            "type": "array"
-          },
-          "version": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "GettableUserConfig": {
         "properties": {
           "alertmanager_config": {
@@ -8638,23 +8572,6 @@
               "type": "string"
             },
             "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "PostableTimeIntervals": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "time_intervals": {
-            "items": {
-              "$ref": "#/components/schemas/TimeIntervalItem"
-            },
-            "type": "array"
-          },
-          "version": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -11655,55 +11572,6 @@
         "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
         "type": "object"
       },
-      "TimeIntervalItem": {
-        "properties": {
-          "days_of_month": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "location": {
-            "type": "string"
-          },
-          "months": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "times": {
-            "items": {
-              "$ref": "#/components/schemas/TimeIntervalTimeRange"
-            },
-            "type": "array"
-          },
-          "weekdays": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "years": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "TimeIntervalTimeRange": {
-        "properties": {
-          "end_time": {
-            "type": "string"
-          },
-          "start_time": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "TimeRange": {
         "description": "Redefining this to avoid an import cycle",
         "properties": {
@@ -13109,7 +12977,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
