@@ -8,6 +8,7 @@ import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-al
 import { trackDeletedRuleRestoreFail, trackDeletedRuleRestoreSuccess } from '../../../Analytics';
 import { UpdatedByUser } from '../../rule-viewer/tabs/version-history/UpdatedBy';
 
+import { ConfirmDeletedPermanentlyModal } from './ConfirmDeletePermanantlyModal';
 import { ConfirmRestoreDeletedRuleModal } from './ConfirmRestoreDeletedRuleModal';
 
 const DELETED_RULES_PAGE_SIZE = 30;
@@ -18,7 +19,8 @@ interface DeletedRulesProps {
 export function DeletedRules({ deletedRules }: DeletedRulesProps) {
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoreRule, setRestoreRule] = useState<RulerGrafanaRuleDTO | undefined>();
-
+  const [confirmDeletePermanently, setConfirmDeletePermanently] = useState(false);
+  const [guidToDelete, setGuidToDelete] = useState<string | undefined>();
   const unknown = t('alerting.deleted-rules.unknown', 'Unknown');
 
   if (deletedRules.length === 0) {
@@ -40,8 +42,23 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
     setRestoreRule(ruleTorestore);
   };
 
-  const hideConfirmation = () => {
+  const hideConfirmationForRestore = () => {
     setConfirmRestore(false);
+  };
+  const hideConfirmationForDelete = () => {
+    setConfirmDeletePermanently(false);
+  };
+
+  const showDeleteConfirmation = (id: string) => {
+    const ruleTorestore = deletedRules.find(
+      (rule) => getRowId(rule.grafana_alert) === id
+    );
+    if (!ruleTorestore) {
+      return;
+    }
+
+    setConfirmDeletePermanently(true);
+    setGuidToDelete(ruleTorestore.grafana_alert.guid);
   };
 
   const columns: Array<Column<(typeof deletedRules)[0]>> = [
@@ -90,7 +107,7 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
       },
     },
     {
-      id: 'actions',
+      id: 'restore',
       disableGrow: true,
       cell: ({ row }) => {
         return (
@@ -100,36 +117,63 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
               size="sm"
               icon="history"
               onClick={() => {
-                showConfirmation(getRowId(row.original.grafana_alert));
+                showConfirmation(getRowId(row.original.grafana_alert)
+                );
               }}
             >
-              <Trans i18nKey="alerting.deleted-rules.restore">Restore</Trans>
+              <Trans i18nKey="alerting..delete-permanently">Delete permanently</Trans>
             </Button>
           </Stack>
         );
       },
     },
+    {
+      id: 'delete-permanently',
+      disableGrow: true,
+      cell: ({ row }) => {
+        return (deletedRules
+          < Stack direction = "row" alignItems = "center" justifyContent = "flex-end" >
+            <Button
+              variant="destructive"
+              size="sm"
+              icon="trash-alt"
+              onClick={() => {
+                showDeleteConfirmation(getRowId(row.original.grafana_alert)
+                );
+              }}
+            >
+              <Trans i18nKey="alerting.deleted-rules.delete-permanently">Delete permanently</Trans>
+            </Button>
+          </ >
+        );
+},
+    },
   ];
 
-  return (
-    <>
-      <InteractiveTable
-        pageSize={DELETED_RULES_PAGE_SIZE}
-        columns={columns}
-        data={deletedRules}
-        getRowId={(row) => {
-          return getRowId(row.grafana_alert);
-        }}
-      />
-      <ConfirmRestoreDeletedRuleModal
-        ruleToRestore={restoreRule}
-        isOpen={confirmRestore}
-        onDismiss={hideConfirmation}
-        onRestoreSucess={trackDeletedRuleRestoreSuccess}
-        onRestoreError={trackDeletedRuleRestoreFail}
-      />
-    </>
-  );
+return (
+  <>
+    <InteractiveTable
+      pageSize={DELETED_RULES_PAGE_SIZE}
+      columns={columns}
+      data={deletedRules}
+      getRowId={(row) => {
+        return getRowId(row.grafana_alert);
+      }}
+    />
+    <ConfirmRestoreDeletedRuleModal
+      ruleToRestore={restoreRule}
+      isOpen={confirmRestore}
+      onDismiss={hideConfirmationForRestore}
+      onRestoreSucess={trackDeletedRuleRestoreSuccess}
+      onRestoreError={trackDeletedRuleRestoreFail}
+    />
+    <ConfirmDeletedPermanentlyModal
+      guid={guidToDelete}
+      isOpen={confirmDeletePermanently}
+      onDismiss={hideConfirmationForDelete}
+    />
+  </>
+);
 }
 
 function getRowId(row: GrafanaRuleDefinition) {
