@@ -73,22 +73,30 @@ func New(cfg app.Config) (app.Runnable, error) {
 }
 
 func (r *Runner) Run(ctx context.Context) error {
-	lastCreated, err := r.checkLastCreated(ctx)
+	// By default, wait for interval to create the next scheduled check
+	lastCreated := time.Now()
+	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
 	if err != nil {
-		r.log.Error("Error getting last check creation time", "error", err)
-		// Wait for interval to create the next scheduled check
-		lastCreated = time.Now()
+		r.log.Error("Error getting checks", "error", err)
 	} else {
-		// do an initial creation if necessary
-		if lastCreated.IsZero() {
-			err = r.createChecks(ctx)
-			if err != nil {
-				klog.Error("Error creating new check reports", "error", err)
-			} else {
-				lastCreated = time.Now()
+		lastCreated, err = r.checkLastCreated(list)
+		if err != nil {
+			r.log.Error("Error getting last check creation time", "error", err)
+		} else {
+			// do an initial creation if necessary
+			if lastCreated.IsZero() {
+				err = r.createChecks(ctx)
+				if err != nil {
+					klog.Error("Error creating new check reports", "error", err)
+				} else {
+					lastCreated = time.Now()
+				}
 			}
 		}
 	}
+
+	// Mark orphaned checks (not processed) as errored
+	r.markOrphanedChecksAsErrored(ctx, list)
 
 	nextSendInterval := time.Until(lastCreated.Add(r.evaluationInterval))
 	if nextSendInterval < time.Minute {
@@ -124,11 +132,7 @@ func (r *Runner) Run(ctx context.Context) error {
 // checkLastCreated returns the creation time of the last check created
 // regardless of its ID. This assumes that the checks are created in batches
 // so a batch will have a similar creation time.
-func (r *Runner) checkLastCreated(ctx context.Context) (time.Time, error) {
-	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
-	if err != nil {
-		return time.Time{}, err
-	}
+func (r *Runner) checkLastCreated(list resource.ListObject) (time.Time, error) {
 	lastCreated := time.Time{}
 	for _, item := range list.GetItems() {
 		itemCreated := item.GetCreationTimestamp().Time
@@ -227,4 +231,16 @@ func getMaxHistory(pluginConfig map[string]string) (int, error) {
 		}
 	}
 	return maxHistory, nil
+}
+
+func (r *Runner) markOrphanedChecksAsErrored(ctx context.Context, list resource.ListObject) {
+	for _, check := range list.GetItems() {
+		if checks.GetStatusAnnotation(check) == "" {
+			r.log.Error("Check is orphaned", "check", check.GetStaticMetadata().Identifier())
+			err := checks.SetStatusAnnotation(ctx, r.client, check, "error")
+			if err != nil {
+				r.log.Error("Error setting check status to error", "error", err)
+			}
+		}
+	}
 }
