@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Button, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans, t } from 'app/core/internationalization';
@@ -10,6 +9,7 @@ import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { LogMessages, logInfo } from '../../Analytics';
+import { useGrafanaManagedRecordingRulesSupport } from '../../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
 import { usePagination } from '../../hooks/usePagination';
@@ -57,7 +57,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const hasGrafanaAlerts = namespaces.length > 0;
 
-  const grafanaRecordingRulesEnabled = config.featureToggles.grafanaManagedRecordingRules;
+  const grafanaRecordingRulesEnabled = useGrafanaManagedRecordingRulesSupport();
 
   return (
     <section className={styles.wrapper}>
