@@ -129,9 +129,11 @@ export function AppChrome({ children }: Props) {
           >
             {children}
           </main>
-          <div className={styles.sidebarContainer}>
-            <ExtensionSidebar />
-          </div>
+          {isExtensionSidebarOpen && (
+            <div className={styles.sidebarContainer}>
+              <ExtensionSidebar />
+            </div>
+          )}
         </div>
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
