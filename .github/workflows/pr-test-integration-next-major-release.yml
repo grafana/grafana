@@ -1,4 +1,4 @@
-name: Integration Tests (G12 Config)
+name: Integration Tests Next Major Release
 
 on:
   push:
@@ -11,14 +11,14 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  G12_CONFIG_FEATURE_TOGGLES: kubernetesClientDashboardsFolders,kubernetesDashboards
+  NEXT_MAJOR_RELEASE_FEATURE_TOGGLES: kubernetesClientDashboardsFolders,kubernetesDashboards
 
 jobs:
   sqlite:
-    name: Sqlite with G12 config
+    name: Sqlite with Next Major Release config
     runs-on: ubuntu-latest-8-cores
     env:
-      GF_FEATURE_TOGGLES_ENABLE: ${{ env.G12_CONFIG_FEATURE_TOGGLES }}
+      GF_FEATURE_TOGGLES_ENABLE: ${{ env.NEXT_MAJOR_RELEASE_FEATURE_TOGGLES }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,10 +30,10 @@ jobs:
       - name: Restore GOCACHE
         uses: actions/cache/restore@v4
         with:
-          key: go-test-cache-${{ github.ref_name }}-sqlite-g12-config
+          key: go-test-cache-${{ github.ref_name }}-sqlite-next-major-release
           restore-keys: |
-            go-test-cache-${{ github.base_ref }}-sqlite-g12-config
-            go-test-cache-main-sqlite-g12-config
+            go-test-cache-${{ github.base_ref }}-sqlite-next-major-release
+            go-test-cache-main-sqlite-next-major-release
           path: /home/runner/.cache/go-build
       - run: |
           make gen-go
@@ -41,15 +41,15 @@ jobs:
       - name: Save GOCACHE
         uses: actions/cache/save@v4
         with:
-          key: go-test-cache-${{ github.ref_name }}-sqlite-g12-config
+          key: go-test-cache-${{ github.ref_name }}-sqlite-next-major-release
           path: /home/runner/.cache/go-build
   mysql:
-    name: MySQL with G12 config
+    name: MySQL with Next Major Release config
     runs-on: ubuntu-latest-8-cores
     env:
       GRAFANA_TEST_DB: mysql
       MYSQL_HOST: 127.0.0.1
-      GF_FEATURE_TOGGLES_ENABLE: ${{ env.G12_CONFIG_FEATURE_TOGGLES }}
+      GF_FEATURE_TOGGLES_ENABLE: ${{ env.NEXT_MAJOR_RELEASE_FEATURE_TOGGLES }}
     services:
       mysql:
         image: mysql:8.0.32
@@ -72,10 +72,10 @@ jobs:
       - name: Restore GOCACHE
         uses: actions/cache/restore@v4
         with:
-          key: go-test-cache-${{ github.ref_name }}-mysql-g12-config
+          key: go-test-cache-${{ github.ref_name }}-mysql-next-major-release
           restore-keys: |
-            go-test-cache-${{ github.base_ref }}-mysql-g12-config
-            go-test-cache-main-mysql-g12-config
+            go-test-cache-${{ github.base_ref }}-mysql-next-major-release
+            go-test-cache-main-mysql-next-major-release
           path: /home/runner/.cache/go-build
       - run: |
           sudo apt-get update -yq && sudo apt-get install mariadb-client
@@ -85,16 +85,16 @@ jobs:
       - name: Save GOCACHE
         uses: actions/cache/save@v4
         with:
-          key: go-test-cache-${{ github.ref_name }}-mysql-g12-config
+          key: go-test-cache-${{ github.ref_name }}-mysql-next-major-release
           path: /home/runner/.cache/go-build
   postgres:
-    name: Postgres with G12 config
+    name: Postgres with Next Major Release config
     runs-on: ubuntu-latest-8-cores
     env:
       GRAFANA_TEST_DB: postgres
       PGPASSWORD: grafanatest
       POSTGRES_HOST: 127.0.0.1
-      GF_FEATURE_TOGGLES_ENABLE: ${{ env.G12_CONFIG_FEATURE_TOGGLES }}
+      GF_FEATURE_TOGGLES_ENABLE: ${{ env.NEXT_MAJOR_RELEASE_FEATURE_TOGGLES }}
     services:
       postgres:
         image: postgres:12.3-alpine
@@ -115,10 +115,10 @@ jobs:
       - name: Restore GOCACHE
         uses: actions/cache/restore@v4
         with:
-          key: go-test-cache-${{ github.ref_name }}-postgres-g12-config
+          key: go-test-cache-${{ github.ref_name }}-postgres-next-major-release
           restore-keys: |
-            go-test-cache-${{ github.base_ref }}-postgres-g12-config
-            go-test-cache-main-postgres-g12-config
+            go-test-cache-${{ github.base_ref }}-postgres-next-major-release
+            go-test-cache-main-postgres-next-major-release
           path: /home/runner/.cache/go-build
       - run: |
           sudo apt-get update -yq && sudo apt-get install postgresql-client
@@ -128,5 +128,5 @@ jobs:
       - name: Save GOCACHE
         uses: actions/cache/save@v4
         with:
-          key: go-test-cache-${{ github.ref_name }}-postgres-g12-config
-          path: /home/runner/.cache/go-build 
+          key: go-test-cache-${{ github.ref_name }}-postgres-next-major-release
+          path: /home/runner/.cache/go-build

@@ -3,7 +3,7 @@
 ## For more information, refer to https://suva.sh/posts/well-documented-makefiles/
 
 WIRE_TAGS = "oss"
-G12_CONFIG_FEATURE_TOGGLES = kubernetesClientDashboardsFolders,kubernetesDashboards
+NEXT_MAJOR_RELEASE_FEATURE_TOGGLES = kubernetesClientDashboardsFolders,kubernetesDashboards
 
 -include local/Makefile
 include .bingo/Variables.mk
@@ -332,23 +332,23 @@ test-go-integration-spanner: ## Run integration tests for Spanner backend with f
 	GRAFANA_TEST_DB=spanner \
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -v -run "^TestIntegration" -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
 
-.PHONY: test-go-integration-g12-config
-test-go-integration-g12-config: ## Run integration tests with G12 config (kubernetesClientDashboardsFolders and kubernetesDashboards).
-	@echo "test backend integration tests with G12 config"
-	GF_FEATURE_TOGGLES_ENABLE=$(G12_CONFIG_FEATURE_TOGGLES) \
+.PHONY: test-go-integration-next-major-release
+test-go-integration-next-major-release: ## Run integration tests with Next Major Release config (kubernetesClientDashboardsFolders and kubernetesDashboards).
+	@echo "test backend integration tests with Next Major Release config"
+	GF_FEATURE_TOGGLES_ENABLE=$(NEXT_MAJOR_RELEASE_FEATURE_TOGGLES) \
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE) -timeout=5m $(GO_INTEGRATION_TESTS) $(GO_TEST_OUTPUT)
 
-.PHONY: test-go-integration-g12-config-mysql
-test-go-integration-g12-config-mysql: devenv-mysql ## Run MySQL integration tests with G12 config.
-	@echo "test backend integration mysql tests with G12 config"
-	GF_FEATURE_TOGGLES_ENABLE=$(G12_CONFIG_FEATURE_TOGGLES) \
+.PHONY: test-go-integration-next-major-release-mysql
+test-go-integration-next-major-release-mysql: devenv-mysql ## Run MySQL integration tests with Next Major Release config.
+	@echo "test backend integration mysql tests with Next Major Release config"
+	GF_FEATURE_TOGGLES_ENABLE=$(NEXT_MAJOR_RELEASE_FEATURE_TOGGLES) \
 	GRAFANA_TEST_DB=mysql \
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
 
-.PHONY: test-go-integration-g12-config-postgres
-test-go-integration-g12-config-postgres: devenv-postgres ## Run Postgres integration tests with G12 config.
-	@echo "test backend integration postgres tests with G12 config"
-	GF_FEATURE_TOGGLES_ENABLE=$(G12_CONFIG_FEATURE_TOGGLES) \
+.PHONY: test-go-integration-next-major-release-postgres
+test-go-integration-next-major-release-postgres: devenv-postgres ## Run Postgres integration tests with Next Major Release config.
+	@echo "test backend integration postgres tests with Next Major Release config"
+	GF_FEATURE_TOGGLES_ENABLE=$(NEXT_MAJOR_RELEASE_FEATURE_TOGGLES) \
 	GRAFANA_TEST_DB=postgres \
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
 

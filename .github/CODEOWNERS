@@ -800,6 +800,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-patch-check.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
+/.github/workflows/pr-test-integration-next-major-release.yml @grafana/grafana-backend-group
+/.github/workflows/pr-test-e2e-g12-config.yml @grafana/grafana-backend-group
 /.github/workflows/pr-backend-coverage.yml @grafana/grafana-backend-group
 /.github/workflows/sync-mirror.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
