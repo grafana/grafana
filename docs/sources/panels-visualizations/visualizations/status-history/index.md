@@ -133,7 +133,7 @@ Controls the opacity of state regions.
 
 ## Tooltip options
 
-{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/tooltip-options-3.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Axis options
 
