@@ -1,5 +1,10 @@
 package sqltemplate
 
+import (
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
 // Spanner is an implementation of Dialect for the Google Spanner database.
 var Spanner = spanner{}
 
@@ -25,6 +30,13 @@ func (s spanner) SelectFor(a ...string) (string, error) {
 
 func (spanner) CurrentEpoch() string {
 	return "UNIX_MICROS(CURRENT_TIMESTAMP())"
+}
+
+func (spanner) IsRowAlreadyExistsError(err error) bool {
+	// This is the implementation of the `ErrCode` function from the spanner driver.
+	// We've inlined it here to avoid adding a dependency on the driver, as we don't want the dependency in OSS (though it'd be fine in Pro/Enterprise).
+	s, ok := status.FromError(err)
+	return ok && s.Code() == codes.AlreadyExists
 }
 
 var rowLockingClauseSpanner = rowLockingClauseMap{

@@ -3,6 +3,8 @@ package sqltemplate
 import (
 	"errors"
 	"strings"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // PostgreSQL is an implementation of Dialect for the PostgreSQL DMBS.
@@ -38,4 +40,11 @@ func (p postgresql) Ident(s string) (string, error) {
 
 func (postgresql) CurrentEpoch() string {
 	return "(EXTRACT(EPOCH FROM statement_timestamp()) * 1000000)::BIGINT"
+}
+
+func (postgresql) IsRowAlreadyExistsError(err error) bool {
+	var pg *pgconn.PgError
+	return errors.As(err, &pg) &&
+		// https://www.postgresql.org/docs/current/errcodes-appendix.html
+		pg.Code == "23505" // unique_violation
 }

@@ -1,7 +1,10 @@
 package sqltemplate
 
 import (
+	"errors"
 	"strings"
+
+	driver "github.com/go-sql-driver/mysql"
 )
 
 // MySQL is the default implementation of Dialect for the MySQL DMBS,
@@ -36,4 +39,11 @@ func (backtickIdent) Ident(s string) (string, error) {
 
 func (mysql) CurrentEpoch() string {
 	return "CAST(FLOOR(UNIX_TIMESTAMP(NOW(6)) * 1000000) AS SIGNED)"
+}
+
+func (mysql) IsRowAlreadyExistsError(err error) bool {
+	var mysqlerr *driver.MySQLError
+	return errors.As(err, &mysqlerr) &&
+		// https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html
+		mysqlerr.Number == 1062 // ER_DUP_ENTRY
 }

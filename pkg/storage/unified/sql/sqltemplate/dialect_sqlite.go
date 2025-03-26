@@ -1,5 +1,11 @@
 package sqltemplate
 
+import (
+	"errors"
+
+	"github.com/mattn/go-sqlite3"
+)
+
 // SQLite is an implementation of Dialect for the SQLite DMBS.
 var SQLite = sqlite{
 	argPlaceholderFunc: argFmtSQL92,
@@ -20,4 +26,10 @@ type sqlite struct {
 func (sqlite) CurrentEpoch() string {
 	// Alternative approaches like `unixepoch('subsecond') * 1000000` returns millisecond precision.
 	return "CAST((julianday('now') - 2440587.5) * 86400000000.0 AS BIGINT)"
+}
+
+func (sqlite) IsRowAlreadyExistsError(err error) bool {
+	var sqlite sqlite3.Error
+	return errors.As(err, &sqlite) &&
+		sqlite.ExtendedCode == sqlite3.ErrConstraintUnique
 }
