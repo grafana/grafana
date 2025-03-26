@@ -29,10 +29,10 @@ func TestIntegrationProvisioning_Client(t *testing.T) {
 		client, _, err := clients.ForResource(schema.GroupVersionResource{
 			Group:    "dashboard.grafana.app",
 			Resource: "dashboards",
-			Version:  "v0alpha1",
+			Version:  "v1alpha1",
 		})
 		require.NoError(t, err)
-		require.Equal(t, dash, client, "expecting the default dashboard to be version0")
+		require.Equal(t, dash, client, "expecting the default dashboard to be version1")
 
 		// With empty version, we should get the preferred version (v1alpha1)
 		client, _, err = clients.ForResource(schema.GroupVersionResource{
@@ -44,7 +44,7 @@ func TestIntegrationProvisioning_Client(t *testing.T) {
 
 		client, _, err = clients.ForKind(schema.GroupVersionKind{
 			Group:   "dashboard.grafana.app",
-			Version: "v0alpha1",
+			Version: "v1alpha1",
 			Kind:    "Dashboard",
 		})
 		require.NoError(t, err)
