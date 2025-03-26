@@ -22,10 +22,18 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: (val: string) => {
+      if (val === '$ws') {
+        return '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace';
+      }
       return val;
     },
+    getVariables: () => [
+      { name: 'var1', current: { value: 'value1' } },
+      { name: 'var2', current: { value: 'value2' } },
+    ],
   }),
 }));
+
 const getResourceGroups = jest.fn().mockResolvedValue([{ resourceGroupURI: 'rg', resourceGroupName: 'rg', count: 1 }]);
 const getResourceNames = jest.fn().mockResolvedValue([
   {

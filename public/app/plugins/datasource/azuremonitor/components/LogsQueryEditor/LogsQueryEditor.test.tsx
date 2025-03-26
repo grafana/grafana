@@ -19,6 +19,10 @@ jest.mock('@grafana/runtime', () => ({
       }
       return val;
     },
+    getVariables: () => [
+      { name: 'var1', current: { value: 'value1' } },
+      { name: 'var2', current: { value: 'value2' } },
+    ],
   }),
 }));
 

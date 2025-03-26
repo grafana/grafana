@@ -255,7 +255,7 @@ describe('Azure monitor datasource', () => {
     });
   });
 
-  it.skip('creates a dashboard that includes a template variable', () => {
+  it('creates a dashboard that includes a template variable', () => {
     e2e.flows.addDashboard({
       timeRange: {
         from: 'now-6h',

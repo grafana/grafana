@@ -44,7 +44,6 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
 
   const selectableOptions = columns.concat(safeTemplateVariables);
 
-  // ✅ Extracted: Handle function change
   const handleFunctionChange = (funcName?: string) => {
     onChange({
       ...aggregate,
@@ -59,7 +58,6 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
     });
   };
 
-  // ✅ Extracted: Handle percentile update
   const handlePercentileChange = (value?: string) => {
     setPercentileValue(value || '');
     onChange({
@@ -84,7 +82,6 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
     });
   };
 
-  // ✅ Extracted: Handle column change
   const handleColumnChange = (value?: string) => {
     setColumnValue(value || '');
     if (isPercentile) {

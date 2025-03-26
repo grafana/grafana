@@ -350,7 +350,7 @@ export function buildAndUpdateQuery({
       ? { orderBy: { expressions: orderBy, type: BuilderQueryEditorExpressionType.Order_by } }
       : {}),
     ...(columns !== undefined ? { columns: { columns, type: BuilderQueryEditorExpressionType.Property } } : {}),
-    ...(from !== undefined ? { from } : {}), // ✅ Apply `from`
+    ...(from !== undefined ? { from } : {}),
   };
 
   const aggregation = reduce?.map((agg) => `${agg.reduce?.name}(${agg.property?.name})`).join(', ');

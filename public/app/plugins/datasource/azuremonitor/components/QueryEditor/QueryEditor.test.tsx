@@ -23,12 +23,18 @@ jest.mock('@grafana/ui', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ___esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: (val: string) => {
+      if (val === '$ws') {
+        return '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace';
+      }
       return val;
     },
+    getVariables: () => [
+      { name: 'var1', current: { value: 'value1' } },
+      { name: 'var2', current: { value: 'value2' } },
+    ],
   }),
 }));
 

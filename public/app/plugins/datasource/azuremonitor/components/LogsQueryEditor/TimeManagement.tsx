@@ -114,42 +114,41 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
           disabledOptions={disabledTimePicker ? ['query'] : []}
         />
       </InlineField>
-      {query.azureLogAnalytics?.dashboardTime ||
-        (query.azureLogAnalytics?.mode === 'builder' && (
-          <InlineField
-            label="Time Column"
-            tooltip={
-              <span>
-                Specifies the time column used for filtering. Defaults to the first tables <code>timeSpan</code> column,
-                the first <code>datetime</code> column found or <code>TimeGenerated</code>.
-              </span>
+      {(query.azureLogAnalytics?.dashboardTime || query.azureLogAnalytics?.mode === 'builder') && (
+        <InlineField
+          label="Time Column"
+          tooltip={
+            <span>
+              Specifies the time column used for filtering. Defaults to the first tables <code>timeSpan</code> column,
+              the first <code>datetime</code> column found or <code>TimeGenerated</code>.
+            </span>
+          }
+        >
+          <Select
+            options={[
+              {
+                label: 'Default time columns',
+                options: defaultTimeColumns ?? [{ value: 'TimeGenerated', label: 'TimeGenerated' }],
+              },
+              {
+                label: 'Other time columns',
+                options: timeColumns ?? [],
+              },
+            ]}
+            onChange={handleTimeColumnChange}
+            value={
+              query.azureLogAnalytics?.timeColumn
+                ? query.azureLogAnalytics?.timeColumn
+                : defaultTimeColumns
+                  ? defaultTimeColumns[0]
+                  : timeColumns
+                    ? timeColumns[0]
+                    : { value: 'TimeGenerated', label: 'TimeGenerated' }
             }
-          >
-            <Select
-              options={[
-                {
-                  label: 'Default time columns',
-                  options: defaultTimeColumns ?? [{ value: 'TimeGenerated', label: 'TimeGenerated' }],
-                },
-                {
-                  label: 'Other time columns',
-                  options: timeColumns ?? [],
-                },
-              ]}
-              onChange={handleTimeColumnChange}
-              value={
-                query.azureLogAnalytics?.timeColumn
-                  ? query.azureLogAnalytics?.timeColumn
-                  : defaultTimeColumns
-                    ? defaultTimeColumns[0]
-                    : timeColumns
-                      ? timeColumns[0]
-                      : { value: 'TimeGenerated', label: 'TimeGenerated' }
-              }
-              allowCustomValue
-            />
-          </InlineField>
-        ))}
+            allowCustomValue
+          />
+        </InlineField>
+      )}
     </>
   );
 }
