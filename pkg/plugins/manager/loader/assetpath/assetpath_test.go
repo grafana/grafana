@@ -195,7 +195,7 @@ func TestService(t *testing.T) {
 				pluginInfo := NewPluginInfo(jsonData["one"], plugins.ClassExternal, pluginFS("one"), nil)
 				pluginInfo.pluginJSON.Locales = []string{"en-US", "pt-BR"}
 				locales, err := svc.GetLocales(pluginInfo)
-
+				require.NoError(t, err)
 				oneCDNURL, err := url.JoinPath(tc.cdnBaseURL, "/one/1.0.0/public/plugins/one")
 				require.NoError(t, err)
 				enURL, err := url.JoinPath(oneCDNURL, "locales/en-US/one.json")

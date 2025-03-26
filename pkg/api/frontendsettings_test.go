@@ -658,11 +658,12 @@ func TestHTTPServer_GetFrontendSettings_locales(t *testing.T) {
 			recorder := httptest.NewRecorder()
 
 			if test.signedInUser != nil {
-				hs.DataSourcesService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				_, err := hs.DataSourcesService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					Name:  "test-app",
 					Type:  "test-app",
 					OrgID: 1,
 				})
+				require.NoError(t, err)
 				m.UseMiddleware(func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						ctx := r.Context()

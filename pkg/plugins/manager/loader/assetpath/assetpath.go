@@ -163,7 +163,7 @@ func (s *Service) GetLocales(n PluginInfo) (map[string]string, error) {
 	// loop through all the locales specified in the plugin.json and add them to the list
 	locales := map[string]string{}
 	for _, locale := range n.pluginJSON.Locales {
-		locales[locale] = fmt.Sprintf("%s/%s/%s.json", pathToLocales, locale, string(n.pluginJSON.ID))
+		locales[locale] = fmt.Sprintf("%s/%s/%s.json", pathToLocales, locale, n.pluginJSON.ID)
 	}
 
 	return locales, nil
