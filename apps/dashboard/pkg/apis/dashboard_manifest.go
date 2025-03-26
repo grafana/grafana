@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 )
 
+var ()
+
 var appManifestData = app.ManifestData{
 	AppName: "dashboard",
 	Group:   "dashboard.grafana.app",

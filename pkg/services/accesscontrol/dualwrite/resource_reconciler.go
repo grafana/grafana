@@ -62,7 +62,7 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 				continue
 			}
 
-			// 4. For folder resource tuples we also need to compare the stored group_resources
+			// 4. For folder resource tuples we also need to compare the stored subresources
 			if zanzana.IsFolderResourceTuple(t) && t.String() != stored.String() {
 				deletes = append(deletes, &openfgav1.TupleKeyWithoutCondition{
 					User:     t.User,
