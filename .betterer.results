@@ -649,25 +649,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "packages/grafana-ui/src/components/Table/Filter.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Table/FilterPopup.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Table/FooterRow.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "packages/grafana-ui/src/components/Table/HeaderRow.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Table/Table.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
-    "packages/grafana-ui/src/components/Table/TableCell.tsx:5381": [
+    "packages/grafana-ui/src/components/Table/Cells/TableCell.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
@@ -675,6 +657,80 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/Table/TableCellInspector.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/Cells/HeaderCell.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/Cells/TableCellNG.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/Filter/Filter.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/Filter/FilterList.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/Filter/FilterPopup.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/Filter/utils.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/TableNG.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/utils.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/utils.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableRT/FilterPopup.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableRT/FooterRow.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableRT/HeaderRow.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableRT/Table.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "packages/grafana-ui/src/components/Table/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5070,8 +5126,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/search/page/components/SearchResultsTable.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/features/search/page/components/columns.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],

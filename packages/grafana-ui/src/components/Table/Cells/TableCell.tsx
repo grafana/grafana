@@ -2,8 +2,8 @@ import { Cell } from 'react-table';
 
 import { TimeRange, DataFrame, InterpolateFunction } from '@grafana/data';
 
-import { TableStyles } from './styles';
-import { GetActionsFunction, GrafanaTableColumn, TableFilterActionCallback, TableInspectCellCallback } from './types';
+import { TableStyles } from '../TableRT/styles';
+import { GetActionsFunction, GrafanaTableColumn, TableFilterActionCallback, TableInspectCellCallback } from '../types';
 
 export interface Props {
   cell: Cell;

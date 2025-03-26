@@ -3980,6 +3980,31 @@
     },
     {
       "metadata": {
+        "name": "tableNG",
+        "resourceVersion": "1742417098717",
+        "creationTimestamp": "2025-03-19T20:44:58Z",
+        "deletionTimestamp": "2025-03-25T17:19:06Z"
+      },
+      "spec": {
+        "description": "Allows access to the new react-data-grid based table component.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "tableNextGen",
+        "resourceVersion": "1742923146714",
+        "creationTimestamp": "2025-03-25T17:19:06Z"
+      },
+      "spec": {
+        "description": "Allows access to the new react-data-grid based table component.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "tableSharedCrosshair",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-12-13T09:33:14Z"

@@ -3,9 +3,9 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { Popover } from '..';
-import { useStyles2 } from '../../themes';
-import { Icon } from '../Icon/Icon';
+import { Popover } from '../..';
+import { useStyles2 } from '../../../themes';
+import { Icon } from '../../Icon/Icon';
 
 import { REGEX_OPERATOR } from './FilterList';
 import { FilterPopup } from './FilterPopup';
