@@ -20,7 +20,7 @@ describe('deserialization', () => {
             kind: 'RowsLayoutRow',
             spec: {
               title: 'Row 1',
-              collapsed: false,
+              collapse: false,
               layout: { kind: 'GridLayout', spec: { items: [] } },
             },
           },
@@ -42,7 +42,7 @@ describe('deserialization', () => {
             kind: 'RowsLayoutRow',
             spec: {
               title: 'Row 1',
-              collapsed: false,
+              collapse: false,
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
@@ -72,7 +72,7 @@ describe('deserialization', () => {
             kind: 'RowsLayoutRow',
             spec: {
               title: 'Row 1',
-              collapsed: false,
+              collapse: false,
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
@@ -88,7 +88,7 @@ describe('deserialization', () => {
             kind: 'RowsLayoutRow',
             spec: {
               title: 'Row 2',
-              collapsed: true,
+              collapse: true,
               layout: { kind: 'GridLayout', spec: { items: [] } },
             },
           },
@@ -101,8 +101,8 @@ describe('deserialization', () => {
     expect(deserialized.state.rows).toHaveLength(2);
     expect(deserialized.state.rows[0].state.layout).toBeInstanceOf(ResponsiveGridLayoutManager);
     expect(deserialized.state.rows[1].state.layout).toBeInstanceOf(DefaultGridLayoutManager);
-    expect(deserialized.state.rows[0].state.isCollapsed).toBe(false);
-    expect(deserialized.state.rows[1].state.isCollapsed).toBe(true);
+    expect(deserialized.state.rows[0].state.collapse).toBe(false);
+    expect(deserialized.state.rows[1].state.collapse).toBe(true);
   });
 
   it('should handle 0 rows', () => {
@@ -127,7 +127,7 @@ describe('deserialization', () => {
             kind: 'RowsLayoutRow',
             spec: {
               title: 'Repeated Row',
-              collapsed: false,
+              collapse: false,
               layout: { kind: 'GridLayout', spec: { items: [] } },
               repeat: { value: 'foo', mode: 'variable' },
             },
@@ -157,7 +157,7 @@ describe('serialization', () => {
       rows: [
         new RowItem({
           title: 'Row 1',
-          isCollapsed: false,
+          collapse: false,
           layout: new DefaultGridLayoutManager({
             grid: new SceneGridLayout({
               children: [],
@@ -194,7 +194,7 @@ describe('serialization', () => {
       rows: [
         new RowItem({
           title: 'Repeated Row',
-          isCollapsed: false,
+          collapse: false,
           layout: new DefaultGridLayoutManager({
             grid: new SceneGridLayout({
               children: [],
@@ -233,7 +233,7 @@ describe('serialization', () => {
       rows: [
         new RowItem({
           title: 'Row 1',
-          isCollapsed: false,
+          collapse: false,
           layout: new ResponsiveGridLayoutManager({
             columnWidth: 'standard',
             rowHeight: 'standard',
@@ -243,7 +243,7 @@ describe('serialization', () => {
         }),
         new RowItem({
           title: 'Row 2',
-          isCollapsed: true,
+          collapse: true,
           layout: new DefaultGridLayoutManager({
             grid: new SceneGridLayout({
               children: [],
