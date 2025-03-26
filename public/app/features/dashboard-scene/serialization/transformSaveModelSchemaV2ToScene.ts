@@ -131,7 +131,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     showSettings: Boolean(dto.access.canEdit),
     canMakeEditable: canSave && !isDashboardEditable,
     hasUnsavedFolderChange: false,
-    version: parseInt(metadata.resourceVersion, 10),
+    version: metadata.generation,
     k8s: metadata,
   };
 
@@ -160,7 +160,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       tags: dashboard.tags,
       title: dashboard.title,
       uid: metadata.name,
-      version: parseInt(metadata.resourceVersion, 10),
+      version: metadata.generation,
       body: layoutManager,
       $timeRange: new SceneTimeRange({
         from: dashboard.timeSettings.from,
