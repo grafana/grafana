@@ -6,6 +6,7 @@ replace (
 	github.com/grafana/grafana => ../../../..
 	github.com/grafana/grafana/pkg/apimachinery => ../../../apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../../apiserver
+	github.com/grafana/grafana/pkg/infra/log => ../../../infra/log
 )
 
 require (
@@ -33,6 +34,8 @@ require (
 	google.golang.org/protobuf v1.36.5
 	k8s.io/apimachinery v0.32.3
 )
+
+require github.com/grafana/grafana/pkg/infra/log v0.0.0-00010101000000-000000000000
 
 require (
 	cel.dev/expr v0.19.1 // indirect
@@ -213,7 +216,7 @@ require (
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/tjhop/slog-gokit v0.1.3 // indirect
+	github.com/tjhop/slog-gokit v0.1.4 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
