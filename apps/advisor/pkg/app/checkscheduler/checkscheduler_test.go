@@ -41,6 +41,24 @@ func TestRunner_Run(t *testing.T) {
 		assert.ErrorAs(t, err, &context.Canceled)
 	})
 }
+
+func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
+	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			return nil, errors.New("list error")
+		},
+	}
+
+	runner := &Runner{
+		client: mockClient,
+		log:    log.NewNopLogger(),
+	}
+
+	lastCreated, err := runner.checkLastCreated(context.Background())
+	assert.Error(t, err)
+	assert.True(t, lastCreated.IsZero())
+}
+
 func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
 	mockCheckService := &MockCheckService{
 		checks: []checks.Check{
@@ -232,10 +250,22 @@ func Test_getMaxHistory(t *testing.T) {
 	})
 }
 
-func Test_markOrphanedChecksAsErrored(t *testing.T) {
+func Test_markUnprocessedChecksAsErrored(t *testing.T) {
+	checkList := &advisorv0alpha1.CheckList{
+		Items: []advisorv0alpha1.Check{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "check-1",
+				},
+			},
+		},
+	}
 	patchOperation := resource.PatchOperation{}
 	identifier := resource.Identifier{}
 	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			return checkList, nil
+		},
 		patchFunc: func(ctx context.Context, id resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
 			patchOperation = patch.Operations[0]
 			identifier = id
@@ -246,15 +276,7 @@ func Test_markOrphanedChecksAsErrored(t *testing.T) {
 		client: mockClient,
 		log:    log.NewNopLogger(),
 	}
-	runner.markOrphanedChecksAsErrored(context.Background(), &advisorv0alpha1.CheckList{
-		Items: []advisorv0alpha1.Check{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "check-1",
-				},
-			},
-		},
-	})
+	runner.markUnprocessedChecksAsErrored(context.Background())
 	assert.Equal(t, "check-1", identifier.Name)
 	assert.Equal(t, "/metadata/annotations", patchOperation.Path)
 	expectedAnnotations := map[string]string{
