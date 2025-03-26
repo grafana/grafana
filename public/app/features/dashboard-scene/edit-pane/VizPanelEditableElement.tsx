@@ -111,6 +111,7 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
         }}
         icon="sliders-v-alt"
         fullWidth
+        size="sm"
         tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
       >
         <Trans i18nKey="dashboard.new-panel.configure-button">Configure panel</Trans>
