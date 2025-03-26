@@ -201,7 +201,7 @@ func (statement *Statement) In(column string, args ...any) *Statement {
 	return statement
 }
 
-// In generate "Where column IN (?) " statement
+// OrIn generate "Where column IN (?) " statement
 func (statement *Statement) OrIn(column string, args ...any) *Statement {
 	in := builder.In(statement.Engine.Quote(column), args...)
 	statement.cond = statement.cond.Or(in)

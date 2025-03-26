@@ -7,15 +7,16 @@ import (
 )
 
 type FakeUserService struct {
-	ExpectedUser             *user.User
-	ExpectedSignedInUser     *user.SignedInUser
-	ExpectedError            error
-	ExpectedSetUsingOrgError error
-	ExpectedSearchUsers      user.SearchUserQueryResult
-	ExpectedListUsers        user.ListUserResult
-	ExpectedUserProfileDTO   *user.UserProfileDTO
-	ExpectedUserProfileDTOs  []*user.UserProfileDTO
-	ExpectedUsageStats       map[string]any
+	ExpectedUser               *user.User
+	ExpectedSignedInUser       *user.SignedInUser
+	ExpectedError              error
+	ExpectedSetUsingOrgError   error
+	ExpectedSearchUsers        user.SearchUserQueryResult
+	ExpectedListUsers          user.ListUserResult
+	ExpectedListUsersByIdOrUid []*user.User
+	ExpectedUserProfileDTO     *user.UserProfileDTO
+	ExpectedUserProfileDTOs    []*user.UserProfileDTO
+	ExpectedUsageStats         map[string]any
 
 	UpdateFn            func(ctx context.Context, cmd *user.UpdateUserCommand) error
 	GetSignedInUserFn   func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
@@ -57,6 +58,10 @@ func (f *FakeUserService) GetByID(ctx context.Context, query *user.GetUserByIDQu
 
 func (f *FakeUserService) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserService) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
+	return f.ExpectedListUsersByIdOrUid, f.ExpectedError
 }
 
 func (f *FakeUserService) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {

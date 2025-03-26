@@ -25,6 +25,7 @@ type store interface {
 	Insert(context.Context, *user.User) (int64, error)
 	GetByID(context.Context, int64) (*user.User, error)
 	GetByUID(ctx context.Context, uid string) (*user.User, error)
+	ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error)
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 	Delete(context.Context, int64) error
