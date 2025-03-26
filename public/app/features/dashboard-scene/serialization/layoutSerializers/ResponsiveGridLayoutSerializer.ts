@@ -1,23 +1,32 @@
-import { SceneCSSGridLayout } from '@grafana/scenes';
 import { DashboardV2Spec, ResponsiveGridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
+import {
+  AUTO_GRID_DEFAULT_COLUMN_WIDTH,
+  AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT,
+  AUTO_GRID_DEFAULT_ROW_HEIGHT,
+  AutoGridColumnWidth,
+  AutoGridRowHeight,
+  getAutoRowsTemplate,
+  getTemplateColumnsTemplate,
+  ResponsiveGridLayoutManager,
+} from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 
-import { buildVizPanel } from './utils';
+import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './utils';
 
 export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: ResponsiveGridLayoutManager): DashboardV2Spec['layout'] {
     return {
       kind: 'ResponsiveGridLayout',
       spec: {
-        col:
-          layoutManager.state.layout.state.templateColumns?.toString() ??
-          ResponsiveGridLayoutManager.defaultCSS.templateColumns,
-        row: layoutManager.state.layout.state.autoRows?.toString() ?? ResponsiveGridLayoutManager.defaultCSS.autoRows,
+        maxColumnCount: layoutManager.state.maxColumnCount,
+        fillScreen: layoutManager.state.fillScreen,
+        ...serializeAutoGridColumnWidth(layoutManager.state.columnWidth),
+        ...serializeAutoGridRowHeight(layoutManager.state.rowHeight),
         items: layoutManager.state.layout.state.children.map((child) => {
           if (!(child instanceof ResponsiveGridItem)) {
             throw new Error('Expected ResponsiveGridItem');
@@ -34,6 +43,12 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
               },
             },
           };
+
+          const conditionalRenderingRootGroup = child.state.conditionalRendering?.serialize();
+          // Only serialize the conditional rendering if it has items
+          if (conditionalRenderingRootGroup?.spec.items.length) {
+            layoutItem.spec.conditionalRendering = conditionalRenderingRootGroup;
+          }
 
           if (child.state.variableName) {
             layoutItem.spec.repeat = {
@@ -58,22 +73,44 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
       if (!panel) {
         throw new Error(`Panel with uid ${item.spec.element.name} not found in the dashboard elements`);
       }
-      if (panel.kind !== 'Panel') {
-        throw new Error(`Unsupported element kind: ${panel.kind}`);
-      }
       return new ResponsiveGridItem({
         key: getGridItemKeyForPanelId(panel.spec.id),
-        body: buildVizPanel(panel),
+        body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel) : buildVizPanel(panel),
         variableName: item.spec.repeat?.value,
+        conditionalRendering: getConditionalRendering(item),
       });
     });
 
     return new ResponsiveGridLayoutManager({
-      layout: new SceneCSSGridLayout({
-        templateColumns: layout.spec.col,
-        autoRows: layout.spec.row,
+      maxColumnCount: layout.spec.maxColumnCount,
+      columnWidth: layout.spec.columnWidthMode === 'custom' ? layout.spec.columnWidth : layout.spec.columnWidthMode,
+      rowHeight: layout.spec.rowHeightMode === 'custom' ? layout.spec.rowHeight : layout.spec.rowHeightMode,
+      fillScreen: layout.spec.fillScreen,
+      layout: new ResponsiveGridLayout({
+        templateColumns: getTemplateColumnsTemplate(
+          layout.spec.maxColumnCount ?? AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT,
+          layout.spec.columnWidth ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH
+        ),
+        autoRows: getAutoRowsTemplate(
+          layout.spec.rowHeight ?? AUTO_GRID_DEFAULT_ROW_HEIGHT,
+          layout.spec.fillScreen ?? false
+        ),
         children,
       }),
     });
   }
+}
+
+function serializeAutoGridColumnWidth(columnWidth: AutoGridColumnWidth) {
+  return {
+    columnWidthMode: typeof columnWidth === 'number' ? 'custom' : columnWidth,
+    columnWidth: typeof columnWidth === 'number' ? columnWidth : undefined,
+  };
+}
+
+function serializeAutoGridRowHeight(rowHeight: AutoGridRowHeight) {
+  return {
+    rowHeightMode: typeof rowHeight === 'number' ? 'custom' : rowHeight,
+    rowHeight: typeof rowHeight === 'number' ? rowHeight : undefined,
+  };
 }

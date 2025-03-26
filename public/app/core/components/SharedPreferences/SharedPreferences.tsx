@@ -120,6 +120,11 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     if (confirmationResult) {
       const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar } = this.state;
+      reportInteraction('grafana_preferences_save_button_clicked', {
+        preferenceType: this.props.preferenceType,
+        theme,
+        language,
+      });
       await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar });
       window.location.reload();
     }
@@ -178,7 +183,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             description={
               config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
                 <Trans i18nKey="shared-preferences.fields.theme-description">
-                  Enjoying the limited edition themes? Tell us what you'd like to see{' '}
+                  Enjoying the experimental themes? Tell us what you'd like to see{' '}
                   <TextLink
                     variant="bodySmall"
                     external

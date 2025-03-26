@@ -68,12 +68,12 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
 
    For assistance, consult the following table for additional guidance about certain fields:
 
-   | Field                                 | Description                                                                                                                                                                                                                                   |
-   | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | **Allow signup**                      | If enabled, you can create new users through the SAML login. If disabled, then only existing Grafana users can log in with SAML.                                                                                                              |
-   | **Auto login**                        | If enabled, Grafana will attempt to automatically log in with SAML skipping the login screen.                                                                                                                                                 |
-   | **Single logout**                     | The SAML single logout feature enables users to log out from all applications associated with the current IdP session established using SAML SSO. For more information, refer to [SAML single logout documentation]](../saml/#single-logout). |
-   | **Identity provider initiated login** | Enables users to log in to Grafana directly from the SAML IdP. For more information, refer to [IdP initiated login documentation](../saml/#idp-initiated-single-sign-on-sso).                                                                 |
+   | Field                                 | Description                                                                                                                                                                                                                                  |
+   | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | **Allow signup**                      | If enabled, you can create new users through the SAML login. If disabled, then only existing Grafana users can log in with SAML.                                                                                                             |
+   | **Auto login**                        | If enabled, Grafana will attempt to automatically log in with SAML skipping the login screen.                                                                                                                                                |
+   | **Single logout**                     | The SAML single logout feature enables users to log out from all applications associated with the current IdP session established using SAML SSO. For more information, refer to [SAML single logout documentation](../saml/#single-logout). |
+   | **Identity provider initiated login** | Enables users to log in to Grafana directly from the SAML IdP. For more information, refer to [IdP initiated login documentation](../saml/#idp-initiated-single-sign-on-sso).                                                                |
 
 1. Click **Next: Sign requests**.
 
@@ -131,8 +131,8 @@ http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
 
 ![image](https://github.com/user-attachments/assets/23910ab8-20ec-4dfd-8ef6-7dbaec51ac90)
 
-You also need to configure the **Groups attribute** field if you want to use group synchronization. Group sync allows you to automatically map users to Grafana teams or role-based access control roles based on their SAML group membership.
-To learn more about how to configure group synchronization, refer to [Configure team sync](../../configure-team-sync/) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
+You also need to configure the **Groups attribute** field if you want to use team sync. Team sync automatically maps users to Grafana teams based on their SAML group membership.
+Learn more about [team sync](../../configure-team-sync) and [configuring team sync for SAML](../saml#configure-team-sync).
 
 1. If you want to automatically assign users' roles based on their SAML roles, complete the **Role mapping** section.
 

@@ -1,7 +1,8 @@
-import { SceneCSSGridLayout, SceneGridLayout } from '@grafana/scenes';
+import { SceneGridLayout } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
 import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
@@ -45,8 +46,9 @@ describe('deserialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  row: 'minmax(min-content, max-content)',
-                  col: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  columnWidthMode: 'standard',
+                  rowHeightMode: 'standard',
+                  maxColumnCount: 4,
                   items: [],
                 },
               },
@@ -74,8 +76,9 @@ describe('deserialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  row: 'minmax(min-content, max-content)',
-                  col: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  columnWidthMode: 'standard',
+                  rowHeightMode: 'standard',
+                  maxColumnCount: 4,
                   items: [],
                 },
               },
@@ -232,11 +235,10 @@ describe('serialization', () => {
           title: 'Row 1',
           isCollapsed: false,
           layout: new ResponsiveGridLayoutManager({
-            layout: new SceneCSSGridLayout({
-              children: [],
-              templateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-              autoRows: 'minmax(min-content, max-content)',
-            }),
+            columnWidth: 'standard',
+            rowHeight: 'standard',
+            maxColumnCount: 4,
+            layout: new ResponsiveGridLayout({}),
           }),
         }),
         new RowItem({
@@ -268,8 +270,12 @@ describe('serialization', () => {
               layout: {
                 kind: 'ResponsiveGridLayout',
                 spec: {
-                  row: 'minmax(min-content, max-content)',
-                  col: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  columnWidth: undefined,
+                  rowHeight: undefined,
+                  fillScreen: false,
+                  rowHeightMode: 'standard',
+                  columnWidthMode: 'standard',
+                  maxColumnCount: 4,
                   items: [],
                 },
               },

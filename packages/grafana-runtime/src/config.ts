@@ -103,11 +103,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
   passwordHint = '';
   loginError: string | undefined = undefined;
   viewersCanEdit = false;
-  editorsCanAdmin = false;
   disableSanitizeHtml = false;
   trustedTypesDefaultPolicyEnabled = false;
   cspReportOnlyEnabled = false;
   liveEnabled = true;
+  liveMessageSizeLimit = 65536;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
@@ -120,7 +120,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rendererDefaultImageWidth = 1000;
   rendererDefaultImageHeight = 500;
   rendererDefaultImageScale = 1;
-  secretsManagerPluginEnabled = false;
   supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
@@ -161,6 +160,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     minInterval: '',
     alertStateHistoryBackend: undefined,
     alertStateHistoryPrimary: undefined,
+    recordingRulesEnabled: false,
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
@@ -199,7 +199,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
-  cloudMigrationFeedbackURL = '';
   cloudMigrationPollIntervalMs = 2000;
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset = '1h';
@@ -229,7 +228,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
         env: 'production',
       },
       viewersCanEdit: false,
-      editorsCanAdmin: false,
       disableSanitizeHtml: false,
     };
 

@@ -13,7 +13,7 @@ import {
   getFieldSeriesColor,
   outerJoinDataFrames,
 } from '@grafana/data';
-import { decoupleHideFromState } from '@grafana/data/src/field/fieldState';
+import { decoupleHideFromState } from '@grafana/data/internal';
 import {
   AxisColorMode,
   AxisPlacement,
@@ -33,8 +33,7 @@ import {
   UPlotConfigBuilder,
   measureText,
 } from '@grafana/ui';
-import { AxisProps, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
+import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
@@ -248,7 +247,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       // use opacity from first numeric field
       let opacityField = frame.fields.find((f) => f.type === FieldType.number)!;
 
-      fillOpacity = (opacityField.config.custom.fillOpacity ?? 100) / 100;
+      fillOpacity = (opacityField?.config?.custom?.fillOpacity ?? 100) / 100;
 
       getColor = (seriesIdx: number, valueIdx: number) => {
         let field = frame.fields[seriesIdx];

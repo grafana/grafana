@@ -2715,6 +2715,9 @@
           "isPaused": {
             "type": "boolean"
           },
+          "keepFiringFor": {
+            "$ref": "#/components/schemas/Duration"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
@@ -2903,6 +2906,9 @@
           },
           "metric": {
             "type": "string"
+          },
+          "targetDatasourceUid": {
+            "type": "string"
           }
         },
         "title": "Record is the provisioned export of models.Record.",
@@ -2971,6 +2977,10 @@
           },
           "health": {
             "type": "string"
+          },
+          "keepFiringFor": {
+            "format": "double",
+            "type": "number"
           },
           "labels": {
             "$ref": "#/components/schemas/Labels"
@@ -6151,6 +6161,9 @@
             ],
             "type": "string"
           },
+          "guid": {
+            "type": "string"
+          },
           "intervalSeconds": {
             "format": "int64",
             "type": "integer"
@@ -7809,6 +7822,9 @@
           "isExternallySynced": {
             "type": "boolean"
           },
+          "isProvisioned": {
+            "type": "boolean"
+          },
           "lastSeenAt": {
             "format": "date-time",
             "type": "string"
@@ -8744,7 +8760,20 @@
           "Interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "Labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "Limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "Name": {
+            "type": "string"
+          },
+          "QueryOffset": {
             "type": "string"
           },
           "Rules": {
@@ -8848,6 +8877,10 @@
           "isPaused": {
             "example": false,
             "type": "boolean"
+          },
+          "keep_firing_for": {
+            "format": "duration",
+            "type": "string"
           },
           "labels": {
             "additionalProperties": {
@@ -9474,6 +9507,11 @@
           "metric": {
             "description": "Name of the recorded metric.",
             "example": "grafana_alerts_ratio",
+            "type": "string"
+          },
+          "target_datasource_uid": {
+            "description": "Which data source should be used to write the output of the recording rule, specified by UID.",
+            "example": "my-prom",
             "type": "string"
           }
         },
@@ -11270,6 +11308,9 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          },
+          "userUID": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -11510,6 +11551,15 @@
         "properties": {
           "name": {
             "description": "Name of the associated template definition for this result.",
+            "type": "string"
+          },
+          "scope": {
+            "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+            "enum": [
+              ".",
+              ".Alerts",
+              ".Alert"
+            ],
             "type": "string"
           },
           "text": {
@@ -12384,6 +12434,9 @@
           "isGrafanaAdminExternallySynced": {
             "type": "boolean"
           },
+          "isProvisioned": {
+            "type": "boolean"
+          },
           "login": {
             "type": "string"
           },
@@ -12429,6 +12482,9 @@
             "type": "boolean"
           },
           "isDisabled": {
+            "type": "boolean"
+          },
+          "isProvisioned": {
             "type": "boolean"
           },
           "lastSeenAt": {
@@ -12910,7 +12966,6 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -13034,6 +13089,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },

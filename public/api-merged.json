@@ -12654,6 +12654,9 @@
         "isPaused": {
           "type": "boolean"
         },
+        "keepFiringFor": {
+          "$ref": "#/definitions/Duration"
+        },
         "labels": {
           "type": "object",
           "additionalProperties": {
@@ -12842,6 +12845,9 @@
         },
         "metric": {
           "type": "string"
+        },
+        "targetDatasourceUid": {
+          "type": "string"
         }
       }
     },
@@ -12920,6 +12926,10 @@
         },
         "health": {
           "type": "string"
+        },
+        "keepFiringFor": {
+          "type": "number",
+          "format": "double"
         },
         "labels": {
           "$ref": "#/definitions/Labels"
@@ -16089,6 +16099,9 @@
             "Error"
           ]
         },
+        "guid": {
+          "type": "string"
+        },
         "intervalSeconds": {
           "type": "integer",
           "format": "int64"
@@ -17747,6 +17760,9 @@
         "isExternallySynced": {
           "type": "boolean"
         },
+        "isProvisioned": {
+          "type": "boolean"
+        },
         "lastSeenAt": {
           "type": "string",
           "format": "date-time"
@@ -18682,7 +18698,20 @@
         "Interval": {
           "$ref": "#/definitions/Duration"
         },
+        "Labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "Name": {
+          "type": "string"
+        },
+        "QueryOffset": {
           "type": "string"
         },
         "Rules": {
@@ -18797,6 +18826,10 @@
         "isPaused": {
           "type": "boolean",
           "example": false
+        },
+        "keep_firing_for": {
+          "type": "string",
+          "format": "duration"
         },
         "labels": {
           "type": "object",
@@ -19417,6 +19450,11 @@
           "description": "Name of the recorded metric.",
           "type": "string",
           "example": "grafana_alerts_ratio"
+        },
+        "target_datasource_uid": {
+          "description": "Which data source should be used to write the output of the recording rule, specified by UID.",
+          "type": "string",
+          "example": "my-prom"
         }
       }
     },
@@ -21209,6 +21247,9 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        },
+        "userUID": {
+          "type": "string"
         }
       }
     },
@@ -21450,6 +21491,15 @@
         "name": {
           "description": "Name of the associated template definition for this result.",
           "type": "string"
+        },
+        "scope": {
+          "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+          "type": "string",
+          "enum": [
+            ".",
+            ".Alerts",
+            ".Alert"
+          ]
         },
         "text": {
           "description": "Interpolated value of the template.",
@@ -22323,6 +22373,9 @@
         "isGrafanaAdminExternallySynced": {
           "type": "boolean"
         },
+        "isProvisioned": {
+          "type": "boolean"
+        },
         "login": {
           "type": "string"
         },
@@ -22368,6 +22421,9 @@
           "type": "boolean"
         },
         "isDisabled": {
+          "type": "boolean"
+        },
+        "isProvisioned": {
           "type": "boolean"
         },
         "lastSeenAt": {
@@ -22849,7 +22905,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -22974,6 +23029,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",
