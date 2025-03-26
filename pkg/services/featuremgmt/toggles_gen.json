@@ -165,7 +165,8 @@
       "metadata": {
         "name": "alertingAlertmanagerExtraDedupStage",
         "resourceVersion": "1738251165994",
-        "creationTimestamp": "2025-01-30T15:32:45Z"
+        "creationTimestamp": "2025-01-30T15:32:45Z",
+        "deletionTimestamp": "2025-03-25T16:57:43Z"
       },
       "spec": {
         "description": "enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching",
@@ -180,7 +181,8 @@
       "metadata": {
         "name": "alertingAlertmanagerExtraDedupStageStopPipeline",
         "resourceVersion": "1738251165994",
-        "creationTimestamp": "2025-01-30T15:32:45Z"
+        "creationTimestamp": "2025-01-30T15:32:45Z",
+        "deletionTimestamp": "2025-03-25T16:57:43Z"
       },
       "spec": {
         "description": "works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning",
