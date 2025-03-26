@@ -3,11 +3,11 @@ import { forwardRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, ScopedVars } from '@grafana/data';
-import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
+import { sanitize, sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { DashboardLink } from '@grafana/schema';
-import { Dropdown, Icon, Button, Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { ButtonLinkProps, LinkButton } from '@grafana/ui/src/components/Button';
+import { Dropdown, Icon, LinkButton, Button, Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { ButtonLinkProps } from '@grafana/ui/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItem } from 'app/features/search/types';
 

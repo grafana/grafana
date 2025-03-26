@@ -19,6 +19,13 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       },
     },
 
+    '.dragging-active': {
+      '*': {
+        cursor: 'move',
+        userSelect: 'none',
+      },
+    },
+
     [theme.breakpoints.down('md')]: {
       '.react-grid-layout': {
         height: 'unset !important',
@@ -69,9 +76,34 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     '.dashboard-selected-element': {
-      outline: `2px dashed ${theme.colors.primary.border}`,
+      outline: `1px dashed ${theme.colors.primary.border}`,
       outlineOffset: '0px',
       borderRadius: theme.shape.radius.default,
+    },
+
+    '.dashboard-selectable-element': {
+      '&:hover': {
+        outline: `1px dashed ${theme.colors.border.strong}`,
+        outlineOffset: '0px',
+        borderRadius: theme.shape.radius.default,
+        backgroundColor: theme.colors.emphasize(theme.colors.background.canvas, 0.08),
+      },
+    },
+
+    '.dashboard-canvas-add-button': {
+      opacity: 0,
+
+      '&:hover': {
+        opacity: 1,
+      },
+    },
+
+    '.dashboard-visible-hidden-element': {
+      opacity: 0.6,
+
+      '&:hover': {
+        opacity: 1,
+      },
     },
   });
 }

@@ -9,6 +9,7 @@ import {
 } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
 import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export interface SpanBarOptions {
   type?: string;
@@ -32,7 +33,12 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   return (
     <div className={css({ width: '100%' })}>
       <InlineFieldRow className={styles.row}>
-        <InlineField label="Label" labelWidth={26} tooltip="Default: duration" grow>
+        <InlineField
+          label={t('explore.span-bar-settings.label-label', 'Label')}
+          labelWidth={26}
+          tooltip={t('explore.span-bar-settings.tooltip-default-duration', 'Default: duration')}
+          grow
+        >
           <Select
             inputId="label"
             options={selectOptions}
@@ -43,7 +49,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
                 type: v?.value ?? '',
               });
             }}
-            placeholder="Duration"
+            placeholder={t('explore.span-bar-settings.placeholder-duration', 'Duration')}
             isClearable
             aria-label={'select-label-name'}
             width={40}
@@ -53,13 +59,13 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
       {options.jsonData.spanBar?.type === TAG && (
         <InlineFieldRow className={styles.row}>
           <InlineField
-            label="Tag key"
+            label={t('explore.span-bar-settings.label-tag-key', 'Tag key')}
             labelWidth={26}
             tooltip="Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
           >
             <Input
               type="text"
-              placeholder="Enter tag key"
+              placeholder={t('explore.span-bar-settings.placeholder-enter-tag-key', 'Enter tag key')}
               onChange={(v) =>
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'spanBar', {
                   ...options.jsonData.spanBar,
@@ -82,7 +88,7 @@ export const SpanBarSection = ({ options, onOptionsChange }: DataSourcePluginOpt
 
   return (
     <ConfigSubSection
-      title="Span bar"
+      title={t('explore.span-bar-section.title-span-bar', 'Span bar')}
       description={
         <ConfigDescriptionLink
           description="Add additional info next to the service and operation on a span bar row in the trace view."

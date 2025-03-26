@@ -3,6 +3,7 @@ import { PropsWithChildren, useMemo, useState } from 'react';
 import { VariableRefresh } from '@grafana/data';
 import { Field, RadioButtonGroup, useTheme2 } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import { t } from 'app/core/internationalization';
 
 interface Props {
   onChange: (option: VariableRefresh) => void;
@@ -32,7 +33,14 @@ export function QueryVariableRefreshSelect({ onChange, refresh, testId }: PropsW
   );
 
   return (
-    <Field label="Refresh" description="When to update the values of this variable" data-testid={testId}>
+    <Field
+      label={t('variables.query-variable-refresh-select.label-refresh', 'Refresh')}
+      description={t(
+        'variables.query-variable-refresh-select.description-update-values-variable',
+        'When to update the values of this variable'
+      )}
+      data-testid={testId}
+    >
       <RadioButtonGroup
         options={REFRESH_OPTIONS}
         onChange={onChange}
