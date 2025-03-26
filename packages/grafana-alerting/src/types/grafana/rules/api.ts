@@ -90,14 +90,6 @@ export type AlertStateWithReason = AlertStateWithoutReason | `${AlertStateWithou
 
 // StateReason
 // https://github.com/grafana/grafana/blob/4d6f9900ecc683796512ce2bfd49fbc92a78d66d/pkg/services/ngalert/models/alert_rule.go#L165-L173
-enum StateReason {
-  StateReasonMissingSeries = 'MissingSeries',
-  StateReasonNoData = 'NoData',
-  StateReasonError = 'Error',
-  StateReasonPaused = 'Paused',
-  StateReasonUpdated = 'Updated',
-  StateReasonRuleDeleted = 'RuleDeleted',
-  StateReasonKeepLast = 'KeepLast',
-}
+type StateReason = 'MissingSeries' | 'NoData' | 'Error' | 'Paused' | 'Updated' | 'RuleDeleted' | 'KeepLast';
 
 type Totals<Key extends string> = Partial<Record<Key, number>>;
