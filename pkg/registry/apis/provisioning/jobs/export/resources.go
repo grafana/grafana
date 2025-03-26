@@ -48,7 +48,7 @@ func (r *exportJob) exportResourceKindFromAPIServer(ctx context.Context, kind sc
 		}
 
 		for _, item := range list.Items {
-			r.progress.Record(ctx, r.write(ctx, &item))
+			r.progress.Record(ctx, r.exportResource(ctx, &item))
 			if err := r.progress.TooManyErrors(); err != nil {
 				return err
 			}
@@ -63,7 +63,7 @@ func (r *exportJob) exportResourceKindFromAPIServer(ctx context.Context, kind sc
 	return nil
 }
 
-func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
+func (r *exportJob) exportResource(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
 	gvk := obj.GroupVersionKind()
 	result := jobs.JobResourceResult{
 		Name:     obj.GetName(),
