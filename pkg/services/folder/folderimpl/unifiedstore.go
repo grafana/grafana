@@ -308,7 +308,14 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 // The full path UIDs of B is "uid1/uid2".
 // The full path UIDs of A is "uid1".
 func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
-	out, err := ss.k8sclient.List(ctx, q.OrgID, v1.ListOptions{})
+	opts := v1.ListOptions{}
+	if q.WithFullpath || q.WithFullpathUIDs {
+		// only supported in modes 0-2, to keep the alerting queries from causing tons of get folder requests
+		// to retrieve the parent for all folders in grafana
+		opts.LabelSelector = utils.AnnoKeyFullpath + "=true"
+	}
+
+	out, err := ss.k8sclient.List(ctx, q.OrgID, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +327,8 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		if f == nil {
 			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
 		}
-		if q.WithFullpath || q.WithFullpathUIDs {
+
+		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
 			parents, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: q.OrgID})
 			if err != nil {
 				return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)

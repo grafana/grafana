@@ -158,6 +158,9 @@ type ProvisionedAlertRule struct {
 	// required: true
 	// swagger:strfmt duration
 	For model.Duration `json:"for"`
+	// required: false
+	// swagger:strfmt duration
+	KeepFiringFor model.Duration `json:"keep_firing_for"`
 	// example: {"runbook_url": "https://supercoolrunbook.com/page/13"}
 	Annotations map[string]string `json:"annotations,omitempty"`
 	// example: {"team": "sre-team-1"}
@@ -170,6 +173,8 @@ type ProvisionedAlertRule struct {
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings"`
 	//example: {"metric":"grafana_alerts_ratio", "from":"A"}
 	Record *Record `json:"record"`
+	// example: 2
+	MissingSeriesEvalsToResolve *int `json:"missingSeriesEvalsToResolve,omitempty"`
 }
 
 // swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
@@ -259,24 +264,27 @@ type AlertRuleGroupExport struct {
 
 // AlertRuleExport is the provisioned file export of models.AlertRule.
 type AlertRuleExport struct {
-	UID          string               `json:"uid,omitempty" yaml:"uid,omitempty"`
-	Title        string               `json:"title" yaml:"title" hcl:"name"`
-	Condition    *string              `json:"condition,omitempty" yaml:"condition,omitempty" hcl:"condition"`
-	Data         []AlertQueryExport   `json:"data" yaml:"data" hcl:"data,block"`
-	DashboardUID *string              `json:"dashboardUid,omitempty" yaml:"dashboardUid,omitempty"`
-	PanelID      *int64               `json:"panelId,omitempty" yaml:"panelId,omitempty"`
-	NoDataState  *NoDataState         `json:"noDataState,omitempty" yaml:"noDataState,omitempty" hcl:"no_data_state"`
-	ExecErrState *ExecutionErrorState `json:"execErrState,omitempty" yaml:"execErrState,omitempty" hcl:"exec_err_state"`
-	For          model.Duration       `json:"for,omitempty" yaml:"for,omitempty"`
-	// ForString is used to:
+	UID           string               `json:"uid,omitempty" yaml:"uid,omitempty"`
+	Title         string               `json:"title" yaml:"title" hcl:"name"`
+	Condition     *string              `json:"condition,omitempty" yaml:"condition,omitempty" hcl:"condition"`
+	Data          []AlertQueryExport   `json:"data" yaml:"data" hcl:"data,block"`
+	DashboardUID  *string              `json:"dashboardUid,omitempty" yaml:"dashboardUid,omitempty"`
+	PanelID       *int64               `json:"panelId,omitempty" yaml:"panelId,omitempty"`
+	NoDataState   *NoDataState         `json:"noDataState,omitempty" yaml:"noDataState,omitempty" hcl:"no_data_state"`
+	ExecErrState  *ExecutionErrorState `json:"execErrState,omitempty" yaml:"execErrState,omitempty" hcl:"exec_err_state"`
+	For           model.Duration       `json:"for,omitempty" yaml:"for,omitempty"`
+	KeepFiringFor model.Duration       `json:"keepFiringFor,omitempty" yaml:"keepFiringFor,omitempty" hcl:"keep_firing_for"`
+	// ForString and KeepFiringForString are used to:
 	// - Only export the for field for HCL if it is non-zero.
 	// - Format the Prometheus model.Duration type properly for HCL.
-	ForString            *string                              `json:"-" yaml:"-" hcl:"for"`
-	Annotations          *map[string]string                   `json:"annotations,omitempty" yaml:"annotations,omitempty" hcl:"annotations"`
-	Labels               *map[string]string                   `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
-	IsPaused             bool                                 `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
-	NotificationSettings *AlertRuleNotificationSettingsExport `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty" hcl:"notification_settings,block"`
-	Record               *AlertRuleRecordExport               `json:"record,omitempty" yaml:"record,omitempty" hcl:"record,block"`
+	ForString                   *string                              `json:"-" yaml:"-" hcl:"for"`
+	KeepFiringForString         *string                              `json:"-" yaml:"-" hcl:"keep_firing_for"`
+	Annotations                 *map[string]string                   `json:"annotations,omitempty" yaml:"annotations,omitempty" hcl:"annotations"`
+	Labels                      *map[string]string                   `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
+	IsPaused                    bool                                 `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
+	NotificationSettings        *AlertRuleNotificationSettingsExport `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty" hcl:"notification_settings,block"`
+	Record                      *AlertRuleRecordExport               `json:"record,omitempty" yaml:"record,omitempty" hcl:"record,block"`
+	MissingSeriesEvalsToResolve *int                                 `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty" hcl:"missing_series_evals_to_resolve"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.

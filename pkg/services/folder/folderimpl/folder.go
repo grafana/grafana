@@ -18,7 +18,7 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
@@ -365,6 +365,9 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		f.Fullpath = f.Title   // set full path to the folder title (unescaped)
 		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
+
+	f.CreatedBy = dashFolder.CreatedBy
+	f.UpdatedBy = dashFolder.UpdatedBy
 
 	return f, err
 }

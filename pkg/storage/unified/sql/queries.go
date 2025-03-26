@@ -39,11 +39,11 @@ var (
 	sqlResourceUpdateRV          = mustTemplate("resource_update_rv.sql")
 	sqlResourceHistoryRead       = mustTemplate("resource_history_read.sql")
 	sqlResourceHistoryUpdateRV   = mustTemplate("resource_history_update_rv.sql")
-	sqlResoureceHistoryUpdateUid = mustTemplate("resource_history_update_uid.sql")
 	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
 	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
 	sqlResourceHistoryDelete     = mustTemplate("resource_history_delete.sql")
+	sqlResourceHistoryPrune      = mustTemplate("resource_history_prune.sql")
 	sqlResourceInsertFromHistory = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
@@ -243,26 +243,42 @@ func (r *sqlResourceHistoryDeleteRequest) Validate() error {
 
 type sqlGetHistoryRequest struct {
 	sqltemplate.SQLTemplate
-	Key     *resource.ResourceKey
-	Trash   bool  // only deleted items
-	StartRV int64 // from NextPageToken
+	Key           *resource.ResourceKey
+	Trash         bool  // only deleted items
+	StartRV       int64 // from NextPageToken
+	MinRV         int64 // minimum resource version for NotOlderThan
+	ExactRV       int64 // exact resource version for Exact
+	SortAscending bool  // if true, sort by resource_version ASC, otherwise DESC
 }
 
 func (r sqlGetHistoryRequest) Validate() error {
 	return nil // TODO
 }
 
-// update resource history
-
-type sqlResourceHistoryUpdateRequest struct {
+// prune resource history
+type sqlPruneHistoryRequest struct {
 	sqltemplate.SQLTemplate
-	WriteEvent resource.WriteEvent
-	OldUID     string
-	NewUID     string
+	Key          *resource.ResourceKey
+	HistoryLimit int64
 }
 
-func (r sqlResourceHistoryUpdateRequest) Validate() error {
-	return nil // TODO
+func (r *sqlPruneHistoryRequest) Validate() error {
+	if r.HistoryLimit <= 0 {
+		return fmt.Errorf("history limit must be greater than zero")
+	}
+	if r.Key == nil {
+		return fmt.Errorf("missing key")
+	}
+	if r.Key.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Key.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Key.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	return nil
 }
 
 type sqlResourceBlobInsertRequest struct {

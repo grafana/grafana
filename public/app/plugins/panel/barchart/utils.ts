@@ -13,7 +13,7 @@ import {
   getFieldSeriesColor,
   outerJoinDataFrames,
 } from '@grafana/data';
-import { decoupleHideFromState } from '@grafana/data/src/field/fieldState';
+import { decoupleHideFromState } from '@grafana/data/internal';
 import {
   AxisColorMode,
   AxisPlacement,
@@ -247,7 +247,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       // use opacity from first numeric field
       let opacityField = frame.fields.find((f) => f.type === FieldType.number)!;
 
-      fillOpacity = (opacityField.config.custom.fillOpacity ?? 100) / 100;
+      fillOpacity = (opacityField?.config?.custom?.fillOpacity ?? 100) / 100;
 
       getColor = (seriesIdx: number, valueIdx: number) => {
         let field = frame.fields[seriesIdx];

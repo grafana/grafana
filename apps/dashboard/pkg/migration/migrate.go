@@ -12,7 +12,7 @@ func Migrate(dash map[string]interface{}, targetVersion int) error {
 	// If the schema version is older than the minimum version, with migration support,
 	// we don't migrate the dashboard.
 	if inputVersion < schemaversion.MIN_VERSION {
-		return schemaversion.NewMigrationError("schema version is too old", inputVersion, schemaversion.MIN_VERSION)
+		return schemaversion.NewMinimumVersionError(inputVersion)
 	}
 
 	for nextVersion := inputVersion + 1; nextVersion <= targetVersion; nextVersion++ {

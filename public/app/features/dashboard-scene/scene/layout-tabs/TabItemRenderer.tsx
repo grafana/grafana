@@ -13,19 +13,23 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { tabs, currentTabIndex } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
+  const mySlug = model.getSlug();
+  const urlKey = parentLayout.getUrlKey();
   const myIndex = tabs.findIndex((tab) => tab === model);
   const isActive = myIndex === currentTabIndex;
   const location = useLocation();
-  const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { tab: myIndex }));
+  const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
 
   return (
     <Tab
+      truncate
       className={cx(
         isSelected && 'dashboard-selected-element',
         isSelectable && !isSelected && 'dashboard-selectable-element'
       )}
       active={isActive}
       role="presentation"
+      title={titleInterpolated}
       href={href}
       aria-selected={isActive}
       onPointerDown={onSelect}
