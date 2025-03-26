@@ -414,6 +414,7 @@ var testSQLStoreSetup = false
 var testSQLStore *SQLStore
 var testSQLStoreMutex sync.Mutex
 var testSQLStoreCleanup []func()
+var testSQLStoreSkipTestsOnBackend string // When not empty and matches DB type, test is skipped.
 
 // InitTestDBOpt contains options for InitTestDB.
 type InitTestDBOpt struct {
@@ -456,6 +457,12 @@ func SetupTestDB() {
 		os.Exit(1)
 	}
 	testSQLStoreSetup = true
+}
+
+func SkipTestsOnSpanner() {
+	testSQLStoreMutex.Lock()
+	defer testSQLStoreMutex.Unlock()
+	testSQLStoreSkipTestsOnBackend = "spanner"
 }
 
 func CleanupTestDB() {
@@ -541,6 +548,10 @@ func TestMain(m *testing.M) {
 
 	if testSQLStore == nil {
 		dbType := sqlutil.GetTestDBType()
+
+		if testSQLStoreSkipTestsOnBackend != "" && testSQLStoreSkipTestsOnBackend == dbType {
+			t.Skipf("test skipped when using DB type %s", testSQLStoreSkipTestsOnBackend)
+		}
 
 		// set test db config
 		cfg := setting.NewCfg()

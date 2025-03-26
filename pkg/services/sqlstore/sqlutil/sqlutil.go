@@ -17,6 +17,7 @@ type ITestDB interface {
 	Logf(format string, args ...any)
 	Log(args ...any)
 	Cleanup(func())
+	Skipf(format string, args ...any)
 }
 
 type TestDB struct {
