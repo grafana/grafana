@@ -38,6 +38,17 @@ func NewDateHistogram() *DateHistogram {
 	}
 }
 
+type BucketAggregationType string
+
+const (
+	BucketAggregationTypeTerms         BucketAggregationType = "terms"
+	BucketAggregationTypeFilters       BucketAggregationType = "filters"
+	BucketAggregationTypeGeohashGrid   BucketAggregationType = "geohash_grid"
+	BucketAggregationTypeDateHistogram BucketAggregationType = "date_histogram"
+	BucketAggregationTypeHistogram     BucketAggregationType = "histogram"
+	BucketAggregationTypeNested        BucketAggregationType = "nested"
+)
+
 type Histogram struct {
 	Field    *string                     `json:"field,omitempty"`
 	Id       string                      `json:"id"`
@@ -143,6 +154,41 @@ func NewCount() *Count {
 		Type: MetricAggregationTypeCount,
 	}
 }
+
+type MetricAggregationType string
+
+const (
+	MetricAggregationTypeCount         MetricAggregationType = "count"
+	MetricAggregationTypeAvg           MetricAggregationType = "avg"
+	MetricAggregationTypeSum           MetricAggregationType = "sum"
+	MetricAggregationTypeMin           MetricAggregationType = "min"
+	MetricAggregationTypeMax           MetricAggregationType = "max"
+	MetricAggregationTypeExtendedStats MetricAggregationType = "extended_stats"
+	MetricAggregationTypePercentiles   MetricAggregationType = "percentiles"
+	MetricAggregationTypeCardinality   MetricAggregationType = "cardinality"
+	MetricAggregationTypeRawDocument   MetricAggregationType = "raw_document"
+	MetricAggregationTypeRawData       MetricAggregationType = "raw_data"
+	MetricAggregationTypeLogs          MetricAggregationType = "logs"
+	MetricAggregationTypeRate          MetricAggregationType = "rate"
+	MetricAggregationTypeTopMetrics    MetricAggregationType = "top_metrics"
+	MetricAggregationTypeMovingAvg     MetricAggregationType = "moving_avg"
+	MetricAggregationTypeMovingFn      MetricAggregationType = "moving_fn"
+	MetricAggregationTypeDerivative    MetricAggregationType = "derivative"
+	MetricAggregationTypeSerialDiff    MetricAggregationType = "serial_diff"
+	MetricAggregationTypeCumulativeSum MetricAggregationType = "cumulative_sum"
+	MetricAggregationTypeBucketScript  MetricAggregationType = "bucket_script"
+)
+
+type PipelineMetricAggregationType string
+
+const (
+	PipelineMetricAggregationTypeMovingAvg     PipelineMetricAggregationType = "moving_avg"
+	PipelineMetricAggregationTypeMovingFn      PipelineMetricAggregationType = "moving_fn"
+	PipelineMetricAggregationTypeDerivative    PipelineMetricAggregationType = "derivative"
+	PipelineMetricAggregationTypeSerialDiff    PipelineMetricAggregationType = "serial_diff"
+	PipelineMetricAggregationTypeCumulativeSum PipelineMetricAggregationType = "cumulative_sum"
+	PipelineMetricAggregationTypeBucketScript  PipelineMetricAggregationType = "bucket_script"
+)
 
 type PipelineMetricAggregation = MovingAverageOrDerivativeOrCumulativeSumOrBucketScript
 
@@ -448,17 +494,6 @@ func NewTopMetrics() *TopMetrics {
 	}
 }
 
-type BucketAggregationType string
-
-const (
-	BucketAggregationTypeTerms         BucketAggregationType = "terms"
-	BucketAggregationTypeFilters       BucketAggregationType = "filters"
-	BucketAggregationTypeGeohashGrid   BucketAggregationType = "geohash_grid"
-	BucketAggregationTypeDateHistogram BucketAggregationType = "date_histogram"
-	BucketAggregationTypeHistogram     BucketAggregationType = "histogram"
-	BucketAggregationTypeNested        BucketAggregationType = "nested"
-)
-
 type BaseBucketAggregation struct {
 	Id       string                `json:"id"`
 	Type     BucketAggregationType `json:"type"`
@@ -535,41 +570,6 @@ type GeoHashGridSettings struct {
 func NewGeoHashGridSettings() *GeoHashGridSettings {
 	return &GeoHashGridSettings{}
 }
-
-type PipelineMetricAggregationType string
-
-const (
-	PipelineMetricAggregationTypeMovingAvg     PipelineMetricAggregationType = "moving_avg"
-	PipelineMetricAggregationTypeMovingFn      PipelineMetricAggregationType = "moving_fn"
-	PipelineMetricAggregationTypeDerivative    PipelineMetricAggregationType = "derivative"
-	PipelineMetricAggregationTypeSerialDiff    PipelineMetricAggregationType = "serial_diff"
-	PipelineMetricAggregationTypeCumulativeSum PipelineMetricAggregationType = "cumulative_sum"
-	PipelineMetricAggregationTypeBucketScript  PipelineMetricAggregationType = "bucket_script"
-)
-
-type MetricAggregationType string
-
-const (
-	MetricAggregationTypeCount         MetricAggregationType = "count"
-	MetricAggregationTypeAvg           MetricAggregationType = "avg"
-	MetricAggregationTypeSum           MetricAggregationType = "sum"
-	MetricAggregationTypeMin           MetricAggregationType = "min"
-	MetricAggregationTypeMax           MetricAggregationType = "max"
-	MetricAggregationTypeExtendedStats MetricAggregationType = "extended_stats"
-	MetricAggregationTypePercentiles   MetricAggregationType = "percentiles"
-	MetricAggregationTypeCardinality   MetricAggregationType = "cardinality"
-	MetricAggregationTypeRawDocument   MetricAggregationType = "raw_document"
-	MetricAggregationTypeRawData       MetricAggregationType = "raw_data"
-	MetricAggregationTypeLogs          MetricAggregationType = "logs"
-	MetricAggregationTypeRate          MetricAggregationType = "rate"
-	MetricAggregationTypeTopMetrics    MetricAggregationType = "top_metrics"
-	MetricAggregationTypeMovingAvg     MetricAggregationType = "moving_avg"
-	MetricAggregationTypeMovingFn      MetricAggregationType = "moving_fn"
-	MetricAggregationTypeDerivative    MetricAggregationType = "derivative"
-	MetricAggregationTypeSerialDiff    MetricAggregationType = "serial_diff"
-	MetricAggregationTypeCumulativeSum MetricAggregationType = "cumulative_sum"
-	MetricAggregationTypeBucketScript  MetricAggregationType = "bucket_script"
-)
 
 type BaseMetricAggregation struct {
 	Type MetricAggregationType `json:"type"`
@@ -1116,7 +1116,6 @@ func (resource DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested) Ma
 	if resource.Nested != nil {
 		return json.Marshal(resource.Nested)
 	}
-
 	return nil, fmt.Errorf("no value for disjunction of refs")
 }
 
@@ -1277,7 +1276,6 @@ func (resource CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSe
 	if resource.TopMetrics != nil {
 		return json.Marshal(resource.TopMetrics)
 	}
-
 	return nil, fmt.Errorf("no value for disjunction of refs")
 }
 
@@ -1482,7 +1480,6 @@ func (resource MovingAverageOrDerivativeOrCumulativeSumOrBucketScript) MarshalJS
 	if resource.BucketScript != nil {
 		return json.Marshal(resource.BucketScript)
 	}
-
 	return nil, fmt.Errorf("no value for disjunction of refs")
 }
 
@@ -1633,7 +1630,6 @@ func (resource BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRaw
 	if resource.TopMetrics != nil {
 		return json.Marshal(resource.TopMetrics)
 	}
-
 	return nil, fmt.Errorf("no value for disjunction of refs")
 }
 

@@ -154,6 +154,19 @@ gen-cuev2: ## Do all CUE code generation
 	@echo "generate code from .cue files (v2)"
 	@$(MAKE) -C ./kindsv2 all
 
+# TODO (@radiohead): uncomment once we want to start generating code for all apps.
+# For now, we want to use an explicit list of apps to generate code for.
+#
+# APPS_DIRS=$(shell find ./apps -mindepth 1 -maxdepth 1 -type d | sort)
+APPS_DIRS := ./apps/dashboard
+
+.PHONY: gen-apps
+gen-apps: ## Generate code for Grafana App SDK apps
+	for dir in $(APPS_DIRS); do \
+		$(MAKE) -C $$dir generate; \
+	done
+	./hack/update-codegen.sh
+
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
