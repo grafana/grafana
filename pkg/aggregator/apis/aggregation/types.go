@@ -17,16 +17,38 @@ type DataPlaneService struct {
 }
 
 type DataPlaneServiceSpec struct {
-	PluginID   string
-	PluginType PluginType
-	Group      string
-	Version    string
+	Group   string
+	Version string
 	// Services is a list of services that the proxied service provides.
 	// +optional
 	// +listType=map
 	// +listMapKey=type
 	Services []Service
+	// Backend is the backend to use for the proxied service.
+	Backend Backend
 }
+type Backend struct {
+	// Type is the type of backend to use.
+	Type BackendType
+	// PluginID is the ID of the plugin to use.
+	// +optional
+	PluginID string
+	// PluginType is the type of plugin to use.
+	// +optional
+	PluginType PluginType
+	// BaseURL is the URL prefix to use with the HTTP reverse proxy backend.
+	// +optional
+	BaseURL string
+}
+
+// BackendType defines the type of backend to use.
+// +enum
+type BackendType string
+
+const (
+	BackendTypePlugin BackendType = "plugin"
+	BackendTypeHTTP   BackendType = "http"
+)
 
 // Service defines the type of service the proxied service provides.
 type Service struct {

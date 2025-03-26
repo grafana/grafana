@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/plugin/admission"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/util"
 	grafanasemconv "github.com/grafana/grafana/pkg/semconv"
@@ -13,7 +14,8 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func (h *PluginHandler) AdmissionMutationHandler() http.Handler {
+func (h *PluginHandler) AdmissionMutationHandler(b aggregationv0alpha1.Backend) http.Handler {
+	pluginID := b.PluginID
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		span := tracing.SpanFromContext(ctx)
@@ -26,9 +28,9 @@ func (h *PluginHandler) AdmissionMutationHandler() http.Handler {
 		}
 
 		span.AddEvent("GetPluginContext",
-			grafanasemconv.GrafanaPluginId(h.dataplaneService.Spec.PluginID),
+			grafanasemconv.GrafanaPluginId(pluginID),
 		)
-		pluginContext, err := h.pluginContextProvider.GetPluginContext(ctx, h.dataplaneService.Spec.PluginID, "")
+		pluginContext, err := h.pluginContextProvider.GetPluginContext(ctx, pluginID, "")
 		if err != nil {
 			responder.Error(w, r, fmt.Errorf("unable to get plugin context: %w", err))
 			return
@@ -72,7 +74,8 @@ func (h *PluginHandler) AdmissionMutationHandler() http.Handler {
 	})
 }
 
-func (h *PluginHandler) AdmissionValidationHandler() http.Handler {
+func (h *PluginHandler) AdmissionValidationHandler(b aggregationv0alpha1.Backend) http.Handler {
+	pluginID := b.PluginID
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		span := tracing.SpanFromContext(ctx)
@@ -85,9 +88,9 @@ func (h *PluginHandler) AdmissionValidationHandler() http.Handler {
 		}
 
 		span.AddEvent("GetPluginContext",
-			grafanasemconv.GrafanaPluginId(h.dataplaneService.Spec.PluginID),
+			grafanasemconv.GrafanaPluginId(pluginID),
 		)
-		pluginContext, err := h.pluginContextProvider.GetPluginContext(ctx, h.dataplaneService.Spec.PluginID, "")
+		pluginContext, err := h.pluginContextProvider.GetPluginContext(ctx, pluginID, "")
 		if err != nil {
 			responder.Error(w, r, fmt.Errorf("unable to get plugin context: %w", err))
 			return
