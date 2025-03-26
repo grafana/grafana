@@ -738,6 +738,14 @@
       "pause": {
         "label": ""
       },
+      "simple-routing": {
+        "alertmanager-label": "",
+        "optional-settings": {
+          "description": "",
+          "help-info1": "",
+          "help-info2": ""
+        }
+      },
       "threshold": {
         "recovery": {
           "stop-alerting-above": "",
@@ -878,8 +886,38 @@
     }
   },
   "api-keys": {
+    "api-keys-action-bar": {
+      "placeholder-search-keys": ""
+    },
+    "api-keys-page-unconnected": {
+      "label-include-expired-keys": ""
+    },
+    "api-keys-table": {
+      "aria-label-delete-api-key": "",
+      "expires": "",
+      "last-used-at": "",
+      "migrate-to-service-account": "",
+      "name": "",
+      "role": ""
+    },
     "empty-state": {
       "message": ""
+    },
+    "migrate-to-service-accounts-card": {
+      "docs-link": {
+        "about-migration": ""
+      },
+      "migrate-all-service-accounts": "",
+      "migration-box-desc": {
+        "migrating": ""
+      },
+      "title-no-api-keys-found": "",
+      "title-switch-service-accounts": ""
+    },
+    "migration-summary": {
+      "close": "",
+      "migration-successful": "",
+      "title-migration-summary": ""
     }
   },
   "app-chrome": {
@@ -891,6 +929,37 @@
   "app-notification": {
     "item": {
       "trace-id": ""
+    }
+  },
+  "auth-config": {
+    "auth-config-page-unconnected": {
+      "auth-settings": ""
+    },
+    "auth-drawer-unconnected": {
+      "advanced-auth": "",
+      "enable-insecure-email-lookup": "",
+      "reset": "",
+      "title-auth-settings": ""
+    },
+    "configure-auth-cta": {
+      "authentication-configuration-created-moment": "",
+      "configuration-required": "",
+      "refer-documentation-configure-authentication": ""
+    },
+    "provider-config-form": {
+      "additional-actions-menu": {
+        "label-reset-to-default-values": ""
+      },
+      "discard": "",
+      "label-enabled": "",
+      "reset-configuration": "",
+      "title-more-actions": "",
+      "title-reset": "",
+      "tooltip-more-actions": ""
+    },
+    "server-discovery-modal": {
+      "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "",
+      "title-open-id-connect-discovery-url": ""
     }
   },
   "bookmarks-page": {
@@ -1079,7 +1148,16 @@
       "request-data-source": "",
       "roadmap": ""
     },
+    "connections-redirect-notice": {
+      "aria-label-link-to-connections": "",
+      "go-to-connections": ""
+    },
+    "no-access-modal": {
+      "connection-contact-grafana-admin": "",
+      "okay": ""
+    },
     "search": {
+      "aria-label-search-all": "",
       "placeholder": ""
     }
   },
@@ -1468,22 +1546,27 @@
       },
       "name": "",
       "options": {
-        "columns": "",
-        "fixed": "",
-        "min": "",
-        "one-column": "",
-        "rows": "",
-        "three-columns": "",
-        "two-columns": ""
+        "custom-min-height": {
+          "clear": ""
+        },
+        "custom-min-width": {
+          "clear": ""
+        },
+        "height-fill": "",
+        "max-columns": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-error": "",
+        "min-width": "",
+        "min-width-custom": "",
+        "min-width-custom-clear": "",
+        "min-width-error": ""
       }
     },
     "rows-layout": {
       "description": "",
+      "header-hidden-tooltip": "",
       "name": "",
-      "options": {
-        "height-expand": "",
-        "height-min": ""
-      },
       "row": {
         "collapse": "",
         "expand": "",
@@ -1511,7 +1594,7 @@
           }
         },
         "row": {
-          "height": "",
+          "fill-screen": "",
           "hide-header": "",
           "title": ""
         },
@@ -1890,11 +1973,96 @@
     }
   },
   "explore": {
+    "accordian-references": {
+      "references": ""
+    },
     "add-to-dashboard": "",
+    "basic-extensions": {
+      "aria-label-add": ""
+    },
+    "confirm-navigation-modal": {
+      "cancel": "",
+      "open": "",
+      "open-in-new-tab": ""
+    },
+    "content-outline-item-button": {
+      "body": {
+        "aria-label-content-outline-item-collapse-button": ""
+      }
+    },
+    "correlation-editor-mode-bar": {
+      "exit-correlation-editor": "",
+      "save": ""
+    },
+    "correlation-helper": {
+      "add-transformation": "",
+      "aria-label-delete-transformation": "",
+      "aria-label-edit-transformation": "",
+      "label-description": "",
+      "label-label": "",
+      "title-correlation-details": ""
+    },
+    "correlation-transformation-add-modal": {
+      "aria-label-field": "",
+      "aria-label-type": "",
+      "cancel": "",
+      "label-expression": "",
+      "label-field": "",
+      "label-type": "",
+      "label-variable-name": ""
+    },
+    "correlation-unsaved-changes-modal": {
+      "cancel": "",
+      "continue-without-saving": "",
+      "save-correlation": ""
+    },
+    "draggable-manager-demo": {
+      "click-horizontally-somewhere-colored-below": "",
+      "draggable-manager-demo": "",
+      "dragging-a-divider": "",
+      "dragging-a-sub-region": ""
+    },
     "drilldownInfo": {
       "action": "",
       "description": "",
       "title": ""
+    },
+    "explore": {
+      "title-flame-graph": "",
+      "title-graph": "",
+      "title-logs": "",
+      "title-logs-sample": "",
+      "title-node-graph": "",
+      "title-queries": "",
+      "title-raw-prometheus": "",
+      "title-table": "",
+      "title-traces": ""
+    },
+    "explore-run-query-button": {
+      "run-button": {
+        "aria-label-run-query-options": ""
+      }
+    },
+    "explore-toolbar": {
+      "outline": "",
+      "tooltip-content-outline": ""
+    },
+    "get-matches-metadata": {
+      "matches": ""
+    },
+    "legacy-create-span-link-factory": {
+      "title-explore-metrics-for-this-span": "",
+      "title-explore-split": "",
+      "title-session-for-this-span": ""
+    },
+    "live-logs": {
+      "clear-logs": "",
+      "exit-live-mode": ""
+    },
+    "live-tail-button": {
+      "pause-the-live-stream": "",
+      "start-live-stream-your-logs": "",
+      "stop-and-exit-the-live-stream": ""
     },
     "logs": {
       "logs-volume": {
@@ -1906,6 +2074,63 @@
       "no-logs-found": "",
       "scan-for-older-logs": "",
       "stop-scan": ""
+    },
+    "logs-container": {
+      "label-logs": ""
+    },
+    "logs-meta-row": {
+      "download": "",
+      "show-original-line": ""
+    },
+    "logs-sample-panel": {
+      "logs-sample-is-loading": "",
+      "no-logs-sample-data": "",
+      "open-in-split-view-button": {
+        "open-logs-in-split-view": ""
+      },
+      "title-failed-sample-query": ""
+    },
+    "logs-table-empty-fields": {
+      "no-fields": ""
+    },
+    "logs-table-multi-select": {
+      "fields": ""
+    },
+    "logs-table-nav-field": {
+      "aria-label-drag-and-drop-icon": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
+    "logs-table-wrap": {
+      "label-select-query": "",
+      "tooltip-select-query-visualize-table": ""
+    },
+    "logs-volume-panel-list": {
+      "label-reload-log-volume": "",
+      "loading": "",
+      "title-failed-volume-query": "",
+      "title-no-logs-volume-available": "",
+      "title-showing-partial-data": "",
+      "title-unable-to-show-log-volume": ""
+    },
+    "make-datasource-setup": {
+      "aria-label-query": ""
+    },
+    "next": "",
+    "no-data-source-call-to-action": {
+      "cta-element": {
+        "add-data-source": ""
+      },
+      "footer": {
+        "learn-more": "",
+        "pro-tip-define-sources-through-configuration-files": ""
+      }
+    },
+    "prev": "",
+    "queryless-apps-extensions": {
+      "aria-label-go-queryless": ""
+    },
+    "raw-list-item": {
+      "tooltip-copy-to-clipboard": ""
     },
     "rich-history": {
       "close-tooltip": "",
@@ -2013,6 +2238,12 @@
       "run-query-button": "",
       "switch-datasource-button": ""
     },
+    "search-bar-input": {
+      "placeholder-find": "",
+      "suffix": {
+        "tooltip-clear-input": ""
+      }
+    },
     "secondary-actions": {
       "add-from-query-library": "",
       "query-add-button": "",
@@ -2022,10 +2253,65 @@
       "query-inspector-button": "",
       "query-inspector-button-aria-label": ""
     },
+    "span-bar-section": {
+      "title-span-bar": ""
+    },
+    "span-bar-settings": {
+      "label-label": "",
+      "label-tag-key": "",
+      "placeholder-duration": "",
+      "placeholder-enter-tag-key": "",
+      "tooltip-default-duration": ""
+    },
+    "span-detail": {
+      "label-resource-attributes": "",
+      "label-span-attributes": "",
+      "label-stack-trace": "",
+      "warnings": ""
+    },
+    "span-filters": {
+      "aria-label-select-max-span-operator": "",
+      "aria-label-select-min-span-operator": "",
+      "aria-label-select-service-name": "",
+      "aria-label-select-service-name-operator": "",
+      "aria-label-select-span-name": "",
+      "aria-label-select-span-name-operator": "",
+      "label-duration": "",
+      "label-service-name": "",
+      "label-span-name": "",
+      "label-tags": "",
+      "placeholder-all-service-names": "",
+      "placeholder-all-span-names": ""
+    },
+    "span-filters-tags": {
+      "aria-label-add-tag": "",
+      "aria-label-input-tag-value": "",
+      "aria-label-remove-tag": "",
+      "aria-label-select-tag-key": "",
+      "aria-label-select-tag-operator": "",
+      "aria-label-select-tag-value": "",
+      "placeholder-select-tag": "",
+      "placeholder-select-value": "",
+      "placeholder-tag-value": "",
+      "tooltip-add-tag": "",
+      "tooltip-remove-tag": ""
+    },
+    "span-flame-graph": {
+      "flame-graph": ""
+    },
+    "supplementary-result-error": {
+      "show-details": ""
+    },
     "table": {
       "no-data": "",
       "title": "",
       "title-with-name": ""
+    },
+    "timeline-collapser": {
+      "tooltip-collapse": "",
+      "tooltip-collapse-all": "",
+      "tooltip-expand": "",
+      "tooltip-expand-all": ""
     },
     "toolbar": {
       "add-to-extensions": "",
@@ -2047,6 +2333,32 @@
       "split-title": "",
       "split-tooltip": "",
       "split-widen": ""
+    },
+    "trace-page-actions": {
+      "give-feedback": "",
+      "title-share-thoughts-about-tracing-grafana": ""
+    },
+    "trace-view": {
+      "no-data": ""
+    },
+    "trace-view-container": {
+      "title-trace": ""
+    },
+    "unthemed-logs": {
+      "label-deduplication": "",
+      "label-display-results": "",
+      "label-prettify-json": "",
+      "label-time": "",
+      "label-unique-labels": "",
+      "label-wrap-lines": "",
+      "title-feedback": "",
+      "title-logs-volume": ""
+    },
+    "unthemed-viewing-layer": {
+      "reset-selection": ""
+    },
+    "unthemed-virtualized-trace-view": {
+      "title-scroll-to-top": ""
     }
   },
   "explore-metrics": {
@@ -2102,6 +2414,9 @@
     "continue-button": "",
     "description": "",
     "discard-button": ""
+  },
+  "frontendtests": {
+    "test-key": ""
   },
   "gen-ai": {
     "apply-suggestion": "",
@@ -4048,6 +4363,73 @@
       "title": ""
     }
   },
+  "serviceaccounts": {
+    "create-token-modal": {
+      "close": "",
+      "copy-clipboard": "",
+      "copy-to-clipboard-and-close": "",
+      "description-name-to-easily-identify-the-token": "",
+      "generate-token": "",
+      "label-display-name": "",
+      "label-expiration": "",
+      "label-expiration-date": "",
+      "label-token": ""
+    },
+    "get-actions-cell": {
+      "add-token": "",
+      "disable": "",
+      "enable": ""
+    },
+    "get-role-cell": {
+      "aria-label-role": ""
+    },
+    "service-account-list-item": {
+      "add-token": "",
+      "aria-label-role": "",
+      "disable": "",
+      "enable": "",
+      "title-tokens": ""
+    },
+    "service-account-page-unconnected": {
+      "add-service-account-token": "",
+      "delete-service-account": "",
+      "disable-service-account": "",
+      "enable-service-account": "",
+      "title-delete-service-account": "",
+      "title-disable-service-account": "",
+      "tokens": ""
+    },
+    "service-account-permissions": {
+      "title-permissions": ""
+    },
+    "service-account-profile": {
+      "information": "",
+      "label-creation-date": "",
+      "label-id": "",
+      "label-name": "",
+      "label-numerical-identifier": "",
+      "label-roles": "",
+      "used-by": ""
+    },
+    "service-account-role-row": {
+      "aria-label-role": ""
+    },
+    "service-account-tokens-table": {
+      "created": "",
+      "expires": "",
+      "last-used-at": "",
+      "name": ""
+    },
+    "service-accounts-list-page-unconnected": {
+      "add-service-account": "",
+      "placeholder-search-service-account-by-name": "",
+      "title-delete-service-account": "",
+      "title-disable-service-account": ""
+    },
+    "token-expiration": {
+      "never": ""
+    }
+  },
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
@@ -4428,11 +4810,34 @@
     }
   },
   "trails": {
+    "add-to-filters-graph-action": {
+      "add-to-filters": ""
+    },
     "bookmarks": {
       "or-view-bookmarks": ""
     },
+    "breakdown-search-scene": {
+      "placeholder-search-for-value": ""
+    },
+    "build-normal-layout": {
+      "text-loading": ""
+    },
     "card": {
       "date-created": ""
+    },
+    "create-bookmark-saved-notification": {
+      "view-bookmarks": ""
+    },
+    "data-trail-card": {
+      "deleteButton-tooltip-remove-bookmark": ""
+    },
+    "data-trail-history": {
+      "history": ""
+    },
+    "data-trail-settings": {
+      "render-popover": {
+        "settings": ""
+      }
     },
     "home": {
       "learn-more": "",
@@ -4440,11 +4845,31 @@
       "start-your-metrics-exploration": "",
       "subtitle": ""
     },
+    "label-breakdown-scene": {
+      "label-search": "",
+      "label-view": ""
+    },
+    "metric-action-bar": {
+      "open": "",
+      "select-new-metric": "",
+      "tooltip-open-in-explore": "",
+      "tooltip-remove-existing-metric-choose": ""
+    },
     "metric-select": {
       "filter-by": "",
       "native-histogram": "",
       "new-badge": "",
       "otel-switch": ""
+    },
+    "metric-select-scene": {
+      "label-otel-experience": "",
+      "placeholder-search-metrics": "",
+      "title-unable-to-retrieve-all-metric-names": "",
+      "unable-to-retrieve-metric-names": ""
+    },
+    "metrics-header": {
+      "explore-prometheuscompatible-metrics-without-writing-query": "",
+      "metrics": ""
     },
     "native-histogram-banner": {
       "ch-heatmap": "",
@@ -4466,12 +4891,245 @@
     "settings": {
       "always-keep-selected-metric-graph-in-view": "",
       "show-previews-of-metric-graphs": ""
+    },
+    "sort-by-scene": {
+      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {
     "empty": {
       "add-transformation-body": "",
       "add-transformation-header": ""
+    }
+  },
+  "transformers": {
+    "axis-editor": {
+      "placeholder-auto": ""
+    },
+    "basic-matcher-editor": {
+      "placeholder-value-or-variable": ""
+    },
+    "binary-operation-options-editor": {
+      "label-operation": "",
+      "placeholder-field-or-number": "",
+      "placeholder-fields-or-number": ""
+    },
+    "calculate-field-transformer-editor": {
+      "label-alias": "",
+      "label-mode": "",
+      "label-replace-all-fields": ""
+    },
+    "concatenate-transformer-editor": {
+      "label-label": "",
+      "label-name": "",
+      "placeholder-frame": ""
+    },
+    "config-from-query-transformer-editor": {
+      "label-apply-to": "",
+      "label-apply-to-options": "",
+      "label-config-query": ""
+    },
+    "convert-field-type-transformer-editor": {
+      "label-date-format": "",
+      "label-input-format": "",
+      "label-join-with": "",
+      "label-set-timezone": "",
+      "tooltip-explicit-separator-joining-array-values": "",
+      "tooltip-specify-the-output-format": "",
+      "tooltip-timezone-manually": ""
+    },
+    "cumulative-options-editor": {
+      "label-calculation": "",
+      "label-field": "",
+      "placeholder-field": ""
+    },
+    "draggable-field-name": {
+      "title-drag-and-drop-to-reorder": ""
+    },
+    "enum-mapping-editor": {
+      "add-enum-value": "",
+      "generate-enum-values-from-data": ""
+    },
+    "enum-mapping-row": {
+      "remove-enum-row-aria-label-delete-enum-row": "",
+      "remove-enum-row-tooltip-delete": ""
+    },
+    "extract-fields-transformer-editor": {
+      "label-delimiter": "",
+      "placeholder-select-delimiter": ""
+    },
+    "field-to-config-mapping-editor": {
+      "additional-settings": "",
+      "field": "",
+      "select": "",
+      "use-as": ""
+    },
+    "filter-by-name-transformer-editor": {
+      "label-from-variable": "",
+      "label-identifier": "",
+      "label-use-variable": "",
+      "label-variable": "",
+      "placeholder-regular-expression-pattern": ""
+    },
+    "filter-by-value-filter-editor": {
+      "label-field": "",
+      "label-match": "",
+      "label-value": "",
+      "placeholder-field-name": "",
+      "placeholder-select-test": ""
+    },
+    "filter-by-value-transformer-editor": {
+      "add-condition": "",
+      "label-conditions": "",
+      "label-filter-type": ""
+    },
+    "format-string-transfomer-editor": {
+      "label-format": "",
+      "label-substring-range": ""
+    },
+    "format-time-transfomer-editor": {
+      "label-format": "",
+      "label-set-timezone": "",
+      "label-time-field": "",
+      "tooltip-timezone-manually": ""
+    },
+    "get-tooltips": {
+      "json-value": ""
+    },
+    "group-by-field-configuration": {
+      "placeholder-ignored": "",
+      "placeholder-select-stats": ""
+    },
+    "group-to-nested-table-transformer-editor": {
+      "label-show-field-names-in-nested-tables": ""
+    },
+    "grouping-to-matrix-transformer-editor": {
+      "label-cell-value": "",
+      "label-column": "",
+      "label-empty-value": "",
+      "label-row": ""
+    },
+    "histogram-transformer-editor": {
+      "placeholder-default": ""
+    },
+    "index-options-editor": {
+      "label-as-percentile": "",
+      "tooltip-transform-index-percentile": ""
+    },
+    "join-by-labels-transformer-editor": {
+      "info": {
+        "input-contain-labels": "",
+        "no-input-or-labels-found": "",
+        "title-no-input-found": "",
+        "title-no-labels-found": ""
+      },
+      "tooltip-select-label-indicating-values": ""
+    },
+    "jsonpath-editor": {
+      "add-path": "",
+      "label-alias": "",
+      "label-field": "",
+      "placeholder-valid-objectvalue": "",
+      "tooltip-remove-path": ""
+    },
+    "labels-as-fields-transformer-editor": {
+      "placeholder-optional-select-label": "",
+      "tooltip-replace-value-field-label": ""
+    },
+    "limit-transformer-editor": {
+      "placeholder-value-or-variable": ""
+    },
+    "long-info": {
+      "ascending-order-duplicates": "",
+      "multiple-value-fields-may-exist": "",
+      "single-frame": "",
+      "st-field-is-time": ""
+    },
+    "merge-transformer-editor": {
+      "merge-effect-applied-single-frame": ""
+    },
+    "multi-info": {
+      "all-values-are-numeric": "",
+      "multiple-frames": "",
+      "string-values-are-represented-as-labels": "",
+      "time-in-ascending-order": ""
+    },
+    "partition-by-values-editor": {
+      "label-field": "",
+      "label-select-field": "",
+      "partition-values-works-single-frame": ""
+    },
+    "prepare-time-series-editor": {
+      "label-format": "",
+      "label-info": ""
+    },
+    "range-matcher-editor": {
+      "and": "",
+      "placeholder-from": "",
+      "placeholder-to": ""
+    },
+    "reduce-row-options-editor": {
+      "label-calculation": "",
+      "label-operation": ""
+    },
+    "reduce-transformer-editor": {
+      "label-calculations": "",
+      "label-include-time": "",
+      "label-labels-to-fields": "",
+      "label-mode": "",
+      "placeholder-choose-stat": ""
+    },
+    "regex-matcher-editor": {
+      "placeholder-value-or-variable": ""
+    },
+    "regression-transformer-editor": {
+      "label-degree": "",
+      "label-model-type": "",
+      "label-predicted-points": "",
+      "label-x-field": "",
+      "label-y-field": ""
+    },
+    "rename-by-regex-transformer-editor": {
+      "label-match": "",
+      "label-replace": "",
+      "placeholder-regular-expression-pattern": "",
+      "placeholder-replacement-pattern": ""
+    },
+    "series-to-fields-transformer-editor": {
+      "label-field": "",
+      "label-mode": ""
+    },
+    "sort-by-transformer-editor": {
+      "label-field": "",
+      "label-reverse": "",
+      "placeholder-select-field": ""
+    },
+    "time-series-table-transform-editor": {
+      "label-stat": "",
+      "label-time-field": "",
+      "tooltip-statistic-should-calculated-series": ""
+    },
+    "transpose-transfomer-editor": {
+      "placeholder-field": "",
+      "placeholder-value": ""
+    },
+    "unary-operation-editor": {
+      "label-operation": "",
+      "placeholder-field": ""
+    },
+    "wide-info": {
+      "multiple-value-fields-of-any-type": "",
+      "single-frame": "",
+      "st-field-is-shared-time": "",
+      "time-in-ascending-order": ""
+    },
+    "window-options-editor": {
+      "label-calculation": "",
+      "label-field": "",
+      "label-type": "",
+      "label-window-size-mode": "",
+      "placeholder-auto": "",
+      "placeholder-field": ""
     }
   },
   "upgrade-box": {
@@ -4515,6 +5173,13 @@
   "users": {
     "empty-state": {
       "message": ""
+    },
+    "token-revoked-modal": {
+      "sign-in": ""
+    },
+    "users-action-bar-unconnected": {
+      "invite": "",
+      "placeholder-search-login-email": ""
     }
   },
   "users-access-list": {
@@ -4541,17 +5206,85 @@
     }
   },
   "variables": {
+    "ad-hoc-filter": {
+      "label-and": ""
+    },
+    "confirm-delete-modal": {
+      "title-delete-variable": ""
+    },
     "empty-state": {
       "button-title": "",
       "info-box-content": "",
       "info-box-content-2": "",
       "title": ""
     },
+    "legacy-variable-query-editor": {
+      "placeholder-metric-name-or-tags-query": ""
+    },
+    "no-unknowns": {
+      "no-renamed-or-missing-variables-found": ""
+    },
+    "query-variable-refresh-select": {
+      "description-update-values-variable": "",
+      "label-refresh": ""
+    },
+    "query-variable-sort-select": {
+      "description-values-variable": ""
+    },
+    "text-box-variable-editor": {
+      "placeholder-default-value-if-any": "",
+      "text-options": ""
+    },
     "unknown-table": {
       "loading": "",
       "no-unknowns": "",
       "renamed-or-missing-variables": "",
       "variable": ""
+    },
+    "variable-check-indicator": {
+      "title-variable-referenced-dashboard": "",
+      "title-variable-referenced-other-variables-dashboard": ""
+    },
+    "variable-editor-editor-un-connected": {
+      "apply": "",
+      "aria-label-variable-editor-form": "",
+      "delete": "",
+      "description-optional-display-name": "",
+      "description-template-variable-characters": "",
+      "general": "",
+      "placeholder-descriptive-text": "",
+      "placeholder-label-name": "",
+      "placeholder-variable-name": ""
+    },
+    "variable-editor-list": {
+      "definition": "",
+      "new-variable": "",
+      "variable": ""
+    },
+    "variable-editor-list-row": {
+      "tooltip-duplicate-variable": "",
+      "tooltip-remove-variable": ""
+    },
+    "variable-options": {
+      "aria-label-toggle-all-values": ""
+    },
+    "variable-usages-button": {
+      "tooltip-show-usages": ""
+    },
+    "variables-dependencies-button": {
+      "show-dependencies": "",
+      "title-dependencies": ""
+    },
+    "variables-unknown-button": {
+      "VariablesUnknownButton-tooltip-show-usages": ""
+    },
+    "variables-unknown-table": {
+      "loading": ""
+    }
+  },
+  "visualization": {
+    "data-hover-view": {
+      "link": ""
     }
   }
 }
