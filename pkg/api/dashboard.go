@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 
 	claims "github.com/grafana/authlib/types"
-	dashboardsV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -167,7 +168,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		creator = hs.getIdentityName(ctx, dash.OrgID, dash.CreatedBy)
 	}
 
-	annotationPermissions := &dashboardsV0.AnnotationPermission{}
+	annotationPermissions := &dashboardsV1.AnnotationPermission{}
 	if hs.Features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
 		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
 	} else {
@@ -275,7 +276,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	return response.JSON(http.StatusOK, dto)
 }
 
-func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext, actions *dashboardsV0.AnnotationActions, scope string) {
+func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext, actions *dashboardsV1.AnnotationActions, scope string) {
 	ctx, span := tracer.Start(c.Req.Context(), "api.getAnnotationPermissionsByScope")
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
@@ -1114,6 +1115,13 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusNotFound, "Dashboard version not found", nil)
 	}
 
+	// do not allow restores if the json data is identical
+	// this is needed for the k8s flow, as the generation id will be used on the
+	// version table, and the generation id only increments when the actual spec is changed
+	if compareDashboardData(version.Data.MustMap(), dash.Data.MustMap()) {
+		return response.Error(http.StatusBadRequest, "Current dashboard is identical to the specified version", nil)
+	}
+
 	var userID int64
 	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
 		userID = id
@@ -1133,6 +1141,18 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 	saveCmd.FolderUID = dash.FolderUID
 
 	return hs.postDashboard(c, saveCmd)
+}
+
+func compareDashboardData(versionData, dashData map[string]any) bool {
+	// these can be different but the actual data is the same
+	delete(versionData, "version")
+	delete(dashData, "version")
+	delete(versionData, "id")
+	delete(dashData, "id")
+	delete(versionData, "uid")
+	delete(dashData, "uid")
+
+	return reflect.DeepEqual(versionData, dashData)
 }
 
 // swagger:route GET /dashboards/tags dashboards getDashboardTags
