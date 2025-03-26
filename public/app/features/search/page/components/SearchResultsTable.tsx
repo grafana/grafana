@@ -171,7 +171,7 @@ export const SearchResultsTable = React.memo(
     if (!rows.length) {
       return (
         <div className={styles.noData}>
-          <Trans i18nKey="search.search-results-table.no-data">No data</Trans>
+          <Trans i18nKey="search.search-results-table.no-data">No values</Trans>
         </div>
       );
     }

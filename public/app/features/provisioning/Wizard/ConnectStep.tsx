@@ -29,25 +29,28 @@ export function ConnectStep() {
 
   return (
     <Stack direction="column">
-      <Combobox
-        options={typeOptions}
-        value={type}
-        onChange={(value) => {
-          const repoType = value?.value;
-          setValue('repository.type', repoType);
-          setValue(
-            'repository.workflows',
-            getWorkflowOptions(repoType).map((v) => v.value)
-          );
-        }}
-      />
+      <Field label="Storage type" required description="Choose the type of storage for your resources">
+        <Combobox
+          options={typeOptions}
+          value={type}
+          onChange={(value) => {
+            const repoType = value?.value;
+            setValue('repository.type', repoType);
+            setValue(
+              'repository.workflows',
+              getWorkflowOptions(repoType).map((v) => v.value)
+            );
+          }}
+        />
+      </Field>
 
       {isGithub && (
         <>
           <TokenPermissionsInfo />
           <Field
-            label={'Token'}
+            label={'Enter your access token'}
             required
+            description="Paste your GitHub personal access token"
             error={errors.repository?.token?.message}
             invalid={!!errors.repository?.token}
           >
@@ -60,7 +63,7 @@ export function ConnectStep() {
                   <SecretInput
                     {...field}
                     id={'token'}
-                    placeholder={'ghp_yourTokenHere1234567890abcdEFGHijklMNOP'}
+                    placeholder={'github_pat_yourTokenHere1234567890abcdEFGHijklMNOP'}
                     isConfigured={tokenConfigured}
                     onReset={() => {
                       setValue('repository.token', '');
@@ -73,21 +76,22 @@ export function ConnectStep() {
           </Field>
 
           <Field
-            label={'Repository URL'}
+            label={'Enter your Repository URL'}
             error={errors.repository?.url?.message}
             invalid={!!errors.repository?.url}
-            description={'Enter the GitHub repository URL'}
+            description={'Paste the URL of your GitHub repository'}
             required
           >
             <Input
               {...register('repository.url', {
                 required: 'This field is required.',
                 pattern: {
+                  // TODO: The regex is not correct when we support GHES.
                   value: /^(?:https:\/\/github\.com\/)?[^/]+\/[^/]+$/,
                   message: 'Please enter a valid GitHub repository URL',
                 },
               })}
-              placeholder={'https://github.com/username/repo-name'}
+              placeholder={'https://github.com/username/repo'}
             />
           </Field>
 

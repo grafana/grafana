@@ -1425,7 +1425,8 @@
         "tab": {
           "heading": "Tab",
           "title": "Break up your dashboard into different horizontal tabs"
-        }
+        },
+        "title": "Add element"
       },
       "elements": {
         "dashboard": "Dashboard",
@@ -1444,11 +1445,6 @@
           "title": "Row header"
         }
       }
-    },
-    "editpane": {
-      "add": "Add",
-      "configure": "Configure",
-      "outline": "Outline"
     },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
@@ -1526,6 +1522,10 @@
         "layout": "Layout"
       }
     },
+    "new-panel": {
+      "configure-button": "Configure panel"
+    },
+    "new-panel-title": "New panel",
     "options": {
       "description": "Description",
       "title-option": "Title"
@@ -1533,9 +1533,7 @@
     "outline": {
       "tree": {
         "item": {
-          "collapse": "Collapse item",
-          "empty": "(empty)",
-          "expand": "Expand item"
+          "empty": "(empty)"
         }
       }
     },
@@ -1558,13 +1556,21 @@
       },
       "name": "Auto grid",
       "options": {
-        "columns": "Columns",
-        "fixed": "Fixed: {{size}}px",
-        "min": "Min: {{size}}px",
-        "one-column": "1 column",
-        "rows": "Rows",
-        "three-columns": "3 columns",
-        "two-columns": "2 columns"
+        "custom-min-height": {
+          "clear": "Clear"
+        },
+        "custom-min-width": {
+          "clear": "Clear"
+        },
+        "height-fill": "Fill screen",
+        "max-columns": "Max columns",
+        "min-height": "Row height",
+        "min-height-custom": "Custom row height",
+        "min-height-error": "A number between 50 and 2000 is required",
+        "min-width": "Min column width",
+        "min-width-custom": "Custom min width",
+        "min-width-custom-clear": "Back to standard min column width",
+        "min-width-error": "A number between 50 and 2000 is required"
       }
     },
     "rows-layout": {
@@ -1629,6 +1635,9 @@
     },
     "toolbar": {
       "add": "Add",
+      "add-new": {
+        "tooltip": "Add panels and other elements"
+      },
       "alert-rules": "Alert rules",
       "back-to-dashboard": "Back to dashboard",
       "dashboard-settings": {
@@ -1747,9 +1756,8 @@
     },
     "viz-panel": {
       "options": {
+        "configure-button-tooltip": "Edit queries and visualization options",
         "description": "Description",
-        "open-edit": "Open panel editor",
-        "plugin-type-image": "Image of plugin type",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }
@@ -2610,6 +2618,13 @@
       "title-essentials": "Essentials"
     }
   },
+  "grafana": {
+    "dashboard": {
+      "edit-pane": {
+        "go-back": "Go back"
+      }
+    }
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -2848,6 +2863,7 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "copy": "Copy to Clipboard",
+      "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",
@@ -4187,9 +4203,7 @@
     },
     "browse": {
       "aria-label-plugin-type-filter": "Plugin type filter",
-      "aria-label-sort-plugins-list": "Sort plugins list",
       "label-search": "Search",
-      "label-sort": "Sort",
       "label-state": "State",
       "label-type": "Type"
     },
@@ -4808,7 +4822,7 @@
     },
     "search-results-table": {
       "aria-label-search-results-table": "Search results table",
-      "no-data": "No data"
+      "no-data": "No values"
     }
   },
   "select": {
