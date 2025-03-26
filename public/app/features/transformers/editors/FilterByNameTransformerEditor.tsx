@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
 import { getTemplateSrv } from '@grafana/runtime/src/services';
-import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select, Checkbox, useTheme2 } from '@grafana/ui';
+import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select, Checkbox } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -197,7 +197,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     this.setState({ byVariable: val });
   };
 
-  toggleSelectAll = () => {
+  onToggleSelectAll = () => {
     this.onChange(
       this.state.selected.length === this.state.options.length ? [] : this.state.options.map((o) => o.name)
     );
@@ -248,7 +248,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
                 description={
                   allChecked ? 'Remove all fields from the visualization' : 'Add all fields to the visualization'
                 }
-                onChange={this.toggleSelectAll}
+                onChange={this.onToggleSelectAll}
               />
             </div>
             <div className={styles.fieldNameOptions}>
