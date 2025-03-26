@@ -39,7 +39,7 @@ func DefaultDecorateFuncs(cfg *config.PluginManagementCfg) []DecorateFunc {
 // NewDefaultConstructor returns a new DefaultConstructor.
 func NewDefaultConstructor(cfg *config.PluginManagementCfg, signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) *DefaultConstructor {
 	return &DefaultConstructor{
-		pluginFactoryFunc:   NewDefaultPluginFactory(cfg, assetPath).createPlugin,
+		pluginFactoryFunc:   NewDefaultPluginFactory(&cfg.Features, assetPath).createPlugin,
 		signatureCalculator: signatureCalculator,
 		log:                 log.New("plugins.construct"),
 	}

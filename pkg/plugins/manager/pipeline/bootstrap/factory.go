@@ -17,12 +17,12 @@ type pluginFactoryFunc func(p *plugins.FoundBundle, pluginClass plugins.Class, s
 // service to set the plugin's BaseURL, Module, Logos and Screenshots fields.
 type DefaultPluginFactory struct {
 	assetPath *assetpath.Service
-	cfg       *config.PluginManagementCfg
+	features  *config.Features
 }
 
 // NewDefaultPluginFactory returns a new DefaultPluginFactory.
-func NewDefaultPluginFactory(cfg *config.PluginManagementCfg, assetPath *assetpath.Service) *DefaultPluginFactory {
-	return &DefaultPluginFactory{assetPath: assetPath, cfg: cfg}
+func NewDefaultPluginFactory(features *config.Features, assetPath *assetpath.Service) *DefaultPluginFactory {
+	return &DefaultPluginFactory{assetPath: assetPath, features: features}
 }
 
 func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class plugins.Class,
@@ -77,7 +77,7 @@ func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Cl
 		return nil, err
 	}
 
-	if f.cfg.Features.LocalizationForPlugins {
+	if f.features.LocalizationForPlugins {
 		if err := setLocales(plugin, f.assetPath, info); err != nil {
 			return nil, err
 		}
