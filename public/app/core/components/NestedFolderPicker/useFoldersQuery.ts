@@ -111,6 +111,12 @@ export function useFoldersQuery(
         return;
       }
 
+      // Check if the last page is still loading
+      const lastPage = pages?.at(-1);
+      if (lastPage?.status === 'pending') {
+        return;
+      }
+
       const args = { parentUid, page: (pageNumber ?? 0) + 1, limit: PAGE_SIZE, permission };
       const promise = dispatch(browseDashboardsAPI.endpoints.listFolders.initiate(args));
 
