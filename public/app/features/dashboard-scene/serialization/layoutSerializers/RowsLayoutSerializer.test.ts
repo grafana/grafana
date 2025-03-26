@@ -272,7 +272,7 @@ describe('serialization', () => {
                 spec: {
                   columnWidth: undefined,
                   rowHeight: undefined,
-                  fillScreen: false,
+                  fillScreen: undefined,
                   rowHeightMode: 'standard',
                   columnWidthMode: 'standard',
                   maxColumnCount: 4,

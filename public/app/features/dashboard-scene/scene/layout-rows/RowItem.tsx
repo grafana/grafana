@@ -65,7 +65,7 @@ export class RowItem
     return {
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
-      icon: 'line-alt',
+      icon: 'list-ul',
     };
   }
 

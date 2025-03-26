@@ -159,6 +159,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     minInterval: '',
     alertStateHistoryBackend: undefined,
     alertStateHistoryPrimary: undefined,
+    recordingRulesEnabled: false,
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
