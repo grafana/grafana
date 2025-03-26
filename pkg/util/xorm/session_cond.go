@@ -58,6 +58,12 @@ func (session *Session) In(column string, args ...any) *Session {
 	return session
 }
 
+// OrIn provides a query string like "id in (1, 2, 3)" using the OR conditional
+func (session *Session) OrIn(column string, args ...any) *Session {
+	session.statement.OrIn(column, args...)
+	return session
+}
+
 // NotIn provides a query string like "id in (1, 2, 3)"
 func (session *Session) NotIn(column string, args ...any) *Session {
 	session.statement.NotIn(column, args...)

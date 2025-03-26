@@ -127,6 +127,25 @@ func (ss *sqlStore) GetByUID(ctx context.Context, uid string) (*user.User, error
 	return &usr, err
 }
 
+func (ss *sqlStore) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
+	users := make([]*user.User, 0)
+
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.Table("user").In("uid", uids).OrIn("id", ids).Find(&users)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return users, err
+}
+
 func (ss *sqlStore) notServiceAccountFilter() string {
 	return fmt.Sprintf("%s.is_service_account = %s",
 		ss.dialect.Quote("user"),
