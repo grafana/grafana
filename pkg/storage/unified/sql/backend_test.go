@@ -10,10 +10,10 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
@@ -251,7 +251,7 @@ func TestBackend_create(t *testing.T) {
 
 		// Then we try to insert the same resource again. This should fail.
 		_, err = b.create(ctx, event)
-		require.ErrorIs(t, err, ErrResourceAlreadyExists)
+		require.ErrorIs(t, err, unifiedbackend.ErrResourceAlreadyExists)
 	})
 
 	t.Run("error inserting into resource", func(t *testing.T) {
@@ -665,12 +665,6 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 		require.Equal(t, rv60, listRv, "Head version should be the latest resource version (rv60)")
 		require.Equal(t, expectedVersions, items, "Items should be in ASC order even with ResourceVersion=0")
 	})
-}
-
-func TestErrResourceAlreadyExistsIsRecognisable(t *testing.T) {
-	t.Parallel()
-
-	require.True(t, apierrors.IsAlreadyExists(ErrResourceAlreadyExists), "ErrResourceAlreadyExists should be recognised as an AlreadyExists error")
 }
 
 // setupHistoryTest creates the necessary mock expectations for a history test
