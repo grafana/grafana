@@ -34,8 +34,11 @@ jobs:
         id: cache-node-modules
         uses: actions/cache@v3
         with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          path: |
+            node_modules
+            /home/runner/.cache/Cypress
+          # key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          key: foo
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: yarn install --immutable
@@ -85,8 +88,10 @@ jobs:
         - name: Restore Cached Node Modules
           uses: actions/cache@v3
           with:
-            path: node_modules
-            key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+            path: |
+              node_modules
+              /home/runner/.cache/Cypress
+            key: foo
 
         - name: Restore Cached Grafana Build and Dependencies
           uses: actions/cache@v3
@@ -99,7 +104,7 @@ jobs:
               conf/
               e2e/test-plugins/
               devenv/
-            key: ${{ runner.os }}-grafana-${{ github.sha }}
+            key: ${{ runner.os }}-grafana-${{ hashFiles('go.mod', 'package-lock.json', 'Makefile', 'pkg/storage/**/*.go', 'public/app/features/search/**/*.ts', 'public/app/features/search/**/*.tsx') }}
         - name: Prettify the name
           run: echo "Running tests for $(basename "${{ matrix.ini_file }}")"
         - name: Set the step name
