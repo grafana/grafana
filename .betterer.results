@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-// 
+//
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -4047,6 +4047,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/AccordianText.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+    ],
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/SpanDetailLinkButtons.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/TimelineHeaderRow.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
