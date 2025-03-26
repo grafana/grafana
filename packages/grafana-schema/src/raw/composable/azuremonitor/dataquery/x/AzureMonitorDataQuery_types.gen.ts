@@ -197,7 +197,7 @@ export interface AzureLogsQuery {
    */
   intersectTime?: boolean;
   /**
-   * Denotes if logs query editor is in builder mode
+   * Denotes if logs query editor is in builder mode or KQL mode
    */
   mode?: LogsEditorMode;
   /**
