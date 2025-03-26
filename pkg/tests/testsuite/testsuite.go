@@ -13,3 +13,8 @@ func Run(m *testing.M) {
 	db.CleanupTestDB()
 	os.Exit(code)
 }
+
+func RunButSkipOnSpanner(m *testing.M) {
+	db.SkipTestsOnSpanner()
+	Run(m)
+}
