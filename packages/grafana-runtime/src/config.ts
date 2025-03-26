@@ -68,7 +68,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   namespace = 'default';
   windowTitlePrefix = '';
   buildInfo: BuildInfo;
-  newPanelTitle = '';
   bootData: BootData;
   externalUserMngLinkUrl = '';
   externalUserMngLinkName = '';
@@ -216,7 +215,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
       datasources: {},
       windowTitlePrefix: 'Grafana - ',
       panels: {},
-      newPanelTitle: 'Panel Title',
       playlist_timespan: '1m',
       unsaved_changes_warning: true,
       appUrl: '',
@@ -250,6 +248,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
   }
+  geomapDefaultBaseLayer?: MapLayerOptions<any> | undefined;
+  listDashboardScopesEndpoint?: string | undefined;
+  listScopesEndpoint?: string | undefined;
 }
 
 // localstorage key: grafana.featureToggles

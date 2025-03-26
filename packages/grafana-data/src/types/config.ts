@@ -165,7 +165,6 @@ export interface GrafanaConfig {
   appSubUrl: string;
   windowTitlePrefix: string;
   buildInfo: BuildInfo;
-  newPanelTitle: string;
   bootData: BootData;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
