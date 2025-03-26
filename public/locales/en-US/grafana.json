@@ -990,6 +990,12 @@
       "success": "Dashboard {{name}} moved to Recently deleted"
     }
   },
+  "carousel": {
+    "close": "Close",
+    "error": "Something went wrong loading images",
+    "next": "Next",
+    "previous": "Previous"
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copied"
@@ -3512,16 +3518,6 @@
   "playlists": {
     "empty-state": {
       "message": "No playlists found"
-    }
-  },
-  "plugin": {
-    "details": {
-      "screenshots": {
-        "closeFullScreen": "Close",
-        "nextFullScreen": "Next",
-        "previousFullScreen": "Previous",
-        "warning": "Something went wrong loading screenshots"
-      }
     }
   },
   "plugins": {

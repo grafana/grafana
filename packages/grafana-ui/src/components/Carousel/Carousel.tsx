@@ -14,7 +14,7 @@ export interface CarouselImage {
   name: string;
 }
 
-interface CarouselProps {
+export interface CarouselProps {
   images: CarouselImage[];
 }
 

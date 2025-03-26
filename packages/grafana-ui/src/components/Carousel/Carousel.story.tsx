@@ -1,6 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { Carousel } from './Carousel';
+import { Carousel, CarouselProps } from './Carousel';
 import mdx from './Carousel.mdx';
 
 // Sample images for the stories
@@ -27,7 +27,7 @@ const meta: Meta<typeof Carousel> = {
   },
 };
 
-const Template: StoryFn<typeof Carousel> = (args) => <Carousel {...args} />;
+const Template: StoryFn<CarouselProps> = (args) => <Carousel {...args} />;
 
 export const Basic = Template.bind({});
 Basic.args = {

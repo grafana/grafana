@@ -63,7 +63,7 @@ export const usePluginDetailsTabs = (
       });
     }
 
-    if (isPublished && plugin?.details?.screenshots && plugin?.details?.screenshots?.length > 0) {
+    if (isPublished && plugin?.details?.screenshots?.length) {
       navModelChildren.push({
         text: PluginTabLabels.SCREENSHOTS,
         id: PluginTabIds.SCREENSHOTS,
