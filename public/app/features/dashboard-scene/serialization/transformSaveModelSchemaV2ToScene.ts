@@ -64,6 +64,7 @@ import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { layoutSerializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
+import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
@@ -292,7 +293,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       value: variable.spec.current?.value ?? '',
       text: variable.spec.current?.text ?? '',
       query: getDataQueryForVariable(variable),
-      datasource: variable.spec.datasource,
+      datasource: getRuntimeVariableDataSource(variable),
       sort: transformSortVariableToEnumV1(variable.spec.sort),
       refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
       regex: variable.spec.regex,
