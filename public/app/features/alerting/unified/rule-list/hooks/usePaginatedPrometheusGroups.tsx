@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import type { API } from '@grafana/alerting/types';
+import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { isLoading, useAsync } from '../../hooks/useAsync';
 
@@ -13,18 +13,17 @@ import { isLoading, useAsync } from '../../hooks/useAsync';
  * @param pageSize - Number of groups to display per page
  * @returns Pagination state and controls for navigating through rule groups
  */
-
-export function usePaginatedPrometheusGroups<GroupType extends API.RuleGroup>(
-  groupsGenerator: AsyncGenerator<GroupType, void, unknown>,
+export function usePaginatedPrometheusGroups<TGroup extends PromRuleGroupDTO>(
+  groupsGenerator: AsyncGenerator<TGroup, void, unknown>,
   pageSize: number
 ) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [groups, setGroups] = useState<GroupType[]>([]);
+  const [groups, setGroups] = useState<TGroup[]>([]);
   const [lastPage, setLastPage] = useState<number | undefined>(undefined);
 
   const [{ execute: fetchMoreGroups }, groupsRequestState] = useAsync(async (groupsCount: number) => {
     let done = false;
-    const currentGroups: GroupType[] = [];
+    const currentGroups: TGroup[] = [];
 
     while (currentGroups.length < groupsCount) {
       const generatorResult = await groupsGenerator.next();

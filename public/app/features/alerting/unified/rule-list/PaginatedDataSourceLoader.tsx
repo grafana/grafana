@@ -1,9 +1,8 @@
 import { groupBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { PrometheusAPI } from '@grafana/alerting/types';
 import { Icon, Stack, Text } from '@grafana/ui';
-import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
+import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 
 import { hashRule } from '../utils/rule-id';
 
@@ -82,7 +81,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
 }
 
 interface RuleGroupListItemProps {
-  group: PrometheusAPI.RuleGroup;
+  group: RuleGroup;
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
   namespaceName: string;
 }

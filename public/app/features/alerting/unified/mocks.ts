@@ -1,7 +1,6 @@
 import { produce } from 'immer';
 import { isEmpty, pick } from 'lodash';
 
-import { PrometheusAPI } from '@grafana/alerting/types';
 import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
@@ -219,7 +218,7 @@ export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): Alert
       severity: 'warning',
     },
     state: PromAlertingRuleState.Firing,
-    health: 'ok',
+    health: 'OK',
     totalsFiltered: { alerting: 1 },
     ...partial,
   };
@@ -259,13 +258,11 @@ export const mockPromRecordingRule = (partial: Partial<RecordingRule> = {}): Rec
   };
 };
 
-export const mockPromRuleGroup = (partial: Partial<RuleGroup> = {}): PrometheusAPI.RuleGroup => {
+export const mockPromRuleGroup = (partial: Partial<RuleGroup> = {}): RuleGroup => {
   return {
     name: 'mygroup',
     interval: 60,
     rules: [mockPromAlertingRule()],
-    evaluationTime: 0,
-    lastEvaluation: new Date().toISOString(),
     ...partial,
   };
 };

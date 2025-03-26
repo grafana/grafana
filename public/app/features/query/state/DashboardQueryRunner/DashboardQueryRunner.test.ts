@@ -1,8 +1,6 @@
-import { uniqueId } from 'lodash';
 import { throwError } from 'rxjs';
 import { delay, first } from 'rxjs/operators';
 
-import { GrafanaAPI } from '@grafana/alerting/types';
 import { AlertState } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import {
@@ -15,7 +13,7 @@ import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import * as store from 'app/store/store';
 import { AccessControlAction } from 'app/types';
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import { PromAlertingRuleState, PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../../core/services/backend_srv';
@@ -74,18 +72,15 @@ function getTestContext() {
   // These tests are setup so all the workers and runners are invoked once, this wouldn't be the case in real life
   const runner = createDashboardQueryRunner({ dashboard: options.dashboard, timeSrv: timeSrvMock });
 
-  const getResults: GrafanaAPI.RuleGroupResponse = {
+  const getResults: PromRulesResponse = {
     status: 'success',
     data: {
       groups: [
         {
           name: 'my-group',
-          folderUid: '0',
           rules: [
             {
               name: 'my alert',
-              uid: uniqueId(),
-              folderUid: '0',
               state: PromAlertingRuleState.Firing,
               query: 'foo > 1',
               type: PromRuleType.Alerting,
@@ -95,24 +90,16 @@ function getTestContext() {
               },
               health: 'ok',
               labels: {},
-              alerts: [],
-              lastEvaluation: new Date().toISOString(),
-              evaluationTime: 0,
             },
           ],
           interval: 300,
           file: 'my-namespace',
-          lastEvaluation: new Date().toISOString(),
-          evaluationTime: 0,
         },
         {
           name: 'another-group',
-          folderUid: '0',
           rules: [
             {
               name: 'another alert',
-              uid: uniqueId(),
-              folderUid: '0',
               query: 'foo > 1',
               state: PromAlertingRuleState.Firing,
               type: PromRuleType.Alerting,
@@ -122,17 +109,15 @@ function getTestContext() {
               },
               health: 'ok',
               labels: {},
-              alerts: [],
-              lastEvaluation: new Date().toISOString(),
-              evaluationTime: 0,
             },
           ],
           interval: 300,
           file: 'my-namespace',
-          lastEvaluation: new Date().toISOString(),
-          evaluationTime: 0,
         },
       ],
+      totals: {
+        alerting: 2,
+      },
     },
   };
 

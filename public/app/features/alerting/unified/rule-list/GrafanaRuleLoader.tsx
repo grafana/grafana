@@ -1,6 +1,5 @@
-import type { GrafanaAPI } from '@grafana/alerting/types';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
-import { PromRuleType } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { GrafanaRulesSource } from '../utils/datasource';
@@ -13,7 +12,7 @@ import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
 
 interface GrafanaRuleLoaderProps {
-  rule: GrafanaAPI.Rule;
+  rule: GrafanaPromRuleDTO;
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
 }

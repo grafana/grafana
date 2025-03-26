@@ -1,6 +1,5 @@
 import { set } from 'lodash';
 
-import { PrometheusAPI } from '@grafana/alerting/types';
 import { RelativeTimeRange } from '@grafana/data';
 import { t } from 'app/core/internationalization';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
@@ -16,6 +15,7 @@ import {
   GrafanaAlertStateDecision,
   Labels,
   PostableRulerRuleGroupDTO,
+  PromRulesResponse,
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
@@ -164,7 +164,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
         return { url: PROM_RULES_URL, params: paramsWithMatcherAndState(params, state, matcher) };
       },
-      transformResponse: (response: PrometheusAPI.RuleGroupResponse): RuleNamespace[] => {
+      transformResponse: (response: PromRulesResponse): RuleNamespace[] => {
         return groupRulesByFileName(response.data.groups, GRAFANA_RULES_SOURCE_NAME);
       },
     }),
@@ -226,7 +226,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           params: queryParams,
         };
       },
-      transformResponse: (response: PrometheusAPI.RuleGroupResponse, _, args): RuleNamespace[] => {
+      transformResponse: (response: PromRulesResponse, _, args): RuleNamespace[] => {
         return groupRulesByFileName(response.data.groups, args.ruleSourceName);
       },
       providesTags: ['CombinedAlertRule'],

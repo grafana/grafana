@@ -1,7 +1,5 @@
 import { from, map, Observable, Unsubscribable } from 'rxjs';
 
-import { PrometheusAPI } from '@grafana/alerting/types';
-import { prometheusRuleType } from '@grafana/alerting/unstable';
 import { AlertState, AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
@@ -19,9 +17,11 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { ungroupRulesByFileName } from 'app/features/alerting/unified/api/prometheus';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { prometheusRuleType } from 'app/features/alerting/unified/utils/rules';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 import { RuleNamespace } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -86,17 +86,17 @@ export class AlertStatesDataLayer
       }
       return promRules.data;
     };
-    const res: Observable<PrometheusAPI.RuleGroup[]> = from(fetchData()).pipe(
+    const res: Observable<PromRuleGroupDTO[]> = from(fetchData()).pipe(
       map((namespaces: RuleNamespace[]) => ungroupRulesByFileName(namespaces))
     );
 
     const alerStatesExecution = res.pipe(
-      map((groups: PrometheusAPI.RuleGroup[]) => {
+      map((groups: PromRuleGroupDTO[]) => {
         this.hasAlertRules = false;
         const panelIdToAlertState: Record<number, AlertStateInfo> = {};
         groups.forEach((group) =>
           group.rules.forEach((rule) => {
-            if (prometheusRuleType.isAlertingRule(rule) && rule.annotations?.[Annotation.panelID]) {
+            if (prometheusRuleType.alertingRule(rule) && rule.annotations?.[Annotation.panelID]) {
               this.hasAlertRules = true;
               const panelId = Number(rule.annotations[Annotation.panelID]);
               const state = promAlertStateToAlertState(rule.state);
@@ -197,10 +197,10 @@ export class AlertStatesDataLayer
   };
 }
 
-export function promAlertStateToAlertState(state: PrometheusAPI.AlertRuleState): AlertState {
-  if (state === 'firing') {
+export function promAlertStateToAlertState(state: PromAlertingRuleState): AlertState {
+  if (state === PromAlertingRuleState.Firing) {
     return AlertState.Alerting;
-  } else if (state === 'pending') {
+  } else if (state === PromAlertingRuleState.Pending) {
     return AlertState.Pending;
   }
   return AlertState.OK;

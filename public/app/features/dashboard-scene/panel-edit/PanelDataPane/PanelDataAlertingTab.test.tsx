@@ -2,7 +2,6 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
-import { GrafanaAPI } from '@grafana/alerting/types';
 import { PromOptions } from '@grafana/prometheus';
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -27,7 +26,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, DashboardDataDTO } from 'app/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
 import * as utils from '../../utils/utils';
@@ -88,16 +87,13 @@ const renderAlertTabContent = (model: PanelDataAlertingTab, initialStore?: Retur
   render(<PanelDataAlertingTabRendered model={model} />);
 };
 
-const promResponse: GrafanaAPI.RuleGroupResponse = {
+const promResponse: PromRulesResponse = {
   status: 'success',
   data: {
     groups: [
       {
         name: 'mygroup',
         file: 'default',
-        evaluationTime: 0,
-        folderUid: '0',
-        lastEvaluation: new Date().toISOString(),
         rules: [
           mockPromAlertingRule({
             name: 'dashboardrule1',
@@ -112,16 +108,13 @@ const promResponse: GrafanaAPI.RuleGroupResponse = {
             ],
             totals: { alerting: 1 },
             totalsFiltered: { alerting: 1 },
-          }) as GrafanaAPI.AlertingRule,
+          }),
         ],
         interval: 20,
       },
       {
         name: 'othergroup',
         file: 'default',
-        evaluationTime: 0,
-        folderUid: '0',
-        lastEvaluation: new Date().toISOString(),
         rules: [
           mockPromAlertingRule({
             name: 'dashboardrule2',
@@ -136,11 +129,14 @@ const promResponse: GrafanaAPI.RuleGroupResponse = {
             ],
             totals: { alerting: 1 },
             totalsFiltered: { alerting: 1 },
-          }) as GrafanaAPI.AlertingRule,
+          }),
         ],
         interval: 20,
       },
     ],
+    totals: {
+      alerting: 2,
+    },
   },
 };
 

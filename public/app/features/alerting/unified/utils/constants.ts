@@ -1,14 +1,3 @@
-import type { ReservedAnnotation } from '@grafana/alerting/internal';
-
-export enum Annotation {
-  description = 'description',
-  summary = 'summary',
-  runbookURL = 'runbook_url',
-  alertId = '__alertId__',
-  dashboardUID = '__dashboardUid__',
-  panelID = '__panelId__',
-}
-
 export const RULER_NOT_SUPPORTED_MSG = 'ruler not supported';
 
 export const RULE_LIST_POLL_INTERVAL_MS = 30000;
@@ -23,28 +12,37 @@ export const TIMESERIES = 'timeseries';
 export const TABLE = 'table';
 export const STAT = 'stat';
 
-export const annotationLabels: Record<ReservedAnnotation, string> = {
-  description: 'Description',
-  summary: 'Summary',
-  runbook_url: 'Runbook URL',
-  __dashboardUid__: 'Dashboard UID',
-  __panelId__: 'Panel ID',
-  __alertId__: 'Alert ID',
+export enum Annotation {
+  description = 'description',
+  summary = 'summary',
+  runbookURL = 'runbook_url',
+  alertId = '__alertId__',
+  dashboardUID = '__dashboardUid__',
+  panelID = '__panelId__',
+}
+
+export const annotationLabels: Record<Annotation, string> = {
+  [Annotation.description]: 'Description',
+  [Annotation.summary]: 'Summary',
+  [Annotation.runbookURL]: 'Runbook URL',
+  [Annotation.dashboardUID]: 'Dashboard UID',
+  [Annotation.panelID]: 'Panel ID',
+  [Annotation.alertId]: 'Alert ID',
 };
 
-export const annotationDescriptions: Record<ReservedAnnotation, string> = {
-  description: 'Description of what the alert rule does.',
-  summary: 'Short summary of what happened and why.',
-  runbook_url: 'Webpage where you keep your runbook for the alert.',
-  __dashboardUid__: '',
-  __panelId__: '',
-  __alertId__: '',
+export const annotationDescriptions: Record<Annotation, string> = {
+  [Annotation.description]: 'Description of what the alert rule does.',
+  [Annotation.summary]: 'Short summary of what happened and why.',
+  [Annotation.runbookURL]: 'Webpage where you keep your runbook for the alert.',
+  [Annotation.dashboardUID]: '',
+  [Annotation.panelID]: '',
+  [Annotation.alertId]: '',
 };
 
-export const defaultAnnotations: Array<{ key: ReservedAnnotation; value: string }> = [
-  { key: 'summary', value: '' },
-  { key: 'description', value: '' },
-  { key: 'runbook_url', value: '' },
+export const defaultAnnotations = [
+  { key: Annotation.summary, value: '' },
+  { key: Annotation.description, value: '' },
+  { key: Annotation.runbookURL, value: '' },
 ];
 
 /** Special matcher name used to identify alert rules by UID */

@@ -1,7 +1,6 @@
 import { isEmpty, uniq } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { prometheusRuleType } from '@grafana/alerting/unstable';
 import { SelectableValue } from '@grafana/data';
 import { Icon, MultiSelect } from '@grafana/ui';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
@@ -11,6 +10,8 @@ import {
   isAsyncRequestMapSliceSettled,
 } from 'app/features/alerting/unified/utils/redux';
 import { useDispatch } from 'app/types';
+import { AlertingRule } from 'app/types/unified-alerting';
+import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { fetchPromRulesAction } from '../../../features/alerting/unified/state/actions';
 import { isPrivateLabelKey } from '../../../features/alerting/unified/utils/labels';
@@ -51,7 +52,7 @@ export const GroupBy = (props: Props) => {
     const allLabels = Object.keys(promRulesByDatasource)
       .flatMap((datasource) => promRulesByDatasource[datasource].result ?? [])
       .flatMap((rules) => rules.groups)
-      .flatMap((group) => group.rules.filter((rule) => prometheusRuleType.isAlertingRule(rule)))
+      .flatMap((group) => group.rules.filter((rule): rule is AlertingRule => rule.type === PromRuleType.Alerting))
       .flatMap((rule) => rule.alerts ?? [])
       .map((alert) => Object.keys(alert.labels ?? {}))
       .flatMap((labels) => labels.filter((label) => !isPrivateLabelKey(label)));

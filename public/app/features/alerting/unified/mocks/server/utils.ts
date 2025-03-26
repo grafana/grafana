@@ -1,6 +1,6 @@
 import { DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams } from 'msw';
 
-import { PrometheusAPI } from '@grafana/alerting/types';
+import { PromRuleGroupDTO, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 /** Helper method to help generate a kubernetes-style response with a list of items */
 export const getK8sResponse = <T>(kind: string, items: T[]) => {
@@ -16,8 +16,8 @@ export const getK8sResponse = <T>(kind: string, items: T[]) => {
 export const ALERTING_API_SERVER_BASE_URL = '/apis/notifications.alerting.grafana.app/v0alpha1';
 
 export function paginatedHandlerFor(
-  groups: PrometheusAPI.RuleGroup[]
-): HttpResponseResolver<PathParams, DefaultBodyType, PrometheusAPI.RuleGroupResponse> {
+  groups: PromRuleGroupDTO[]
+): HttpResponseResolver<PathParams, DefaultBodyType, PromRulesResponse> {
   const orderedGroupsWithCursor = groups.map((group) => ({
     ...group,
     id: Buffer.from(`${group.file}-${group.name}`).toString('base64url'),
@@ -37,7 +37,7 @@ export function paginatedHandlerFor(
     const nextToken =
       groupLimit && orderedGroupsWithCursor.length > groupLimit ? orderedGroupsWithCursor.at(endIndex)?.id : undefined;
 
-    return HttpResponse.json<PrometheusAPI.RuleGroupResponse>({
+    return HttpResponse.json<PromRulesResponse>({
       status: 'success',
       data: { groups: groupsResult, groupNextToken: nextToken },
     });

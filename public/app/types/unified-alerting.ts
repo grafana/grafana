@@ -1,6 +1,5 @@
 /* Prometheus internal models */
 
-import type { PrometheusAPI } from '@grafana/alerting/types';
 import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
 import { PromOptions } from '@grafana/prometheus';
 import { LokiOptions } from 'app/plugins/datasource/loki/types';
@@ -112,7 +111,7 @@ export interface DataSourceRuleNamespace {
 export interface RuleNamespace {
   dataSourceName: string;
   name: string;
-  groups: PrometheusAPI.RuleGroup[];
+  groups: RuleGroup[];
 }
 
 export interface RulesSourceResult {

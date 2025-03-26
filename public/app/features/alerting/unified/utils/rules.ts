@@ -11,11 +11,13 @@ import {
   CombinedRuleWithLocation,
   EditableRuleIdentifier,
   GrafanaRuleIdentifier,
+  PromRuleWithLocation,
   PrometheusRuleIdentifier,
   RecordingRule,
   Rule,
   RuleGroupIdentifier,
   RuleIdentifier,
+  RuleNamespace,
   RuleWithLocation,
   RulesSource,
 } from 'app/types/unified-alerting';
@@ -227,6 +229,19 @@ export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlert
   }
   return capitalize(state);
 }
+
+export const flattenRules = (rules: RuleNamespace[]) => {
+  return rules.reduce<PromRuleWithLocation[]>((acc, { dataSourceName, name: namespaceName, groups }) => {
+    groups.forEach(({ name: groupName, rules }) => {
+      rules.forEach((rule) => {
+        if (isAlertingRule(rule)) {
+          acc.push({ dataSourceName, namespaceName, groupName, rule });
+        }
+      });
+    });
+    return acc;
+  }, []);
+};
 
 export const getAlertingRule = (rule: CombinedRuleWithLocation) =>
   isAlertingRule(rule.promRule) ? rule.promRule : null;

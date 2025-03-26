@@ -1,13 +1,16 @@
 import { produce } from 'immer';
 import { lastValueFrom } from 'rxjs';
 
-import { PrometheusAPI } from '@grafana/alerting/types';
-import { prometheusRuleType } from '@grafana/alerting/unstable';
 import { getBackendSrv } from '@grafana/runtime';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { RuleGroup, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import {
+  PromAlertingRuleState,
+  PromRuleGroupDTO,
+  PromRuleType,
+  PromRulesResponse,
+} from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from '../utils/datasource';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
@@ -87,11 +90,11 @@ export function paramsWithMatcherAndState(
   return paramsResult;
 }
 
-export function normalizeRuleGroup(group: PrometheusAPI.RuleGroup): PrometheusAPI.RuleGroup {
+export function normalizeRuleGroup(group: PromRuleGroupDTO): PromRuleGroupDTO {
   return produce(group, (draft) => {
     draft.rules.forEach((rule) => {
       rule.query = rule.query || '';
-      if (prometheusRuleType.isAlertingRule(rule)) {
+      if (rule.type === PromRuleType.Alerting) {
         // There's a possibility that a custom/unexpected datasource might response with
         // `type: alerting` but no state
         // In this case, we fall back to `Inactive` state so that elsewhere in the UI we don't fail/have to handle the edge case
@@ -105,7 +108,7 @@ export function normalizeRuleGroup(group: PrometheusAPI.RuleGroup): PrometheusAP
   });
 }
 
-export const groupRulesByFileName = (groups: PrometheusAPI.RuleGroup[], dataSourceName: string) => {
+export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName: string) => {
   const normalizedGroups = groups.map(normalizeRuleGroup);
 
   const nsMap: { [key: string]: RuleNamespace } = {};
@@ -124,23 +127,20 @@ export const groupRulesByFileName = (groups: PrometheusAPI.RuleGroup[], dataSour
   return Object.values(nsMap);
 };
 
-export const ungroupRulesByFileName = (namespaces: RuleNamespace[] = []): PrometheusAPI.RuleGroup[] => {
+export const ungroupRulesByFileName = (namespaces: RuleNamespace[] = []): PromRuleGroupDTO[] => {
   return namespaces?.flatMap((namespace) =>
     namespace.groups.flatMap((group) => ruleGroupToPromRuleGroupDTO(group, namespace.name))
   );
 };
 
-function ruleGroupToPromRuleGroupDTO(group: PrometheusAPI.RuleGroup, namespace: string): PrometheusAPI.RuleGroup {
+function ruleGroupToPromRuleGroupDTO(group: RuleGroup, namespace: string): PromRuleGroupDTO {
   return {
     name: group.name,
     file: namespace,
     rules: group.rules,
     interval: group.interval,
-    evaluationTime: group.evaluationTime,
-    lastEvaluation: group.lastEvaluation,
   };
 }
-
 export async function fetchRules(
   dataSourceName: string,
   filter?: FetchPromRulesFilter,
@@ -161,7 +161,7 @@ export async function fetchRules(
 
   // adding state param here instead of adding it in prometheusUrlBuilder, for being a possible multiple query param
   const response = await lastValueFrom(
-    getBackendSrv().fetch<PrometheusAPI.RuleGroupResponse>({
+    getBackendSrv().fetch<PromRulesResponse>({
       url,
       params: params,
       showErrorAlert: false,
