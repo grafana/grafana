@@ -312,7 +312,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	if q.WithFullpath || q.WithFullpathUIDs {
 		// only supported in modes 0-2, to keep the alerting queries from causing tons of get folder requests
 		// to retrieve the parent for all folders in grafana
-		opts.LabelSelector = utils.AnnoKeyFullpath + "=true"
+		opts.LabelSelector = utils.LabelGetFullpath + "=true"
 	}
 
 	out, err := ss.k8sclient.List(ctx, q.OrgID, opts)
