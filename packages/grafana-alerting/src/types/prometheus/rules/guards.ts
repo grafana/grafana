@@ -1,14 +1,10 @@
-import {
-  PrometheusAlertingRuleDefinition,
-  PrometheusRecordingRuleDefinition,
-  PrometheusRuleDefinition,
-} from './definitions';
+import { AlertingRuleDefinition, RecordingRuleDefinition, RuleDefinition } from './definitions';
 
 /*
  * Check if the given rule defintion is a AlertingRule definition
  * Used for YAML / JSON definitions (these don't include a "type")
  */
-export function isAlertingRuleDefinition(rule: PrometheusRuleDefinition): rule is PrometheusAlertingRuleDefinition {
+export function isAlertingRuleDefinition(rule: RuleDefinition): rule is AlertingRuleDefinition {
   return 'alert' in rule;
 }
 
@@ -16,6 +12,6 @@ export function isAlertingRuleDefinition(rule: PrometheusRuleDefinition): rule i
  * Check if the given rule defintion is a RecordingRule definition
  * Used for YAML / JSON definitions (these don't include a "type")
  */
-export function isRecordingRuleDefinition(rule: PrometheusRuleDefinition): rule is PrometheusRecordingRuleDefinition {
+export function isRecordingRuleDefinition(rule: RuleDefinition): rule is RecordingRuleDefinition {
   return 'record' in rule;
 }
