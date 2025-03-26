@@ -8,19 +8,21 @@ import (
 	"regexp"
 	"strings"
 
+	alertmanager_config "github.com/prometheus/alertmanager/config"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/hcl"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
-	alertmanager_config "github.com/prometheus/alertmanager/config"
 )
 
 const disableProvenanceHeaderName = "X-Disable-Provenance"
@@ -356,9 +358,6 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		if errors.Is(err, alerting_models.ErrAlertRuleUniqueConstraintViolation) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
 		if errors.Is(err, store.ErrOptimisticLock) {
 			return ErrResp(http.StatusConflict, err, "")
 		}
@@ -395,9 +394,6 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 	updated.UID = UID
 	provenance := determineProvenance(c)
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), c.SignedInUser, updated, alerting_models.Provenance(provenance))
-	if errors.Is(err, alerting_models.ErrAlertRuleUniqueConstraintViolation) {
-		return ErrResp(http.StatusBadRequest, err, "")
-	}
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -513,9 +509,6 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 	}
 	provenance := determineProvenance(c)
 	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, groupModel, alerting_models.Provenance(provenance))
-	if errors.Is(err, alerting_models.ErrAlertRuleUniqueConstraintViolation) {
-		return ErrResp(http.StatusBadRequest, err, "")
-	}
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}

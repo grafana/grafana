@@ -46,7 +46,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -86,6 +85,15 @@ func init() {
 	// we need to add the options to empty v1
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
 	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
+}
+
+// ClearRestConfig clears the package level restConfig.
+// This is intended to be used in tests only.
+//
+// TODO: Refactor such that there is no global state.
+func ClearRestConfig() {
+	restConfig = nil
+	ready = make(chan struct{})
 }
 
 // GetRestConfig return a client Config mounted at package level
@@ -158,7 +166,6 @@ func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
-	orgService org.Service,
 	tracing *tracing.TracingService,
 	serverLockService *serverlock.ServerLockService,
 	db db.DB,
@@ -178,7 +185,7 @@ func ProvideService(
 		rr:                                rr,
 		stopCh:                            make(chan struct{}),
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           metrics.ProvideRegisterer(),
