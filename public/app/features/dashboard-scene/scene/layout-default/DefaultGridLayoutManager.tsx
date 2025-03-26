@@ -186,6 +186,29 @@ export class DefaultGridLayoutManager
     this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
   }
 
+  public duplicate(): DashboardLayoutManager {
+    const clone = this.clone({
+      key: undefined,
+      grid: this.state.grid.clone({
+        key: undefined,
+        children: this.state.grid.state.children.map((child) => {
+          if (child instanceof DashboardGridItem) {
+            return child.clone({
+              key: undefined,
+              body: child.state.body.clone({
+                key: getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(child.state.body)),
+              }),
+            });
+          }
+
+          return child.clone({ key: undefined });
+        }),
+      }),
+    });
+
+    return clone;
+  }
+
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
@@ -233,6 +256,7 @@ export class DefaultGridLayoutManager
 
     sceneGridLayout.setState({ children: [row, ...sceneGridLayout.state.children] });
 
+    this.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
     return row;
   }
 

@@ -271,10 +271,6 @@ export interface FeatureToggles {
   */
   traceQLStreaming?: boolean;
   /**
-  * Enables metrics summary queries in the Tempo data source
-  */
-  metricsSummary?: boolean;
-  /**
   * Expose some datasources as apiservers.
   */
   datasourceAPIServers?: boolean;
@@ -389,10 +385,6 @@ export interface FeatureToggles {
   * Use the kubernetes API in the frontend for dashboards
   */
   kubernetesDashboards?: boolean;
-  /**
-  * Allow restoring objects in k8s
-  */
-  kubernetesRestore?: boolean;
   /**
   * Route the folder and dashboard service requests to k8s
   */
@@ -755,6 +747,10 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
+  * Allows access to the new react-data-grid based table component.
+  */
+  tableNextGen?: boolean;
+  /**
   * Send dashboard and panel names to Loki when querying
   */
   lokiSendDashboardPanelNames?: boolean;
@@ -818,6 +814,7 @@ export interface FeatureToggles {
   unifiedStorageSearchSprinkles?: boolean;
   /**
   * Enable permission filtering on unified storage search
+  * @default true
   */
   unifiedStorageSearchPermissionFiltering?: boolean;
   /**
@@ -1066,7 +1063,10 @@ export interface FeatureToggles {
   unifiedStorageHistoryPruner?: boolean;
   /**
   * Enables the logs builder mode for the Azure Monitor data source
-  * @default true
   */
   azureMonitorLogsBuilderEditor?: boolean;
+  /**
+  * Enables the unified storage grpc connection pool
+  */
+  unifiedStorageGrpcConnectionPool?: boolean;
 }
