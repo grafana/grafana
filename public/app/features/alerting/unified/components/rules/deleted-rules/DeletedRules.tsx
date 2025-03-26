@@ -119,8 +119,8 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
         ruleToRestore={restoreRule}
         isOpen={confirmRestore}
         onDismiss={hideConfirmation}
-        onRestoreSucess={() => trackDeletedRuleRestoreSuccess()}
-        onRestoreError={() => trackDeletedRuleRestoreFail()}
+        onRestoreSucess={trackDeletedRuleRestoreSuccess}
+        onRestoreError={trackDeletedRuleRestoreFail}
       />
     </>
   );

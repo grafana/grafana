@@ -171,10 +171,10 @@ export const navIndex: NavIndex = {
         hideFromTabs: true,
       },
       {
-        id: 'alerts-trash',
-        text: 'Trash',
+        id: 'alerts/recently-deleted',
+        text: 'Recently deleted',
         icon: 'trash-alt',
-        url: '/alerting/trash',
+        url: '/alerting/recently-deleted',
       },
     ],
     parentItem: {
