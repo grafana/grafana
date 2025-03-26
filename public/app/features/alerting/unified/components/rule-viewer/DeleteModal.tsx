@@ -6,7 +6,7 @@ import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { EditableRuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
-import { shouldIAllowRecoveringDeletedRules, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
+import { shouldAllowRecoveringDeletedRules, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { fetchPromAndRulerRulesAction, fetchRulerRulesAction } from '../../state/actions';
@@ -26,7 +26,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<DeleteRuleInfo>();
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const { waitForRemoval } = usePrometheusConsistencyCheck();
-  const isSoftDeleteEnabled = shouldIAllowRecoveringDeletedRules();
+  const isSoftDeleteEnabled = shouldAllowRecoveringDeletedRules();
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);

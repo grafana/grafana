@@ -15,7 +15,7 @@ import {
   PERMISSIONS_NOTIFICATION_POLICIES_READ,
 } from './unified/components/notification-policies/permissions';
 import { PERMISSIONS_TEMPLATES } from './unified/components/templates/permissions';
-import { shouldIAllowRecoveringDeletedRules } from './unified/featureToggles';
+import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
 import { evaluateAccess } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
@@ -215,13 +215,13 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/recently-deleted/',
       roles: () => ['Admin'],
-      component: shouldIAllowRecoveringDeletedRules()
+      component: shouldAllowRecoveringDeletedRules()
         ? importAlertingComponent(
-            () =>
-              import(
+          () =>
+            import(
                 /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
-              )
-          )
+            )
+        )
         : () => <Navigate replace to="/alerting/list" />,
     },
     {

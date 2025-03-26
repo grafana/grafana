@@ -7,5 +7,5 @@ export const shouldUsePrometheusRulesPrimary = () => config.featureToggles.alert
 export const useGrafanaManagedRecordingRulesSupport = () =>
   config.unifiedAlerting.recordingRulesEnabled && config.featureToggles.grafanaManagedRecordingRules;
 
-export const shouldIAllowRecoveringDeletedRules = () =>
+export const shouldAllowRecoveringDeletedRules = () =>
   (isAdmin() && config.featureToggles.alertingRuleRecoverDeleted && config.featureToggles.alertRuleRestore) ?? false;
