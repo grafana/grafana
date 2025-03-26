@@ -1546,13 +1546,21 @@
       },
       "name": "",
       "options": {
-        "columns": "",
-        "fixed": "",
-        "min": "",
-        "one-column": "",
-        "rows": "",
-        "three-columns": "",
-        "two-columns": ""
+        "custom-min-height": {
+          "clear": ""
+        },
+        "custom-min-width": {
+          "clear": ""
+        },
+        "height-fill": "",
+        "max-columns": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-error": "",
+        "min-width": "",
+        "min-width-custom": "",
+        "min-width-custom-clear": "",
+        "min-width-error": ""
       }
     },
     "rows-layout": {
@@ -4355,6 +4363,73 @@
       "title": ""
     }
   },
+  "serviceaccounts": {
+    "create-token-modal": {
+      "close": "",
+      "copy-clipboard": "",
+      "copy-to-clipboard-and-close": "",
+      "description-name-to-easily-identify-the-token": "",
+      "generate-token": "",
+      "label-display-name": "",
+      "label-expiration": "",
+      "label-expiration-date": "",
+      "label-token": ""
+    },
+    "get-actions-cell": {
+      "add-token": "",
+      "disable": "",
+      "enable": ""
+    },
+    "get-role-cell": {
+      "aria-label-role": ""
+    },
+    "service-account-list-item": {
+      "add-token": "",
+      "aria-label-role": "",
+      "disable": "",
+      "enable": "",
+      "title-tokens": ""
+    },
+    "service-account-page-unconnected": {
+      "add-service-account-token": "",
+      "delete-service-account": "",
+      "disable-service-account": "",
+      "enable-service-account": "",
+      "title-delete-service-account": "",
+      "title-disable-service-account": "",
+      "tokens": ""
+    },
+    "service-account-permissions": {
+      "title-permissions": ""
+    },
+    "service-account-profile": {
+      "information": "",
+      "label-creation-date": "",
+      "label-id": "",
+      "label-name": "",
+      "label-numerical-identifier": "",
+      "label-roles": "",
+      "used-by": ""
+    },
+    "service-account-role-row": {
+      "aria-label-role": ""
+    },
+    "service-account-tokens-table": {
+      "created": "",
+      "expires": "",
+      "last-used-at": "",
+      "name": ""
+    },
+    "service-accounts-list-page-unconnected": {
+      "add-service-account": "",
+      "placeholder-search-service-account-by-name": "",
+      "title-delete-service-account": "",
+      "title-disable-service-account": ""
+    },
+    "token-expiration": {
+      "never": ""
+    }
+  },
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
@@ -4735,11 +4810,34 @@
     }
   },
   "trails": {
+    "add-to-filters-graph-action": {
+      "add-to-filters": ""
+    },
     "bookmarks": {
       "or-view-bookmarks": ""
     },
+    "breakdown-search-scene": {
+      "placeholder-search-for-value": ""
+    },
+    "build-normal-layout": {
+      "text-loading": ""
+    },
     "card": {
       "date-created": ""
+    },
+    "create-bookmark-saved-notification": {
+      "view-bookmarks": ""
+    },
+    "data-trail-card": {
+      "deleteButton-tooltip-remove-bookmark": ""
+    },
+    "data-trail-history": {
+      "history": ""
+    },
+    "data-trail-settings": {
+      "render-popover": {
+        "settings": ""
+      }
     },
     "home": {
       "learn-more": "",
@@ -4747,11 +4845,31 @@
       "start-your-metrics-exploration": "",
       "subtitle": ""
     },
+    "label-breakdown-scene": {
+      "label-search": "",
+      "label-view": ""
+    },
+    "metric-action-bar": {
+      "open": "",
+      "select-new-metric": "",
+      "tooltip-open-in-explore": "",
+      "tooltip-remove-existing-metric-choose": ""
+    },
     "metric-select": {
       "filter-by": "",
       "native-histogram": "",
       "new-badge": "",
       "otel-switch": ""
+    },
+    "metric-select-scene": {
+      "label-otel-experience": "",
+      "placeholder-search-metrics": "",
+      "title-unable-to-retrieve-all-metric-names": "",
+      "unable-to-retrieve-metric-names": ""
+    },
+    "metrics-header": {
+      "explore-prometheuscompatible-metrics-without-writing-query": "",
+      "metrics": ""
     },
     "native-histogram-banner": {
       "ch-heatmap": "",
@@ -4773,12 +4891,245 @@
     "settings": {
       "always-keep-selected-metric-graph-in-view": "",
       "show-previews-of-metric-graphs": ""
+    },
+    "sort-by-scene": {
+      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {
     "empty": {
       "add-transformation-body": "",
       "add-transformation-header": ""
+    }
+  },
+  "transformers": {
+    "axis-editor": {
+      "placeholder-auto": ""
+    },
+    "basic-matcher-editor": {
+      "placeholder-value-or-variable": ""
+    },
+    "binary-operation-options-editor": {
+      "label-operation": "",
+      "placeholder-field-or-number": "",
+      "placeholder-fields-or-number": ""
+    },
+    "calculate-field-transformer-editor": {
+      "label-alias": "",
+      "label-mode": "",
+      "label-replace-all-fields": ""
+    },
+    "concatenate-transformer-editor": {
+      "label-label": "",
+      "label-name": "",
+      "placeholder-frame": ""
+    },
+    "config-from-query-transformer-editor": {
+      "label-apply-to": "",
+      "label-apply-to-options": "",
+      "label-config-query": ""
+    },
+    "convert-field-type-transformer-editor": {
+      "label-date-format": "",
+      "label-input-format": "",
+      "label-join-with": "",
+      "label-set-timezone": "",
+      "tooltip-explicit-separator-joining-array-values": "",
+      "tooltip-specify-the-output-format": "",
+      "tooltip-timezone-manually": ""
+    },
+    "cumulative-options-editor": {
+      "label-calculation": "",
+      "label-field": "",
+      "placeholder-field": ""
+    },
+    "draggable-field-name": {
+      "title-drag-and-drop-to-reorder": ""
+    },
+    "enum-mapping-editor": {
+      "add-enum-value": "",
+      "generate-enum-values-from-data": ""
+    },
+    "enum-mapping-row": {
+      "remove-enum-row-aria-label-delete-enum-row": "",
+      "remove-enum-row-tooltip-delete": ""
+    },
+    "extract-fields-transformer-editor": {
+      "label-delimiter": "",
+      "placeholder-select-delimiter": ""
+    },
+    "field-to-config-mapping-editor": {
+      "additional-settings": "",
+      "field": "",
+      "select": "",
+      "use-as": ""
+    },
+    "filter-by-name-transformer-editor": {
+      "label-from-variable": "",
+      "label-identifier": "",
+      "label-use-variable": "",
+      "label-variable": "",
+      "placeholder-regular-expression-pattern": ""
+    },
+    "filter-by-value-filter-editor": {
+      "label-field": "",
+      "label-match": "",
+      "label-value": "",
+      "placeholder-field-name": "",
+      "placeholder-select-test": ""
+    },
+    "filter-by-value-transformer-editor": {
+      "add-condition": "",
+      "label-conditions": "",
+      "label-filter-type": ""
+    },
+    "format-string-transfomer-editor": {
+      "label-format": "",
+      "label-substring-range": ""
+    },
+    "format-time-transfomer-editor": {
+      "label-format": "",
+      "label-set-timezone": "",
+      "label-time-field": "",
+      "tooltip-timezone-manually": ""
+    },
+    "get-tooltips": {
+      "json-value": ""
+    },
+    "group-by-field-configuration": {
+      "placeholder-ignored": "",
+      "placeholder-select-stats": ""
+    },
+    "group-to-nested-table-transformer-editor": {
+      "label-show-field-names-in-nested-tables": ""
+    },
+    "grouping-to-matrix-transformer-editor": {
+      "label-cell-value": "",
+      "label-column": "",
+      "label-empty-value": "",
+      "label-row": ""
+    },
+    "histogram-transformer-editor": {
+      "placeholder-default": ""
+    },
+    "index-options-editor": {
+      "label-as-percentile": "",
+      "tooltip-transform-index-percentile": ""
+    },
+    "join-by-labels-transformer-editor": {
+      "info": {
+        "input-contain-labels": "",
+        "no-input-or-labels-found": "",
+        "title-no-input-found": "",
+        "title-no-labels-found": ""
+      },
+      "tooltip-select-label-indicating-values": ""
+    },
+    "jsonpath-editor": {
+      "add-path": "",
+      "label-alias": "",
+      "label-field": "",
+      "placeholder-valid-objectvalue": "",
+      "tooltip-remove-path": ""
+    },
+    "labels-as-fields-transformer-editor": {
+      "placeholder-optional-select-label": "",
+      "tooltip-replace-value-field-label": ""
+    },
+    "limit-transformer-editor": {
+      "placeholder-value-or-variable": ""
+    },
+    "long-info": {
+      "ascending-order-duplicates": "",
+      "multiple-value-fields-may-exist": "",
+      "single-frame": "",
+      "st-field-is-time": ""
+    },
+    "merge-transformer-editor": {
+      "merge-effect-applied-single-frame": ""
+    },
+    "multi-info": {
+      "all-values-are-numeric": "",
+      "multiple-frames": "",
+      "string-values-are-represented-as-labels": "",
+      "time-in-ascending-order": ""
+    },
+    "partition-by-values-editor": {
+      "label-field": "",
+      "label-select-field": "",
+      "partition-values-works-single-frame": ""
+    },
+    "prepare-time-series-editor": {
+      "label-format": "",
+      "label-info": ""
+    },
+    "range-matcher-editor": {
+      "and": "",
+      "placeholder-from": "",
+      "placeholder-to": ""
+    },
+    "reduce-row-options-editor": {
+      "label-calculation": "",
+      "label-operation": ""
+    },
+    "reduce-transformer-editor": {
+      "label-calculations": "",
+      "label-include-time": "",
+      "label-labels-to-fields": "",
+      "label-mode": "",
+      "placeholder-choose-stat": ""
+    },
+    "regex-matcher-editor": {
+      "placeholder-value-or-variable": ""
+    },
+    "regression-transformer-editor": {
+      "label-degree": "",
+      "label-model-type": "",
+      "label-predicted-points": "",
+      "label-x-field": "",
+      "label-y-field": ""
+    },
+    "rename-by-regex-transformer-editor": {
+      "label-match": "",
+      "label-replace": "",
+      "placeholder-regular-expression-pattern": "",
+      "placeholder-replacement-pattern": ""
+    },
+    "series-to-fields-transformer-editor": {
+      "label-field": "",
+      "label-mode": ""
+    },
+    "sort-by-transformer-editor": {
+      "label-field": "",
+      "label-reverse": "",
+      "placeholder-select-field": ""
+    },
+    "time-series-table-transform-editor": {
+      "label-stat": "",
+      "label-time-field": "",
+      "tooltip-statistic-should-calculated-series": ""
+    },
+    "transpose-transfomer-editor": {
+      "placeholder-field": "",
+      "placeholder-value": ""
+    },
+    "unary-operation-editor": {
+      "label-operation": "",
+      "placeholder-field": ""
+    },
+    "wide-info": {
+      "multiple-value-fields-of-any-type": "",
+      "single-frame": "",
+      "st-field-is-shared-time": "",
+      "time-in-ascending-order": ""
+    },
+    "window-options-editor": {
+      "label-calculation": "",
+      "label-field": "",
+      "label-type": "",
+      "label-window-size-mode": "",
+      "placeholder-auto": "",
+      "placeholder-field": ""
     }
   },
   "upgrade-box": {
@@ -4822,6 +5173,13 @@
   "users": {
     "empty-state": {
       "message": ""
+    },
+    "token-revoked-modal": {
+      "sign-in": ""
+    },
+    "users-action-bar-unconnected": {
+      "invite": "",
+      "placeholder-search-login-email": ""
     }
   },
   "users-access-list": {
@@ -4848,17 +5206,85 @@
     }
   },
   "variables": {
+    "ad-hoc-filter": {
+      "label-and": ""
+    },
+    "confirm-delete-modal": {
+      "title-delete-variable": ""
+    },
     "empty-state": {
       "button-title": "",
       "info-box-content": "",
       "info-box-content-2": "",
       "title": ""
     },
+    "legacy-variable-query-editor": {
+      "placeholder-metric-name-or-tags-query": ""
+    },
+    "no-unknowns": {
+      "no-renamed-or-missing-variables-found": ""
+    },
+    "query-variable-refresh-select": {
+      "description-update-values-variable": "",
+      "label-refresh": ""
+    },
+    "query-variable-sort-select": {
+      "description-values-variable": ""
+    },
+    "text-box-variable-editor": {
+      "placeholder-default-value-if-any": "",
+      "text-options": ""
+    },
     "unknown-table": {
       "loading": "",
       "no-unknowns": "",
       "renamed-or-missing-variables": "",
       "variable": ""
+    },
+    "variable-check-indicator": {
+      "title-variable-referenced-dashboard": "",
+      "title-variable-referenced-other-variables-dashboard": ""
+    },
+    "variable-editor-editor-un-connected": {
+      "apply": "",
+      "aria-label-variable-editor-form": "",
+      "delete": "",
+      "description-optional-display-name": "",
+      "description-template-variable-characters": "",
+      "general": "",
+      "placeholder-descriptive-text": "",
+      "placeholder-label-name": "",
+      "placeholder-variable-name": ""
+    },
+    "variable-editor-list": {
+      "definition": "",
+      "new-variable": "",
+      "variable": ""
+    },
+    "variable-editor-list-row": {
+      "tooltip-duplicate-variable": "",
+      "tooltip-remove-variable": ""
+    },
+    "variable-options": {
+      "aria-label-toggle-all-values": ""
+    },
+    "variable-usages-button": {
+      "tooltip-show-usages": ""
+    },
+    "variables-dependencies-button": {
+      "show-dependencies": "",
+      "title-dependencies": ""
+    },
+    "variables-unknown-button": {
+      "VariablesUnknownButton-tooltip-show-usages": ""
+    },
+    "variables-unknown-table": {
+      "loading": ""
+    }
+  },
+  "visualization": {
+    "data-hover-view": {
+      "link": ""
     }
   }
 }
