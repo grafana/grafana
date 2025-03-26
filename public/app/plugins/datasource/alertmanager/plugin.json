@@ -8,7 +8,7 @@
       "method": "POST",
       "path": "alertmanager/api/v2/silences",
       "reqRole": "Editor",
-      "reqAction": "alert.silences:create"
+      "reqAction": "alert.instances.external:write"
     },
     {
       "method": "DELETE",
