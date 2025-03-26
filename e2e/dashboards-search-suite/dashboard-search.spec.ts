@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 const rowGroup = '[role="rowgroup"]';
 const row = '[role="row"]';
-const searchInput = '[data-testid="input-wrapper"]'
+const searchInput = '[data-testid="input-wrapper"]';
 
 describe('Dashboard search', () => {
   beforeEach(() => {
@@ -18,7 +18,6 @@ describe('Dashboard search', () => {
   });
 
   it('Search - Filter by search input', () => {
-
     e2e.pages.Dashboards.visit();
 
     toggleSearchView();
@@ -29,13 +28,13 @@ describe('Dashboard search', () => {
     cy.get(searchInput).type('Datasource tests - MySQL');
     assertResultsCount(2);
 
-    cy.get(searchInput).type('{selectall}{backspace}')  // clear input
+    cy.get(searchInput).type('{selectall}{backspace}'); // clear input
 
     // exact match
     cy.get(searchInput).type('Datasource tests - MySQL (unittest)');
     assertResultsCount(1);
 
-    cy.get(searchInput).type('{selectall}{backspace}')  // clear input
+    cy.get(searchInput).type('{selectall}{backspace}'); // clear input
 
     // suffix match
     cy.get(searchInput).type('- MySQL');
@@ -47,12 +46,11 @@ const assertResultsCount = (length: number) => {
   e2e.pages.SearchDashboards.table().should('exist');
 
   const table = e2e.pages.SearchDashboards.table();
-  const group = table.find(rowGroup)
+  const group = table.find(rowGroup);
   group.should('have.length', 1);
   const rows = group.find(row);
   rows.should('have.length', length);
-}
-
+};
 
 const toggleSearchView = () => {
   e2e.pages.Dashboards.toggleView().each((e, i) => {
@@ -60,4 +58,4 @@ const toggleSearchView = () => {
       cy.wrap(e).click();
     }
   });
-}
+};

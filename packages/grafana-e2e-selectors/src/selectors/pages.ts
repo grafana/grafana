@@ -570,7 +570,7 @@ export const versionedPages = {
       '10.2.0': (title: string) => `Dashboard search item ${title}`,
     },
     toggleView: {
-      [MIN_GRAFANA_VERSION]:`data-testid radio-button`,
+      [MIN_GRAFANA_VERSION]: 'data-testid radio-button',
     },
   },
   SaveDashboardAsModal: {
@@ -950,7 +950,7 @@ export const versionedPages = {
   },
   SearchDashboards: {
     table: {
-        '10.2.0': 'Search results table',
+      '10.2.0': 'Search results table',
     },
   },
   Search: {
