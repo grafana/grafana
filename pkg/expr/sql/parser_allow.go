@@ -93,10 +93,13 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.Into:
 		return
 
+	case *sqlparser.IsExpr:
+		return
+
 	case *sqlparser.JoinTableExpr, sqlparser.JoinCondition:
 		return
 
-	case *sqlparser.Select, sqlparser.SelectExprs:
+	case *sqlparser.Select, sqlparser.SelectExprs, *sqlparser.ParenSelect:
 		return
 
 	case *sqlparser.SetOp:

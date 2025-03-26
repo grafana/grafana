@@ -16,9 +16,35 @@ type CommonQueryModel struct {
 	Type       expr.QueryType         `json:"type"`
 }
 
+// createAlertQueryWithDefaults creates an AlertQuery with default values initialized.
+func createAlertQueryWithDefaults(datasourceUID string, modelData any, refID string, relTimeRange *models.RelativeTimeRange, queryType string) (models.AlertQuery, error) {
+	modelJSON, err := json.Marshal(modelData)
+	if err != nil {
+		return models.AlertQuery{}, fmt.Errorf("failed to marshal query model: %w", err)
+	}
+
+	query := models.AlertQuery{
+		DatasourceUID: datasourceUID,
+		Model:         modelJSON,
+		RefID:         refID,
+		QueryType:     queryType,
+	}
+
+	// Set relative time range if provided
+	if relTimeRange != nil {
+		query.RelativeTimeRange = *relTimeRange
+	}
+
+	if err := query.InitDefaults(); err != nil {
+		return models.AlertQuery{}, err
+	}
+
+	return query, nil
+}
+
 func createQueryNode(datasourceUID, datasourceType, expr string, fromTimeRange, evaluationOffset time.Duration) (models.AlertQuery, error) {
-	modelData := map[string]interface{}{
-		"datasource": map[string]interface{}{
+	modelData := map[string]any{
+		"datasource": map[string]any{
 			"type": datasourceType,
 			"uid":  datasourceUID,
 		},
@@ -32,20 +58,12 @@ func createQueryNode(datasourceUID, datasourceType, expr string, fromTimeRange, 
 		modelData["queryType"] = "instant"
 	}
 
-	modelJSON, err := json.Marshal(modelData)
-	if err != nil {
-		return models.AlertQuery{}, err
+	relTimeRange := models.RelativeTimeRange{
+		From: models.Duration(fromTimeRange + evaluationOffset),
+		To:   models.Duration(evaluationOffset),
 	}
 
-	return models.AlertQuery{
-		DatasourceUID: datasourceUID,
-		Model:         modelJSON,
-		RefID:         queryRefID,
-		RelativeTimeRange: models.RelativeTimeRange{
-			From: models.Duration(fromTimeRange + evaluationOffset),
-			To:   models.Duration(evaluationOffset),
-		},
-	}, nil
+	return createAlertQueryWithDefaults(datasourceUID, modelData, queryRefID, &relTimeRange, datasourceType)
 }
 
 type MathQueryModel struct {
@@ -70,17 +88,7 @@ func createMathNode() (models.AlertQuery, error) {
 		},
 	}
 
-	modelJSON, err := json.Marshal(model)
-	if err != nil {
-		return models.AlertQuery{}, err
-	}
-
-	return models.AlertQuery{
-		DatasourceUID: expr.DatasourceUID,
-		Model:         modelJSON,
-		RefID:         prometheusMathRefID,
-		QueryType:     string(model.Type),
-	}, nil
+	return createAlertQueryWithDefaults(expr.DatasourceUID, model, prometheusMathRefID, nil, string(expr.QueryTypeMath))
 }
 
 type ThresholdQueryModel struct {
@@ -113,15 +121,5 @@ func createThresholdNode() (models.AlertQuery, error) {
 		},
 	}
 
-	modelJSON, err := json.Marshal(model)
-	if err != nil {
-		return models.AlertQuery{}, err
-	}
-
-	return models.AlertQuery{
-		DatasourceUID: expr.DatasourceUID,
-		Model:         modelJSON,
-		RefID:         thresholdRefID,
-		QueryType:     string(model.Type),
-	}, nil
+	return createAlertQueryWithDefaults(expr.DatasourceUID, model, thresholdRefID, nil, string(expr.QueryTypeThreshold))
 }

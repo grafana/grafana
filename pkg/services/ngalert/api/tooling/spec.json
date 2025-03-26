@@ -2671,155 +2671,6 @@
         }
       }
     },
-    "/v1/notifications/receivers": {
-      "get": {
-        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-        "tags": [
-          "notifications"
-        ],
-        "summary": "Get all receivers.",
-        "operationId": "RouteGetReceivers",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "name": "names",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "limit",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "offset",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "name": "decrypt",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/GetReceiversResponse"
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          }
-        }
-      }
-    },
-    "/v1/notifications/receivers/{Name}": {
-      "get": {
-        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-        "tags": [
-          "notifications"
-        ],
-        "summary": "Get a receiver by name.",
-        "operationId": "RouteGetReceiver",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "name",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "boolean",
-            "name": "decrypt",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/GetReceiverResponse"
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          },
-          "404": {
-            "description": "NotFound",
-            "schema": {
-              "$ref": "#/definitions/NotFound"
-            }
-          }
-        }
-      }
-    },
-    "/v1/notifications/time-intervals": {
-      "get": {
-        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-        "tags": [
-          "notifications"
-        ],
-        "summary": "Get all the time intervals",
-        "operationId": "RouteNotificationsGetTimeIntervals",
-        "deprecated": true,
-        "responses": {
-          "200": {
-            "$ref": "#/responses/GetAllIntervalsResponse"
-          },
-          "403": {
-            "description": "ForbiddenError",
-            "schema": {
-              "$ref": "#/definitions/ForbiddenError"
-            }
-          }
-        }
-      }
-    },
-    "/v1/notifications/time-intervals/{name}": {
-      "get": {
-        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-        "tags": [
-          "notifications"
-        ],
-        "summary": "Get a time interval by name.",
-        "operationId": "RouteNotificationsGetTimeInterval",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Time interval name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/GetIntervalsByNameResponse"
-          },
-          "403": {
-            "description": "ForbiddenError",
-            "schema": {
-              "$ref": "#/definitions/ForbiddenError"
-            }
-          },
-          "404": {
-            "description": "NotFound",
-            "schema": {
-              "$ref": "#/definitions/NotFound"
-            }
-          }
-        }
-      }
-    },
     "/v1/provisioning/alert-rules": {
       "get": {
         "tags": [
@@ -4442,6 +4293,10 @@
             "type": "string"
           }
         },
+        "missing_series_evals_to_resolve": {
+          "type": "integer",
+          "format": "int64"
+        },
         "noDataState": {
           "type": "string",
           "enum": [
@@ -5855,6 +5710,10 @@
         "metadata": {
           "$ref": "#/definitions/AlertRuleMetadata"
         },
+        "missing_series_evals_to_resolve": {
+          "type": "integer",
+          "format": "int64"
+        },
         "namespace_uid": {
           "type": "string"
         },
@@ -6002,26 +5861,6 @@
         },
         "versionInfo": {
           "$ref": "#/definitions/versionInfo"
-        }
-      }
-    },
-    "GettableTimeIntervals": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
-        },
-        "time_intervals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeIntervalItem"
-          }
-        },
-        "version": {
-          "type": "string"
         }
       }
     },
@@ -7090,6 +6929,12 @@
         "metadata": {
           "$ref": "#/definitions/AlertRuleMetadata"
         },
+        "missing_series_evals_to_resolve": {
+          "description": "Number of consecutive evaluation intervals with no data for a dimension must pass\nbefore the alert state is considered stale and automatically resolved.\nIf set to 0, the value is reset to the default.",
+          "type": "integer",
+          "format": "int64",
+          "example": 3
+        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -7158,23 +7003,6 @@
           "items": {
             "type": "string"
           }
-        }
-      }
-    },
-    "PostableTimeIntervals": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "time_intervals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeIntervalItem"
-          }
-        },
-        "version": {
-          "type": "string"
         }
       }
     },
@@ -7386,6 +7214,11 @@
           "example": {
             "team": "sre-team-1"
           }
+        },
+        "missingSeriesEvalsToResolve": {
+          "type": "integer",
+          "format": "int64",
+          "example": 2
         },
         "noDataState": {
           "type": "string",
@@ -8698,55 +8531,6 @@
         }
       }
     },
-    "TimeIntervalItem": {
-      "type": "object",
-      "properties": {
-        "days_of_month": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "location": {
-          "type": "string"
-        },
-        "months": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "times": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeIntervalTimeRange"
-          }
-        },
-        "weekdays": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "years": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "TimeIntervalTimeRange": {
-      "type": "object",
-      "properties": {
-        "end_time": {
-          "type": "string"
-        },
-        "start_time": {
-          "type": "string"
-        }
-      }
-    },
     "TimeRange": {
       "description": "Redefining this to avoid an import cycle",
       "type": "object",
@@ -9039,7 +8823,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
@@ -9201,7 +8984,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -9578,36 +9360,6 @@
     }
   },
   "responses": {
-    "GetAllIntervalsResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/GettableTimeIntervals"
-        }
-      }
-    },
-    "GetIntervalsByNameResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/GettableTimeIntervals"
-      }
-    },
-    "GetReceiverResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/GettableApiReceiver"
-      }
-    },
-    "GetReceiversResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/GettableApiReceiver"
-        }
-      }
-    },
     "GettableHistoricUserConfigs": {
       "description": "",
       "schema": {
