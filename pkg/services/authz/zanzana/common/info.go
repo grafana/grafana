@@ -19,12 +19,22 @@ var typedResources = map[string]typeInfo{
 		folderalpha1.FolderResourceInfo.GroupResource().Group,
 		folderalpha1.FolderResourceInfo.GroupResource().Resource,
 		"",
-	): {Type: "folder", Relations: RelationsFolder},
+	): {Type: "folder", Relations: RelationsTyped},
 	FormatGroupResource(
 		iamalpha1.TeamResourceInfo.GroupResource().Group,
 		iamalpha1.TeamResourceInfo.GroupResource().Resource,
 		"",
-	): {Type: "team", Relations: RelationsFolder},
+	): {Type: "team", Relations: RelationsTyped},
+	FormatGroupResource(
+		iamalpha1.UserResourceInfo.GroupResource().Group,
+		iamalpha1.UserResourceInfo.GroupResource().Resource,
+		"",
+	): {Type: "user", Relations: RelationsTyped},
+	FormatGroupResource(
+		iamalpha1.ServiceAccountResourceInfo.GroupResource().Group,
+		iamalpha1.ServiceAccountResourceInfo.GroupResource().Resource,
+		"",
+	): {Type: "service-account", Relations: RelationsTyped},
 }
 
 func getTypeInfo(group, resource string) (typeInfo, bool) {
