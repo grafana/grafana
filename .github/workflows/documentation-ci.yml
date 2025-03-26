@@ -16,4 +16,3 @@ jobs:
       - uses: grafana/writers-toolkit/vale-action@vale-action/v1
         with:
           filter: '.Name in ["Grafana.WordList", "Grafana.Spelling", "Grafana.ProductPossessives"]'
-          token: ${{ secrets.GITHUB_TOKEN }}
