@@ -5,11 +5,12 @@ import tinycolor from 'tinycolor2';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPinned } from './LogListContext';
-import { LogFieldDimension, LogListModel } from './processing';
-import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight } from './virtualization';
+import { LogListModel } from './processing';
+import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight, LogFieldDimension } from './virtualization';
 
 interface Props {
   displayedFields: string[];
@@ -56,7 +57,13 @@ export const LogLine = ({
     >
       <LogLineMenu styles={styles} log={log} />
       <div className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`}`}>
-        <Log displayedFields={displayedFields} log={log} showTime={showTime} styles={styles} />
+        <Log
+          displayedFields={displayedFields}
+          log={log}
+          showTime={showTime}
+          styles={styles}
+          wrapLogMessage={wrapLogMessage}
+        />
       </div>
     </div>
   );
@@ -67,24 +74,49 @@ interface LogProps {
   log: LogListModel;
   showTime: boolean;
   styles: LogLineStyles;
+  wrapLogMessage: boolean;
 }
 
-const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
+const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
   return (
     <>
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
-      <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+      {
+        // When logs are unwrapped, we want an empty column space to align with other log lines.
+      }
+      {(log.displayLevel || !wrapLogMessage) && (
+        <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+      )}
       {displayedFields.length > 0 ? (
-        displayedFields.map((field) => (
-          <span className="field" title={field} key={field}>
-            {getDisplayedFieldValue(field, log)}
-          </span>
-        ))
+        displayedFields.map((field) =>
+          field === LOG_LINE_BODY_FIELD_NAME ? (
+            <LogLineBody log={log} key={field} />
+          ) : (
+            <span className="field" title={field} key={field}>
+              {getDisplayedFieldValue(field, log)}
+            </span>
+          )
+        )
       ) : (
-        <span className="field">{log.body}</span>
+        <LogLineBody log={log} />
       )}
     </>
   );
+};
+
+const LogLineBody = ({ log }: { log: LogListModel }) => {
+  if (log.hasAnsi) {
+    const needsHighlighter =
+      log.searchWords && log.searchWords.length > 0 && log.searchWords[0] && log.searchWords[0].length > 0;
+    const highlight = needsHighlighter ? { searchWords: log.searchWords ?? [], highlightClassName: '' } : undefined;
+    return (
+      <span className="field">
+        <LogMessageAnsi value={log.body} highlight={highlight} />
+      </span>
+    );
+  }
+
+  return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
 };
 
 export function getDisplayedFieldValue(fieldName: string, log: LogListModel): string {
@@ -110,16 +142,18 @@ export type LogLineStyles = ReturnType<typeof getStyles>;
 export const getStyles = (theme: GrafanaTheme2) => {
   const colors = {
     critical: '#B877D9',
-    error: '#FF5286',
+    error: '#f22f44',
     warning: '#FBAD37',
     debug: '#6CCF8E',
     trace: '#6ed0e0',
     info: '#6E9FFF',
+    metadata: theme.colors.text.primary,
+    parsedField: theme.colors.text.primary,
   };
 
   return {
     logLine: css({
-      color: theme.colors.text.primary,
+      color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
       display: 'flex',
       gap: theme.spacing(0.5),
       flexDirection: 'row',
@@ -127,7 +161,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.fontSize,
       wordBreak: 'break-all',
       '&:hover': {
-        opacity: 0.7,
+        background: `hsla(0, 0%, 0%, 0.1)`,
       },
       '&.infinite-scroll': {
         '&::before': {
@@ -138,6 +172,37 @@ export const getStyles = (theme: GrafanaTheme2) => {
           position: 'absolute',
           top: -3,
           width: '100%',
+        },
+      },
+      '& .log-syntax-highlight': {
+        '.log-token-string': {
+          color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
+        },
+        '.log-token-duration': {
+          color: theme.colors.success.text,
+        },
+        '.log-token-size': {
+          color: theme.colors.success.text,
+        },
+        '.log-token-uuid': {
+          color: theme.colors.success.text,
+        },
+        '.log-token-key': {
+          color: colors.parsedField,
+          opacity: 0.9,
+          fontWeight: theme.typography.fontWeightMedium,
+        },
+        '.log-token-json-key': {
+          color: colors.parsedField,
+          opacity: 0.9,
+          fontWeight: theme.typography.fontWeightMedium,
+        },
+        '.log-token-label': {
+          color: colors.metadata,
+          fontWeight: theme.typography.fontWeightBold,
+        },
+        '.log-token-method': {
+          color: theme.colors.info.shade,
         },
       },
     }),
@@ -151,30 +216,16 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     logLineMessage: css({
       fontFamily: theme.typography.fontFamily,
-      textAlign: 'center',
+      justifyContent: 'center',
     }),
     timestamp: css({
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.disabled,
       display: 'inline-block',
-      '&.level-critical': {
-        color: colors.critical,
-      },
-      '&.level-error': {
-        color: colors.error,
-      },
-      '&.level-info': {
-        color: colors.info,
-      },
-      '&.level-warning': {
-        color: colors.warning,
-      },
-      '&.level-debug': {
-        color: colors.debug,
-      },
     }),
     level: css({
       color: theme.colors.text.secondary,
       fontWeight: theme.typography.fontWeightBold,
+      textTransform: 'uppercase',
       display: 'inline-block',
       '&.level-critical': {
         color: colors.critical,
@@ -207,8 +258,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       paddingBottom: theme.spacing(0.75),
     }),
     wrappedLogLine: css({
-      whiteSpace: 'pre-wrap',
+      alignSelf: 'flex-start',
       paddingBottom: theme.spacing(0.75),
+      whiteSpace: 'pre-wrap',
       '& .field': {
         marginRight: theme.spacing(FIELD_GAP_MULTIPLIER),
       },
