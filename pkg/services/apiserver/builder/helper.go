@@ -170,6 +170,8 @@ func SetupConfig(
 			operationAlt = "get" + operationAlt[len("read"):]
 		} else if strings.HasPrefix(operationAlt, "patch") {
 			operationAlt = "update" + operationAlt[len("patch"):]
+		} else if strings.HasPrefix(operationAlt, "put") {
+			operationAlt = "replace" + operationAlt[len("put"):]
 		}
 
 		// Audit our options here

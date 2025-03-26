@@ -52,12 +52,12 @@ func (d *directResourceClient) List(ctx context.Context, in *resource.ListReques
 	return d.server.List(ctx, in)
 }
 
-func (d *directResourceClient) ListRepositoryObjects(ctx context.Context, in *resource.ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.ListRepositoryObjectsResponse, error) {
-	return d.server.ListRepositoryObjects(ctx, in)
+func (d *directResourceClient) ListManagedObjects(ctx context.Context, in *resource.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resource.ListManagedObjectsResponse, error) {
+	return d.server.ListManagedObjects(ctx, in)
 }
 
-func (d *directResourceClient) CountRepositoryObjects(ctx context.Context, in *resource.CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.CountRepositoryObjectsResponse, error) {
-	return d.server.CountRepositoryObjects(ctx, in)
+func (d *directResourceClient) CountManagedObjects(ctx context.Context, in *resource.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resource.CountManagedObjectsResponse, error) {
+	return d.server.CountManagedObjects(ctx, in)
 }
 
 // PutBlob implements ResourceClient.
@@ -68,11 +68,6 @@ func (d *directResourceClient) PutBlob(ctx context.Context, in *resource.PutBlob
 // Read implements ResourceClient.
 func (d *directResourceClient) Read(ctx context.Context, in *resource.ReadRequest, opts ...grpc.CallOption) (*resource.ReadResponse, error) {
 	return d.server.Read(ctx, in)
-}
-
-// Restore implements ResourceClient.
-func (d *directResourceClient) Restore(ctx context.Context, in *resource.RestoreRequest, opts ...grpc.CallOption) (*resource.RestoreResponse, error) {
-	return d.server.Restore(ctx, in)
 }
 
 // Search implements ResourceClient.

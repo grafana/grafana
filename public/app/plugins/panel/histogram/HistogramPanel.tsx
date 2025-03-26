@@ -1,9 +1,16 @@
 import { useMemo } from 'react';
 
-import { DataFrameType, PanelProps, buildHistogram, cacheFieldDisplayNames, getHistogramFields } from '@grafana/data';
-import { histogramFieldsToFrame, joinHistograms } from '@grafana/data/src/transformations/transformers/histogram';
+import {
+  histogramFieldsToFrame,
+  joinHistograms,
+  DataFrameType,
+  PanelProps,
+  buildHistogram,
+  cacheFieldDisplayNames,
+  getHistogramFields,
+} from '@grafana/data';
 import { TooltipDisplayMode, TooltipPlugin2, useTheme2 } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TooltipHoverMode } from '@grafana/ui/internal';
 
 import { Histogram, getBucketSize } from './Histogram';
 import { HistogramTooltip } from './HistogramTooltip';
