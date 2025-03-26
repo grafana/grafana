@@ -3,7 +3,6 @@ import { CSSProperties, useEffect, useRef } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
@@ -154,7 +153,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     logLine: css({
-      color: alpha(theme.colors.text.secondary, 0.75),
+      color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
       display: 'flex',
       gap: theme.spacing(0.5),
       flexDirection: 'row',
@@ -177,7 +176,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
       '& .log-syntax-highlight': {
         '.log-token-string': {
-          color: alpha(theme.colors.text.secondary, 0.75),
+          color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
         },
         '.log-token-duration': {
           color: theme.colors.success.text,
