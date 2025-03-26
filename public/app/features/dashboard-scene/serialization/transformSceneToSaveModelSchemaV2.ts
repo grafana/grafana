@@ -404,11 +404,31 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
       },
     };
 
-    // Check if DataQueryKind exists
-    const queryKind = getAnnotationQueryKind(layer.state.query);
-    if (layer.state.query.query?.kind === queryKind) {
+    // For built-in annotations, always use grafana kind but respect target if it exists
+    if (layer.state.query.builtIn) {
       result.spec.query = {
-        kind: queryKind,
+        kind: 'grafana',
+        spec: layer.state.query.target || {
+          type: 'dashboard',
+          limit: 100,
+          matchAny: false,
+          tags: [],
+        },
+      };
+    } else if (layer.state.query.target) {
+      // Transform old target structure to new query structure for non-built-in annotations
+      result.spec.query = {
+        kind: getAnnotationQueryKind(layer.state.query),
+        spec: {
+          ...layer.state.query.target,
+          // Include any datasource-specific query properties (like expr for Prometheus)
+          ...(layer.state.query.expr && { expr: layer.state.query.expr }),
+        },
+      };
+    } else if (layer.state.query.query?.kind) {
+      // Use new query structure if it exists
+      result.spec.query = {
+        kind: layer.state.query.query.kind,
         spec: layer.state.query.query.spec,
       };
     }
