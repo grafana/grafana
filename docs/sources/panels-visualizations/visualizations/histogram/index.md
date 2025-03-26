@@ -121,7 +121,7 @@ Use the following options to refine your histogram visualization.
 
 #### Bucket offset
 
-If the first bucket should not start at zero. A non-zero offset has the effect of shifting the aggregation window.
+If the first bucket should not start at zero, a non-zero offset has the effect of shifting the aggregation window.
 
 For example, 5-sized buckets that are 0-5, 5-10, 10-15 with a default 0 offset would become 2-7, 7-12, 12-17 with an offset of 2; offsets of 0, 5, or 10, in this case, would effectively do nothing.
 
