@@ -3,7 +3,7 @@ name: Run dashboard search e2e
 on:
   push:
     branches:
-      - main
+      - grafana-e2e
   pull_request:
     branches:
       - main
@@ -12,10 +12,11 @@ env:
   ARCH: linux-amd64
 
 jobs:
-  dashboard-search-e2e:
+  setup:
     runs-on: ubuntu-latest
-    continue-on-error: true
-    if: github.event.pull_request.draft == false
+    outputs:
+      ini_files: ${{ steps.get_files.outputs.ini_files }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,42 +29,85 @@ jobs:
         with:
           node-version: 20
           cache: 'yarn'
+      - name: Cache Node Modules
+        id: cache-node-modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
       - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: yarn install --immutable
-      - name: Build grafana
-        run: make build
+      - name: Install Cypress (Runs in Background)
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm install cypress --save-dev &
       - name: Install Cypress dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         uses: cypress-io/github-action@v6
         with:
           runTests: false
-      - name: Run dashboard search e2e mode0
+      - name: Cache Grafana Build and Dependencies
+        id: cache-grafana
+        uses: actions/cache@v3
+        with:
+          path: |
+            bin/
+            scripts/grafana-server/
+            tools/
+            public/
+            conf/
+            e2e/test-plugins/
+            devenv/
+          key: ${{ runner.os }}-grafana-${{ github.sha }}
+
+      - name: Build Grafana (Runs Only If Not Cached)
+        if: steps.cache-grafana.outputs.cache-hit != 'true'
+        run: make build
+
+      - name: Get list of .ini files
+        id: get_files
         run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode0.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
-          yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
-      - name: Run dashboard search e2e mode1
+          INI_FILES=$(ls ${{ github.workspace }}/e2e/dashboards-search-suite/*.ini | jq -R -s -c 'split("\n")[:-1]')
+          echo "ini_files=$INI_FILES" >> $GITHUB_ENV
+          echo "::set-output name=ini_files::$INI_FILES"
+
+run_tests:
+    needs: setup
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: github.event.pull_request.draft == false
+    strategy:
+      matrix:
+        ini_file: ${{ fromJson(needs.setup.outputs.ini_files) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore Cached Node Modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+      - name: Restore Cached Grafana Build and Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            bin/
+            scripts/grafana-server/
+            tools/
+            public/
+            conf/
+            e2e/test-plugins/
+            devenv/
+          key: ${{ runner.os }}-grafana-${{ github.sha }}
+
+      - name: Run tests for ${{ matrix.ini_file }}
         run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode1.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
+          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/${{ matrix.ini_file }} ${{ github.workspace }}/scripts/grafana-server/custom.ini
           yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
-      - name: Run dashboard search e2e mode2
-        run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode2.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
-          yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
-      - name: Run dashboard search e2e mode3
-        run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode3.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
-          yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
-      - name: Run dashboard search e2e mode4
-        run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode4.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
-          yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
-      - name: Run dashboard search e2e mode5
-        run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode5.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
-          yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
-      - name: Run dashboard search e2e mode2 legacy search
-        run: |
-          cp -rf ${{ github.workspace }}/e2e/dashboards-search-suite/mode2-legacy-search.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
-          yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
+            - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
       - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
         if: failure()
         run: exit 0
