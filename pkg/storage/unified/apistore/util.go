@@ -71,7 +71,7 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 				if len(requirements) != 1 {
 					return nil, predicate, apierrors.NewBadRequest("single label supported with: " + v)
 				}
-				if !opts.Predicate.Field.Empty() {
+				if opts.Predicate.Field != nil && !opts.Predicate.Field.Empty() {
 					return nil, predicate, apierrors.NewBadRequest("field selector not supported with: " + v)
 				}
 				if r.Operator() != selection.Equals {
