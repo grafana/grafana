@@ -19,7 +19,7 @@
     {
       "method": "GET",
       "path": "alertmanager/api/v2/silence",
-      "reqRole": "Editor",
+      "reqRole": "Viewer",
       "reqAction": "alert.instances.external:read"
     },
     {
@@ -27,18 +27,6 @@
       "path": "alertmanager/api/v2/silence",
       "reqRole": "Editor",
       "reqAction": "alert.instances.external:write"
-    },
-    {
-      "method": "POST",
-      "reqRole": "Editor"
-    },
-    {
-      "method": "PUT",
-      "reqRole": "Editor"
-    },
-    {
-      "method": "DELETE",
-      "reqRole": "Editor"
     },
     {
       "method": "GET",
@@ -55,15 +43,39 @@
     {
       "method": "POST",
       "path": "alertmanager/api/v2/alerts",
-      "reqRole": "Viewer",
+      "reqRole": "Editor",
       "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/status",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/receivers",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
     },
     {
       "method": "GET",
       "path": "api/v1/alerts",
       "reqRole": "Admin",
       "reqAction": "alert.instances.external:read"      
-    }
+    },
+    {
+      "method": "POST",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "PUT",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "DELETE",
+      "reqRole": "Editor"
+    }    
   ],
   "info": {
     "description": "Add external Alertmanagers (supports Prometheus and Mimir implementations) so you can use the Grafana Alerting UI to manage silences, contact points, and notification policies.",
