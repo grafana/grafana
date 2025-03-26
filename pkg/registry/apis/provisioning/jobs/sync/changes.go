@@ -42,13 +42,9 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 	keep := safepath.NewTrie()
 	changes := make([]ResourceFileChange, 0, len(source))
 	for _, file := range source {
-		if !file.Blob {
-			continue // skip folder references?
-		}
-
 		check, ok := lookup[file.Path]
 		if ok {
-			if check.Hash != file.Hash {
+			if check.Hash != file.Hash && check.Resource != folders.RESOURCE {
 				changes = append(changes, ResourceFileChange{
 					Action:   repository.FileActionUpdated,
 					Path:     check.Path,
@@ -59,7 +55,10 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 			if err := keep.Add(file.Path); err != nil {
 				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
-			delete(lookup, file.Path)
+
+			if check.Resource != folders.RESOURCE {
+				delete(lookup, file.Path)
+			}
 
 			continue
 		}
@@ -78,24 +77,24 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 		}
 
 		// Maintain the safe segment for empty folders
-		folderPath := safepath.SafeSegment(file.Path)
-		if !safepath.IsDir(folderPath) {
-			folderPath = safepath.Dir(folderPath)
+		safeSegment := safepath.SafeSegment(file.Path)
+		if !safepath.IsDir(safeSegment) {
+			safeSegment = safepath.Dir(safeSegment)
 		}
 
-		if folderPath != "" && resources.IsPathSupported(folderPath) == nil {
-			if err := keep.Add(folderPath); err != nil {
+		if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
+			if err := keep.Add(safeSegment); err != nil {
 				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
-			_, ok := lookup[folderPath]
+			_, ok := lookup[safeSegment]
 			if ok {
 				continue
 			}
 
 			changes = append(changes, ResourceFileChange{
 				Action: repository.FileActionCreated, // or previously ignored/failed
-				Path:   folderPath,
+				Path:   safeSegment,
 			})
 		}
 	}
