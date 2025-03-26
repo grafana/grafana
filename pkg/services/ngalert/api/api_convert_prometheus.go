@@ -511,20 +511,10 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 	// 3. Update the GMA Rules in the DB
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
 		for _, grafanaGroup := range grafanaGroups {
-			rules := make([]*models.AlertRuleWithOptionals, 0, len(grafanaGroup.Rules))
-			for _, r := range grafanaGroup.Rules {
-				rules = append(rules, &models.AlertRuleWithOptionals{
-					AlertRule: r,
-				})
-			}
-			groupKey := models.AlertRuleGroupKey{
-				OrgID:        c.SignedInUser.GetOrgID(),
-				NamespaceUID: grafanaGroup.FolderUID,
-				RuleGroup:    grafanaGroup.Title,
-			}
-			updateResp := srv.rulerSrv.updateAlertRulesInGroup(c, groupKey, rules, false)
-			if updateResp.Status() != http.StatusAccepted {
-				return fmt.Errorf("failed to update group %s with folder_uid %s", groupKey.RuleGroup, grafanaGroup.FolderUID)
+			err = srv.alertRuleService.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, *grafanaGroup, provenance)
+			if err != nil {
+				logger.Error("Failed to replace rule group", "error", err)
+				return err
 			}
 		}
 
