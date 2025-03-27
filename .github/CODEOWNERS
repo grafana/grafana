@@ -560,6 +560,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/table/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx @grafana/dataviz-squad @grafana/app-o11y-visualizations
 /public/app/plugins/panel/table-old/ @grafana/dataviz-squad
+/public/app/plugins/panel/table-new/ @grafana/dataviz-squad
 /public/app/plugins/panel/timeseries/ @grafana/dataviz-squad
 /public/app/plugins/panel/trend/ @grafana/dataviz-squad
 /public/app/plugins/panel/geomap/ @grafana/dataviz-squad
