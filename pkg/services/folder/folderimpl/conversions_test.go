@@ -34,7 +34,7 @@ func TestFolderConversions(t *testing.T) {
           "grafana.app/updatedTimestamp": "2022-12-02T07:02:02Z",
           "grafana.app/repoName": "example-repo",
           "grafana.app/createdBy": "user:useruid",
-          "grafana.app/updatedBy": "user:useruid"
+          "grafana.app/updatedBy": "user:2"
         }
       },
       "spec": {
@@ -49,12 +49,23 @@ func TestFolderConversions(t *testing.T) {
 	require.NoError(t, err)
 
 	fake := usertest.NewUserServiceFake()
-	fake.ExpectedUser = &user.User{ID: 10, UID: "useruid"}
+	fake.ExpectedListUsersByIdOrUid = []*user.User{
+		{
+			ID:  1,
+			UID: "useruid",
+		},
+		{
+			ID:  2,
+			UID: "useruid2",
+		},
+	}
 
 	fs := ProvideUnifiedStore(nil, fake)
 
 	converted, err := fs.UnstructuredToLegacyFolder(context.Background(), input)
 	require.NoError(t, err)
+	require.Equal(t, 1, len(fake.ListUsersByIdOrUidCalls)) // only one call to the user service
+	require.Equal(t, usertest.ListUsersByIdOrUidCall{Uids: []string{"useruid"}, Ids: []int64{2}}, fake.ListUsersByIdOrUidCalls[0])
 	require.Equal(t, folder.Folder{
 		ID:          234,
 		OrgID:       1,
@@ -67,8 +78,8 @@ func TestFolderConversions(t *testing.T) {
 		ManagedBy:   utils.ManagerKindRepo,
 		Created:     created,
 		Updated:     created.Add(time.Hour * 5),
-		CreatedBy:   10,
-		UpdatedBy:   10,
+		CreatedBy:   1,
+		UpdatedBy:   2,
 	}, *converted)
 }
 
@@ -257,7 +268,7 @@ func TestFolderListConversions(t *testing.T) {
 	converted, err := fs.UnstructuredToLegacyFolderList(context.Background(), input)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(fake.ListUsersByIdOrUidCalls)) // only one call to the user service
-	require.Equal(t, usertest.ListUsersByIdOrUidCall{Uids: []string{"uuuuuuuuuuuuuu", "uuuuuuuuuuuuuu", "iiiiiiiiiiiiii", "iiiiiiiiiiiiii"}, Ids: []int64{1, 1, 2, 2}}, fake.ListUsersByIdOrUidCalls[0])
+	require.Equal(t, usertest.ListUsersByIdOrUidCall{Uids: []string{"uuuuuuuuuuuuuu", "iiiiiiiiiiiiii", "jjjjjjjjjjjjjj"}, Ids: []int64{1, 2, 3}}, fake.ListUsersByIdOrUidCalls[0])
 	require.Equal(t, 6, len(converted))
 	require.Equal(t, []*folder.Folder{
 		{
