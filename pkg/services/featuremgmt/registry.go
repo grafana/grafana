@@ -1780,13 +1780,6 @@ var (
 			FrontendOnly:      true,
 		},
 		{
-			Name:         "extraLanguages",
-			Description:  "Enables additional languages",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:              "noBackdropBlur",
 			Description:       "Disables backdrop blur",
 			Stage:             FeatureStageExperimental,
