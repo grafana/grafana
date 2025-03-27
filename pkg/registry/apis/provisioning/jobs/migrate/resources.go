@@ -19,9 +19,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-var _ resource.BulkResourceWriter = (*resourceReader)(nil)
+var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
 
-type resourceReader struct {
+// TODO: can we use the same migrator for folders?
+type legacyResourceResourceMigrator struct {
 	repo       repository.ReaderWriter
 	legacy     legacy.LegacyMigrator
 	parser     *resources.Parser
@@ -33,8 +34,8 @@ type resourceReader struct {
 	userInfo   map[string]repository.CommitSignature
 }
 
-func NewResourceReader(repo repository.ReaderWriter, legacy legacy.LegacyMigrator, parser *resources.Parser, folderTree *resources.FolderTree, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource, userInfo map[string]repository.CommitSignature) *resourceReader {
-	return &resourceReader{
+func NewLegacyResourceMigrator(repo repository.ReaderWriter, legacy legacy.LegacyMigrator, parser *resources.Parser, folderTree *resources.FolderTree, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource, userInfo map[string]repository.CommitSignature) *legacyResourceResourceMigrator {
+	return &legacyResourceResourceMigrator{
 		repo:       repo,
 		legacy:     legacy,
 		parser:     parser,
@@ -48,17 +49,17 @@ func NewResourceReader(repo repository.ReaderWriter, legacy legacy.LegacyMigrato
 }
 
 // Close implements resource.BulkResourceWriter.
-func (r *resourceReader) Close() error {
+func (r *legacyResourceResourceMigrator) Close() error {
 	return nil
 }
 
 // CloseWithResults implements resource.BulkResourceWriter.
-func (r *resourceReader) CloseWithResults() (*resource.BulkResponse, error) {
+func (r *legacyResourceResourceMigrator) CloseWithResults() (*resource.BulkResponse, error) {
 	return &resource.BulkResponse{}, nil
 }
 
 // Write implements resource.BulkResourceWriter.
-func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	// Reuse the same parse+cleanup logic
 	parsed, err := r.parser.Parse(ctx, &repository.FileInfo{
 		Path: "", // empty path to ignore file system
@@ -83,7 +84,7 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	return nil
 }
 
-func (r *resourceReader) Migrate(ctx context.Context) error {
+func (r *legacyResourceResourceMigrator) Migrate(ctx context.Context) error {
 	r.progress.SetMessage(ctx, fmt.Sprintf("migrate %s resource", r.kind.Resource))
 	opts := legacy.MigrateOptions{
 		Namespace:   r.namespace,
@@ -117,7 +118,7 @@ func (r *resourceReader) Migrate(ctx context.Context) error {
 }
 
 // TODO: this is copied from the export job
-func (r *resourceReader) write(ctx context.Context, obj *unstructured.Unstructured, folderTree *resources.FolderTree) jobs.JobResourceResult {
+func (r *legacyResourceResourceMigrator) write(ctx context.Context, obj *unstructured.Unstructured, folderTree *resources.FolderTree) jobs.JobResourceResult {
 	gvk := obj.GroupVersionKind()
 	result := jobs.JobResourceResult{
 		Name:     obj.GetName(),
@@ -203,7 +204,7 @@ func (r *resourceReader) write(ctx context.Context, obj *unstructured.Unstructur
 }
 
 // TODO: this is copied from the export job
-func (r *resourceReader) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
+func (r *legacyResourceResourceMigrator) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
 	if r.userInfo == nil {
 		return ctx
 	}

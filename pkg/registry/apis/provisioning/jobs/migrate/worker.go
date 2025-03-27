@@ -191,7 +191,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 			continue
 		}
 
-		reader := NewResourceReader(rw, w.legacyMigrator, parser, folders.Tree(), progress, options, namespace, kind.GroupResource(), userInfo)
+		reader := NewLegacyResourceMigrator(rw, w.legacyMigrator, parser, folders.Tree(), progress, options, namespace, kind.GroupResource(), userInfo)
 		if err := reader.Migrate(ctx); err != nil {
 			return fmt.Errorf("error migrating resource %s: %w", kind, err)
 		}
