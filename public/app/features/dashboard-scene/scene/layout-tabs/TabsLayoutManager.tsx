@@ -87,6 +87,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
   }
 
+  public switchToTab(tab: TabItem) {
+    this.setState({ currentTabIndex: this.state.tabs.indexOf(tab) });
+  }
+
   public getCurrentTab(): TabItem {
     return this.state.tabs.length > this.state.currentTabIndex
       ? this.state.tabs[this.state.currentTabIndex]
