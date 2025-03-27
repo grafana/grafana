@@ -767,10 +767,6 @@ const (
 	// Use new combobox component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 
-	// FlagUserStorageAPI
-	// Enables the user storage API
-	FlagUserStorageAPI = "userStorageAPI"
-
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
@@ -903,14 +899,6 @@ const (
 	// Enable the alerting conversion API
 	FlagAlertingConversionAPI = "alertingConversionAPI"
 
-	// FlagAlertingAlertmanagerExtraDedupStage
-	// enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
-	FlagAlertingAlertmanagerExtraDedupStage = "alertingAlertmanagerExtraDedupStage"
-
-	// FlagAlertingAlertmanagerExtraDedupStageStopPipeline
-	// works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
-	FlagAlertingAlertmanagerExtraDedupStageStopPipeline = "alertingAlertmanagerExtraDedupStageStopPipeline"
-
 	// FlagNewLogsPanel
 	// Enables the new logs panel in Explore
 	FlagNewLogsPanel = "newLogsPanel"
@@ -958,10 +946,6 @@ const (
 	// FlagInviteUserExperimental
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
-
-	// FlagExtraLanguages
-	// Enables additional languages
-	FlagExtraLanguages = "extraLanguages"
 
 	// FlagNoBackdropBlur
 	// Disables backdrop blur
