@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelParamEditor.tsx
 import { useState } from 'react';
 
-import { DataSourceApi, SelectableValue, toOption } from '@grafana/data';
+import { DataSourceApi, SelectableValue, toOption, getDefaultTimeRange } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import { promQueryModeller } from '../PromQueryModeller';
@@ -52,7 +52,7 @@ async function loadGroupByLabels(query: PromVisualQuery, datasource: DataSourceA
   }
 
   const expr = promQueryModeller.renderLabels(labels);
-  const result = await datasource.languageProvider.fetchLabelsWithMatch(expr);
+  const result = await datasource.languageProvider.fetchLabelsWithMatch(getDefaultTimeRange(), expr);
 
   return Object.keys(result).map((x) => ({
     label: x,
