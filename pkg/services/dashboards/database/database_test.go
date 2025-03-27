@@ -188,6 +188,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		queryResult, err := dashboardStore.GetDashboardUIDByID(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, queryResult.UID, savedDash.UID)
+		require.Equal(t, queryResult.FolderUID, savedFolder.UID)
 	})
 
 	t.Run("Shouldn't be able to get a dashboard with just an OrgID", func(t *testing.T) {

@@ -1345,12 +1345,13 @@ func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *
 			return nil, fmt.Errorf("unexpected number of dashboards found: %d. desired: 1", len(result))
 		}
 
-		return &dashboards.DashboardRef{UID: result[0].UID, Slug: result[0].Slug}, nil
+		return &dashboards.DashboardRef{UID: result[0].UID, Slug: result[0].Slug, FolderUID: result[0].FolderUID}, nil
 	}
 
 	return dr.dashboardStore.GetDashboardUIDByID(ctx, query)
 }
 
+// expensive query in new flow !! use sparingly - only if you truly need dashboard.Data
 func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashboards.GetDashboardsQuery) ([]*dashboards.Dashboard, error) {
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		if query.OrgID == 0 {
@@ -1386,17 +1387,16 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashbo
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.Dashboard, error) {
+func (dr *DashboardServiceImpl) GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.DashboardRef, error) {
 	return dr.getDashboardsSharedWithUser(ctx, user)
 }
 
-func (dr *DashboardServiceImpl) getDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.Dashboard, error) {
+func (dr *DashboardServiceImpl) getDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.DashboardRef, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.getDashboardsSharedWithUser")
 	defer span.End()
 
 	permissions := user.GetPermissions()
 	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
-	sharedDashboards := make([]*dashboards.Dashboard, 0)
 	dashboardUids := make([]string, 0)
 	for _, p := range dashboardPermissions {
 		if dashboardUid, found := strings.CutPrefix(p, dashboards.ScopeDashboardsPrefix); found {
@@ -1407,27 +1407,42 @@ func (dr *DashboardServiceImpl) getDashboardsSharedWithUser(ctx context.Context,
 	}
 
 	if len(dashboardUids) == 0 {
-		return sharedDashboards, nil
+		return []*dashboards.DashboardRef{}, nil
 	}
 
 	dashboardsQuery := &dashboards.GetDashboardsQuery{
 		DashboardUIDs: dashboardUids,
 		OrgID:         user.GetOrgID(),
 	}
-	sharedDashboards, err := dr.GetDashboards(ctx, dashboardsQuery)
+
+	var err error
+	var dashs []*dashboards.Dashboard
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		dashs, err = dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
+			DashboardUIDs: dashboardUids,
+			OrgId:         user.GetOrgID(),
+		})
+	} else {
+		dashs, err = dr.dashboardStore.GetDashboards(ctx, dashboardsQuery)
+	}
 	if err != nil {
 		return nil, err
 	}
+
+	sharedDashboards := make([]*dashboards.DashboardRef, len(dashs))
+	for i, d := range dashs {
+		sharedDashboards[i] = &dashboards.DashboardRef{UID: d.UID, Slug: d.Slug, FolderUID: d.FolderUID}
+	}
+
 	return dr.filterUserSharedDashboards(ctx, user, sharedDashboards)
 }
 
 // filterUserSharedDashboards filter dashboards directly assigned to user, but not located in folders with view permissions
-func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, user identity.Requester, userDashboards []*dashboards.Dashboard) ([]*dashboards.Dashboard, error) {
+func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, user identity.Requester, userDashboards []*dashboards.DashboardRef) ([]*dashboards.DashboardRef, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.filterUserSharedDashboards")
 	defer span.End()
 
-	filteredDashboards := make([]*dashboards.Dashboard, 0)
-
+	filteredDashboards := make([]*dashboards.DashboardRef, 0)
 	folderUIDs := make([]string, 0)
 	for _, dashboard := range userDashboards {
 		folderUIDs = append(folderUIDs, dashboard.FolderUID)
