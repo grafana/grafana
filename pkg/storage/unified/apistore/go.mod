@@ -5,6 +5,7 @@ go 1.24.1
 replace (
 	github.com/grafana/grafana => ../../../..
 	github.com/grafana/grafana/pkg/apimachinery => ../../../apimachinery
+	github.com/grafana/grafana/pkg/apis => ../../../apis
 	github.com/grafana/grafana/pkg/apiserver => ../../../apiserver
 	github.com/grafana/grafana/pkg/storage/unified/resource => ../resource
 )
@@ -212,6 +213,7 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0 // indirect
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // indirect
+	github.com/grafana/grafana/pkg/apis v0.0.0-20250327091030-e216c2f29dcc // indirect
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
