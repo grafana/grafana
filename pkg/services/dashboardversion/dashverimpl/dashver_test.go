@@ -74,7 +74,8 @@ func TestDashboardVersionService(t *testing.T) {
 		require.NoError(t, err)
 		obj.SetUpdatedTimestamp(&updatedTimestamp)
 		mockCli.On("GetUserFromMeta", mock.Anything, "user:1").Return(&user.User{ID: 1}, nil)
-		mockCli.On("Get", mock.Anything, "uid", int64(1), v1.GetOptions{ResourceVersion: "10"}, mock.Anything).Return(dash, nil).Once()
+		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{*dash}}, nil).Once()
 		res, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
 			DashboardID: 42,
 			OrgID:       1,
@@ -82,7 +83,7 @@ func TestDashboardVersionService(t *testing.T) {
 		})
 		require.Nil(t, err)
 		require.Equal(t, res, &dashver.DashboardVersionDTO{
-			ID:            12, // RV should be used
+			ID:            10,
 			Version:       10,
 			ParentVersion: 9,
 			DashboardID:   42,
@@ -93,22 +94,23 @@ func TestDashboardVersionService(t *testing.T) {
 		})
 
 		mockCli.On("GetUserFromMeta", mock.Anything, "user:2").Return(&user.User{ID: 2}, nil)
-		mockCli.On("Get", mock.Anything, "uid", int64(1), v1.GetOptions{ResourceVersion: "11"}, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]any{
-				"metadata": map[string]any{
-					"name":            "uid",
-					"resourceVersion": "11",
-					"generation":      int64(11),
-					"labels": map[string]any{
-						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{{
+				Object: map[string]any{
+					"metadata": map[string]any{
+						"name":            "uid",
+						"resourceVersion": "11",
+						"generation":      int64(11),
+						"labels": map[string]any{
+							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+						},
+						"annotations": map[string]any{
+							utils.AnnoKeyCreatedBy: "user:1",
+							utils.AnnoKeyUpdatedBy: "user:2", // if updated by is set, that is the version creator
+						},
 					},
-					"annotations": map[string]any{
-						utils.AnnoKeyCreatedBy: "user:1",
-						utils.AnnoKeyUpdatedBy: "user:2", // if updated by is set, that is the version creator
-					},
-				},
-				"spec": map[string]any{},
-			}}, nil).Once()
+					"spec": map[string]any{},
+				}}}}, nil).Once()
 		res, err = dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
 			DashboardID: 42,
 			OrgID:       1,
@@ -116,7 +118,7 @@ func TestDashboardVersionService(t *testing.T) {
 		})
 		require.Nil(t, err)
 		require.Equal(t, res, &dashver.DashboardVersionDTO{
-			ID:            11, // RV should be used
+			ID:            11,
 			Version:       11,
 			ParentVersion: 10,
 			DashboardID:   42,
@@ -133,7 +135,7 @@ func TestDashboardVersionService(t *testing.T) {
 		dashboardVersionService.k8sclient = mockCli
 		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
 		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
-		mockCli.On("Get", mock.Anything, "uid", int64(1), v1.GetOptions{ResourceVersion: "10"}, mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "dashboards.dashboard.grafana.app", Resource: "dashboard"}, "uid"))
+		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "dashboards.dashboard.grafana.app", Resource: "dashboard"}, "uid"))
 
 		_, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
 			DashboardID: 42,
@@ -285,7 +287,7 @@ func TestListDashboardVersions(t *testing.T) {
 		require.Equal(t, 1, len(res.Versions))
 		require.EqualValues(t, &dashver.DashboardVersionResponse{
 			Versions: []*dashver.DashboardVersionDTO{{
-				ID:            12, // should take rv
+				ID:            5,
 				DashboardID:   42,
 				ParentVersion: 4,
 				Version:       5, // should take from spec

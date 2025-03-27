@@ -1,14 +1,19 @@
 package api
 
 import (
+	"encoding/json"
 	"io"
+	"mime"
 
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
+
+var errorUnsupportedMediaType = errutil.UnsupportedMediaType("alerting.unsupportedMediaType")
 
 type ConvertPrometheusApiHandler struct {
 	svc *ConvertPrometheusSrv
@@ -49,8 +54,30 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroup(
 	defer func() { _ = ctx.Req.Body.Close() }()
 
 	var promGroup apimodels.PrometheusRuleGroup
-	if err := yaml.Unmarshal(body, &promGroup); err != nil {
-		return errorToResponse(err)
+	var m string
+
+	// Parse content-type only if it's not empty,
+	// otherwise we'll assume it's yaml
+	contentType := ctx.Req.Header.Get("content-type")
+	if contentType != "" {
+		m, _, err = mime.ParseMediaType(contentType)
+		if err != nil {
+			return errorToResponse(err)
+		}
+	}
+
+	switch m {
+	case "application/yaml", "":
+		// mimirtool does not send content-type, so if it's empty, we assume it's yaml
+		if err := yaml.Unmarshal(body, &promGroup); err != nil {
+			return errorToResponse(err)
+		}
+	case "application/json":
+		if err := json.Unmarshal(body, &promGroup); err != nil {
+			return errorToResponse(err)
+		}
+	default:
+		return errorToResponse(errorUnsupportedMediaType.Errorf("unsupported media type: %s, only application/yaml and application/json are supported", m))
 	}
 
 	return f.svc.RouteConvertPrometheusPostRuleGroup(ctx, namespaceTitle, promGroup)
