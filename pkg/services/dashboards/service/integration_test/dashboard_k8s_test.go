@@ -62,39 +62,26 @@ func TestK8sDashboardIntegration(t *testing.T) {
 		helper.Shutdown()
 	})
 
-	// Use the pre-created users in the helper
-	adminUser := helper.Org1.Admin
-	editorUser := helper.Org1.Editor
-	viewerUser := helper.Org1.Viewer
+	// Create test contexts for both organizations
+	org1Ctx := createTestContext(t, helper, helper.Org1)
+	org2Ctx := createTestContext(t, helper, helper.OrgB)
 
-	// Create test folder
-	folderTitle := "Test Folder"
-	testFolder, err := createFolder(t, helper, adminUser, folderTitle)
-	require.NoError(t, err, "Failed to create test folder")
+	t.Run("Organization 1 tests", func(t *testing.T) {
+		t.Run("Authorization tests for all identity types", func(t *testing.T) {
+			runAuthorizationTests(t, org1Ctx)
+		})
 
-	// Create test context
-	ctx := TestContext{
-		Helper:                    helper,
-		AdminUser:                 adminUser,
-		EditorUser:                editorUser,
-		ViewerUser:                viewerUser,
-		TestFolder:                testFolder,
-		AdminServiceAccountToken:  helper.Org1.AdminServiceAccountToken,
-		EditorServiceAccountToken: helper.Org1.EditorServiceAccountToken,
-		ViewerServiceAccountToken: helper.Org1.ViewerServiceAccountToken,
-		OrgID:                     adminUser.Identity.GetOrgID(),
-	}
+		t.Run("Dashboard permission tests", func(t *testing.T) {
+			runDashboardPermissionTests(t, org1Ctx)
+		})
 
-	t.Run("Authorization tests for all identity types", func(t *testing.T) {
-		runAuthorizationTests(t, ctx)
+		t.Run("Dashboard validation tests", func(t *testing.T) {
+			runDashboardValidationTests(t, org1Ctx)
+		})
 	})
 
-	t.Run("Dashboard permission tests", func(t *testing.T) {
-		runDashboardPermissionTests(t, ctx)
-	})
-
-	t.Run("Dashboard validation tests", func(t *testing.T) {
-		runDashboardValidationTests(t, ctx)
+	t.Run("Cross-organization tests", func(t *testing.T) {
+		runCrossOrgTests(t, org1Ctx, org2Ctx)
 	})
 }
 
@@ -611,6 +598,39 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
 		// Admin should be able to delete it
 		err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 		require.NoError(t, err, "Admin should always be able to delete dashboards")
+	})
+
+	// Test cross-org permissions
+	t.Run("Custom permissions don't extend across organizations", func(t *testing.T) {
+		// Get client for other org
+		otherOrgClient := getResourceClient(t, ctx.Helper, ctx.Helper.OrgB.Viewer, getDashboardGVR())
+
+		// Create a dashboard with admin in the current org
+		dash, err := createDashboard(t, adminClient, "Dashboard for Cross-Org Permissions Test", nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, dash)
+		dashUID := dash.GetName()
+
+		// Set the highest permissions for the viewer in the current org
+		viewerUserID := ctx.ViewerUser.Identity.GetUID()
+		setResourceUserPermission(t, ctx, ctx.AdminUser, "dashboards", dashUID, viewerUserID, dashboardaccess.PERMISSION_ADMIN)
+
+		// Verify the viewer in the current org can now view and update the dashboard
+		viewerDash, err := viewerClient.Resource.Get(context.Background(), dashUID, v1.GetOptions{})
+		require.NoError(t, err, "Viewer with custom permissions should be able to view the dashboard")
+
+		_, err = updateDashboard(t, viewerClient, viewerDash, "Updated by Viewer with Admin Permissions")
+		require.NoError(t, err, "Viewer with admin permissions should be able to update the dashboard")
+
+		// Try to access the dashboard from a viewer in the other org
+		_, err = otherOrgClient.Resource.Get(context.Background(), dashUID, v1.GetOptions{})
+		require.Error(t, err, "User from other org should not be able to view dashboard even with custom permissions")
+		statusErr := ctx.Helper.AsStatusError(err)
+		require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code), "Should get 404 Not Found")
+
+		// Clean up
+		err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+		require.NoError(t, err)
 	})
 }
 
@@ -1261,32 +1281,175 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.Error(t, err)
 		})
 	})
+}
 
-	t.Run("Cross-organization validations", func(t *testing.T) {
-		t.Run("allow same dashboard UID in different organizations", func(t *testing.T) {
-			// Create a dashboard in one organization
-			specificUID := "cross-org-test-uid"
-			dashTitle := "Cross-Org Dashboard Test"
+// Helper function to create test context for an organization
+func createTestContext(t *testing.T, helper *apis.K8sTestHelper, orgUsers apis.OrgUsers) TestContext {
+	// Create test folder
+	folderTitle := "Test Folder " + orgUsers.Admin.Identity.GetLogin()
+	testFolder, err := createFolder(t, helper, orgUsers.Admin, folderTitle)
+	require.NoError(t, err, "Failed to create test folder")
 
-			// Create in first org
-			_, err := createDashboard(t, adminClient, dashTitle, nil, &specificUID)
-			require.NoError(t, err)
+	// Create test context
+	return TestContext{
+		Helper:                    helper,
+		AdminUser:                 orgUsers.Admin,
+		EditorUser:                orgUsers.Editor,
+		ViewerUser:                orgUsers.Viewer,
+		TestFolder:                testFolder,
+		AdminServiceAccountToken:  orgUsers.AdminServiceAccountToken,
+		EditorServiceAccountToken: orgUsers.EditorServiceAccountToken,
+		ViewerServiceAccountToken: orgUsers.ViewerServiceAccountToken,
+		OrgID:                     orgUsers.Admin.Identity.GetOrgID(),
+	}
+}
 
-			// Get client for another organization
-			otherOrgClient := getResourceClient(t, ctx.Helper, ctx.Helper.OrgB.Admin, getDashboardGVR())
+// Run tests specifically checking cross-org behavior
+func runCrossOrgTests(t *testing.T, org1Ctx, org2Ctx TestContext) {
+	// Get clients for both organizations
+	org1AdminClient := getResourceClient(t, org1Ctx.Helper, org1Ctx.AdminUser, getDashboardGVR())
+	org1EditorClient := getResourceClient(t, org1Ctx.Helper, org1Ctx.EditorUser, getDashboardGVR())
+	org1ViewerClient := getResourceClient(t, org1Ctx.Helper, org1Ctx.ViewerUser, getDashboardGVR())
 
-			// Create dashboard with same UID in second org - should succeed
-			_, err = createDashboard(t, otherOrgClient, dashTitle, nil, &specificUID)
-			require.NoError(t, err)
+	// Service account clients for org1
+	org1AdminTokenClient := getServiceAccountResourceClient(t, org1Ctx.Helper, org1Ctx.AdminServiceAccountToken, org1Ctx.OrgID, getDashboardGVR())
+	org1EditorTokenClient := getServiceAccountResourceClient(t, org1Ctx.Helper, org1Ctx.EditorServiceAccountToken, org1Ctx.OrgID, getDashboardGVR())
+	org1ViewerTokenClient := getServiceAccountResourceClient(t, org1Ctx.Helper, org1Ctx.ViewerServiceAccountToken, org1Ctx.OrgID, getDashboardGVR())
 
-			// Clean up in both orgs
-			err = adminClient.Resource.Delete(context.Background(), specificUID, v1.DeleteOptions{})
-			require.NoError(t, err)
+	org1FolderClient := getResourceClient(t, org1Ctx.Helper, org1Ctx.AdminUser, getFolderGVR())
 
-			err = otherOrgClient.Resource.Delete(context.Background(), specificUID, v1.DeleteOptions{})
-			require.NoError(t, err)
-		})
+	org2AdminClient := getResourceClient(t, org2Ctx.Helper, org2Ctx.AdminUser, getDashboardGVR())
+	org2EditorClient := getResourceClient(t, org2Ctx.Helper, org2Ctx.EditorUser, getDashboardGVR())
+	org2ViewerClient := getResourceClient(t, org2Ctx.Helper, org2Ctx.ViewerUser, getDashboardGVR())
+
+	// Service account clients for org2
+	org2AdminTokenClient := getServiceAccountResourceClient(t, org2Ctx.Helper, org2Ctx.AdminServiceAccountToken, org2Ctx.OrgID, getDashboardGVR())
+	org2EditorTokenClient := getServiceAccountResourceClient(t, org2Ctx.Helper, org2Ctx.EditorServiceAccountToken, org2Ctx.OrgID, getDashboardGVR())
+	org2ViewerTokenClient := getServiceAccountResourceClient(t, org2Ctx.Helper, org2Ctx.ViewerServiceAccountToken, org2Ctx.OrgID, getDashboardGVR())
+
+	org2FolderClient := getResourceClient(t, org2Ctx.Helper, org2Ctx.AdminUser, getFolderGVR())
+
+	// Test dashboard and folder name/UID uniqueness across orgs
+	t.Run("Dashboard and folder names/UIDs are unique per organization", func(t *testing.T) {
+		// Create dashboard with same UID in both orgs - should succeed
+		uid := "cross-org-dash-uid"
+		dashTitle := "Cross-Org Dashboard"
+
+		// Create in org1
+		dash1, err := createDashboard(t, org1AdminClient, dashTitle, nil, &uid)
+		require.NoError(t, err, "Failed to create dashboard in org1")
+
+		// Create in org2 with same UID - should succeed (UIDs only need to be unique within an org)
+		dash2, err := createDashboard(t, org2AdminClient, dashTitle, nil, &uid)
+		require.NoError(t, err, "Failed to create dashboard with same UID in org2")
+
+		// Verify both dashboards were created
+		require.Equal(t, uid, dash1.GetName(), "Dashboard UID in org1 should match")
+		require.Equal(t, uid, dash2.GetName(), "Dashboard UID in org2 should match")
+
+		// Clean up
+		err = org1AdminClient.Resource.Delete(context.Background(), uid, v1.DeleteOptions{})
+		require.NoError(t, err, "Failed to delete dashboard in org1")
+
+		err = org2AdminClient.Resource.Delete(context.Background(), uid, v1.DeleteOptions{})
+		require.NoError(t, err, "Failed to delete dashboard in org2")
+
+		// Repeat test with folders
+		folderUID := "cross-org-folder-uid"
+		folderTitle := "Cross-Org Folder"
+
+		// Create folder objects directly with fixed UIDs
+		folder1 := createFolderObject(folderTitle, org1Ctx.Helper.Namespacer(org1Ctx.OrgID), "")
+		folder1.Object["metadata"].(map[string]interface{})["name"] = folderUID
+		delete(folder1.Object["metadata"].(map[string]interface{}), "generateName")
+
+		folder2 := createFolderObject(folderTitle, org2Ctx.Helper.Namespacer(org2Ctx.OrgID), "")
+		folder2.Object["metadata"].(map[string]interface{})["name"] = folderUID
+		delete(folder2.Object["metadata"].(map[string]interface{}), "generateName")
+
+		// Create folders in both orgs
+		createdFolder1, err := org1FolderClient.Resource.Create(context.Background(), folder1, v1.CreateOptions{})
+		require.NoError(t, err, "Failed to create folder in org1")
+
+		createdFolder2, err := org2FolderClient.Resource.Create(context.Background(), folder2, v1.CreateOptions{})
+		require.NoError(t, err, "Failed to create folder with same UID in org2")
+
+		// Verify both folders were created with the same UID
+		require.Equal(t, folderUID, createdFolder1.GetName(), "Folder UID in org1 should match")
+		require.Equal(t, folderUID, createdFolder2.GetName(), "Folder UID in org2 should match")
+
+		// Clean up
+		err = org1FolderClient.Resource.Delete(context.Background(), folderUID, v1.DeleteOptions{})
+		require.NoError(t, err, "Failed to delete folder in org1")
+
+		err = org2FolderClient.Resource.Delete(context.Background(), folderUID, v1.DeleteOptions{})
+		require.NoError(t, err, "Failed to delete folder in org2")
 	})
+
+	// Test cross-organization access
+	t.Run("Cross-organization access", func(t *testing.T) {
+		// Create dashboards in both orgs
+		org1Dashboard, err := createDashboard(t, org1AdminClient, "Org1 Dashboard", nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, org1Dashboard)
+		org1DashUID := org1Dashboard.GetName()
+
+		org2Dashboard, err := createDashboard(t, org2AdminClient, "Org2 Dashboard", nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, org2Dashboard)
+		org2DashUID := org2Dashboard.GetName()
+
+		// Clean up at the end
+		defer func() {
+			err = org1AdminClient.Resource.Delete(context.Background(), org1DashUID, v1.DeleteOptions{})
+			require.NoError(t, err)
+
+			err = org2AdminClient.Resource.Delete(context.Background(), org2DashUID, v1.DeleteOptions{})
+			require.NoError(t, err)
+		}()
+
+		// Test org1 users trying to access org2 dashboard
+		testCrossOrgAccess := func(client *apis.K8sResourceClient, targetDashUID string, description string) {
+			t.Run(description, func(t *testing.T) {
+				// Try to get the dashboard
+				_, err := client.Resource.Get(context.Background(), targetDashUID, v1.GetOptions{})
+				require.Error(t, err, "Should not be able to access dashboard from another org")
+				statusErr := org1Ctx.Helper.AsStatusError(err)
+				require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code), "Should get 404 Not Found")
+
+				// Try to update the dashboard
+				dashObj := createDashboardObject("Attempt cross-org update", "", 0)
+				dashObj.Object["metadata"].(map[string]interface{})["name"] = targetDashUID
+				_, err = client.Resource.Update(context.Background(), dashObj, v1.UpdateOptions{})
+				require.Error(t, err, "Should not be able to update dashboard from another org")
+
+				// Try to delete the dashboard
+				err = client.Resource.Delete(context.Background(), targetDashUID, v1.DeleteOptions{})
+				require.Error(t, err, "Should not be able to delete dashboard from another org")
+			})
+		}
+
+		// Test real users from org1 trying to access org2 dashboard
+		testCrossOrgAccess(org1AdminClient, org2DashUID, "Org1 admin cannot access Org2 dashboard")
+		testCrossOrgAccess(org1EditorClient, org2DashUID, "Org1 editor cannot access Org2 dashboard")
+		testCrossOrgAccess(org1ViewerClient, org2DashUID, "Org1 viewer cannot access Org2 dashboard")
+
+		// Test real users from org2 trying to access org1 dashboard
+		testCrossOrgAccess(org2AdminClient, org1DashUID, "Org2 admin cannot access Org1 dashboard")
+		testCrossOrgAccess(org2EditorClient, org1DashUID, "Org2 editor cannot access Org1 dashboard")
+		testCrossOrgAccess(org2ViewerClient, org1DashUID, "Org2 viewer cannot access Org1 dashboard")
+
+		// Test service accounts from org1 trying to access org2 dashboard
+		testCrossOrgAccess(org1AdminTokenClient, org2DashUID, "Org1 admin token cannot access Org2 dashboard")
+		testCrossOrgAccess(org1EditorTokenClient, org2DashUID, "Org1 editor token cannot access Org2 dashboard")
+		testCrossOrgAccess(org1ViewerTokenClient, org2DashUID, "Org1 viewer token cannot access Org2 dashboard")
+
+		// Test service accounts from org2 trying to access org1 dashboard
+		testCrossOrgAccess(org2AdminTokenClient, org1DashUID, "Org2 admin token cannot access Org1 dashboard")
+		testCrossOrgAccess(org2EditorTokenClient, org1DashUID, "Org2 editor token cannot access Org1 dashboard")
+		testCrossOrgAccess(org2ViewerTokenClient, org1DashUID, "Org2 viewer token cannot access Org1 dashboard")
+	})
+
 }
 
 // Helper function to set permissions for a user via the HTTP API
@@ -1489,18 +1652,6 @@ func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string,
 	createdDash, err := client.Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
 	if err != nil {
 		return nil, err
-	}
-
-	// Ensure we get the latest version with the server-assigned metadata
-	// Fetch the dashboard after creation to ensure we have accurate metadata
-	if createdDash != nil && createdDash.GetName() != "" {
-		dashName := createdDash.GetName()
-		latestDash, err := client.Resource.Get(context.Background(), dashName, v1.GetOptions{})
-		if err != nil {
-			t.Logf("Error fetching dashboard after creation: %v", err)
-			return createdDash, nil // Return what we have if Get fails
-		}
-		return latestDash, nil
 	}
 
 	return createdDash, nil
