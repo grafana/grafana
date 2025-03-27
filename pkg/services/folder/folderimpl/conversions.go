@@ -126,45 +126,38 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Con
 		return nil, err
 	}
 
-	usersById := make(map[int64]*user.User)
-	usersByUID := make(map[string]*user.User)
-
+	userUIDtoIDmapping := make(map[string]int64)
 	for _, user := range allUsers {
-		usersById[user.ID] = user
-		usersByUID[user.UID] = user
+		userUIDtoIDmapping[user.UID] = user.ID
 	}
 
 	for _, item := range unstructuredList.Items {
 		folder, creatorRaw, updaterRaw, err := parseUnstructuredToLegacyFolder(&item)
 
-		var creator *user.User
+		var creatorId int64
 		creatorIdentifier := toUID(creatorRaw)
 		id, err := strconv.ParseInt(creatorIdentifier, 10, 64)
 		if err == nil {
-			creator = usersById[id]
+			creatorId = id
 		} else {
-			creator = usersByUID[creatorIdentifier]
+			creatorId = userUIDtoIDmapping[creatorIdentifier]
 		}
 
-		if creator == nil {
-			creator = &user.User{}
-		}
-
-		var updater *user.User
+		var updaterId int64
 		updaterIdentifier := toUID(updaterRaw)
 		id, err = strconv.ParseInt(updaterIdentifier, 10, 64)
 		if err == nil {
-			updater = usersById[id]
+			updaterId = id
 		} else {
-			updater = usersByUID[updaterIdentifier]
+			updaterId = userUIDtoIDmapping[updaterIdentifier]
 		}
 
-		if updater == nil {
-			updater = creator
+		if updaterId == 0 {
+			updaterId = creatorId
 		}
 
-		folder.CreatedBy = creator.ID
-		folder.UpdatedBy = updater.ID
+		folder.CreatedBy = creatorId
+		folder.UpdatedBy = updaterId
 		folders = append(folders, folder)
 	}
 
