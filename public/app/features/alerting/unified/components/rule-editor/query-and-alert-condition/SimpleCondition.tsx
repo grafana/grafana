@@ -179,11 +179,11 @@ function updateReduceExpression(
 
   const newReduceExpression = reduceExpression
     ? produce(reduceExpression?.model, (draft) => {
-      if (draft && draft.conditions) {
-        draft.reducer = reducer;
-        draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
-      }
-    })
+        if (draft && draft.conditions) {
+          draft.reducer = reducer;
+          draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
+        }
+      })
     : undefined;
   newReduceExpression && dispatch(updateExpression(newReduceExpression));
 }
