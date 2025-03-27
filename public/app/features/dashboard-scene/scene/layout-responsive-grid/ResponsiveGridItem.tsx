@@ -20,7 +20,7 @@ import { ConditionalRendering } from '../../conditional-rendering/ConditionalRen
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { Point, Rect } from '../layout-manager/utils';
-import { scrollCanvasElementIntoView, ScrollElementIntoViewEvent } from '../layouts-shared/scrollCanvasElementIntoView';
+import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem, IntermediateLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
