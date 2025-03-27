@@ -158,7 +158,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 				Action:   repository.FileActionCreated,
 			}
 
-			fileName, err := resourceManager.CreateResourceFromObject(ctx, item, resources.WriteOptions{
+			fileName, err := resourceManager.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
 				Path:       options.Path,
 				Ref:        options.Branch,
 				Identifier: options.Identifier,
