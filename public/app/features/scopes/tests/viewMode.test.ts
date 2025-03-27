@@ -24,6 +24,7 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('View mode', () => {
   let dashboardScene: DashboardScene;
+  let scopesService: ScopesService;
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
@@ -31,7 +32,9 @@ describe('View mode', () => {
   });
 
   beforeEach(async () => {
-    dashboardScene = await renderDashboard();
+    const renderResult = await renderDashboard();
+    dashboardScene = renderResult.scene;
+    scopesService = renderResult.scopesService;
   });
 
   afterEach(async () => {
@@ -40,8 +43,8 @@ describe('View mode', () => {
 
   it('Enters view mode', async () => {
     await enterEditMode(dashboardScene);
-    expect(ScopesService.instance?.state.readOnly).toEqual(true);
-    expect(ScopesService.instance?.state.drawerOpened).toEqual(false);
+    expect(scopesService.state.readOnly).toEqual(true);
+    expect(scopesService.state.drawerOpened).toEqual(false);
   });
 
   it('Closes selector on enter', async () => {

@@ -1,52 +1,6 @@
 {
   "components": {
     "responses": {
-      "GetAllIntervalsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/GettableTimeIntervals"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetIntervalsByNameResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GettableTimeIntervals"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetReceiverResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GettableApiReceiver"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetReceiversResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/GettableApiReceiver"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "GettableHistoricUserConfigs": {
         "content": {
           "application/json": {
@@ -2715,11 +2669,18 @@
           "isPaused": {
             "type": "boolean"
           },
+          "keepFiringFor": {
+            "$ref": "#/components/schemas/Duration"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object"
+          },
+          "missing_series_evals_to_resolve": {
+            "format": "int64",
+            "type": "integer"
           },
           "noDataState": {
             "enum": [
@@ -2903,6 +2864,9 @@
           },
           "metric": {
             "type": "string"
+          },
+          "targetDatasourceUid": {
+            "type": "string"
           }
         },
         "title": "Record is the provisioned export of models.Record.",
@@ -2971,6 +2935,10 @@
           },
           "health": {
             "type": "string"
+          },
+          "keepFiringFor": {
+            "format": "double",
+            "type": "number"
           },
           "labels": {
             "$ref": "#/components/schemas/Labels"
@@ -6151,6 +6119,9 @@
             ],
             "type": "string"
           },
+          "guid": {
+            "type": "string"
+          },
           "intervalSeconds": {
             "format": "int64",
             "type": "integer"
@@ -6160,6 +6131,10 @@
           },
           "metadata": {
             "$ref": "#/components/schemas/AlertRuleMetadata"
+          },
+          "missing_series_evals_to_resolve": {
+            "format": "int64",
+            "type": "integer"
           },
           "namespace_uid": {
             "type": "string"
@@ -6310,26 +6285,6 @@
           "uptime",
           "versionInfo"
         ],
-        "type": "object"
-      },
-      "GettableTimeIntervals": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "provenance": {
-            "$ref": "#/components/schemas/Provenance"
-          },
-          "time_intervals": {
-            "items": {
-              "$ref": "#/components/schemas/TimeIntervalItem"
-            },
-            "type": "array"
-          },
-          "version": {
-            "type": "string"
-          }
-        },
         "type": "object"
       },
       "GettableUserConfig": {
@@ -7809,6 +7764,9 @@
           "isExternallySynced": {
             "type": "boolean"
           },
+          "isProvisioned": {
+            "type": "boolean"
+          },
           "lastSeenAt": {
             "format": "date-time",
             "type": "string"
@@ -8540,6 +8498,12 @@
           "metadata": {
             "$ref": "#/components/schemas/AlertRuleMetadata"
           },
+          "missing_series_evals_to_resolve": {
+            "description": "Number of consecutive evaluation intervals with no data for a dimension must pass\nbefore the alert state is considered stale and automatically resolved.\nIf set to 0, the value is reset to the default.",
+            "example": 3,
+            "format": "int64",
+            "type": "integer"
+          },
           "no_data_state": {
             "enum": [
               "Alerting",
@@ -8608,23 +8572,6 @@
               "type": "string"
             },
             "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "PostableTimeIntervals": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "time_intervals": {
-            "items": {
-              "$ref": "#/components/schemas/TimeIntervalItem"
-            },
-            "type": "array"
-          },
-          "version": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -8744,7 +8691,20 @@
           "Interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "Labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "Limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "Name": {
+            "type": "string"
+          },
+          "QueryOffset": {
             "type": "string"
           },
           "Rules": {
@@ -8849,6 +8809,10 @@
             "example": false,
             "type": "boolean"
           },
+          "keep_firing_for": {
+            "format": "duration",
+            "type": "string"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
@@ -8857,6 +8821,11 @@
               "team": "sre-team-1"
             },
             "type": "object"
+          },
+          "missingSeriesEvalsToResolve": {
+            "example": 2,
+            "format": "int64",
+            "type": "integer"
           },
           "noDataState": {
             "enum": [
@@ -9474,6 +9443,11 @@
           "metric": {
             "description": "Name of the recorded metric.",
             "example": "grafana_alerts_ratio",
+            "type": "string"
+          },
+          "target_datasource_uid": {
+            "description": "Which data source should be used to write the output of the recording rule, specified by UID.",
+            "example": "my-prom",
             "type": "string"
           }
         },
@@ -11270,6 +11244,9 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          },
+          "userUID": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -11512,6 +11489,15 @@
             "description": "Name of the associated template definition for this result.",
             "type": "string"
           },
+          "scope": {
+            "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+            "enum": [
+              ".",
+              ".Alerts",
+              ".Alert"
+            ],
+            "type": "string"
+          },
           "text": {
             "description": "Interpolated value of the template.",
             "type": "string"
@@ -11584,55 +11570,6 @@
           }
         },
         "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
-        "type": "object"
-      },
-      "TimeIntervalItem": {
-        "properties": {
-          "days_of_month": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "location": {
-            "type": "string"
-          },
-          "months": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "times": {
-            "items": {
-              "$ref": "#/components/schemas/TimeIntervalTimeRange"
-            },
-            "type": "array"
-          },
-          "weekdays": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "years": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "TimeIntervalTimeRange": {
-        "properties": {
-          "end_time": {
-            "type": "string"
-          },
-          "start_time": {
-            "type": "string"
-          }
-        },
         "type": "object"
       },
       "TimeRange": {
@@ -12384,6 +12321,9 @@
           "isGrafanaAdminExternallySynced": {
             "type": "boolean"
           },
+          "isProvisioned": {
+            "type": "boolean"
+          },
           "login": {
             "type": "string"
           },
@@ -12429,6 +12369,9 @@
             "type": "boolean"
           },
           "isDisabled": {
+            "type": "boolean"
+          },
+          "isProvisioned": {
             "type": "boolean"
           },
           "lastSeenAt": {

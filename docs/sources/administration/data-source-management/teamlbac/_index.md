@@ -50,7 +50,7 @@ This feature addresses two common challenges faced by Grafana users:
    LBAC for data sources lets Grafana Teams use the same dashboard with different access control rules.
 
 To set up LBAC for data sources for a Loki data source, refer to [Configure LBAC for Loki Data Source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
-To set up LBAC for data sources for a Loki data source, refer to [Configure LBAC for Prometheus Data Source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-prometheus/).
+To set up LBAC for data sources for a Prometheus data source, refer to [Configure LBAC for Prometheus Data Source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-prometheus/).
 
 ## Logs and Metrics Filtering with LBAC
 

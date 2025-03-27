@@ -5,7 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
-import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
+import { getSvgSize } from '@grafana/ui/internal';
 import { Trans } from 'app/core/internationalization';
 import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 
@@ -126,7 +126,9 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
   if (isError) {
     return (
       <>
-        <Text italic>Unable to load folder</Text>
+        <Text italic>
+          <Trans i18nKey="migrate-to-cloud.folder-info.unable-to-load-folder">Unable to load folder</Trans>
+        </Text>
         <Text color="secondary">Folder {data.refId}</Text>
       </>
     );

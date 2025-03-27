@@ -136,6 +136,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "single path",
 					Data: &sqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
+						},
 					},
 				},
 			},
@@ -164,26 +168,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "single path",
 					Data: &sqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-					},
-				},
-			},
-
-			sqlResoureceHistoryUpdateUid: {
-				{
-					Name: "modify uids in history",
-					Data: &sqlResourceHistoryUpdateRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						WriteEvent: resource.WriteEvent{
-							Key: &resource.ResourceKey{
-								Namespace: "nn",
-								Group:     "gg",
-								Resource:  "rr",
-								Name:      "name",
-							},
-							PreviousRV: 1234,
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
 						},
-						OldUID: "old-uid",
-						NewUID: "new-uid",
 					},
 				},
 			},
@@ -243,6 +231,22 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						},
 						Trash:   true,
 						StartRV: 123456,
+					},
+				},
+			},
+
+			sqlResourceHistoryPrune: {
+				{
+					Name: "simple",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+							Name:      "na",
+						},
+						HistoryLimit: 100,
 					},
 				},
 			},

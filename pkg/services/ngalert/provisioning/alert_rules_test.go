@@ -2103,7 +2103,7 @@ func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOpera
 			uid = string(*userUID)
 		}
 
-		uids, ok := q.Params[2].([]string)
+		uids, ok := q.Params[3].([]string)
 		require.True(t, ok, "uids parameter should be []string")
 
 		operations = append(operations, deleteRuleOperation{

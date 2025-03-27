@@ -29,6 +29,10 @@ type Dialect interface {
 	SupportEngine() bool
 	LikeStr() string
 	Default(col *Column) string
+	// BooleanValue can be used as an argument in SELECT or INSERT statements. For constructing
+	// raw SQL queries, please use BooleanStr instead.
+	BooleanValue(bool) any
+	// BooleanStr should only be used to construct SQL statements (strings). For arguments to queries, use BooleanValue instead.
 	BooleanStr(bool) string
 	DateTimeFunc(string) string
 	BatchSize() int

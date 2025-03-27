@@ -1,34 +1,44 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { clearButtonStyles, Icon, useElementSelection, useStyles2 } from '@grafana/ui';
+import { SceneComponentProps } from '@grafana/scenes';
+import { clearButtonStyles, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { isClonedKey } from '../../utils/clone';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { useIsClone } from '../../utils/clone';
+import {
+  useDashboardState,
+  useElementSelectionScene,
+  useInterpolatedTitle,
+  useIsConditionallyHidden,
+} from '../../utils/utils';
 
 import { RowItem } from './RowItem';
 import { RowItemMenu } from './RowItemMenu';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, title, isCollapsed, height = 'min', isHeaderHidden, key } = model.useState();
-  const isClone = useMemo(() => isClonedKey(key!), [key]);
-  const dashboard = getDashboardSceneFor(model);
-  const { isEditing, showHiddenElements } = dashboard.useState();
+  const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden } = model.useState();
+  const isClone = useIsClone(model);
+  const { isEditing } = useDashboardState(model);
+  const isConditionallyHidden = useIsConditionallyHidden(model);
+  const { isSelected, onSelect, isSelectable } = useElementSelectionScene(model);
+  const title = useInterpolatedTitle(model);
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
-  const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
-  const ref = useRef<HTMLDivElement>(null);
-  const shouldGrow = !isCollapsed && height === 'expand';
-  const { isSelected, isSelectable, onSelect } = useElementSelection(key);
+
+  const shouldGrow = !isCollapsed && fillScreen;
+  const isHidden = isConditionallyHidden && !isEditing;
 
   // Highlight the full row when hovering over header
   const [selectableHighlight, setSelectableHighlight] = useState(false);
   const onHeaderEnter = useCallback(() => setSelectableHighlight(true), []);
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
+
+  if (isHidden) {
+    return null;
+  }
 
   return (
     <div
@@ -38,15 +48,24 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
         isEditing && isCollapsed && styles.wrapperEditingCollapsed,
         isCollapsed && styles.wrapperCollapsed,
         shouldGrow && styles.wrapperGrow,
+        isConditionallyHidden && 'dashboard-visible-hidden-element',
         !isClone && isSelected && 'dashboard-selected-element',
         !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element'
       )}
-      ref={ref}
-      onPointerDown={onSelect}
+      onPointerDown={(e) => {
+        // If we selected and are clicking a button inside row header then don't de-select row
+        if (isSelected && e.target instanceof Element && e.target.closest('button')) {
+          // Stop propagation otherwise dashboaed level onPointerDown will de-select row
+          e.stopPropagation();
+          return;
+        }
+
+        onSelect?.(e);
+      }}
     >
-      {(!isHeaderHidden || (isEditing && showHiddenElements)) && (
+      {(!isHeaderHidden || isEditing) && (
         <div
-          className={cx(styles.rowHeader, 'dashboard-row-header')}
+          className={cx(isHeaderHidden && 'dashboard-visible-hidden-element', styles.rowHeader, 'dashboard-row-header')}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}
         >
@@ -58,11 +77,18 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 ? t('dashboard.rows-layout.row.expand', 'Expand row')
                 : t('dashboard.rows-layout.row.collapse', 'Collapse row')
             }
-            data-testid={selectors.components.DashboardRow.title(titleInterpolated!)}
+            data-testid={selectors.components.DashboardRow.title(title!)}
           >
             <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
-            <span className={styles.rowTitle} role="heading">
-              {titleInterpolated}
+            <span className={cx(styles.rowTitle, isHeaderHidden && styles.rowTitleHidden)} role="heading">
+              {title}
+              {isHeaderHidden && (
+                <Tooltip
+                  content={t('dashboard.rows-layout.header-hidden-tooltip', 'Row header only visible in edit mode')}
+                >
+                  <Icon name="eye-slash" />
+                </Tooltip>
+              )}
             </span>
           </button>
           {!isClone && isEditing && <RowItemMenu model={model} />}
@@ -93,6 +119,9 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
     }),
     rowTitle: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(2),
       fontSize: theme.typography.h5.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
@@ -101,6 +130,9 @@ function getStyles(theme: GrafanaTheme2) {
       maxWidth: '100%',
       flexGrow: 1,
       minWidth: 0,
+    }),
+    rowTitleHidden: css({
+      textDecoration: 'line-through',
     }),
     wrapper: css({
       display: 'flex',

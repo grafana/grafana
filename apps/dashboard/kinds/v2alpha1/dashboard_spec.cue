@@ -18,7 +18,7 @@ DashboardSpec: {
 
 	elements: [ElementReference.name]: Element
 
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 
 	// Links with references to other dashboards or external websites.
 	links: [...DashboardLink]
@@ -263,15 +263,12 @@ ValueMapping: ValueMap | RangeMap | RegexMap | SpecialValueMap
 // `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 // `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 // `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
-MappingType: "value" | "range" | "regex" | "special" @cog(kind="enum",memberNames="ValueToText|RangeToText|RegexToText|SpecialValue")
+MappingType: "value" | "range" | "regex" | "special"
 
 // Maps text values to a color or different display text and color.
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
 ValueMap: {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "value"
-	type: "value"
+	type: MappingType & "value"
 	// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
 	options: [string]: ValueMappingResult
 }
@@ -279,10 +276,7 @@ ValueMap: {
 // Maps numerical ranges to a display text and color.
 // For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 RangeMap: {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "range"
-	type: "range"
+	type: MappingType & "range"
 	// Range to match against and the result to apply when the value is within the range
 	options: {
 		// Min value of the range. It can be null which means -Infinity
@@ -297,10 +291,7 @@ RangeMap: {
 // Maps regular expressions to replacement text and a color.
 // For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 RegexMap: {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "regex"
-	type: "regex"
+	type: MappingType & "regex"
 	// Regular expression to match against and the result to apply when the value matches the regex
 	options: {
 		// Regular expression to match against
@@ -314,10 +305,7 @@ RegexMap: {
 // See SpecialValueMatch to see the list of special values.
 // For example, you can configure a special value mapping so that null values appear as N/A.
 SpecialValueMap: {
-	// TODO (@radiohead): Something broke in cog / app SDK codegen
-	// And this is no longer producing valid TS / Go output
-	// type: MappingType & "special"
-	type: "special"
+	type: MappingType & "special"
 	options: {
 		// Special value to match against
 		match: SpecialValueMatch
@@ -506,7 +494,7 @@ RowRepeatOptions: {
 	value: string
 }
 
-ResponsiveGridRepeatOptions: {
+AutoGridRepeatOptions: {
 	mode:  RepeatMode
 	value: string
 }
@@ -562,31 +550,39 @@ RowsLayoutRowKind: {
 }
 
 RowsLayoutRowSpec: {
-	title?:    string
-	collapsed: bool
-	repeat?:   RowRepeatOptions
-	layout:    GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+	title?:                string
+	collapse?:             bool
+	hideHeader?:           bool
+	fillScreen?:           bool
+	conditionalRendering?: ConditionalRenderingGroupKind
+	repeat?:               RowRepeatOptions
+	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 }
 
-ResponsiveGridLayoutKind: {
-	kind: "ResponsiveGridLayout"
-	spec: ResponsiveGridLayoutSpec
+AutoGridLayoutKind: {
+	kind: "AutoGridLayout"
+	spec: AutoGridLayoutSpec
 }
 
-ResponsiveGridLayoutSpec: {
-	row: string
-	col: string
-	items: [...ResponsiveGridLayoutItemKind]
+AutoGridLayoutSpec: {
+	maxColumnCount?: number | *3
+	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
+	columnWidth?: number
+	rowHeightMode: "short" | *"standard" | "tall" | "custom"
+	rowHeight?: number
+	fillScreen?: bool | *false
+	items: [...AutoGridLayoutItemKind]
 }
 
-ResponsiveGridLayoutItemKind: {
-	kind: "ResponsiveGridLayoutItem"
-	spec: ResponsiveGridLayoutItemSpec
+AutoGridLayoutItemKind: {
+	kind: "AutoGridLayoutItem"
+	spec: AutoGridLayoutItemSpec
 }
 
-ResponsiveGridLayoutItemSpec: {
-	element: ElementReference
-	repeat?: ResponsiveGridRepeatOptions
+AutoGridLayoutItemSpec: {
+	element:               ElementReference
+	repeat?:               AutoGridRepeatOptions
+	conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 TabsLayoutKind: {
@@ -605,7 +601,7 @@ TabsLayoutTabKind: {
 
 TabsLayoutTabSpec: {
 	title?: string
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 }
 
 PanelSpec: {
@@ -920,4 +916,43 @@ AdHocFilterWithLabels: {
 AdhocVariableKind: {
 	kind: "AdhocVariable"
 	spec: AdhocVariableSpec
+}
+
+ConditionalRenderingGroupKind: {
+	kind: "ConditionalRenderingGroup"
+	spec: ConditionalRenderingGroupSpec
+}
+
+ConditionalRenderingGroupSpec: {
+	condition: "and" | "or"
+	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
+}
+
+ConditionalRenderingVariableKind: {
+	kind: "ConditionalRenderingVariable"
+	spec: ConditionalRenderingVariableSpec
+}
+
+ConditionalRenderingVariableSpec: {
+	variable: string
+	operator: "equals" | "notEquals"
+	value:    string
+}
+
+ConditionalRenderingDataKind: {
+	kind: "ConditionalRenderingData"
+	spec: ConditionalRenderingDataSpec
+}
+
+ConditionalRenderingDataSpec: {
+	value: bool
+}
+
+ConditionalRenderingTimeIntervalKind: {
+	kind: "ConditionalRenderingTimeInterval"
+	spec: ConditionalRenderingTimeIntervalSpec
+}
+
+ConditionalRenderingTimeIntervalSpec: {
+	value: string
 }

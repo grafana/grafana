@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
-import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
+import { TableSortByFieldState } from '@grafana/ui/internal';
 
 import { getActions } from '../../../features/actions/utils';
 
@@ -34,6 +34,7 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
+  const useTableNg = config.featureToggles.tableNextGen;
 
   let tableHeight = height;
 
@@ -68,6 +69,7 @@ export function TablePanel(props: Props) {
       timeRange={timeRange}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
       fieldConfig={fieldConfig}
+      useTableNg={useTableNg}
       getActions={getCellActions}
       replaceVariables={replaceVariables}
     />

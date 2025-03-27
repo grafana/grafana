@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,7 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	authz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	apivalidation "github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -74,6 +78,14 @@ var ignoreFieldsForValidate = [...]string{"RuleGroupIndex"}
 // Returns http.StatusForbidden if user does not have access to any of the rules that match the filter.
 // Returns http.StatusBadRequest if all rules that match the filter and the user is authorized to delete are provisioned.
 func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceUID string, group string) response.Response {
+	var permanently bool
+	if c.QueryBool("deletePermanently") {
+		if !c.SignedInUser.HasRole(identity.RoleAdmin) {
+			return ErrResp(http.StatusForbidden, errors.New("only administrators can delete rules permanently"), "")
+		}
+		permanently = true
+	}
+
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
@@ -157,7 +169,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 			rulesToDelete = append(rulesToDelete, uid...)
 		}
 		if len(rulesToDelete) > 0 {
-			err := srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.GetOrgID(), ngmodels.NewUserUID(c.SignedInUser), rulesToDelete...)
+			err := srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.GetOrgID(), ngmodels.NewUserUID(c.SignedInUser), permanently, rulesToDelete...)
 			if err != nil {
 				return err
 			}
@@ -381,6 +393,14 @@ func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUI
 }
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceUID string) response.Response {
+	var deletePermanently bool
+	if c.QueryBool("deletePermanently") {
+		if !c.SignedInUser.HasRole(identity.RoleAdmin) {
+			return ErrResp(http.StatusForbidden, errors.New("only administrators can delete rules permanently"), "")
+		}
+		deletePermanently = true
+	}
+
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
@@ -390,7 +410,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	rules, err := ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, RuleLimitsFromConfig(srv.cfg, srv.featureManager))
+	rules, err := apivalidation.ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager))
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -401,7 +421,18 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		RuleGroup:    ruleGroupConfig.Name,
 	}
 
-	return srv.updateAlertRulesInGroup(c, groupKey, rules)
+	return srv.updateAlertRulesInGroup(c, groupKey, rules, deletePermanently)
+}
+
+func (srv RulerSrv) RouteDeleteAlertRuleFromTrashByGUID(ctx *contextmodel.ReqContext, guid string) response.Response {
+	deleted, err := srv.store.DeleteRuleFromTrashByGUID(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), guid)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule from trash")
+	}
+	if deleted == 0 {
+		return response.Empty(http.StatusNotFound)
+	}
+	return response.Empty(http.StatusOK)
 }
 
 func (srv RulerSrv) checkGroupLimits(group apimodels.PostableRuleGroupConfig) error {
@@ -420,7 +451,7 @@ func (srv RulerSrv) checkGroupLimits(group apimodels.PostableRuleGroupConfig) er
 // All operations are performed in a single transaction
 //
 //nolint:gocyclo
-func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals) response.Response {
+func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals, deletePermanently bool) response.Response {
 	var finalChanges *store.GroupDelta
 	var dbConfig *ngmodels.AlertConfiguration
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
@@ -481,7 +512,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 				UIDs = append(UIDs, rule.UID)
 			}
 
-			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.GetOrgID(), ngmodels.NewUserUID(c.SignedInUser), UIDs...); err != nil {
+			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.GetOrgID(), ngmodels.NewUserUID(c.SignedInUser), deletePermanently, UIDs...); err != nil {
 				return fmt.Errorf("failed to delete rules: %w", err)
 			}
 		}
@@ -610,30 +641,34 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 
 	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
-			Title:                r.Title,
-			Condition:            r.Condition,
-			Data:                 ApiAlertQueriesFromAlertQueries(r.Data),
-			Updated:              r.Updated,
-			UpdatedBy:            userIdToName(r.UpdatedBy),
-			IntervalSeconds:      r.IntervalSeconds,
-			Version:              r.Version,
-			UID:                  r.UID,
-			NamespaceUID:         r.NamespaceUID,
-			RuleGroup:            r.RuleGroup,
-			NoDataState:          apimodels.NoDataState(r.NoDataState),
-			ExecErrState:         apimodels.ExecutionErrorState(r.ExecErrState),
-			Provenance:           apimodels.Provenance(provenance),
-			IsPaused:             r.IsPaused,
-			NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(r.NotificationSettings),
-			Record:               ApiRecordFromModelRecord(r.Record),
-			Metadata:             AlertRuleMetadataFromModelMetadata(r.Metadata),
+			Title:                       r.Title,
+			Condition:                   r.Condition,
+			Data:                        ApiAlertQueriesFromAlertQueries(r.Data),
+			Updated:                     r.Updated,
+			UpdatedBy:                   userIdToName(r.UpdatedBy),
+			IntervalSeconds:             r.IntervalSeconds,
+			Version:                     r.Version,
+			UID:                         r.UID,
+			NamespaceUID:                r.NamespaceUID,
+			RuleGroup:                   r.RuleGroup,
+			NoDataState:                 apimodels.NoDataState(r.NoDataState),
+			ExecErrState:                apimodels.ExecutionErrorState(r.ExecErrState),
+			Provenance:                  apimodels.Provenance(provenance),
+			IsPaused:                    r.IsPaused,
+			NotificationSettings:        AlertRuleNotificationSettingsFromNotificationSettings(r.NotificationSettings),
+			Record:                      ApiRecordFromModelRecord(r.Record),
+			Metadata:                    AlertRuleMetadataFromModelMetadata(r.Metadata),
+			GUID:                        r.GUID,
+			MissingSeriesEvalsToResolve: r.MissingSeriesEvalsToResolve,
 		},
 	}
 	forDuration := model.Duration(r.For)
+	keepFiringForDuration := model.Duration(r.KeepFiringFor)
 	gettableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
-		For:         &forDuration,
-		Annotations: r.Annotations,
-		Labels:      r.Labels,
+		For:           &forDuration,
+		KeepFiringFor: &keepFiringForDuration,
+		Annotations:   r.Annotations,
+		Labels:        r.Labels,
 	}
 	return gettableExtendedRuleNode
 }
@@ -812,4 +847,11 @@ func (srv RulerSrv) resolveUserIdToNameFn(ctx context.Context) userIDToUserInfoF
 		cache[*id] = result
 		return result
 	}
+}
+
+func getPanelIDFromQuery(v url.Values) (int64, error) {
+	if s := strings.TrimSpace(v.Get("panel_id")); s != "" {
+		return strconv.ParseInt(s, 10, 64)
+	}
+	return 0, nil
 }

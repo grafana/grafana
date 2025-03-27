@@ -35,6 +35,7 @@ import {
   RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
+  RulerRuleGroupDTO,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
@@ -144,6 +145,10 @@ export function isEditableRuleIdentifier(identifier: RuleIdentifier): identifier
 
 export function isProvisionedRule(rulerRule: RulerRuleDTO): boolean {
   return isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+}
+
+export function isProvisionedRuleGroup(group: RulerRuleGroupDTO): boolean {
+  return group.rules.some((rule) => isProvisionedRule(rule));
 }
 
 export function getRuleHealth(health: string): RuleHealth | undefined {
@@ -310,7 +315,7 @@ export function getFirstActiveAt(promRule?: AlertingRule) {
  *
  * see https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation
  */
-export function isFederatedRuleGroup(group: CombinedRuleGroup) {
+export function isFederatedRuleGroup(group: CombinedRuleGroup | RulerRuleGroupDTO): boolean {
   return Array.isArray(group.source_tenants);
 }
 
@@ -372,6 +377,24 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
     return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(forNumber / evalNumberMs) + 1;
   }
 };
+
+/**
+ * Calculates the number of rule evaluations before the alerting rule will fire
+ * @param pendingPeriodMs - The pending period of the alerting rule in milliseconds
+ * @param groupIntervalMs - The group's evaluation interval in milliseconds
+ * @returns The number of rule evaluations before the rule will fire
+ */
+export function calcRuleEvalsToStartAlerting(pendingPeriodMs: number, groupIntervalMs: number) {
+  if (pendingPeriodMs === 0) {
+    return 1; // No pending period, the rule will fire immediately
+  }
+  if (groupIntervalMs === 0) {
+    return 0; // Invalid case. Group interval is never 0. The default interval will be used.
+  }
+
+  const evaluationsBeforeCeil = pendingPeriodMs / groupIntervalMs;
+  return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(pendingPeriodMs / groupIntervalMs) + 1;
+}
 
 /*
  * Extracts a rule group identifier from a CombinedRule

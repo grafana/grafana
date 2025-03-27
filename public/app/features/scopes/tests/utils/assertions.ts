@@ -1,3 +1,5 @@
+import { ScopesSelectorService } from '../../selector/ScopesSelectorService';
+
 import {
   getDashboard,
   getDashboardsContainer,
@@ -77,7 +79,7 @@ export const expectDashboardNotInDocument = (uid: string) => expectNotInDocument
 export const expectDashboardLength = (uid: string, length: number) =>
   expect(queryAllDashboard(uid)).toHaveLength(length);
 
-export const expectSelectedScopePath = (name: string, path: string[] | undefined) =>
-  expect(getSelectedScope(name)?.path).toEqual(path);
-export const expectTreeScopePath = (name: string, path: string[] | undefined) =>
-  expect(getTreeScope(name)?.path).toEqual(path);
+export const expectSelectedScopePath = (service: ScopesSelectorService, name: string, path: string[] | undefined) =>
+  expect(getSelectedScope(service, name)?.path).toEqual(path);
+export const expectTreeScopePath = (service: ScopesSelectorService, name: string, path: string[] | undefined) =>
+  expect(getTreeScope(service, name)?.path).toEqual(path);

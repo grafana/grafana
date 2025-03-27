@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -227,257 +228,6 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 			require.NoError(t, err)
 			require.EqualValues(t, 1, count) // only the current version
 		})
-	})
-}
-
-func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	usr := models.UserUID("test")
-	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
-	sqlStore := db.InitTestDB(t)
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
-	b := &fakeBus{}
-	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
-
-	gen := models.RuleGen
-	createRuleInFolder := func(title string, orgID int64, namespaceUID string) *models.AlertRule {
-		gen := gen.With(
-			gen.WithOrgID(orgID),
-			gen.WithIntervalMatching(store.Cfg.BaseInterval),
-			gen.WithNamespaceUID(namespaceUID),
-		)
-		return createRule(t, store, gen)
-	}
-
-	t.Run("should handle update chains without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder("chain-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder("chain-rule2", 1, "my-namespace")
-
-		newRule1 := models.CopyRule(rule1)
-		newRule2 := models.CopyRule(rule2)
-		newRule1.Title = rule2.Title
-		newRule2.Title = util.GenerateShortUID()
-
-		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
-			Existing: rule1,
-			New:      *newRule1,
-		}, {
-			Existing: rule2,
-			New:      *newRule2,
-		},
-		})
-		require.NoError(t, err)
-
-		dbrule1 := &alertRule{}
-		dbrule2 := &alertRule{}
-		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
-			if err != nil {
-				return err
-			}
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
-
-			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
-			if err != nil {
-				return err
-			}
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule2.ID))
-			return nil
-		})
-
-		require.NoError(t, err)
-		require.Equal(t, newRule1.Title, dbrule1.Title)
-		require.Equal(t, newRule2.Title, dbrule2.Title)
-	})
-
-	t.Run("should handle update chains with cycle without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder("cycle-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder("cycle-rule2", 1, "my-namespace")
-		rule3 := createRuleInFolder("cycle-rule3", 1, "my-namespace")
-
-		newRule1 := models.CopyRule(rule1)
-		newRule2 := models.CopyRule(rule2)
-		newRule3 := models.CopyRule(rule3)
-		newRule1.Title = rule2.Title
-		newRule2.Title = rule3.Title
-		newRule3.Title = rule1.Title
-
-		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
-			Existing: rule1,
-			New:      *newRule1,
-		}, {
-			Existing: rule2,
-			New:      *newRule2,
-		}, {
-			Existing: rule3,
-			New:      *newRule3,
-		},
-		})
-		require.NoError(t, err)
-
-		dbrule1 := &alertRule{}
-		dbrule2 := &alertRule{}
-		dbrule3 := &alertRule{}
-		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
-			if err != nil {
-				return err
-			}
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
-
-			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
-			if err != nil {
-				return err
-			}
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule2.ID))
-
-			exist, err = sess.Table(alertRule{}).ID(rule3.ID).Get(dbrule3)
-			if err != nil {
-				return err
-			}
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule3.ID))
-			return nil
-		})
-
-		require.NoError(t, err)
-		require.Equal(t, newRule1.Title, dbrule1.Title)
-		require.Equal(t, newRule2.Title, dbrule2.Title)
-		require.Equal(t, newRule3.Title, dbrule3.Title)
-	})
-
-	t.Run("should handle case-insensitive intermediate collision without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder("case-cycle-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder("case-cycle-rule2", 1, "my-namespace")
-
-		newRule1 := models.CopyRule(rule1)
-		newRule2 := models.CopyRule(rule2)
-		newRule1.Title = strings.ToUpper(rule2.Title)
-		newRule2.Title = strings.ToUpper(rule1.Title)
-
-		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
-			Existing: rule1,
-			New:      *newRule1,
-		}, {
-			Existing: rule2,
-			New:      *newRule2,
-		},
-		})
-		require.NoError(t, err)
-
-		dbrule1 := &alertRule{}
-		dbrule2 := &alertRule{}
-		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
-			if err != nil {
-				return err
-			}
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
-
-			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
-			if err != nil {
-				return err
-			}
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule2.ID))
-			return nil
-		})
-
-		require.NoError(t, err)
-		require.Equal(t, newRule1.Title, dbrule1.Title)
-		require.Equal(t, newRule2.Title, dbrule2.Title)
-	})
-
-	t.Run("should handle update multiple chains in different folders without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder("multi-cycle-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder("multi-cycle-rule2", 1, "my-namespace")
-		rule3 := createRuleInFolder("multi-cycle-rule1", 1, "my-namespace2")
-		rule4 := createRuleInFolder("multi-cycle-rule2", 1, "my-namespace2")
-
-		newRule1 := models.CopyRule(rule1)
-		newRule2 := models.CopyRule(rule2)
-		newRule3 := models.CopyRule(rule3)
-		newRule4 := models.CopyRule(rule4)
-		newRule1.Title = rule2.Title
-		newRule2.Title = rule1.Title
-		newRule3.Title = rule4.Title
-		newRule4.Title = rule3.Title
-
-		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
-			Existing: rule1,
-			New:      *newRule1,
-		}, {
-			Existing: rule2,
-			New:      *newRule2,
-		}, {
-			Existing: rule3,
-			New:      *newRule3,
-		}, {
-			Existing: rule4,
-			New:      *newRule4,
-		},
-		})
-		require.NoError(t, err)
-
-		dbrule1 := &alertRule{}
-		dbrule2 := &alertRule{}
-		dbrule3 := &alertRule{}
-		dbrule4 := &alertRule{}
-		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
-			if err != nil {
-				return err
-			}
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
-
-			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
-			if err != nil {
-				return err
-			}
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule2.ID))
-
-			exist, err = sess.Table(alertRule{}).ID(rule3.ID).Get(dbrule3)
-			if err != nil {
-				return err
-			}
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule3.ID))
-
-			exist, err = sess.Table(alertRule{}).ID(rule4.ID).Get(dbrule4)
-			if err != nil {
-				return err
-			}
-			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule4.ID))
-			return nil
-		})
-
-		require.NoError(t, err)
-		require.Equal(t, newRule1.Title, dbrule1.Title)
-		require.Equal(t, newRule2.Title, dbrule2.Title)
-		require.Equal(t, newRule3.Title, dbrule3.Title)
-		require.Equal(t, newRule4.Title, dbrule4.Title)
-	})
-
-	t.Run("should fail with unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder("unique-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder("unique-rule2", 1, "my-namespace")
-
-		newRule1 := models.CopyRule(rule1)
-		newRule2 := models.CopyRule(rule2)
-		newRule2.Title = newRule1.Title
-
-		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
-			Existing: rule2,
-			New:      *newRule2,
-		},
-		})
-		require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
-		require.NotEqual(t, newRule2.UID, "")
-		require.NotEqual(t, newRule2.Title, "")
-		require.NotEqual(t, newRule2.NamespaceUID, "")
-		require.ErrorContains(t, err, newRule2.UID)
-		require.ErrorContains(t, err, newRule2.Title)
-		require.ErrorContains(t, err, newRule2.NamespaceUID)
 	})
 }
 
@@ -745,7 +495,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 			called = true
 			return nil
 		}
-		err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, rule.UID)
+		err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, false, rule.UID)
 		require.NoError(t, err)
 		require.True(t, called)
 	})
@@ -772,7 +522,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.Len(t, savedInstances, 1)
 
 		// Delete the rule
-		err = store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, rule.UID)
+		err = store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, false, rule.UID)
 		require.NoError(t, err)
 
 		// Now there should be no alert rule state
@@ -820,7 +570,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -887,7 +637,60 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uids...)
+		require.NoError(t, err)
+
+		guids := make([]string, 0, len(rules))
+		for _, rule := range rules {
+			guids = append(guids, rule.GUID)
+		}
+
+		_ = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			var versions []alertRuleVersion
+			err = sess.Table(alertRuleVersion{}).Where(`rule_uid = ''`).In("rule_guid", guids).Find(&versions)
+			require.NoError(t, err)
+			require.Emptyf(t, versions, "some rules were not permanently deleted") // should be one version per GUID
+			return nil
+		})
+	})
+
+	t.Run("should remove all versions and not keep history if permanently is true", func(t *testing.T) {
+		orgID := int64(rand.Intn(1000))
+		gen = gen.With(gen.WithOrgID(orgID))
+		// Create a new store to pass the custom bus to check the signal
+		b := &fakeBus{}
+		logger := log.New("test-dbstore")
+
+		cfg.UnifiedAlerting.DeletedRuleRetention = 1000 * time.Hour
+
+		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
+
+		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, gen.GenerateMany(3))
+		uids := make([]string, 0, len(result))
+		for _, rule := range result {
+			uids = append(uids, rule.UID)
+		}
+		require.NoError(t, err)
+		rules, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: orgID, RuleUIDs: uids})
+		require.NoError(t, err)
+
+		updates := make([]models.UpdateRule, 0, len(rules))
+		for _, rule := range rules {
+			rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
+			updates = append(updates, models.UpdateRule{
+				Existing: rule,
+				New:      *rule2,
+			})
+		}
+		err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, updates)
+		require.NoError(t, err)
+
+		versions, err := store.GetAlertRuleVersions(context.Background(), orgID, rules[0].GUID)
+		require.NoError(t, err)
+		require.Len(t, versions, 2)
+
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), true, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -1025,18 +828,11 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{rules[0]})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 	})
-	t.Run("fail insert rules with the same title in a folder", func(t *testing.T) {
+	t.Run("should not fail insert rules with the same title in a folder", func(t *testing.T) {
 		cp := models.CopyRule(&rules[0])
 		cp.UID = cp.UID + "-new"
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{*cp})
-		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
-		require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
-		require.NotEqual(t, rules[0].UID, "")
-		require.NotEqual(t, rules[0].Title, "")
-		require.NotEqual(t, rules[0].NamespaceUID, "")
-		require.ErrorContains(t, err, rules[0].UID)
-		require.ErrorContains(t, err, rules[0].Title)
-		require.ErrorContains(t, err, rules[0].NamespaceUID)
+		require.NoError(t, err)
 	})
 	t.Run("should not let insert rules with the same UID", func(t *testing.T) {
 		cp := models.CopyRule(&rules[0])
@@ -2025,6 +1821,15 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
+	oldT := TimeNow
+	t.Cleanup(func() {
+		TimeNow = oldT
+	})
+	clk := clock.NewMock()
+	TimeNow = func() time.Time {
+		return clk.Now()
+	}
+
 	orgID := int64(1)
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID))
@@ -2034,6 +1839,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	rule, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
 	require.NoError(t, err)
 
+	clk.Add(1 * time.Hour)
 	rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
 	err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
 		{
@@ -2055,7 +1861,8 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 		require.Empty(t, list)
 	})
 
-	err = store.DeleteAlertRulesByUID(context.Background(), orgID, &models.AlertingUserUID, rule.UID)
+	clk.Add(1 * time.Hour)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule.UID)
 	require.NoError(t, err)
 
 	t.Run("should return the last deleted rule", func(t *testing.T) {
@@ -2063,7 +1870,9 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, list, 1)
 		assert.Empty(t, list[0].UID)
-		assert.Empty(t, rule2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID"))
+		assert.Empty(t, rule2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID", "Updated", "UpdatedBy")) // ignore updated because it's not
+		assert.Equal(t, list[0].Updated.UTC(), clk.Now().UTC())
+		assert.EqualValues(t, list[0].UpdatedBy, util.Pointer(models.UserUID("test")))
 	})
 }
 
@@ -2113,7 +1922,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 		TimeNow = func() time.Time {
 			return t0.Add(time.Duration(idx) * 10 * time.Second)
 		}
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), uid)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uid)
 		require.NoError(t, err)
 	}
 

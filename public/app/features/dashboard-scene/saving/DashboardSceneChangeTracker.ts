@@ -137,9 +137,7 @@ export class DashboardSceneChangeTracker {
     return this._dashboard.state.meta.folderUid !== this._dashboard.getInitialState()?.meta.folderUid;
   }
 
-  private updateIsDirty(result: DashboardChangeInfo) {
-    const { hasChanges } = result;
-
+  private updateIsDirty(hasChanges: boolean) {
     if (hasChanges || this.hasMetadataChanges()) {
       if (!this._dashboard.state.isDirty) {
         this._dashboard.setState({ isDirty: true });
@@ -161,7 +159,7 @@ export class DashboardSceneChangeTracker {
     }
 
     this._changesWorker!.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
-      this.updateIsDirty(e.data);
+      this.updateIsDirty(!!e.data.hasChanges);
     };
 
     const performSaveModelDiff = getChangeTrackerDebouncer(this.detectSaveModelChanges.bind(this));

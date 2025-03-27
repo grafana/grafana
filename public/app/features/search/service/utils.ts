@@ -106,6 +106,7 @@ export function queryResultToViewItem(
     title: item.name,
     url: item.url,
     tags: item.tags ?? [],
+    managedBy: item.managedBy,
   };
 
   // Set enterprise sort value property

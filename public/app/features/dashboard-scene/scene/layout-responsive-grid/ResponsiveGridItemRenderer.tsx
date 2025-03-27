@@ -1,35 +1,33 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 
 import { SceneComponentProps } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
 
-import { ResponsiveGridItem } from './ResponsiveGridItem';
+import { useDashboardState, useIsConditionallyHidden } from '../../utils/utils';
 
-export function ResponsiveGridItemRenderer({ model }: SceneComponentProps<ResponsiveGridItem>) {
+import { AutoGridItem } from './ResponsiveGridItem';
+
+export interface AutoGridItemProps extends SceneComponentProps<AutoGridItem> {}
+
+export function AutoGridItemRenderer({ model }: AutoGridItemProps) {
   const { body } = model.useState();
-  const style = useStyles2(getStyles);
+  const { isEditing } = useDashboardState(model);
+  const isConditionallyHidden = useIsConditionallyHidden(model);
+
+  if (isConditionallyHidden && !isEditing) {
+    return null;
+  }
 
   return model.state.repeatedPanels ? (
     <>
       {model.state.repeatedPanels.map((item) => (
-        <div className={cx(style.wrapper)} key={item.state.key}>
+        <div className={cx({ 'dashboard-visible-hidden-element': isConditionallyHidden })} key={item.state.key}>
           <item.Component model={item} />
         </div>
       ))}
     </>
   ) : (
-    <div className={cx(style.wrapper)}>
+    <div className={cx({ 'dashboard-visible-hidden-element': isConditionallyHidden })}>
       <body.Component model={body} />
     </div>
   );
-}
-
-function getStyles() {
-  return {
-    wrapper: css({
-      width: '100%',
-      height: '100%',
-      position: 'relative',
-    }),
-  };
 }

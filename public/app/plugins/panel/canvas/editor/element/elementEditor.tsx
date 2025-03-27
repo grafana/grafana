@@ -1,6 +1,6 @@
 import { get as lodashGet } from 'lodash';
 
-import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/internal';
 import { CanvasElementOptions } from 'app/features/canvas/element';
 import {
   canvasElementRegistry,
