@@ -1310,6 +1310,36 @@
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
     },
+    "auto-grid": {
+      "description": "Panels resize to fit and form uniform grids",
+      "item-options": {
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
+            "title": "Repeat by variable"
+          }
+        }
+      },
+      "name": "Auto grid",
+      "options": {
+        "custom-min-height": {
+          "clear": "Clear"
+        },
+        "custom-min-width": {
+          "clear": "Clear"
+        },
+        "height-fill": "Fill screen",
+        "max-columns": "Max columns",
+        "min-height": "Row height",
+        "min-height-custom": "Custom row height",
+        "min-height-error": "A number between 50 and 2000 is required",
+        "min-width": "Min column width",
+        "min-width-custom": "Custom min width",
+        "min-width-custom-clear": "Back to standard min column width",
+        "min-width-error": "A number between 50 and 2000 is required"
+      }
+    },
     "conditional-rendering": {
       "data": {
         "disable": "Disable",
@@ -1541,36 +1571,6 @@
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
         "no-rules": "There are no alert rules linked to this panel."
-      }
-    },
-    "responsive-layout": {
-      "description": "Panels resize to fit and form uniform grids",
-      "item-options": {
-        "repeat": {
-          "title": "Repeat options",
-          "variable": {
-            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
-            "title": "Repeat by variable"
-          }
-        }
-      },
-      "name": "Auto grid",
-      "options": {
-        "custom-min-height": {
-          "clear": "Clear"
-        },
-        "custom-min-width": {
-          "clear": "Clear"
-        },
-        "height-fill": "Fill screen",
-        "max-columns": "Max columns",
-        "min-height": "Row height",
-        "min-height-custom": "Custom row height",
-        "min-height-error": "A number between 50 and 2000 is required",
-        "min-width": "Min column width",
-        "min-width-custom": "Custom min width",
-        "min-width-custom-clear": "Back to standard min column width",
-        "min-width-error": "A number between 50 and 2000 is required"
       }
     },
     "rows-layout": {

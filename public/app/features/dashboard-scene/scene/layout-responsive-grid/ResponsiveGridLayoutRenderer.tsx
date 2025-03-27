@@ -7,9 +7,9 @@ import { useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { ResponsiveGridLayout, ResponsiveGridLayoutState } from './ResponsiveGridLayout';
+import { AutoGridLayout, AutoGridLayoutState } from './ResponsiveGridLayout';
 
-export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<ResponsiveGridLayout>) {
+export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, isLazy } = model.useState();
   const styles = useStyles2(getStyles, model.state);
   const { layoutOrchestrator } = getDashboardSceneFor(model).state;
@@ -76,7 +76,7 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, state: ResponsiveGridLayoutState) => ({
+const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
   container: css({
     display: 'grid',
     position: 'relative',
