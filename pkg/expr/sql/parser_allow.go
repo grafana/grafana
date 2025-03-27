@@ -189,7 +189,7 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "lower", "upper":
 		return
-	case "substring":
+	case "substring", "substring_index":
 		return
 
 	// Date functions
