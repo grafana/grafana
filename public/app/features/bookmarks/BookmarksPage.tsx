@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { useTranslate } from '@grafana/runtime/src/unstable';
+import { useTranslate } from '@grafana/runtime/unstable';
 import { EmptyState, useStyles2 } from '@grafana/ui';
 import { usePinnedItems } from 'app/core/components/AppChrome/MegaMenu/hooks';
 import { findByUrl } from 'app/core/components/AppChrome/MegaMenu/utils';

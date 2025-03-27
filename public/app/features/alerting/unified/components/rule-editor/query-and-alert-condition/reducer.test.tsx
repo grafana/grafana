@@ -1,5 +1,4 @@
 import { RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime/src/services/__mocks__/dataSourceSrv';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import {
   ExpressionDatasourceUID,
@@ -47,9 +46,29 @@ const thresholdExpression: AlertQuery<ExpressionQuery> = {
   },
 };
 
+const ds1 = {
+  id: 1,
+  uid: 'c8eceabb-0275-4108-8f03-8f74faf4bf6d',
+  type: 'prometheus',
+  name: 'gdev-prometheus',
+  meta: {
+    alerting: true,
+    info: {
+      logos: {
+        small: 'http://example.com/logo.png',
+      },
+    },
+  },
+  jsonData: {},
+  access: 'proxy',
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: getDataSourceSrv,
+  getDataSourceSrv: () => ({
+    getList: () => [ds1],
+    getInstanceSettings: () => ds1,
+  }),
 }));
 
 const alertQuery: AlertQuery = {

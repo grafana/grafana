@@ -12,7 +12,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
-import { getTemplateSrv } from '@grafana/runtime/src/services';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
