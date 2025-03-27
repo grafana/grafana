@@ -12,8 +12,9 @@ import {
   Field,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { Select, TableNG, usePanelContext, useTheme2 } from '@grafana/ui';
+import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/internal';
+import { TableNG } from '@grafana/ui/unstable';
 
 import { getActions } from '../../../features/actions/utils';
 

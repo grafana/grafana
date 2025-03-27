@@ -102,9 +102,6 @@ export {
   type TableJsonViewCellOptions,
 } from './Table/types';
 
-/** @internal */
-export { TableNG } from './Table/TableNG/TableNG';
-
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab, type TabProps } from './Tabs/Tab';
