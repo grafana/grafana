@@ -2,10 +2,7 @@ import { from, map, of, switchMap } from 'rxjs';
 
 import { DataFrame, toLiveChannelId, StreamingDataFrame } from '@grafana/data';
 import { BackendSrv, GrafanaLiveSrv, toDataQueryResponse } from '@grafana/runtime';
-import {
-  standardStreamOptionsProvider,
-  toStreamingDataResponse,
-} from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { standardStreamOptionsProvider, toStreamingDataResponse } from '@grafana/runtime/internal';
 
 import { CentrifugeSrv, StreamingDataQueryResponse } from './centrifuge/service';
 import { isStreamingResponseData, StreamingResponseDataType } from './data/utils';

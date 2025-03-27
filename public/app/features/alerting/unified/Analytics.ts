@@ -1,7 +1,6 @@
 import { isEmpty } from 'lodash';
 
-import { createMonitoringLogger } from '@grafana/runtime';
-import { config, reportInteraction } from '@grafana/runtime/src';
+import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import { RuleNamespace } from '../../../types/unified-alerting';

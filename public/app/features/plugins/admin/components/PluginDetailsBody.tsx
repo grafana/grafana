@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
+import { PageInfoItem } from '@grafana/runtime/internal';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
 import { Changelog } from '../components/Changelog';
