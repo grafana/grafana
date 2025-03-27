@@ -248,6 +248,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExploreHideLogsDownload:          hs.Cfg.ExploreHideLogsDownload,
 
 		DefaultDatasourceManageAlertsUIToggle: hs.Cfg.DefaultDatasourceManageAlertsUIToggle,
+		PluginDependencies:                    pluginDependencyMap(c.Req.Context(), hs.pluginStore),
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
@@ -791,4 +792,25 @@ func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
 		}
 	}
 	return providers
+}
+
+// pluginDependencyMap returns a map of dependant plugin IDs to their parent.
+func pluginDependencyMap(ctx context.Context, pluginStore pluginstore.Store) map[string][]plugins.Dependency {
+	dependencies := make(map[string][]plugins.Dependency)
+
+	for _, plugin := range pluginStore.Plugins(ctx) {
+		for _, dep := range plugin.Dependencies.Plugins {
+			if _, exists := dependencies[dep.ID]; !exists {
+				dependencies[dep.ID] = []plugins.Dependency{}
+			}
+			dependencies[dep.ID] = append(dependencies[dep.ID], plugins.Dependency{
+				ID:      plugin.ID,
+				Version: plugin.Info.Version,
+				Name:    plugin.Name,
+				Type:    string(plugin.Type),
+			})
+		}
+	}
+
+	return dependencies
 }

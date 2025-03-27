@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { GrafanaTheme2, PluginDependencyInfo } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import {
   Stack,
@@ -20,7 +20,8 @@ import {
 import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
-import { CatalogPlugin } from '../types';
+import { getLatestCompatibleVersion } from '../helpers';
+import { CatalogPlugin, PluginIconName } from '../types';
 
 type Props = {
   pluginExtentionsInfo: PageInfoItem[];
@@ -56,6 +57,25 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
       plugin_id: pluginId,
     });
   };
+
+  const pluginDependencies = plugin.details?.pluginDependencies;
+  let grafanaDependency = plugin.details?.grafanaDependency;
+  if (!grafanaDependency) {
+    grafanaDependency = 'unknown';
+  }
+
+  const useLatestCompatibleInfo = !plugin.isInstalled;
+  const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
+  if (useLatestCompatibleInfo && latestCompatibleVersion?.grafanaDependency) {
+    grafanaDependency = latestCompatibleVersion?.grafanaDependency;
+  }
+
+  let pluginDependants: PluginDependencyInfo[] = [];
+  if (config.pluginDependants && config.pluginDependants[plugin.id]) {
+    pluginDependants = config.pluginDependants[plugin.id];
+  }
+  const hasDependencyInfo =
+    grafanaDependency || (pluginDependencies && pluginDependencies.length) || pluginDependants.length;
 
   return (
     <>
@@ -96,6 +116,50 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
             )}
           </Stack>
         </Box>
+        {hasDependencyInfo && (
+          <Box padding={2} borderColor="medium" borderStyle="solid">
+            <Stack direction="column" gap={1}>
+              <Text color="secondary">
+                <Trans i18nKey="plugins.details.labels.dependencies">Dependencies</Trans>
+              </Text>
+              <Stack direction="column" gap={1}>
+                <span className={styles.depBadge}>
+                  <Icon name="grafana" className={styles.icon} />
+                  <Trans i18nKey="plugins.details.labels.grafanaDependency">Grafana </Trans> {grafanaDependency}
+                </span>
+              </Stack>
+
+              {pluginDependencies && pluginDependencies.length > 0 && (
+                <Stack direction="column" gap={1}>
+                  {pluginDependencies.map((p) => {
+                    return (
+                      <TextLink key={p.id} href={'/plugins/' + p.id}>
+                        <Icon name={PluginIconName[p.type]} className={styles.icon} />
+                        {p.name} {p.version}
+                      </TextLink>
+                    );
+                  })}
+                </Stack>
+              )}
+
+              {pluginDependants && pluginDependants.length > 0 && (
+                <Stack direction="column" gap={1}>
+                  <Text color="secondary">
+                    <Trans i18nKey={'plugins.details.labels.pluginDependants'}>Required by: </Trans>
+                  </Text>
+                  {pluginDependants.map((p) => {
+                    return (
+                      <TextLink key={p.id} href={'/plugins/' + p.id}>
+                        <Icon name={PluginIconName[p.type]} className={styles.icon} />
+                        {p.name} {p.version}
+                      </TextLink>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Stack>
+          </Box>
+        )}
         {shouldRenderLinks && (
           <>
             <Box padding={2} borderColor="medium" borderStyle="solid" data-testid="plugin-details-regular-links">
@@ -256,6 +320,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     pluginVersionDetails: css({
       wordBreak: 'break-word',
+    }),
+    depBadge: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
+      marginRight: theme.spacing(0.5),
     }),
   };
 };

@@ -130,12 +130,19 @@ export function InstallControlsButton({
     uninstallTitle = 'Preinstalled plugin. Remove from Grafana config before uninstalling.';
   }
 
+  let uninstallConfirmationBody = 'Are you sure you want to uninstall this plugin?';
+  // TODO && dependant plugin is still installed
+  const dependencyOf = plugin.dependantPlugins?.map((dep) => dep.name);
+  if (dependencyOf?.length) {
+    uninstallConfirmationBody = `This plugin is a dependency of ${dependencyOf.join(', ')}. Are you sure you want to uninstall this plugin?`;
+  }
+
   const uninstallControls = (
     <>
       <ConfirmModal
         isOpen={isConfirmModalVisible}
         title={`Uninstall ${plugin.name}`}
-        body="Are you sure you want to uninstall this plugin?"
+        body={uninstallConfirmationBody}
         confirmText="Confirm"
         icon="exclamation-triangle"
         onConfirm={onUninstall}
@@ -162,7 +169,7 @@ export function InstallControlsButton({
   }
 
   if (!plugin.isPublished || hasInstallWarning) {
-    // Cannot be updated or installed
+    // Cannot be updated/installed/uninstalled
     return null;
   }
 

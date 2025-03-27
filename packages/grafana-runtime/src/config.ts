@@ -19,6 +19,7 @@ import {
   AngularMeta,
   PluginLoadingStrategy,
   PluginDependencies,
+  PluginDependencyInfo,
   PluginExtensions,
 } from '@grafana/data';
 
@@ -139,6 +140,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginCatalogManagedPlugins: string[] = [];
   pluginCatalogPreinstalledPlugins: PreinstalledPlugin[] = [];
   pluginsCDNBaseURL = '';
+  pluginDependants?: { [key: string]: PluginDependencyInfo[] } = {};
   expressionsEnabled = false;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;

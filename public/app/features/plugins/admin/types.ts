@@ -64,15 +64,13 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   iam?: IdentityAccessManagement;
   isProvisioned?: boolean;
   url?: string;
+  dependantPlugins?: any[];
 }
 
 export interface CatalogPluginDetails {
   readme?: string;
   versions?: Version[];
-  links: Array<{
-    name: string;
-    url: string;
-  }>;
+  links: Rel[];
   grafanaDependency?: string;
   pluginDependencies?: PluginDependencies['plugins'];
   statusContext?: string;
