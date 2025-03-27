@@ -105,8 +105,6 @@ type service struct {
 }
 
 func ProvideService(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
@@ -123,6 +121,8 @@ func ProvideService(
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
 ) (*service, error) {
+	scheme := builder.ProvideScheme()
+	codecs := builder.ProvideCodecFactory(scheme)
 	s := &service{
 		scheme:                            scheme,
 		codecs:                            codecs,
