@@ -408,7 +408,7 @@ func (s *persistentStore) InsertNotifications() chan struct{} {
 // generateJobName creates and updates the job's name to one that fits it.
 func (s *persistentStore) generateJobName(job *provisioning.Job) {
 	switch job.Spec.Action {
-	case provisioning.JobActionMigrate, provisioning.JobActionSync:
+	case provisioning.JobActionMigrate, provisioning.JobActionPull:
 		// Sync and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
 		job.Name = job.Spec.Repository + "-syncmigrate"
 	case provisioning.JobActionPullRequest:

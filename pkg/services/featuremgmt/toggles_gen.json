@@ -439,6 +439,25 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleRecoverDeleted",
+        "resourceVersion": "1741351039908",
+        "creationTimestamp": "2025-03-07T09:25:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-07 12:37:19.908258 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the UI functionality to recover and view deleted alert rules",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
         "resourceVersion": "1740740039764",
         "creationTimestamp": "2025-01-16T14:08:12Z",
@@ -885,16 +904,17 @@
     {
       "metadata": {
         "name": "azureMonitorPrometheusExemplars",
-        "resourceVersion": "1723028568258",
+        "resourceVersion": "1739465911959",
         "creationTimestamp": "2024-06-06T16:53:17Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-08-07 11:02:48.258776 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-13 16:58:31.95981 +0000 UTC"
         }
       },
       "spec": {
         "description": "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
-        "stage": "preview",
-        "codeowner": "@grafana/partner-datasources"
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "true"
       }
     },
     {
