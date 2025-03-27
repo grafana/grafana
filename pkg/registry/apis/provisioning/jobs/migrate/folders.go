@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -60,11 +59,8 @@ func (j *migrateFromLegacyJob) migrateLegacyFolders(ctx context.Context) error {
 	}
 	_, err := j.legacy.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: j.namespace,
-		Resources: []schema.GroupResource{{
-			Group:    folders.GROUP,
-			Resource: folders.RESOURCE,
-		}},
-		Store: parquet.NewBulkResourceWriterClient(reader),
+		Resources: []schema.GroupResource{resources.FolderResource.GroupResource()},
+		Store:     parquet.NewBulkResourceWriterClient(reader),
 	})
 	if err != nil {
 		return fmt.Errorf("unable to read folders from legacy storage %w", err)
@@ -79,8 +75,8 @@ func (j *migrateFromLegacyJob) migrateLegacyFolders(ctx context.Context) error {
 
 		result := jobs.JobResourceResult{
 			Name:     folder.ID,
-			Resource: folders.RESOURCE,
-			Group:    folders.GROUP,
+			Resource: resources.FolderResource.Resource,
+			Group:    resources.FolderResource.Group,
 			Path:     p,
 		}
 

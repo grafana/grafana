@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -309,8 +308,8 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			}
 
 			result.Name = folder
-			result.Resource = folders.RESOURCE
-			result.Group = folders.GROUP
+			result.Resource = resources.FolderResource.Resource
+			result.Group = resources.FolderResource.Group
 			r.progress.Record(ctx, result)
 
 			continue
@@ -361,8 +360,8 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 				r.progress.Record(ctx, jobs.JobResourceResult{
 					Path:     safeSegment,
 					Action:   repository.FileActionCreated,
-					Resource: folders.RESOURCE,
-					Group:    folders.GROUP,
+					Resource: resources.FolderResource.Resource,
+					Group:    resources.FolderResource.Group,
 					Name:     folder,
 				})
 

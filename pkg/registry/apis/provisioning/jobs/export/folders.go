@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -47,8 +46,8 @@ func (r *exportJob) exportFoldersFromAPIServer(ctx context.Context) error {
 
 		result := jobs.JobResourceResult{
 			Name:     folder.ID,
-			Resource: folders.RESOURCE,
-			Group:    folders.GROUP,
+			Resource: resources.FolderResource.Resource,
+			Group:    resources.FolderResource.Group,
 			Path:     p,
 		}
 

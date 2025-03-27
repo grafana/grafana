@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -64,7 +63,7 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 func (j *migrateFromLegacyJob) migrateLegacyResources(ctx context.Context) error {
 	for _, kind := range resources.SupportedResources {
 		// Skip folders, they are handled separately
-		if kind.Resource == folders.RESOURCE {
+		if kind == resources.FolderResource {
 			continue
 		}
 
