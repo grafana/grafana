@@ -1921,8 +1921,9 @@ func TestGetDashboardUIDByID(t *testing.T) {
 	}
 
 	expectedResult := &dashboards.DashboardRef{
-		UID:  "uid1",
-		Slug: "dashboard-1",
+		UID:       "uid1",
+		Slug:      "dashboard-1",
+		FolderUID: "folder1",
 	}
 	query := &dashboards.GetDashboardRefByIDQuery{
 		ID: 1,
