@@ -27,8 +27,8 @@ interface BaseProps {
   placeholder?: string;
   allowEmpty?: boolean;
   // @PERCONA
-  // @TODO
-  timepickerProps?: TimePickerProps;
+  // @TODO TimePickerProps
+  timepickerProps?: any;
 }
 
 interface AllowEmptyProps extends BaseProps {
