@@ -275,6 +275,10 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 }
 
+func sanitizePath(path string) string {
+	return strings.ReplaceAll(strings.TrimPrefix(path, "/"), "//", "/")
+}
+
 func (proxy *DataSourceProxy) validateRequest() error {
 	if !proxy.checkWhiteList() {
 		return errors.New("target URL is not a valid target")
@@ -300,7 +304,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 
 		// route match
-		if !strings.HasPrefix(proxy.proxyPath, route.Path) {
+		if !strings.HasPrefix(sanitizePath(proxy.proxyPath), sanitizePath(route.Path)) {
 			continue
 		}
 
