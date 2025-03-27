@@ -168,9 +168,9 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	var err error
-	var permisions string
+	var permissions string
 	req := &resource.CreateRequest{}
-	req.Value, permisions, err = s.prepareObjectForStorage(ctx, obj)
+	req.Value, permissions, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	grantPermisions, err := afterCreatePermissionCreator(ctx, req.Key, permisions, obj, s.opts.Permissions)
+	grantPermissions, err := afterCreatePermissionCreator(ctx, req.Key, permissions, obj, s.opts.Permissions)
 	if err != nil {
 		return err
 	}
@@ -216,8 +216,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
-	if grantPermisions != nil {
-		return grantPermisions(ctx)
+	if grantPermissions != nil {
+		return grantPermissions(ctx)
 	}
 
 	return nil
