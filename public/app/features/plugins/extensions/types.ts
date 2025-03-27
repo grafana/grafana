@@ -4,19 +4,15 @@ import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { RegistryType } from './registry/Registry';
 
-export type GetExtensions = ({
-  context,
-  extensionPointId,
-  limitPerPlugin,
-  addedLinksRegistry,
-  addedComponentsRegistry,
-}: {
+export type GetExtensionsOptions = {
   context?: object | Record<string | symbol, unknown>;
   extensionPointId: string;
   limitPerPlugin?: number;
   addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]> | undefined;
   addedLinksRegistry: RegistryType<AddedLinkRegistryItem[]> | undefined;
-}) => { extensions: PluginExtension[] };
+};
+
+export type GetExtensions = (options: GetExtensionsOptions) => { extensions: PluginExtension[] };
 
 export type GetPluginExtensions<T = PluginExtension> = (options: {
   extensionPointId: string;
