@@ -769,6 +769,68 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 			require.Equal(t, resourceVersions[i], allItems[i].ResourceVersion)
 		}
 	})
+
+	t.Run("fetch history with deleted item", func(t *testing.T) {
+		// Create a resource and delete it
+		rv, err := writeEvent(ctx, backend, "deleted-item", resource.WatchEvent_ADDED, WithNamespace(ns))
+		require.NoError(t, err)
+		rvDeleted, err := writeEvent(ctx, backend, "deleted-item", resource.WatchEvent_DELETED, WithNamespace(ns))
+		require.NoError(t, err)
+		require.Greater(t, rvDeleted, rv)
+
+		// Fetch history for the deleted item
+		res, err := server.List(ctx, &resource.ListRequest{
+			Source: resource.ListRequest_HISTORY,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
+					Name:      "deleted-item",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 0)
+	})
+
+	t.Run("fetch history with recreated item", func(t *testing.T) {
+		// Create a resource and delete it
+		rv, err := writeEvent(ctx, backend, "deleted-item", resource.WatchEvent_ADDED, WithNamespace(ns))
+		require.NoError(t, err)
+		rvDeleted, err := writeEvent(ctx, backend, "deleted-item", resource.WatchEvent_DELETED, WithNamespace(ns))
+		require.NoError(t, err)
+		require.Greater(t, rvDeleted, rv)
+
+		// Create a few more versions after deletion
+		rv1, err := writeEvent(ctx, backend, "deleted-item", resource.WatchEvent_ADDED, WithNamespace(ns))
+		require.NoError(t, err)
+		require.Greater(t, rv1, rvDeleted)
+		rv2, err := writeEvent(ctx, backend, "deleted-item", resource.WatchEvent_MODIFIED, WithNamespace(ns))
+		require.NoError(t, err)
+		require.Greater(t, rv2, rv1)
+
+		// Fetch history for the deleted item
+		res, err := server.List(ctx, &resource.ListRequest{
+			Source: resource.ListRequest_HISTORY,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
+					Name:      "deleted-item",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 2)
+		require.Equal(t, "deleted-item MODIFIED", string(res.Items[0].Value))
+		require.Equal(t, rv2, res.Items[0].ResourceVersion)
+		require.Equal(t, "deleted-item ADDED", string(res.Items[1].Value))
+		require.Equal(t, rv1, res.Items[1].ResourceVersion)
+	})
 }
 
 func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
