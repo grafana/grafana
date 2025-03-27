@@ -8,6 +8,7 @@ import { Box, Button, Collapse, Field, InlineField, InlineSwitch, LinkButton, Sp
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { Folder } from '../../types/rule-form';
@@ -16,9 +17,8 @@ import { createListFilterLink } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
-
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSuggestions';
+
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
 
 export interface ImportFormValues {
@@ -64,6 +64,7 @@ const ImportFromDSRules = () => {
     console.log('rulerRulesToPayload', rulerRulesToPayload);
     try {
       await convert({
+        dataSourceUID: data.selectedDatasourceUID,
         targetFolderUID: data.targetFolder?.uid,
         pauseRecordingRules: data.pauseRecordingRules,
         pauseAlerts: data.pauseAlertingRules,
