@@ -16,12 +16,13 @@ import (
 // DualReadWriter is a wrapper around a repository that can read and write resources
 // TODO: it does not support folders yet
 type DualReadWriter struct {
-	repo   repository.ReaderWriter
-	parser *Parser
+	repo    repository.ReaderWriter
+	parser  *Parser
+	folders *FolderManager
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser *Parser) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser}
+func NewDualReadWriter(repo repository.ReaderWriter, parser *Parser, folders *FolderManager) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -108,11 +109,6 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, path string, ref stri
 		return nil, fmt.Errorf("not a folder path")
 	}
 
-	client, err := r.parser.Clients().Folder()
-	if err != nil {
-		return nil, err
-	}
-
 	// Now actually create the folder
 	if err := r.repo.Create(ctx, path, ref, nil, message); err != nil {
 		return nil, fmt.Errorf("failed to create folder: %w", err)
@@ -134,14 +130,12 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, path string, ref stri
 	}
 
 	if ref == "" {
-		// TODO: manager should be part of the dual writer
-		manager := NewFolderManager(r.repo, client, NewEmptyFolderTree())
-		folderName, err := manager.EnsureFolderPathExist(ctx, path)
+		folderName, err := r.folders.EnsureFolderPathExist(ctx, path)
 		if err != nil {
 			return nil, err
 		}
 
-		current, err := manager.GetFolder(ctx, folderName)
+		current, err := r.folders.GetFolder(ctx, folderName)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return nil, err // unable to check if the folder exists
 		}

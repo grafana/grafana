@@ -70,7 +70,13 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, fmt.Errorf("failed to get parser: %w", err)
 	}
 
-	dualReadWriter := resources.NewDualReadWriter(readWriter, parser)
+	folderClient, err := parser.Clients().Folder()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get folder client: %w", err)
+	}
+	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
+	dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders)
+
 	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		ref := query.Get("ref")
