@@ -2460,7 +2460,7 @@
           {
             "type": "string",
             "default": "default",
-            "description": "ResultSortColumn can be used to override the default system sort. Valid values are \"default\", \"name\", \"type\", and \"status\".",
+            "description": "ResultSortColumn can be used to override the default system sort. Valid values are \"name\", \"resource_type\", and \"status\".",
             "name": "resultSortColumn",
             "in": "query"
           },
@@ -2469,6 +2469,13 @@
             "default": "ASC",
             "description": "ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC.",
             "name": "resultSortOrder",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "description": "ErrorsOnly is used to only return resources with error statuses",
+            "name": "errorsOnly",
             "in": "query"
           },
           {
