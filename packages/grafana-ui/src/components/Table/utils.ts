@@ -720,7 +720,7 @@ export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFram
   // If the default field option is set to allow text wrapping
   // we determine the field to wrap text with here and then
   // pass it to the RowsList
-  if (fieldConfig.defaults.custom?.wrapText) {
+  if (fieldConfig.defaults.custom?.cellOptions?.wrapText) {
     const stringFields = data.fields.filter((field: Field) => field.type === FieldType.string);
 
     if (stringFields.length >= 1 && stringFields[0].values.length > 0) {
