@@ -45,7 +45,7 @@ func NewExportWorker(clientFactory *resources.ClientFactory,
 }
 
 func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
-	return job.Spec.Action == provisioning.JobActionExport
+	return job.Spec.Action == provisioning.JobActionPush
 }
 
 // Process will start a job

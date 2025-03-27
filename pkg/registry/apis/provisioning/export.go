@@ -63,7 +63,7 @@ func (c *exportConnector) Connect(ctx context.Context, name string, opts runtime
 				Namespace: cfg.Namespace,
 			},
 			Spec: provisioning.JobSpec{
-				Action:     provisioning.JobActionExport,
+				Action:     provisioning.JobActionPush,
 				Repository: cfg.Name,
 				Push:       options,
 			},
