@@ -1,6 +1,8 @@
 package investigations
 
-// This is our Investigation definition, which contains metadata about the kind, and the kind's schema
+// This is our Investigation definition,
+// which contains metadata about the kind,
+// and the kind's schema
 investigation: {
 	kind:       "Investigation"
 	pluralName: "Investigations"
@@ -15,6 +17,7 @@ investigation: {
 	}
 
 	current: "v0alpha1"
+
 	versions: {
 		"v0alpha1": {
 			schema: {

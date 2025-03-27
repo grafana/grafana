@@ -10,7 +10,7 @@ check: {
 			enabled: true
 		}
 		ts: {
-			enabled: false
+			enabled: true
 		}
 	}
 

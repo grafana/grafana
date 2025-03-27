@@ -21,12 +21,11 @@ func NewInvestigationPerson() *InvestigationPerson {
 // Collectable represents an item collected during investigation
 // +k8s:openapi-gen=true
 type InvestigationCollectable struct {
-	Id        string `json:"id"`
-	CreatedAt string `json:"createdAt"`
-	Title     string `json:"title"`
-	Origin    string `json:"origin"`
-	Type      string `json:"type"`
-	// +listType=atomic
+	Id            string                     `json:"id"`
+	CreatedAt     string                     `json:"createdAt"`
+	Title         string                     `json:"title"`
+	Origin        string                     `json:"origin"`
+	Type          string                     `json:"type"`
 	Queries       []InvestigationQuery       `json:"queries"`
 	TimeRange     InvestigationTimeRange     `json:"timeRange"`
 	Datasource    InvestigationDatasourceRef `json:"datasource"`

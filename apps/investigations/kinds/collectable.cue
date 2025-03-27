@@ -8,11 +8,11 @@ package investigations
 	title:  string
 	origin: string
 	type:   string
-	queries: [...#Query] // +listType=atomic
-	timeRange:           #TimeRange
-	datasource:          #DatasourceRef
-	url:                 string
-	logoPath?:           string
+	queries: [...#Query]
+	timeRange:  #TimeRange
+	datasource: #DatasourceRef
+	url:        string
+	logoPath?:  string
 
 	note:          string
 	noteUpdatedAt: string
