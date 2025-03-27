@@ -6,7 +6,7 @@ import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/da
 import { RadioButtonGroup, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { AutoGridItem } from '../scene/layout-responsive-grid/AutoGridItem';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { RowItem } from '../scene/layout-rows/RowItem';
 
 import { ConditionHeader } from './ConditionHeader';

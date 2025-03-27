@@ -5,7 +5,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getDefaultVizPanel } from '../../utils/utils';
-import { AutoGridLayoutManager } from '../layout-responsive-grid/AutoGridLayoutManager';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
