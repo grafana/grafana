@@ -266,6 +266,9 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	r.progress.SetMessage(ctx, "replicating changes")
 
 	for _, change := range changes {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		if err := r.progress.TooManyErrors(); err != nil {
 			return err
 		}
@@ -344,6 +347,9 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	r.progress.SetMessage(ctx, "replicating versioned changes")
 
 	for _, change := range diff {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		if err := r.progress.TooManyErrors(); err != nil {
 			return err
 		}
