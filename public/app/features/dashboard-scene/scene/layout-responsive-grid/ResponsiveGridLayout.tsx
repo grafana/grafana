@@ -55,7 +55,7 @@ export interface AutoGridLayoutOptions {
   justifyContent?: CSSProperties['justifyContent'];
 }
 
-export class ResponsiveGridLayout extends SceneObjectBase<AutoGridLayoutState> implements SceneLayout {
+export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> implements SceneLayout {
   public static Component = AutoGridLayoutRenderer;
 
   private _containerRef: HTMLDivElement | null = null;

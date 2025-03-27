@@ -171,12 +171,14 @@ export class AutoGridLayoutManager
             const panelId = getPanelIdForVizPanel(gridItem.state.body);
             const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(panelId));
 
-          return gridItem.clone({
-            key: gridItemKey,
-            body: gridItem.state.body.clone({
-              key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(panelId)),
-            }),
-          });
+            return gridItem.clone({
+              key: gridItemKey,
+              body: gridItem.state.body.clone({
+                key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(panelId)),
+              }),
+            });
+          }
+          throw new Error('Unexpected child type');
         }),
       }),
     });
