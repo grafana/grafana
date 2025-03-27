@@ -1,6 +1,13 @@
 import React from 'react';
 
-import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig, SceneObject } from '@grafana/scenes';
+import {
+  SceneObjectState,
+  SceneObjectBase,
+  sceneGraph,
+  VariableDependencyConfig,
+  SceneObject,
+  VizPanel,
+} from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -10,6 +17,7 @@ import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridL
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
+import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
@@ -22,11 +30,12 @@ import { TabsLayoutManager } from './TabsLayoutManager';
 export interface TabItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
+  isDropTarget?: boolean;
 }
 
 export class TabItem
   extends SceneObjectBase<TabItemState>
-  implements LayoutParent, BulkActionElement, EditableDashboardElement
+  implements LayoutParent, BulkActionElement, EditableDashboardElement, DashboardDropTarget
 {
   public static Component = TabItemRenderer;
 
@@ -35,6 +44,8 @@ export class TabItem
   });
 
   public readonly isEditableDashboardElement = true;
+  public readonly isDashboardDropTarget = true;
+
   private _layoutRestorer = new LayoutRestorer();
   public containerRef = React.createRef<HTMLDivElement>();
 
@@ -117,6 +128,29 @@ export class TabItem
 
   public onChangeTitle(title: string) {
     this.setState({ title });
+  }
+
+  public setIsDropTarget(isDropTarget: boolean) {
+    if (!!this.state.isDropTarget !== isDropTarget) {
+      this.setState({ isDropTarget });
+    }
+  }
+
+  public draggedPanelOutside(panel: VizPanel) {
+    this.getLayout().removePanel?.(panel);
+    this.setIsDropTarget(false);
+  }
+
+  public draggedPanelInside(panel: VizPanel) {
+    panel.clearParent();
+    this.getLayout().addPanel(panel);
+    this.setIsDropTarget(false);
+
+    const parentLayout = this.getParentLayout();
+    const tabIndex = parentLayout.state.tabs.findIndex((tab) => tab === this);
+    if (tabIndex !== parentLayout.state.currentTabIndex) {
+      parentLayout.setState({ currentTabIndex: tabIndex });
+    }
   }
 
   public getParentLayout(): TabsLayoutManager {
