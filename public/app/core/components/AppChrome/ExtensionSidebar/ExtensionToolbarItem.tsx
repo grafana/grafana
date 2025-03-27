@@ -25,6 +25,7 @@ export function ExtensionToolbarItem() {
     return (
       <ToolbarButton
         icon="web-section"
+        data-testid="extension-toolbar-button"
         variant={isOpen ? 'active' : 'default'}
         tooltip={components[0].description}
         onClick={() => {
@@ -61,7 +62,12 @@ export function ExtensionToolbarItem() {
   );
   return (
     <Dropdown overlay={MenuItems} onVisibleChange={setIsMenuOpen} placement="bottom-end">
-      <ToolbarButton icon="web-section" isOpen={isMenuOpen} variant={isOpen ? 'active' : 'default'} />
+      <ToolbarButton
+        data-testid="extension-toolbar-button"
+        icon="web-section"
+        isOpen={isMenuOpen}
+        variant={isOpen ? 'active' : 'default'}
+      />
     </Dropdown>
   );
 }
