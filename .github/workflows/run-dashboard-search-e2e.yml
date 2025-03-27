@@ -1,12 +1,10 @@
 name: Run dashboard search e2e
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Trigger Dashboard Search E2E Tests"]
+    types:
+      - completed
 
 env:
   ARCH: linux-amd64
@@ -91,7 +89,7 @@ jobs:
             path: |
               node_modules
               /home/runner/.cache/Cypress
-            key: foo
+            key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 
         - name: Restore Cached Grafana Build and Dependencies
           uses: actions/cache@v3
@@ -105,8 +103,6 @@ jobs:
               e2e/test-plugins/
               devenv/
             key: ${{ runner.os }}-grafana-${{ hashFiles('go.mod', 'package-lock.json', 'Makefile', 'pkg/storage/**/*.go', 'public/app/features/search/**/*.ts', 'public/app/features/search/**/*.tsx') }}
-        - name: Prettify the name
-          run: echo "Running tests for $(basename "${{ matrix.ini_file }}")"
         - name: Set the step name
           id: set_file_name
           run: |
