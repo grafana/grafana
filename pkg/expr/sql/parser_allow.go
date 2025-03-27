@@ -138,6 +138,31 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.Where:
 		return
 
+	// // New safe node types
+	// case sqlparser.Values, sqlparser.ValTuple:
+	// 	return
+
+	// case *sqlparser.GroupConcatExpr:
+	// 	return
+
+	// case *sqlparser.Default:
+	// 	return
+
+	// case *sqlparser.NullVal:
+	// 	return
+
+	// case *sqlparser.MatchExpr:
+	// 	return
+
+	// case *sqlparser.CollateExpr:
+	// 	return
+
+	// case *sqlparser.WindowDef:
+	// 	return
+
+	// case *sqlparser.Frame, *sqlparser.FrameExtent, *sqlparser.FrameBound:
+	// 	return
+
 	default:
 		return false
 	}
@@ -159,6 +184,8 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "variance", "var_pop":
 		return
+	// case "group_concat":
+	// 	return
 
 	// Mathematical functions
 	case "abs":
@@ -171,6 +198,8 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "sign":
 		return
+	// case "rand", "pi":
+	// 	return
 
 	// String functions
 	case "concat", "length", "char_length":
@@ -179,6 +208,14 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "substring":
 		return
+	// case "trim", "ltrim", "rtrim":
+	// 	return
+	// case "replace", "reverse":
+	// 	return
+	// case "lpad", "rpad":
+	// 	return
+	// case "left", "right":
+	// 	return
 
 	// Date functions
 	case "str_to_date":
@@ -193,10 +230,28 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "unix_timestamp", "from_unixtime":
 		return
+	// case "dayofweek", "dayofmonth", "dayofyear":
+	// 	return
+	// case "week", "quarter", "hour", "minute", "second":
+	// 	return
+	// case "timestampdiff", "timestampadd":
+	// 	return
 
 	// Type conversion
 	case "cast":
 		return
+	// case "convert":
+	// 	return
+
+	// // Window functions
+	// case "row_number", "rank", "dense_rank":
+	// 	return
+	// case "first_value", "last_value", "nth_value":
+	// 	return
+	// case "lead", "lag":
+	// 	return
+	// case "percent_rank", "cume_dist":
+	// 	return
 
 	default:
 		return false

@@ -42,6 +42,21 @@ func TestAllowQuery(t *testing.T) {
 			q:    `SELECT * FROM a_table WHERE a_column IS NOT NULL`,
 			err:  nil,
 		},
+		{
+			name: "window functions",
+			q:    example_window_functions,
+			err:  nil,
+		},
+		{
+			name: "group concat and match",
+			q:    example_group_concat_and_match,
+			err:  nil,
+		},
+		{
+			name: "values and default",
+			q:    example_values_and_default,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -214,3 +229,50 @@ SELECT
 FROM sample_data
 GROUP BY name, value, created_at
 LIMIT 10`
+
+var example_window_functions = `
+WITH sales AS (
+  SELECT 
+    product_id,
+    sale_date,
+    amount,
+    ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY sale_date) as row_num,
+    RANK() OVER (PARTITION BY product_id ORDER BY amount DESC) as rank_val,
+    DENSE_RANK() OVER (PARTITION BY product_id ORDER BY amount DESC) as dense_rank_val,
+    FIRST_VALUE(amount) OVER (PARTITION BY product_id ORDER BY sale_date) as first_sale,
+    LAST_VALUE(amount) OVER (PARTITION BY product_id ORDER BY sale_date) as last_sale,
+    NTH_VALUE(amount, 2) OVER (PARTITION BY product_id ORDER BY sale_date) as second_sale,
+    LEAD(amount) OVER (PARTITION BY product_id ORDER BY sale_date) as next_sale,
+    LAG(amount) OVER (PARTITION BY product_id ORDER BY sale_date) as prev_sale,
+    PERCENT_RANK() OVER (PARTITION BY product_id ORDER BY amount) as percent_rank_val,
+    CUME_DIST() OVER (PARTITION BY product_id ORDER BY amount) as cume_dist_val
+  FROM sales_data
+)
+SELECT * FROM sales
+WHERE row_num <= 10`
+
+var example_group_concat_and_match = `
+SELECT 
+  category,
+  GROUP_CONCAT(product_name ORDER BY price DESC SEPARATOR '; ') as products,
+  GROUP_CONCAT(DISTINCT tag) as unique_tags,
+  MATCH(description) AGAINST('keyword' IN BOOLEAN MODE) as relevance
+FROM products
+WHERE MATCH(name, description) AGAINST('search terms' IN NATURAL LANGUAGE MODE)
+GROUP BY category
+HAVING relevance > 0.5`
+
+var example_values_and_default = `
+WITH RECURSIVE dates(dt) AS (
+  VALUES('2023-01-01')
+  UNION ALL
+  SELECT DATE_ADD(dt, INTERVAL 1 DAY)
+  FROM dates
+  WHERE dt < '2023-12-31'
+)
+SELECT 
+  dt,
+  COALESCE(amount, DEFAULT) as amount_with_default,
+  NULLIF(status, DEFAULT) as non_default_status
+FROM dates
+LEFT JOIN transactions ON dates.dt = transactions.date`
