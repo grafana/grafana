@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -40,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"golang.org/x/exp/slices"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -1558,6 +1560,7 @@ func TestSearchDashboards(t *testing.T) {
 		cfg:            setting.NewCfg(),
 		dashboardStore: &fakeStore,
 		folderService:  fakeFolders,
+		metrics:        newDashboardsMetrics(prometheus.NewRegistry()),
 	}
 
 	expectedResult := model.HitList{
@@ -1674,6 +1677,109 @@ func TestSearchDashboards(t *testing.T) {
 		result, err := service.SearchDashboards(ctx, &query)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("Should handle Shared with me folder correctly", func(t *testing.T) {
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagKubernetesClientDashboardsFolders)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+			if len(req.Options.Fields) == 0 {
+				return false
+			}
+			// make sure the search request includes the shared folders
+			for _, field := range req.Options.Fields {
+				if field.Key == resource.SEARCH_FIELD_NAME {
+					return slices.Equal(field.Values, []string{"shared-uid1", "shared-uid2"})
+				}
+			}
+			return false
+		})).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "tags",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "shared-uid1",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Shared Dashboard 1"),
+							[]byte("f1"),
+							[]byte("[\"shared\"]"),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+			if len(req.Options.Fields) == 0 {
+				return false
+			}
+			for _, field := range req.Options.Fields {
+				if field.Key == resource.SEARCH_FIELD_NAME {
+					return slices.Equal(field.Values, []string{"shared-uid1"})
+				}
+			}
+			return false
+		})).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "tags",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "shared-uid1",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Shared Dashboard 1"),
+							[]byte("f1"),
+							[]byte("[\"shared\"]"),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil)
+		fakeFolders.ExpectedFolders = []*folder.Folder{}
+		query := dashboards.FindPersistedDashboardsQuery{
+			FolderUIDs:   []string{folder.SharedWithMeFolderUID},
+			SignedInUser: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsPrefix + "shared-uid1", dashboards.ScopeDashboardsPrefix + "shared-uid2"}}}},
+		}
+
+		result, err := service.SearchDashboards(ctx, &query)
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		require.Equal(t, "shared-uid1", result[0].UID)
+		require.Equal(t, "Shared Dashboard 1", result[0].Title)
 		k8sCliMock.AssertExpectations(t)
 	})
 }
@@ -1815,8 +1921,9 @@ func TestGetDashboardUIDByID(t *testing.T) {
 	}
 
 	expectedResult := &dashboards.DashboardRef{
-		UID:  "uid1",
-		Slug: "dashboard-1",
+		UID:       "uid1",
+		Slug:      "dashboard-1",
+		FolderUID: "folder1",
 	}
 	query := &dashboards.GetDashboardRefByIDQuery{
 		ID: 1,
@@ -1974,6 +2081,119 @@ func TestGetDashboardTags(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 		fakeStore.AssertExpectations(t)
+	})
+}
+
+func TestGetDashboardsSharedWithUser(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+		folderService:  &foldertest.FakeService{},
+	}
+
+	user := &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {
+				dashboards.ActionDashboardsRead: {
+					dashboards.ScopeDashboardsPrefix + "dashboard1",
+					dashboards.ScopeDashboardsPrefix + "dashboard2",
+				},
+			},
+		},
+	}
+
+	expectedDashboards := []*dashboards.Dashboard{
+		{
+			UID:       "dashboard1",
+			Slug:      "dashboard-1",
+			FolderUID: "folder1",
+		},
+		{
+			UID:       "dashboard2",
+			Slug:      "dashboard-2",
+			FolderUID: "folder2",
+		},
+	}
+
+	expectedFolderRefs := []*dashboards.DashboardRef{
+		{
+			UID:       "dashboard1",
+			Slug:      "dashboard-1",
+			FolderUID: "folder1",
+		},
+		{
+			UID:       "dashboard2",
+			Slug:      "dashboard-2",
+			FolderUID: "folder2",
+		},
+	}
+
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("GetDashboards", mock.Anything, &dashboards.GetDashboardsQuery{
+			DashboardUIDs: []string{"dashboard1", "dashboard2"},
+			OrgID:         1,
+		}).Return(expectedDashboards, nil).Once()
+
+		result, err := service.GetDashboardsSharedWithUser(context.Background(), user)
+		require.NoError(t, err)
+		require.Equal(t, expectedFolderRefs, result)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
+
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+			return req.Options.Fields[0].Key == "name" &&
+				slices.Equal(req.Options.Fields[0].Values, []string{"dashboard1", "dashboard2"})
+		})).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "dashboard1",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Dashboard 1"),
+							[]byte("folder1"),
+						},
+					},
+					{
+						Key: &resource.ResourceKey{
+							Name:     "dashboard2",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Dashboard 2"),
+							[]byte("folder2"),
+						},
+					},
+				},
+			},
+			TotalHits: 2,
+		}, nil)
+
+		result, err := service.GetDashboardsSharedWithUser(ctx, user)
+		require.NoError(t, err)
+		require.Equal(t, expectedFolderRefs, result)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 

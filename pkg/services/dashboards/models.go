@@ -288,8 +288,9 @@ type GetDashboardsByPluginIDQuery struct {
 }
 
 type DashboardRef struct {
-	UID  string `xorm:"uid"`
-	Slug string
+	UID       string `xorm:"uid"`
+	Slug      string
+	FolderUID string `xorm:"folder_uid"`
 }
 
 type GetDashboardRefByIDQuery struct {

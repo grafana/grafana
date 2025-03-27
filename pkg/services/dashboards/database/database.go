@@ -906,7 +906,7 @@ func (d *dashboardStore) GetDashboardUIDByID(ctx context.Context, query *dashboa
 
 	us := &dashboards.DashboardRef{}
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = `SELECT uid, slug from dashboard WHERE Id=?`
+		var rawSQL = `SELECT uid, slug, folder_uid from dashboard WHERE Id=?`
 		exists, err := sess.SQL(rawSQL, query.ID).Get(us)
 		if err != nil {
 			return err
