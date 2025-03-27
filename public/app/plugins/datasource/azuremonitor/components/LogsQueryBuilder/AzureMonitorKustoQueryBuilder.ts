@@ -115,6 +115,6 @@ const toQuery = (builderQuery: BuilderQueryExpression): string => {
   return phrases.join('\n| ');
 };
 
-export const AzureMonitorKustoQueryParser = {
+export const AzureMonitorKustoQueryBuilder = {
   toQuery,
 };

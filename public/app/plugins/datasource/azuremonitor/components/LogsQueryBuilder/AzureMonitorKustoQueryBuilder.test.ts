@@ -1,11 +1,11 @@
 import { BuilderQueryEditorExpressionType } from '../../dataquery.gen';
 
-import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
+import { AzureMonitorKustoQueryBuilder } from './AzureMonitorKustoQueryBuilder';
 
 describe('AzureMonitorKustoQueryParser', () => {
   it('returns empty string if from table is not specified', () => {
     const builderQuery: any = { from: { property: { name: '' } } };
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toBe('');
   });
 
@@ -15,7 +15,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       columns: { columns: ['TimeGenerated', 'Level', 'Message'] },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('Logs');
     expect(result).toContain('project TimeGenerated, Level, Message');
   });
@@ -35,7 +35,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       columns: { columns: ['TimeGenerated', 'Level'] },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('$__timeFilter(TimeGenerated)');
   });
 
@@ -53,7 +53,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain("Message contains 'fail'");
   });
 
@@ -76,7 +76,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain("Level == 'Error'");
     expect(result).toContain("Message contains 'fail'");
   });
@@ -96,7 +96,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain("Level == 'Error'");
   });
 
@@ -113,7 +113,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('summarize percentile(95, Duration)');
   });
 
@@ -130,7 +130,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('summarize avg(ResponseTime)');
   });
 
@@ -146,7 +146,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).not.toContain('summarize');
   });
 
@@ -167,7 +167,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('summarize count() by Level');
   });
 
@@ -180,7 +180,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('order by TimeGenerated desc');
   });
 
@@ -191,7 +191,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       limit: 50,
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('limit 50');
   });
 });
