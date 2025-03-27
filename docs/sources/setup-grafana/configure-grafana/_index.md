@@ -2228,6 +2228,11 @@ The values `jaeger` and `w3c` are supported.
 Add a comma (`,`) between values to specify multiple formats (for example, `"jaeger,w3c"`).
 The default value is `w3c`.
 
+#### `insecure`
+
+Toggles the insecure communication setting, defaults to `true`.
+When set to `false`, the OTLP client will use TLS credentials with the default system cert pool for communication.
+
 <hr>
 
 ### `[external_image_storage]`
