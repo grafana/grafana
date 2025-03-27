@@ -45,7 +45,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   const styles = useStyles2(getStyles);
   const headerRef = useRef<HTMLDivElement>(null);
 
-  const filterable = field.config.custom?.filterable ?? false;
+  const filterable = field.config?.custom?.filterable ?? false;
 
   let isColumnFilterable = filterable;
   if (field.config.custom?.filterable !== filterable) {

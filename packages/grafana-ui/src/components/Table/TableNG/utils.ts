@@ -171,7 +171,7 @@ export function shouldTextOverflow(
   field: Field,
   cellType: TableCellDisplayMode
 ): boolean {
-  const cellInspect = field.config.custom?.inspect ?? false;
+  const cellInspect = field.config?.custom?.inspect ?? false;
 
   // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
   // so we need to ensure we don't apply overflow hover states fo type image

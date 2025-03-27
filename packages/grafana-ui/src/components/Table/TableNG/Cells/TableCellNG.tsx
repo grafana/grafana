@@ -35,7 +35,7 @@ export function TableCellNG(props: TableCellNGProps) {
     rowBg,
   } = props;
 
-  const cellInspect = field.config.custom?.inspect ?? false;
+  const cellInspect = field.config?.custom?.inspect ?? false;
 
   const { config: fieldConfig } = field;
   const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
