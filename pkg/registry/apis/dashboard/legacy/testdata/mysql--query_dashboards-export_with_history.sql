@@ -14,7 +14,7 @@ FROM `grafana`.`dashboard` as dashboard
 LEFT OUTER JOIN `grafana`.`dashboard_version` as dashboard_version ON dashboard.id = dashboard_version.dashboard_id
 LEFT OUTER JOIN `grafana`.`dashboard_provisioning` as provisioning ON dashboard.id = provisioning.dashboard_id
 LEFT OUTER JOIN `grafana`.`user` as created_user ON dashboard.created_by = created_user.id
-LEFT OUTER JOIN `grafana`.`user` as updated_user ON dashboard.updated_by = updated_user.id
+LEFT OUTER JOIN `grafana`.`user` as updated_user ON dashboard_version.created_by = updated_user.id
 WHERE dashboard.is_folder = FALSE
   AND dashboard.org_id = 1
   ORDER BY
