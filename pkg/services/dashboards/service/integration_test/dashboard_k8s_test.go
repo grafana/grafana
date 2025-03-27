@@ -1654,7 +1654,15 @@ func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string,
 		return nil, err
 	}
 
-	return createdDash, nil
+	// TODO: Remove once the underlying issue is fixed:
+	// https://raintank-corp.slack.com/archives/C05FYAPEPKP/p1743111830777889
+	databaseDash, err := client.Resource.Get(context.Background(), createdDash.GetName(), v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	require.NotEqual(t, createdDash.GetUID(), databaseDash.GetUID(), "The underlying UID mismatch bug has been fixed, please remove the redundant read!")
+
+	return databaseDash, nil
 }
 
 // Update a dashboard
