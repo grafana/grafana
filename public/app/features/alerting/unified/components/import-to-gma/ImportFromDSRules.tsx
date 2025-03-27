@@ -12,10 +12,10 @@ import { Trans, t } from 'app/core/internationalization';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { Folder } from '../../types/rule-form';
 import { stringifyErrorLike } from '../../utils/misc';
+import { createListFilterLink } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
-import { createListFilterLink } from '../rule-viewer/RuleViewer';
 
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
 
