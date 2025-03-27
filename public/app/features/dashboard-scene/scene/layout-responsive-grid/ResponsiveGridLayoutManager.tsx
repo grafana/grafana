@@ -8,6 +8,7 @@ import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
   forceRenderChildren,
+  getDashboardSceneFor,
   getGridItemKeyForPanelId,
   getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
@@ -237,7 +238,10 @@ export class AutoGridLayoutManager
     }
 
     const layoutManager = AutoGridLayoutManager.createEmpty();
-    layoutManager.state.layout.setState({ children });
+    layoutManager.state.layout.setState({
+      children,
+      isDraggable: getDashboardSceneFor(layout).state.isEditing,
+    });
 
     return layoutManager;
   }
