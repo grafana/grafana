@@ -42,6 +42,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 
   return (
     <div
+      ref={model.containerRef}
       className={cx(
         styles.wrapper,
         isEditing && !isCollapsed && styles.wrapperEditing,

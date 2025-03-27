@@ -12,6 +12,7 @@ import {
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
 } from '../panel-edit/getPanelFrameOptions';
+import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
@@ -95,6 +96,12 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
     return new MultiSelectedVizPanelsEditableElement(items);
+  }
+
+  public scrollIntoView() {
+    if (this.panel.parent instanceof ResponsiveGridItem) {
+      this.panel.parent.scrollIntoView();
+    }
   }
 }
 

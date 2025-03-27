@@ -20,6 +20,7 @@ import { ConditionalRendering } from '../../conditional-rendering/ConditionalRen
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { Point, Rect } from '../layout-manager/utils';
+import { scrollCanvasElementIntoView, ScrollElementIntoViewEvent } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem, IntermediateLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
@@ -37,11 +38,13 @@ export interface ResponsiveGridItemState extends SceneObjectState {
 
 export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState> implements DashboardLayoutItem {
   public static Component = ResponsiveGridItemRenderer;
+
   private _prevRepeatValues?: VariableValueSingle[];
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: this.state.variableName ? [this.state.variableName] : [],
     onVariableUpdateCompleted: () => this.performRepeat(),
   });
+
   public readonly isDashboardLayoutItem = true;
   public containerRef = createRef<HTMLDivElement>();
   public cachedBoundingBox: Rect | undefined;
@@ -196,6 +199,10 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
       width: rect.width,
       height: rect.height,
     };
+  }
+
+  public scrollIntoView() {
+    scrollCanvasElementIntoView(this, this.containerRef);
   }
 }
 

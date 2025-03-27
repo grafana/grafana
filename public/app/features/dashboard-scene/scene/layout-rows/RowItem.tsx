@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
@@ -7,6 +9,7 @@ import { ConditionalRendering } from '../../conditional-rendering/ConditionalRen
 import { getDefaultVizPanel } from '../../utils/utils';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
+import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
@@ -39,6 +42,7 @@ export class RowItem
 
   public readonly isEditableDashboardElement = true;
   private _layoutRestorer = new LayoutRestorer();
+  public containerRef = React.createRef<HTMLDivElement>();
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -172,5 +176,9 @@ export class RowItem
 
   private _getRepeatBehavior(): RowItemRepeaterBehavior | undefined {
     return this.state.$behaviors?.find((b) => b instanceof RowItemRepeaterBehavior);
+  }
+
+  public scrollIntoView() {
+    scrollCanvasElementIntoView(this, this.containerRef);
   }
 }

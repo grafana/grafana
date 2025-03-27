@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig, SceneObject } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
@@ -6,6 +8,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { getDefaultVizPanel } from '../../utils/utils';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
+import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
@@ -33,6 +36,7 @@ export class TabItem
 
   public readonly isEditableDashboardElement = true;
   private _layoutRestorer = new LayoutRestorer();
+  public containerRef = React.createRef<HTMLDivElement>();
 
   constructor(state?: Partial<TabItemState>) {
     super({
@@ -121,5 +125,9 @@ export class TabItem
 
   private _getParentLayout(): TabsLayoutManager {
     return sceneGraph.getAncestor(this, TabsLayoutManager);
+  }
+
+  public scrollIntoView(): void {
+    scrollCanvasElementIntoView(this, this.containerRef);
   }
 }
