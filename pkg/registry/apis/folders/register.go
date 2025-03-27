@@ -166,28 +166,18 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		Permissions: b.dashboardPermissions.SetDefaultPermissions,
 	})
 
-	folderStore := &folderStorage{
-		tableConverter:       resourceInfo.TableConverter(),
-		folderPermissionsSvc: b.folderPermissionsSvc,
-		features:             b.features,
-		cfg:                  b.cfg,
-	}
-
+	storage[resourceInfo.StoragePath()] = legacyStore
 	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 		if err != nil {
 			return err
 		}
 
-		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
+		storage[resourceInfo.StoragePath()], err = dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
 		if err != nil {
 			return err
 		}
-
-		folderStore.store = dw
 	}
-	storage[resourceInfo.StoragePath()] = folderStore
-
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
 		getter: storage[resourceInfo.StoragePath()].(rest.Getter), // Get the parents
 	}
