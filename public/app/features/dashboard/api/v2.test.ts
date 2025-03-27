@@ -161,27 +161,6 @@ describe('v2 dashboard API', () => {
         slug: '',
         status: 'success',
         version: 2,
-        k8s: {
-          apiVersion: 'dashboard.grafana.app/v2alpha1',
-          kind: 'Dashboard',
-          metadata: {
-            name: 'test-dash',
-            resourceVersion: '2',
-            creationTimestamp: expect.any(String),
-            labels: {
-              [DeprecatedInternalId]: '123',
-            },
-            annotations: {
-              [AnnoKeyFolder]: 'test-folder',
-              [AnnoKeyMessage]: 'test save',
-              [AnnoKeySavedFromUI]: '10.0.0',
-            },
-          },
-          spec: {
-            ...defaultSaveCommand.dashboard,
-            title: 'test-dashboard',
-          },
-        },
       });
     });
 

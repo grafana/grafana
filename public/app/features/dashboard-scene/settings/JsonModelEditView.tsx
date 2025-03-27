@@ -8,6 +8,7 @@ import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alp
 import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
 
@@ -25,10 +26,6 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { ObjectMeta } from 'app/features/apiserver/types';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 
 export interface JsonModelEditViewState extends DashboardEditViewState {
   jsonText: string;
