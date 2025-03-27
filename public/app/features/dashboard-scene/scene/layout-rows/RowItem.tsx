@@ -34,6 +34,7 @@ export interface RowItemState extends SceneObjectState {
   fillScreen?: boolean;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
+  isNew?: boolean;
 }
 
 export class RowItem
@@ -161,7 +162,7 @@ export class RowItem
   }
 
   public onChangeTitle(title: string) {
-    this.setState({ title });
+    this.setState({ title, isNew: false });
   }
 
   public onHeaderHiddenToggle(hideHeader = !this.state.hideHeader) {
