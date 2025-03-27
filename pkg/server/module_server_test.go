@@ -41,6 +41,14 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	cfg.HTTPPort = "3001"
 	cfg.GRPCServer.Network = "tcp"
 	cfg.GRPCServer.Address = "localhost:10000"
+
+	clientAuth, err := cfg.Raw.NewSection("grpc_client_authentication")
+	require.NoError(t, err)
+	_, err = clientAuth.NewKey("token_exchange_url", "token-url")
+	require.NoError(t, err)
+	_, err = clientAuth.NewKey("token", "some-token")
+	require.NoError(t, err)
+
 	addStorageServerToConfig(t, cfg, dbType)
 	cfg.Target = []string{modules.StorageServer}
 
