@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, SceneComponentProps, sceneGraph } from '@grafana/scenes';
@@ -16,27 +15,8 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   const { children, isHidden, isLazy } = model.useState();
   const styles = useStyles2(getStyles, model.state);
   const { layoutOrchestrator, isEditing } = useDashboardState(model);
-
-  const { activeLayoutItemRef } = layoutOrchestrator.useState();
-  const activeLayoutItem = activeLayoutItemRef?.resolve();
-  const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen } = layoutManager.useState();
-
-  useEffect(() => {
-    if (model.containerRef.current) {
-      const computedStyles = getComputedStyle(model.containerRef.current);
-      model.columnCount = computedStyles.gridTemplateColumns.split(' ').length;
-      model.rowCount = computedStyles.gridTemplateRows.split(' ').length;
-
-      // when the contents of a scrollable area are changed, most (all?) browsers
-      // seem to automatically adjust the scroll position
-      // this hack keeps the scroll position fixed
-      if (currentLayoutIsActive && model.scrollPos) {
-        model.scrollPos.wrapper?.scrollTo(0, model.scrollPos.scrollTop);
-      }
-    }
-  });
 
   if (isHidden || !layoutOrchestrator) {
     return null;
@@ -45,41 +25,16 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   return (
     <div
       className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
-      ref={model.containerRef}
     >
-      <div
-        style={{
-          gridRow: model.activeGridCell.row,
-          gridColumn: model.activeGridCell.column,
-          display: currentLayoutIsActive && model.activeIndex !== undefined ? 'grid' : 'none',
-        }}
-      />
-      {children.map((item) => {
-        const Wrapper = isLazy ? LazyLoader : 'div';
-        const isDragging = activeLayoutItem === item;
-
-        return (
-          <Wrapper
-            key={item.state.key!}
-            className={cx(styles.wrapper, { [styles.dragging]: isDragging })}
-            style={
-              isDragging && layoutOrchestrator && item.cachedBoundingBox
-                ? {
-                    width: item.cachedBoundingBox.right - item.cachedBoundingBox.left,
-                    height: item.cachedBoundingBox.bottom - item.cachedBoundingBox.top,
-                    // adjust the panel position to mouse position
-                    translate: `${-layoutOrchestrator.dragOffset.left}px ${-layoutOrchestrator.dragOffset.top}px`,
-                    // adjust the panel position on the screen
-                    transform: `translate(var(--x-pos), var(--y-pos))`,
-                  }
-                : {}
-            }
-            ref={item.containerRef}
-          >
-            <item.Component model={item} />
-          </Wrapper>
-        );
-      })}
+      {children.map((item) =>
+        isLazy ? (
+          <LazyLoader key={item.state.key!} className={styles.container}>
+            <item.Component key={item.state.key} model={item} />
+          </LazyLoader>
+        ) : (
+          <item.Component key={item.state.key} model={item} />
+        )
+      )}
       {isEditing && (
         <div className={cx(styles.addAction, 'dashboard-canvas-add-button')}>
           <Button

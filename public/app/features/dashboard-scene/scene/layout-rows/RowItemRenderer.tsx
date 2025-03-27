@@ -19,7 +19,7 @@ import { DashboardScene } from '../DashboardScene';
 import { RowItem } from './RowItem';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden } = model.useState();
+  const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden, isDropTarget } = model.useState();
   const isClone = useIsClone(model);
   const { isEditing } = useDashboardState(model);
   const isConditionallyHidden = useIsConditionallyHidden(model);
@@ -43,6 +43,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 
   return (
     <div
+      data-dashboard-drop-target-key={model.state.key}
       className={cx(
         styles.wrapper,
         isEditing && !isCollapsed && styles.wrapperEditing,
@@ -51,7 +52,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
         shouldGrow && styles.wrapperGrow,
         isConditionallyHidden && 'dashboard-visible-hidden-element',
         !isClone && isSelected && 'dashboard-selected-element',
-        !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element'
+        !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element',
+        isDropTarget && 'dashboard-drop-target'
       )}
       onPointerDown={(e) => {
         // If we selected and are clicking a button inside row header then don't de-select row
