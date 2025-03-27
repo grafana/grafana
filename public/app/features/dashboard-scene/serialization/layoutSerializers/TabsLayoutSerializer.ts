@@ -12,7 +12,7 @@ export class TabsLayoutSerializer implements LayoutManagerSerializer {
     return {
       kind: 'TabsLayout',
       spec: {
-        tabs: layoutManager.state.tabs.map((tab) => {
+        items: layoutManager.state.tabs.map((tab) => {
           const layout = getLayout(tab.state.layout);
           return {
             kind: 'TabsLayoutTab',
@@ -34,7 +34,7 @@ export class TabsLayoutSerializer implements LayoutManagerSerializer {
     if (layout.kind !== 'TabsLayout') {
       throw new Error('Invalid layout kind');
     }
-    const tabs = layout.spec.tabs.map((tab) => {
+    const tabs = layout.spec.items.map((tab) => {
       const layout = tab.spec.layout;
       return new TabItem({
         title: tab.spec.title,

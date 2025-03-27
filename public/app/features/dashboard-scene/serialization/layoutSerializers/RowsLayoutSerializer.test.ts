@@ -15,7 +15,7 @@ describe('deserialization', () => {
     const layout: DashboardV2Spec['layout'] = {
       kind: 'RowsLayout',
       spec: {
-        rows: [
+        items: [
           {
             kind: 'RowsLayoutRow',
             spec: {
@@ -64,7 +64,7 @@ describe('deserialization', () => {
     const layout: DashboardV2Spec['layout'] = {
       kind: 'RowsLayout',
       spec: {
-        rows: [
+        items: [
           {
             kind: 'RowsLayoutRow',
             spec: {
@@ -94,7 +94,7 @@ describe('deserialization', () => {
     const layout: DashboardV2Spec['layout'] = {
       kind: 'RowsLayout',
       spec: {
-        rows: [
+        items: [
           {
             kind: 'RowsLayoutRow',
             spec: {
@@ -140,7 +140,7 @@ describe('deserialization', () => {
     const layout: DashboardV2Spec['layout'] = {
       kind: 'RowsLayout',
       spec: {
-        rows: [],
+        items: [],
       },
     };
     const serializer = new RowsLayoutSerializer();
@@ -153,7 +153,7 @@ describe('deserialization', () => {
     const layout: DashboardV2Spec['layout'] = {
       kind: 'RowsLayout',
       spec: {
-        rows: [
+        items: [
           {
             kind: 'RowsLayoutRow',
             spec: {
@@ -208,7 +208,7 @@ describe('serialization', () => {
     expect(serialized).toEqual({
       kind: 'RowsLayout',
       spec: {
-        rows: [
+        items: [
           {
             kind: 'RowsLayoutRow',
             spec: {
@@ -289,7 +289,7 @@ describe('serialization', () => {
     expect(serialized).toEqual({
       kind: 'RowsLayout',
       spec: {
-        rows: [
+        items: [
           {
             kind: 'RowsLayoutRow',
             spec: {
@@ -341,7 +341,7 @@ describe('serialization', () => {
     expect(serialized).toEqual({
       kind: 'RowsLayout',
       spec: {
-        rows: [
+        items: [
           {
             kind: 'RowsLayoutRow',
             spec: {

@@ -12,7 +12,12 @@ describe('deserialization', () => {
     const layout: DashboardV2Spec['layout'] = {
       kind: 'TabsLayout',
       spec: {
-        tabs: [{ kind: 'TabsLayoutTab', spec: { title: 'Tab 1', layout: { kind: 'RowsLayout', spec: { rows: [] } } } }],
+        items: [
+          {
+            kind: 'TabsLayoutTab',
+            spec: { title: 'Tab 1', layout: { kind: 'RowsLayout', spec: { items: [] } } },
+          },
+        ],
       },
     };
     const serializer = new TabsLayoutSerializer();
@@ -25,7 +30,7 @@ describe('deserialization', () => {
     const layout: DashboardV2Spec['layout'] = {
       kind: 'TabsLayout',
       spec: {
-        tabs: [
+        items: [
           {
             kind: 'TabsLayoutTab',
             spec: {
@@ -49,7 +54,7 @@ describe('deserialization', () => {
     const layout: DashboardV2Spec['layout'] = {
       kind: 'TabsLayout',
       spec: {
-        tabs: [
+        items: [
           {
             kind: 'TabsLayoutTab',
             spec: { title: 'Tab 1', layout: { kind: 'GridLayout', spec: { items: [] } } },
@@ -67,7 +72,7 @@ describe('deserialization', () => {
     const layout: DashboardV2Spec['layout'] = {
       kind: 'TabsLayout',
       spec: {
-        tabs: [
+        items: [
           {
             kind: 'TabsLayoutTab',
             spec: {
@@ -93,7 +98,7 @@ describe('deserialization', () => {
     const layout: DashboardV2Spec['layout'] = {
       kind: 'TabsLayout',
       spec: {
-        tabs: [],
+        items: [],
       },
     };
     const serializer = new TabsLayoutSerializer();

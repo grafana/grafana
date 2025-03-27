@@ -541,7 +541,7 @@ RowsLayoutKind: {
 }
 
 RowsLayoutSpec: {
-	rows: [...RowsLayoutRowKind]
+	items: [...RowsLayoutRowKind]
 }
 
 RowsLayoutRowKind: {
@@ -591,7 +591,7 @@ TabsLayoutKind: {
 }
 
 TabsLayoutSpec: {
-	tabs: [...TabsLayoutTabKind]
+	items: [...TabsLayoutTabKind]
 }
 
 TabsLayoutTabKind: {
