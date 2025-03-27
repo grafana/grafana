@@ -68,11 +68,11 @@ Alert instances will be routed for [notifications](ref:notifications) when they 
 
 {{< figure src="/media/docs/alerting/alert-rule-evaluation-overview-statediagram-v2.png" alt="A diagram of the alert instance states and when to route their notifications." max-width="750px" >}}
 
-### Stale alert instances (Missingseries)
+### Stale alert instances (MissingSeries)
 
 The `No Data` state occurs when the alert rule query runs successfully but returns no data points at all.
 
-An alert instance is considered stale if the query returns data but its dimension or series has disappeared for two evaluation intervals. In this case, the alert instance transitions to the **Normal (Missingseries)** state as resolved, and is then evicted.
+An alert instance is considered stale if the query returns data but its dimension or series has disappeared for two evaluation intervals. In this case, the alert instance transitions to the **Normal (MissingSeries)** state as resolved, and is then evicted.
 
 1. The alert rule runs and returns data for some label sets.
 
@@ -80,7 +80,7 @@ An alert instance is considered stale if the query returns data but its dimensio
 
 1. Grafana keeps the previous state of the alert instance for two evaluation intervals.
 
-1. If it remains missing after two intervals, it transitions to the **Normal** state and sets **Missingseries** in the `grafana_state_reason` annotation.
+1. If it remains missing after two intervals, it transitions to the **Normal** state and sets **MissingSeries** in the `grafana_state_reason` annotation.
 
 1. Stale alert instances in the **Alerting**, **No Data**, or **Error** states transition to the **Normal** state as **Resolved**, and are routed for notifications like other resolved alerts.
 
@@ -142,7 +142,7 @@ In these situations, the evaluation state may differ from the alert state, and i
 
 The `grafana_state_reason` annotation is included in these situations, providing the reason that explains why the alert instance transitioned to its current state. For example:
 
-- [Stale alert instances](#stale-alert-instances-missingseries) in the `Normal` state include the `grafana_state_reason` annotation with the value **Missingseries**.
+- [Stale alert instances](#stale-alert-instances-missingseries) in the `Normal` state include the `grafana_state_reason` annotation with the value **MissingSeries**.
 - If "no data" or "error" handling transitions to the `Normal` state, the `grafana_state_reason` annotation is included with the value **No Data** or **Error**, respectively.
 - If the alert rule is deleted or paused, the `grafana_state_reason` is set to **Paused** or **RuleDeleted**. For some updates, it is set to **Updated**.
 
