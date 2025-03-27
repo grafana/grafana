@@ -7,7 +7,7 @@ import {
   GrafanaTableColumn,
   GrafanaTableState,
   TableStateReducerProps,
-  GeneralTableProps,
+  TableRTProps,
 } from './types';
 
 export interface ActionType {
@@ -69,7 +69,7 @@ export function useTableStateReducer({ onColumnResize, onSortByChange, data }: T
 }
 
 export function getInitialState(
-  initialSortBy: GeneralTableProps['initialSortBy'],
+  initialSortBy: TableRTProps['initialSortBy'],
   columns: GrafanaTableColumn[]
 ): Partial<GrafanaTableState> {
   const state: Partial<GrafanaTableState> = {};
