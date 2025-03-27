@@ -59,7 +59,7 @@ const statusHistoryPanel = async () =>
   await import(/* webpackChunkName: "statusHistoryPanel" */ 'app/plugins/panel/status-history/module');
 const tablePanel = async () => {
   if (config.featureToggles.tableNextGen) {
-    return await import(/* webpackChunkName: "tableNewPanel" */ 'app/plugins/panel/table-new/module');
+    return await import(/* webpackChunkName: "tableNewPanel" */ 'app/plugins/panel/table/table-new/module');
   } else {
     return await import(/* webpackChunkName: "tablePanel" */ 'app/plugins/panel/table/module');
   }
