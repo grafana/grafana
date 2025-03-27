@@ -1033,10 +1033,6 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Enables additional languages
-  */
-  extraLanguages?: boolean;
-  /**
   * Disables backdrop blur
   */
   noBackdropBlur?: boolean;
