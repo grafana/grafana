@@ -7,7 +7,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getDefaultVizPanel } from '../../utils/utils';
-import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -48,7 +48,7 @@ export class RowItem
     super({
       ...state,
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
-      layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
+      layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
       conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
     });
 

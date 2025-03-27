@@ -15,12 +15,12 @@ import {
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
-import { ResponsiveGridItem } from './ResponsiveGridItem';
-import { ResponsiveGridLayout } from './ResponsiveGridLayout';
+import { AutoGridItem } from './ResponsiveGridItem';
+import { AutoGridLayout } from './ResponsiveGridLayout';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
 
-interface ResponsiveGridLayoutManagerState extends SceneObjectState {
-  layout: ResponsiveGridLayout;
+interface AutoGridLayoutManagerState extends SceneObjectState {
+  layout: AutoGridLayout;
   maxColumnCount: number;
   rowHeight: AutoGridRowHeight;
   columnWidth: AutoGridColumnWidth;
@@ -34,30 +34,30 @@ export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
 export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
-export class ResponsiveGridLayoutManager
-  extends SceneObjectBase<ResponsiveGridLayoutManagerState>
+export class AutoGridLayoutManager
+  extends SceneObjectBase<AutoGridLayoutManagerState>
   implements DashboardLayoutManager
 {
-  public static Component = ResponsiveGridLayoutManagerRenderer;
+  public static Component = AutoGridLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
-      return t('dashboard.responsive-layout.name', 'Auto grid');
+      return t('dashboard.auto-grid.name', 'Auto grid');
     },
     get description() {
-      return t('dashboard.responsive-layout.description', 'Panels resize to fit and form uniform grids');
+      return t('dashboard.auto-grid.description', 'Panels resize to fit and form uniform grids');
     },
-    id: 'responsive-grid',
-    createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
-    kind: 'ResponsiveGridLayout',
+    id: 'auto-grid',
+    createFromLayout: AutoGridLayoutManager.createFromLayout,
+    kind: 'AutoGridLayout',
     isGridLayout: true,
   };
 
-  public readonly descriptor = ResponsiveGridLayoutManager.descriptor;
+  public readonly descriptor = AutoGridLayoutManager.descriptor;
 
-  public constructor(state: Partial<ResponsiveGridLayoutManagerState>) {
+  public constructor(state: Partial<AutoGridLayoutManagerState>) {
     const maxColumnCount = state.maxColumnCount ?? AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT;
     const columnWidth = state.columnWidth ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH;
     const rowHeight = state.rowHeight ?? AUTO_GRID_DEFAULT_ROW_HEIGHT;
@@ -71,7 +71,7 @@ export class ResponsiveGridLayoutManager
       fillScreen,
       layout:
         state.layout ??
-        new ResponsiveGridLayout({
+        new AutoGridLayout({
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
           autoRows: getAutoRowsTemplate(rowHeight, fillScreen),
         }),
@@ -89,7 +89,7 @@ export class ResponsiveGridLayoutManager
     vizPanel.clearParent();
 
     this.state.layout.setState({
-      children: [new ResponsiveGridItem({ body: vizPanel }), ...this.state.layout.state.children],
+      children: [new AutoGridItem({ body: vizPanel }), ...this.state.layout.state.children],
     });
 
     this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
@@ -120,7 +120,7 @@ export class ResponsiveGridLayoutManager
 
   public duplicatePanel(panel: VizPanel) {
     const gridItem = panel.parent;
-    if (!(gridItem instanceof ResponsiveGridItem)) {
+    if (!(gridItem instanceof AutoGridItem)) {
       console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
       return;
     }
@@ -152,7 +152,7 @@ export class ResponsiveGridLayoutManager
     const panels: VizPanel[] = [];
 
     for (const child of this.state.layout.state.children) {
-      if (child instanceof ResponsiveGridItem) {
+      if (child instanceof AutoGridItem) {
         panels.push(child.state.body);
       }
     }
@@ -169,7 +169,7 @@ export class ResponsiveGridLayoutManager
     return this.clone({
       layout: this.state.layout.clone({
         children: this.state.layout.state.children.map((gridItem) => {
-          if (gridItem instanceof ResponsiveGridItem) {
+          if (gridItem instanceof AutoGridItem) {
             // Get the original panel ID from the gridItem's key
             const panelId = getPanelIdForVizPanel(gridItem.state.body);
             const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(panelId));
@@ -227,26 +227,26 @@ export class ResponsiveGridLayoutManager
     });
   }
 
-  public static createEmpty(): ResponsiveGridLayoutManager {
-    return new ResponsiveGridLayoutManager({});
+  public static createEmpty(): AutoGridLayoutManager {
+    return new AutoGridLayoutManager({});
   }
 
-  public static createFromLayout(layout: DashboardLayoutManager): ResponsiveGridLayoutManager {
+  public static createFromLayout(layout: DashboardLayoutManager): AutoGridLayoutManager {
     const panels = layout.getVizPanels();
-    const children: ResponsiveGridItem[] = [];
+    const children: AutoGridItem[] = [];
 
     for (let panel of panels) {
-      children.push(new ResponsiveGridItem({ body: panel.clone() }));
+      children.push(new AutoGridItem({ body: panel.clone() }));
     }
 
-    const layoutManager = ResponsiveGridLayoutManager.createEmpty();
+    const layoutManager = AutoGridLayoutManager.createEmpty();
     layoutManager.state.layout.setState({ children });
 
     return layoutManager;
   }
 }
 
-function ResponsiveGridLayoutManagerRenderer({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) {
+function AutoGridLayoutManagerRenderer({ model }: SceneComponentProps<AutoGridLayoutManager>) {
   return <model.state.layout.Component model={model.state.layout} />;
 }
 

@@ -6,7 +6,7 @@ import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { getDefaultVizPanel } from '../../utils/utils';
-import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -42,7 +42,7 @@ export class TabItem
     super({
       ...state,
       title: state?.title ?? t('dashboard.tabs-layout.tab.new', 'New tab'),
-      layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
+      layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
     });
   }
 
