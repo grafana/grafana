@@ -24,7 +24,7 @@ export function scrollCanvasElementIntoView(sceneObject: SceneObject, ref: React
     if (parent instanceof TabItem) {
       const tabsManager = parent.parent;
       if (tabsManager instanceof TabsLayoutManager && tabsManager.getCurrentTab() !== parent) {
-        tabsManager.setState({ currentTabIndex: tabsManager.state.tabs.indexOf(parent) });
+        tabsManager.switchToTab(parent);
       }
     }
     parent = parent.parent;

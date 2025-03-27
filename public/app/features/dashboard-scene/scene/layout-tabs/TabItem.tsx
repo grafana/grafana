@@ -128,6 +128,11 @@ export class TabItem
   }
 
   public scrollIntoView(): void {
+    const tabsLayout = sceneGraph.getAncestor(this, TabsLayoutManager);
+    if (tabsLayout.getCurrentTab() !== this) {
+      tabsLayout.switchToTab(this);
+    }
+
     scrollCanvasElementIntoView(this, this.containerRef);
   }
 }
