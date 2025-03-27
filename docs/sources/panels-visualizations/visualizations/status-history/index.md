@@ -95,68 +95,72 @@ The data is converted as follows:
 
 {{< figure src="/static/img/docs/status-history-panel/status_history.png" max-width="1025px" alt="A status history panel with two time columns showing the status of two servers" >}}
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Status history options
+### Status history options
 
 Use these options to refine the visualization.
 
-### Show values
+#### Show values
 
 Controls whether values are rendered inside the value boxes. Auto will render values if there is sufficient space.
 
-### Row height
+#### Row height
 
 Controls the height of boxes. 1 = maximum space and 0 = minimum space.
 
-### Page size (enable pagination)
+#### Page size (enable pagination)
 
 The **Page size** option lets you paginate the status history visualization to limit how many series are visible at once. This is useful when you have many series.
 
-### Column width
+#### Column width
 
 Controls the width of boxes. 1 = maximum space and 0 = minimum space.
 
-### Line width
+#### Line width
 
 Controls line width of state regions.
 
-### Fill opacity
+#### Fill opacity
 
 Controls the opacity of state regions.
 
-## Legend options
+### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Tooltip options
+### Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-3.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Axis options
+### Axis options
 
 {{< docs/shared lookup="visualizations/axis-options-state-status.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
-## Standard options
+### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links and actions
+### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
 
-## Thresholds
+### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
