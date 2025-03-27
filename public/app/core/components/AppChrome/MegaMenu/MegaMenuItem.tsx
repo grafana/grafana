@@ -4,8 +4,8 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
-import { useStyles2, Text, IconButton, Icon, Stack } from '@grafana/ui';
+import { FeatureState, GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
+import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { Dot } from 'app/percona/shared/components/Elements/Dot';
 
@@ -126,6 +126,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
                 <Text truncate>{link.text}</Text>
                 {/* @PERCONA */}
                 {!!link.showDot && !link.icon && <Dot right={-8} top={2} />}
+                {link.isNew && <FeatureBadge featureState={FeatureState.new} />}
               </div>
             </div>
           </MegaMenuItemText>

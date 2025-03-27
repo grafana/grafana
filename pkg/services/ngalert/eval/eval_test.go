@@ -739,243 +739,322 @@ func TestEvaluate(t *testing.T) {
 		resp     backend.QueryDataResponse
 		expected Results
 		error    string
-	}{{
-		name: "is no data with no frames",
-		cond: models.Condition{
-			Data: []models.AlertQuery{{
-				RefID:         "A",
-				DatasourceUID: "test",
-			}, {
-				RefID:         "B",
-				DatasourceUID: expr.DatasourceUID,
-			}, {
-				RefID:         "C",
-				DatasourceUID: expr.OldDatasourceUID,
-			}, {
-				RefID:         "D",
-				DatasourceUID: expr.MLDatasourceUID,
+	}{
+		{
+			name: "is no data with no frames",
+			cond: models.Condition{
+				Data: []models.AlertQuery{{
+					RefID:         "A",
+					DatasourceUID: "test",
+				}, {
+					RefID:         "B",
+					DatasourceUID: expr.DatasourceUID,
+				}, {
+					RefID:         "C",
+					DatasourceUID: expr.OldDatasourceUID,
+				}, {
+					RefID:         "D",
+					DatasourceUID: expr.MLDatasourceUID,
+				}},
+			},
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {Frames: nil},
+					"B": {Frames: []*data.Frame{{Fields: nil}}},
+					"C": {Frames: nil},
+					"D": {Frames: []*data.Frame{{Fields: nil}}},
+				},
+			},
+			expected: Results{{
+				State: NoData,
+				Instance: data.Labels{
+					"datasource_uid": "test",
+					"ref_id":         "A",
+				},
 			}},
 		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {Frames: nil},
-				"B": {Frames: []*data.Frame{{Fields: nil}}},
-				"C": {Frames: nil},
-				"D": {Frames: []*data.Frame{{Fields: nil}}},
+		{
+			name: "is no data for one frame with no fields",
+			cond: models.Condition{
+				Data: []models.AlertQuery{{
+					RefID:         "A",
+					DatasourceUID: "test",
+				}},
 			},
-		},
-		expected: Results{{
-			State: NoData,
-			Instance: data.Labels{
-				"datasource_uid": "test",
-				"ref_id":         "A",
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {Frames: []*data.Frame{{Fields: nil}}},
+				},
 			},
-		}},
-	}, {
-		name: "is no data for one frame with no fields",
-		cond: models.Condition{
-			Data: []models.AlertQuery{{
-				RefID:         "A",
-				DatasourceUID: "test",
+			expected: Results{{
+				State: NoData,
+				Instance: data.Labels{
+					"datasource_uid": "test",
+					"ref_id":         "A",
+				},
 			}},
 		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {Frames: []*data.Frame{{Fields: nil}}},
+		{
+			name: "results contains captured values for exact label matches",
+			cond: models.Condition{
+				Condition: "B",
 			},
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(1.0)},
+								),
+							},
+						}},
+					},
+				},
+			},
+			expected: Results{{
+				State: Alerting,
+				Instance: data.Labels{
+					"foo": "bar",
+				},
+				Values: map[string]NumberValueCapture{
+					"A": {
+						Var:    "A",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  util.Pointer(10.0),
+					},
+					"B": {
+						Var:    "B",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  util.Pointer(1.0),
+					},
+				},
+				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=1 ]",
+			}},
 		},
-		expected: Results{{
-			State: NoData,
-			Instance: data.Labels{
-				"datasource_uid": "test",
-				"ref_id":         "A",
+		{
+			name: "results contains captured values for subset of labels",
+			cond: models.Condition{
+				Condition: "B",
 			},
-		}},
-	}, {
-		name: "results contains captured values for exact label matches",
-		cond: models.Condition{
-			Condition: "B",
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar", "bar": "baz"},
+									[]*float64{util.Pointer(1.0)},
+								),
+							},
+						}},
+					},
+				},
+			},
+			expected: Results{{
+				State: Alerting,
+				Instance: data.Labels{
+					"foo": "bar",
+					"bar": "baz",
+				},
+				Values: map[string]NumberValueCapture{
+					"A": {
+						Var:    "A",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  util.Pointer(10.0),
+					},
+					"B": {
+						Var:    "B",
+						Labels: data.Labels{"foo": "bar", "bar": "baz"},
+						Value:  util.Pointer(1.0),
+					},
+				},
+				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={bar=baz, foo=bar} value=1 ]",
+			}},
 		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {
-					Frames: []*data.Frame{{
-						RefID: "A",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(10.0)},
-							),
-						},
-					}},
-				},
-				"B": {
-					Frames: []*data.Frame{{
-						RefID: "B",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(1.0)},
-							),
-						},
-					}},
+		{
+			name: "results contains error if condition frame has error",
+			cond: models.Condition{
+				Condition: "B",
+			},
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar", "bar": "baz"},
+									[]*float64{util.Pointer(1.0)},
+								),
+							},
+						}},
+						Error: errors.New("some frame error"),
+					},
 				},
 			},
+			expected: Results{{
+				State:            Error,
+				Error:            errors.New("some frame error"),
+				EvaluationString: "",
+			}},
 		},
-		expected: Results{{
-			State: Alerting,
-			Instance: data.Labels{
-				"foo": "bar",
+		{
+			name: "results contain underlying error if condition frame has error that depends on another node",
+			cond: models.Condition{
+				Condition: "B",
 			},
-			Values: map[string]NumberValueCapture{
-				"A": {
-					Var:    "A",
-					Labels: data.Labels{"foo": "bar"},
-					Value:  util.Pointer(10.0),
-				},
-				"B": {
-					Var:    "B",
-					Labels: data.Labels{"foo": "bar"},
-					Value:  util.Pointer(1.0),
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						}},
+						Error: errors.New("another error depends on me"),
+					},
+					"B": {
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar", "bar": "baz"},
+									[]*float64{util.Pointer(1.0)},
+								),
+							},
+						}},
+						Error: expr.MakeDependencyError("B", "A"),
+					},
 				},
 			},
-			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=1 ]",
-		}},
-	}, {
-		name: "results contains captured values for subset of labels",
-		cond: models.Condition{
-			Condition: "B",
+			expected: Results{{
+				State:            Error,
+				Error:            errors.New("another error depends on me"),
+				EvaluationString: "",
+			}},
 		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {
-					Frames: []*data.Frame{{
-						RefID: "A",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(10.0)},
-							),
-						},
-					}},
-				},
-				"B": {
-					Frames: []*data.Frame{{
-						RefID: "B",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar", "bar": "baz"},
-								[]*float64{util.Pointer(1.0)},
-							),
-						},
-					}},
+		{
+			name: "result values for all refIDs when a math no-op expression is used and two results share the same frame pointer",
+			cond: models.Condition{
+				Condition: "C",
+			},
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						// in a math no-op expression the frame for B is the same as A
+						// e.g. A = some_query, B = `${A}`
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						}},
+					},
+					"C": {
+						Frames: []*data.Frame{{
+							RefID: "C",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(1.0)},
+								),
+							},
+						}},
+					},
 				},
 			},
+			expected: Results{{
+				State: Alerting,
+				Instance: data.Labels{
+					"foo": "bar",
+				},
+				Values: map[string]NumberValueCapture{
+					"A": {
+						Var:    "A",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  util.Pointer(10.0),
+					},
+					"B": {
+						Var:    "B",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  util.Pointer(10.0),
+					},
+					"C": {
+						Var:    "C",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  util.Pointer(1.0),
+					},
+				},
+				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=10 ], [ var='C' labels={foo=bar} value=1 ]",
+			}},
 		},
-		expected: Results{{
-			State: Alerting,
-			Instance: data.Labels{
-				"foo": "bar",
-				"bar": "baz",
-			},
-			Values: map[string]NumberValueCapture{
-				"A": {
-					Var:    "A",
-					Labels: data.Labels{"foo": "bar"},
-					Value:  util.Pointer(10.0),
-				},
-				"B": {
-					Var:    "B",
-					Labels: data.Labels{"foo": "bar", "bar": "baz"},
-					Value:  util.Pointer(1.0),
-				},
-			},
-			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={bar=baz, foo=bar} value=1 ]",
-		}},
-	}, {
-		name: "results contains error if condition frame has error",
-		cond: models.Condition{
-			Condition: "B",
-		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {
-					Frames: []*data.Frame{{
-						RefID: "A",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(10.0)},
-							),
-						},
-					}},
-				},
-				"B": {
-					Frames: []*data.Frame{{
-						RefID: "B",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar", "bar": "baz"},
-								[]*float64{util.Pointer(1.0)},
-							),
-						},
-					}},
-					Error: errors.New("some frame error"),
-				},
-			},
-		},
-		expected: Results{{
-			State:            Error,
-			Error:            errors.New("some frame error"),
-			EvaluationString: "",
-		}},
-	}, {
-		name: "results contain underlying error if condition frame has error that depends on another node",
-		cond: models.Condition{
-			Condition: "B",
-		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {
-					Frames: []*data.Frame{{
-						RefID: "A",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(10.0)},
-							),
-						},
-					}},
-					Error: errors.New("another error depends on me"),
-				},
-				"B": {
-					Frames: []*data.Frame{{
-						RefID: "B",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar", "bar": "baz"},
-								[]*float64{util.Pointer(1.0)},
-							),
-						},
-					}},
-					Error: expr.MakeDependencyError("B", "A"),
-				},
-			},
-		},
-		expected: Results{{
-			State:            Error,
-			Error:            errors.New("another error depends on me"),
-			EvaluationString: "",
-		}},
-	}}
+	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

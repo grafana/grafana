@@ -87,11 +87,6 @@ func (r *ruleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	return definitionsIDs
 }
 
-type RuleVersionAndPauseStatus struct {
-	Fingerprint fingerprint
-	IsPaused    bool
-}
-
 type Evaluation struct {
 	scheduledAt time.Time
 	rule        *models.AlertRule
@@ -314,8 +309,6 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 
 	// fields that do not affect the state.
 	// TODO consider removing fields below from the fingerprint
-	writeInt(rule.ID)
-	writeInt(rule.OrgID)
 	writeInt(int64(rule.For))
 	if rule.DashboardUID != nil {
 		writeString(*rule.DashboardUID)

@@ -6,7 +6,7 @@ import { InsightsMenuButton } from '../../InsightsMenuButton';
 
 export function getRuleGroupEvaluationDurationIntervalRatioScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
-    ? `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group", id="${INSTANCE_ID}"} / grafanacloud_instance_rule_group_interval_seconds{rule_group="$rule_group", id="${INSTANCE_ID}"}`
+    ? `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group", stack_id="${INSTANCE_ID}"} / grafanacloud_instance_rule_group_interval_seconds{rule_group="$rule_group", stack_id="${INSTANCE_ID}"}`
     : `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group"} / grafanacloud_instance_rule_group_interval_seconds{rule_group="$rule_group"}`;
 
   const query = new SceneQueryRunner({

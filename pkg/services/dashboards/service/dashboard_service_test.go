@@ -10,13 +10,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"k8s.io/client-go/dynamic"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -24,30 +26,32 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
+		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 		defer fakeStore.AssertExpectations(t)
 
 		folderSvc := foldertest.NewFakeService()
-
 		service := &DashboardServiceImpl{
-			cfg:            setting.NewCfg(),
-			log:            log.New("test.logger"),
-			dashboardStore: &fakeStore,
-			folderService:  folderSvc,
-			features:       featuremgmt.WithFeatures(),
+			cfg:                    setting.NewCfg(),
+			log:                    log.New("test.logger"),
+			dashboardStore:         &fakeStore,
+			folderService:          folderSvc,
+			features:               featuremgmt.WithFeatures(),
+			publicDashboardService: fakePublicDashboardService,
 		}
+		folderStore := foldertest.FakeFolderStore{}
+		folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(nil, dashboards.ErrFolderNotFound).Once()
+		service.folderStore = &folderStore
 
 		origNewDashboardGuardian := guardian.New
 		defer func() { guardian.New = origNewDashboardGuardian }()
@@ -64,6 +68,22 @@ func TestDashboardService(t *testing.T) {
 					_, err := service.SaveDashboard(context.Background(), dto, false)
 					require.Equal(t, err, dashboards.ErrDashboardTitleEmpty)
 				}
+			})
+
+			t.Run("Should return validation error if message is too long", func(t *testing.T) {
+				dto.Dashboard = dashboards.NewDashboard("Dash")
+				dto.Message = `Here we go, 500+ characters for testing. I'm sorry that you're
+				having to read this. I spent too long trying to come up with something clever
+				to say or a funny joke. Unforuntately, nothing came to mind. So instead, I'm
+				will share this with you, as a form of payment for having to read this:
+				https://youtu.be/dQw4w9WgXcQ?si=KeoTIpn9tUtQnOBk! Enjoy :) Now lets see if
+				this test passes or if the result is more exciting than these 500 characters
+				I wrote. Best of luck to the both of us!`
+				_, err := service.SaveDashboard(context.Background(), dto, false)
+				require.Equal(t, err, dashboards.ErrDashboardMessageTooLong)
+
+				// set to a shorter message for the rest of the tests
+				dto.Message = `message`
 			})
 
 			t.Run("Should return validation error if folder is named General", func(t *testing.T) {
@@ -102,9 +122,8 @@ func TestDashboardService(t *testing.T) {
 			t.Run("Should return validation error if a folder that is specified can't be found", func(t *testing.T) {
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.FolderUID = "non-existing-folder"
-				folderStore := foldertest.FakeFolderStore{}
-				folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(nil, dashboards.ErrFolderNotFound).Once()
-				service.folderStore = &folderStore
+				folderSvc := foldertest.FakeService{ExpectedError: dashboards.ErrFolderNotFound}
+				service.folderService = &folderSvc
 				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, dashboards.ErrFolderNotFound)
 			})
@@ -182,6 +201,7 @@ func TestDashboardService(t *testing.T) {
 			t.Run("DeleteProvisionedDashboard should delete it", func(t *testing.T) {
 				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
 				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
+				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 			})
@@ -197,6 +217,7 @@ func TestDashboardService(t *testing.T) {
 			t.Run("DeleteProvisionedDashboard should delete the dashboard", func(t *testing.T) {
 				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
 				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
+				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 			})
@@ -205,6 +226,7 @@ func TestDashboardService(t *testing.T) {
 				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
 				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
 				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(nil, nil).Once()
+				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 				err := service.DeleteDashboard(context.Background(), 1, "", 1)
 				require.NoError(t, err)
 			})
@@ -225,6 +247,8 @@ func TestDashboardService(t *testing.T) {
 		t.Run("Delete dashboards in folder", func(t *testing.T) {
 			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUIDs: []string{"uid"}}
 			fakeStore.On("DeleteDashboardsInFolders", mock.Anything, args).Return(nil).Once()
+			fakeStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
+			fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
 			require.NoError(t, err)
 		})
@@ -238,96 +262,16 @@ func TestDashboardService(t *testing.T) {
 	})
 }
 
-type mockDashK8sCli struct {
-	mock.Mock
-	searcher *mockResourceIndexClient
-}
-
-func (m *mockDashK8sCli) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
-	args := m.Called(ctx, orgID)
-	return args.Get(0).(dynamic.ResourceInterface), args.Bool(1)
-}
-
-func (m *mockDashK8sCli) getNamespace(orgID int64) string {
-	if orgID == 1 {
-		return "default"
-	}
-	return fmt.Sprintf("orgs-%d", orgID)
-}
-
-func (m *mockDashK8sCli) getSearcher() resource.ResourceIndexClient {
-	return m.searcher
-}
-
-type mockResourceIndexClient struct {
-	mock.Mock
-	resource.ResourceIndexClient
-}
-
-func (m *mockResourceIndexClient) Search(ctx context.Context, req *resource.ResourceSearchRequest, opts ...grpc.CallOption) (*resource.ResourceSearchResponse, error) {
-	args := m.Called(req)
-	return args.Get(0).(*resource.ResourceSearchResponse), args.Error(1)
-}
-
-type mockResourceInterface struct {
-	mock.Mock
-	dynamic.ResourceInterface
-}
-
-func (m *mockResourceInterface) Get(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, name, options, subresources)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
-}
-
-func (m *mockResourceInterface) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
-	args := m.Called(ctx, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*unstructured.UnstructuredList), args.Error(1)
-}
-
-func (m *mockResourceInterface) Create(ctx context.Context, obj *unstructured.Unstructured, options metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, obj, options, subresources)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
-}
-
-func (m *mockResourceInterface) Update(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, obj, options, subresources)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
-}
-
-func (m *mockResourceInterface) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
-	args := m.Called(ctx, name, options, subresources)
-	return args.Error(0)
-}
-
-func (m *mockResourceInterface) DeleteCollection(ctx context.Context, options metav1.DeleteOptions, listOptions metav1.ListOptions) error {
-	args := m.Called(ctx, options, listOptions)
-	return args.Error(0)
-}
-
-func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *mockDashK8sCli, *mockResourceInterface) {
-	k8sClientMock := new(mockDashK8sCli)
-	k8sResourceMock := new(mockResourceInterface)
-	k8sClientMock.searcher = new(mockResourceIndexClient)
-	service.k8sclient = k8sClientMock
-	service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboards)
+func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *client.MockK8sHandler) {
+	mockCli := new(client.MockK8sHandler)
+	service.k8sclient = mockCli
+	service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
 
 	ctx := context.Background()
 	userCtx := &user.SignedInUser{UserID: 1, OrgID: 1}
 	ctx = identity.WithRequester(ctx, userCtx)
 
-	return ctx, k8sClientMock, k8sResourceMock
+	return ctx, mockCli
 }
 
 func TestGetDashboard(t *testing.T) {
@@ -352,7 +296,7 @@ func TestGetDashboard(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		dashboardUnstructured := unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name": "uid",
@@ -372,13 +316,13 @@ func TestGetDashboard(t *testing.T) {
 			Version: 1,
 			Data:    simplejson.NewFromAny(map[string]any{"test": "test", "title": "testing slugify", "uid": "uid", "version": int64(1)}),
 		}
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("Get", mock.Anything, query.UID, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil).Once()
+		k8sCliMock.On("Get", mock.Anything, query.UID, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil).Once()
+		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
 
 		dashboard, err := service.GetDashboard(ctx, query)
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 		// make sure the conversion is working
 		require.True(t, reflect.DeepEqual(dashboard, &dashboardExpected))
 	})
@@ -389,7 +333,8 @@ func TestGetDashboard(t *testing.T) {
 			UID:   "",
 			OrgID: 1,
 		}
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		dashboardUnstructured := unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name": "uid",
@@ -409,16 +354,18 @@ func TestGetDashboard(t *testing.T) {
 			Version: 1,
 			Data:    simplejson.NewFromAny(map[string]any{"test": "test", "title": "testing slugify", "uid": "uid", "version": int64(1)}),
 		}
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil).Once()
-		k8sClientMock.searcher.On("Search", mock.Anything).Return(&resource.ResourceSearchResponse{
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil).Once()
+		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -440,32 +387,30 @@ func TestGetDashboard(t *testing.T) {
 		dashboard, err := service.GetDashboard(ctx, query)
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
-		k8sClientMock.AssertExpectations(t)
-		k8sClientMock.searcher.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 		// make sure the conversion is working
 		require.True(t, reflect.DeepEqual(dashboard, &dashboardExpected))
 	})
 
 	t.Run("Should return error when Kubernetes client fails", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("Get", mock.Anything, query.UID, mock.Anything, mock.Anything).Return(nil, assert.AnError).Once()
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("Get", mock.Anything, query.UID, mock.Anything, mock.Anything, mock.Anything).Return(nil, assert.AnError).Once()
 
 		dashboard, err := service.GetDashboard(ctx, query)
 		require.Error(t, err)
 		require.Nil(t, dashboard)
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 
 	t.Run("Should return dashboard not found if Kubernetes client returns nil", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("Get", mock.Anything, query.UID, mock.Anything, mock.Anything).Return(nil, nil).Once()
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("Get", mock.Anything, query.UID, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil).Once()
 		dashboard, err := service.GetDashboard(ctx, query)
 		require.Error(t, err)
 		require.Equal(t, dashboards.ErrDashboardNotFound, err)
 		require.Nil(t, dashboard)
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
@@ -487,7 +432,7 @@ func TestGetAllDashboards(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
 
 		dashboardUnstructured := unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
@@ -509,13 +454,13 @@ func TestGetAllDashboards(t *testing.T) {
 			Data:    simplejson.NewFromAny(map[string]any{"test": "test", "title": "testing slugify", "uid": "uid", "version": int64(1)}),
 		}
 
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("List", mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{Items: []unstructured.Unstructured{dashboardUnstructured}}, nil).Once()
+		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		k8sCliMock.On("List", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{Items: []unstructured.Unstructured{dashboardUnstructured}}, nil).Once()
 
 		dashes, err := service.GetAllDashboards(ctx)
 		require.NoError(t, err)
 		require.NotNil(t, dashes)
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 		// make sure the conversion is working
 		require.True(t, reflect.DeepEqual(dashes, []*dashboards.Dashboard{&dashboardExpected}))
 	})
@@ -539,7 +484,7 @@ func TestGetAllDashboardsByOrgId(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
 
 		dashboardUnstructured := unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
@@ -561,13 +506,13 @@ func TestGetAllDashboardsByOrgId(t *testing.T) {
 			Data:    simplejson.NewFromAny(map[string]any{"test": "test", "title": "testing slugify", "uid": "uid", "version": int64(1)}),
 		}
 
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("List", mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{Items: []unstructured.Unstructured{dashboardUnstructured}}, nil).Once()
+		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		k8sCliMock.On("List", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{Items: []unstructured.Unstructured{dashboardUnstructured}}, nil).Once()
 
 		dashes, err := service.GetAllDashboardsByOrgId(ctx, 1)
 		require.NoError(t, err)
 		require.NotNil(t, dashes)
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 		// make sure the conversion is working
 		require.True(t, reflect.DeepEqual(dashes, []*dashboards.Dashboard{&dashboardExpected}))
 	})
@@ -594,32 +539,39 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled and get from relevant org", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, mock.Anything).Return(k8sResourceMock, true)
-		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name": "uid",
-				"labels": map[string]any{
-					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		provisioningTimestamp := int64(1234567)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": dashboardv0alpha1.DashboardResourceInfo.GroupVersion().String(),
+				"kind":       dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"name": "uid",
+					"labels": map[string]interface{}{
+						utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
+					},
+					"annotations": map[string]interface{}{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "test",
+						utils.AnnoKeySourceChecksum:  "hash",
+						utils.AnnoKeySourcePath:      "path/to/file",
+						utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
+					},
 				},
-				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "test",
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+				"spec": map[string]interface{}{
+					"test":    "test",
+					"version": int64(1),
+					"title":   "testing slugify",
 				},
 			},
-			"spec": map[string]any{
-				"test":    "test",
-				"version": int64(1),
-				"title":   "testing slugify",
-			},
-		}}, nil).Once()
+		}, nil).Once()
 		repo := "test"
-		k8sClientMock.searcher.On("Search",
+		k8sCliMock.On("Search", mock.Anything, int64(1),
 			mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-				// ensure the prefix is added to the query
-				return req.Options.Key.Namespace == "default" && req.Options.Fields[0].Values[0] == provisionedFileNameWithPrefix(repo)
+				// make sure the kind is added to the query
+				return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
+					req.Options.Fields[1].Values[0] == repo
 			})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{},
@@ -627,17 +579,20 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 			},
 			TotalHits: 0,
 		}, nil).Once()
-		k8sClientMock.searcher.On("Search", mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			// ensure the prefix is added to the query
-			return req.Options.Key.Namespace == "orgs-2" && req.Options.Fields[0].Values[0] == provisionedFileNameWithPrefix(repo)
+		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+			// make sure the kind is added to the query
+			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
+				req.Options.Fields[1].Values[0] == repo
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -664,9 +619,9 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 			Name:        "test",
 			ExternalID:  "path/to/file",
 			CheckSum:    "hash",
-			Updated:     1735689600,
+			Updated:     provisioningTimestamp,
 		})
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
@@ -691,46 +646,48 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled and get from whatever org it is in", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, mock.Anything).Return(k8sResourceMock, true)
-		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		provisioningTimestamp := int64(1234567)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": dashboardv0alpha1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"metadata": map[string]interface{}{
 				"name": "uid",
-				"labels": map[string]any{
+				"labels": map[string]interface{}{
 					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
 				},
-				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "test",
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+				"annotations": map[string]interface{}{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
+					utils.AnnoKeyManagerIdentity: "test",
+					utils.AnnoKeySourceChecksum:  "hash",
+					utils.AnnoKeySourcePath:      "path/to/file",
+					utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
 				},
 			},
-			"spec": map[string]any{
+			"spec": map[string]interface{}{
 				"test":    "test",
 				"version": int64(1),
 				"title":   "testing slugify",
 			},
 		}}, nil)
-		k8sClientMock.searcher.On("Search", mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Key.Namespace == "default"
-		})).Return(&resource.ResourceSearchResponse{
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{},
 				Rows:    []*resource.ResourceTableRow{},
 			},
 			TotalHits: 0,
 		}, nil)
-		k8sClientMock.searcher.On("Search", mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Key.Namespace == "orgs-2"
-		})).Return(&resource.ResourceSearchResponse{
+		k8sCliMock.On("Search", mock.Anything, int64(2), mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -756,9 +713,9 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 			Name:        "test",
 			ExternalID:  "path/to/file",
 			CheckSum:    "hash",
-			Updated:     1735689600,
+			Updated:     provisioningTimestamp,
 		})
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
@@ -783,35 +740,41 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, mock.Anything).Return(k8sResourceMock, true)
-		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		provisioningTimestamp := int64(1234567)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": dashboardv0alpha1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"metadata": map[string]interface{}{
 				"name": "uid",
-				"labels": map[string]any{
+				"labels": map[string]interface{}{
 					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
 				},
-				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "test",
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+				"annotations": map[string]interface{}{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
+					utils.AnnoKeyManagerIdentity: "test",
+					utils.AnnoKeySourceChecksum:  "hash",
+					utils.AnnoKeySourcePath:      "path/to/file",
+					utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
 				},
 			},
-			"spec": map[string]any{
+			"spec": map[string]interface{}{
 				"test":    "test",
 				"version": int64(1),
 				"title":   "testing slugify",
 			},
 		}}, nil).Once()
-		k8sClientMock.searcher.On("Search", mock.Anything).Return(&resource.ResourceSearchResponse{
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -837,14 +800,15 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 			Name:        "test",
 			ExternalID:  "path/to/file",
 			CheckSum:    "hash",
-			Updated:     1735689600,
+			Updated:     provisioningTimestamp,
 		})
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
 func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
+	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
@@ -852,6 +816,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
+		publicDashboardService: fakePublicDashboardService,
 	}
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
@@ -867,58 +832,63 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled, delete across all orgs, but only delete file based provisioned dashboards", func(t *testing.T) {
-		_, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, mock.Anything).Return(k8sResourceMock, true)
-		k8sResourceMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		_, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		fakeStore.On("CleanupAfterDelete", mock.Anything, &dashboards.DeleteDashboardCommand{UID: "uid", OrgID: 1}).Return(nil).Once()
 		fakeStore.On("CleanupAfterDelete", mock.Anything, &dashboards.DeleteDashboardCommand{UID: "uid3", OrgID: 2}).Return(nil).Once()
-		k8sResourceMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name": "uid",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "orphaned",
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
+					utils.AnnoKeyManagerIdentity: "orphaned",
+					utils.AnnoKeySourceChecksum:  "hash",
+					utils.AnnoKeySourcePath:      "path/to/file",
+					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
 				},
 			},
 			"spec": map[string]any{},
 		}}, nil).Once()
 		// should not delete this one, because it does not start with "file:"
-		k8sResourceMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
+		k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name": "uid2",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName: "plugin",
-					utils.AnnoKeyRepoHash: "app",
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindPlugin),
+					utils.AnnoKeyManagerIdentity: "app",
 				},
 			},
 			"spec": map[string]any{},
 		}}, nil).Once()
 
-		k8sResourceMock.On("Get", mock.Anything, "uid3", mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
+		k8sCliMock.On("Get", mock.Anything, "uid3", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name": "uid3",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "orphaned",
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
+					utils.AnnoKeyManagerIdentity: "orphaned",
+					utils.AnnoKeySourceChecksum:  "hash",
+					utils.AnnoKeySourcePath:      "path/to/file",
+					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
 				},
 			},
 			"spec": map[string]any{},
 		}}, nil).Once()
-		k8sClientMock.searcher.On("Search", mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Key.Namespace == "default" && req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == provisionedFileNameWithPrefix("test") &&
-				req.Options.Fields[0].Operator == "notin"
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+			// nolint:staticcheck
+			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "test" && req.Options.Fields[1].Operator == "notin"
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -937,17 +907,19 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			TotalHits: 1,
 		}, nil).Once()
 
-		k8sClientMock.searcher.On("Search", mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Key.Namespace == "orgs-2" && req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == provisionedFileNameWithPrefix("test") &&
-				req.Options.Fields[0].Operator == "notin"
+		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+			// nolint:staticcheck
+			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "test" && req.Options.Fields[1].Operator == "notin"
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -979,7 +951,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			ReaderNames: []string{"test"},
 		})
 		require.NoError(t, err)
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
@@ -1003,21 +975,21 @@ func TestUnprovisionDashboard(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled - should remove annotations", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, mock.Anything).Return(k8sResourceMock, true)
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		dash := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name": "uid",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "test",
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+					utils.AnnoKeyManagerKind:     utils.ManagerKindClassicFP, // nolint:staticcheck
+					utils.AnnoKeyManagerIdentity: "test",
+					utils.AnnoKeySourceChecksum:  "hash",
+					utils.AnnoKeySourcePath:      "path/to/file",
+					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
 				},
 			},
 			"spec": map[string]any{},
 		}}
-		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 		dashWithoutAnnotations := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "dashboard.grafana.app/v0alpha1",
 			"kind":       "Dashboard",
@@ -1032,15 +1004,19 @@ func TestUnprovisionDashboard(t *testing.T) {
 			},
 		}}
 		// should update it to be without annotations
-		k8sResourceMock.On("Update", mock.Anything, dashWithoutAnnotations, mock.Anything, mock.Anything).Return(dashWithoutAnnotations, nil)
-		k8sClientMock.searcher.On("Search", mock.Anything).Return(&resource.ResourceSearchResponse{
+		k8sCliMock.On("Update", mock.Anything, dashWithoutAnnotations, mock.Anything).Return(dashWithoutAnnotations, nil)
+		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
+		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1060,7 +1036,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 		}, nil)
 		err := service.UnprovisionDashboard(ctx, 1)
 		require.NoError(t, err)
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
@@ -1076,6 +1052,15 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 		PluginID: "testing",
 		OrgID:    1,
 	}
+	uidUnstructured := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name": "uid1",
+		},
+		"spec": map[string]any{
+			"title": "Dashboard 1",
+		},
+	}}
+
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
 		fakeStore.On("GetDashboardsByPluginID", mock.Anything, mock.Anything).Return([]*dashboards.Dashboard{}, nil).Once()
@@ -1085,18 +1070,24 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, _ := setupK8sDashboardTests(service)
-		k8sClientMock.searcher.On("Search", mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == "plugin" &&
-				req.Options.Fields[1].Key == "repo.path" && req.Options.Fields[1].Values[0] == "testing"
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(uidUnstructured, nil)
+		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+			return ( // gofmt comment helper
+			req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindPlugin) &&
+				req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "testing")
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1117,7 +1108,7 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 		dashes, err := service.GetDashboardsByPluginID(ctx, query)
 		require.NoError(t, err)
 		require.Len(t, dashes, 1)
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
@@ -1127,7 +1118,13 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
 		dashboardStore: &fakeStore,
-		log:            log.NewNopLogger(),
+		folderService: &foldertest.FakeService{
+			ExpectedFolder: &folder.Folder{
+				ID:  0,
+				UID: "general",
+			},
+		},
+		log: log.NewNopLogger(),
 	}
 
 	origNewDashboardGuardian := guardian.New
@@ -1169,16 +1166,17 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 	}}
 
 	t.Run("Should use Kubernetes create if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true)
-		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
-		k8sResourceMock.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		k8sCliMock.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
 
 		dashboard, err := service.SaveProvisionedDashboard(ctx, query, &dashboards.DashboardProvisioning{})
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 		// ensure the provisioning data is still saved to the db
 		fakeStore.AssertExpectations(t)
 	})
@@ -1190,6 +1188,9 @@ func TestSaveDashboard(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
 		dashboardStore: &fakeStore,
+		folderService: &foldertest.FakeService{
+			ExpectedFolder: &folder.Folder{},
+		},
 	}
 
 	origNewDashboardGuardian := guardian.New
@@ -1231,10 +1232,11 @@ func TestSaveDashboard(t *testing.T) {
 	}}
 
 	t.Run("Should use Kubernetes create if feature flags are enabled and dashboard doesn't exist", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true)
-		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
-		k8sResourceMock.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
+		k8sCliMock.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
 
 		dashboard, err := service.SaveDashboard(ctx, query, false)
 		require.NoError(t, err)
@@ -1242,10 +1244,11 @@ func TestSaveDashboard(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes update if feature flags are enabled and dashboard exists", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true)
-		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
-		k8sResourceMock.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
+		k8sCliMock.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
 
 		dashboard, err := service.SaveDashboard(ctx, query, false)
 		require.NoError(t, err)
@@ -1253,10 +1256,10 @@ func TestSaveDashboard(t *testing.T) {
 	})
 
 	t.Run("Should return an error if uid is invalid", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true)
-		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
-		k8sResourceMock.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
+		k8sCliMock.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
 
 		query.Dashboard.UID = "invalid/uid"
 		_, err := service.SaveDashboard(ctx, query, false)
@@ -1266,45 +1269,52 @@ func TestSaveDashboard(t *testing.T) {
 
 func TestDeleteDashboard(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
+	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg:                    setting.NewCfg(),
+		dashboardStore:         &fakeStore,
+		publicDashboardService: fakePublicDashboardService,
 	}
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
 		fakeStore.On("DeleteDashboard", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.Anything).Return(nil, nil).Once()
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
 		err := service.DeleteDashboard(context.Background(), 1, "uid", 1)
 		require.NoError(t, err)
 		fakeStore.AssertExpectations(t)
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Once()
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		err := service.DeleteDashboard(ctx, 1, "uid", 1)
 		require.NoError(t, err)
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 
 	t.Run("If UID is not passed in, it should retrieve that first", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Once()
-		k8sClientMock.searcher.On("Search", mock.Anything).Return(&resource.ResourceSearchResponse{
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1324,8 +1334,8 @@ func TestDeleteDashboard(t *testing.T) {
 		}, nil)
 		err := service.DeleteDashboard(ctx, 1, "", 1)
 		require.NoError(t, err)
-		k8sClientMock.AssertExpectations(t)
-		k8sClientMock.searcher.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
@@ -1346,22 +1356,28 @@ func TestDeleteAllDashboards(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		err := service.DeleteAllDashboards(ctx, 1)
 		require.NoError(t, err)
-		k8sClientMock.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
 func TestSearchDashboards(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
+	fakeFolders := foldertest.NewFakeService()
+	fakeFolders.ExpectedFolder = &folder.Folder{
+		Title: "testing-folder-1",
+		UID:   "f1",
+	}
+	fakeFolders.ExpectedFolders = []*folder.Folder{fakeFolders.ExpectedFolder}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
 		dashboardStore: &fakeStore,
+		folderService:  fakeFolders,
 	}
 
 	expectedResult := model.HitList{
@@ -1376,15 +1392,19 @@ func TestSearchDashboards(t *testing.T) {
 				"tag1",
 				"tag2",
 			},
+			FolderTitle: "testing-folder-1",
+			FolderUID:   "f1",
 		},
 		{
-			UID:   "uid2",
-			OrgID: 1,
-			Title: "Dashboard 2",
-			Type:  "dash-db",
-			URI:   "db/dashboard-2",
-			URL:   "/d/uid2/dashboard-2",
-			Tags:  []string{},
+			UID:         "uid2",
+			OrgID:       1,
+			Title:       "Dashboard 2",
+			Type:        "dash-db",
+			URI:         "db/dashboard-2",
+			URL:         "/d/uid2/dashboard-2",
+			Tags:        []string{},
+			FolderTitle: "testing-folder-1",
+			FolderUID:   "f1",
 		},
 	}
 	query := dashboards.FindPersistedDashboardsQuery{
@@ -1394,17 +1414,21 @@ func TestSearchDashboards(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
 		fakeStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
 			{
-				UID:   "uid1",
-				Slug:  "dashboard-1",
-				OrgID: 1,
-				Title: "Dashboard 1",
-				Tags:  []string{"tag1", "tag2"},
+				UID:         "uid1",
+				Slug:        "dashboard-1",
+				OrgID:       1,
+				Title:       "Dashboard 1",
+				Tags:        []string{"tag1", "tag2"},
+				FolderTitle: "testing-folder-1",
+				FolderUID:   "f1",
 			},
 			{
-				UID:   "uid2",
-				Slug:  "dashboard-2",
-				OrgID: 1,
-				Title: "Dashboard 2",
+				UID:         "uid2",
+				Slug:        "dashboard-2",
+				OrgID:       1,
+				Title:       "Dashboard 2",
+				FolderTitle: "testing-folder-1",
+				FolderUID:   "f1",
 			},
 		}, nil).Once()
 		result, err := service.SearchDashboards(context.Background(), &query)
@@ -1414,19 +1438,29 @@ func TestSearchDashboards(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sClientMock.searcher.On("Search", mock.Anything).Return(&resource.ResourceSearchResponse{
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		expectedFolders := model.HitList{
+			{
+				UID:   "f1",
+				Title: "testing-folder-1",
+			},
+		}
+		fakeFolders.ExpectedHitList = expectedFolders
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "tags",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1437,7 +1471,7 @@ func TestSearchDashboards(t *testing.T) {
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
-							[]byte(""),
+							[]byte("f1"),
 							[]byte("[\"tag1\", \"tag2\"]"),
 						},
 					},
@@ -1448,7 +1482,7 @@ func TestSearchDashboards(t *testing.T) {
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 2"),
-							[]byte(""),
+							[]byte("f1"),
 							[]byte(""),
 						},
 					},
@@ -1460,7 +1494,7 @@ func TestSearchDashboards(t *testing.T) {
 		result, err := service.SearchDashboards(ctx, &query)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
-		k8sClientMock.searcher.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
@@ -1478,14 +1512,32 @@ func TestGetDashboards(t *testing.T) {
 			Slug:  "dashboard-1",
 			OrgID: 1,
 			Title: "Dashboard 1",
+			Data:  simplejson.NewFromAny(map[string]any{"title": "Dashboard 1", "uid": "uid1"}),
 		},
 		{
 			UID:   "uid2",
 			Slug:  "dashboard-2",
 			OrgID: 1,
 			Title: "Dashboard 2",
+			Data:  simplejson.NewFromAny(map[string]any{"title": "Dashboard 2", "uid": "uid2"}),
 		},
 	}
+	uid1Unstructured := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name": "uid1",
+		},
+		"spec": map[string]any{
+			"title": "Dashboard 1",
+		},
+	}}
+	uid2Unstructured := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name": "uid2",
+		},
+		"spec": map[string]any{
+			"title": "Dashboard 2",
+		},
+	}}
 	queryByIDs := &dashboards.GetDashboardsQuery{
 		DashboardIDs: []int64{1, 2},
 		OrgID:        1,
@@ -1513,16 +1565,21 @@ func TestGetDashboards(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sClientMock.searcher.On("Search", mock.Anything).Return(&resource.ResourceSearchResponse{
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Get", mock.Anything, "uid1", mock.Anything, mock.Anything, mock.Anything).Return(uid1Unstructured, nil)
+		k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(uid2Unstructured, nil)
+		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1555,13 +1612,13 @@ func TestGetDashboards(t *testing.T) {
 		result, err := service.GetDashboards(ctx, queryByIDs)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
-		k8sClientMock.searcher.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 
 		// by uids
 		result, err = service.GetDashboards(ctx, queryByUIDs)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
-		k8sClientMock.searcher.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
@@ -1591,16 +1648,18 @@ func TestGetDashboardUIDByID(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sClientMock.searcher.On("Search", mock.Anything).Return(&resource.ResourceSearchResponse{
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1621,15 +1680,15 @@ func TestGetDashboardUIDByID(t *testing.T) {
 		result, err := service.GetDashboardUIDByID(ctx, query)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
-		k8sClientMock.searcher.AssertExpectations(t)
+		k8sCliMock.AssertExpectations(t)
 	})
 }
 
 func TestUnstructuredToLegacyDashboard(t *testing.T) {
-	fake := usertest.NewUserServiceFake()
-	fake.ExpectedUser = &user.User{ID: 10, UID: "useruid"}
+	k8sCliMock := new(client.MockK8sHandler)
+	k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{ID: 10, UID: "useruid"}, nil)
 	dr := &DashboardServiceImpl{
-		userService: fake,
+		k8sclient: k8sCliMock,
 	}
 	t.Run("successfully converts unstructured to legacy dashboard", func(t *testing.T) {
 		uid := "36b7c825-79cc-435e-acf6-c78bd96a4510"
@@ -1709,9 +1768,8 @@ func TestGetDashboardTags(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sClientMock.searcher.On("Search", mock.Anything).Return(&resource.ResourceSearchResponse{
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Facet: map[string]*resource.ResourceSearchResponse_Facet{
 				"tags": {
 					Terms: []*resource.ResourceSearchResponse_TermFacet{
@@ -1752,44 +1810,17 @@ func TestQuotaCount(t *testing.T) {
 		},
 	}
 
-	dashboardUnstructuredOrg1 := unstructured.UnstructuredList{
-		Items: []unstructured.Unstructured{{
-			Object: map[string]any{
-				"metadata": map[string]any{
-					"name": "uid",
-				},
-				"spec": map[string]any{
-					"test":    "test",
-					"version": int64(1),
-					"title":   "testing slugify",
-				},
-			},
-		}},
-	}
-	dashboardUnstructuredOrg2 := unstructured.UnstructuredList{
-		Items: []unstructured.Unstructured{{
-			Object: map[string]any{
-				"metadata": map[string]any{
-					"name": "uid",
-				},
-				"spec": map[string]any{
-					"test":    "test",
-					"version": int64(1),
-					"title":   "testing slugify",
-				},
+	countOrg1 := resource.ResourceStatsResponse{
+		Stats: []*resource.ResourceStatsResponse_Stats{
+			{
+				Count: 1,
 			},
 		},
+	}
+	countOrg2 := resource.ResourceStatsResponse{
+		Stats: []*resource.ResourceStatsResponse_Stats{
 			{
-				Object: map[string]any{
-					"metadata": map[string]any{
-						"name": "uid2",
-					},
-					"spec": map[string]any{
-						"test":    "test2",
-						"version": int64(1),
-						"title":   "testing slugify2",
-					},
-				},
+				Count: 2,
 			},
 		},
 	}
@@ -1806,13 +1837,11 @@ func TestQuotaCount(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		orgSvc := orgtest.FakeOrgService{ExpectedOrgs: orgs}
 		service.orgService = &orgSvc
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sClientMock.On("getClient", mock.Anything, int64(2)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("List", mock.Anything, mock.Anything).Return(&dashboardUnstructuredOrg2, nil).Once()
-		k8sResourceMock.On("List", mock.Anything, mock.Anything).Return(&dashboardUnstructuredOrg1, nil).Once()
+		k8sCliMock.On("GetStats", mock.Anything, mock.Anything).Return(&countOrg2, nil).Once()
+		k8sCliMock.On("GetStats", mock.Anything, mock.Anything).Return(&countOrg1, nil).Once()
 
 		result, err := service.Count(ctx, query)
 		require.NoError(t, err)
@@ -1831,10 +1860,239 @@ func TestQuotaCount(t *testing.T) {
 	})
 }
 
+func TestCountDashboardsInOrg(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+	}
+	count := resource.ResourceStatsResponse{
+		Stats: []*resource.ResourceStatsResponse_Stats{
+			{
+				Count: 3,
+			},
+		},
+	}
+
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("CountInOrg", mock.Anything, mock.Anything).Return(nil, nil).Once()
+		_, err := service.CountDashboardsInOrg(context.Background(), 1)
+		require.NoError(t, err)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("GetStats", mock.Anything, mock.Anything).Return(&count, nil).Once()
+		result, err := service.CountDashboardsInOrg(ctx, 1)
+		require.NoError(t, err)
+		require.Equal(t, result, int64(3))
+	})
+}
+
+func TestCountInFolders(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+	}
+	dashs := &resource.ResourceSearchResponse{
+		Results: &resource.ResourceTable{
+			Columns: []*resource.ResourceTableColumnDefinition{
+				{
+					Name: "title",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: "folder",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+			},
+			Rows: []*resource.ResourceTableRow{
+				{
+					Key: &resource.ResourceKey{
+						Name:     "uid",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 1"),
+						[]byte("folder 1"),
+					},
+				},
+				{
+					Key: &resource.ResourceKey{
+						Name:     "uid2",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 2"),
+						[]byte("folder 1"),
+					},
+				},
+			},
+		},
+		TotalHits: 2,
+	}
+
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("CountDashboardsInFolders", mock.Anything, mock.Anything).Return(int64(1), nil).Once()
+		_, err := service.CountInFolders(context.Background(), 1, []string{"folder1"}, &user.SignedInUser{})
+		require.NoError(t, err)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(dashs, nil).Once()
+		result, err := service.CountInFolders(ctx, 1, []string{"folder1"}, &user.SignedInUser{})
+		require.NoError(t, err)
+		require.Equal(t, result, int64(2))
+	})
+}
+
+func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
+	ctx := context.Background()
+	k8sCliMock := new(client.MockK8sHandler)
+	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+	query := &dashboards.FindPersistedDashboardsQuery{
+		OrgId: 1,
+	}
+	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
+		Results: &resource.ResourceTable{
+			Columns: []*resource.ResourceTableColumnDefinition{
+				{
+					Name: "title",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: "folder",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+			},
+			Rows: []*resource.ResourceTableRow{
+				{
+					Key: &resource.ResourceKey{
+						Name:     "uid",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 1"),
+						[]byte("folder1"),
+					},
+				},
+			},
+		},
+		TotalHits: 1,
+	}, nil)
+	res, err := service.searchDashboardsThroughK8s(ctx, query)
+	require.NoError(t, err)
+	assert.Equal(t, []*dashboards.Dashboard{
+		{
+			UID:       "uid",
+			OrgID:     1,
+			FolderUID: "folder1",
+			Title:     "Dashboard 1",
+			Slug:      "dashboard-1", // should be slugified
+		},
+	}, res)
+	assert.Equal(t, "dash-db", query.Type) // query type should be added
+}
+
+func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
+	ctx := context.Background()
+	k8sCliMock := new(client.MockK8sHandler)
+	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+	query := &dashboards.FindPersistedDashboardsQuery{
+		OrgId: 1,
+	}
+	provisioningTimestamp := int64(1234567)
+	dashboardUnstructuredProvisioned := unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name": "uid",
+			"annotations": map[string]any{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
+				utils.AnnoKeyManagerIdentity: "test",
+				utils.AnnoKeySourceChecksum:  "hash",
+				utils.AnnoKeySourcePath:      "path/to/file",
+				utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
+			},
+		},
+		"spec": map[string]any{},
+	}}
+	dashboardUnstructuredNotProvisioned := unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name": "uid2",
+		},
+		"spec": map[string]any{},
+	}}
+	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
+		Results: &resource.ResourceTable{
+			Columns: []*resource.ResourceTableColumnDefinition{
+				{
+					Name: "title",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: "folder",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+			},
+			Rows: []*resource.ResourceTableRow{
+				{
+					Key: &resource.ResourceKey{
+						Name:     "uid",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 1"),
+						[]byte("folder1"),
+					},
+				},
+				{
+					Key: &resource.ResourceKey{
+						Name:     "uid2",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 2"),
+						[]byte("folder2"),
+					},
+				},
+			},
+		},
+		TotalHits: 1,
+	}, nil)
+	k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructuredProvisioned, nil).Once()
+	k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructuredNotProvisioned, nil).Once()
+	res, err := service.searchProvisionedDashboardsThroughK8s(ctx, query)
+	require.NoError(t, err)
+	assert.Equal(t, []*dashboardProvisioningWithUID{
+		{
+			DashboardUID: "uid",
+			DashboardProvisioning: dashboards.DashboardProvisioning{
+				Name:       "test",
+				ExternalID: "path/to/file",
+				CheckSum:   "hash",
+				Updated:    provisioningTimestamp,
+			},
+		},
+	}, res) // only should return the one provisioned dashboard
+	assert.Equal(t, "dash-db", query.Type) // query type should be added as dashboards only
+}
+
 func TestLegacySaveCommandToUnstructured(t *testing.T) {
 	namespace := "test-namespace"
 	t.Run("successfully converts save command to unstructured", func(t *testing.T) {
 		cmd := &dashboards.SaveDashboardCommand{
+			FolderUID: "folder-uid",
+			Message:   "saving this dashboard",
 			Dashboard: simplejson.NewFromAny(map[string]any{"test": "test", "title": "testing slugify", "uid": "test-uid"}),
 		}
 
@@ -1845,6 +2103,7 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 		assert.Equal(t, "test-namespace", result.GetNamespace())
 		spec := result.Object["spec"].(map[string]any)
 		assert.Equal(t, spec["version"], 1)
+		assert.Equal(t, result.GetAnnotations(), map[string]string{utils.AnnoKeyFolder: "folder-uid", utils.AnnoKeyMessage: "saving this dashboard"})
 	})
 
 	t.Run("should increase version when called", func(t *testing.T) {
@@ -1856,19 +2115,7 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 		assert.NotNil(t, result)
 		spec := result.Object["spec"].(map[string]any)
 		assert.Equal(t, spec["version"], float64(2))
-	})
-}
-
-func TestToUID(t *testing.T) {
-	t.Run("parses valid UID", func(t *testing.T) {
-		rawIdentifier := "user:uid-value"
-		result := toUID(rawIdentifier)
-		assert.Equal(t, "uid-value", result)
-	})
-
-	t.Run("returns empty string for invalid identifier", func(t *testing.T) {
-		rawIdentifier := "invalid-uid"
-		result := toUID(rawIdentifier)
-		assert.Equal(t, "", result)
+		// folder annotation should not be set if not inside a folder
+		assert.Equal(t, result.GetAnnotations(), map[string]string(nil))
 	})
 }

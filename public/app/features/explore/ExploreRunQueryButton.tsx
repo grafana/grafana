@@ -3,8 +3,8 @@ import { ConnectedProps, connect } from 'react-redux';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Button, ButtonVariant, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
-import { t } from '@grafana/ui/src/utils/i18n';
+import { Button, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
 
 import { changeDatasource } from './state/datasource';
@@ -22,13 +22,12 @@ interface ExploreRunQueryButtonProps {
   queries: DataQuery[];
   rootDatasourceUid?: string;
   disabled?: boolean;
-  variant?: ButtonVariant;
   onClick?: () => void;
 }
 
 export type Props = ConnectedProps<typeof connector> & ExploreRunQueryButtonProps;
 
-/* 
+/*
 This component does not validate datasources before running them. Root datasource validation should happen outside this component and can pass in an undefined if invalid
 If query level validation is done and a query datasource is invalid, pass in disabled = true
 */
@@ -37,7 +36,6 @@ export function ExploreRunQueryButton({
   rootDatasourceUid,
   queries,
   disabled = false,
-  variant = 'secondary',
   onClick,
   changeDatasource,
   setQueries,
@@ -84,7 +82,7 @@ export function ExploreRunQueryButton({
       const buttonText = runQueryText(exploreId, rootDatasourceUid);
       return (
         <Button
-          variant={variant}
+          variant={'primary'}
           aria-label={buttonText.translation}
           onClick={() => {
             runQuery(exploreId);

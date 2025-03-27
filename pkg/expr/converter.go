@@ -23,7 +23,6 @@ type ResultConverter struct {
 func (c *ResultConverter) Convert(ctx context.Context,
 	datasourceType string,
 	frames data.Frames,
-	allowLongFrames bool,
 ) (string, mathexp.Results, error) {
 	if len(frames) == 0 {
 		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
@@ -80,7 +79,7 @@ func (c *ResultConverter) Convert(ctx context.Context,
 			continue
 		}
 
-		if schema.Type != data.TimeSeriesTypeWide && !allowLongFrames {
+		if schema.Type != data.TimeSeriesTypeWide {
 			return "", mathexp.Results{}, fmt.Errorf("%w but got type %s (input refid)", ErrSeriesMustBeWide, schema.Type)
 		}
 		filtered = append(filtered, frame)

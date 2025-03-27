@@ -1,0 +1,55 @@
+name: Lint Frontend
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+
+jobs:
+  verify-i18n:
+    name: Verify i18n
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'
+    - run: yarn install --immutable --check-cache
+    - run: |
+        extract_error_message='::error::Extraction failed. Make sure that you have no dynamic translation phrases, such as "t(`preferences.theme.{themeID}`, themeName)" and that no translation key is used twice. Search the output for '[warning]' to find the offending file.'
+        make i18n-extract || (echo "${extract_error_message}" && false)
+    - run: |
+        uncommited_error_message="::error::Translation extraction has not been committed. Please run 'make i18n-extract', commit the changes and push again."
+        file_diff=$(git diff --dirstat public/locales)
+        if [ -n "$file_diff" ]; then
+            echo $file_diff
+            echo "${uncommited_error_message}"
+            exit 1
+        fi
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'
+    - run: yarn install --immutable --check-cache
+    - run: yarn run prettier:check
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'
+    - run: yarn install --immutable --check-cache
+    - run: yarn run typecheck

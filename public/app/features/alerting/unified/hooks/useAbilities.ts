@@ -20,8 +20,9 @@ import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
 import { getRulesSourceName } from '../utils/datasource';
+import { getGroupOriginName } from '../utils/groupIdentifier';
 import { isAdmin } from '../utils/misc';
-import { isFederatedRuleGroup, isGrafanaRecordingRule, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';
+import { isFederatedRuleGroup, isPluginProvidedRule, rulerRuleType } from '../utils/rules';
 
 import { useIsRuleEditable } from './useIsRuleEditable';
 
@@ -86,6 +87,7 @@ export enum AlertRuleAction {
   Silence = 'silence-alert-rule',
   ModifyExport = 'modify-export-rule',
   Pause = 'pause-alert-rule',
+  Restore = 'restore-alert-rule',
 }
 
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
@@ -204,9 +206,10 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   const canSilence = useCanSilence(rule.rulerRule);
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
-    const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+    const isProvisioned =
+      rulerRuleType.grafana.rule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
     const isFederated = isFederatedRuleGroup(rule.group);
-    const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule.rulerRule);
+    const isGrafanaManagedAlertRule = rulerRuleType.grafana.rule(rule.rulerRule);
     const isPluginProvided = isPluginProvidedRule(rule.rulerRule);
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
@@ -230,6 +233,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
       [AlertRuleAction.Silence]: canSilence,
       [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
       [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
+      [AlertRuleAction.Restore]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
     };
 
     return abilities;
@@ -242,17 +246,17 @@ export function useAllRulerRuleAbilities(
   rule: RulerRuleDTO | undefined,
   groupIdentifier: RuleGroupIdentifierV2
 ): Abilities<AlertRuleAction> {
-  const rulesSourceName = groupIdentifier.rulesSource.name;
+  const rulesSourceName = getGroupOriginName(groupIdentifier);
 
   const { isEditable, isRemovable, isRulerAvailable = false, loading } = useIsRuleEditable(rulesSourceName, rule);
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
   const canSilence = useCanSilence(rule);
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
-    const isProvisioned = isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance);
+    const isProvisioned = rulerRuleType.grafana.rule(rule) && Boolean(rule.grafana_alert.provenance);
     // const isFederated = isFederatedRuleGroup();
     const isFederated = false;
-    const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule);
+    const isGrafanaManagedAlertRule = rulerRuleType.grafana.rule(rule);
     const isPluginProvided = isPluginProvidedRule(rule);
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
@@ -276,6 +280,7 @@ export function useAllRulerRuleAbilities(
       [AlertRuleAction.Silence]: canSilence,
       [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
       [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
+      [AlertRuleAction.Restore]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
     };
 
     return abilities;
@@ -437,15 +442,14 @@ const { useGetGrafanaAlertingConfigurationStatusQuery } = alertmanagerApi;
  * 2. the admin has configured to only send instances to external AMs
  */
 function useCanSilence(rule?: RulerRuleDTO): [boolean, boolean] {
-  const folderUID = isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
+  const folderUID = rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.namespace_uid : undefined;
   const { loading: folderIsLoading, folder } = useFolder(folderUID);
 
-  const isGrafanaManagedRule = rule && isGrafanaRulerRule(rule);
-  const isGrafanaRecording = rule && isGrafanaRecordingRule(rule);
+  const isGrafanaManagedRule = rule && rulerRuleType.grafana.rule(rule);
+  const isGrafanaRecording = rulerRuleType.grafana.recordingRule(rule);
 
-  const { currentData: amConfigStatus, isLoading } = useGetGrafanaAlertingConfigurationStatusQuery(undefined, {
-    skip: !isGrafanaManagedRule || !rule,
-  });
+  const silenceSupported = useGrafanaRulesSilenceSupport();
+  const canSilenceInFolder = useCanSilenceInFolder(folderUID);
 
   if (!rule) {
     return [false, false];
@@ -453,24 +457,38 @@ function useCanSilence(rule?: RulerRuleDTO): [boolean, boolean] {
 
   // we don't support silencing when the rule is not a Grafana managed alerting rule
   // we simply don't know what Alertmanager the ruler is sending alerts to
-  if (!isGrafanaManagedRule || isGrafanaRecording || isLoading || folderIsLoading || !folder) {
+  if (!isGrafanaManagedRule || isGrafanaRecording || folderIsLoading || !folder) {
     return [false, false];
   }
+
+  return [silenceSupported, canSilenceInFolder];
+}
+
+function useCanSilenceInFolder(folderUID?: string) {
+  const folderPermissions = useFolderPermissions(folderUID);
+
+  const hasFolderSilencePermission = folderPermissions[AccessControlAction.AlertingSilenceCreate] ?? false;
+  const hasGlobalSilencePermission = ctx.hasPermission(AccessControlAction.AlertingInstanceCreate);
+
+  // User is permitted to silence if they either have the "global" permissions of "AlertingInstanceCreate",
+  // or the folder specific access control of "AlertingSilenceCreate"
+  const allowedToSilence = hasGlobalSilencePermission || hasFolderSilencePermission;
+  return allowedToSilence;
+}
+
+function useGrafanaRulesSilenceSupport() {
+  const { currentData: amConfigStatus, isLoading } = useGetGrafanaAlertingConfigurationStatusQuery(undefined);
 
   const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
   const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;
   const silenceSupported = !interactsOnlyWithExternalAMs || interactsWithAll;
 
-  const { accessControl = {} } = folder;
+  return isLoading ? false : silenceSupported;
+}
 
-  // User is permitted to silence if they either have the "global" permissions of "AlertingInstanceCreate",
-  // or the folder specific access control of "AlertingSilenceCreate"
-  const allowedToSilence = Boolean(
-    ctx.hasPermission(AccessControlAction.AlertingInstanceCreate) ||
-      accessControl[AccessControlAction.AlertingSilenceCreate]
-  );
-
-  return [silenceSupported, allowedToSilence];
+function useFolderPermissions(folderUID?: string): Record<string, boolean> {
+  const { folder } = useFolder(folderUID);
+  return folder?.accessControl ?? {};
 }
 
 // just a convenient function

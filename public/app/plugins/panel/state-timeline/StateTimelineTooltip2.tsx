@@ -68,12 +68,16 @@ export const StateTimelineTooltip2 = ({
 
   let footer: ReactNode;
 
-  if (isPinned && seriesIdx != null) {
+  if (seriesIdx != null) {
     const field = series.fields[seriesIdx];
-    const dataIdx = dataIdxs[seriesIdx]!;
-    const actions = getFieldActions(series, field, replaceVariables!, dataIdx);
+    const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
-    footer = <VizTooltipFooter dataLinks={dataLinks} annotate={annotate} actions={actions} />;
+    if (isPinned || hasOneClickLink) {
+      const dataIdx = dataIdxs[seriesIdx]!;
+      const actions = getFieldActions(series, field, replaceVariables!, dataIdx);
+
+      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
+    }
   }
 
   const headerItem: VizTooltipItem = {

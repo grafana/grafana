@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow } from '@grafana/experimental';
+import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { TextArea, Input } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';

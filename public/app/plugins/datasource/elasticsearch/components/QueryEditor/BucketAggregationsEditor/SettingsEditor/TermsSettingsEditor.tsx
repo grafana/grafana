@@ -7,11 +7,10 @@ import { InlineField, Select, Input } from '@grafana/ui';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { MetricAggregation, Percentiles, ExtendedStatMetaType, ExtendedStats, Terms } from '../../../../types';
 import { describeMetric } from '../../../../utils';
-import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
 import { useQuery } from '../../ElasticsearchQueryContext';
 import { isPipelineAggregation } from '../../MetricAggregationsEditor/aggregations';
 import { changeBucketAggregationSetting } from '../state/actions';
-import { bucketAggregationConfig, orderByOptions, orderOptions, sizeOptions } from '../utils';
+import { bucketAggregationConfig, orderByOptions, orderOptions } from '../utils';
 
 import { inlineFieldProps } from '.';
 
@@ -23,6 +22,12 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
   const { metrics } = useQuery();
   const orderBy = createOrderByOptions(metrics);
   const { current: baseId } = useRef(uniqueId('es-terms-'));
+  let size = bucketAgg.settings?.size || bucketAggregationConfig.terms.defaultSettings?.size;
+  if (!size || size === '') {
+    size = '10';
+  } else if (size === '0') {
+    size = '500';
+  }
 
   const dispatch = useDispatch();
 
@@ -40,16 +45,12 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
       </InlineField>
 
       <InlineField label="Size" {...inlineFieldProps}>
-        <Select
-          inputId={`${baseId}-size`}
-          // TODO: isValidNewOption should only allow numbers & template variables
-          {...useCreatableSelectPersistedBehaviour({
-            options: sizeOptions,
-            value: bucketAgg.settings?.size || bucketAggregationConfig.terms.defaultSettings?.size,
-            onChange({ value }) {
-              dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'size', newValue: value }));
-            },
-          })}
+        <Input
+          id={`${baseId}-size`}
+          onBlur={(e) =>
+            dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'size', newValue: e.target.value }))
+          }
+          defaultValue={size}
         />
       </InlineField>
 

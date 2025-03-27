@@ -2,9 +2,11 @@ package kerberos
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -22,12 +24,37 @@ type KerberosAuth struct {
 	CredentialCache           string
 	CredentialCacheLookupFile string
 	ConfigFilePath            string
-	UDPConnectionLimit        string
+	UDPConnectionLimit        int
 	EnableDNSLookupKDC        string
 }
 
 func GetKerberosSettings(settings backend.DataSourceInstanceSettings) (kerberosAuth KerberosAuth, err error) {
+	kerberosAuth = KerberosAuth{
+		KeytabFilePath:            "",
+		CredentialCache:           "",
+		CredentialCacheLookupFile: "",
+		ConfigFilePath:            "",
+		UDPConnectionLimit:        1,
+		EnableDNSLookupKDC:        "",
+	}
+
 	err = json.Unmarshal(settings.JSONData, &kerberosAuth)
+	var unmarshalErr *json.UnmarshalTypeError
+	if err != nil && errors.As(err, &unmarshalErr) {
+		stringMap := map[string]any{}
+		err = json.Unmarshal(settings.JSONData, &stringMap)
+		if err != nil {
+			return kerberosAuth, err
+		}
+
+		if stringMap["UDPConnectionLimit"] != "" {
+			udpConnLimit, err := strconv.Atoi(stringMap["UDPConnectionLimit"].(string))
+			if err != nil {
+				return kerberosAuth, err
+			}
+			kerberosAuth.UDPConnectionLimit = udpConnLimit
+		}
+	}
 	return kerberosAuth, err
 }
 
@@ -65,8 +92,8 @@ func Krb5ParseAuthCredentials(host string, port string, db string, user string, 
 		return ""
 	}
 
-	if kerberosAuth.UDPConnectionLimit != "" {
-		krb5DriverParams += "krb5-udppreferencelimit=" + kerberosAuth.UDPConnectionLimit + ";"
+	if kerberosAuth.UDPConnectionLimit != 1 {
+		krb5DriverParams += fmt.Sprintf("krb5-udppreferencelimit=%d;", kerberosAuth.UDPConnectionLimit)
 	}
 
 	if kerberosAuth.EnableDNSLookupKDC != "" {

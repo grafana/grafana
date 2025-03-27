@@ -1,4 +1,4 @@
-import { DataSourceApi } from '@grafana/data';
+import { DataSourceApi, parseDuration } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { generateId } from './SearchTraceQLEditor/TagsInput';
@@ -98,4 +98,35 @@ export const migrateFromSearchToTraceQLSearch = (query: TempoQuery) => {
     refId: query.refId,
   };
   return migratedQuery;
+};
+
+export const stepToNanos = (step?: string) => {
+  if (!step) {
+    return 0;
+  }
+
+  const match = step.match(/(\d+)(.+)/);
+
+  const rawLength = match?.[1];
+  const unit = match?.[2];
+
+  if (rawLength) {
+    if (unit === 'ns') {
+      return parseInt(rawLength, 10);
+    }
+    if (unit === 'µs') {
+      return parseInt(rawLength, 10) * 1000;
+    }
+    if (unit === 'ms') {
+      return parseInt(rawLength, 10) * 1000000;
+    }
+    const duration = parseDuration(step);
+    return (
+      (duration.seconds || 0) * 1000000000 +
+      (duration.minutes || 0) * 60000000000 +
+      (duration.hours || 0) * 3600000000000
+    );
+  }
+
+  return 0;
 };

@@ -127,7 +127,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		2: {AlertmanagerConfiguration: brokenConfig, OrgID: orgWithBadConfig},
 	})
 
-	orgs, err := mam.orgStore.GetOrgs(ctx)
+	orgs, err := mam.orgStore.FetchOrgIds(ctx)
 	require.NoError(t, err)
 	// No successfully applied configurations should be found at first.
 	{

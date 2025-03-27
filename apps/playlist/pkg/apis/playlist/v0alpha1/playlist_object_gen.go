@@ -16,10 +16,10 @@ import (
 
 // +k8s:openapi-gen=true
 type Playlist struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata"`
-	Spec              PlaylistSpec   `json:"spec"`
-	PlaylistStatus    PlaylistStatus `json:"status"`
+	metav1.TypeMeta   `json:",inline" yaml:",inline"`
+	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
+	Spec              PlaylistSpec   `json:"spec" yaml:"spec"`
+	PlaylistStatus    PlaylistStatus `json:"status" yaml:"status"`
 }
 
 func (o *Playlist) GetSpec() any {
@@ -224,9 +224,9 @@ var _ resource.Object = &Playlist{}
 
 // +k8s:openapi-gen=true
 type PlaylistList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata"`
-	Items           []Playlist `json:"items"`
+	metav1.TypeMeta `json:",inline" yaml:",inline"`
+	metav1.ListMeta `json:"metadata" yaml:"metadata"`
+	Items           []Playlist `json:"items" yaml:"items"`
 }
 
 func (o *PlaylistList) DeepCopyObject() runtime.Object {

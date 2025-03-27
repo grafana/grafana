@@ -34,7 +34,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 
 		query := dashver.GetDashboardVersionQuery{
 			DashboardID: savedDash.ID,
-			Version:     savedDash.Version,
+			Version:     int64(savedDash.Version),
 			OrgID:       1,
 		}
 
@@ -60,7 +60,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	t.Run("Attempt to get a version that doesn't exist", func(t *testing.T) {
 		query := dashver.GetDashboardVersionQuery{
 			DashboardID: int64(999),
-			Version:     123,
+			Version:     int64(123),
 			OrgID:       1,
 		}
 

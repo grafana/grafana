@@ -1,24 +1,27 @@
 import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
-import { usePluginContext } from '@grafana/data';
 import {
-  UsePluginComponentOptions,
-  UsePluginComponentsResult,
-} from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
+  type ComponentTypeWithExtensionMeta,
+  type PluginExtensionComponentMeta,
+  PluginExtensionTypes,
+  usePluginContext,
+} from '@grafana/data';
+import { UsePluginComponentsOptions, UsePluginComponentsResult } from '@grafana/runtime';
 
 import { useAddedComponentsRegistry } from './ExtensionRegistriesContext';
 import * as errors from './errors';
 import { log } from './logs/log';
+import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { getExtensionPointPluginDependencies, isGrafanaDevMode } from './utils';
+import { generateExtensionId, getExtensionPointPluginDependencies, isGrafanaDevMode } from './utils';
 import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginComponents<Props extends object = {}>({
   limitPerPlugin,
   extensionPointId,
-}: UsePluginComponentOptions): UsePluginComponentsResult<Props> {
+}: UsePluginComponentsOptions): UsePluginComponentsResult<Props> {
   const registry = useAddedComponentsRegistry();
   const registryState = useObservable(registry.asObservable());
   const pluginContext = usePluginContext();
@@ -27,7 +30,7 @@ export function usePluginComponents<Props extends object = {}>({
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
     const enableRestrictions = isGrafanaDevMode() && pluginContext;
-    const components: Array<React.ComponentType<Props>> = [];
+    const components: Array<ComponentTypeWithExtensionMeta<Props>> = [];
     const extensionsByPlugin: Record<string, number> = {};
     const pluginId = pluginContext?.meta.id ?? '';
     const pointLog = log.child({
@@ -66,7 +69,12 @@ export function usePluginComponents<Props extends object = {}>({
         extensionsByPlugin[pluginId] = 0;
       }
 
-      components.push(registryItem.component as React.ComponentType<Props>);
+      const component = createComponentWithMeta<Props>(
+        registryItem as AddedComponentRegistryItem<Props>,
+        extensionPointId
+      );
+
+      components.push(component);
       extensionsByPlugin[pluginId] += 1;
     }
 
@@ -75,4 +83,29 @@ export function usePluginComponents<Props extends object = {}>({
       components,
     };
   }, [extensionPointId, limitPerPlugin, pluginContext, registryState, isLoadingAppPlugins]);
+}
+
+// exported so it can be used in tests
+export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
+  registryItem: AddedComponentRegistryItem<Props>,
+  extensionPointId: string
+): ComponentTypeWithExtensionMeta<Props> {
+  const { component: Component, ...config } = registryItem;
+  function ComponentWithMeta(props: Props) {
+    return <Component {...props} />;
+  }
+
+  ComponentWithMeta.displayName = Component.displayName;
+  ComponentWithMeta.defaultProps = Component.defaultProps;
+  ComponentWithMeta.propTypes = Component.propTypes;
+  ComponentWithMeta.contextTypes = Component.contextTypes;
+  ComponentWithMeta.meta = {
+    pluginId: config.pluginId,
+    title: config.title ?? '',
+    description: config.description ?? '',
+    id: generateExtensionId(config.pluginId, extensionPointId, config.title),
+    type: PluginExtensionTypes.component,
+  } satisfies PluginExtensionComponentMeta;
+
+  return ComponentWithMeta;
 }

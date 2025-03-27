@@ -11,10 +11,7 @@ export const usePluginConfig = (plugin?: CatalogPlugin) => {
       return null;
     }
 
-    const isPluginInstalled =
-      config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall
-        ? plugin.isFullyInstalled
-        : plugin.isInstalled;
+    const isPluginInstalled = config.pluginAdminExternalManageEnabled ? plugin.isFullyInstalled : plugin.isInstalled;
 
     if (isPluginInstalled && !plugin.isDisabled) {
       return loadPlugin(plugin.id);

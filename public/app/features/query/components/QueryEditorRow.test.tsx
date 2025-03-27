@@ -354,6 +354,7 @@ describe('QueryEditorRow', () => {
     onChange: jest.fn(),
     onRemoveQuery: jest.fn(),
     index: 0,
+    range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   });
   it('should display error message in corresponding panel', async () => {
     const data = {

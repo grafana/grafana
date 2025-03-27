@@ -29,6 +29,10 @@ export interface TempoQuery extends common.DataQuery {
    */
   maxDuration?: string;
   /**
+   * For metric queries, whether to run instant or range queries
+   */
+  metricsQueryType?: MetricsQueryType;
+  /**
    * @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   minDuration?: string;
@@ -76,6 +80,11 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
 };
 
 export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
+
+export enum MetricsQueryType {
+  Instant = 'instant',
+  Range = 'range',
+}
 
 /**
  * The state of the TraceQL streaming search query

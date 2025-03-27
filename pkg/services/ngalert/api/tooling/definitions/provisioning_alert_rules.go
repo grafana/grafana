@@ -308,6 +308,7 @@ type AlertRuleNotificationSettingsExport struct {
 
 // Record is the provisioned export of models.Record.
 type AlertRuleRecordExport struct {
-	Metric string `json:"metric" yaml:"metric" hcl:"metric"`
-	From   string `json:"from" yaml:"from" hcl:"from"`
+	Metric              string  `json:"metric" yaml:"metric" hcl:"metric"`
+	From                string  `json:"from" yaml:"from" hcl:"from"`
+	TargetDatasourceUID *string `json:"targetDatasourceUid,omitempty" yaml:"targetDatasourceUid,omitempty" hcl:"target_datasource_uid,optional"`
 }

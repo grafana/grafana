@@ -100,7 +100,7 @@ func TestIntegrationPlugins(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		testCases := []testCase{
 			{
-				desc:        "should return all loaded core and bundled plugins",
+				desc:        "should return all loaded core plugins",
 				url:         "http://%s/api/plugins",
 				expStatus:   http.StatusOK,
 				expRespPath: "expectedListResp.json",

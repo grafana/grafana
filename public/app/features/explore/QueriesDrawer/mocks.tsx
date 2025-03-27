@@ -8,13 +8,12 @@ type Props = {
 } & PropsWithChildren;
 
 export function QueriesDrawerContextProviderMock(props: Props) {
-  const [selectedTab, setSelectedTab] = useState<Tabs>(Tabs.QueryLibrary);
+  const [selectedTab, setSelectedTab] = useState<Tabs>(Tabs.RichHistory);
   const [drawerOpened, setDrawerOpened] = useState<boolean>(false);
 
   return (
     <QueriesDrawerContext.Provider
       value={{
-        queryLibraryAvailable: props.queryLibraryAvailable || false,
         selectedTab,
         setSelectedTab,
         drawerOpened,

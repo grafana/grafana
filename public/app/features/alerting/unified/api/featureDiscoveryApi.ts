@@ -12,6 +12,7 @@ import { discoverAlertmanagerFeatures, discoverFeaturesByUid } from './buildInfo
 
 export const GRAFANA_RULER_CONFIG: RulerDataSourceConfig = {
   dataSourceName: 'grafana',
+  dataSourceUid: 'grafana',
   apiVersion: 'legacy',
 };
 
@@ -39,7 +40,7 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
       queryFn: async (rulesSourceIdentifier) => {
         const dataSourceUID = getDataSourceUID(rulesSourceIdentifier);
         if (!dataSourceUID) {
-          return { error: new Error(`Unable to find data source for ${rulesSourceIdentifier}`) };
+          return { error: new Error(`Unable to find data source for ${JSON.stringify(rulesSourceIdentifier)}`) };
         }
 
         if (dataSourceUID === GrafanaRulesSourceSymbol) {
@@ -63,6 +64,7 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
         const rulerConfig = features.features.rulerApiEnabled
           ? ({
               dataSourceName: dataSourceSettings.name,
+              dataSourceUid: dataSourceSettings.uid,
               apiVersion: features.application === PromApplication.Cortex ? 'legacy' : 'config',
             } satisfies RulerDataSourceConfig)
           : undefined;

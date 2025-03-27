@@ -124,11 +124,11 @@ func doRequestWithPagination(ctx context.Context, r *http.Request, dsInfo dataso
 	return d, nil
 }
 
-func traceReq(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo, _ *http.Request, target string) trace.Span {
+func traceReq(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo, _ *http.Request, target string, timeRange backend.TimeRange) trace.Span {
 	_, span := tracing.DefaultTracer().Start(ctx, "cloudMonitoring query", trace.WithAttributes(
 		attribute.String("target", target),
-		attribute.String("from", req.Queries[0].TimeRange.From.String()),
-		attribute.String("until", req.Queries[0].TimeRange.To.String()),
+		attribute.String("from", timeRange.From.String()),
+		attribute.String("until", timeRange.To.String()),
 		attribute.Int64("datasource_id", dsInfo.id),
 		attribute.Int64("org_id", req.PluginContext.OrgID),
 	))
@@ -137,7 +137,7 @@ func traceReq(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasou
 }
 
 func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, projectName string, params url.Values, body map[string]any, logger log.Logger) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, projectName string, params url.Values, body map[string]any, logger log.Logger, timeRange backend.TimeRange) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, projectName)
 	if err != nil {
@@ -154,7 +154,7 @@ func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	span := traceReq(ctx, req, dsInfo, r, params.Encode())
+	span := traceReq(ctx, req, dsInfo, r, params.Encode(), timeRange)
 	defer span.End()
 
 	d, err := doRequestWithPagination(ctx, r, dsInfo, params, body, logger)

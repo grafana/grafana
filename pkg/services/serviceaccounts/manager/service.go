@@ -7,12 +7,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -39,6 +40,8 @@ type ServiceAccountsService struct {
 	log               log.Logger
 	backgroundLog     log.Logger
 	secretScanService secretscan.Checker
+	orgService        org.Service
+	serverLock        *serverlock.ServerLockService
 
 	secretScanEnabled  bool
 	secretScanInterval time.Duration
@@ -54,6 +57,7 @@ func ProvideServiceAccountsService(
 	orgService org.Service,
 	acService accesscontrol.Service,
 	permissions accesscontrol.ServiceAccountPermissionsService,
+	serverLockService *serverlock.ServerLockService,
 ) (*ServiceAccountsService, error) {
 	serviceAccountsStore := database.ProvideServiceAccountsStore(
 		cfg,
@@ -71,6 +75,8 @@ func ProvideServiceAccountsService(
 		store:         serviceAccountsStore,
 		log:           log.New("serviceaccounts"),
 		backgroundLog: log.New("serviceaccounts.background"),
+		orgService:    orgService,
+		serverLock:    serverLockService,
 	}
 
 	if err := RegisterRoles(acService); err != nil {
@@ -100,6 +106,17 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 
 	if _, err := sa.getUsageMetrics(ctx); err != nil {
 		sa.log.Warn("Failed to get usage metrics", "error", err.Error())
+	}
+
+	err := sa.serverLock.LockAndExecute(ctx, "migrate API keys to service accounts", time.Minute*30, func(context.Context) {
+		err := sa.migrateAPIKeysForAllOrgs(ctx)
+		if err != nil {
+			sa.log.Warn("Failed to migrate API keys", "error", err.Error())
+		}
+	})
+
+	if err != nil {
+		sa.log.Error("Failed to lock and execute the migration of API keys to service accounts", "error", err)
 	}
 
 	updateStatsTicker := time.NewTicker(metricsCollectionInterval)
@@ -248,6 +265,7 @@ func (sa *ServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgI
 	if err := validServiceAccountID(serviceAccountID); err != nil {
 		return nil, err
 	}
+
 	return sa.store.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
 }
 
@@ -297,6 +315,51 @@ func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Co
 		return nil, err
 	}
 	return sa.store.MigrateApiKeysToServiceAccounts(ctx, orgID)
+}
+
+func (sa *ServiceAccountsService) migrateAPIKeysForAllOrgs(ctx context.Context) error {
+	sa.log.Debug("Starting to migrate API keys to service accounts")
+
+	total := 0
+	migrated := 0
+	failed := 0
+	errorsTotal := 0
+
+	defer func() {
+		if total > 0 || errorsTotal > 0 {
+			sa.log.Info("API key migration finished", "total_keys", total, "successful_keys", migrated, "failed_keys", failed, "errors", errorsTotal)
+		}
+		setAPIKeyMigrationStats(total, migrated, failed)
+	}()
+
+	orgs, err := sa.orgService.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		return err
+	}
+
+	for _, o := range orgs {
+		sa.log.Debug("Migrating API keys for an org", "orgId", o.ID)
+
+		result, err := sa.store.MigrateApiKeysToServiceAccounts(ctx, o.ID)
+		if err != nil {
+			sa.log.Warn("Failed to migrate API keys", "error", err.Error(), "orgId", o.ID)
+			errorsTotal += 1
+			continue
+		}
+		if result.Failed > 0 {
+			sa.log.Warn("Some API keys failed to be migrated", "total_keys", result.Total, "failed_keys", result.Failed, "orgId", o.ID)
+		} else if result.Total > 0 {
+			sa.log.Info("API key migration was successful", "orgId", o.ID, "total_keys", result.Total)
+		} else {
+			sa.log.Debug("No API keys found to migrate", "orgId", o.ID)
+		}
+
+		total += result.Total
+		migrated += result.Migrated
+		failed += result.Failed
+	}
+
+	return nil
 }
 
 func validOrgID(orgID int64) error {

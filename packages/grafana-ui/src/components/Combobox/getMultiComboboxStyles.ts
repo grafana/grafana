@@ -9,18 +9,34 @@ export const getMultiComboboxStyles = (
   theme: GrafanaTheme2,
   isOpen: boolean,
   invalid?: boolean,
-  disabled?: boolean
+  disabled?: boolean,
+  width?: number | 'auto',
+  minWidth?: number,
+  maxWidth?: number,
+  isClearable?: boolean
 ) => {
   const inputStyles = getInputStyles({ theme, invalid });
   const focusStyles = getFocusStyles(theme);
 
+  const wrapperWidth = width && width !== 'auto' ? theme.spacing(width) : '100%';
+  const wrapperMinWidth = minWidth ? theme.spacing(minWidth) : '';
+  const wrapperMaxWidth = maxWidth ? theme.spacing(maxWidth) : '';
+
   return {
+    container: css({
+      width: width === 'auto' ? 'auto' : wrapperWidth,
+      minWidth: wrapperMinWidth,
+      maxWidth: wrapperMaxWidth,
+      display: width === 'auto' ? 'inline-block' : 'block',
+    }), // wraps everything
     wrapper: cx(
       inputStyles.input,
       css({
         display: 'flex',
+        width: '100%',
         gap: theme.spacing(0.5),
         padding: theme.spacing(0.5),
+        paddingRight: isClearable ? theme.spacing(5) : 28, // Account for suffix
         '&:focus-within': {
           ...focusStyles,
         },
@@ -31,20 +47,18 @@ export const getMultiComboboxStyles = (
       outline: 'none',
       background: 'transparent',
       flexGrow: 1,
-      minWidth: '0',
+      maxWidth: '100%',
+      minWidth: 40, // This is a bit arbitrary, but is used to leave some space for clicking. This will override the minWidth property
       '&::placeholder': {
         color: theme.colors.text.disabled,
       },
       '&:focus': {
         outline: 'none',
+        cursor: 'text',
       },
+      cursor: 'pointer',
     }),
-    inputClosed: css({
-      width: 0,
-      flexGrow: 0,
-      paddingLeft: 0,
-      paddingRight: 0,
-    }),
+
     pillWrapper: css({
       display: 'inline-flex',
       flexWrap: isOpen ? 'wrap' : 'nowrap',

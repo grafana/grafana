@@ -61,9 +61,14 @@ target = all
 protocol = https
 
 [feature_toggles]
-; store folders in k8s
-kubernetesFolders = true
 grafanaAPIServerWithExperimentalAPIs = true
+kubernetesClientDashboardsFolders = true
+
+[unified_storage.folders.folder.grafana.app]
+dualWriterMode = 4
+
+[unified_storage.dashboards.dashboard.grafana.app]
+dualWriterMode = 4
 
 [grafana-apiserver]
 ; use unified storage for k8s apiserver

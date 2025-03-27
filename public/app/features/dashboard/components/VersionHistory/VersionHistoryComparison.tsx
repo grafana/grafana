@@ -43,6 +43,7 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
                 icon="history"
                 onClick={() => {
                   showModal(RevertDashboardModal, {
+                    id: baseInfo.id,
                     version: baseInfo.version,
                     hideModal,
                   });

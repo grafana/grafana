@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 
@@ -25,18 +24,16 @@ type RestoreConnector interface {
 	rest.StorageMetadata
 }
 
-func NewRestoreConnector(unified resource.ResourceClient, gr schema.GroupResource, opts generic.RESTOptions) RestoreConnector {
+func NewRestoreConnector(unified resource.ResourceClient, gr schema.GroupResource) RestoreConnector {
 	return &restoreREST{
 		unified: unified,
 		gr:      gr,
-		opts:    opts,
 	}
 }
 
 type restoreREST struct {
 	unified resource.ResourceClient
 	gr      schema.GroupResource
-	opts    generic.RESTOptions
 }
 
 func (r *restoreREST) New() runtime.Object {

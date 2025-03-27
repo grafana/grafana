@@ -1,14 +1,14 @@
-import { withErrorBoundary } from '@grafana/ui';
-
+import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 
 import { CentralAlertHistoryScene } from './CentralAlertHistoryScene';
 
-const HistoryPage = () => {
+function HistoryPage() {
   return (
     <AlertingPageWrapper navId="alerts-history" isLoading={false}>
       <CentralAlertHistoryScene />
     </AlertingPageWrapper>
   );
-};
-export default withErrorBoundary(HistoryPage, { style: 'page' });
+}
+
+export default withPageErrorBoundary(HistoryPage);

@@ -8,7 +8,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ConfigSubSection } from '@grafana/experimental';
+import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 

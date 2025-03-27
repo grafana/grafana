@@ -17,8 +17,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
@@ -116,7 +119,10 @@ func TestRecordingRule(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
+						r.Update(&Evaluation{
+							rule:        gen.GenerateRef(),
+							folderTitle: util.GenerateShortUID(),
+						})
 					case 2:
 						r.Eval(&Evaluation{
 							scheduledAt: time.Now(),
@@ -152,26 +158,50 @@ func TestRecordingRule(t *testing.T) {
 	})
 }
 
+func TestRecordingRuleIdentifier(t *testing.T) {
+	t.Run("should return correct identifier", func(t *testing.T) {
+		key := models.GenerateRuleKeyWithGroup(1)
+		r := blankRecordingRuleForTests(context.Background())
+		r.key = key
+		require.Equal(t, key, r.Identifier())
+	})
+}
+
 func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 	st := setting.RecordingRuleSettings{
 		Enabled: true,
 	}
-	return newRecordingRule(context.Background(), models.AlertRuleKey{}, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
+	return newRecordingRule(context.Background(), models.AlertRuleKeyWithGroup{}, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
+	t.Run("with prometheus writer", func(t *testing.T) {
+		writeTarget := writer.NewTestRemoteWriteTarget(t)
+		defer writeTarget.Close()
+		writerReg := prometheus.NewPedanticRegistry()
+		writer := setupPrometheusWriter(t, writeTarget, writerReg)
+		testRecordingRule_Integration(t, writeTarget, writer, writerReg, "")
+	})
+	t.Run("with datasource writer", func(t *testing.T) {
+		writeTarget := writer.NewTestRemoteWriteTarget(t)
+		defer writeTarget.Close()
+		writerReg := prometheus.NewPedanticRegistry()
+		writer := setupDatasourceWriter(t, writeTarget, writerReg, "ds-uid")
+		testRecordingRule_Integration(t, writeTarget, writer, writerReg, "ds-uid")
+	})
+}
+
+func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteWriteTarget, writer RecordingWriter, writerReg *prometheus.Registry, dsUID string) {
 	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
-	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil)
-	writeTarget := writer.NewTestRemoteWriteTarget(t)
-	defer writeTarget.Close()
-	writerReg := prometheus.NewPedanticRegistry()
-	sch.recordingWriter = setupWriter(t, writeTarget, writerReg)
+	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
+	sch.recordingWriter = writer
 
 	t.Run("rule that succeeds", func(t *testing.T) {
 		writeTarget.Reset()
 		rule := gen.With(withQueryForHealth("ok")).GenerateRef()
+		rule.Record.TargetDatasourceUID = dsUID
 		ruleStore.PutRule(context.Background(), rule)
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
@@ -483,7 +513,7 @@ func TestRecordingRule_Integration(t *testing.T) {
 		t.Run("status shows evaluation", func(t *testing.T) {
 			status := process.(*recordingRule).Status()
 
-			//TODO: assert "error" to fix test, update to "nodata" in the future
+			// TODO: assert "error" to fix test, update to "nodata" in the future
 			require.Equal(t, "error", status.Health)
 		})
 	})
@@ -530,12 +560,33 @@ func withQueryForHealth(health string) models.AlertRuleMutator {
 	}
 }
 
-func setupWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer) *writer.PrometheusWriter {
+func setupPrometheusWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer) *writer.PrometheusWriter {
 	provider := testClientProvider{}
 	m := metrics.NewNGAlert(reg)
-	wr, err := writer.NewPrometheusWriter(target.ClientSettings(), provider, clock.NewMock(), log.NewNopLogger(), m.GetRemoteWriterMetrics())
+	wr, err := writer.NewPrometheusWriterWithSettings(target.ClientSettings(), provider, clock.NewMock(), log.NewNopLogger(), m.GetRemoteWriterMetrics())
 	require.NoError(t, err)
 	return wr
+}
+
+func setupDatasourceWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer, dsUID string) *writer.DatasourceWriter {
+	provider := testClientProvider{}
+	m := metrics.NewNGAlert(reg)
+
+	dss := &dsfakes.FakeDataSourceService{}
+	p1, _ := dss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		UID:  dsUID,
+		Type: datasources.DS_PROMETHEUS,
+	})
+	p1.URL = target.DatasourceURL()
+
+	cfg := writer.DatasourceWriterConfig{
+		Timeout:               time.Second * 5,
+		DefaultDatasourceUID:  "",
+		RemoteWritePathSuffix: writer.RemoteWriteSuffix,
+	}
+
+	return writer.NewDatasourceWriter(cfg, dss, provider, clock.NewMock(),
+		log.New("test"), m.GetRemoteWriterMetrics())
 }
 
 type testClientProvider struct{}

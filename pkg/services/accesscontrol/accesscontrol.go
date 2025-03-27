@@ -32,7 +32,6 @@ type AccessControl interface {
 }
 
 type Service interface {
-	registry.BackgroundService
 	registry.ProvidesUsageStats
 	// GetRoleByName returns a role by name
 	GetRoleByName(ctx context.Context, orgID int64, roleName string) (*RoleDTO, error)
@@ -59,6 +58,8 @@ type Service interface {
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 	// SyncUserRoles adds provided roles to user
 	SyncUserRoles(ctx context.Context, orgID int64, cmd SyncUserRolesCommand) error
+	// GetStaicRoles returns a map where key organization role and value is a static rbac role.
+	GetStaticRoles(ctx context.Context) map[string]*RoleDTO
 }
 
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/

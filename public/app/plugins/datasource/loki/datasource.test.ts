@@ -1414,6 +1414,15 @@ describe('LokiDatasource', () => {
       expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
+    it('does not create provider for hidden logs query', () => {
+      const options: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
+        targets: [{ expr: '{label="value"}', refId: 'A', queryType: LokiQueryType.Range, hide: true }],
+      };
+
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
+    });
+
     it('does not create provider for metrics query', () => {
       const options: DataQueryRequest<LokiQuery> = {
         ...baseRequestOptions,
@@ -1526,7 +1535,21 @@ describe('LokiDatasource', () => {
         });
       });
 
-      it('does return logs volume query for instant log query', () => {
+      it('does not return logs volume query for hidden log query', () => {
+        expect(
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsVolume },
+            {
+              expr: '{label="value"}',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+              hide: true,
+            }
+          )
+        ).toEqual(undefined);
+      });
+
+      it('returns logs volume query for instant log query', () => {
         // we changed logic to automatically run logs queries as range queries, thus there's a volume query now
         expect(
           ds.getSupplementaryQuery(
@@ -1603,6 +1626,20 @@ describe('LokiDatasource', () => {
           maxLines: 20,
           supportingQueryType: SupportingQueryType.LogsSample,
         });
+      });
+
+      it('does not return logs sample query for hidden query', () => {
+        expect(
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsSample },
+            {
+              expr: 'rate({label="value"}[5m]',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+              hide: true,
+            }
+          )
+        ).toEqual(undefined);
       });
 
       it('returns logs sample query for instant metric query', () => {

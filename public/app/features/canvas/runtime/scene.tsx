@@ -97,6 +97,8 @@ export class Scene {
 
   moveableActionCallback?: (moved: boolean) => void;
 
+  actionConfirmationCallback?: () => void;
+
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;
 

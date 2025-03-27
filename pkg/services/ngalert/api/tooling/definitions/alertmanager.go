@@ -21,6 +21,9 @@ import (
 //
 // sets an Alerting config
 //
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //     Responses:
 //       201: Ack
 //       400: ValidationError
@@ -37,6 +40,10 @@ import (
 // swagger:route GET /alertmanager/grafana/config/api/v1/alerts alertmanager RouteGetGrafanaAlertingConfig
 //
 // gets an Alerting config
+//
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //
 //     Responses:
 //       200: GettableUserConfig
@@ -55,6 +62,9 @@ import (
 //
 // gets Alerting configurations that were successfully applied in the past
 //
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //     Responses:
 //       200: GettableHistoricUserConfigs
 
@@ -62,6 +72,9 @@ import (
 //
 // revert Alerting configuration to the historical configuration specified by the given id
 //
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //     Responses:
 //       202: Ack
 //       400: ValidationError
@@ -71,6 +84,9 @@ import (
 //
 // deletes the Alerting config for a tenant
 //
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //     Responses:
 //       200: Ack
 //       400: ValidationError
@@ -353,6 +369,10 @@ type TestTemplatesResult struct {
 
 	// Interpolated value of the template.
 	Text string `json:"text"`
+
+	// Scope that was successfully used to interpolate the template. If the root scope "." fails, more specific
+	// scopes will be tried, such as ".Alerts', or ".Alert".
+	Scope TemplateScope `json:"scope"`
 }
 
 type TestTemplatesErrorResult struct {
@@ -372,6 +392,15 @@ type TemplateErrorKind string
 const (
 	InvalidTemplate TemplateErrorKind = "invalid_template"
 	ExecutionError  TemplateErrorKind = "execution_error"
+)
+
+// swagger:enum TemplateScope
+type TemplateScope string
+
+const (
+	RootScope   TemplateScope = "."
+	AlertsScope TemplateScope = ".Alerts"
+	AlertScope  TemplateScope = ".Alert"
 )
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence

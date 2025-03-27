@@ -1,6 +1,5 @@
 import { AdHocVariableFilter, RawTimeRange, Scope } from '@grafana/data';
-import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
-import { PromQueryModeller } from '@grafana/prometheus/src/querybuilder/PromQueryModeller';
+import { getPrometheusTime, PromQueryModeller, utf8Support } from '@grafana/prometheus';
 import { config, getBackendSrv } from '@grafana/runtime';
 
 import { limitOtelMatchTerms } from '../otel/util';
@@ -38,7 +37,7 @@ export async function getMetricNamesWithoutScopes(
     ? adhocFilters.map((filter) =>
         removeBrackets(queryModeller.renderLabels([{ label: filter.key, op: filter.operator, value: filter.value }]))
       )
-    : adhocFilters.map((filter) => `${filter.key}${filter.operator}"${filter.value}"`);
+    : adhocFilters.map((filter) => `${utf8Support(filter.key)}${filter.operator}"${filter.value}"`);
   let missingOtelTargets = false;
 
   if (jobs.length > 0 && instances.length > 0) {
@@ -58,7 +57,7 @@ export async function getMetricNamesWithoutScopes(
     ...(limit ? { limit } : {}),
   };
 
-  const response = await getBackendSrv().get<SuggestionsResponse>(url, params, 'explore-metrics-names');
+  const response = await getBackendSrv().get<SuggestionsResponse>(url, params, 'metrics-drilldown-names');
 
   if (limit && response.warnings?.includes(LIMIT_REACHED)) {
     return { ...response, limitReached: true, missingOtelTargets };
@@ -83,7 +82,7 @@ export async function getMetricNamesWithScopes(
     filters,
     '__name__',
     limit,
-    'explore-metrics-names'
+    'metrics-drilldown-names'
   );
 
   if (jobs.length > 0 && instances.length > 0) {

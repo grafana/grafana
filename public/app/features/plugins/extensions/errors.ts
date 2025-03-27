@@ -8,6 +8,8 @@ export const TITLE_MISSING = 'Title is missing.';
 
 export const DESCRIPTION_MISSING = 'Description is missing.';
 
+export const INVALID_EXTENSION_FUNCTION = 'The "fn" argument is invalid, it should be a function.';
+
 export const INVALID_CONFIGURE_FUNCTION = 'The "configure" function is invalid. It should be a function.';
 
 export const INVALID_PATH_OR_ON_CLICK = 'Either "path" or "onClick" is required.';
@@ -32,6 +34,9 @@ export const TITLE_NOT_MATCHING_META_INFO = 'The "title" doesn\'t match the titl
 
 export const ADDED_LINK_META_INFO_MISSING =
   'The extension was not recorded in the plugin.json. Added link extensions must be listed in the section "extensions.addedLinks[]". Currently, this is only required in development but will be enforced also in production builds in the future.';
+
+export const ADDED_FUNCTION_META_INFO_MISSING =
+  'The extension was not recorded in the plugin.json. Added function extensions must be listed in the section "extensions.addedFunction[]". Currently, this is only required in development but will be enforced also in production builds in the future.';
 
 export const DESCRIPTION_NOT_MATCHING_META_INFO =
   'The "description" doesn\'t match the description recorded in plugin.json.';

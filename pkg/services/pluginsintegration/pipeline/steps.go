@@ -121,9 +121,9 @@ func (r *RegisterActionSets) Register(ctx context.Context, p *plugins.Plugin) (*
 	return p, nil
 }
 
-// ReportBuildMetrics reports build information for all plugins, except core and bundled plugins.
+// ReportBuildMetrics reports build information for all plugins, except core plugins.
 func ReportBuildMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if !p.IsCorePlugin() && !p.IsBundledPlugin() {
+	if !p.IsCorePlugin() {
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 	}
 

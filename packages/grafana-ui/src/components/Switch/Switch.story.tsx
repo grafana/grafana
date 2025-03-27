@@ -2,11 +2,11 @@ import { Meta, StoryFn } from '@storybook/react';
 import { useState, useCallback } from 'react';
 import * as React from 'react';
 
-import { InlineField, Switch, InlineSwitch } from '@grafana/ui';
-
 import { Field } from '../Forms/Field';
+import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
 
+import { InlineSwitch, Switch } from './Switch';
 import mdx from './Switch.mdx';
 
 const meta: Meta<typeof Switch> = {

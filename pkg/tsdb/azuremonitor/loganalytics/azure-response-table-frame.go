@@ -78,7 +78,7 @@ func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.Azu
 		if !ok {
 			return nil, fmt.Errorf("unsupported analytics column type %v", col.Type)
 		}
-		if (queryType == dataquery.AzureQueryTypeAzureTraces || queryType == dataquery.AzureQueryTypeTraceql) && resultFormat == dataquery.ResultFormatTrace && (col.Name == "serviceTags" || col.Name == "tags") {
+		if (queryType == dataquery.AzureQueryTypeAzureTraces || queryType == dataquery.AzureQueryTypeTraceExemplar) && resultFormat == dataquery.ResultFormatTrace && (col.Name == "serviceTags" || col.Name == "tags") {
 			converter = tagsConverter
 		}
 		converters = append(converters, converter)

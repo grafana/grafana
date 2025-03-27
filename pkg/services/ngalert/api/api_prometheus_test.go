@@ -314,9 +314,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"query": "vector(1)",
 				"alerts": [{
 					"labels": {
@@ -377,10 +380,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1)",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"alerts": [{
 					"labels": {
 						"job": "prometheus",
@@ -439,10 +445,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1) | vector(1)",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"alerts": [{
 					"labels": {
 						"job": "prometheus"
@@ -781,8 +790,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			}
 		})
 
-		t.Run("bad token should return no results", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=10&group_next_token=foobar", nil)
+		t.Run("bad token should return first group_limit results", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=1&group_next_token=foobar", nil)
 			require.NoError(t, err)
 
 			c.Context = &web.Context{Req: r}
@@ -792,7 +801,14 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			result := &apimodels.RuleResponse{}
 			require.NoError(t, json.Unmarshal(resp.Body(), result))
 
-			require.Len(t, result.Data.RuleGroups, 0)
+			require.Len(t, result.Data.RuleGroups, 1)
+			require.Len(t, result.Data.Totals, 0)
+			require.NotEmpty(t, result.Data.NextToken)
+
+			folder, err := api.store.GetNamespaceByUID(context.Background(), "namespace_0", orgID, user)
+			require.NoError(t, err)
+			require.Equal(t, folder.Fullpath, result.Data.RuleGroups[0].File)
+			require.Equal(t, "rule_group_0", result.Data.RuleGroups[0].Name)
 		})
 
 		t.Run("should return nothing when using group_limit=0", func(t *testing.T) {

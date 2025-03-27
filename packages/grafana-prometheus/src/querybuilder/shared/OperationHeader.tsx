@@ -4,7 +4,7 @@ import { DraggableProvided } from '@hello-pangea/dnd';
 import { memo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { FlexItem } from '@grafana/experimental';
+import { FlexItem } from '@grafana/plugin-ui';
 import { Button, Select, useStyles2 } from '@grafana/ui';
 
 import { OperationInfoButton } from './OperationInfoButton';

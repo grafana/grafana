@@ -11,6 +11,7 @@ import {
   getDataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -175,6 +176,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       onQueryToggled={onQueryToggled}
                       queries={queries}
                       app={app}
+                      range={getTimeSrv().timeRange()}
                       history={history}
                       eventBus={eventBus}
                     />

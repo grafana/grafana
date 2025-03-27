@@ -206,6 +206,10 @@ export class LokiDatasource
    * @returns A supplemented Loki query or undefined if unsupported.
    */
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: LokiQuery): LokiQuery | undefined {
+    if (query.hide) {
+      return undefined;
+    }
+
     const normalizedQuery = getNormalizedLokiQuery(query);
     let expr = removeCommentsFromQuery(normalizedQuery.expr);
     let isQuerySuitable = false;
@@ -541,6 +545,11 @@ export class LokiDatasource
     // detected_field/${label}/values has different structure then other metadata responses
     if (!res.data && res.values) {
       return res.values ?? [];
+    }
+
+    // detected_fields has a different return structure then other metadata responses
+    if (!res.data && res.fields) {
+      return res.fields ?? [];
     }
     return res.data ?? [];
   }
@@ -1005,8 +1014,18 @@ export class LokiDatasource
    * Part of `DataSourceWithLogsContextSupport`, used to retrieve the log context UI for the provided log row and original query.
    * @returns A React component or element representing the log context UI for the log row.
    */
-  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void, origQuery: DataQuery): React.ReactNode {
-    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, getLokiQueryFromDataQuery(origQuery));
+  getLogRowContextUi(
+    row: LogRowModel,
+    runContextQuery: () => void,
+    origQuery: DataQuery,
+    scopedVars?: ScopedVars
+  ): React.ReactNode {
+    return this.logContextProvider.getLogRowContextUi(
+      row,
+      runContextQuery,
+      getLokiQueryFromDataQuery(origQuery),
+      scopedVars
+    );
   }
 
   /**

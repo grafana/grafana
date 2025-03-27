@@ -10,6 +10,10 @@ var LoggerFactory alertingLogging.LoggerFactory = func(logger string, ctx ...any
 	return &logWrapper{log.New(append([]any{logger}, ctx...)...)}
 }
 
+func newLogWrapper(logger log.Logger, ctx ...any) alertingLogging.Logger {
+	return &logWrapper{logger.New(ctx...)}
+}
+
 type logWrapper struct {
 	*log.ConcreteLogger
 }

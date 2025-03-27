@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -84,7 +85,7 @@ func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
+	license licensing.Licensing, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*FolderPermissionsService, error) {
 	if err := registerFolderRoles(cfg, features, service); err != nil {
@@ -98,19 +99,32 @@ func ProvideFolderPermissions(
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideFolderPermissions.ResourceValidator")
 			defer span.End()
 
-			query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
-			queryResult, err := dashboardStore.GetDashboard(ctx, query)
-			if err != nil {
-				return err
-			}
+			ctx, ident := identity.WithServiceIdentity(ctx, orgID)
+			_, err := folderService.Get(ctx, &folder.GetFolderQuery{
+				UID:          &resourceID,
+				OrgID:        orgID,
+				SignedInUser: ident,
+			})
 
-			if !queryResult.IsFolder {
-				return errors.New("not found")
+			if err != nil {
+				// if the folder is not found, this may be on the create path,
+				// where the write path to legacy will then go through the read
+				// path and try to read from both legacy & unified before it exists on both
+				if features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) && errors.Is(err, dashboards.ErrFolderNotFound) {
+					_, err = folderService.GetLegacy(ctx, &folder.GetFolderQuery{
+						UID:          &resourceID,
+						OrgID:        orgID,
+						SignedInUser: ident,
+					})
+					return err
+				}
+				return err
 			}
 
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+			ctx, _ = identity.WithServiceIdentity(ctx, orgID)
 			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
 		},
 		Assignments: resourcepermissions.Assignments{

@@ -29,6 +29,7 @@ interface ExemplarMarkerProps {
   exemplarColor?: string;
   clickedExemplarFieldIndex: DataFrameFieldIndex | undefined;
   setClickedExemplarFieldIndex: React.Dispatch<DataFrameFieldIndex | undefined>;
+  maxHeight?: number;
 }
 
 export const ExemplarMarker = ({
@@ -39,6 +40,7 @@ export const ExemplarMarker = ({
   exemplarColor,
   clickedExemplarFieldIndex,
   setClickedExemplarFieldIndex,
+  maxHeight,
 }: ExemplarMarkerProps) => {
   const styles = useStyles2(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
@@ -163,7 +165,7 @@ export const ExemplarMarker = ({
     return (
       <div className={styles.tooltip} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
         {isLocked && <ExemplarModalHeader onClick={onClose} style={exemplarHeaderCustomStyle} />}
-        <ExemplarHoverView displayValues={displayValues} links={links} />
+        <ExemplarHoverView displayValues={displayValues} links={links} maxHeight={maxHeight} />
       </div>
     );
   }, [
@@ -175,6 +177,7 @@ export const ExemplarMarker = ({
     floatingStyles,
     getFloatingProps,
     refs.setFloating,
+    maxHeight,
   ]);
 
   const seriesColor = config
@@ -285,6 +288,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
       padding: 0,
       overflowY: 'auto',
       maxHeight: '95vh',
+      boxShadow: theme.shadows.z2,
     }),
     header: css({
       background: headerBg,

@@ -2,6 +2,8 @@
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
 import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 
+export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
+
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
   alertmanager_config: AlertmanagerConfig;
@@ -133,7 +135,8 @@ export type Route = {
   active_time_intervals?: string[];
   /** only the root policy might have a provenance field defined */
   provenance?: string;
-  _metadata?: {
+  /** this is used to add additional metadata to the routes without interfering with original route definition (symbols aren't iterable)  */
+  [ROUTES_META_SYMBOL]?: {
     provisioned?: boolean;
     resourceVersion?: string;
     name?: string;

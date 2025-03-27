@@ -54,6 +54,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     const result = await onSaveDashboard(dashboard, {
       overwrite,
       folderUid: data.folder.uid,
+      rawDashboardJSON: changedSaveModel,
 
       // save as config
       saveAsCopy: true,
@@ -138,7 +139,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
           // Old folder picker fields
           value={formValues.folder?.uid}
           initialTitle={defaultValues!.folder!.title}
-          dashboardId={changedSaveModel.id ?? undefined}
+          dashboardId={dashboard.state.id ?? undefined}
           enableCreateNew
         />
       </Field>

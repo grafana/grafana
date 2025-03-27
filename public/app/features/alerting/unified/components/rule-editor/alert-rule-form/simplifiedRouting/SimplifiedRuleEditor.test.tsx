@@ -106,8 +106,10 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
   it('simplified routing is not available when Grafana AM is not enabled', async () => {
     setAlertmanagerChoices(AlertmanagerChoice.External, 1);
-    renderRuleEditor();
+    const { user } = renderRuleEditor();
 
+    // Just to make sure all dropdowns have been loaded
+    await selectFolderAndGroup(user);
     await waitFor(() => expect(ui.inputs.simplifiedRouting.contactPointRouting.query()).not.toBeInTheDocument());
   });
 
@@ -147,6 +149,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       expect(await screen.findByText('Email')).toBeInTheDocument();
     });
   });
+
   describe('switch modes enabled', () => {
     testWithFeatureToggles(['alertingQueryAndExpressionsStepMode', 'alertingNotificationsStepMode']);
 
@@ -168,6 +171,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
     });
+
     it('can create the new grafana-managed rule with advanced modes', async () => {
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
 
@@ -185,6 +189,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
     });
+
     it('can create the new grafana-managed rule with only notifications step advanced mode', async () => {
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
 
@@ -202,6 +207,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
     });
+
     it('can create the new grafana-managed rule with only query step advanced mode', async () => {
       const contactPointName = 'lotsa-emails';
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
@@ -221,6 +227,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
     });
+
     it('switch modes are intiallized depending on the local storage - 1', async () => {
       localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
       localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
@@ -231,6 +238,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       expect(ui.inputs.switchModeAdvanced(GrafanaRuleFormStep.Query).get()).toBeInTheDocument();
       expect(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).get()).toBeInTheDocument();
     });
+
     it('switch modes are intiallized depending on the local storage - 2', async () => {
       localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
       localStorage.setItem(MANUAL_ROUTING_KEY, 'false');

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { chain, omit } from 'lodash';
+import { omit } from 'lodash';
 import moment from 'moment';
 import { useState } from 'react';
 
@@ -17,10 +17,10 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
-import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { computeVersionDiff } from '../../utils/diff';
 import { stringifyErrorLike } from '../../utils/misc';
 import { Spacer } from '../Spacer';
 
@@ -98,7 +98,7 @@ const AlertmanagerConfigurationVersionManager = ({
 
     return {
       ...config,
-      diff: priorConfig ? computeConfigDiff(config, latestConfig) : { added: 0, removed: 0 },
+      diff: priorConfig ? computeVersionDiff(config, latestConfig, normalizeConfig) : { added: 0, removed: 0 },
     };
   });
 
@@ -294,31 +294,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 // these props are part of the historical config response but not the current config, so we remove them for fair comparison
 function normalizeConfig(config: AlertManagerCortexConfig) {
   return omit(config, ['id', 'last_applied']);
-}
-
-function computeConfigDiff(json1: AlertManagerCortexConfig, json2: AlertManagerCortexConfig): Diff {
-  const cleanedJson1 = normalizeConfig(json1);
-  const cleanedJson2 = normalizeConfig(json2);
-
-  const diff = jsonDiff(cleanedJson1, cleanedJson2);
-  const added = chain(diff)
-    .values()
-    .flatMap()
-    .filter((operation) => operation.op === 'add' || operation.op === 'replace' || operation.op === 'move')
-    .sumBy((operation) => operation.endLineNumber - operation.startLineNumber + 1)
-    .value();
-
-  const removed = chain(diff)
-    .values()
-    .flatMap()
-    .filter((operation) => operation.op === 'remove' || operation.op === 'replace')
-    .sumBy((operation) => operation.endLineNumber - operation.startLineNumber + 1)
-    .value();
-
-  return {
-    added,
-    removed,
-  };
 }
 
 export { AlertmanagerConfigurationVersionManager };

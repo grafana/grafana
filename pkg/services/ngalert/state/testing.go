@@ -44,8 +44,6 @@ func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q models.AlertI
 	return nil
 }
 
-func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
-
 func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...models.AlertInstanceKey) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -59,6 +57,17 @@ func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...model
 }
 
 func (f *FakeInstanceStore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	f.recordedOps = append(f.recordedOps, FakeInstanceStoreOp{
+		Name: "SaveAlertInstancesForRule", Args: []any{
+			ctx,
+			key,
+			instances,
+		},
+	})
+
 	return nil
 }
 

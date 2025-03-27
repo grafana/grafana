@@ -178,14 +178,6 @@ describe('NavToolbarActions', () => {
 
       expect(screen.queryByTestId('button-snapshot')).toBeInTheDocument();
     });
-    it('should not show link button when is not found dashboard', () => {
-      setup({
-        isSnapshot: true,
-        dashboardNotFound: true,
-      });
-
-      expect(screen.queryByTestId('button-snapshot')).not.toBeInTheDocument();
-    });
   });
 });
 

@@ -14,7 +14,6 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
-	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
@@ -27,7 +26,7 @@ import (
 	zlogger "github.com/grafana/grafana/pkg/services/authz/zanzana/logger"
 )
 
-func NewOpenFGA(cfg *setting.ZanzanaSettings, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
+func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
 	opts := []server.OpenFGAServiceV1Option{
 		server.WithDatastore(store),
 		server.WithLogger(zlogger.New(logger)),
@@ -37,9 +36,6 @@ func NewOpenFGA(cfg *setting.ZanzanaSettings, store storage.OpenFGADatastore, lo
 		server.WithListObjectsDeadline(cfg.ListObjectsDeadline),
 	}
 
-	// FIXME(kalleep): Interceptors
-	// We probably need to at least need to add store id interceptor also
-	// would be nice to inject our own requestid?
 	srv, err := server.NewServerWithOpts(opts...)
 	if err != nil {
 		return nil, err
@@ -48,8 +44,7 @@ func NewOpenFGA(cfg *setting.ZanzanaSettings, store storage.OpenFGADatastore, lo
 	return srv, nil
 }
 
-// StartOpenFGAHttpSever starts HTTP server which allows to use fga cli.
-func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log.Logger) error {
+func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Provider) (*http.Server, error) {
 	dialOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
@@ -66,12 +61,12 @@ func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log
 		retries++
 	}
 	if addr == "" {
-		return fmt.Errorf("failed to start HTTP server: GRPC server unavailable")
+		return nil, fmt.Errorf("failed to create HTTP server: GRPC server unavailable")
 	}
 
 	conn, err := grpc.NewClient(addr, dialOpts...)
 	if err != nil {
-		return fmt.Errorf("unable to dial GRPC: %w", err)
+		return nil, fmt.Errorf("unable to dial GRPC: %w", err)
 	}
 
 	muxOpts := []runtime.ServeMuxOption{
@@ -91,11 +86,11 @@ func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log
 	}
 	mux := runtime.NewServeMux(muxOpts...)
 	if err := openfgav1.RegisterOpenFGAServiceHandler(context.TODO(), mux, conn); err != nil {
-		return fmt.Errorf("failed to register gateway handler: %w", err)
+		return nil, fmt.Errorf("failed to register gateway handler: %w", err)
 	}
 
-	httpServer := &http.Server{
-		Addr: cfg.Zanzana.HttpAddr,
+	return &http.Server{
+		Addr: cfg.OpenFGAHttpAddr,
 		Handler: cors.New(cors.Options{
 			AllowedOrigins:   []string{"*"},
 			AllowCredentials: true,
@@ -104,13 +99,5 @@ func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log
 				http.MethodHead, http.MethodPatch, http.MethodDelete, http.MethodPut},
 		}).Handler(mux),
 		ReadHeaderTimeout: 30 * time.Second,
-	}
-	go func() {
-		err = httpServer.ListenAndServe()
-		if err != nil {
-			logger.Error("failed to start http server", zapcore.Field{Key: "err", Type: zapcore.ErrorType, Interface: err})
-		}
-	}()
-	logger.Info(fmt.Sprintf("OpenFGA HTTP server listening on '%s'...", httpServer.Addr))
-	return nil
+	}, nil
 }

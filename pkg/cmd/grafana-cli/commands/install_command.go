@@ -90,6 +90,7 @@ type pluginInstallOpts struct {
 	repoURL   string
 	pluginURL string
 	pluginDir string
+	gcomToken string
 }
 
 func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
@@ -98,6 +99,7 @@ func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
 		repoURL:   c.PluginRepoURL(),
 		pluginURL: c.PluginURL(),
 		pluginDir: c.PluginDirectory(),
+		gcomToken: c.GcomToken(),
 	}
 }
 
@@ -132,9 +134,10 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 	}
 
 	repository := repo.NewManager(repo.ManagerCfg{
-		SkipTLSVerify: o.insecure,
-		BaseURL:       o.repoURL,
-		Logger:        services.Logger,
+		SkipTLSVerify:      o.insecure,
+		BaseURL:            o.repoURL,
+		Logger:             services.Logger,
+		GrafanaComAPIToken: o.gcomToken,
 	})
 
 	// FIXME: Re-enable grafanaVersion. This check was broken in 10.2 so disabling it for the moment.

@@ -2,6 +2,8 @@ package folder
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
 type Service interface {
@@ -39,6 +41,9 @@ type Service interface {
 	// If FullpathUIDs is true it computes a string that contains the UIDs of all parent folders separated by slash.
 	GetFolders(ctx context.Context, q GetFoldersQuery) ([]*Folder, error)
 	GetFoldersLegacy(ctx context.Context, q GetFoldersQuery) ([]*Folder, error)
+
+	// SearchFolders returns a list of folders that match the query.
+	SearchFolders(ctx context.Context, q SearchFoldersQuery) (model.HitList, error)
 
 	// GetChildren returns an array containing all child folders.
 	GetChildren(ctx context.Context, q *GetChildrenQuery) ([]*Folder, error)

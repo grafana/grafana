@@ -6,7 +6,7 @@ import { InsightsMenuButton } from '../InsightsMenuButton';
 
 export function getInvalidConfigScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
-    ? `sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config{id="${INSTANCE_ID}"})`
+    ? `sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config{stack_id="${INSTANCE_ID}"})`
     : `sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config)`;
 
   const query = new SceneQueryRunner({

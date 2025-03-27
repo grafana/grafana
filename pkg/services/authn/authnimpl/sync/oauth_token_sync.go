@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"

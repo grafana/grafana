@@ -7,6 +7,9 @@ import (
 	"net/textproto"
 	"strings"
 
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -61,7 +64,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
 		}
 
-		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to query data: %w", err)
+		if s, ok := grpcstatus.FromError(err); ok && s.Code() == grpccodes.Canceled {
+			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
+		}
+
+		return nil, plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to query data: %w", err)
 	}
 
 	for refID, res := range resp.Responses {
@@ -120,7 +127,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			return plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: call resource request canceled: %w", err)
 		}
 
-		return plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to call resources: %w", err)
+		return plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to call resources: %w", err)
 	}
 
 	return nil
@@ -142,7 +149,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: collect metrics request canceled: %w", err)
 		}
 
-		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to collect metrics: %w", err)
+		return nil, plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to collect metrics: %w", err)
 	}
 
 	return resp, nil

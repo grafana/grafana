@@ -226,7 +226,7 @@ The label field allows you to override the default name of the metric legend usi
 ## Query CloudWatch Logs
 
 The logs query editor helps you write CloudWatch Logs Query Language queries across defined regions and log groups.
-It supports querying Cloudwatch logs with Logs Insights Query Language, OpenSearch PPL and OpenSearch SQL.
+It supports querying CloudWatch logs with Logs Insights Query Language, OpenSearch PPL and OpenSearch SQL.
 
 ### Create a CloudWatch Logs query
 
@@ -237,7 +237,7 @@ It supports querying Cloudwatch logs with Logs Insights Query Language, OpenSear
    Region and log groups are mandatory fields when querying with Logs Insights QL and OpenSearch PPL. Log group selection is not necessary when querying with OpenSearch SQL. However, selecting log groups simplifies writing logs queries by populating syntax suggestions with discovered log group fields.
    {{< /admonition >}}
 
-1. Use the main input area to write your logs query. AWS Cloudwatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
+1. Use the main input area to write your logs query. AWS CloudWatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
 
    #### Querying Log groups with OpenSearch SQL
 

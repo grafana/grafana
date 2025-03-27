@@ -272,6 +272,7 @@ export type AnnotationPermission = {
 };
 export type DashboardMeta = {
   annotationsPermissions?: AnnotationPermission;
+  apiVersion?: string;
   canAdmin?: boolean;
   canDelete?: boolean;
   canEdit?: boolean;
@@ -303,7 +304,7 @@ export type DashboardFullWithMeta = {
   dashboard?: Json;
   meta?: DashboardMeta;
 };
-export type LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser = {
+export type LibraryElementDtoMetaUser = {
   avatarUrl?: string;
   id?: number;
   name?: string;
@@ -311,11 +312,11 @@ export type LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser = 
 export type LibraryElementDtoMetaIsTheMetaInformationForLibraryElementDto = {
   connectedDashboards?: number;
   created?: string;
-  createdBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+  createdBy?: LibraryElementDtoMetaUser;
   folderName?: string;
   folderUid?: string;
   updated?: string;
-  updatedBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+  updatedBy?: LibraryElementDtoMetaUser;
 };
 export type LibraryElementDtoIsTheFrontendDtoForEntities = {
   description?: string;

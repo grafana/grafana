@@ -583,7 +583,7 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.RegisterActionSets")
 	defer span.End()
 
-	if !a.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) || !a.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
+	if !a.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
 		return nil
 	}
 	for _, reg := range registrations {

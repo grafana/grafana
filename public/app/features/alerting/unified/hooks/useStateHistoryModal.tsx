@@ -61,7 +61,7 @@ function useStateHistoryModal() {
         <Suspense fallback={'Loading...'}>
           {implementation === StateHistoryImplementation.Loki && <LokiStateHistory ruleUID={rule.grafana_alert.uid} />}
           {implementation === StateHistoryImplementation.Annotations && (
-            <AnnotationsStateHistory alertId={rule.grafana_alert.id ?? ''} />
+            <AnnotationsStateHistory ruleUID={rule.grafana_alert.uid ?? ''} />
           )}
         </Suspense>
       </Modal>

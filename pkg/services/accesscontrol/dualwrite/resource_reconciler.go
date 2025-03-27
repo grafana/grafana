@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/authlib/claims"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
+	claims "github.com/grafana/authlib/types"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"

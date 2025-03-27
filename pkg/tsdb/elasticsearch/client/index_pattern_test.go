@@ -290,7 +290,7 @@ func TestIndexPattern(t *testing.T) {
 func indexPatternScenario(t *testing.T, interval string, pattern string, timeRange backend.TimeRange, fn func(indices []string)) {
 	testName := fmt.Sprintf("Index pattern (interval=%s, index=%s", interval, pattern)
 	t.Run(testName, func(t *testing.T) {
-		ip, err := newIndexPattern(interval, pattern)
+		ip, err := NewIndexPattern(interval, pattern)
 		require.NoError(t, err)
 		require.NotNil(t, ip)
 		indices, err := ip.GetIndices(timeRange)

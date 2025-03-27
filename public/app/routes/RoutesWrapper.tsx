@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ComponentType } from 'react';
+import { ComponentType, ReactNode } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
@@ -19,11 +19,18 @@ import { AppNotificationList } from '../core/components/AppNotifications/AppNoti
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
 
+function ExtraProviders(props: { children: ReactNode; providers: Array<ComponentType<{ children: ReactNode }>> }) {
+  return props.providers.reduce((tree, Provider): ReactNode => {
+    return <Provider>{tree}</Provider>;
+  }, props.children);
+}
+
 type RouterWrapperProps = {
   perconaBootstrapper?: JSX.Element | false;
   routes?: JSX.Element | false;
   bodyRenderHooks: ComponentType[];
   pageBanners: ComponentType[];
+  providers: Array<ComponentType<{ children: ReactNode }>>;
 };
 export function RouterWrapper(props: RouterWrapperProps) {
   return (
@@ -31,23 +38,26 @@ export function RouterWrapper(props: RouterWrapperProps) {
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
           <QueriesDrawerContextProvider>
-            <ModalsContextProvider>
-              <AppChrome>
-                <AngularRoot />
-                <AppNotificationList />
-                <Stack gap={0} grow={1} direction="column">
-                  {props.pageBanners.map((Banner, index) => (
-                    <Banner key={index.toString()} />
+            <ExtraProviders providers={props.providers}>
+              <ModalsContextProvider>
+                <AppChrome>
+                  <AngularRoot />
+                  <AppNotificationList />
+                  <Stack gap={0} grow={1} direction="column">
+                    {props.pageBanners.map((Banner, index) => (
+                      <Banner key={index.toString()} />
+                    ))}
+                    {/* @PERCONA */}
+                    {props.perconaBootstrapper}
+                    {props.routes}
+                  </Stack>
+                  {props.bodyRenderHooks.map((Hook, index) => (
+                    <Hook key={index.toString()} />
                   ))}
-                  {props.perconaBootstrapper}
-                  {props.routes}
-                </Stack>
-                {props.bodyRenderHooks.map((Hook, index) => (
-                  <Hook key={index.toString()} />
-                ))}
-              </AppChrome>
-              <ModalRoot />
-            </ModalsContextProvider>
+                </AppChrome>
+                <ModalRoot />
+              </ModalsContextProvider>
+            </ExtraProviders>
           </QueriesDrawerContextProvider>
         </CompatRouter>
       </LocationServiceProvider>

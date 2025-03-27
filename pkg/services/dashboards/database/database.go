@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -145,6 +146,38 @@ func (d *dashboardStore) GetProvisionedDashboardData(ctx context.Context, name s
 	return result, err
 }
 
+func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string) ([]*dashboards.Dashboard, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetProvisionedDashboardsByName")
+	defer span.End()
+
+	dashes := []*dashboards.Dashboard{}
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(`dashboard`).
+			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+			Where(`dashboard_provisioning.name = ?`, name).Find(&dashes)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashes, nil
+}
+
+func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string) ([]*dashboards.Dashboard, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetOrphanedProvisionedDashboards")
+	defer span.End()
+
+	dashes := []*dashboards.Dashboard{}
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(`dashboard`).
+			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+			NotIn(`dashboard_provisioning.name`, notIn).Find(&dashes)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashes, nil
+}
+
 func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, dash *dashboards.Dashboard, provisioning *dashboards.DashboardProvisioning) error {
 	ctx, span := tracer.Start(ctx, "dashboards.database.SaveProvisionedDashboard")
 	defer span.End()
@@ -266,6 +299,24 @@ func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopePara
 	return u, nil
 }
 
+func (d *dashboardStore) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	type result struct {
+		Count int64
+	}
+	r := result{}
+	if err := d.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE org_id=? AND is_folder=%s", d.store.GetDialect().BooleanStr(false))
+		if _, err := sess.SQL(rawSQL, orgID).Get(&r); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+
+	return r.Count, nil
+}
+
 func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.Dashboard, overwrite bool) (bool, error) {
 	dashWithIdExists := false
 	isParentFolderChanged := false
@@ -349,6 +400,20 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		userId = -1
 	}
 
+	// we don't save FolderID in kubernetes object when saving through k8s
+	// this block guarantees we save dashboards with folder_id and folder_uid in those cases
+	if !dash.IsFolder && dash.FolderUID != "" && dash.FolderID == 0 { // nolint:staticcheck
+		var existing dashboards.Dashboard
+		folderIdFound, err := sess.Where("uid=? AND org_id=?", dash.FolderUID, dash.OrgID).Get(&existing)
+		if err != nil {
+			return nil, err
+		}
+
+		if folderIdFound {
+			dash.FolderID = existing.ID // nolint:staticcheck
+		}
+	}
+
 	if dash.ID > 0 {
 		var existing dashboards.Dashboard
 		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.ID, dash.OrgID).Get(&existing)
@@ -421,6 +486,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		CreatedBy:     dash.UpdatedBy,
 		Message:       cmd.Message,
 		Data:          dash.Data,
+		APIVersion:    cmd.APIVersion,
 	}
 
 	// insert version entry

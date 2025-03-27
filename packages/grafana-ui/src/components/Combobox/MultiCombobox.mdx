@@ -1,0 +1,20 @@
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+
+import { MultiCombobox } from './MultiCombobox';
+
+<Meta title="MDX|MultiCombobox" component={MultiCombobox} />
+
+# MultiCombobox
+
+The behavior of the MultiCombobox is similar to that of the Combobox, but it allows you to select multiple options. For all non-multi behaviors, see the Combobox documentation.
+
+## "All" functionality
+
+Use the prop `enableAllOption` to show the "All" option.
+
+- If no filtering is applied, selecting "All" will select all options, returning the same array as the `options` prop.
+- With filtering, selecting "All" will choose the filtered subset of options.
+
+## Props
+
+<ArgTypes of={MultiCombobox} />

@@ -274,7 +274,8 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
         <TempoQueryBuilderOptions
           onChange={onChange}
           query={query}
-          isStreaming={datasource.isStreamingSearchEnabled() ?? false}
+          searchStreaming={datasource.isStreamingSearchEnabled() ?? false}
+          metricsStreaming={datasource.isStreamingMetricsEnabled() ?? false}
         />
       </div>
       {error ? (

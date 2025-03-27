@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -115,10 +117,31 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 	t.Run("Removing org", func(t *testing.T) {
 		// make sure ac2 has no org
 		ac2 := &org.Org{ID: 22, Name: "ac2", Version: 1, Created: time.Now(), Updated: time.Now()}
-		_, err := orgStore.Insert(context.Background(), ac2)
+		orgId, err := orgStore.Insert(context.Background(), ac2)
 		require.NoError(t, err)
+
+		// Create some org-scoped items like playlists, so we can assert that they
+		// are cleaned up on delete.
+		plItems := []playlist.PlaylistItem{
+			{
+				Type: "foo",
+			},
+		}
+		plStore := playlistimpl.ProvideService(ss, tracing.InitializeTracerForTest())
+		plCreateCommand := playlist.CreatePlaylistCommand{
+			OrgId: orgId,
+			Name:  "test",
+			Items: plItems,
+		}
+		pl, err := plStore.Create(context.Background(), &plCreateCommand)
+		require.NoError(t, err)
+
 		err = orgStore.Delete(context.Background(), &org.DeleteOrgCommand{ID: ac2.ID})
 		require.NoError(t, err)
+
+		plDTO, err := plStore.Get(context.Background(), &playlist.GetPlaylistByUidQuery{OrgId: pl.OrgId, UID: pl.UID})
+		require.Error(t, err)
+		require.Nil(t, plDTO)
 
 		// TODO: this part of the test will be added when we move RemoveOrgUser to org store
 		// "Removing user from org should delete user completely if in no other org"

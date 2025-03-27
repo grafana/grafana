@@ -8,6 +8,7 @@ import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/
 import { DashboardRoutes } from 'app/types';
 
 import DashboardPage, { DashboardPageParams } from './DashboardPage';
+import { DashboardPageError } from './DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
 export type DashboardPageProxyProps = Omit<
@@ -53,6 +54,10 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
       slug: params.slug,
     });
   }, [params.uid, props.route.routeName]);
+
+  if (dashboard.error) {
+    return <DashboardPageError error={dashboard.error} />;
+  }
 
   if (dashboard.loading) {
     return null;

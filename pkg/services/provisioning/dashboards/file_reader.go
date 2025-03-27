@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -147,6 +148,8 @@ func (fr *FileReader) isDatabaseAccessRestricted() bool {
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
 func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*dashboards.DashboardProvisioning, usageTracker *usageTracker) error {
+	ctx, _ = identity.WithServiceIdentity(ctx, fr.Cfg.OrgID)
+
 	folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return fmt.Errorf("%w with name %q: %w", ErrGetOrCreateFolder, fr.Cfg.Folder, err)
@@ -177,6 +180,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 			folderName = filepath.Base(dashboardsFolder)
 		}
 
+		ctx, _ = identity.WithServiceIdentity(ctx, fr.Cfg.OrgID)
 		folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
 		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 			return fmt.Errorf("%w with name %q from file system structure: %w", ErrGetOrCreateFolder, folderName, err)
@@ -342,38 +346,42 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return 0, "", ErrFolderNameMissing
 	}
 
-	// TODO use folder service instead
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return 0, "", err
+	}
+
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
-	cmd := &dashboards.GetDashboardQuery{
-		FolderID: util.Pointer(int64(0)), // nolint:staticcheck
-		OrgID:    cfg.OrgID,
+	cmd := &folder.GetFolderQuery{
+		OrgID:        cfg.OrgID,
+		SignedInUser: user,
 	}
 
 	if cfg.FolderUID != "" {
-		cmd.UID = cfg.FolderUID
+		cmd.UID = &cfg.FolderUID
 	} else {
 		// provisioning depends on unique names
 		//nolint:staticcheck
 		cmd.Title = &folderName
 	}
 
-	result, err := fr.dashboardStore.GetDashboard(ctx, cmd)
-
-	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+	result, err := fr.folderService.Get(ctx, cmd)
+	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
 		return 0, "", err
 	}
 
-	// dashboard folder not found. create one.
-	if errors.Is(err, dashboards.ErrDashboardNotFound) {
-		// set dashboard folderUid if given
-		if cfg.FolderUID == accesscontrol.GeneralFolderUID {
-			return 0, "", dashboards.ErrFolderInvalidUID
-		}
+	// do not allow the creation of folder with uid "general"
+	if result != nil && result.UID == accesscontrol.GeneralFolderUID {
+		return 0, "", dashboards.ErrFolderInvalidUID
+	}
 
+	// dashboard folder not found. create one.
+	if errors.Is(err, dashboards.ErrFolderNotFound) {
 		createCmd := &folder.CreateFolderCommand{
-			OrgID: cfg.OrgID,
-			UID:   cfg.FolderUID,
-			Title: folderName,
+			OrgID:        cfg.OrgID,
+			UID:          cfg.FolderUID,
+			Title:        folderName,
+			SignedInUser: user,
 		}
 
 		f, err := service.SaveFolderForProvisionedDashboards(ctx, createCmd)
@@ -385,10 +393,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return f.ID, f.UID, nil
 	}
 
-	if !result.IsFolder {
-		return 0, "", fmt.Errorf("got invalid response. expected folder, found dashboard")
-	}
-
+	//nolint:staticcheck
 	return result.ID, result.UID, nil
 }
 

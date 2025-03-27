@@ -1,4 +1,5 @@
 import { countBy, chain } from 'lodash';
+import { MouseEvent } from 'react';
 
 import {
   LogLevel,
@@ -14,9 +15,15 @@ import {
   QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
+  getFieldDisplayName,
+  getDefaultTimeRange,
+  locationUtil,
+  urlUtil,
 } from '@grafana/data';
+import { getConfig } from 'app/core/config';
 
 import { getDataframeFields } from './components/logParser';
+import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
 
 /**
  * Returns the log level of a log line.
@@ -216,22 +223,28 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
 
   // collect and aggregate into aggregated object
   dataFrames.forEach((dataFrame) => {
-    const { level, valueField, timeField, length } = getLogLevelInfo(dataFrame);
+    const { level, valueField, timeField } = getLogLevelInfo(dataFrame, dataFrames);
+
+    if (!timeField || !valueField) {
+      return;
+    }
 
     configs[level] = {
       meta: dataFrame.meta,
-      valueFieldConfig: valueField.config,
-      timeFieldConfig: timeField.config,
+      valueFieldConfig: valueField?.config ?? {},
+      timeFieldConfig: timeField?.config ?? {},
     };
 
-    for (let pointIndex = 0; pointIndex < length; pointIndex++) {
+    for (let pointIndex = 0; pointIndex < dataFrame.length; pointIndex++) {
       const time: number = timeField.values[pointIndex];
       const value: number = valueField.values[pointIndex];
       aggregated[level] ??= {};
       aggregated[level][time] = (aggregated[level][time] || 0) + value;
 
       totals[time] = (totals[time] || 0) + value;
-      maximumValue = Math.max(totals[time], maximumValue);
+      if (totals[time] > maximumValue) {
+        maximumValue = totals[time];
+      }
     }
   });
 
@@ -296,21 +309,48 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
   }
 };
 
-export function getLogLevelInfo(dataFrame: DataFrame) {
+export async function handleOpenLogsContextClick(
+  event: MouseEvent<HTMLElement>,
+  row: LogRowModel,
+  getRowContextQuery: GetRowContextQueryFn | undefined,
+  onOpenContext: (row: LogRowModel) => void
+) {
+  // if ctrl or meta key is pressed, open query in new Explore tab
+  if (getRowContextQuery && (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)) {
+    const win = window.open('about:blank');
+    // for this request we don't want to use the cached filters from a context provider, but always want to refetch and clear
+    const query = await getRowContextQuery(row, undefined, false);
+    if (query && win) {
+      const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
+        left: JSON.stringify({
+          datasource: query.datasource,
+          queries: [query],
+          range: getDefaultTimeRange(),
+        }),
+      });
+      win.location = url;
+
+      return;
+    }
+    win?.close();
+  }
+  onOpenContext(row);
+}
+
+export function getLogLevelInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]) {
   const fieldCache = new FieldCache(dataFrame);
   const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
   const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
 
   if (!timeField) {
-    throw new Error('Missing time field');
+    console.error('Time field missing in data frame');
   }
   if (!valueField) {
-    throw new Error('Missing value field');
+    console.error('Value field missing in data frame');
   }
 
-  const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
-  const length = valueField.values.length;
-  return { level, valueField, timeField, length };
+  const level = valueField ? getFieldDisplayName(valueField, dataFrame, allDataFrames) : 'logs';
+  return { level, valueField, timeField };
 }
 
 export function targetIsElement(target: EventTarget | null): target is Element {

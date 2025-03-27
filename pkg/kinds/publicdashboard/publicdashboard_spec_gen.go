@@ -7,25 +7,26 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
 package publicdashboard
 
-// Spec defines model for Spec.
 type Spec struct {
-	// Unique public access token
-	AccessToken *string `json:"accessToken,omitempty"`
-
-	// Flag that indicates if annotations are enabled
-	AnnotationsEnabled bool `json:"annotationsEnabled"`
-
-	// Dashboard unique identifier referenced by this public dashboard
-	DashboardUid string `json:"dashboardUid"`
-
-	// Flag that indicates if the public dashboard is enabled
-	IsEnabled bool `json:"isEnabled"`
-
-	// Flag that indicates if the time range picker is enabled
-	TimeSelectionEnabled bool `json:"timeSelectionEnabled"`
-
 	// Unique public dashboard identifier
 	Uid string `json:"uid"`
+	// Dashboard unique identifier referenced by this public dashboard
+	DashboardUid string `json:"dashboardUid"`
+	// Unique public access token
+	AccessToken *string `json:"accessToken,omitempty"`
+	// Flag that indicates if the public dashboard is enabled
+	IsEnabled bool `json:"isEnabled"`
+	// Flag that indicates if annotations are enabled
+	AnnotationsEnabled bool `json:"annotationsEnabled"`
+	// Flag that indicates if the time range picker is enabled
+	TimeSelectionEnabled bool `json:"timeSelectionEnabled"`
+}
+
+// NewSpec creates a new Spec object.
+func NewSpec() *Spec {
+	return &Spec{}
 }

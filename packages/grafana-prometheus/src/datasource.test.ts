@@ -1029,6 +1029,23 @@ describe('PrometheusDatasource', () => {
       expect(interval).toEqual({ text: '15s', value: '15s' });
       expect(intervalMs).toEqual({ text: 15000, value: 15000 });
     });
+
+    it('should use the default time range when no range provided in options', () => {
+      const prometheusDatasource = new PrometheusDatasource(
+        { ...instanceSettings, jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.None } },
+        templateSrvStub
+      );
+      const query = 'query_result(topk(5,rate(http_request_duration_microseconds_count[$__interval])))';
+      prometheusDatasource.metricFindQuery(query);
+
+      // Last 6h
+      const range = replaceMock.mock.calls[1][1].__range;
+      const rangeMs = replaceMock.mock.calls[1][1].__range_ms;
+      const rangeS = replaceMock.mock.calls[1][1].__range_s;
+      expect(range).toEqual({ text: '21600s', value: '21600s' });
+      expect(rangeMs).toEqual({ text: 21600000, value: 21600000 });
+      expect(rangeS).toEqual({ text: 21600, value: 21600 });
+    });
   });
 });
 

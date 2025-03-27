@@ -14,49 +14,32 @@ import { Stack } from '../../components/Layout/Stack/Stack';
 import { Select } from '../../components/Select/Select';
 import { graphFieldOptions } from '../../components/uPlot/config';
 
+const category = ['Axis'];
+
 /**
  * @alpha
  */
-export function addAxisConfig(
-  builder: FieldConfigEditorBuilder<AxisConfig>,
-  defaultConfig: AxisConfig,
-  hideScale?: boolean
-) {
-  const category = ['Axis'];
-
+export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, defaultConfig: AxisConfig) {
   // options for axis appearance
+  addAxisPlacement(builder);
+
+  builder.addTextInput({
+    path: 'axisLabel',
+    name: 'Label',
+    category,
+    defaultValue: '',
+    settings: {
+      placeholder: 'Optional text',
+      expandTemplateVars: true,
+    },
+    showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
+    // Do not apply default settings to time and string fields which are used as x-axis fields in Time series and Bar chart panels
+    shouldApply: (f) => f.type !== FieldType.time && f.type !== FieldType.string,
+  });
+
+  addAxisWidth(builder);
+
   builder
-    .addRadio({
-      path: 'axisPlacement',
-      name: 'Placement',
-      category,
-      defaultValue: graphFieldOptions.axisPlacement[0].value,
-      settings: {
-        options: graphFieldOptions.axisPlacement,
-      },
-    })
-    .addTextInput({
-      path: 'axisLabel',
-      name: 'Label',
-      category,
-      defaultValue: '',
-      settings: {
-        placeholder: 'Optional text',
-        expandTemplateVars: true,
-      },
-      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
-      // Do not apply default settings to time and string fields which are used as x-axis fields in Time series and Bar chart panels
-      shouldApply: (f) => f.type !== FieldType.time && f.type !== FieldType.string,
-    })
-    .addNumberInput({
-      path: 'axisWidth',
-      name: 'Width',
-      category,
-      settings: {
-        placeholder: 'Auto',
-      },
-      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
-    })
     .addRadio({
       path: 'axisGridShow',
       name: 'Show grid lines',
@@ -209,3 +192,32 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
     </Stack>
   );
 };
+
+/** @internal */
+export function addAxisWidth(builder: FieldConfigEditorBuilder<AxisConfig>) {
+  builder.addNumberInput({
+    path: 'axisWidth',
+    name: 'Width',
+    category,
+    settings: {
+      placeholder: 'Auto',
+    },
+    showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
+  });
+}
+
+/** @internal */
+export function addAxisPlacement(
+  builder: FieldConfigEditorBuilder<AxisConfig>,
+  optionsFilter = (placement: AxisPlacement) => true
+) {
+  builder.addRadio({
+    path: 'axisPlacement',
+    name: 'Placement',
+    category,
+    defaultValue: graphFieldOptions.axisPlacement[0].value,
+    settings: {
+      options: graphFieldOptions.axisPlacement.filter((placement) => optionsFilter(placement.value!)),
+    },
+  });
+}

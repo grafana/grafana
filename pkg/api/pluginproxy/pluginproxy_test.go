@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -557,7 +557,7 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 				SecureJSONData: map[string][]byte{},
 			}
 			cfg := &setting.Cfg{}
-			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall))
+			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
 			require.NoError(t, err)
 			proxy.HandleRequest()
 

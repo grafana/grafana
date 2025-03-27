@@ -1,11 +1,13 @@
+import { isValidLegacyName } from '@grafana/prometheus';
+
 import { createDefaultMetricQueryDefs } from './queryGenerators/default';
 import { createHistogramMetricQueryDefs } from './queryGenerators/histogram';
 import { createSummaryMetricQueryDefs } from './queryGenerators/summary';
 import { AutoQueryContext, AutoQueryInfo } from './types';
 import { getUnit } from './units';
 
-export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
-  const isUtf8Metric = false;
+export function getAutoQueriesForMetric(metric: string, nativeHistogram?: boolean): AutoQueryInfo {
+  const isUtf8Metric = !isValidLegacyName(metric);
   const metricParts = metric.split('_');
   const suffix = metricParts.at(-1);
 
@@ -28,7 +30,7 @@ export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
     return createSummaryMetricQueryDefs(ctx);
   }
 
-  if (suffix === 'bucket') {
+  if (suffix === 'bucket' || nativeHistogram) {
     return createHistogramMetricQueryDefs(ctx);
   }
 

@@ -5,7 +5,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataFrame, GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
-import { Alert, Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
@@ -103,15 +103,15 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         <input type="submit" hidden />
       </form>
       {!isEmpty(commonLabels) && (
-        <div className={styles.commonLabels}>
-          <Stack gap={1} alignItems="center">
-            <strong>Common labels</strong>
+        <Stack gap={1} alignItems="center" wrap="wrap">
+          <Stack gap={0.5} alignItems="center" minWidth="fit-content">
+            <Text variant="bodySmall">Common labels</Text>
             <Tooltip content="Common labels are the ones attached to all of the alert instances">
-              <Icon name="info-circle" />
+              <Icon name="info-circle" size="sm" />
             </Tooltip>
-            <AlertLabels labels={fromPairs(commonLabels)} size="sm" />
           </Stack>
-        </div>
+          <AlertLabels labels={fromPairs(commonLabels)} size="sm" />
+        </Stack>
       )}
       {isEmpty(frameSubset) ? (
         <>
@@ -253,10 +253,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   moreInstancesWarning: css({
     color: theme.colors.warning.text,
     padding: theme.spacing(),
-  }),
-  commonLabels: css({
-    display: 'grid',
-    gridTemplateColumns: 'max-content auto',
   }),
   // we need !important here to override the list item default styles
   highlightedLogRecord: css({

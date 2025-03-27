@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { AccessoryButton, InputGroup } from '@grafana/experimental';
+import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { Alert, Input, useStyles2 } from '@grafana/ui';
 
 import { type CloudWatchDatasource } from '../../datasource';

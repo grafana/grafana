@@ -63,6 +63,118 @@
       "format": "",
       "description": "How many links appear on the page",
       "priority": 0
+    },
+    {
+      "name": "errors_today",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of errors that occurred today",
+      "priority": 0
+    },
+    {
+      "name": "errors_last_1_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of errors that occurred in the last 1 days",
+      "priority": 0
+    },
+    {
+      "name": "errors_last_7_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of errors that occurred in the last 7 days",
+      "priority": 0
+    },
+    {
+      "name": "errors_last_30_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of errors that occurred in the last 30 days",
+      "priority": 0
+    },
+    {
+      "name": "errors_total",
+      "type": "number",
+      "format": "int64",
+      "description": "Total number of errors",
+      "priority": 0
+    },
+    {
+      "name": "queries_today",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of queries that occurred today",
+      "priority": 0
+    },
+    {
+      "name": "queries_last_1_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of queries that occurred in the last 1 days",
+      "priority": 0
+    },
+    {
+      "name": "queries_last_7_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of queries that occurred in the last 7 days",
+      "priority": 0
+    },
+    {
+      "name": "queries_last_30_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of queries that occurred in the last 30 days",
+      "priority": 0
+    },
+    {
+      "name": "queries_total",
+      "type": "number",
+      "format": "int64",
+      "description": "Total number of queries",
+      "priority": 0
+    },
+    {
+      "name": "views_today",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of views that occurred today",
+      "priority": 0
+    },
+    {
+      "name": "views_last_1_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of views that occurred in the last 1 days",
+      "priority": 0
+    },
+    {
+      "name": "views_last_7_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of views that occurred in the last 7 days",
+      "priority": 0
+    },
+    {
+      "name": "views_last_30_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of views that occurred in the last 30 days",
+      "priority": 0
+    },
+    {
+      "name": "views_total",
+      "type": "number",
+      "format": "int64",
+      "description": "Total number of views",
+      "priority": 0
+    },
+    {
+      "name": "legacy_id",
+      "type": "number",
+      "format": "int64",
+      "description": "Deprecated legacy id of the dashboard",
+      "priority": 0
     }
   ],
   "rows": [
@@ -74,6 +186,22 @@
           "aa"
         ],
         "zzz",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
         null,
         null,
         null,
@@ -102,6 +230,24 @@
         null,
         null,
         null,
+        [
+          "timeseries"
+        ],
+        40,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        100,
+        null,
+        null,
+        null,
         null
       ],
       "object": {
@@ -124,6 +270,25 @@
         ],
         "xxx",
         null,
+        null,
+        null,
+        null,
+        [
+          "timeseries",
+          "table"
+        ],
+        25,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        50,
         null,
         null,
         null,

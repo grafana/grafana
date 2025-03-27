@@ -9,7 +9,6 @@ import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
-import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
@@ -26,7 +25,6 @@ import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';
 import { DashNav } from '../components/DashNav';
-import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
@@ -41,6 +39,7 @@ import { explicitlyControlledMigrationPanels, autoMigrateAngular } from '../stat
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
 
+import { DashboardPageError } from './DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
 import 'react-grid-layout/css/styles.css';
@@ -355,7 +354,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, initError, queryParams, theme } = this.props;
+    const { dashboard, initError, queryParams, theme, params } = this.props;
+
     const { editPanel, viewPanel, pageNav, sectionNav } = this.state;
     const kioskMode = getKioskMode(this.props.queryParams);
     const styles = getStyles(theme);
@@ -367,20 +367,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const inspectPanel = this.getInspectPanel();
     const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview && dashboard.isSubMenuVisible();
 
-    const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
+    const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview && !initError;
 
     const pageClassName = cx({
       [styles.fullScreenPanel]: Boolean(viewPanel),
       'page-hidden': Boolean(queryParams.editview || editPanel),
     });
-
-    if (dashboard.meta.dashboardNotFound) {
-      return (
-        <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} pageNav={{ text: 'Not found' }}>
-          <EntityNotFound entity="Dashboard" />
-        </Page>
-      );
-    }
 
     const migrationFeatureFlags = new Set([
       'autoMigrateOldPanels',
@@ -448,7 +440,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             </header>
           )}
           <DashboardPrompt dashboard={dashboard} />
-          {initError && <DashboardFailed />}
+          {initError && <DashboardPageError error={initError.error} type={params.type} />}
           {showSubMenu && (
             <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
@@ -463,12 +455,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             />
           )}
           {showDashboardMigrationNotice && <AngularMigrationNotice dashboardUid={dashboard.uid} />}
-          <DashboardGrid
-            dashboard={dashboard}
-            isEditable={!!dashboard.meta.canEdit}
-            viewPanel={viewPanel}
-            editPanel={editPanel}
-          />
+          {!initError && (
+            <DashboardGrid
+              dashboard={dashboard}
+              isEditable={!!dashboard.meta.canEdit}
+              viewPanel={viewPanel}
+              editPanel={editPanel}
+            />
+          )}
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
           {queryParams.shareView && (

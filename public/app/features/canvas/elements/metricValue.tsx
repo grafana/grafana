@@ -3,13 +3,7 @@ import { useCallback } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
-import {
-  DataFrame,
-  FieldNamePickerConfigSettings,
-  GrafanaTheme2,
-  OneClickMode,
-  StandardEditorsRegistryItem,
-} from '@grafana/data';
+import { DataFrame, FieldNamePickerConfigSettings, GrafanaTheme2, StandardEditorsRegistryItem } from '@grafana/data';
 import { TextDimensionMode } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
@@ -181,7 +175,6 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
       left: options?.placement?.left ?? 100,
       rotation: options?.placement?.rotation ?? 0,
     },
-    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 

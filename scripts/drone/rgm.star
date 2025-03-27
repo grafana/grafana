@@ -19,6 +19,7 @@ load(
 load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
     "github_app_step_volumes",
 )
 load(
@@ -350,7 +351,7 @@ def rgm_promotion_pipeline():
             "--grafana-ref=$${GRAFANA_REF} " +
             "--enterprise-ref=$${ENTERPRISE_REF} " +
             "--grafana-repo=$${GRAFANA_REPO} " +
-            "--version=$${VERSION} ",
+            "--version=$${VERSION} " +
             "--go-version={}".format(golang_version),
         ],
         "environment": rgm_env_secrets(env),
@@ -364,6 +365,11 @@ def rgm_promotion_pipeline():
     build_step["depends_on"] = [
         generate_token_step["name"],
     ]
+
+    publish_step["depends_on"] = [
+        build_step["name"],
+    ]
+
     steps = [
         generate_token_step,
         build_step,
@@ -375,7 +381,7 @@ def rgm_promotion_pipeline():
             name = "rgm-promotion",
             trigger = promotion_trigger,
             steps = steps,
-            volumes = github_app_step_volumes(),
+            volumes = github_app_step_volumes() + github_app_pipeline_volumes(),
         ),
     ]
 

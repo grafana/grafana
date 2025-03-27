@@ -1,7 +1,7 @@
 import { Button, LinkButton, Menu, Tooltip } from '@grafana/ui';
 
 import { usePluginBridge } from '../../hooks/usePluginBridge';
-import { SupportedPlugin } from '../../types/pluginBridges';
+import { getIrmIfPresentOrIncidentPluginId } from '../../utils/config';
 import { createBridgeURL } from '../PluginBridge';
 
 interface Props {
@@ -10,10 +10,16 @@ interface Props {
   url?: string;
 }
 
-export const DeclareIncidentButton = ({ title = '', severity = '', url = '' }: Props) => {
-  const bridgeURL = createBridgeURL(SupportedPlugin.Incident, '/incidents/declare', { title, severity, url });
+const pluginId = getIrmIfPresentOrIncidentPluginId();
 
-  const { loading, installed, settings } = usePluginBridge(SupportedPlugin.Incident);
+export const DeclareIncidentButton = ({ title = '', severity = '', url = '' }: Props) => {
+  const bridgeURL = createBridgeURL(pluginId, '/incidents/declare', {
+    title,
+    severity,
+    url,
+  });
+
+  const { loading, installed, settings } = usePluginBridge(pluginId);
 
   return (
     <>
@@ -39,9 +45,13 @@ export const DeclareIncidentButton = ({ title = '', severity = '', url = '' }: P
 };
 
 export const DeclareIncidentMenuItem = ({ title = '', severity = '', url = '' }: Props) => {
-  const bridgeURL = createBridgeURL(SupportedPlugin.Incident, '/incidents/declare', { title, severity, url });
+  const bridgeURL = createBridgeURL(pluginId, '/incidents/declare', {
+    title,
+    severity,
+    url,
+  });
 
-  const { loading, installed, settings } = usePluginBridge(SupportedPlugin.Incident);
+  const { loading, installed, settings } = usePluginBridge(pluginId);
 
   return (
     <>

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, InputGroup } from '@grafana/experimental';
+import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';

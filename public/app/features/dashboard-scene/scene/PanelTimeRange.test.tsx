@@ -97,6 +97,45 @@ describe('PanelTimeRange', () => {
     expect(panelTime.state.from).toBe('now-12h');
     expect(panelTime.state.to).toBe('now-2h');
   });
+
+  it('should properly apply timeZone', () => {
+    const panelTime = new PanelTimeRange({ timeFrom: '2h' });
+
+    const panel = new SceneCanvasText({ text: 'Hello', $timeRange: panelTime });
+    const scene = new SceneFlexLayout({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now', timeZone: 'utc' }),
+      children: [new SceneFlexItem({ body: panel })],
+    });
+    activateFullSceneTree(scene);
+
+    expect(panelTime.state.value.from.format('Z')).toBe('+00:00'); // UTC
+    expect(panelTime.state.value.to.format('Z')).toBe('+00:00'); // UTC
+  });
+
+  it('should handle invalid time reference in timeShift', () => {
+    const panelTime = new PanelTimeRange({ timeShift: 'now-1d' });
+
+    buildAndActivateSceneFor(panelTime);
+
+    expect(panelTime.state.timeInfo).toBe('invalid timeshift');
+    // Should not be affected by invalid timeShift
+    expect(panelTime.state.from).toBe('now-6h');
+    expect(panelTime.state.to).toBe('now');
+  });
+
+  it('should handle invalid time reference in timeShift combined with timeFrom', () => {
+    const panelTime = new PanelTimeRange({
+      timeFrom: 'now-2h',
+      timeShift: 'now-1d',
+    });
+
+    buildAndActivateSceneFor(panelTime);
+
+    expect(panelTime.state.timeInfo).toBe('invalid timeshift');
+    // Should not be affected by invalid timeShift
+    expect(panelTime.state.from).toBe('now-2h');
+    expect(panelTime.state.to).toBe('now');
+  });
 });
 
 function buildAndActivateSceneFor(panelTime: PanelTimeRange) {

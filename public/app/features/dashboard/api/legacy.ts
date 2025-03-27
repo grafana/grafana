@@ -1,5 +1,6 @@
 import { AppEvents, UrlQueryMap } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { FetchError, getBackendSrv } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -9,10 +10,10 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI } from './types';
 
-export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO> {
+export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   constructor() {}
 
-  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
+  saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
     dashboardWatcher.ignoreNextSave();
 
     return getBackendSrv().post<SaveDashboardResponseDTO>('/api/dashboards/db/', {
@@ -24,7 +25,9 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO> {
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
+    return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, undefined, {
+      showSuccessAlert,
+    });
   }
 
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
@@ -32,7 +35,12 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO> {
 
     if (result.meta.isFolder) {
       appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
-      throw new Error('Dashboard not found');
+      const fetchError: FetchError = {
+        status: 404,
+        config: { url: `/api/dashboards/uid/${uid}` },
+        data: { message: 'Dashboard not found' },
+      };
+      throw fetchError;
     }
 
     return result;

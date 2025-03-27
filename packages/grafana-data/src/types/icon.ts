@@ -94,6 +94,7 @@ export const availableIconsIndex = {
   'document-layout-left': true,
   'download-alt': true,
   draggabledots: true,
+  drilldown: true,
   edit: true,
   'ellipsis-v': true,
   enter: true,

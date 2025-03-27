@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { GrafanaTheme2, OneClickMode } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
@@ -72,7 +72,6 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
         fixed: defaultBgColor,
       },
     },
-    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 

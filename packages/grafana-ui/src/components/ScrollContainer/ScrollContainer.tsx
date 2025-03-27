@@ -34,6 +34,7 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
     const defaults: Partial<BoxProps> = {
       maxHeight: '100%',
       minHeight: 0,
+      minWidth: 0,
     };
     const boxProps = { ...defaults, ...rest };
 

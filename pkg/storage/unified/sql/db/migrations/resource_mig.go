@@ -149,5 +149,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Name: "folder", Type: migrator.DB_NVarchar, Length: 253, Nullable: false, Default: "''",
 	}))
 
+	mg.AddMigration("Migrate DeletionMarkers to real Resource objects", &deletionMarkerMigrator{})
+
 	return marker
 }

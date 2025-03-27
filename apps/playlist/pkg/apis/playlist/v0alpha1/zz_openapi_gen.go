@@ -15,7 +15,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.Playlist":                    schema_pkg_apis_playlist_v0alpha1_Playlist(ref),
 		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistItem":                schema_pkg_apis_playlist_v0alpha1_PlaylistItem(ref),
 		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistList":                schema_pkg_apis_playlist_v0alpha1_PlaylistList(ref),
-		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistOperatorState":       schema_pkg_apis_playlist_v0alpha1_PlaylistOperatorState(ref),
 		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistSpec":                schema_pkg_apis_playlist_v0alpha1_PlaylistSpec(ref),
 		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistStatus":              schema_pkg_apis_playlist_v0alpha1_PlaylistStatus(ref),
 		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlayliststatusOperatorState": schema_pkg_apis_playlist_v0alpha1_PlayliststatusOperatorState(ref),
@@ -73,8 +72,7 @@ func schema_pkg_apis_playlist_v0alpha1_PlaylistItem(ref common.ReferenceCallback
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "PlaylistItem defines model for PlaylistItem.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
@@ -147,65 +145,19 @@ func schema_pkg_apis_playlist_v0alpha1_PlaylistList(ref common.ReferenceCallback
 	}
 }
 
-func schema_pkg_apis_playlist_v0alpha1_PlaylistOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "PlaylistOperatorState defines model for PlaylistOperatorState.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"descriptiveState": {
-						SchemaProps: spec.SchemaProps{
-							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"details": {
-						SchemaProps: spec.SchemaProps{
-							Description: "details contains any extra information that is operator-specific",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"lastEvaluation", "state"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_playlist_v0alpha1_PlaylistSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "PlaylistSpec defines model for PlaylistSpec.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"interval": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -226,15 +178,8 @@ func schema_pkg_apis_playlist_v0alpha1_PlaylistSpec(ref common.ReferenceCallback
 							},
 						},
 					},
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 				},
-				Required: []string{"interval", "items", "title"},
+				Required: []string{"title", "interval", "items"},
 			},
 		},
 		Dependencies: []string{
@@ -246,24 +191,8 @@ func schema_pkg_apis_playlist_v0alpha1_PlaylistStatus(ref common.ReferenceCallba
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "PlaylistStatus defines model for PlaylistStatus.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"additionalFields": {
-						SchemaProps: spec.SchemaProps{
-							Description: "additionalFields is reserved for future use",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
 					"operatorStates": {
 						SchemaProps: spec.SchemaProps{
 							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -274,6 +203,21 @@ func schema_pkg_apis_playlist_v0alpha1_PlaylistStatus(ref common.ReferenceCallba
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
 										Ref:     ref("github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlayliststatusOperatorState"),
+									},
+								},
+							},
+						},
+					},
+					"additionalFields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "additionalFields is reserved for future use",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
 									},
 								},
 							},
@@ -291,9 +235,24 @@ func schema_pkg_apis_playlist_v0alpha1_PlayliststatusOperatorState(ref common.Re
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "PlayliststatusOperatorState defines model for Playliststatus.#OperatorState.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"descriptiveState": {
 						SchemaProps: spec.SchemaProps{
 							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
@@ -314,22 +273,6 @@ func schema_pkg_apis_playlist_v0alpha1_PlayliststatusOperatorState(ref common.Re
 									},
 								},
 							},
-						},
-					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 				},

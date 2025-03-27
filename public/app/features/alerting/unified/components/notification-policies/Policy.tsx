@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { defaults, isArray, sumBy, uniqueId } from 'lodash';
+import { isArray, sumBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import * as React from 'react';
 import { FC, Fragment, ReactNode, useState } from 'react';
@@ -51,7 +51,9 @@ import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
 import { RoutesMatchingFilters } from './NotificationPoliciesList';
-import { TIMING_OPTIONS_DEFAULTS, TimingOptions } from './timingOptions';
+import { TimingOptions } from './timingOptions';
+
+const POLICIES_PER_PAGE = 20;
 
 interface PolicyComponentProps {
   receivers?: Receiver[];
@@ -171,8 +173,6 @@ const Policy = (props: PolicyComponentProps) => {
   contactPointErrors.forEach((error) => {
     errors.push(error);
   });
-
-  const POLICIES_PER_PAGE = 20;
 
   const [visibleChildPolicies, setVisibleChildPolicies] = useState(POLICIES_PER_PAGE);
 
@@ -511,12 +511,7 @@ function MetadataRow({
             <TimeIntervals timings={activeTimings} alertManagerSourceName={alertManagerSourceName} />
           </MetaText>
         )}
-        {timingOptions && (
-          // for the default policy we will also merge the default timings, that way a user can observe what the timing options would be
-          <TimingOptionsMeta
-            timingOptions={isDefaultPolicy ? defaults(timingOptions, TIMING_OPTIONS_DEFAULTS) : timingOptions}
-          />
-        )}
+        {timingOptions && <TimingOptionsMeta timingOptions={timingOptions} />}
         {hasInheritedProperties && (
           <>
             <MetaText icon="corner-down-right-alt" data-testid="inherited-properties">

@@ -1,6 +1,6 @@
 package rbac
 
-import "github.com/grafana/authlib/claims"
+import claims "github.com/grafana/authlib/types"
 
 type CheckRequest struct {
 	Namespace    claims.NamespaceInfo
@@ -22,10 +22,4 @@ type ListRequest struct {
 	Resource     string
 	Verb         string
 	Action       string
-}
-
-type FolderNode struct {
-	uid          string
-	parentUID    *string
-	childrenUIDs []string
 }

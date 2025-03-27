@@ -1,7 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { Avatar } from '@grafana/ui';
-
+import { Avatar } from './Avatar';
 import mdx from './Avatar.mdx';
 
 const meta: Meta<typeof Avatar> = {

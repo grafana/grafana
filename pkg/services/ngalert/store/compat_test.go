@@ -43,3 +43,20 @@ func TestAlertRuleToModelsAlertRule(t *testing.T) {
 		require.Equal(t, ngmodels.ErrorErrState, converted.ExecErrState)
 	})
 }
+
+func TestAlertRuleVersionToAlertRule(t *testing.T) {
+	g := ngmodels.RuleGen
+
+	t.Run("make sure no data is lost between conversions", func(t *testing.T) {
+		for _, rule := range g.GenerateMany(100) {
+			// ignore fields
+			rule.DashboardUID = nil
+			rule.PanelID = nil
+
+			r, err := alertRuleFromModelsAlertRule(rule)
+			require.NoError(t, err)
+			r2 := alertRuleVersionToAlertRule(alertRuleToAlertRuleVersion(r))
+			require.Equal(t, r, r2)
+		}
+	})
+}

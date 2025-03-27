@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { AccessoryButton } from '@grafana/experimental';
+import { AccessoryButton } from '@grafana/plugin-ui';
 
 import { InfluxQueryTag } from '../../../../../types';
 import { adjustOperatorIfNeeded, getCondition, getOperator } from '../utils/tagUtils';

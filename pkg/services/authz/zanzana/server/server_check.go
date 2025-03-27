@@ -10,7 +10,7 @@ import (
 )
 
 func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	ctx, span := tracer.Start(ctx, "server.Check")
+	ctx, span := s.tracer.Start(ctx, "server.Check")
 	defer span.End()
 
 	if err := authorize(ctx, r.GetNamespace()); err != nil {
@@ -24,7 +24,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 	relation := common.VerbMapping[r.GetVerb()]
 
-	contextuals, err := s.getContextuals(ctx, r.GetSubject())
+	contextuals, err := s.getContextuals(r.GetSubject())
 	if err != nil {
 		return nil, err
 	}

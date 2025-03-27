@@ -41,7 +41,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const visualization = createVisualizationColors(colors);
 
   const theme = {
-    name: (name ?? colors.mode === 'dark') ? 'Dark' : 'Light',
+    name: name ?? (colors.mode === 'dark' ? 'Dark' : 'Light'),
     isDark: colors.mode === 'dark',
     isLight: colors.mode === 'light',
     colors,

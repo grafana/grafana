@@ -5,9 +5,9 @@ import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from '@grafana/ui/src/utils/i18n';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans, t } from 'app/core/internationalization';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { AlertInstanceTotalState, CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
@@ -23,12 +23,10 @@ import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../util
 import {
   RulePluginOrigin,
   getRulePluginOrigin,
-  isAlertingRule,
   isFederatedRuleGroup,
-  isGrafanaRecordingRule,
-  isGrafanaRulerRule,
-  isGrafanaRulerRulePaused,
-  isRecordingRule,
+  isPausedRule,
+  prometheusRuleType,
+  rulerRuleType,
 } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { AlertLabels } from '../AlertLabels';
@@ -42,6 +40,7 @@ import { FederatedRuleWarning } from './FederatedRuleWarning';
 import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
 import { RecordingBadge, StateBadge } from './StateBadges';
+import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { Details } from './tabs/Details';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
@@ -54,6 +53,7 @@ export enum ActiveTab {
   History = 'history',
   Routing = 'routing',
   Details = 'details',
+  VersionHistory = 'version-history',
 }
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
@@ -69,11 +69,11 @@ const RuleViewer = () => {
   const { annotations, promRule, rulerRule } = rule;
 
   const hasError = isErrorHealth(promRule?.health);
-  const isAlertType = isAlertingRule(promRule);
+  const isAlertType = prometheusRuleType.alertingRule(promRule);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
-  const isProvisioned = isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
-  const isPaused = isGrafanaRulerRule(rulerRule) && isGrafanaRulerRulePaused(rulerRule);
+  const isProvisioned = rulerRuleType.grafana.rule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+  const isPaused = rulerRuleType.grafana.alertingRule(rulerRule) && isPausedRule(rulerRule);
 
   const showError = hasError && !isPaused;
   const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
@@ -124,9 +124,14 @@ const RuleViewer = () => {
         <TabContent>
           {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
           {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
-          {activeTab === ActiveTab.History && isGrafanaRulerRule(rule.rulerRule) && <History rule={rule.rulerRule} />}
+          {activeTab === ActiveTab.History && rulerRuleType.grafana.rule(rule.rulerRule) && (
+            <History rule={rule.rulerRule} />
+          )}
           {activeTab === ActiveTab.Routing && <Routing />}
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
+          {activeTab === ActiveTab.VersionHistory && rulerRuleType.grafana.rule(rule.rulerRule) && (
+            <AlertVersionHistory rule={rule.rulerRule} />
+          )}
         </TabContent>
       </Stack>
       {duplicateRuleIdentifier && (
@@ -201,7 +206,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
       ),
     });
   }
-  if (isGrafanaRecordingRule(rule.rulerRule)) {
+  if (rulerRuleType.grafana.recordingRule(rule.rulerRule)) {
     const metric = rule.rulerRule?.grafana_alert.record?.metric ?? '';
     metadata.push({
       label: 'Metric name',
@@ -331,14 +336,15 @@ function usePageNav(rule: CombinedRule) {
   const { annotations, promRule, rulerRule } = rule;
 
   const summary = annotations[Annotation.summary];
-  const isAlertType = isAlertingRule(promRule);
+  const isAlertType = prometheusRuleType.alertingRule(promRule);
   const numberOfInstance = isAlertType ? calculateTotalInstances(rule.instanceTotals) : undefined;
 
   const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
   const groupName = rule.group.name;
 
-  const isGrafanaAlertRule = isGrafanaRulerRule(rulerRule) && isAlertType;
-  const isRecordingRuleType = isRecordingRule(promRule);
+  const isGrafanaAlertRule = rulerRuleType.grafana.rule(rulerRule) && isAlertType;
+  const grafanaRecordingRule = rulerRuleType.grafana.recordingRule(rulerRule);
+  const isRecordingRuleType = prometheusRuleType.recordingRule(promRule);
 
   const pageNav: NavModelItem = {
     ...defaultPageNav,
@@ -376,6 +382,14 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.Details);
         },
+      },
+      {
+        text: 'Versions',
+        active: activeTab === ActiveTab.VersionHistory,
+        onClick: () => {
+          setActiveTab(ActiveTab.VersionHistory);
+        },
+        hideFromTabs: !isGrafanaAlertRule && !grafanaRecordingRule,
       },
     ],
     parentItem: {

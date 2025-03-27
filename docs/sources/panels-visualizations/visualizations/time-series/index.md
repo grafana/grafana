@@ -209,21 +209,7 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 ### Axis options
 
-Options under the **Axis** section control how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you're editing. You can also press `Enter`.
-
-| Option                             | Description                                                                                                                                                                                                                                                                                                                                                                      |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Time zone                          | Set the desired time zones to display along the x-axis.                                                                                                                                                                                                                                                                                                                          |
-| [Placement](#placement)            | Select the placement of the y-axis.                                                                                                                                                                                                                                                                                                                                              |
-| Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override.                                                                                                                                                                                                                                                               |
-| Width                              | Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis. By setting the width of the axis, data with different axes types can share the same display proportions. This setting makes it easier for you to compare more than one graph’s worth of data because the axes aren't shifted or stretched within visual proximity to each other. |
-| Show grid lines                    | Set the axis grid line visibility.<br>                                                                                                                                                                                                                                                                                                                                           |
-| Color                              | Set the color of the axis.                                                                                                                                                                                                                                                                                                                                                       |
-| Show border                        | Set the axis border visibility.                                                                                                                                                                                                                                                                                                                                                  |
-| Scale                              | Set the y-axis values scale.<br>                                                                                                                                                                                                                                                                                                                                                 |
-| Centered zero                      | Set the y-axis so it's centered on zero.                                                                                                                                                                                                                                                                                                                                         |
-| [Soft min](#soft-min-and-soft-max) | Set a soft min to better control the y-axis limits. zero.                                                                                                                                                                                                                                                                                                                        |
-| [Soft max](#soft-min-and-soft-max) | Set a soft max to better control the y-axis limits. zero.                                                                                                                                                                                                                                                                                                                        |
+{{< docs/shared lookup="visualizations/axis-options-all.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 #### Placement
 
@@ -376,9 +362,9 @@ Set the position of the bar relative to a data point. In the examples below, **S
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Data links
+### Data links and actions
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Value mappings
 

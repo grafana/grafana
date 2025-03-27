@@ -60,9 +60,9 @@ Customize access to app plugins with [RBAC](../roles-and-permissions/access-cont
 
 By default, the Viewer, Editor and Admin roles have access to all app plugins that their Organization role allows them to access. Access is granted by the `fixed:plugins.app:reader` role.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To prevent users from seeing an app plugin, refer to [these permissions scenarios](../roles-and-permissions/access-control/plan-rbac-rollout-strategy/#prevent-viewers-from-accessing-an-app-plugin).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Plugin catalog
 
@@ -74,9 +74,9 @@ The following access rules apply depending on the user role:
 - If you are a **Server Admin**, you can't configure app plugins, but you can install, uninstall, or update them.
 - If you are both **Org Admin** and **Server Admin**, you can configure app plugins and also install, uninstall, or update them.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The Grafana plugin catalog is designed to work with a single Grafana server instance only. Support for Grafana clusters is planned for future Grafana releases.
-{{% /admonition %}}
+{{< /admonition >}}
 
 <div class="medium-6 columns">
   <video width="700" height="600" controls>
@@ -87,9 +87,9 @@ The Grafana plugin catalog is designed to work with a single Grafana server inst
 
 _Video shows the Plugin catalog in a previous version of Grafana._
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If required, the Grafana plugin catalog can be disabled using the `plugin_admin_enabled` flag in the [configuration](../../setup-grafana/configure-grafana/#plugin_admin_enabled) file.
-{{% /admonition %}}
+{{< /admonition >}}
 
 <a id="#plugin-catalog-entry"></a>
 
@@ -128,11 +128,11 @@ unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 
 The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration](../../setup-grafana/configure-grafana/#plugins).
 
-#### Install a plugin using Grafana configuration
+#### Install a plugin using Grafana configuration
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This feature requires Grafana 11.5.0 or later.
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can install plugins by adding the plugin ID to the `plugins.preinstall` section in the Grafana configuration file. This prevents the plugin from being accidentally uninstalled and can be auto-updated. For more information, refer to [Configuration](../../setup-grafana/configure-grafana/#plugins).
 
@@ -220,7 +220,7 @@ All plugins are signed under a _signature level_. The signature level determines
 
 ### Allow unsigned plugins
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Unsigned plugins are not supported in Grafana Cloud.
 {{% /admonition %}}
 
@@ -232,9 +232,35 @@ If you've allowed loading of an unsigned plugin, then Grafana writes a warning m
 WARN[06-01|16:45:59] Running an unsigned plugin   pluginID=<plugin id>
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you're developing a plugin, then you can enable development mode to allow all unsigned plugins.
-{{% /admonition %}}
+{{< /admonition >}}
+
+## Integrate plugins
+
+You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. By default, you can only communicate with plugin backends remotely. You can use this configuration to, for example, enable a [canvas panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/) to call an application resource API that is permitted by the `actions_allow_post_url` option.
+
+To enable backend communication between plugins:
+
+1. Set the plugins you want to communicate with. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable and then set the following configuration option:
+
+   ```
+   actions_allow_post_url=
+   ```
+
+   This is a comma-separated list that uses glob matching.
+
+   - To allow access to all plugins that have a backend:
+
+     ```
+     actions_allow_post_url=/api/plugins/*
+     ```
+
+   - To access to the backend of only one plugin:
+
+     ```
+     actions_allow_post_url=/api/plugins/<GRAFANA_SPECIAL_APP>
+     ```
 
 ## Integrate plugins
 
@@ -264,9 +290,9 @@ To enable backend communication between plugins:
 
 ## Plugin Frontend Sandbox
 
-{{% admonition type="caution" %}}
+{{< admonition type="caution" >}}
 Plugin Frontend Sandbox is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-{{% /admonition %}}
+{{< /admonition >}}
 
 The Plugin Frontend Sandbox is a security feature that isolates plugin frontend code from the main Grafana application.
 When enabled, plugins run in a separate JavaScript context, which provides several security benefits:
@@ -282,15 +308,15 @@ Plugins running inside the Frontend Sandbox should continue to work normally wit
 
 The Frontend Sandbox feature is currently behind the `pluginsFrontendSandbox` feature flag. To enable it, you'll need to:
 
-1. Enable the feature flag in your Grafana configuration. For more information about enabling feature flags, refer to [Configure feature toggles](../../setup-grafana/configure-grafana/feature-toggles/).
+1. Enable the feature flag in your Grafana configuration. For more information about enabling feature flags, refer to [Configure feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 2. For self-hosted Grafana installations, add the plugin IDs you want to sandbox in the `security` section using the `enable_frontend_sandbox_for_plugins` configuration option.
 
 For Grafana Cloud users, you can simply use the toggle switch in the plugin catalog page to enable or disable the sandbox for each plugin. By default, the sandbox is disabled for all plugins.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Enabling the Frontend Sandbox might impact the performance of certain plugins. Only disable the sandbox if you fully trust the plugin and understand the security implications.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Compatibility
 

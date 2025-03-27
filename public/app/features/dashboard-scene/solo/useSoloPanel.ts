@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { VizPanel, UrlSyncManager } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardRepeatsProcessedEvent } from '../scene/types';
-import { findVizPanelByKey, isPanelClone } from '../utils/utils';
+import { DashboardRepeatsProcessedEvent } from '../scene/types/DashboardRepeatsProcessedEvent';
+import { containsCloneKey } from '../utils/clone';
+import { findVizPanelByKey } from '../utils/utils';
 
 export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPanel | undefined, string | undefined] {
   const [panel, setPanel] = useState<VizPanel>();
@@ -26,7 +27,7 @@ export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPa
     if (panel) {
       activateParents(panel);
       setPanel(panel);
-    } else if (isPanelClone(panelId)) {
+    } else if (containsCloneKey(panelId)) {
       findRepeatClone(dashboard, panelId).then((panel) => {
         if (panel) {
           setPanel(panel);

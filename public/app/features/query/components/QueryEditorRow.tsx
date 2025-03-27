@@ -8,7 +8,6 @@ import { PureComponent, ReactNode } from 'react';
 // Utils & Services
 import {
   CoreApp,
-  DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
@@ -25,6 +24,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -39,6 +39,8 @@ import { Trans, t } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+
+import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -61,9 +63,9 @@ export interface Props<TQuery extends DataQuery> {
   visualization?: ReactNode;
   hideHideQueryButton?: boolean;
   app?: CoreApp;
+  range: TimeRange;
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
-  alerting?: boolean;
   hideActionButtons?: boolean;
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
@@ -271,7 +273,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
+    const { query, onChange, queries, onRunQuery, onAddQuery, range, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
     if (this.isWaitingForDatasourceToLoad()) {
@@ -296,7 +298,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               onRunQuery={onRunQuery}
               onAddQuery={onAddQuery}
               data={data}
-              range={getTimeSrv().timeRange()}
+              range={range}
               queries={queries}
               app={app}
               history={history}
@@ -487,6 +489,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
+        <MaybeQueryLibrarySaveButton query={query} />
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
@@ -515,8 +518,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
-    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras, hideRefId } =
-      this.props;
+    const { app, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras, hideRefId } = this.props;
 
     return (
       <QueryEditorRowHeader
@@ -529,7 +531,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
         renderExtras={renderHeaderExtras}
-        alerting={alerting}
+        alerting={app === CoreApp.UnifiedAlerting}
         hideRefId={hideRefId}
       />
     );
@@ -655,4 +657,10 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     errors: error ? [error] : undefined,
     timeRange,
   };
+}
+
+// Will render anything only if query library is enabled
+function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
+  const { renderSaveQueryButton } = useQueryLibraryContext();
+  return renderSaveQueryButton(props.query);
 }

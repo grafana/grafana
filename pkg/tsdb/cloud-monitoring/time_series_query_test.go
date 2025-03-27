@@ -125,7 +125,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 			parameters: &dataquery.TimeSeriesQuery{
 				ProjectName: "test-proj",
 				Query:       "test-query",
-				GraphPeriod: strPtr("60s"),
+				GraphPeriod: "60s",
 			},
 			timeRange: backend.TimeRange{
 				From: fromStart,
@@ -145,7 +145,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("skips graph_period if disabled", func(t *testing.T) {
-		query := &cloudMonitoringTimeSeriesQuery{parameters: &dataquery.TimeSeriesQuery{GraphPeriod: strPtr("disabled")}}
+		query := &cloudMonitoringTimeSeriesQuery{parameters: &dataquery.TimeSeriesQuery{GraphPeriod: "disabled"}}
 		assert.Equal(t, query.appendGraphPeriod(&backend.QueryDataRequest{Queries: []backend.DataQuery{{}}}), "")
 	})
 

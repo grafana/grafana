@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
+import { t } from '../../utils/i18n';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
@@ -59,6 +60,8 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     const role = restProps['role'] || rolesBySeverity[severity];
     const ariaLabel = restProps['aria-label'] || title;
 
+    const closeLabel = t('grafana-ui.alert.close-button', 'Close alert');
+
     return (
       <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
         <Box
@@ -97,7 +100,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           {onRemove && !buttonContent && (
             <div className={styles.close}>
               <Button
-                aria-label="Close alert"
+                aria-label={closeLabel}
                 icon="times"
                 onClick={onRemove}
                 type="button"
@@ -109,7 +112,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
           {onRemove && buttonContent && (
             <Box marginLeft={1} display="flex" alignItems="center">
-              <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">
+              <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
                 {buttonContent}
               </Button>
             </Box>

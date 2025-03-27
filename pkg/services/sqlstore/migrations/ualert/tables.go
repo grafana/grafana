@@ -302,6 +302,8 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 UPDATE alert_rule SET is_paused = false;`))
 }
 
+var alertRuleVersionUDX_OrgIdRuleUIDVersion = &migrator.Index{Cols: []string{"rule_org_id", "rule_uid", "version"}, Type: migrator.UniqueIndex}
+
 func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 	// DO NOT EDIT
 	alertRuleVersion := migrator.Table{
@@ -325,12 +327,12 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'Alerting'"},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"rule_org_id", "rule_uid", "version"}, Type: migrator.UniqueIndex},
+			alertRuleVersionUDX_OrgIdRuleUIDVersion,
 			{Cols: []string{"rule_org_id", "rule_namespace_uid", "rule_group"}, Type: migrator.IndexType},
 		},
 	}
 	mg.AddMigration("create alert_rule_version table", migrator.NewAddTableMigration(alertRuleVersion))
-	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_uid and version columns", migrator.NewAddIndexMigration(alertRuleVersion, alertRuleVersion.Indices[0]))
+	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_uid and version columns", migrator.NewAddIndexMigration(alertRuleVersion, alertRuleVersionUDX_OrgIdRuleUIDVersion))
 	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_namespace_uid and rule_group columns", migrator.NewAddIndexMigration(alertRuleVersion, alertRuleVersion.Indices[1]))
 
 	mg.AddMigration("alter alert_rule_version table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").

@@ -36,7 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-type fakePluginRequestValidator struct {
+type fakeDataSourceRequestValidator struct {
 	err error
 }
 
@@ -45,7 +45,7 @@ type secretsErrorResponseBody struct {
 	Message string `json:"message"`
 }
 
-func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) error {
+func (rv *fakeDataSourceRequestValidator) Validate(ds *datasources.DataSource, req *http.Request) error {
 	return rv.err
 }
 
@@ -56,7 +56,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 		cfg,
 		nil,
 		nil,
-		&fakePluginRequestValidator{},
+		&fakeDataSourceRequestValidator{},
 		&fakePluginClient{
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
@@ -114,7 +114,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		cfg,
 		nil,
 		nil,
-		&fakePluginRequestValidator{},
+		&fakeDataSourceRequestValidator{},
 		&fakePluginClient{
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
@@ -249,7 +249,7 @@ func TestDataSourceQueryError(t *testing.T) {
 			expectedStatus: errutil.StatusInternal.HTTPStatus(),
 			expectedBody: body{
 				Message:    "An error occurred within the plugin",
-				MessageId:  "plugin.downstreamError",
+				MessageId:  "plugin.requestFailureError",
 				StatusCode: 500,
 			},
 		},
@@ -309,7 +309,7 @@ func TestDataSourceQueryError(t *testing.T) {
 					cfg,
 					&fakeDatasources.FakeCacheService{},
 					nil,
-					&fakePluginRequestValidator{},
+					&fakeDataSourceRequestValidator{},
 					pluginClient.ProvideService(r),
 					plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
 						PluginList: []pluginstore.Plugin{pluginstore.ToGrafanaDTO(p)},

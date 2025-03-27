@@ -221,10 +221,14 @@ HTTPS protocol is supported in the image renderer v3.11.0 and later.
 
 Change the protocol of the server, it can be `http` or `https`. Default is `http`.
 
+```bash
+HTTP_PROTOCOL=https
+```
+
 ```json
 {
   "service": {
-    "protocol": "http"
+    "protocol": "https"
   }
 }
 ```
@@ -232,6 +236,11 @@ Change the protocol of the server, it can be `http` or `https`. Default is `http
 #### HTTPS certificate and key file
 
 Path to the image renderer certificate and key file used to start an HTTPS server.
+
+```bash
+HTTP_CERT_FILE=./path/to/cert
+HTTP_CERT_KEY=./path/to/key
+```
 
 ```json
 {
@@ -245,6 +254,10 @@ Path to the image renderer certificate and key file used to start an HTTPS serve
 #### HTTPS min TLS version
 
 Minimum TLS version allowed. Accepted values are: `TLSv1.2`, `TLSv1.3`. Default is `TLSv1.2`.
+
+```bash
+HTTP_MIN_TLS_VERSION=TLSv1.2
+```
 
 ```json
 {
@@ -564,6 +577,24 @@ RENDERING_VIEWPORT_PAGE_ZOOM_LEVEL=1
 {
   "rendering": {
     "pageZoomLevel": 1
+  }
+}
+```
+
+#### Tracing
+
+Enable OpenTelemetry Tracing by setting the tracing URL. Default is empty (disabled).
+
+```bash
+RENDERING_TRACING_URL="http://localhost:4318/v1/traces"
+```
+
+```json
+{
+  "rendering": {
+    "tracing": {
+      "url": "http://localhost:4318/v1/traces"
+    }
   }
 }
 ```

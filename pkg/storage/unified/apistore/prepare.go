@@ -3,6 +3,7 @@ package apistore
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -13,7 +14,8 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authtypes "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -37,9 +39,9 @@ func formatBytes(numBytes int) string {
 
 // Called on create
 func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) ([]byte, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
+	info, ok := authtypes.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, errors.New("missing auth info")
 	}
 
 	obj, err := utils.MetaAccessor(newObject)
@@ -47,7 +49,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return nil, err
 	}
 	if obj.GetName() == "" {
-		return nil, storage.ErrResourceVersionSetOnCreate
+		return nil, storage.NewInvalidObjError("", "missing name")
 	}
 	if obj.GetResourceVersion() != "" {
 		return nil, storage.ErrResourceVersionSetOnCreate
@@ -60,8 +62,11 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		// nolint:staticcheck
 		id := obj.GetDeprecatedInternalID()
 		if id < 1 {
+			// the ID must be smaller than 9007199254740991, otherwise we will lose prescision
+			// on the frontend, which uses the number type to store ids. The largest safe number in
+			// javascript is 9007199254740991, compared to 9223372036854775807 as the max int64
 			// nolint:staticcheck
-			obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64())
+			obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64() & ((1 << 52) - 1))
 		}
 	}
 
@@ -69,15 +74,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
 
-	// Read+write will verify that repository format is accurate
-	repo, err := obj.GetRepositoryInfo()
-	if err != nil {
-		return nil, err
-	}
-	obj.SetRepositoryInfo(repo)
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
-	obj.SetCreatedBy(user.GetUID())
+	obj.SetCreatedBy(info.GetUID())
 
 	var buf bytes.Buffer
 	if err = s.codec.Encode(newObject, &buf); err != nil {
@@ -88,9 +87,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 
 // Called on update
 func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runtime.Object, previousObject runtime.Object) ([]byte, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
+	info, ok := authtypes.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, errors.New("missing auth info")
 	}
 
 	obj, err := utils.MetaAccessor(updateObject)
@@ -132,13 +131,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
 	}
 
-	// Read+write will verify that origin format is accurate
-	repo, err := obj.GetRepositoryInfo()
-	if err != nil {
-		return nil, err
-	}
-	obj.SetRepositoryInfo(repo)
-	obj.SetUpdatedBy(user.GetUID())
+	obj.SetUpdatedBy(info.GetUID())
 	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 
 	var buf bytes.Buffer

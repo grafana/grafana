@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
+import { DataFrame, Field } from '../../types/dataFrame';
 import {
   SpecialValue,
   DataTransformerInfo,
@@ -65,9 +65,9 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
   operator: (options: GroupingToMatrixTransformerOptions, ctx: DataTransformContext) => (source) =>
     source.pipe(
       map((data) => {
-        const columnFieldMatch = ctx.interpolate(options.columnField || DEFAULT_COLUMN_FIELD);
-        const rowFieldMatch = ctx.interpolate(options.rowField || DEFAULT_ROW_FIELD);
-        const valueFieldMatch = ctx.interpolate(options.valueField || DEFAULT_VALUE_FIELD);
+        const columnFieldMatch = options.columnField || DEFAULT_COLUMN_FIELD;
+        const rowFieldMatch = options.rowField || DEFAULT_ROW_FIELD;
+        const valueFieldMatch = options.valueField || DEFAULT_VALUE_FIELD;
         const emptyValue = options.emptyValue || DEFAULT_EMPTY_VALUE;
 
         // Accept only single queries
@@ -106,7 +106,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           {
             name: rowColumnField,
             values: rowValues,
-            type: FieldType.string,
+            type: keyRowField.type,
             config: {},
           },
         ];
@@ -127,7 +127,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           }
 
           fields.push({
-            name: columnName.toString(),
+            name: columnName?.toString() ?? null,
             values: values,
             config: valueField.config,
             type: valueField.type,
@@ -145,12 +145,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
 };
 
 function uniqueValues<T>(values: T[]): T[] {
-  const unique = new Set<T>();
-
-  for (let index = 0; index < values.length; index++) {
-    unique.add(values[index]);
-  }
-
+  const unique = new Set<T>(values);
   return Array.from(unique);
 }
 

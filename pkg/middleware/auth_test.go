@@ -7,13 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -30,7 +29,7 @@ import (
 )
 
 func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr error) *contexthandler.ContextHandler {
-	return contexthandler.ProvideService(setting.NewCfg(), tracing.InitializeTracerForTest(), &authntest.FakeService{
+	return contexthandler.ProvideService(setting.NewCfg(), &authntest.FakeService{
 		ExpectedErr:      authErr,
 		ExpectedIdentity: identity,
 	}, featuremgmt.WithFeatures())
@@ -68,7 +67,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return 200 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{Type: claims.TypeAnonymous},
+			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
@@ -76,7 +75,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user with forceLogin query string",
 			path:           "/secure?forceLogin=true",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{Type: claims.TypeAnonymous},
+			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -84,7 +83,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user when orgId in query string is different from currently used",
 			path:           "/secure?orgId=2",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{Type: claims.TypeAnonymous},
+			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -92,7 +91,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 401 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{Type: claims.TypeAnonymous},
+			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusUnauthorized,
 		},
@@ -100,7 +99,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 200 for authenticated user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{ID: "1", Type: claims.TypeUser},
+			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
@@ -108,7 +107,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "snapshot public mode disabled should return 200 for authenticated user",
 			path:           "/api/secure",
 			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
-			identity:       &authn.Identity{ID: "1", Type: claims.TypeUser},
+			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
@@ -205,11 +204,10 @@ func TestRoleAppPluginAuth(t *testing.T) {
 							0: tc.role,
 						},
 					})
-					features := featuremgmt.WithFeatures()
 					logger := &logtest.Fake{}
 					ac := &actest.FakeAccessControl{}
 
-					sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
+					sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, logger), func(c *contextmodel.ReqContext) {
 						c.JSON(http.StatusOK, map[string]interface{}{})
 					})
 					sc.fakeReq("GET", path).exec()
@@ -228,10 +226,9 @@ func TestRoleAppPluginAuth(t *testing.T) {
 				0: org.RoleViewer,
 			},
 		})
-		features := featuremgmt.WithFeatures()
 		logger := &logtest.Fake{}
 		ac := &actest.FakeAccessControl{}
-		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, &pluginstore.FakePluginStore{}, features, logger), func(c *contextmodel.ReqContext) {
+		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, &pluginstore.FakePluginStore{}, logger), func(c *contextmodel.ReqContext) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/test").exec()
@@ -246,7 +243,6 @@ func TestRoleAppPluginAuth(t *testing.T) {
 				0: org.RoleViewer,
 			},
 		})
-		features := featuremgmt.WithFeatures()
 		logger := &logtest.Fake{}
 		ac := &actest.FakeAccessControl{}
 		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, pluginstore.NewFakePluginStore(pluginstore.Plugin{
@@ -260,7 +256,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				},
 			},
-		}), features, logger), func(c *contextmodel.ReqContext) {
+		}), logger), func(c *contextmodel.ReqContext) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/notExistingPath").exec()
@@ -308,7 +304,6 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				})
 				logger := &logtest.Fake{}
-				features := featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 				ac := &actest.FakeAccessControl{
 					ExpectedEvaluate: tc.evalResult,
 					ExpectedErr:      tc.evalErr,
@@ -328,7 +323,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				})
 
-				sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
+				sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, logger), func(c *contextmodel.ReqContext) {
 					c.JSON(http.StatusOK, map[string]interface{}{})
 				})
 				sc.fakeReq("GET", path).exec()

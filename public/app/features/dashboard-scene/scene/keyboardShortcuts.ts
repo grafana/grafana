@@ -111,7 +111,15 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'i',
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      locationService.push(getInspectUrl(vizPanel));
+      if (scene.state.inspectPanelKey) {
+        locationService.push(
+          locationUtil.getUrlForPartial(locationService.getLocation(), {
+            inspect: undefined,
+          })
+        );
+      } else {
+        locationService.push(locationUtil.stripBaseFromUrl(getInspectUrl(vizPanel)));
+      }
     }),
   });
 

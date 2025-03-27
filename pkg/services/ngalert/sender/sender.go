@@ -114,7 +114,9 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 		s.logger.Error("failed to register service discovery metrics", "error", err)
 		return nil, err
 	}
-	s.sdManager = discovery.NewManager(sdCtx, s.logger, prometheus.NewRegistry(), sdMetrics)
+	// Convert s.Logger to slog.Logger using the adapter
+	slogLogger := toSlogLogger(s.logger)
+	s.sdManager = discovery.NewManager(sdCtx, slogLogger, prometheus.NewRegistry(), sdMetrics)
 
 	if s.sdManager == nil {
 		return nil, errors.New("failed to create new discovery manager")

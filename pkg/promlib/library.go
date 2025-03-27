@@ -2,7 +2,6 @@ package promlib
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -11,7 +10,6 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	"github.com/grafana/grafana/pkg/promlib/client"
 	"github.com/grafana/grafana/pkg/promlib/instrumentation"
@@ -39,6 +37,14 @@ func NewService(httpClientProvider *sdkhttpclient.Provider, plog log.Logger, ext
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, plog, extendOptions)),
 		logger: plog,
 	}
+}
+
+// Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
+// created. As soon as datasource settings change detected by SDK old datasource instance will
+// be disposed and a new one will be created using NewSampleDatasource factory function.
+func (s *Service) Dispose() {
+	// Clean up datasource instance resources.
+	s.logger.Debug("Disposing the instance...")
 }
 
 func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Logger, extendOptions ExtendOptions) datasource.InstanceFactoryFunc {
@@ -129,19 +135,4 @@ func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginConte
 	}
 	in := i.(instance)
 	return &in, nil
-}
-
-// IsAPIError returns whether err is or wraps a Prometheus error.
-func IsAPIError(err error) bool {
-	// Check if the right error type is in err's chain.
-	var e *apiv1.Error
-	return errors.As(err, &e)
-}
-
-func ConvertAPIError(err error) error {
-	var e *apiv1.Error
-	if errors.As(err, &e) {
-		return fmt.Errorf("%s: %s", e.Msg, e.Detail)
-	}
-	return err
 }

@@ -124,3 +124,7 @@ func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler,
 	}
 	return f.LotexRuler, nil
 }
+
+func (f *RulerApiHandler) handleRouteGetRuleVersionsByUID(ctx *contextmodel.ReqContext, ruleUID string) response.Response {
+	return f.GrafanaRuler.RouteGetRuleVersionsByUID(ctx, ruleUID)
+}

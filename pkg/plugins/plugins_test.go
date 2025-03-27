@@ -56,6 +56,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Extensions: Extensions{
 					AddedLinks:        []AddedLink{},
 					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -108,8 +109,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Name: "Pie Chart (old)",
 
 				Extensions: Extensions{
-					AddedLinks:        []AddedLink{},
-					AddedComponents:   []AddedComponent{},
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -143,8 +146,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Type:     TypeDataSource,
 
 				Extensions: Extensions{
-					AddedLinks:        []AddedLink{},
-					AddedComponents:   []AddedComponent{},
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -188,6 +193,9 @@ func Test_ReadPluginJSON(t *testing.T) {
 								"id": "myorg-extensions-app/component-1/v1"
 							}
 						],
+						"addedFunctions": [
+              {"targets": ["foo/bar"], "title":"some hook"}
+            ],
 						"extensionPoints": [
 							{
 								"title": "Extension point 1",
@@ -209,6 +217,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 						{Title: "Added link 1", Description: "Added link 1 description", Targets: []string{"grafana/dashboard/panel/menu"}},
 					},
 					AddedComponents: []AddedComponent{
+
 						{Title: "Added component 1", Description: "Added component 1 description", Targets: []string{"grafana/user/profile/tab"}},
 					},
 					ExposedComponents: []ExposedComponent{
@@ -216,6 +225,9 @@ func Test_ReadPluginJSON(t *testing.T) {
 					},
 					ExtensionPoints: []ExtensionPoint{
 						{Id: "myorg-extensions-app/extensions-point-1/v1", Title: "Extension point 1", Description: "Extension points 1 description"},
+					},
+					AddedFunctions: []AddedFunction{
+						{Targets: []string{"foo/bar"}, Title: "some hook"},
 					},
 				},
 
@@ -271,6 +283,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 					AddedComponents: []AddedComponent{
 						{Title: "Added component 1", Description: "Added component 1 description", Targets: []string{"grafana/user/profile/tab"}},
 					},
+					AddedFunctions:    []AddedFunction{},
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -301,8 +314,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Type: TypeApp,
 
 				Extensions: Extensions{
-					AddedLinks:        []AddedLink{},
-					AddedComponents:   []AddedComponent{},
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -332,8 +347,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Type: TypeApp,
 
 				Extensions: Extensions{
-					AddedLinks:        []AddedLink{},
-					AddedComponents:   []AddedComponent{},
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -371,6 +388,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Extensions: Extensions{
 					AddedLinks:        []AddedLink{},
 					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},

@@ -22,7 +22,7 @@ import {
 import { Components } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes';
-import { Trans } from '../../../utils/i18n';
+import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button/Button';
 import { InlineField } from '../../Forms/InlineField';
 import { Icon } from '../../Icon/Icon';
@@ -301,10 +301,11 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
 
     const icon = (
       <Button
-        aria-label="Time picker"
+        aria-label={t('grafana-ui.date-time-picker.calendar-icon-label', 'Time picker')}
         icon="calendar-alt"
         variant="secondary"
-        onClick={onOpen} // @PERCONA
+        onClick={onOpen}
+        // @PERCONA
         className={css({
           height: '100%',
         })}
@@ -324,7 +325,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
           value={internalDate.value}
           onBlur={onBlur}
           data-testid={Components.DateTimePicker.input}
-          placeholder="Select date/time"
+          placeholder={t('grafana-ui.date-time-picker.select-placeholder', 'Select date/time')}
           ref={ref}
           suffix={
             clearable &&
@@ -410,9 +411,9 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
           prev2Label={null}
           value={reactCalendarDate}
           nextLabel={<Icon name="angle-right" />}
-          nextAriaLabel="Next month"
+          nextAriaLabel={t('grafana-ui.date-time-picker.next-label', 'Next month')}
           prevLabel={<Icon name="angle-left" />}
-          prevAriaLabel="Previous month"
+          prevAriaLabel={t('grafana-ui.date-time-picker.previous-label', 'Previous month')}
           onChange={onChangeDate}
           locale="en"
           className={calendarStyles.body}

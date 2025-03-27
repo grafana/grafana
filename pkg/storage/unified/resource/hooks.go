@@ -4,7 +4,7 @@ import (
 	context "context"
 	"fmt"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 )
 
 type WriteAccessHooks struct {

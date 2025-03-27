@@ -17,22 +17,20 @@ import {
   Menu,
   MenuItem,
   Stack,
+  Text,
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Trans, t } from 'app/core/internationalization';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import {
-  ExpressionDatasourceUID,
-  ExpressionQuery,
-  ExpressionQueryType,
-  ReducerMode,
-  expressionTypes,
-} from 'app/features/expressions/types';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
+import {
+  areQueriesTransformableToSimpleCondition,
+  isExpressionQueryInAlert,
+} from '../../../rule-editor/formProcessing';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { PromOrLokiQuery, isPromOrLokiQuery } from '../../../utils/rule-form';
@@ -75,49 +73,6 @@ import {
 } from './reducer';
 import { useAdvancedMode } from './useAdvancedMode';
 import { useAlertQueryRunner } from './useAlertQueryRunner';
-
-export function areQueriesTransformableToSimpleCondition(
-  dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>>,
-  expressionQueries: Array<AlertQuery<ExpressionQuery>>
-) {
-  if (dataQueries.length !== 1) {
-    return false;
-  }
-  const singleReduceExpressionInInstantQuery =
-    'instant' in dataQueries[0].model && dataQueries[0].model.instant && expressionQueries.length === 1;
-
-  if (expressionQueries.length !== 2 && !singleReduceExpressionInInstantQuery) {
-    return false;
-  }
-
-  const query = dataQueries[0];
-
-  if (query.refId !== SimpleConditionIdentifier.queryId) {
-    return false;
-  }
-
-  const reduceExpressionIndex = expressionQueries.findIndex(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SimpleConditionIdentifier.reducerId
-  );
-  const reduceExpression = expressionQueries.at(reduceExpressionIndex);
-  const reduceOk =
-    reduceExpression &&
-    reduceExpressionIndex === 0 &&
-    (reduceExpression.model.settings?.mode === ReducerMode.Strict ||
-      reduceExpression.model.settings?.mode === undefined);
-
-  const thresholdExpressionIndex = expressionQueries.findIndex(
-    (query) =>
-      query.model.type === ExpressionQueryType.threshold && query.refId === SimpleConditionIdentifier.thresholdId
-  );
-  const thresholdExpression = expressionQueries.at(thresholdExpressionIndex);
-  const conditions = thresholdExpression?.model.conditions ?? [];
-  const thresholdIndexOk = singleReduceExpressionInInstantQuery
-    ? thresholdExpressionIndex === 0
-    : thresholdExpressionIndex === 1;
-  const thresholdOk = thresholdExpression && thresholdIndexOk && conditions[0]?.unloadEvaluator === undefined;
-  return (Boolean(reduceOk) || Boolean(singleReduceExpressionInInstantQuery)) && Boolean(thresholdOk);
-}
 
 interface Props {
   editingExistingRule: boolean;
@@ -777,9 +732,3 @@ const useSetExpressionAndDataSource = () => {
     }
   };
 };
-
-export function isExpressionQueryInAlert(
-  query: AlertQuery<AlertDataQuery | ExpressionQuery>
-): query is AlertQuery<ExpressionQuery> {
-  return isExpressionQuery(query.model);
-}

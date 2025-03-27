@@ -14,7 +14,6 @@
       "public/**/*",
       "packages/**/*",
       "e2e/**/*",
-      "plugins-bundled/**/*",
       "scripts/build/release-packages.sh",
       "scripts/circle-release-next-packages.sh",
       "scripts/ci-frontend-metrics.sh",
@@ -248,7 +247,8 @@
       "/pkg/services/sqlstore/migrations/ualert/**/*",
       "/pkg/services/alerting/**/*",
       "/public/app/features/alerting/**/*",
-      "/pkg/tests/api/alerting/**/*"
+      "/pkg/tests/api/alerting/**/*",
+      "/pkg/tests/alertmanager/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "area/alerting"

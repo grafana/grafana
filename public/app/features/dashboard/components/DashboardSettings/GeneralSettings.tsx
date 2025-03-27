@@ -13,6 +13,7 @@ import {
   TextArea,
   Box,
   Stack,
+  WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -97,7 +98,7 @@ export function GeneralSettingsUnconnected({
     updateTimeZone(timeZone);
   };
 
-  const onWeekStartChange = (weekStart: string) => {
+  const onWeekStartChange = (weekStart?: WeekStart) => {
     dashboard.weekStart = weekStart;
     setRenderCounter(renderCounter + 1);
     updateWeekStart(weekStart);

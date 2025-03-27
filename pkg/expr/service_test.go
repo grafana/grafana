@@ -29,32 +29,11 @@ import (
 func TestService(t *testing.T) {
 	dsDF := data.NewFrame("test",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("value", data.Labels{"test": "label"}, []*float64{fp(2)}))
+		data.NewField("value", data.Labels{"test": "label"}, []*float64{fp(2)}),
+	)
 
-	me := &mockEndpoint{
-		Responses: map[string]backend.DataResponse{
-			"A": {Frames: data.Frames{dsDF}},
-		},
-	}
-
-	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
-		PluginList: []pluginstore.Plugin{
-			{JSONData: plugins.JSONData{ID: "test"}},
-		},
-	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
-
-	features := featuremgmt.WithFeatures()
-	s := Service{
-		cfg:          setting.NewCfg(),
-		dataService:  me,
-		pCtxProvider: pCtxProvider,
-		features:     features,
-		tracer:       tracing.InitializeTracerForTest(),
-		metrics:      newMetrics(nil),
-		converter: &ResultConverter{
-			Features: features,
-			Tracer:   tracing.InitializeTracerForTest(),
-		},
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{dsDF}},
 	}
 
 	queries := []Query{
@@ -78,7 +57,7 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	req := &Request{Queries: queries, User: &user.SignedInUser{}}
+	s, req := newMockQueryService(resp, queries)
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
@@ -121,26 +100,9 @@ func TestService(t *testing.T) {
 }
 
 func TestDSQueryError(t *testing.T) {
-	me := &mockEndpoint{
-		Responses: map[string]backend.DataResponse{
-			"A": {Error: fmt.Errorf("womp womp")},
-			"B": {Frames: data.Frames{}},
-		},
-	}
-
-	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
-		PluginList: []pluginstore.Plugin{
-			{JSONData: plugins.JSONData{ID: "test"}},
-		},
-	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
-
-	s := Service{
-		cfg:          setting.NewCfg(),
-		dataService:  me,
-		pCtxProvider: pCtxProvider,
-		features:     featuremgmt.WithFeatures(),
-		tracer:       tracing.InitializeTracerForTest(),
-		metrics:      newMetrics(nil),
+	resp := map[string]backend.DataResponse{
+		"A": {Error: fmt.Errorf("womp womp")},
+		"B": {Frames: data.Frames{}},
 	}
 
 	queries := []Query{
@@ -169,19 +131,19 @@ func TestDSQueryError(t *testing.T) {
 		},
 	}
 
-	req := &Request{Queries: queries, User: &user.SignedInUser{}}
+	s, req := newMockQueryService(resp, queries)
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
 
-	resp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
 	require.NoError(t, err)
 
 	var utilErr errutil.Error
-	require.ErrorContains(t, resp.Responses["A"].Error, "womp womp")
-	require.ErrorAs(t, resp.Responses["B"].Error, &utilErr)
+	require.ErrorContains(t, res.Responses["A"].Error, "womp womp")
+	require.ErrorAs(t, res.Responses["B"].Error, &utilErr)
 	require.ErrorIs(t, utilErr, DependencyError)
-	require.Equal(t, fp(42), resp.Responses["C"].Frames[0].Fields[0].At(0))
+	require.Equal(t, fp(42), res.Responses["C"].Frames[0].Fields[0].At(0))
 }
 
 func fp(f float64) *float64 {
@@ -203,4 +165,29 @@ func (me *mockEndpoint) QueryData(ctx context.Context, req *backend.QueryDataReq
 func dataSourceModel() *datasources.DataSource {
 	d, _ := DataSourceModelFromNodeType(TypeCMDNode)
 	return d
+}
+
+func newMockQueryService(responses map[string]backend.DataResponse, queries []Query) (*Service, *Request) {
+	me := &mockEndpoint{
+		Responses: responses,
+	}
+	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
+			{JSONData: plugins.JSONData{ID: "test"}},
+		},
+	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
+
+	features := featuremgmt.WithFeatures()
+	return &Service{
+		cfg:          setting.NewCfg(),
+		dataService:  me,
+		pCtxProvider: pCtxProvider,
+		features:     featuremgmt.WithFeatures(),
+		tracer:       tracing.InitializeTracerForTest(),
+		metrics:      newMetrics(nil),
+		converter: &ResultConverter{
+			Features: features,
+			Tracer:   tracing.InitializeTracerForTest(),
+		},
+	}, &Request{Queries: queries, User: &user.SignedInUser{}}
 }

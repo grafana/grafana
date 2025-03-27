@@ -10,15 +10,6 @@ import { buildMockDB } from '../SqlComponents.testHelpers';
 
 import { SelectRow } from './SelectRow';
 
-// Mock featureToggle sqlQuerybuilderFunctionParameters
-jest.mock('@grafana/runtime', () => ({
-  config: {
-    featureToggles: {
-      sqlQuerybuilderFunctionParameters: true,
-    },
-  },
-}));
-
 describe('SelectRow', () => {
   const query = Object.freeze<SQLQuery>({
     refId: 'A',

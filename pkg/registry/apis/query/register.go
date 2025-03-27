@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
+	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -40,14 +41,14 @@ type QueryAPIBuilder struct {
 	tracer     tracing.Tracer
 	metrics    *queryMetrics
 	parser     *queryParser
-	client     DataSourceClientSupplier
+	client     clientapi.DataSourceClientSupplier
 	registry   query.DataSourceApiServerRegistry
 	converter  *expr.ResultConverter
 	queryTypes *query.QueryTypeDefinitionList
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
-	client DataSourceClientSupplier,
+	client clientapi.DataSourceClientSupplier,
 	registry query.DataSourceApiServerRegistry,
 	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
@@ -251,10 +252,5 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		return oas, nil
 	}
 
-	// The root API discovery list
-	sub := oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }

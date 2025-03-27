@@ -15,6 +15,8 @@ export interface Action {
   // Currently this is required because there is only one valid type (fetch)
   // once multiple types are valid, usage of this will need to be optional
   [ActionType.Fetch]: FetchOptions;
+  confirmation?: string;
+  oneClick?: boolean;
 }
 
 /**
@@ -23,6 +25,8 @@ export interface Action {
 export interface ActionModel<T = any> {
   title: string;
   onClick: (event: any, origin?: any) => void;
+  confirmation?: string;
+  oneClick?: boolean;
 }
 
 interface FetchOptions {

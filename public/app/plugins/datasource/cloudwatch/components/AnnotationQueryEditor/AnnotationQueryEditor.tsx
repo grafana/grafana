@@ -1,7 +1,7 @@
 import { ChangeEvent } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
-import { EditorField, EditorHeader, EditorRow, EditorSwitch, InlineSelect } from '@grafana/experimental';
+import { EditorField, EditorHeader, EditorRow, EditorSwitch, InlineSelect } from '@grafana/plugin-ui';
 import { Alert, Input, Space } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';

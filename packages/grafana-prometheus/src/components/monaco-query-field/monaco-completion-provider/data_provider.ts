@@ -3,6 +3,7 @@ import type { Monaco } from '@grafana/ui'; // used in TSDoc `@link` below
 
 import PromQlLanguageProvider from '../../../language_provider';
 import { PromQuery } from '../../../types';
+import { isValidLegacyName } from '../../../utf8_support';
 
 export const CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT = 'codeModeSuggestionsIncomplete';
 
@@ -26,6 +27,7 @@ interface Metric {
   name: string;
   help: string;
   type: string;
+  isUtf8?: boolean;
 }
 
 export interface DataProviderParams {
@@ -78,6 +80,7 @@ export class DataProvider {
         name: m,
         help: metaItem?.help ?? '',
         type: metaItem?.type ?? '',
+        isUtf8: !isValidLegacyName(m),
       };
     });
 

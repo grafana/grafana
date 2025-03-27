@@ -113,7 +113,7 @@ export function VariableEditorForm({
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
-      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect()} />}
+      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
 
       <div className={styles.buttonContainer}>
         <Stack gap={2}>

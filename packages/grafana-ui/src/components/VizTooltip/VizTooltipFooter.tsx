@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
-import { ActionModel, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
 
-import { Button, DataLinkButton, Stack } from '..';
+import { Button, DataLinkButton, Icon, Stack } from '..';
 import { useStyles2 } from '../../themes';
 import { Trans } from '../../utils/i18n';
 import { ActionButton } from '../Actions/ActionButton';
+import { ResponsiveProp } from '../Layout/utils/responsiveness';
 
 interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
@@ -15,34 +17,75 @@ interface VizTooltipFooterProps {
 
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
-const renderDataLinks = (dataLinks: LinkModel[], styles: ReturnType<typeof getStyles>) => {
-  return (
-    <Stack direction="column" justifyContent="flex-start" gap={0.5}>
-      {dataLinks.map((link, i) => (
-        <DataLinkButton link={link} key={i} buttonProps={{ className: styles.dataLinkButton, fill: 'text' }} />
-      ))}
-    </Stack>
-  );
-};
+type RenderOneClickTrans = (title: string) => React.ReactNode;
+type RenderItem<T extends LinkModel | ActionModel> = (
+  item: T,
+  idx: number,
+  styles: ReturnType<typeof getStyles>
+) => React.ReactNode;
 
-const renderActions = (actions: ActionModel[]) => {
-  return (
-    <Stack direction="column" justifyContent="flex-start">
-      {actions.map((action, i) => (
-        <ActionButton key={i} action={action} variant="secondary" />
-      ))}
-    </Stack>
-  );
-};
+function makeRenderLinksOrActions<T extends LinkModel | ActionModel>(
+  renderOneClickTrans: RenderOneClickTrans,
+  renderItem: RenderItem<T>,
+  itemGap?: ResponsiveProp<ThemeSpacingTokens>
+) {
+  const renderLinksOrActions = (items: T[], styles: ReturnType<typeof getStyles>) => {
+    if (items.length === 0) {
+      return;
+    }
 
-export const VizTooltipFooter = ({ dataLinks, actions, annotate }: VizTooltipFooterProps) => {
+    const oneClickItem = items.find((item) => item.oneClick === true);
+
+    if (oneClickItem != null) {
+      return (
+        <div className={styles.dataLinks}>
+          <Stack direction="column" justifyContent="flex-start" gap={0.5}>
+            <span className={styles.oneClickWrapper}>
+              <Icon name="info-circle" size="lg" className={styles.infoIcon} />
+              {renderOneClickTrans(oneClickItem.title)}
+            </span>
+          </Stack>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.dataLinks}>
+        <Stack direction="column" justifyContent="flex-start" gap={itemGap}>
+          {items.map((item, i) => renderItem(item, i, styles))}
+        </Stack>
+      </div>
+    );
+  };
+
+  return renderLinksOrActions;
+}
+
+const renderDataLinks = makeRenderLinksOrActions<LinkModel>(
+  (title) => (
+    <Trans i18nKey="grafana-ui.viz-tooltip.footer-click-to-navigate">Click to open {{ linkTitle: title }}</Trans>
+  ),
+  (item, i, styles) => (
+    <DataLinkButton link={item} key={i} buttonProps={{ className: styles.dataLinkButton, fill: 'text' }} />
+  ),
+  0.5
+);
+
+const renderActions = makeRenderLinksOrActions<ActionModel>(
+  (title) => <Trans i18nKey="grafana-ui.viz-tooltip.footer-click-to-action">Click to {{ actionTitle: title }}</Trans>,
+  (item, i, styles) => <ActionButton key={i} action={item} variant="secondary" />
+);
+
+export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
+  const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
+  const hasOneClickAction = useMemo(() => actions.some((action) => action.oneClick === true), [actions]);
 
   return (
     <div className={styles.wrapper}>
-      {dataLinks?.length > 0 && <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>}
-      {actions && actions.length > 0 && <div className={styles.dataLinks}>{renderActions(actions)}</div>}
-      {annotate != null && (
+      {!hasOneClickAction && renderDataLinks(dataLinks, styles)}
+      {!hasOneClickLink && renderActions(actions, styles)}
+      {!hasOneClickLink && !hasOneClickAction && annotate != null && (
         <div className={styles.addAnnotations}>
           <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
             <Trans i18nKey="grafana-ui.viz-tooltip.footer-add-annotation">Add annotation</Trans>
@@ -74,5 +117,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
       textDecoration: 'underline',
       background: 'none',
     },
+  }),
+  oneClickWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  infoIcon: css({
+    color: theme.colors.primary.main,
+    paddingRight: theme.spacing(0.5),
   }),
 });

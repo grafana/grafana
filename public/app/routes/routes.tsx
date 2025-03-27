@@ -163,6 +163,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/drilldown',
+      component: () => <NavLandingPage navId="drilldown" />,
+    },
+    {
       path: '/apps',
       component: () => <NavLandingPage navId="apps" />,
     },
@@ -789,12 +793,21 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.exploreMetrics && {
-      path: '/explore/metrics',
-      chromeless: false,
+      path: '/explore/metrics/*',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
-      ),
+      ...(config.featureToggles.exploreMetricsUseExternalAppPlugin
+        ? {
+            component: SafeDynamicImport(
+              () =>
+                import(/* webpackChunkName: "MetricsDrilldownRedirect"*/ 'app/features/trails/RedirectToDrilldownApp')
+            ),
+          }
+        : {
+            chromeless: false,
+            component: SafeDynamicImport(
+              () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
+            ),
+          }),
     },
     {
       path: '/pmm-dump',

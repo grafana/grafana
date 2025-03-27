@@ -1,17 +1,22 @@
 import { useMemo } from 'react';
 
 import { Input, TextArea } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
-import { EditableDashboardElement } from '../scene/types';
+import { DashboardLayoutSelector } from '../scene/layouts-shared/DashboardLayoutSelector';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 export class DashboardEditableElement implements EditableDashboardElement {
-  public isEditableDashboardElement: true = true;
+  public readonly isEditableDashboardElement = true;
 
   public constructor(private dashboard: DashboardScene) {}
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { typeId: 'dashboard', icon: 'apps', name: t('dashboard.edit-pane.elements.dashboard', 'Dashboard') };
+  }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const dashboard = this.dashboard;
@@ -20,36 +25,40 @@ export class DashboardEditableElement implements EditableDashboardElement {
     const { body } = dashboard.useState();
 
     const dashboardOptions = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({
-        title: 'Dashboard options',
+      const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({
+        title: t('dashboard.options.title', 'Dashboard options'),
         id: 'dashboard-options',
-        isOpenDefault: true,
+        isOpenable: false,
       })
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Title',
-            render: function renderTitle() {
-              return <DashboardTitleInput dashboard={dashboard} />;
-            },
+            title: t('dashboard.options.title-option', 'Title'),
+            render: () => <DashboardTitleInput dashboard={dashboard} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Description',
-            render: function renderTitle() {
-              return <DashboardDescriptionInput dashboard={dashboard} />;
-            },
+            title: t('dashboard.options.description', 'Description'),
+            render: () => <DashboardDescriptionInput dashboard={dashboard} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.layout.common.layout', 'Layout'),
+            render: () => <DashboardLayoutSelector layoutManager={body} />,
           })
         );
-    }, [dashboard]);
 
-    const layoutCategory = useLayoutCategory(body);
+      if (body.getOptions) {
+        for (const option of body.getOptions()) {
+          editPaneHeaderOptions.addItem(option);
+        }
+      }
 
-    return [dashboardOptions, layoutCategory];
-  }
+      return editPaneHeaderOptions;
+    }, [body, dashboard]);
 
-  public getTypeName(): string {
-    return 'Dashboard';
+    return [dashboardOptions];
   }
 }
 
