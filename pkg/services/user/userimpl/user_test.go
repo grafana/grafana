@@ -274,7 +274,7 @@ type FakeUserStore struct {
 	ExpectedError                           error
 	ExpectedDeleteUserError                 error
 	ExpectedCountUserAccountsWithEmptyRoles int64
-	ExpectedListUsersByIdOrUid []*user.User
+	ExpectedListUsersByIdOrUid              []*user.User
 }
 
 func newUserStoreFake() *FakeUserStore {
