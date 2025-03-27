@@ -8,113 +8,42 @@ import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource'
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { dispatch } from 'app/store/store';
 
-import { ScopedResourceClient } from '../apiserver/client';
-import { Resource, ResourceForCreate, ResourceClient } from '../apiserver/types';
+import { Playlist } from '../../api/clients/playlist';
 import { getGrafanaSearcher } from '../search/service/searcher';
 import { DashboardQueryResult, SearchQuery } from '../search/service/types';
 
-import { Playlist, PlaylistItem, PlaylistAPI } from './types';
+import { PlaylistUI, PlaylistItemUI } from './types';
 
-class LegacyAPI implements PlaylistAPI {
-  async getAllPlaylist(): Promise<Playlist[]> {
-    return getBackendSrv().get<Playlist[]>('/api/playlists/');
-  }
-
-  async getPlaylist(uid: string): Promise<Playlist> {
-    const p = await getBackendSrv().get<Playlist>(`/api/playlists/${uid}`);
-    await migrateInternalIDs(p);
-    return p;
-  }
-
-  async createPlaylist(playlist: Playlist): Promise<void> {
-    await withErrorHandling(() => getBackendSrv().post('/api/playlists', playlist));
-  }
-
-  async updatePlaylist(playlist: Playlist): Promise<void> {
-    await withErrorHandling(() => getBackendSrv().put(`/api/playlists/${playlist.uid}`, playlist));
-  }
-
-  async deletePlaylist(uid: string): Promise<void> {
-    await withErrorHandling(() => getBackendSrv().delete(`/api/playlists/${uid}`), 'Playlist deleted');
-  }
-}
-
-interface PlaylistSpec {
-  title: string;
-  interval: string;
-  items: PlaylistItem[];
-}
-
-type K8sPlaylist = Resource<PlaylistSpec>;
-
-class K8sAPI implements PlaylistAPI {
-  readonly server: ResourceClient<PlaylistSpec>;
-
-  constructor() {
-    this.server = new ScopedResourceClient<PlaylistSpec>({
-      group: 'playlist.grafana.app',
-      version: 'v0alpha1',
-      resource: 'playlists',
-    });
-  }
-
-  async getAllPlaylist(): Promise<Playlist[]> {
-    const result = await this.server.list();
-    return result.items.map(k8sResourceAsPlaylist);
-  }
-
-  async getPlaylist(uid: string): Promise<Playlist> {
-    const r = await this.server.get(uid);
-    const p = k8sResourceAsPlaylist(r);
-    await migrateInternalIDs(p);
-    return p;
-  }
-
-  async createPlaylist(playlist: Playlist): Promise<void> {
-    const body = this.playlistAsK8sResource(playlist);
-    await withErrorHandling(async () => {
-      await this.server.create(body);
-    });
-  }
-
-  async updatePlaylist(playlist: Playlist): Promise<void> {
-    const body = this.playlistAsK8sResource(playlist);
-    await withErrorHandling(() => this.server.update(body).then(() => {}));
-  }
-
-  async deletePlaylist(uid: string): Promise<void> {
-    await withErrorHandling(() => this.server.delete(uid).then(() => {}), 'Playlist deleted');
-  }
-
-  playlistAsK8sResource = (playlist: Playlist): ResourceForCreate<PlaylistSpec> => {
-    return {
-      metadata: {
-        name: playlist.uid, // uid as k8s name
-      },
-      spec: {
-        title: playlist.name, // name becomes title
-        interval: playlist.interval,
-        items: playlist.items ?? [],
-      },
-    };
+export const playlistAsK8sResource = (playlist: PlaylistUI): Playlist => {
+  return {
+    metadata: {
+      name: playlist.uid, // uid as k8s name
+    },
+    spec: {
+      title: playlist.name, // name becomes title
+      interval: playlist.interval,
+      items: playlist.items ?? [],
+    },
+    status: {},
   };
-}
+};
 
 // This converts a saved k8s resource into a playlist object
 // the main difference is that k8s uses metadata.name as the uid
 // to avoid future confusion, the display name is now called "title"
-function k8sResourceAsPlaylist(r: K8sPlaylist): Playlist {
+export function k8sResourceAsPlaylist(r: Playlist): PlaylistUI {
   const { spec, metadata } = r;
   return {
-    uid: metadata.name, // use the k8s name as uid
+    uid: metadata.name ?? '', // use the k8s name as uid
     name: spec.title,
     interval: spec.interval,
     items: spec.items,
   };
 }
 
+// TODO figure out where we need to use this
 /** @deprecated -- this migrates playlists saved with internal ids to uid  */
-async function migrateInternalIDs(playlist: Playlist) {
+async function migrateInternalIDs(playlist: PlaylistUI) {
   if (playlist?.items) {
     for (const item of playlist.items) {
       if (item.type === 'dashboard_by_id') {
@@ -128,6 +57,7 @@ async function migrateInternalIDs(playlist: Playlist) {
   }
 }
 
+// TODO figure out where we need to use this
 async function withErrorHandling(apiCall: () => Promise<void>, message = 'Playlist saved') {
   try {
     await apiCall();
@@ -140,7 +70,7 @@ async function withErrorHandling(apiCall: () => Promise<void>, message = 'Playli
 }
 
 /** Returns a copy with the dashboards loaded */
-export async function loadDashboards(items: PlaylistItem[]): Promise<PlaylistItem[]> {
+export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistItemUI[]> {
   let idx = 0;
   if (!items?.length) {
     return [];
@@ -176,7 +106,7 @@ export async function loadDashboards(items: PlaylistItem[]): Promise<PlaylistIte
   // The SQL based store can only execute individual queries
   if (!config.featureToggles.panelTitleSearch) {
     const searcher = getGrafanaSearcher();
-    const res: PlaylistItem[] = [];
+    const res: PlaylistItemUI[] = [];
     for (let i = 0; i < targets.length; i++) {
       const view = (await searcher.search(targets[i].search!)).view;
       res.push({ ...items[i], dashboards: view.map((v) => ({ ...v })) });
@@ -197,18 +127,14 @@ export async function loadDashboards(items: PlaylistItem[]): Promise<PlaylistIte
   });
 }
 
-export function getDefaultPlaylist(): Playlist {
+export function getDefaultPlaylist(): PlaylistUI {
   return { items: [], interval: '5m', name: '', uid: '' };
 }
 
-export function searchPlaylists(playlists: Playlist[], query?: string): Playlist[] {
+export function searchPlaylists(playlists: PlaylistUI[], query?: string): PlaylistUI[] {
   if (!query?.length) {
     return playlists;
   }
   query = query.toLowerCase();
   return playlists.filter((v) => v.name.toLowerCase().includes(query!));
-}
-
-export function getPlaylistAPI() {
-  return config.featureToggles.kubernetesPlaylists ? new K8sAPI() : new LegacyAPI();
 }

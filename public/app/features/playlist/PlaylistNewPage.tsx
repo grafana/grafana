@@ -4,15 +4,20 @@ import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
+import { useCreatePlaylistMutation } from '../../api/clients/playlist';
+
 import { PlaylistForm } from './PlaylistForm';
-import { getPlaylistAPI, getDefaultPlaylist } from './api';
-import { Playlist } from './types';
+import { PlaylistUI } from './types';
+import { getDefaultPlaylist, playlistAsK8sResource } from './utils';
 
 export const PlaylistNewPage = () => {
-  const [playlist] = useState<Playlist>(getDefaultPlaylist());
+  const [playlist] = useState<PlaylistUI>(getDefaultPlaylist());
+  const [createPlaylist] = useCreatePlaylistMutation();
 
-  const onSubmit = async (playlist: Playlist) => {
-    await getPlaylistAPI().createPlaylist(playlist);
+  const onSubmit = async (playlist: PlaylistUI) => {
+    await createPlaylist({
+      playlist: playlistAsK8sResource(playlist),
+    });
     locationService.push('/playlists');
   };
 

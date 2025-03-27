@@ -1,14 +1,15 @@
 import { useParams } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { t, Trans } from 'app/core/internationalization';
 
+import { useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist';
+
 import { PlaylistForm } from './PlaylistForm';
-import { getPlaylistAPI } from './api';
-import { Playlist } from './types';
+import { PlaylistUI } from './types';
+import { k8sResourceAsPlaylist, playlistAsK8sResource } from './utils';
 
 export interface RouteParams {
   uid: string;
@@ -16,11 +17,14 @@ export interface RouteParams {
 
 export const PlaylistEditPage = () => {
   const { uid = '' } = useParams();
-  const api = getPlaylistAPI();
-  const playlist = useAsync(() => api.getPlaylist(uid), [uid]);
+  const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
+  const [replacePlaylist] = useReplacePlaylistMutation();
 
-  const onSubmit = async (playlist: Playlist) => {
-    await api.updatePlaylist(playlist);
+  const onSubmit = async (playlist: PlaylistUI) => {
+    replacePlaylist({
+      name: playlist.uid,
+      playlist: playlistAsK8sResource(playlist),
+    });
     locationService.push('/playlists');
   };
 
@@ -34,14 +38,14 @@ export const PlaylistEditPage = () => {
 
   return (
     <Page navId="dashboards/playlists" pageNav={pageNav}>
-      <Page.Contents isLoading={playlist.loading}>
-        {playlist.error && (
+      <Page.Contents isLoading={isLoading}>
+        {isError && (
           <div>
             <Trans i18nKey="playlist-edit.error-prefix">Error loading playlist:</Trans>
-            {JSON.stringify(playlist.error)}
+            {JSON.stringify(error)}
           </div>
         )}
-        {playlist.value && <PlaylistForm onSubmit={onSubmit} playlist={playlist.value} />}
+        {data && <PlaylistForm onSubmit={onSubmit} playlist={k8sResourceAsPlaylist(data)} />}
       </Page.Contents>
     </Page>
   );

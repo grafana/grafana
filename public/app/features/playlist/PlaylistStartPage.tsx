@@ -1,10 +1,19 @@
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { useGetPlaylistQuery } from '../../api/clients/playlist';
+
 import { playlistSrv } from './PlaylistSrv';
+import { k8sResourceAsPlaylist } from './utils';
 
 // This is a react page that just redirects to new URLs
 export default function PlaylistStartPage() {
   const { uid = '' } = useParams();
-  playlistSrv.start(uid);
+  const { data } = useGetPlaylistQuery({ name: uid });
+  useEffect(() => {
+    if (data) {
+      playlistSrv.start(k8sResourceAsPlaylist(data));
+    }
+  }, [data]);
   return null;
 }

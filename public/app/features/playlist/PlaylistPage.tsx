@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
 
 import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -7,20 +6,22 @@ import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist';
+
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { getPlaylistAPI, searchPlaylists } from './api';
-import { Playlist } from './types';
+import { PlaylistUI } from './types';
+import { k8sResourceAsPlaylist, searchPlaylists } from './utils';
 
 export const PlaylistPage = () => {
-  const api = getPlaylistAPI();
-  const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
+  const { data, isLoading } = useListPlaylistQuery({});
+  const [deletePlaylist] = useDeletePlaylistMutation();
   const [searchQuery, setSearchQuery] = useState('');
-  const allPlaylists = useAsync(() => api.getAllPlaylist(), [forcePlaylistsFetch]);
-  const playlists = useMemo(() => searchPlaylists(allPlaylists.value ?? [], searchQuery), [searchQuery, allPlaylists]);
+  const allPlaylists = useMemo(() => data?.items.map((value) => k8sResourceAsPlaylist(value)) ?? [], [data?.items]);
+  const playlists = useMemo(() => searchPlaylists(allPlaylists, searchQuery), [searchQuery, allPlaylists]);
 
-  const [startPlaylist, setStartPlaylist] = useState<Playlist | undefined>();
-  const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | undefined>();
+  const [startPlaylist, setStartPlaylist] = useState<PlaylistUI | undefined>();
+  const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistUI | undefined>();
 
   const hasPlaylists = playlists && playlists.length > 0;
   const onDismissDelete = () => setPlaylistToDelete(undefined);
@@ -28,13 +29,14 @@ export const PlaylistPage = () => {
     if (!playlistToDelete) {
       return;
     }
-    api.deletePlaylist(playlistToDelete.uid).finally(() => {
-      setForcePlaylistsFetch(forcePlaylistsFetch + 1);
+    deletePlaylist({
+      name: playlistToDelete.uid,
+    }).finally(() => {
       setPlaylistToDelete(undefined);
     });
   };
 
-  const showSearch = allPlaylists.loading || playlists.length > 0 || searchQuery.length > 0;
+  const showSearch = isLoading || playlists.length > 0 || searchQuery.length > 0;
 
   return (
     <Page
@@ -50,7 +52,7 @@ export const PlaylistPage = () => {
       <Page.Contents>
         {showSearch && <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
 
-        {allPlaylists.loading ? (
+        {isLoading ? (
           <PlaylistPageList.Skeleton />
         ) : (
           <>

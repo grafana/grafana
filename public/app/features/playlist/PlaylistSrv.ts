@@ -5,8 +5,8 @@ import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
-import { getPlaylistAPI, loadDashboards } from './api';
-import { PlaylistAPI } from './types';
+import { PlaylistUI } from './types';
+import { loadDashboards } from './utils';
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
@@ -30,13 +30,11 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   private numberOfLoops = 0;
   declare private validPlaylistUrl: string;
   private locationListenerUnsub?: () => void;
-  private api: PlaylistAPI;
 
   public constructor() {
     super({ isPlaying: false });
 
     this.locationUpdated = this.locationUpdated.bind(this);
-    this.api = getPlaylistAPI();
   }
 
   private navigateToDashboard(replaceHistoryEntry = false) {
@@ -92,7 +90,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     }
   }
 
-  async start(playlistUid: string) {
+  async start(playlist: PlaylistUI) {
     this.stop();
 
     this.startUrl = window.location.href;
@@ -104,7 +102,6 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
     const urls: string[] = [];
 
-    let playlist = await this.api.getPlaylist(playlistUid);
     if (!playlist.items?.length) {
       // alert
       return;

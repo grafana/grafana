@@ -5,10 +5,10 @@ import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { Playlist, PlaylistMode } from './types';
+import { PlaylistUI, PlaylistMode } from './types';
 
 export interface Props {
-  playlist: Playlist;
+  playlist: PlaylistUI;
   onDismiss: () => void;
 }
 

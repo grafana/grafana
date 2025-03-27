@@ -11,12 +11,12 @@ import { Trans, t } from 'app/core/internationalization';
 import { getGrafanaSearcher } from '../search/service/searcher';
 
 import { PlaylistTable } from './PlaylistTable';
-import { Playlist } from './types';
+import { PlaylistUI } from './types';
 import { usePlaylistItems } from './usePlaylistItems';
 
 interface Props {
-  onSubmit: (playlist: Playlist) => void;
-  playlist: Playlist;
+  onSubmit: (playlist: PlaylistUI) => void;
+  playlist: PlaylistUI;
 }
 
 export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
@@ -28,7 +28,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
 
   const { items, addByUID, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
 
-  const doSubmit = (list: Playlist) => {
+  const doSubmit = (list: PlaylistUI) => {
     setSaving(true);
     onSubmit({ ...list, items, uid: playlist.uid });
   };

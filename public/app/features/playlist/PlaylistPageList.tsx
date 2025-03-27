@@ -5,19 +5,19 @@ import { useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 
 import { PlaylistCard } from './PlaylistCard';
-import { Playlist } from './types';
+import { PlaylistUI } from './types';
 
 interface Props {
-  setStartPlaylist: (playlistItem: Playlist) => void;
-  setPlaylistToDelete: (playlistItem: Playlist) => void;
-  playlists: Playlist[];
+  setStartPlaylist: (playlistItem: PlaylistUI) => void;
+  setPlaylistToDelete: (playlistItem: PlaylistUI) => void;
+  playlists: PlaylistUI[];
 }
 
 const PlaylistPageListComponent = ({ playlists, setStartPlaylist, setPlaylistToDelete }: Props) => {
   const styles = useStyles2(getStyles);
   return (
     <ul className={styles.list}>
-      {playlists.map((playlist: Playlist) => (
+      {playlists.map((playlist: PlaylistUI) => (
         <li className={styles.listItem} key={playlist.uid}>
           <PlaylistCard
             playlist={playlist}

@@ -6,7 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { PlaylistEditPage } from './PlaylistEditPage';
-import { Playlist } from './types';
+import { PlaylistUI } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -19,9 +19,9 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-async function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
+async function getTestContext({ name, interval, items, uid }: Partial<PlaylistUI> = {}) {
   jest.clearAllMocks();
-  const playlist = { name, items, interval, uid } as unknown as Playlist;
+  const playlist = { name, items, interval, uid } as unknown as PlaylistUI;
 
   const getMock = jest.spyOn(backendSrv, 'get');
   const putMock = jest.spyOn(backendSrv, 'put').mockImplementation(() => Promise.resolve());

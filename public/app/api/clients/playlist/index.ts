@@ -6,7 +6,7 @@ export const {
   useDeletePlaylistMutation,
   useGetPlaylistQuery,
   useListPlaylistQuery,
-  useUpdatePlaylistMutation,
+  useReplacePlaylistMutation,
 } = playlistAPI;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files

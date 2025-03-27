@@ -9,12 +9,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
 import { ShareModal } from './ShareModal';
-import { Playlist } from './types';
+import { PlaylistUI } from './types';
 
 interface Props {
-  setStartPlaylist: (playlistItem: Playlist) => void;
-  setPlaylistToDelete: (playlistItem: Playlist) => void;
-  playlist: Playlist;
+  setStartPlaylist: (playlistItem: PlaylistUI) => void;
+  setPlaylistToDelete: (playlistItem: PlaylistUI) => void;
+  playlist: PlaylistUI;
 }
 
 const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete }: Props) => {

@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { PlaylistForm } from './PlaylistForm';
-import { Playlist } from './types';
+import { PlaylistUI } from './types';
 
 jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
@@ -10,15 +10,15 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
+function getTestContext({ name, interval, items, uid }: Partial<PlaylistUI> = {}) {
   const onSubmitMock = jest.fn();
-  const playlist = { name, items, interval, uid } as unknown as Playlist;
+  const playlist = { name, items, interval, uid } as unknown as PlaylistUI;
   const { rerender } = render(<PlaylistForm onSubmit={onSubmitMock} playlist={playlist} />);
 
   return { onSubmitMock, playlist, rerender };
 }
 
-const playlist: Playlist = {
+const playlist: PlaylistUI = {
   name: 'A test playlist',
   interval: '10m',
   items: [
