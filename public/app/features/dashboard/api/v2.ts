@@ -97,10 +97,6 @@ export class K8sDashboardV2API
       // the metadata will have the name that's the uid
       metadata: {
         ...options?.k8s,
-        annotations: {
-          ...options?.k8s?.annotations,
-          [AnnoKeyGrantPermissions]: 'default',
-        },
       },
       spec: {
         ...dashboard,
@@ -135,6 +131,10 @@ export class K8sDashboardV2API
       delete obj.metadata.resourceVersion;
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
