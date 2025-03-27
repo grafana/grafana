@@ -211,11 +211,6 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 
 // migrateFromUnifiedStorage will export the resources from unified storage and import them into the target repository
 func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
-	parser, err := w.parsers.GetParser(ctx, repo)
-	if err != nil {
-		return fmt.Errorf("error getting parser: %w", err)
-	}
-
 	progress.SetMessage(ctx, "exporting unified storage resources")
 	if err := w.exportWorker.Process(ctx, repo, provisioning.Job{
 		Spec: provisioning.JobSpec{
@@ -230,7 +225,7 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 	// Reset the results after the export as pull will operate on the same resources
 	progress.ResetResults()
 	progress.SetMessage(ctx, "pulling resources")
-	err = w.syncWorker.Process(ctx, repo, provisioning.Job{
+	err := w.syncWorker.Process(ctx, repo, provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Pull: &provisioning.SyncJobOptions{
 				Incremental: false,
@@ -241,18 +236,9 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 		return fmt.Errorf("pull resources: %w", err)
 	}
 
-	for _, kind := range resources.SupportedResources {
-		progress.SetMessage(ctx, fmt.Sprintf("removing unprovisioned %s resources", kind.Resource))
-		// Delete version to the discovery client
-		// TODO: should the supported resources be GroupResourceVersion with empty version?
-		client, _, err := parser.Clients().ForResource(kind.WithVersion(""))
-		if err != nil {
-			return fmt.Errorf("unable to get client for %s: %w", kind.Resource, err)
-		}
-
-		if err := removeUnprovisioned(ctx, client, progress); err != nil {
-			return fmt.Errorf("remove unprovisioned %s resources: %w", kind.Resource, err)
-		}
+	progress.SetMessage(ctx, "removing unprovisioned resources")
+	if err := w.removeUnprovisioned(ctx, repo, progress); err != nil {
+		return fmt.Errorf("remove unprovisioned resources: %w", err)
 	}
 
 	return nil

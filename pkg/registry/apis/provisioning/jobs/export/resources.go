@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -27,36 +27,14 @@ func (r *exportJob) exportResourcesFromAPIServer(ctx context.Context) error {
 
 	for _, kind := range kinds {
 		r.progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
-		if err := r.exportResourceKindFromAPIServer(ctx, kind); err != nil {
-			return fmt.Errorf("error loading %s %w", kind.Resource, err)
-		}
-	}
-	return nil
-}
-
-func (r *exportJob) exportResourceKindFromAPIServer(ctx context.Context, kind schema.GroupVersionResource) error {
-	client, _, err := r.client.ForResource(kind)
-	if err != nil {
-		return err
-	}
-
-	var continueToken string
-	for {
-		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
-		if err != nil {
-			return fmt.Errorf("error executing list: %w", err)
-		}
-
-		for _, item := range list.Items {
-			r.progress.Record(ctx, r.exportResource(ctx, &item))
+		if err := r.client.ForEachResource(ctx, kind, func(_ dynamic.ResourceInterface, item *unstructured.Unstructured) error {
+			r.progress.Record(ctx, r.exportResource(ctx, item))
 			if err := r.progress.TooManyErrors(); err != nil {
 				return err
 			}
-		}
-
-		continueToken = list.GetContinue()
-		if continueToken == "" {
-			break
+			return nil
+		}); err != nil {
+			return fmt.Errorf("error exporting %s %w", kind.Resource, err)
 		}
 	}
 

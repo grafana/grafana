@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
@@ -137,6 +139,45 @@ func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.
 		c.byResource[versionless] = info
 	}
 	return info.client, info.gvk, nil
+}
+
+// ForEachResource applies the function to each resource in the discovery client
+func (c *ResourceClients) ForEachResource(ctx context.Context, kind schema.GroupVersionResource, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
+	client, _, err := c.ForResource(kind)
+	if err != nil {
+		return err
+	}
+
+	var continueToken string
+	for {
+		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
+		if err != nil {
+			return fmt.Errorf("error executing list: %w", err)
+		}
+
+		for _, item := range list.Items {
+			if err := fn(client, &item); err != nil {
+				return err
+			}
+		}
+
+		continueToken = list.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+
+	return nil
+}
+
+// ForEachSupportedResource applies the function to each supported resource
+func (c *ResourceClients) ForEachSupportedResource(ctx context.Context, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
+	for _, kind := range SupportedResources {
+		if err := c.ForEachResource(ctx, kind.WithVersion(""), fn); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *ResourceClients) Folder() (dynamic.ResourceInterface, error) {

@@ -5,11 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -20,6 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 )
 
 var _ resource.BulkResourceWriter = (*resourceReader)(nil)
@@ -190,20 +189,14 @@ func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured
 }
 
 // TODO: should this be part of resources package?
-func removeUnprovisioned(ctx context.Context, client dynamic.ResourceInterface, progress jobs.JobProgressRecorder) error {
-	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
+func (w *MigrationWorker) removeUnprovisioned(ctx context.Context, repo repository.ReaderWriter, progress jobs.JobProgressRecorder) error {
+	parser, err := w.parsers.GetParser(ctx, repo)
 	if err != nil {
-		return fmt.Errorf("failed to list resources: %w", err)
+		return fmt.Errorf("error getting parser: %w", err)
 	}
 
-	if rawList.GetContinue() != "" {
-		return fmt.Errorf("unable to list all resources in one request: %s", rawList.GetContinue())
-	}
-
-	for _, item := range rawList.Items {
-		// Create a pointer to the item since MetaAccessor requires a pointer
-		itemPtr := &item
-		meta, err := utils.MetaAccessor(itemPtr)
+	return parser.Clients().ForEachSupportedResource(ctx, func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error {
+		meta, err := utils.MetaAccessor(item)
 		if err != nil {
 			return fmt.Errorf("extract meta accessor: %w", err)
 		}
@@ -211,7 +204,7 @@ func removeUnprovisioned(ctx context.Context, client dynamic.ResourceInterface, 
 		// Skip if managed
 		_, ok := meta.GetManagerProperties()
 		if ok {
-			continue
+			return nil
 		}
 
 		result := jobs.JobResourceResult{
@@ -228,7 +221,7 @@ func removeUnprovisioned(ctx context.Context, client dynamic.ResourceInterface, 
 		}
 
 		progress.Record(ctx, result)
-	}
 
-	return nil
+		return nil
+	})
 }
