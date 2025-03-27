@@ -4,12 +4,14 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"sync"
 
 	"github.com/apache/arrow-go/v18/arrow/flight"
 	"github.com/apache/arrow-go/v18/arrow/flight/flightsql"
 	"github.com/apache/arrow-go/v18/arrow/ipc"
 	"github.com/apache/arrow-go/v18/arrow/memory"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -26,8 +28,8 @@ func (c *client) FlightClient() flight.Client {
 	return c.Client.Client
 }
 
-func newFlightSQLClient(addr string, metadata metadata.MD, secure bool) (*client, error) {
-	dialOptions, err := grpcDialOptions(secure)
+func newFlightSQLClient(addr string, metadata metadata.MD, secure bool, proxyClient proxy.Client) (*client, error) {
+	dialOptions, err := grpcDialOptions(secure, proxyClient)
 	if err != nil {
 		return nil, fmt.Errorf("grpc dial options: %s", err)
 	}
@@ -38,14 +40,35 @@ func newFlightSQLClient(addr string, metadata metadata.MD, secure bool) (*client
 	return &client{Client: fsqlClient, md: metadata}, nil
 }
 
-func grpcDialOptions(secure bool) ([]grpc.DialOption, error) {
+func grpcDialOptions(secure bool, proxyClient proxy.Client) ([]grpc.DialOption, error) {
 	transport := grpc.WithTransportCredentials(insecure.NewCredentials())
+
 	if secure {
 		pool, err := x509.SystemCertPool()
 		if err != nil {
 			return nil, fmt.Errorf("x509: %s", err)
 		}
 		transport = grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, ""))
+	}
+
+	if proxyClient.SecureSocksProxyEnabled() {
+		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create influx proxy dialer: %s", err)
+		}
+
+		transport = grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
+			conn, err := dialer.Dial("tcp", host)
+			if err != nil {
+				return nil, fmt.Errorf("not possible to dial secure socks proxy: %w", err)
+			}
+			select {
+			case <-ctx.Done():
+				return conn, fmt.Errorf("context canceled: %w", err)
+			default:
+				return conn, nil
+			}
+		})
 	}
 
 	opts := []grpc.DialOption{
