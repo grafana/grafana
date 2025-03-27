@@ -100,7 +100,7 @@ const LogsQueryEditor = ({
     const hasRawKql = !!query.azureLogAnalytics?.query;
     const hasNoBuilder = !query.azureLogAnalytics?.builderQuery;
     const modeUnset = query.azureLogAnalytics?.mode === undefined;
-  
+
     if (hasRawKql && hasNoBuilder && modeUnset) {
       onChange({
         ...query,
@@ -111,7 +111,6 @@ const LogsQueryEditor = ({
       });
     }
   }, [query, onChange]);
-  
 
   useEffect(() => {
     const getBasicLogsUsage = async (query: AzureMonitorQuery) => {
