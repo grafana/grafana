@@ -241,28 +241,18 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 		return fmt.Errorf("pull resources: %w", err)
 	}
 
-	// Use generic client to remove all unprovisioned resources
+	for _, kind := range resources.SupportedResources {
+		progress.SetMessage(ctx, fmt.Sprintf("removing unprovisioned %s resources", kind.Resource))
+		// Delete version to the discovery client
+		// TODO: should the supported resources be GroupResourceVersion with empty version?
+		client, _, err := parser.Clients().ForResource(kind.WithVersion(""))
+		if err != nil {
+			return fmt.Errorf("unable to get client for %s: %w", kind.Resource, err)
+		}
 
-	folderClient, err := parser.Clients().Folder()
-	if err != nil {
-		return fmt.Errorf("unable to get folder client: %w", err)
-	}
-
-	dashboardClient, err := parser.Clients().Dashboard()
-	if err != nil {
-		return fmt.Errorf("unable to get dashboard client: %w", err)
-	}
-
-	progress.SetMessage(ctx, "removing unprovisioned folders")
-	err = removeUnprovisioned(ctx, folderClient, progress)
-	if err != nil {
-		return fmt.Errorf("remove unprovisioned folders: %w", err)
-	}
-
-	progress.SetMessage(ctx, "removing unprovisioned dashboards")
-	err = removeUnprovisioned(ctx, dashboardClient, progress)
-	if err != nil {
-		return fmt.Errorf("remove unprovisioned dashboards: %w", err)
+		if err := removeUnprovisioned(ctx, client, progress); err != nil {
+			return fmt.Errorf("remove unprovisioned %s resources: %w", kind.Resource, err)
+		}
 	}
 
 	return nil
