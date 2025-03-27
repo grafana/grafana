@@ -105,22 +105,6 @@ export class RowItem
     this.getLayout().addPanel(panel);
   }
 
-  public onMoveUp() {
-    this._getParentLayout().moveRowUp(this);
-  }
-
-  public onMoveDown() {
-    this._getParentLayout().moveRowDown(this);
-  }
-
-  public isFirstRow(): boolean {
-    return this._getParentLayout().isFirstRow(this);
-  }
-
-  public isLastRow(): boolean {
-    return this._getParentLayout().isLastRow(this);
-  }
-
   public getRepeatVariable(): string | undefined {
     return this._getRepeatBehavior()?.state.variableName;
   }

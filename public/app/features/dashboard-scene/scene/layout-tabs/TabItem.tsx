@@ -91,22 +91,6 @@ export class TabItem
     this._getParentLayout().addNewTab();
   }
 
-  public onMoveLeft() {
-    this._getParentLayout().moveTabLeft(this);
-  }
-
-  public onMoveRight() {
-    this._getParentLayout().moveTabRight(this);
-  }
-
-  public isFirstTab(): boolean {
-    return this._getParentLayout().isFirstTab(this);
-  }
-
-  public isLastTab(): boolean {
-    return this._getParentLayout().isLastTab(this);
-  }
-
   public onChangeTitle(title: string) {
     this.setState({ title });
   }
