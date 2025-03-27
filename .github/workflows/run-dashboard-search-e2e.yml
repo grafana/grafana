@@ -1,8 +1,12 @@
-name: Run dashboard search e2e
+name: run-dashboard-search-e2e
 
 on:
   workflow_run:
-    workflows: ["Trigger Dashboard Search E2E Tests"]
+    workflows: 
+      - trigger-dashboard-search-e2e
+    branches:
+      - e2e-async-job
+      - main
     types:
       - completed
   workflow_dispatch:

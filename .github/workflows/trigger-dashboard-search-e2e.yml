@@ -1,4 +1,4 @@
-name: Trigger Dashboard Search E2E Tests
+name: trigger-dashboard-search-e2e
 # triggers the dashboard search e2e tests which runs async 
 # doesn't block prs, allows setting up notifications from grafana
 on:
