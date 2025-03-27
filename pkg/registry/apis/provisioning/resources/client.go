@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -168,6 +169,24 @@ func (c *ResourceClients) ForEachResource(ctx context.Context, kind schema.Group
 	}
 
 	return nil
+}
+
+// ForEachUnmanagedResource applies the function to each unprovisioned supported resource
+func (c *ResourceClients) ForEachUnmanagedResource(ctx context.Context, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
+	return c.ForEachSupportedResource(ctx, func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error {
+		meta, err := utils.MetaAccessor(item)
+		if err != nil {
+			return fmt.Errorf("extract meta accessor: %w", err)
+		}
+
+		// Skip if managed
+		_, ok := meta.GetManagerProperties()
+		if ok {
+			return nil
+		}
+
+		return fn(client, item)
+	})
 }
 
 // ForEachSupportedResource applies the function to each supported resource

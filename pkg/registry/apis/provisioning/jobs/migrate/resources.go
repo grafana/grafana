@@ -15,10 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 )
 
 var _ resource.BulkResourceWriter = (*resourceReader)(nil)
@@ -186,44 +184,6 @@ func (j *migrateFromLegacyJob) write(ctx context.Context, obj *unstructured.Unst
 	}
 
 	return result
-}
-
-// TODO: should this be part of resources package?
-func (w *MigrationWorker) removeUnprovisioned(ctx context.Context, repo repository.ReaderWriter, progress jobs.JobProgressRecorder) error {
-	parser, err := w.parsers.GetParser(ctx, repo)
-	if err != nil {
-		return fmt.Errorf("error getting parser: %w", err)
-	}
-
-	return parser.Clients().ForEachSupportedResource(ctx, func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error {
-		meta, err := utils.MetaAccessor(item)
-		if err != nil {
-			return fmt.Errorf("extract meta accessor: %w", err)
-		}
-
-		// Skip if managed
-		_, ok := meta.GetManagerProperties()
-		if ok {
-			return nil
-		}
-
-		result := jobs.JobResourceResult{
-			Name:     item.GetName(),
-			Resource: item.GetKind(),
-			Group:    item.GroupVersionKind().Group,
-			Action:   repository.FileActionDeleted,
-		}
-
-		if err = client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
-			result.Error = fmt.Errorf("failed to delete folder: %w", err)
-			progress.Record(ctx, result)
-			return result.Error
-		}
-
-		progress.Record(ctx, result)
-
-		return nil
-	})
 }
 
 // TODO: this is copied from the export job

@@ -20,6 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 )
 
 type MigrationWorker struct {
@@ -211,36 +214,56 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 // migrateFromUnifiedStorage will export the resources from unified storage and import them into the target repository
 func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "exporting unified storage resources")
-	if err := w.exportWorker.Process(ctx, repo, provisioning.Job{
+	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Push: &provisioning.ExportJobOptions{
 				Identifier: options.Identifier,
 			},
 		},
-	}, progress); err != nil {
+	}
+	if err := w.exportWorker.Process(ctx, repo, exportJob, progress); err != nil {
 		return fmt.Errorf("export resources: %w", err)
 	}
 
 	// Reset the results after the export as pull will operate on the same resources
 	progress.ResetResults()
 	progress.SetMessage(ctx, "pulling resources")
-	err := w.syncWorker.Process(ctx, repo, provisioning.Job{
+	syncJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Pull: &provisioning.SyncJobOptions{
 				Incremental: false,
 			},
 		},
-	}, progress)
-	if err != nil {
+	}
+
+	if err := w.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
 		return fmt.Errorf("pull resources: %w", err)
 	}
 
 	progress.SetMessage(ctx, "removing unprovisioned resources")
-	if err := w.removeUnprovisioned(ctx, repo, progress); err != nil {
-		return fmt.Errorf("remove unprovisioned resources: %w", err)
+	parser, err := w.parsers.GetParser(ctx, repo)
+	if err != nil {
+		return fmt.Errorf("error getting parser: %w", err)
 	}
 
-	return nil
+	return parser.Clients().ForEachUnmanagedResource(ctx, func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error {
+		result := jobs.JobResourceResult{
+			Name:     item.GetName(),
+			Resource: item.GetKind(),
+			Group:    item.GroupVersionKind().Group,
+			Action:   repository.FileActionDeleted,
+		}
+
+		if err = client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
+			result.Error = fmt.Errorf("failed to delete folder: %w", err)
+			progress.Record(ctx, result)
+			return result.Error
+		}
+
+		progress.Record(ctx, result)
+
+		return nil
+	})
 }
 
 // MigrationJob holds all context for a running job
