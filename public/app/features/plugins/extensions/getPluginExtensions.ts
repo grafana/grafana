@@ -95,7 +95,7 @@ export const getObservablePluginComponents: GetObservablePluginComponents = (opt
     map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.component)),
     filter((extensions) => extensions.length > 0)
   );
-};  
+};
 
 export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
   let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
