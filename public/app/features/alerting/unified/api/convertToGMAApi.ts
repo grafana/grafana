@@ -1,3 +1,5 @@
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+
 import { alertingApi } from './alertingApi';
 
 export const convertToGMAApi = alertingApi.injectEndpoints({
@@ -5,18 +7,17 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
     convertToGMA: build.mutation<
       void,
       {
-        datasourceUID: string;
-        namespace?: string;
-        group?: string;
         targetFolderUID?: string;
         pauseRecordingRules?: boolean;
         pauseAlerts?: boolean;
+        payload:  RulerRulesConfigDTO;
       }
     >({
-      query: ({ datasourceUID, namespace, group, targetFolderUID, pauseRecordingRules, pauseAlerts }) => ({
-        url: `/api/convert/${datasourceUID}/config/v1/rules`,
-        params: { namespace, group, targetFolderUID, pauseRecordingRules, pauseAlerts },
+      query: ({ payload,targetFolderUID, pauseRecordingRules, pauseAlerts }) => ({
+        url: `/api/convert/config/v1/rules`,
+        params: { targetFolderUID, pauseRecordingRules, pauseAlerts },
         method: 'POST',
+        body: payload,
       }),
     }),
   }),

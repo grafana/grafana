@@ -17,6 +17,8 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
 
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSuggestions';
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
 
 export interface ImportFormValues {
@@ -52,16 +54,20 @@ const ImportFromDSRules = () => {
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
   const notifyApp = useAppNotification();
   const [optionsShowing, toggleOptions] = useToggle(false);
+  const { rulerRules } = useGetNameSpacesByDatasourceName(selectedDatasourceName ?? '');
+  console.log('rulerRules', rulerRules);
 
   const onSubmit = async (data: ImportFormValues) => {
+
+    const rulerRulesToPayload = filterRulerRulesConfig(rulerRules, data.namespace, data.ruleGroup);
+
+    console.log('rulerRulesToPayload', rulerRulesToPayload);
     try {
       await convert({
-        datasourceUID: data.selectedDatasourceUID,
         targetFolderUID: data.targetFolder?.uid,
         pauseRecordingRules: data.pauseRecordingRules,
         pauseAlerts: data.pauseAlertingRules,
-        ...(data.namespace ? { namespace: data.namespace } : {}),
-        ...(data.ruleGroup ? { group: data.ruleGroup } : {}),
+        payload: rulerRulesToPayload
       }).unwrap();
 
       const isRootFolder = isEmpty(data.targetFolder?.uid);
@@ -210,5 +216,32 @@ const ImportFromDSRules = () => {
     </AlertingPageWrapper>
   );
 };
+
+export function filterRulerRulesConfig(
+  rulerRulesConfig: RulerRulesConfigDTO,
+  namespace?: string,
+  groupName?: string
+): RulerRulesConfigDTO {
+  const filteredConfig: RulerRulesConfigDTO = {};
+
+  Object.entries(rulerRulesConfig).forEach(([ns, groups]) => {
+    if (namespace && ns !== namespace) {
+      return;
+    }
+
+    const filteredGroups = groups.filter((group) => {
+      if (groupName && group.name !== groupName) {
+        return false;
+      }
+      return true;
+    });
+
+    if (filteredGroups.length > 0) {
+      filteredConfig[ns] = filteredGroups;
+    }
+  });
+
+  return filteredConfig;
+}
 
 export default withPageErrorBoundary(ImportFromDSRules);

@@ -39,7 +39,6 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
   );
 
   const hasSomeResults = rulesDataSources.some((ds) => Boolean(promRules[ds.name]?.result?.length));
-
   const hasDataSourcesConfigured = rulesDataSources.length > 0;
   const hasDataSourcesLoading = dataSourcesLoading.length > 0;
   const hasNamespaces = namespaces.length > 0;
@@ -54,7 +53,6 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
   const [viewExternalRuleSupported, viewExternalRuleAllowed] = useAlertingAbility(AlertingAction.ViewExternalAlertRule);
 
   const canViewCloudRules = viewExternalRuleSupported && viewExternalRuleAllowed;
-
   const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
   const canMigrateToGMA =
     hasDataSourcesConfigured && canCreateGrafanaRules && canViewCloudRules && config.featureToggles.alertingMigrationUI;
@@ -87,17 +85,15 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
         </div>
       </Stack>
 
-      {pageItems.map(({ group, namespace }) => {
-        return (
-          <RulesGroup
-            group={group}
-            key={`${getRulesSourceUid(namespace.rulesSource)}-${namespace.name}-${group.name}`}
-            namespace={namespace}
-            expandAll={expandAll}
-            viewMode={'grouped'}
-          />
-        );
-      })}
+      {pageItems.map(({ group, namespace }) => (
+        <RulesGroup
+          group={group}
+          key={`${getRulesSourceUid(namespace.rulesSource)}-${namespace.name}-${group.name}`}
+          namespace={namespace}
+          expandAll={expandAll}
+          viewMode={'grouped'}
+        />
+      ))}
 
       {!hasDataSourcesConfigured && (
         <p>
@@ -151,7 +147,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export function CreateRecordingRuleButton() {
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
-
   const location = useLocation();
 
   const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
