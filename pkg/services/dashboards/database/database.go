@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -673,7 +674,7 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{dashboard.UID, dashboard.OrgID}},
 		{SQL: "DELETE FROM star WHERE dashboard_id = ? ", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard WHERE id = ?", args: []any{dashboard.ID}},
-		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{dashboard.ID}},
+		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{strconv.FormatInt(dashboard.ID, 10)}}, // Column has TEXT type.
 		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{dashboard.ID}},
@@ -737,7 +738,7 @@ func (d *dashboardStore) CleanupAfterDelete(ctx context.Context, cmd *dashboards
 	sqlStatements := []statement{
 		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
 		{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
-		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{cmd.ID}},
+		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{strconv.FormatInt(cmd.ID, 10)}}, // Column has TEXT type.
 		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{cmd.ID}},
 		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{cmd.ID}},
 		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{cmd.ID}},

@@ -4,6 +4,7 @@ import { PluginMeta } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { updatePluginSettings } from '../../api';
@@ -59,13 +60,13 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
     <>
       {!enabled && (
         <Button variant="primary" onClick={enable}>
-          Enable
+          <Trans i18nKey="plugins.get-started-with-app.enable">Enable</Trans>
         </Button>
       )}
 
       {enabled && !autoEnabled && (
         <Button variant="destructive" onClick={disable}>
-          Disable
+          <Trans i18nKey="plugins.get-started-with-app.disable">Disable</Trans>
         </Button>
       )}
     </>

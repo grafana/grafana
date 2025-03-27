@@ -71,6 +71,157 @@ func TestExpandError(t *testing.T) {
 	assert.Equal(t, "failed to expand template '{{': unexpected {{", err.Error())
 }
 
+func TestNewData(t *testing.T) {
+	t.Run("uses evaluation string when no datasource nodes", func(t *testing.T) {
+		res := eval.Result{
+			EvaluationString: "[ var='A' labels={instance=foo} value=10 ]",
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:              "A",
+					IsDatasourceNode: false,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
+				},
+			},
+		}
+
+		data := NewData(map[string]string{}, res)
+		assert.Equal(t, "[ var='A' labels={instance=foo} value=10 ]", data.Value)
+	})
+
+	t.Run("uses single datasource node value when exactly one exists", func(t *testing.T) {
+		res := eval.Result{
+			EvaluationString: "[ var='A' labels={instance=foo} value=10 ]",
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
+				},
+				"B": {
+					Var:              "B",
+					IsDatasourceNode: false,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(20.0),
+				},
+			},
+		}
+
+		data := NewData(map[string]string{}, res)
+		assert.Equal(t, "10", data.Value)
+	})
+
+	t.Run("uses evaluation string when multiple datasource nodes exist", func(t *testing.T) {
+		res := eval.Result{
+			EvaluationString: "[ var='A' labels={instance=foo} value=10 ]",
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
+				},
+				"B": {
+					Var:              "B",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "bar"},
+					Value:            util.Pointer(20.0),
+				},
+			},
+		}
+
+		data := NewData(map[string]string{}, res)
+		assert.Equal(t, "[ var='A' labels={instance=foo} value=10 ]", data.Value)
+	})
+}
+
+// TestDatasourceValueInTemplating tests the behavior of the $value variable in alert templates.
+// $value behavior has been changed to return a numeric value from the datasource query
+// when only a single datasource is used in the alerting rule. If more datasources are used,
+// $value will return the evaluation string.
+//
+// This change makes Grafana's templating more compatible with Prometheus templating,
+// where $value and .Value return the numeric value of the alert query.
+func TestDatasourceValueInTemplating(t *testing.T) {
+	t.Run("nil datasource value is rendered as NaN", func(t *testing.T) {
+		res := eval.Result{
+			EvaluationString: "[ var='A' labels={instance=foo} value=no data ]",
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            nil, // nil value
+				},
+			},
+		}
+
+		data := NewData(map[string]string{}, res)
+		// In Prometheus, a nil value would be rendered as NaN
+		assert.Equal(t, "NaN", data.Value)
+	})
+
+	t.Run("single datasource node uses query value", func(t *testing.T) {
+		res := eval.Result{
+			EvaluationString: "[ var='A' labels={instance=foo} value=10, var='B' labels={instance=foo} value=20, var='C' labels={instance=foo} value=30 ]",
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
+				},
+				"B": {
+					Var:              "B",
+					IsDatasourceNode: false,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(20.0),
+				},
+				"C": {
+					Var:              "C",
+					IsDatasourceNode: false,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(30.0),
+				},
+			},
+		}
+
+		data := NewData(map[string]string{}, res)
+		assert.Equal(t, "10", data.Value)
+	})
+
+	t.Run("multiple datasource nodes uses evaluation string", func(t *testing.T) {
+		evalStr := "[ var='A' labels={instance=foo} value=10, var='B' labels={instance=foo} value=20, var='C' labels={instance=foo} value=30 ]"
+		res := eval.Result{
+			EvaluationString: evalStr,
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
+				},
+				"B": {
+					Var:              "B",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(20.0),
+				},
+				"C": {
+					Var:              "C",
+					IsDatasourceNode: false,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(30.0),
+				},
+			},
+		}
+
+		data := NewData(map[string]string{}, res)
+		assert.Equal(t, evalStr, data.Value)
+	})
+}
+
 func TestExpandTemplate(t *testing.T) {
 	pathPrefix := "/path/prefix"
 	externalURL, err := url.Parse("http://localhost" + pathPrefix)
@@ -112,9 +263,10 @@ func TestExpandTemplate(t *testing.T) {
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:    "A",
-					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(1.1),
+					Var:              "A",
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(1.1),
+					IsDatasourceNode: true,
 				},
 			},
 		},
@@ -125,9 +277,10 @@ func TestExpandTemplate(t *testing.T) {
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:    "A",
-					Labels: data.Labels{},
-					Value:  util.Pointer(1.0),
+					Var:              "A",
+					Labels:           data.Labels{},
+					Value:            util.Pointer(1.0),
+					IsDatasourceNode: true,
 				},
 			},
 		},
@@ -145,6 +298,58 @@ func TestExpandTemplate(t *testing.T) {
 			},
 		},
 		expected: "foo has value NaN",
+	}, {
+		name: "$value is expanded into a number for a single datasource query",
+		text: `
+			current $value is: {{ $value }}
+			current .Value is: {{ .Value }}
+		`,
+		alertInstance: eval.Result{
+			Values: map[string]eval.NumberValueCapture{
+				"query": {
+					Var:              "query",
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.123),
+					IsDatasourceNode: true,
+				},
+				"math": {
+					Var:              "math",
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
+					IsDatasourceNode: false,
+				},
+			},
+			EvaluationString: "[ var='query' labels={instance=foo} value=10.123, var='math' labels={instance=foo} value=10 ]",
+		},
+		expected: `current $value is: 10.123
+			current .Value is: 10.123
+		`,
+	}, {
+		name: "$value is expanded into a string for multi-datasource query",
+		text: `
+			current $value is: {{ $value }}
+			current .Value is: {{ .Value }}
+		`,
+		alertInstance: eval.Result{
+			Values: map[string]eval.NumberValueCapture{
+				"query": {
+					Var:              "query",
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.123),
+					IsDatasourceNode: true,
+				},
+				"second-query": {
+					Var:              "second-query",
+					Labels:           data.Labels{"instance": "bar"},
+					Value:            util.Pointer(20.456),
+					IsDatasourceNode: true,
+				},
+			},
+			EvaluationString: "[ var='query' labels={instance=foo} value=10.123, var='second-query' labels={instance=bar} value=20.456 ]",
+		},
+		expected: `current $value is: [ var='query' labels={instance=foo} value=10.123, var='second-query' labels={instance=bar} value=20.456 ]
+			current .Value is: [ var='query' labels={instance=foo} value=10.123, var='second-query' labels={instance=bar} value=20.456 ]
+		`,
 	}, {
 		name: "assert value string is expanded into $value",
 		text: "{{ $value }}",

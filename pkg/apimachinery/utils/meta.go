@@ -58,6 +58,12 @@ const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
+// Only used in modes 0-2 (legacy db) for returning the folder fullpath
+
+const LabelGetFullpath = "grafana.app/fullpath"
+const AnnoKeyFullpath = "grafana.app/fullpath"
+const AnnoKeyFullpathUIDs = "grafana.app/fullpathUIDs"
+
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
@@ -86,6 +92,7 @@ type GrafanaMetaAccessor interface {
 	GetMessage() string
 	SetMessage(msg string)
 	SetAnnotation(key string, val string)
+	GetAnnotation(key string) string
 
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
@@ -95,6 +102,11 @@ type GrafanaMetaAccessor interface {
 
 	// Deprecated: This will be removed in Grafana 13
 	SetDeprecatedInternalID(id int64)
+
+	GetFullpath() string
+	SetFullpath(path string)
+	GetFullpathUIDs() string
+	SetFullpathUIDs(uids string)
 
 	GetSpec() (any, error)
 	SetSpec(any) error
@@ -143,9 +155,13 @@ type grafanaMetaAccessor struct {
 // required fields are missing. Fields that are not required return the default
 // value and are a no-op if set.
 func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
+	if raw == nil {
+		return nil, fmt.Errorf("unable to read metadata from nil object")
+	}
+
 	obj, err := meta.Accessor(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to read metadata from: %T, %s", raw, err)
 	}
 
 	// reflection to find title and other non object properties
@@ -186,6 +202,14 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 		anno[key] = val
 	}
 	m.obj.SetAnnotations(anno)
+}
+
+func (m *grafanaMetaAccessor) GetAnnotation(key string) string {
+	anno := m.obj.GetAnnotations()
+	if anno != nil {
+		return anno[key]
+	}
+	return ""
 }
 
 func (m *grafanaMetaAccessor) get(key string) string {
@@ -302,6 +326,22 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 
 	labels[LabelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
 	m.obj.SetLabels(labels)
+}
+
+func (m *grafanaMetaAccessor) GetFullpath() string {
+	return m.get(AnnoKeyFullpath)
+}
+
+func (m *grafanaMetaAccessor) SetFullpath(path string) {
+	m.SetAnnotation(AnnoKeyFullpath, path)
+}
+
+func (m *grafanaMetaAccessor) GetFullpathUIDs() string {
+	return m.get(AnnoKeyFullpathUIDs)
+}
+
+func (m *grafanaMetaAccessor) SetFullpathUIDs(uids string) {
+	m.SetAnnotation(AnnoKeyFullpathUIDs, uids)
 }
 
 // GetAnnotations implements GrafanaMetaAccessor.

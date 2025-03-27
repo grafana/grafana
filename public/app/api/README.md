@@ -47,7 +47,7 @@ This is the API definition for the specific group you're working with, where `ge
 
 ### 3. Add your new client to the generation script
 
-Open [generate-rtk-apis.ts](scripts/generate-rtk-apis.ts) and add the following information:
+Open [generate-rtk-apis.ts](/scripts/generate-rtk-apis.ts) and add the following information:
 
 | Data            | Descritpion                                                                                                                                                                                                                                                                               |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -123,7 +123,7 @@ export const dashboardsAPI = generatedApi.enhanceEndpoints({
 
 Last but not least, you need to add the middleware and reducers to the store.
 
-In Grafana, the reducers are added to [`root.ts`](public/app/core/reducers/root.ts):
+In Grafana, the reducers are added to [`root.ts`](/public/app/core/reducers/root.ts):
 
 ```jsx
   import { dashboardAPI } from '<pathToYourAPI>';
@@ -133,7 +133,7 @@ In Grafana, the reducers are added to [`root.ts`](public/app/core/reducers/root.
   };
 ```
 
-And the middleware is added to [`configureStore.ts`](public/app/store/configureStore.ts):
+And the middleware is added to [`configureStore.ts`](/public/app/store/configureStore.ts):
 
 ```jsx
 import { dashboardAPI } from '<pathToYourAPI>';

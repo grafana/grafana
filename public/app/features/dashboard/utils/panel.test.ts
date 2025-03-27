@@ -2,7 +2,7 @@ import { advanceTo, clear } from 'jest-date-mock';
 import { ComponentClass } from 'react';
 
 import { dateTime, DateTime, PanelProps, TimeRange } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 
 import { PanelModel } from '../state/PanelModel';

@@ -1,7 +1,6 @@
 import { of } from 'rxjs';
 
-import { CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
-import { dateTime } from '@grafana/data/src/datetime/moment_wrapper';
+import { dateTime, CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
 
 import {

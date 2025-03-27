@@ -407,6 +407,7 @@ func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
 
 func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering) {
+		s.log.Warn("Tried to search for 'sharedwithme' dashboards with ", featuremgmt.FlagUnifiedStorageSearchPermissionFiltering, " disabled")
 		return []string{}, nil
 	}
 
@@ -459,7 +460,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	if folderUidIdx == -1 {
-		return sharedDashboards, fmt.Errorf("Error retrieving folder information")
+		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
 	// populate list of unique folder UIDs in the list of dashboards user has read permissions

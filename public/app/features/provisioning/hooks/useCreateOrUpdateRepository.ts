@@ -13,7 +13,18 @@ export function useCreateOrUpdateRepository(name?: string) {
   const updateOrCreate = useCallback(
     (data: RepositorySpec) => {
       if (name) {
-        return update({ name, repository: { metadata: { name }, spec: data } });
+        return update({
+          name,
+          repository: {
+            metadata: {
+              name,
+              // TODO? -- replace with patch spec, so the rest of the metadata is not replaced?
+              // Can that support optimistic locking? (eg, make sure the RV is the same?)
+              finalizers: ['cleanup', 'remove-orphan-resources'],
+            },
+            spec: data,
+          },
+        });
       }
       return create({ repository: { metadata: generateRepositoryMetadata(data), spec: data } });
     },

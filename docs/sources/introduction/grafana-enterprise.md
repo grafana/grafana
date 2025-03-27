@@ -34,14 +34,14 @@ Grafana Enterprise includes integrations with more ways to authenticate your use
 Supported auth providers:
 
 - [Auth Proxy](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/auth-proxy#team-sync-enterprise-only)
-- [Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread#group-sync-enterprise-only)
-- [Generic OAuth integration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/generic-oauth#configure-group-synchronization)
-- [GitHub OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/github#configure-group-synchronization)
-- [GitLab OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/gitlab#configure-group-synchronization)
-- [Google OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google#configure-group-synchronization)
-- [LDAP](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/enhanced-ldap#ldap-group-synchronization)
-- [Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/okta#configure-group-synchronization-enterprise-only)
-- [SAML](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml#configure-group-synchronization)
+- [Azure AD OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#team-sync-enterprise-only)
+- [GitHub OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/github/#configure-team-synchronization)
+- [Generic OAuth integration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/generic-oauth#configure-team-synchronization)
+- [GitLab OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/gitlab/#configure-team-synchronization)
+- [Google OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/google#configure-team-synchronization)
+- [LDAP](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/enhanced-ldap/#ldap-group-synchronization-for-teams)
+- [Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/okta#configure-team-synchronization-enterprise-only)
+- [SAML](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml#configure-team-sync)
 
 ### Enhanced LDAP integration
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { getLatestCompatibleVersion } from '../helpers';
 import { Version } from '../types';
@@ -28,7 +29,11 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
   }, [installedVersion]);
 
   if (versions.length === 0) {
-    return <p>No version history was found.</p>;
+    return (
+      <p>
+        <Trans i18nKey="plugins.version-list.no-version-history-was-found">No version history was found.</Trans>
+      </p>
+    );
   }
 
   const onInstallClick = () => {
@@ -39,10 +44,16 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
     <table className={styles.table}>
       <thead>
         <tr>
-          <th>Version</th>
+          <th>
+            <Trans i18nKey="plugins.version-list.version">Version</Trans>
+          </th>
           <th></th>
-          <th>Last updated</th>
-          <th>Grafana Dependency</th>
+          <th>
+            <Trans i18nKey="plugins.version-list.last-updated">Last updated</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="plugins.version-list.grafana-dependency">Grafana dependency</Trans>
+          </th>
         </tr>
       </thead>
       <tbody>

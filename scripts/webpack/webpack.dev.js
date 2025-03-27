@@ -52,11 +52,6 @@ module.exports = (env = {}) => {
         // Packages linked for development need react to be resolved from the same location
         react: path.resolve('./node_modules/react'),
 
-        // Also Grafana packages need to be resolved from the same location so they share
-        // the same singletons
-        '@grafana/runtime': path.resolve(__dirname, '../../packages/grafana-runtime'),
-        '@grafana/data': path.resolve(__dirname, '../../packages/grafana-data'),
-
         // This is required to correctly resolve react-router-dom when linking with
         //  local version of @grafana/scenes
         'react-router-dom': path.resolve('./node_modules/react-router-dom'),

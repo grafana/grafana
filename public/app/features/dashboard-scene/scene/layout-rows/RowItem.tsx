@@ -1,12 +1,21 @@
-import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
+import {
+  sceneGraph,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+  VariableDependencyConfig,
+  VizPanel,
+} from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
+import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getDefaultVizPanel } from '../../utils/utils';
-import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { BulkActionElement } from '../types/BulkActionElement';
+import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
@@ -20,15 +29,17 @@ import { RowsLayoutManager } from './RowsLayoutManager';
 export interface RowItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
-  isCollapsed?: boolean;
-  isHeaderHidden?: boolean;
-  height?: 'expand' | 'min';
+  collapse?: boolean;
+  hideHeader?: boolean;
+  fillScreen?: boolean;
+  isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
+  isNew?: boolean;
 }
 
 export class RowItem
   extends SceneObjectBase<RowItemState>
-  implements LayoutParent, BulkActionElement, EditableDashboardElement
+  implements LayoutParent, BulkActionElement, EditableDashboardElement, DashboardDropTarget
 {
   public static Component = RowItemRenderer;
 
@@ -37,13 +48,14 @@ export class RowItem
   });
 
   public readonly isEditableDashboardElement = true;
+  public readonly isDashboardDropTarget = true;
   private _layoutRestorer = new LayoutRestorer();
 
   public constructor(state?: Partial<RowItemState>) {
     super({
       ...state,
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
-      layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
+      layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
       conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
     });
 
@@ -64,12 +76,16 @@ export class RowItem
     return {
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
-      icon: 'line-alt',
+      icon: 'list-ul',
     };
   }
 
   public getLayout(): DashboardLayoutManager {
     return this.state.layout;
+  }
+
+  public getSlug(): string {
+    return kbn.slugifyForUrl(sceneGraph.interpolate(this, this.state.title ?? 'Row'));
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
@@ -124,20 +140,37 @@ export class RowItem
     return this._getParentLayout().isLastRow(this);
   }
 
+  public setIsDropTarget(isDropTarget: boolean) {
+    if (!!this.state.isDropTarget !== isDropTarget) {
+      this.setState({ isDropTarget });
+    }
+  }
+
+  public draggedPanelOutside(panel: VizPanel) {
+    this.getLayout().removePanel?.(panel);
+    this.setIsDropTarget(false);
+  }
+
+  public draggedPanelInside(panel: VizPanel) {
+    panel.clearParent();
+    this.getLayout().addPanel(panel);
+    this.setIsDropTarget(false);
+  }
+
   public getRepeatVariable(): string | undefined {
     return this._getRepeatBehavior()?.state.variableName;
   }
 
   public onChangeTitle(title: string) {
-    this.setState({ title });
+    this.setState({ title, isNew: false });
   }
 
-  public onHeaderHiddenToggle(isHeaderHidden = !this.state.isHeaderHidden) {
-    this.setState({ isHeaderHidden });
+  public onHeaderHiddenToggle(hideHeader = !this.state.hideHeader) {
+    this.setState({ hideHeader });
   }
 
-  public onChangeHeight(height: 'expand' | 'min') {
-    this.setState({ height });
+  public onChangeFillScreen(fillScreen: boolean) {
+    this.setState({ fillScreen });
   }
 
   public onChangeRepeat(repeat: string | undefined) {
@@ -158,7 +191,7 @@ export class RowItem
   }
 
   public onCollapseToggle() {
-    this.setState({ isCollapsed: !this.state.isCollapsed });
+    this.setState({ collapse: !this.state.collapse });
   }
 
   private _getParentLayout(): RowsLayoutManager {

@@ -103,7 +103,7 @@ export const SnapshotListTable = () => {
       <ConfirmModal
         isOpen={!!removeSnapshot}
         icon="trash-alt"
-        title="Delete"
+        title={t('manage-dashboards.snapshot-list-table.title-delete', 'Delete')}
         body={`Are you sure you want to delete '${removeSnapshot?.name}'?`}
         confirmText="Delete"
         onDismiss={() => setRemoveSnapshot(undefined)}

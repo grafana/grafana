@@ -14,6 +14,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
+var (
+	ErrMissingSQLQuery = errutil.BadRequest("sql-missing-query").Errorf("missing SQL query")
+	ErrInvalidSQLQuery = errutil.BadRequest("sql-invalid-sql").MustTemplate(
+		"invalid SQL query: {{ .Private.query }} err: {{ .Error }}",
+		errutil.WithPublic(
+			"Invalid SQL query: {{ .Public.error }}",
+		),
+	)
+)
+
 // SQLCommand is an expression to run SQL over results
 type SQLCommand struct {
 	query       string
@@ -25,15 +35,20 @@ type SQLCommand struct {
 // NewSQLCommand creates a new SQLCommand.
 func NewSQLCommand(refID, rawSQL string, limit int64) (*SQLCommand, error) {
 	if rawSQL == "" {
-		return nil, errutil.BadRequest("sql-missing-query",
-			errutil.WithPublicMessage("missing SQL query"))
+		return nil, ErrMissingSQLQuery
 	}
 	tables, err := sql.TablesList(rawSQL)
 	if err != nil {
 		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
-		return nil, errutil.BadRequest("sql-invalid-sql",
-			errutil.WithPublicMessage(fmt.Sprintf("invalid SQL query: %s", err)),
-		)
+		return nil, ErrInvalidSQLQuery.Build(errutil.TemplateData{
+			Error: err,
+			Public: map[string]any{
+				"error": err.Error(),
+			},
+			Private: map[string]any{
+				"query": rawSQL,
+			},
+		})
 	}
 	if len(tables) == 0 {
 		logger.Warn("no tables found in SQL query", "sql", rawSQL)

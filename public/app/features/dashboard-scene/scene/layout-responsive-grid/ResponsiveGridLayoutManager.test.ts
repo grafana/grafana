@@ -3,14 +3,14 @@ import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { findVizPanelByKey } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
-import { ResponsiveGridItem } from './ResponsiveGridItem';
-import { ResponsiveGridLayout } from './ResponsiveGridLayout';
-import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
+import { AutoGridItem } from './ResponsiveGridItem';
+import { AutoGridLayout } from './ResponsiveGridLayout';
+import { AutoGridLayoutManager } from './ResponsiveGridLayoutManager';
 
-describe('ResponsiveGridLayoutManager', () => {
+describe('AutoGridLayoutManager', () => {
   it('Should clone the layout', () => {
     const { manager } = setup();
-    const clone = manager.cloneLayout('foo', true) as ResponsiveGridLayoutManager;
+    const clone = manager.cloneLayout('foo', true) as AutoGridLayoutManager;
 
     expect(clone).not.toBe(manager);
     expect(clone.state.layout).not.toBe(manager.state.layout);
@@ -27,7 +27,7 @@ describe('ResponsiveGridLayoutManager', () => {
 
 function setup() {
   const gridItems = [
-    new ResponsiveGridItem({
+    new AutoGridItem({
       key: 'grid-item-1',
       body: new VizPanel({
         title: 'Panel A',
@@ -36,7 +36,7 @@ function setup() {
         $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
       }),
     }),
-    new ResponsiveGridItem({
+    new AutoGridItem({
       key: 'grid-item-2',
       body: new VizPanel({
         title: 'Panel B',
@@ -46,7 +46,7 @@ function setup() {
     }),
   ];
 
-  const manager = new ResponsiveGridLayoutManager({ layout: new ResponsiveGridLayout({ children: gridItems }) });
+  const manager = new AutoGridLayoutManager({ layout: new AutoGridLayout({ children: gridItems }) });
 
   new DashboardScene({ body: manager });
 

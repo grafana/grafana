@@ -137,11 +137,11 @@ type UserSearchHitDTO struct {
 	AvatarURL     string               `json:"avatarUrl" xorm:"avatar_url"`
 	IsAdmin       bool                 `json:"isAdmin"`
 	IsDisabled    bool                 `json:"isDisabled"`
+	IsProvisioned bool                 `json:"isProvisioned"`
 	LastSeenAt    time.Time            `json:"lastSeenAt"`
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
 	AuthLabels    []string             `json:"authLabels"`
 	AuthModule    AuthModuleConversion `json:"-"`
-	IsProvisioned bool                 `json:"-" xorm:"is_provisioned"`
 }
 
 type GetUserProfileQuery struct {
@@ -166,7 +166,7 @@ type UserProfileDTO struct {
 	CreatedAt                      time.Time       `json:"createdAt"`
 	AvatarURL                      string          `json:"avatarUrl"`
 	AccessControl                  map[string]bool `json:"accessControl,omitempty"`
-	IsProvisioned                  bool            `json:"-"`
+	IsProvisioned                  bool            `json:"isProvisioned"`
 }
 
 // implement Conversion interface to define custom field mapping (xorm feature)

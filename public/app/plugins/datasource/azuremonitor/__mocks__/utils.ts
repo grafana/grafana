@@ -1,5 +1,4 @@
-import { VariableType, VariableWithOptions } from '@grafana/data';
-import { LoadingState } from '@grafana/data/src/types/data';
+import { LoadingState, VariableType, VariableWithOptions } from '@grafana/data';
 
 interface TemplateableValue {
   variableName: string;

@@ -8,8 +8,7 @@ import {
   DataTransformContext,
   FieldMatcher,
 } from '@grafana/data';
-import { getMatcherConfig } from '@grafana/data/src/transformations/transformers/filterByName';
-import { noopTransformer } from '@grafana/data/src/transformations/transformers/noop';
+import { getMatcherConfig, noopTransformer } from '@grafana/data/internal';
 
 import { partition } from './partition';
 

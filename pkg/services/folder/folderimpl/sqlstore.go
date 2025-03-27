@@ -607,9 +607,9 @@ func (ss *FolderStoreImpl) GetDescendants(ctx context.Context, orgID int64, ance
 }
 
 func getFullpathSQL(dialect migrator.Dialect) string {
-	escaped := "\\/"
-	if dialect.DriverName() == migrator.MySQL {
-		escaped = "\\\\/"
+	escaped := `\/`
+	if dialect.DriverName() == migrator.MySQL || dialect.DriverName() == migrator.Spanner {
+		escaped = `\\/`
 	}
 	concatCols := make([]string, 0, folder.MaxNestedFolderDepth)
 	concatCols = append(concatCols, fmt.Sprintf("COALESCE(REPLACE(f0.title, '/', '%s'), '')", escaped))

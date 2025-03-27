@@ -6,7 +6,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { InlineField, InlineSwitch, Modal, Button, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { AccessControlAction, ApiKey, ApikeyMigrationResult, StoreState } from 'app/types';
 
@@ -127,7 +127,10 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               onSearchChange={this.onSearchQueryChange}
             />
           ) : null}
-          <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
+          <InlineField
+            disabled={includeExpiredDisabled}
+            label={t('api-keys.api-keys-page-unconnected.label-include-expired-keys', 'Include expired keys')}
+          >
             <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
           </InlineField>
           {apiKeys.length > 0 ? (
@@ -175,10 +178,17 @@ const styles: { [key: string]: React.CSSProperties } = {
 
 export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, data, onDismiss }) => {
   return (
-    <Modal title="Migration summary" isOpen={visible} closeOnBackdropClick={true} onDismiss={onDismiss}>
+    <Modal
+      title={t('api-keys.migration-summary.title-migration-summary', 'Migration summary')}
+      isOpen={visible}
+      closeOnBackdropClick={true}
+      onDismiss={onDismiss}
+    >
       {data.failedApikeyIDs.length === 0 && (
         <div style={styles.migrationSummary}>
-          <p>Migration Successful!</p>
+          <p>
+            <Trans i18nKey="api-keys.migration-summary.migration-successful">Migration Successful!</Trans>
+          </p>
           <p>
             <strong>Total: </strong>
             {data.total}
@@ -220,7 +230,7 @@ export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, dat
       )}
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onDismiss}>
-          Close
+          <Trans i18nKey="api-keys.migration-summary.close">Close</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

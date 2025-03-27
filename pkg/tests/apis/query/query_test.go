@@ -3,7 +3,6 @@ package dashboards
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -71,7 +70,7 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 			},
 		})
 
-		//fmt.Printf("%s", string(body))
+		//t.Logf("%s", string(body))
 
 		require.NoError(t, err)
 
@@ -90,7 +89,7 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 
 		body, err = result.Raw()
 		require.NoError(t, err)
-		fmt.Printf("OUT: %s", string(body))
+		t.Logf("OUT: %s", string(body))
 
 		rsp := &backend.QueryDataResponse{}
 		err = json.Unmarshal(body, rsp)
@@ -135,7 +134,7 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 			Do(context.Background())
 
 		body, err = result.Raw()
-		//fmt.Printf("OUT: %s", string(body))
+		//t.Logf("OUT: %s", string(body))
 
 		require.Error(t, err, "expecting a 400")
 		require.JSONEq(t, `{

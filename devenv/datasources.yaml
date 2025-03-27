@@ -255,6 +255,7 @@ datasources:
       customMetricsNamespaces: "CWAgent"
 
   - name: gdev-loki
+    uid: gdev-loki
     type: loki
     access: proxy
     url: http://localhost:3100
@@ -313,6 +314,15 @@ datasources:
     access: proxy
     url: http://localhost:3200
     editable: false
+    correlations:
+      - targetUID: gdev-loki
+        label: "Logs (correlation)"
+        description: "Correlation to logs stored in Loki"
+        config:
+          type: query
+          target:
+            expr: "{ job=\"job\" }"
+          field: "traceID"
     jsonData:
       tracesToLogsV2:
           datasourceUid: gdev-loki
@@ -323,6 +333,14 @@ datasources:
       tracesToProfiles:
         datasourceUid: gdev-pyroscope
         profileTypeId: "process_cpu:cpu:nanoseconds:cpu:nanoseconds"
+      tracesToMetrics:
+        datasourceUid: gdev-prometheus
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
+        tags: [{ key: 'job' }]
+        queries:
+          - name: 'Metrics'
+            query: 'sum(rate({$$__tags}[5m]))'
 
   - name: gdev-pyroscope
     type: grafana-pyroscope-datasource

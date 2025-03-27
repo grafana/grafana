@@ -96,7 +96,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
         break;
       case OptionFilter.Recent:
         mainBoxElements.push(
-          <OptionsPaneCategory id="Recent options" title="Recent options" key="Recent options" forceOpen={1}>
+          <OptionsPaneCategory id="Recent options" title="Recent options" key="Recent options" forceOpen={true}>
             {getRecentOptions(allOptions).map((item) => item.render())}
           </OptionsPaneCategory>
         );
@@ -163,7 +163,7 @@ export function renderSearchHits(
         id="Found options"
         title={`Matched ${optionHits.length}/${totalCount} options`}
         key="Normal options"
-        forceOpen={1}
+        forceOpen={true}
       >
         {optionHits.map((hit) => hit.render(searchQuery))}
       </OptionsPaneCategory>

@@ -172,6 +172,14 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 			return nil, plugins.ErrMethodNotImplemented
 		}
 
+		if status.Code(err) == codes.Unavailable {
+			return nil, plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("%v", err)
+		}
+
+		if status.Code(err) == codes.ResourceExhausted {
+			return nil, plugins.ErrPluginGrpcResourceExhaustedBase.Errorf("%v", err)
+		}
+
 		if errorSource, ok := backend.ErrorSourceFromGrpcStatusError(ctx, err); ok {
 			return nil, handleGrpcStatusError(ctx, errorSource, err)
 		}

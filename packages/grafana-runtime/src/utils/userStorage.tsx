@@ -50,7 +50,7 @@ class UserStorage {
     this.service = service;
     this.userUID = config.bootData.user.uid === '' ? config.bootData.user.id.toString() : config.bootData.user.uid;
     this.resourceName = `${service}:${this.userUID}`;
-    this.canUseUserStorage = config.featureToggles.userStorageAPI === true && config.bootData.user.isSignedIn;
+    this.canUseUserStorage = config.bootData.user.isSignedIn;
   }
 
   private async init() {
@@ -81,7 +81,7 @@ class UserStorage {
     // Ensure this.storageSpec is initialized
     await this.init();
     if (!this.storageSpec) {
-      // Also, fallback to localStorage for backward compatibility once userStorageAPI is enabled
+      // Also, fallback to localStorage for backward compatibility
       return localStorage.getItem(this.resourceName);
     }
     return this.storageSpec.data[key];

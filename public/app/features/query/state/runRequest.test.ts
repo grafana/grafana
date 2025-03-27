@@ -12,7 +12,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { setEchoSrv } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { DataQuery } from '@grafana/schema';
 
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';

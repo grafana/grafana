@@ -14,7 +14,7 @@ var logger = log.New("sql_expr")
 func TablesList(rawSQL string) ([]string, error) {
 	stmt, err := sqlparser.Parse(rawSQL)
 	if err != nil {
-		logger.Error("error parsing sql: %s", err.Error(), "sql", rawSQL)
+		logger.Error("error parsing sql", "error", err.Error(), "sql", rawSQL)
 		return nil, fmt.Errorf("error parsing sql: %s", err.Error())
 	}
 

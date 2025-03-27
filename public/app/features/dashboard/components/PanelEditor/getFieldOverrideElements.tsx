@@ -85,7 +85,7 @@ export function getFieldOverrideCategories(
     const configPropertiesOptions = getOverrideProperties(registry);
     const isSystemOverride = isSystemOverrideGuard(override);
     // A way to force open new override categories
-    const forceOpen = override.properties.length === 0 ? 1 : 0;
+    const forceOpen = override.properties.length === 0;
 
     const category = new OptionsPaneCategoryDescriptor({
       title: overrideName,

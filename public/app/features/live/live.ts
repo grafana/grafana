@@ -2,10 +2,7 @@ import { from, map, of, switchMap } from 'rxjs';
 
 import { DataFrame, toLiveChannelId, StreamingDataFrame } from '@grafana/data';
 import { BackendSrv, GrafanaLiveSrv, toDataQueryResponse } from '@grafana/runtime';
-import {
-  standardStreamOptionsProvider,
-  toStreamingDataResponse,
-} from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { standardStreamOptionsProvider, toStreamingDataResponse } from '@grafana/runtime/internal';
 
 import { CentrifugeSrv, StreamingDataQueryResponse } from './centrifuge/service';
 import { isStreamingResponseData, StreamingResponseDataType } from './data/utils';
@@ -93,7 +90,11 @@ export class GrafanaLiveService implements GrafanaLiveSrv {
    *
    * @alpha -- experimental
    */
-  publish: GrafanaLiveSrv['publish'] = async (address, data) => {
+  publish: GrafanaLiveSrv['publish'] = async (address, data, options) => {
+    if (options?.useSocket) {
+      return this.deps.centrifugeSrv.publish(address, data);
+    }
+
     return this.deps.backendSrv.post(`api/live/publish`, {
       channel: toLiveChannelId(address), // orgId is from user
       data,

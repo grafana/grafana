@@ -2,6 +2,8 @@ import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { PermissionLevelString } from 'app/types';
 
+import { ManagerKind } from '../../apiserver/types';
+
 export interface FacetField {
   field: string;
   count?: number;
@@ -46,6 +48,7 @@ export interface DashboardQueryResult {
   // debugging fields
   score: number;
   explain: {};
+  managedBy?: ManagerKind;
 
   // enterprise sends extra properties through for sorting (views, errors, etc)
   [key: string]: unknown;
@@ -91,4 +94,5 @@ export interface GrafanaSearcher {
 export interface NestedFolderDTO {
   uid: string;
   title: string;
+  managedBy?: ManagerKind;
 }

@@ -8,11 +8,9 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import {
-  LabelsToFieldsMode,
-  LabelsToFieldsOptions,
-} from '@grafana/data/src/transformations/transformers/labelsToFields';
+import { LabelsToFieldsMode, LabelsToFieldsOptions } from '@grafana/data/internal';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -102,14 +100,20 @@ export const LabelsAsFieldsTransformerEditor = ({
           <InlineField
             label={'Value field name'}
             labelWidth={labelWidth}
-            tooltip="Replace the value field name with a label"
+            tooltip={t(
+              'transformers.labels-as-fields-transformer-editor.tooltip-replace-value-field-label',
+              'Replace the value field name with a label'
+            )}
             htmlFor="labels-to-fields-as-name"
           >
             <Select
               inputId="labels-to-fields-as-name"
               isClearable={true}
               allowCustomValue={false}
-              placeholder="(Optional) Select label"
+              placeholder={t(
+                'transformers.labels-as-fields-transformer-editor.placeholder-optional-select-label',
+                '(Optional) Select label'
+              )}
               options={labelNames}
               value={options?.valueLabel}
               onChange={onValueLabelChange}

@@ -263,7 +263,8 @@
       "renovate[bot]",
       "dependabot[bot]",
       "grafana-delivery-bot[bot]",
-      "grafanabot"
+      "grafanabot",
+      "alerting-team[bot]"
     ],
     "action": "updateLabel",
     "addLabel": "pr/external"

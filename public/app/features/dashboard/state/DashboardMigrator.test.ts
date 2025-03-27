@@ -1,7 +1,7 @@
 import { each, map } from 'lodash';
 
 import { DataLinkBuiltInVars, MappingType, VariableHide } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { FieldConfigSource } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';

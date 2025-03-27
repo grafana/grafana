@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
 
-import { DataFrame, InterpolateFunction, LinkModel } from '@grafana/data';
-import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { colorManipulator, DataFrame, InterpolateFunction, LinkModel } from '@grafana/data';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -67,7 +66,7 @@ export const XYChartTooltip = ({
   const headerItem: VizTooltipItem = {
     label,
     value: '',
-    color: alpha(seriesColor ?? '#fff', 0.5),
+    color: colorManipulator.alpha(seriesColor ?? '#fff', 0.5),
     colorIndicator: ColorIndicator.marker_md,
   };
 

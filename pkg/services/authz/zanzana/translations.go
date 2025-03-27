@@ -1,7 +1,7 @@
 package zanzana
 
 import (
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 )
 

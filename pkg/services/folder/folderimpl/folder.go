@@ -18,7 +18,7 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
@@ -91,6 +91,7 @@ func ProvideService(
 	resourceClient resource.ResourceClient,
 	dual dualwrite.Service,
 	sorter sort.Service,
+	restConfig apiserver.RestConfigProvider,
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
@@ -118,7 +119,7 @@ func ProvideService(
 			dual,
 			request.GetNamespaceMapper(cfg),
 			v0alpha1.FolderResourceInfo.GroupVersionResource(),
-			apiserver.GetRestConfig,
+			restConfig.GetRestConfig,
 			dashboardStore,
 			userService,
 			resourceClient,
@@ -136,7 +137,7 @@ func ProvideService(
 			dual,
 			request.GetNamespaceMapper(cfg),
 			dashboardalpha1.DashboardResourceInfo.GroupVersionResource(),
-			apiserver.GetRestConfig,
+			restConfig.GetRestConfig,
 			dashboardStore,
 			userService,
 			resourceClient,

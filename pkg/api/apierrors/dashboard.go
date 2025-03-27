@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,7 +17,7 @@ import (
 
 // ToDashboardErrorResponse returns a different response status according to the dashboard error type
 func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store, err error) response.Response {
-	var dashboardErr dashboards.DashboardErr
+	var dashboardErr dashboardaccess.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		if body := dashboardErr.Body(); body != nil {
 			return response.JSON(dashboardErr.StatusCode, body)

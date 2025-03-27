@@ -152,4 +152,36 @@ func testCheck(t *testing.T, server *Server) {
 		require.NoError(t, err)
 		assert.False(t, res.GetAllowed())
 	})
+
+	t.Run("user:13 should be able to read folder status for all subfolders of folder 5", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "", "5"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "", "6"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "", "4"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("user:14 should be able to read team subresources for team 1", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:14", utils.VerbGet, "iam.grafana.app", "teams", statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("user:15 should be able to read user subresources for user 1", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:15", utils.VerbGet, "iam.grafana.app", "users", statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("user:16 should be able to read serviceaccount subresources for serviceaccount 1", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:16", utils.VerbGet, "iam.grafana.app", "serviceaccounts", statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"xorm.io/core"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -53,6 +54,7 @@ type InitTestDBOpt = sqlstore.InitTestDBOpt
 var SetupTestDB = sqlstore.SetupTestDB
 var CleanupTestDB = sqlstore.CleanupTestDB
 var ProvideService = sqlstore.ProvideService
+var SkipTestsOnSpanner = sqlstore.SkipTestsOnSpanner
 
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.SQLStore {
 	db, _ := InitTestDBWithCfg(t, opts...)

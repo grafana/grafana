@@ -12,11 +12,12 @@ import {
 import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import {
   DashboardV2Spec,
-  ResponsiveGridLayoutItemKind,
+  AutoGridLayoutItemKind,
   RowsLayoutRowKind,
   LibraryPanelKind,
   PanelKind,
   PanelQueryKind,
+  QueryVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -58,7 +59,7 @@ export function buildVizPanel(panel: PanelKind): VizPanel {
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.spec.id),
-    title: panel.spec.title,
+    title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
     options: panel.spec.vizConfig.spec.options,
@@ -182,13 +183,38 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
-      datasource = query.spec.datasource;
+      if (!query.spec.datasource?.uid) {
+        const defaultDatasource = config.bootData.settings.defaultDatasource;
+        const dsList = config.bootData.settings.datasources;
+        // this is look up by type
+        const bestGuess = Object.values(dsList).find((ds) => ds.meta.id === query.spec.query.kind);
+        datasource = bestGuess ? { uid: bestGuess.uid, type: bestGuess.meta.id } : dsList[defaultDatasource];
+      } else {
+        datasource = query.spec.datasource;
+      }
     } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
       isMixedDatasource = true;
     }
   });
 
-  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
+  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : datasource;
+}
+
+export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
+  let datasource: DataSourceRef | undefined = undefined;
+
+  if (!datasource) {
+    if (!variable.spec.datasource?.uid) {
+      const defaultDatasource = config.bootData.settings.defaultDatasource;
+      const dsList = config.bootData.settings.datasources;
+      // this is look up by type
+      const bestGuess = Object.values(dsList).find((ds) => ds.meta.id === variable.spec.query.kind);
+      datasource = bestGuess ? { uid: bestGuess.uid, type: bestGuess.meta.id } : dsList[defaultDatasource];
+    } else {
+      datasource = variable.spec.datasource;
+    }
+  }
+  return datasource;
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
@@ -205,10 +231,11 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
   if (!registryItem) {
     throw new Error(`Layout serializer not found for kind: ${sceneState.descriptor.kind}`);
   }
+
   return registryItem.serializer.serialize(sceneState);
 }
 
-export function getConditionalRendering(item: RowsLayoutRowKind | ResponsiveGridLayoutItemKind): ConditionalRendering {
+export function getConditionalRendering(item: RowsLayoutRowKind | AutoGridLayoutItemKind): ConditionalRendering {
   if (!item.spec.conditionalRendering) {
     return ConditionalRendering.createEmpty();
   }

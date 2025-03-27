@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -124,12 +125,18 @@ export const extractFieldsTransformerEditor = ({
       )}
       {options.format === FieldExtractorID.Delimiter && (
         <InlineFieldRow>
-          <InlineField label="Delimiter" labelWidth={16}>
+          <InlineField
+            label={t('transformers.extract-fields-transformer-editor.label-delimiter', 'Delimiter')}
+            labelWidth={16}
+          >
             <Combobox
               value={options.delimiter}
               options={[{ value: ',' }, { value: ';' }, { value: '|' }]}
               onChange={onDelimiterChange}
-              placeholder="Select delimiter..."
+              placeholder={t(
+                'transformers.extract-fields-transformer-editor.placeholder-select-delimiter',
+                'Select delimiter...'
+              )}
               width={24}
             />
           </InlineField>

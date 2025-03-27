@@ -19,18 +19,18 @@ export function findParentLayout(sceneObject: SceneObject): DashboardLayoutManag
 }
 
 export interface EditPaneInputAutoFocusProps {
-  noAutoFocus?: boolean;
+  autoFocus?: boolean;
 }
 
-export function useEditPaneInputAutoFocus({ noAutoFocus }: EditPaneInputAutoFocusProps = {}) {
+export function useEditPaneInputAutoFocus({ autoFocus }: EditPaneInputAutoFocusProps = {}) {
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (ref.current && !noAutoFocus) {
+    if (ref.current && autoFocus) {
       // Need the setTimeout here for some reason
       setTimeout(() => ref.current?.focus(), 200);
     }
-  }, [noAutoFocus]);
+  }, [autoFocus]);
 
   return ref;
 }

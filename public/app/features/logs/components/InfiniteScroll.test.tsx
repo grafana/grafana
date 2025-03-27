@@ -2,8 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useRef, useState } from 'react';
 
-import { CoreApp, LogRowModel, dateTimeForTimeZone } from '@grafana/data';
-import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
+import { CoreApp, LogRowModel, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { LogsSortOrder } from '@grafana/schema';
 
@@ -16,7 +15,7 @@ const absoluteRange = {
   from: 1702578600000,
   to: 1702578900000,
 };
-const defaultRange = convertRawToRange({
+const defaultRange = rangeUtil.convertRawToRange({
   from: dateTimeForTimeZone(defaultTz, absoluteRange.from),
   to: dateTimeForTimeZone(defaultTz, absoluteRange.to),
 });
@@ -62,11 +61,15 @@ function setup(
 ) {
   const { element, events } = getMockElement(startPosition);
 
-  function scrollTo(position: number) {
+  function scrollTo(position: number, timeStamp?: number) {
     element.scrollTop = position;
 
     act(() => {
-      events['scroll'](new Event('scroll'));
+      const event = new Event('scroll');
+      if (timeStamp) {
+        jest.spyOn(event, 'timeStamp', 'get').mockReturnValue(timeStamp);
+      }
+      events['scroll'](event);
     });
 
     // When scrolling top, we wait for the user to reach the top, and then for a new scrolling event
@@ -153,7 +156,8 @@ describe('InfiniteScroll', () => {
 
           expect(await screen.findByTestId('contents')).toBeInTheDocument();
 
-          scrollTo(endPosition);
+          scrollTo(endPosition - 1, 1);
+          scrollTo(endPosition, 600);
 
           expect(loadMoreMock).toHaveBeenCalled();
           expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
@@ -177,7 +181,8 @@ describe('InfiniteScroll', () => {
 
           expect(await screen.findByTestId('contents')).toBeInTheDocument();
 
-          wheel(deltaY);
+          wheel(deltaY, 1);
+          wheel(deltaY, 600);
 
           expect(loadMoreMock).toHaveBeenCalled();
           expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
@@ -192,7 +197,8 @@ describe('InfiniteScroll', () => {
         element.clientHeight = 40;
         element.scrollHeight = element.clientHeight;
 
-        scrollTo(40);
+        scrollTo(39, 1);
+        scrollTo(40, 600);
 
         expect(loadMoreMock).not.toHaveBeenCalled();
         expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
@@ -207,7 +213,8 @@ describe('InfiniteScroll', () => {
 
         expect(await screen.findByTestId('contents')).toBeInTheDocument();
 
-        scrollTo(endPosition);
+        scrollTo(endPosition - 1, 1);
+        scrollTo(endPosition, 600);
 
         expect(loadMoreMock).toHaveBeenCalledWith({
           from: rows[rows.length - 1].timeEpochMs,
@@ -224,7 +231,8 @@ describe('InfiniteScroll', () => {
 
         expect(await screen.findByTestId('contents')).toBeInTheDocument();
 
-        scrollTo(endPosition);
+        scrollTo(endPosition - 1, 1);
+        scrollTo(endPosition, 600);
 
         expect(loadMoreMock).toHaveBeenCalledWith({
           from: absoluteRange.from,
@@ -246,7 +254,8 @@ describe('InfiniteScroll', () => {
 
             expect(await screen.findByTestId('contents')).toBeInTheDocument();
 
-            scrollTo(endPosition);
+            scrollTo(endPosition - 1, 1);
+            scrollTo(endPosition, 600);
 
             expect(loadMoreMock).not.toHaveBeenCalled();
             expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
@@ -269,7 +278,8 @@ describe('InfiniteScroll', () => {
 
             expect(await screen.findByTestId('contents')).toBeInTheDocument();
 
-            scrollTo(endPosition);
+            scrollTo(endPosition - 1, 1);
+            scrollTo(endPosition, 600);
 
             expect(loadMoreMock).not.toHaveBeenCalled();
             expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();

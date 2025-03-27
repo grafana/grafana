@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { reportInteraction } from '@grafana/runtime/src';
+import { reportInteraction } from '@grafana/runtime';
 import { Trans } from 'app/core/internationalization';
 import { AddLibraryPanelContents } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 
