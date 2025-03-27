@@ -27,10 +27,6 @@
       "import": "./src/index.ts",
       "require": "./src/index.ts"
     },
-    "./types": {
-      "import": "./src/types/index.ts",
-      "require": "./src/types/index.ts"
-    },
     "./internal": {
       "import": "./src/internal/index.ts",
       "require": "./src/internal/index.ts"
@@ -38,10 +34,6 @@
     "./unstable": {
       "import": "./src/unstable.ts",
       "require": "./src/unstable.ts"
-    },
-    "./mocks": {
-      "import": "./src/mocks.ts",
-      "require": "./src/mocks.ts"
     }
   },
   "publishConfig": {

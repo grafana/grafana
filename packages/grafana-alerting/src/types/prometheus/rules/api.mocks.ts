@@ -29,7 +29,7 @@ export const AlertingRuleFactory = Factory.define<AlertingRule>(({ sequence, par
       labels,
       annotations,
     }),
-    duration: 60, // equavalent to "1m"
+    duration: 60, // equivalent to "1m"
     health: 'ok',
     evaluationTime: evaluationTime(),
     lastEvaluation: new Date().toISOString(),
