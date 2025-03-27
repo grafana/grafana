@@ -8,7 +8,6 @@ import {
   PluginDisabledBadge,
   PluginInstalledBadge,
   PluginUpdateAvailableBadge,
-  PluginAngularBadge,
   PluginDeprecatedBadge,
 } from './Badges';
 
@@ -25,7 +24,6 @@ export function PluginListItemBadges({ plugin }: PluginBadgeType) {
         <PluginEnterpriseBadge plugin={plugin} />
         {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
         {canUpdate && <PluginUpdateAvailableBadge plugin={plugin} />}
-        {plugin.angularDetected && <PluginAngularBadge />}
       </Stack>
     );
   }
@@ -37,7 +35,6 @@ export function PluginListItemBadges({ plugin }: PluginBadgeType) {
       {plugin.isDeprecated && <PluginDeprecatedBadge />}
       {plugin.isInstalled && <PluginInstalledBadge />}
       {canUpdate && <PluginUpdateAvailableBadge plugin={plugin} />}
-      {plugin.angularDetected && <PluginAngularBadge />}
     </Stack>
   );
 }
