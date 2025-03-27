@@ -51,13 +51,11 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 		return nil, err
 	}
 
-	// Grant default permissions for root folders
-	if cmd.ParentUID == "" {
-		user, _ := claims.AuthInfoFrom(ctx)
-		if user != nil && user.GetIdentityType() == claims.TypeUser {
-			meta, _ := utils.MetaAccessor(obj)
-			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
-		}
+	// Add the default permissions annotation for users and service accounts
+	user, _ := claims.AuthInfoFrom(ctx)
+	if user != nil && (user.GetIdentityType() == claims.TypeUser || user.GetIdentityType() == claims.TypeServiceAccount) {
+		meta, _ := utils.MetaAccessor(obj)
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	}
 
 	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID)

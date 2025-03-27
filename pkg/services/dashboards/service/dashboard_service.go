@@ -1336,6 +1336,10 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 }
 
 func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context, cmd *folder.CreateFolderCommand, f *folder.Folder, provisioned bool) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		return
+	}
+
 	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultFolderPermissions")
 	defer span.End()
 
