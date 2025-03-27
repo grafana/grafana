@@ -11,11 +11,8 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -80,34 +77,6 @@ func (s *folderStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	p, ok := obj.(*v0alpha1.Folder)
-	if !ok {
-		return nil, fmt.Errorf("expected folder?")
-	}
-
-	accessor, err := utils.MetaAccessor(p)
-	if err != nil {
-		return nil, err
-	}
-
-	parentUid := accessor.GetFolder()
-
-	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.ObjectMeta.Name, parentUid)
-	if err != nil {
-		return nil, err
-	}
-
 	return obj, nil
 }
 
