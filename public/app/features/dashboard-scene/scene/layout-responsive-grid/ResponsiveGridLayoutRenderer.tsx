@@ -1,5 +1,4 @@
-import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
+import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, SceneComponentProps } from '@grafana/scenes';
@@ -7,76 +6,33 @@ import { useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { ResponsiveGridLayout, ResponsiveGridLayoutState } from './ResponsiveGridLayout';
+import { AutoGridLayout, AutoGridLayoutState } from './ResponsiveGridLayout';
 
-export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<ResponsiveGridLayout>) {
+export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, isLazy } = model.useState();
   const styles = useStyles2(getStyles, model.state);
   const { layoutOrchestrator } = getDashboardSceneFor(model).state;
-
-  const { activeLayoutItemRef } = layoutOrchestrator.useState();
-  const activeLayoutItem = activeLayoutItemRef?.resolve();
-  const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
-
-  useEffect(() => {
-    if (model.containerRef.current) {
-      const computedStyles = getComputedStyle(model.containerRef.current);
-      model.columnCount = computedStyles.gridTemplateColumns.split(' ').length;
-      model.rowCount = computedStyles.gridTemplateRows.split(' ').length;
-
-      // when the contents of a scrollable area are changed, most (all?) browsers
-      // seem to automatically adjust the scroll position
-      // this hack keeps the scroll position fixed
-      if (currentLayoutIsActive && model.scrollPos) {
-        model.scrollPos.wrapper?.scrollTo(0, model.scrollPos.scrollTop);
-      }
-    }
-  });
 
   if (isHidden || !layoutOrchestrator) {
     return null;
   }
 
   return (
-    <div className={styles.container} ref={model.containerRef}>
-      <div
-        style={{
-          gridRow: model.activeGridCell.row,
-          gridColumn: model.activeGridCell.column,
-          display: currentLayoutIsActive && model.activeIndex !== undefined ? 'grid' : 'none',
-        }}
-      />
-      {children.map((item) => {
-        const Wrapper = isLazy ? LazyLoader : 'div';
-        const isDragging = activeLayoutItem === item;
-
-        return (
-          <Wrapper
-            key={item.state.key!}
-            className={cx(styles.wrapper, { [styles.dragging]: isDragging })}
-            style={
-              isDragging && layoutOrchestrator && item.cachedBoundingBox
-                ? {
-                    width: item.cachedBoundingBox.right - item.cachedBoundingBox.left,
-                    height: item.cachedBoundingBox.bottom - item.cachedBoundingBox.top,
-                    // adjust the panel position to mouse position
-                    translate: `${-layoutOrchestrator.dragOffset.left}px ${-layoutOrchestrator.dragOffset.top}px`,
-                    // adjust the panel position on the screen
-                    transform: `translate(var(--x-pos), var(--y-pos))`,
-                  }
-                : {}
-            }
-            ref={item.containerRef}
-          >
-            <item.Component model={item} />
-          </Wrapper>
-        );
-      })}
+    <div className={styles.container} ref={(ref) => model.setRef(ref)}>
+      {children.map((item) =>
+        isLazy ? (
+          <LazyLoader key={item.state.key!} className={styles.container}>
+            <item.Component key={item.state.key} model={item} />
+          </LazyLoader>
+        ) : (
+          <item.Component key={item.state.key} model={item} />
+        )
+      )}
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, state: ResponsiveGridLayoutState) => ({
+const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
   container: css({
     display: 'grid',
     position: 'relative',

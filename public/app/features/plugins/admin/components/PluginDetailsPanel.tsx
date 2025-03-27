@@ -73,7 +73,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
             {plugin.updatedAt && (
               <Stack direction="column" gap={0.5}>
                 <Text color="secondary">
-                  <Trans i18nKey="plugins.details.labels.updatedAt">Last updated:</Trans>
+                  <Trans i18nKey="plugins.details.labels.latestReleaseDate">Latest release date:</Trans>
                 </Text>{' '}
                 <Text>
                   {formatDate(new Date(plugin.updatedAt), { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -229,6 +229,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                 This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email
                 us at:{' '}
               </Trans>
+              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <TextLink href="mailto:integrations+report-plugin@grafana.com">integrations@grafana.com</TextLink>
             </Text>
             <Text>
