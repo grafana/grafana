@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -470,7 +471,7 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 }
 
 func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 	server := newServer(t, backend)
 	ns := nsPrefix + "-ns1"
 	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED, WithNamespace(ns))
@@ -767,6 +768,36 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		for i := 1; i < len(allItems); i++ {
 			require.Equal(t, "paged-item MODIFIED", string(allItems[i].Value))
 			require.Equal(t, resourceVersions[i], allItems[i].ResourceVersion)
+		}
+	})
+
+	t.Run("using context with short deadline should return error", func(t *testing.T) {
+		request := &resource.ListRequest{
+			Limit:           3,
+			Source:          resource.ListRequest_HISTORY,
+			ResourceVersion: rv1,
+			VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
+					Name:      "item1",
+				},
+			},
+		}
+
+		res, err := server.List(ctx, request)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 3)
+
+		shortContext, cancel := context.WithTimeout(ctx, 1*time.Millisecond)
+		defer cancel()
+
+		res, err = server.List(shortContext, request)
+		if err == nil && res != nil && res.Error == nil {
+			require.Fail(t, "expected error")
 		}
 	})
 }

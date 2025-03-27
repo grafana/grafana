@@ -563,7 +563,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					return err
 				}
 			}
-			return err
+			return iter.Error()
 		})
 		return rv, err
 	})
