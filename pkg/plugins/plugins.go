@@ -132,7 +132,7 @@ type JSONData struct {
 	// App Service Auth Registration
 	IAM *auth.IAM `json:"iam,omitempty"`
 
-	// Array of languages supported by the plugin
+	// List of languages supported by the plugin
 	Languages []string `json:"languages,omitempty"`
 }
 
