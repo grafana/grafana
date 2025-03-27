@@ -97,6 +97,23 @@ const LogsQueryEditor = ({
   }, [basicLogsEnabled, onChange, query, showBasicLogsToggle]);
 
   useEffect(() => {
+    const hasRawKql = !!query.azureLogAnalytics?.query;
+    const hasNoBuilder = !query.azureLogAnalytics?.builderQuery;
+    const modeUnset = query.azureLogAnalytics?.mode === undefined;
+  
+    if (hasRawKql && hasNoBuilder && modeUnset) {
+      onChange({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          mode: LogsEditorMode.Raw,
+        },
+      });
+    }
+  }, [query, onChange]);
+  
+
+  useEffect(() => {
     const getBasicLogsUsage = async (query: AzureMonitorQuery) => {
       try {
         if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && !!query.azureLogAnalytics.query) {
