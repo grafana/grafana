@@ -66,11 +66,11 @@ The following table compares SCIM with other synchronization methods to help you
 
 | Sync Method                                                                    | Users | Teams | Roles | Automation | Key Benefits                                                             | Limitations                                                  | On-Prem | Cloud |
 | ------------------------------------------------------------------------------ | ----- | ----- | ----- | ---------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ | ------- | ----- |
-| SCIM                                                                           | ✅    | ✅    | ⚠️    | Partial    | Complete user and team lifecycle management with automatic team creation | Requires SAML authentication; uses Role Sync for basic roles | ✅      | ✅    |
-| [Team Sync](../configure-team-sync/)                                           | ❌    | ✅    | ❌    | Partial    | Maps identity provider groups to Grafana teams                           | Requires manual team creation                                | ✅      | ✅    |
+| SCIM                                                                           | ✅    | ✅    | ⚠️    | Full       | Complete user and team lifecycle management with automatic team creation | Requires SAML authentication; uses Role Sync for basic roles | ✅      | ✅    |
+| [Team Sync](../configure-team-sync/)                                           | ❌    | ⚠️    | ❌    | Partial    | Syncs team memberships to existing teams                                 | Requires manual team creation; no team lifecycle management  | ✅      | ✅    |
 | [Active LDAP Sync](../configure-authentication/enhanced-ldap/)                 | ✅    | ❌    | ❌    | Full       | Background synchronization of LDAP users                                 | Limited to LDAP environments                                 | ✅      | ❌    |
-| [Role Sync](../configure-authentication/saml#configure-role-sync)              | ❌    | ❌    | ✅    | Partial    | Maps basic roles to users                                                | Limited to basic roles only                                  | ✅      | ✅    |
-| [Org Mapping](../configure-authentication/saml#configure-organization-mapping) | ❌    | ❌    | ✅    | Partial    | Maps basic roles per organization                                        | Only available for on-premises deployments                   | ✅      | ❌    |
+| [Role Sync](../configure-authentication/saml#configure-role-sync)              | ❌    | ❌    | ✅    | Full       | Full automation of basic role assignment                                 | Limited to basic roles only                                  | ✅      | ✅    |
+| [Org Mapping](../configure-authentication/saml#configure-organization-mapping) | ❌    | ❌    | ✅    | Full       | Full automation of basic role assignment per organization                | Limited to basic roles only; on-premises only                | ✅      | ❌    |
 
 ### Key advantages
 
