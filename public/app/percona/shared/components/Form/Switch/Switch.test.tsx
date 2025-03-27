@@ -12,7 +12,7 @@ describe('SwitchField::', () => {
       </FormWrapper>
     );
 
-    expect(screen.getByRole('checkbox')).toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeInTheDocument();
   });
 
   it('should call passed validators', () => {
@@ -71,6 +71,6 @@ describe('SwitchField::', () => {
       </FormWrapper>
     );
 
-    expect(screen.getByRole('checkbox')).toHaveProperty('disabled', true);
+    expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
   });
 });

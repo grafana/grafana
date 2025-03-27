@@ -72,12 +72,12 @@ describe('Render', () => {
 
   it('should update document title', async () => {
     setup({ navId: 'child1', pageNav });
-    expect(document.title).toBe('pageNav title - Child1 - Section name - Grafana');
+    expect(document.title).toBe('pageNav title - Child1 - Section name - Percona Monitoring and Management');
   });
 
   it('should not include hideFromBreadcrumb nodes in title', async () => {
     pageNav.children![0].hideFromBreadcrumbs = true;
     setup({ navId: 'child1', pageNav });
-    expect(document.title).toBe('pageNav title - Child1 - Section name - Grafana');
+    expect(document.title).toBe('pageNav title - Child1 - Section name - Percona Monitoring and Management');
   });
 });

@@ -47,7 +47,7 @@ describe('SSHKey::', () => {
 
   it('Calls apply changes', async () => {
     const spy = jest.spyOn(reducers, 'updateSettingsAction');
-    const { container } = render(
+    render(
       <Provider
         store={configureStore({
           percona: {
@@ -64,7 +64,7 @@ describe('SSHKey::', () => {
     await waitFor(() => expect(screen.getByTestId('ssh-key-button')).not.toBeDisabled());
     fireEvent.submit(screen.getByTestId('ssh-key-button'));
 
-    await waitForElementToBeRemoved(() => container.querySelector('.fa-spin'));
+    await waitForElementToBeRemoved(() => screen.getByTestId('Spinner'));
 
     expect(spy).toHaveBeenCalled();
   });

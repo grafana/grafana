@@ -1,5 +1,9 @@
 import { render } from '@testing-library/react';
+import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
+
+import { configureStore } from 'app/store/configureStore';
+import { StoreState } from 'app/types';
 
 import { UserDTO } from '../../../types';
 
@@ -18,9 +22,17 @@ const setup = (propOverrides?: object) => {
   Object.assign(props, propOverrides);
 
   render(
+    <Provider
+            store={configureStore({
+              percona: {
+                user: { isAuthorized: true },
+              },
+            } as StoreState)}
+          >
     <MemoryRouter>
       <UsersTable {...props} />
     </MemoryRouter>
+    </Provider>
   );
 };
 

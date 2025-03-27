@@ -159,7 +159,7 @@ describe('DashboardPage', () => {
     it('Should update title', async () => {
       setup({ dashboard: getTestDashboard() });
       await waitFor(() => {
-        expect(document.title).toBe('My dashboard - Dashboards - Grafana');
+        expect(document.title).toBe('My dashboard - Dashboards - Percona Monitoring and Management');
       });
     });
 

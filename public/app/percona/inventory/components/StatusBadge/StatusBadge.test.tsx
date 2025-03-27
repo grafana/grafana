@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { locationService } from '@grafana/runtime';
 
 import { ServiceAgentStatus } from '../../Inventory.types';
 
@@ -14,7 +13,7 @@ describe('StatusBadge', () => {
   });
   it('should render green if all agents are running or starting', () => {
     render(
-      <Router history={locationService.getHistory()}>
+      <MemoryRouter>
         <StatusBadge
           agents={[
             { agentId: 'agent_1', status: ServiceAgentStatus.RUNNING },
@@ -24,14 +23,14 @@ describe('StatusBadge', () => {
           type="services"
           strippedId=""
         />
-      </Router>
+      </MemoryRouter>
     );
     expect(screen.queryByTestId('status-badge-green')).toBeInTheDocument();
     expect(screen.queryByText('3/3 running')).toBeInTheDocument();
   });
   it('should render orange if some agent is not running or starting', () => {
     render(
-      <Router history={locationService.getHistory()}>
+      <MemoryRouter>
         <StatusBadge
           agents={[
             { agentId: 'agent_1', status: ServiceAgentStatus.RUNNING },
@@ -41,14 +40,14 @@ describe('StatusBadge', () => {
           type="services"
           strippedId=""
         />
-      </Router>
+      </MemoryRouter>
     );
     expect(screen.queryByTestId('status-badge-orange')).toBeInTheDocument();
     expect(screen.queryByText('2/3 running')).toBeInTheDocument();
   });
   it('should render red if all agents are not running or starting', () => {
     render(
-      <Router history={locationService.getHistory()}>
+      <MemoryRouter>
         <StatusBadge
           agents={[
             { agentId: 'agent_1', status: ServiceAgentStatus.STOPPING },
@@ -58,7 +57,7 @@ describe('StatusBadge', () => {
           type="services"
           strippedId=""
         />
-      </Router>
+      </MemoryRouter>
     );
     expect(screen.queryByTestId('status-badge-red')).toBeInTheDocument();
     expect(screen.queryByText('3/3 not running')).toBeInTheDocument();

@@ -39,7 +39,7 @@ describe('PermissionLoader', () => {
   });
 
   it('should show loading if feature disabled and while getting settings', async () => {
-    const { container } = render(
+    render(
       <Provider store={configureStore({ percona: { settings: { loading: true } } } as StoreState)}>
         <PermissionLoader
           featureSelector={() => false}
@@ -48,7 +48,7 @@ describe('PermissionLoader', () => {
         />
       </Provider>
     );
-    expect(container.querySelector('.fa-spin')).toBeInTheDocument();
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
   });
 
   it('should render error if feature disabled and user is authorized', async () => {

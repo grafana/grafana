@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { OrgRole, StoreState } from 'app/types';
@@ -41,9 +41,9 @@ describe('AlertRuleTemplate', () => {
         } as StoreState)}
       >
         {wrapWithGrafanaContextMock(
-          <Router history={locationService.getHistory()}>
+          <MemoryRouter>
             <AlertRuleTemplate />
-          </Router>
+          </MemoryRouter>
         )}
       </Provider>
     );
@@ -67,9 +67,9 @@ describe('AlertRuleTemplate', () => {
         } as StoreState)}
       >
         {wrapWithGrafanaContextMock(
-          <Router history={locationService.getHistory()}>
+          <MemoryRouter>
             <AlertRuleTemplate />
-          </Router>
+          </MemoryRouter>
         )}
       </Provider>
     );
@@ -96,9 +96,9 @@ describe('AlertRuleTemplate', () => {
         } as StoreState)}
       >
         {wrapWithGrafanaContextMock(
-          <Router history={locationService.getHistory()}>
+          <MemoryRouter>
             <AlertRuleTemplate />
-          </Router>
+          </MemoryRouter>
         )}
       </Provider>
     );
@@ -122,9 +122,9 @@ describe('AlertRuleTemplate', () => {
         } as StoreState)}
       >
         {wrapWithGrafanaContextMock(
-          <Router history={locationService.getHistory()}>
+          <MemoryRouter>
             <AlertRuleTemplate />
-          </Router>
+          </MemoryRouter>
         )}
       </Provider>
     );
@@ -146,9 +146,9 @@ describe('AlertRuleTemplate', () => {
         } as StoreState)}
       >
         {wrapWithGrafanaContextMock(
-          <Router history={locationService.getHistory()}>
+          <MemoryRouter>
             <AlertRuleTemplate />
-          </Router>
+          </MemoryRouter>
         )}
       </Provider>
     );
