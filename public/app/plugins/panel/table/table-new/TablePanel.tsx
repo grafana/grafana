@@ -10,6 +10,7 @@ import {
   PanelProps,
   SelectableValue,
   Field,
+  cacheFieldDisplayNames,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
@@ -25,6 +26,8 @@ interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables } = props;
+
+  cacheFieldDisplayNames(data.series);
 
   const theme = useTheme2();
   const panelContext = usePanelContext();

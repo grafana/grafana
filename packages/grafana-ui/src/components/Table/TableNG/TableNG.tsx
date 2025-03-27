@@ -1,7 +1,14 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
-import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle } from 'react-data-grid';
+import DataGrid, {
+  RenderCellProps,
+  RenderRowProps,
+  Row,
+  SortColumn,
+  DataGridHandle,
+  SortDirection,
+} from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {
@@ -65,13 +72,28 @@ export function TableNG(props: TableNGProps) {
     fieldConfig,
     footerOptions,
     height,
+    initialSortBy,
     noHeader,
     onColumnResize,
+    onSortByChange,
     width,
     data,
     enableSharedCrosshair,
     showTypeIcons,
   } = props;
+
+  const initialSortColumns = useMemo<SortColumn[]>(() => {
+    const initialSort = initialSortBy?.map(({ displayName, desc }) => {
+      const matchingField = data.fields.find(({ state }) => state?.displayName === displayName);
+      const columnKey = matchingField?.name || displayName;
+
+      return {
+        columnKey,
+        direction: (desc ? 'DESC' : 'ASC') as SortDirection,
+      };
+    });
+    return initialSort ?? [];
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ------------------------------- Local state ------------------------------ */
   const [revId, setRevId] = useState(0);
@@ -89,7 +111,7 @@ export function TableNG(props: TableNGProps) {
   // This state will trigger re-render for recalculating row heights
   const [, setResizeTrigger] = useState(0);
   const [, setReadyForRowHeightCalc] = useState(false);
-  const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
+  const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>(initialSortColumns);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
   const scrollPositionRef = useRef<ScrollPosition>({ x: 0, y: 0 });
@@ -100,7 +122,7 @@ export function TableNG(props: TableNGProps) {
   const crossFilterRows = useRef<Record<string, TableRow[]>>({});
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
   // TODO: This ref persists sortColumns between renders. setSortColumns is still used to trigger re-render
-  const sortColumnsRef = useRef(sortColumns);
+  const sortColumnsRef = useRef<SortColumn[]>(initialSortColumns);
   const prevProps = useRef(props);
   const calcsRef = useRef<string[]>([]);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
@@ -364,6 +386,7 @@ export function TableNG(props: TableNGProps) {
           filter,
           headerCellRefs,
           isCountRowsSet,
+          onSortByChange,
           osContext,
           rows,
           // INFO: sortedRows is for correct row indexing for cell background coloring
@@ -437,6 +460,13 @@ export function TableNG(props: TableNGProps) {
       y: target.scrollTop,
     };
   };
+
+  // Reset sortColumns when initialSortBy changes
+  useEffect(() => {
+    if (initialSortColumns.length > 0) {
+      setSortColumns(initialSortColumns);
+    }
+  }, [initialSortColumns]);
 
   // Restore scroll position after re-renders
   useEffect(() => {
@@ -566,6 +596,7 @@ export function mapFrameToDataGrid({
     filter,
     headerCellRefs,
     isCountRowsSet,
+    onSortByChange,
     osContext,
     rows,
     sortedRows,
@@ -752,9 +783,18 @@ export function mapFrameToDataGrid({
           column={column}
           rows={rows}
           field={field}
-          onSort={(columnKey, direction, isMultiSort) =>
-            handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumnsRef)
-          }
+          onSort={(columnKey, direction, isMultiSort) => {
+            handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumnsRef);
+
+            // Update panel context with the new sort order
+            if (onSortByChange) {
+              const sortByFields = sortColumnsRef.current.map(({ columnKey, direction }) => ({
+                displayName: columnKey,
+                desc: direction === 'DESC',
+              }));
+              onSortByChange(sortByFields);
+            }
+          }}
           direction={sortDirection}
           justifyContent={justifyColumnContent}
           filter={filter}

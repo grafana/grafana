@@ -22,6 +22,7 @@ import {
   TableCellDisplayMode,
   TableCellHeight,
   TableCellOptions,
+  TableSortByFieldState,
 } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../..';
@@ -477,6 +478,7 @@ export interface MapFrameToGridOptions extends TableNGProps {
   filter: FilterType;
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
   isCountRowsSet: boolean;
+  onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
   osContext: OffscreenCanvasRenderingContext2D | null;
   rows: TableRow[];
   sortedRows: TableRow[];
