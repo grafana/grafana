@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -254,15 +253,9 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		return fmt.Errorf("this should be empty")
 	}
 
-	// Do the deepest paths first (important for delete)
-	sort.Slice(changes, func(i, j int) bool {
-		return safepath.Depth(changes[i].Path) > safepath.Depth(changes[j].Path)
-	})
-
 	r.progress.SetTotal(ctx, len(changes))
 	r.progress.SetMessage(ctx, "replicating changes")
 
-	// Create folder structure first
 	for _, change := range changes {
 		if err := r.progress.TooManyErrors(); err != nil {
 			return err
@@ -300,6 +293,28 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			continue
 		}
 
+		// If folder ensure it exists
+		if safepath.IsDir(change.Path) {
+			result := jobs.JobResourceResult{
+				Path:   change.Path,
+				Action: change.Action,
+			}
+
+			folder, err := r.folders.EnsureFolderPathExist(ctx, change.Path)
+			if err != nil {
+				result.Error = fmt.Errorf("create folder: %w", err)
+				r.progress.Record(ctx, result)
+				continue
+			}
+
+			result.Name = folder
+			result.Resource = folders.RESOURCE
+			result.Group = folders.GROUP
+			r.progress.Record(ctx, result)
+
+			continue
+		}
+
 		// Write the resource file
 		r.progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, "", change.Action))
 	}
@@ -330,6 +345,29 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		}
 
 		if err := resources.IsPathSupported(change.Path); err != nil {
+			// Maintain the safe segment for empty folders
+			safeSegment := safepath.SafeSegment(change.Path)
+			if !safepath.IsDir(safeSegment) {
+				safeSegment = safepath.Dir(safeSegment)
+			}
+
+			if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
+				folder, err := r.folders.EnsureFolderPathExist(ctx, safeSegment)
+				if err != nil {
+					return fmt.Errorf("unable to create empty file folder: %w", err)
+				}
+
+				r.progress.Record(ctx, jobs.JobResourceResult{
+					Path:     safeSegment,
+					Action:   repository.FileActionCreated,
+					Resource: folders.RESOURCE,
+					Group:    folders.GROUP,
+					Name:     folder,
+				})
+
+				continue
+			}
+
 			r.progress.Record(ctx, jobs.JobResourceResult{
 				Path:   change.Path,
 				Action: repository.FileActionIgnored,

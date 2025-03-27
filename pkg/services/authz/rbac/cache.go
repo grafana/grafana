@@ -52,18 +52,20 @@ func newCacheWrap[T any](cache cache.Cache, logger log.Logger, ttl time.Duration
 }
 
 func (c *cacheWrap[T]) Get(ctx context.Context, key string) (T, bool) {
+	logger := c.logger.FromContext(ctx)
+
 	var value T
 	data, err := c.cache.Get(ctx, key)
 	if err != nil {
 		if !errors.Is(err, cache.ErrNotFound) {
-			c.logger.Warn("failed to get from cache", "key", key, "error", err)
+			logger.Warn("failed to get from cache", "key", key, "error", err)
 		}
 		return value, false
 	}
 
 	err = json.Unmarshal(data, &value)
 	if err != nil {
-		c.logger.Warn("failed to unmarshal from cache", "key", key, "error", err)
+		logger.Warn("failed to unmarshal from cache", "key", key, "error", err)
 		return value, false
 	}
 
@@ -71,14 +73,16 @@ func (c *cacheWrap[T]) Get(ctx context.Context, key string) (T, bool) {
 }
 
 func (c *cacheWrap[T]) Set(ctx context.Context, key string, value T) {
+	logger := c.logger.FromContext(ctx)
+
 	data, err := json.Marshal(value)
 	if err != nil {
-		c.logger.Warn("failed to marshal to cache", "key", key, "error", err)
+		logger.Warn("failed to marshal to cache", "key", key, "error", err)
 		return
 	}
 
 	err = c.cache.Set(ctx, key, data, c.ttl)
 	if err != nil {
-		c.logger.Warn("failed to set to cache", "key", key, "error", err)
+		logger.Warn("failed to set to cache", "key", key, "error", err)
 	}
 }
