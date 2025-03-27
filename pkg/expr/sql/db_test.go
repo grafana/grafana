@@ -207,8 +207,7 @@ func TestErrorsFromGoMySQLServerAreFlagged(t *testing.T) {
 }
 
 func TestFrameToSQLAndBack_JSONRoundtrip(t *testing.T) {
-	// Input frame with a nullable JSON field
-	frame := &data.Frame{
+	expectedFrame := &data.Frame{
 		RefID: "json_test",
 		Name:  "json_test",
 		Fields: []*data.Field{
@@ -220,24 +219,64 @@ func TestFrameToSQLAndBack_JSONRoundtrip(t *testing.T) {
 		},
 	}
 
-	// Create a SQL DB from the input frame
-	provider := NewFramesDBProvider(data.Frames{frame})
-	db, _ := provider.Database(nil, "frames")
-	table, _, _ := db.GetTableInsensitive(nil, frame.RefID)
+	sqlDB := &DB{}
 
-	// Use go-mysql-server APIs to query the table back into a frame
-	schema := table.Schema()
-	iter, _ := table.PartitionRows(nil, nil)
-	resultFrame, err := convertToDataFrame(nil, iter, schema)
+	query := `SELECT * FROM json_test`
+
+	resultFrame, err := sqlDB.QueryFrames(context.Background(), "json_test", query, data.Frames{expectedFrame})
 	require.NoError(t, err)
 
-	// Ensure names and metadata match
-	resultFrame.Name = frame.Name
-	resultFrame.RefID = frame.RefID
+	// Ensure consistent names for comparison
+	resultFrame.Name = expectedFrame.Name
+	resultFrame.RefID = expectedFrame.RefID
 
-	// Compare result to original
-	if diff := cmp.Diff(frame, resultFrame, data.FrameTestCompareOptions()...); diff != "" {
+	if diff := cmp.Diff(expectedFrame, resultFrame, data.FrameTestCompareOptions()...); diff != "" {
 		require.FailNowf(t, "Frame mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestQueryFrames_JSONFilter(t *testing.T) {
+	input := &data.Frame{
+		RefID: "A",
+		Name:  "A",
+		Fields: []*data.Field{
+			data.NewField("title", nil, []*string{
+				p("Bug report"),
+				p("Feature request"),
+			}),
+			data.NewField("labels", nil, []*json.RawMessage{
+				p(json.RawMessage(`["type/bug", "priority/high"]`)),
+				p(json.RawMessage(`["type/feature", "priority/low"]`)),
+			}),
+		},
+	}
+
+	expected := &data.Frame{
+		RefID: "B",
+		Name:  "B",
+		Fields: []*data.Field{
+			data.NewField("title", nil, []*string{
+				p("Bug report"),
+			}),
+			data.NewField("labels", nil, []*json.RawMessage{
+				p(json.RawMessage(`["type/bug", "priority/high"]`)),
+			}),
+		},
+	}
+
+	sqlDB := &DB{}
+
+	query := `SELECT title, labels FROM A WHERE json_contains(labels, '"type/bug"')`
+
+	result, err := sqlDB.QueryFrames(context.Background(), "B", query, data.Frames{input})
+	require.NoError(t, err)
+
+	// Ensure frame names match for comparison
+	result.Name = expected.Name
+	result.RefID = expected.RefID
+
+	if diff := cmp.Diff(expected, result, data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "Result mismatch (-want +got):\n%s", diff)
 	}
 }
 
