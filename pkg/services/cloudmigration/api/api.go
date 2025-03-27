@@ -496,8 +496,9 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 		SessionUID: uid,
 		Limit:      getQueryPageParams(c.QueryInt("limit"), 100),
 		Page:       getQueryPageParams(c.QueryInt("page"), 1),
-		Sort:       c.Query("sort"),
-		OrgID:      c.SignedInUser.OrgID,
+		// TODO: change to pattern used by GetSnapshot results
+		Sort:  c.Query("sort"),
+		OrgID: c.SignedInUser.OrgID,
 	}
 
 	snapshotList, err := cma.cloudMigrationService.GetSnapshotList(ctx, q)
