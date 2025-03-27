@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, Select, useStyles2 } from '@grafana/ui';
+import { AsyncSelect, Button, Combobox, Select, useStyles2 } from '@grafana/ui';
 
 import {
   AzureQueryType,
@@ -45,7 +45,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
 
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const [filters, setFilters] = useState<BuilderQueryEditorWhereExpression[]>(builderQuery?.where?.expressions || []);
-  const [filterOptions, setFilterOptions] = useState<Record<number, Array<SelectableValue<string>>>>({});
   const hasLoadedFilters = useRef(false);
 
   const variableOptions = Array.isArray(templateVariableOptions) ? templateVariableOptions : [templateVariableOptions];
@@ -96,15 +95,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     if (field === 'property') {
       filter.property.name = value;
       filter.operator.value = '';
-
-      const options: Array<SelectableValue<string>> = await getFilterValues(filter);
-
-      setFilterOptions(
-        (prev): Record<number, Array<SelectableValue<string>>> => ({
-          ...prev,
-          [index]: options,
-        })
-      );
     } else if (field === 'operator') {
       filter.operator.name = value;
     } else if (field === 'value') {
@@ -119,11 +109,10 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
       filter.operator?.value !== undefined &&
       filter.operator?.value !== '';
 
+    setFilters(updated);
     if (isValid) {
       updateFilters(updated);
     }
-
-    setFilters(updated);
   };
 
   const onDeleteFilter = (index: number) => {
@@ -155,11 +144,9 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         range: timeRange || getDefaultTimeRange(),
         targets: [
           {
-            ...query,
             refId: 'A',
             queryType: AzureQueryType.LogAnalytics,
             azureLogAnalytics: {
-              ...query.azureLogAnalytics,
               query: kustoQuery,
               resources: query.azureLogAnalytics?.resources ?? [],
             },
@@ -175,7 +162,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         value: String(v),
       }));
 
-      setFilterOptions(selectable);
       return selectable;
     }
     return [];
@@ -209,14 +195,14 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                     options={toOperatorOptions('string')}
                     onChange={(e) => e.value && onChangeFilter(index, 'operator', e.value)}
                   />
-                  <Select
+                  <Combobox
                     aria-label="column value"
                     value={
                       filter.operator.value
                         ? { label: String(filter.operator.value), value: String(filter.operator.value) }
                         : null
                     }
-                    options={filterOptions[index] || []}
+                    options={() => getFilterValues(filter)}
                     onChange={(e) => e.value && onChangeFilter(index, 'value', e.value)}
                     width={inputFieldSize}
                     disabled={!filter.property?.name}
