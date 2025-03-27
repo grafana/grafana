@@ -45,6 +45,7 @@ const LogsQueryEditor = ({
   onChange,
   setError,
   hideFormatAs,
+  timeRange,
   data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
@@ -208,6 +209,8 @@ const LogsQueryEditor = ({
             basicLogsEnabled={basicLogsEnabled}
             onQueryChange={onChange}
             templateVariableOptions={templateVariableOptions}
+            datasource={datasource}
+            timeRange={timeRange}
           />
         ) : (
           <QueryField

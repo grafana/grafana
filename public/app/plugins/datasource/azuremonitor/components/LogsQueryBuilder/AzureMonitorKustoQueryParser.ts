@@ -74,7 +74,7 @@ const appendSummarize = (builderQuery: BuilderQueryExpression, phrases: string[]
     return;
   }
 
-  const groupBy = builderQuery.groupBy?.expressions?.map((exp) => exp.property.name) || [];
+  const groupBy = builderQuery.groupBy?.expressions?.map((exp) => exp.property?.name) || [];
   const summarizeClause = `summarize ${summarizeParts.join(', ')}`;
   phrases.push(groupBy.length ? `${summarizeClause} by ${groupBy.join(', ')}` : summarizeClause);
 };

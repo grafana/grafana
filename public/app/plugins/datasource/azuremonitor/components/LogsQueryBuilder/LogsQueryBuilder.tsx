@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, TimeRange } from '@grafana/data';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
 
@@ -14,6 +14,7 @@ import {
   BuilderQueryEditorPropertyExpression,
   BuilderQueryExpression,
 } from '../../dataquery.gen';
+import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import {
   AzureLogAnalyticsMetadataTable,
@@ -39,10 +40,12 @@ interface LogsQueryBuilderProps {
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   schema: EngineSchema;
   templateVariableOptions: SelectableValue<string>;
+  datasource: Datasource;
+  timeRange?: TimeRange;
 }
 
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
-  const { query, onQueryChange, schema } = props;
+  const { query, onQueryChange, schema, datasource, timeRange } = props;
   const [isKQLPreviewHidden, setIsKQLPreviewHidden] = useState<boolean>(true);
 
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
@@ -127,7 +130,13 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           <Alert severity="warning" title="Resource loaded successfully but without any tables" />
         )}
         <TableSection {...props} tables={tables} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
-        <FilterSection {...props} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
+        <FilterSection
+          {...props}
+          allColumns={allColumns}
+          buildAndUpdateQuery={buildAndUpdateQuery}
+          datasource={datasource}
+          timeRange={timeRange}
+        />
         <AggregateSection {...props} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
         <GroupBySection {...props} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
         <OrderBySection {...props} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />

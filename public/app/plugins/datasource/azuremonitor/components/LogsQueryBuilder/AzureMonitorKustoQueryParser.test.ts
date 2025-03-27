@@ -107,10 +107,7 @@ describe('AzureMonitorKustoQueryParser', () => {
         expressions: [
           {
             reduce: { name: 'percentile' },
-            parameters: [
-              { value: '95' },
-              { value: 'Duration' },
-            ],
+            parameters: [{ value: '95' }, { value: 'Duration' }],
           },
         ],
       },

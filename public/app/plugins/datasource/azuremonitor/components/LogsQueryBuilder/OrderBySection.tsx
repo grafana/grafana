@@ -118,36 +118,41 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
           tooltip={`Sort results based on one or more columns in ascending or descending order.`}
         >
           <>
-            {orderBy.length > 0 && (
-              <div>
-                {orderBy.map((entry, index) => (
-                  <InputGroup key={index}>
-                    <Select
-                      aria-label="Order by column"
-                      width={inputFieldSize}
-                      value={entry.property?.name ? { label: entry.property.name, value: entry.property.name } : null}
-                      options={columnOptions}
-                      onChange={(e) => e.value && handleOrderByChange(index, 'column', e.value)}
-                    />
-                    <Label style={{ margin: '9px 9px 0 9px' }}>BY</Label>
-                    <Select
-                      aria-label="Order Direction"
-                      width={inputFieldSize}
-                      value={orderOptions.find((o) => o.value === entry.order) || null}
-                      options={orderOptions}
-                      onChange={(e) => e.value && handleOrderByChange(index, 'order', e.value)}
-                    />
-                    <Button variant="secondary" icon="times" onClick={() => onDeleteOrderBy(index)} />
-                    {index < orderBy.length - 1 ? <Label>AND</Label> : <></>}
+            {orderBy.length > 0 ? (
+              orderBy.map((entry, index) => (
+                <InputGroup key={index}>
+                  <Select
+                    aria-label="Order by column"
+                    width={inputFieldSize}
+                    value={entry.property?.name ? { label: entry.property.name, value: entry.property.name } : null}
+                    options={columnOptions}
+                    onChange={(e) => e.value && handleOrderByChange(index, 'column', e.value)}
+                  />
+                  <Label style={{ margin: '9px 9px 0 9px' }}>BY</Label>
+                  <Select
+                    aria-label="Order Direction"
+                    width={inputFieldSize}
+                    value={orderOptions.find((o) => o.value === entry.order) || null}
+                    options={orderOptions}
+                    onChange={(e) => e.value && handleOrderByChange(index, 'order', e.value)}
+                  />
+                  <Button variant="secondary" icon="times" onClick={() => onDeleteOrderBy(index)} />
+                  {index === orderBy.length - 1 ? (
                     <Button
                       variant="secondary"
                       onClick={() => handleOrderByChange(-1, 'column', '')}
                       icon="plus"
                       style={{ marginLeft: '15px' }}
                     />
-                  </InputGroup>
-                ))}
-              </div>
+                  ) : (
+                    <></>
+                  )}
+                </InputGroup>
+              ))
+            ) : (
+              <InputGroup>
+                <Button variant="secondary" onClick={() => handleOrderByChange(-1, 'column', '')} icon="plus" />
+              </InputGroup>
             )}
           </>
         </EditorField>

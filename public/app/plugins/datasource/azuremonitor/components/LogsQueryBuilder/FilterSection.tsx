@@ -1,15 +1,18 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
+import { lastValueFrom } from 'rxjs';
 
-import { SelectableValue } from '@grafana/data';
+import { CoreApp, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, Input, Label, Select, useStyles2 } from '@grafana/ui';
+import { Button, Select, useStyles2 } from '@grafana/ui';
 
 import {
+  AzureQueryType,
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorWhereExpression,
 } from '../../dataquery.gen';
+import Datasource from '../../datasource';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
 import { BuildAndUpdateOptions, inputFieldSize, toOperatorOptions, valueToDefinition } from './utils';
@@ -19,6 +22,8 @@ interface FilterSectionProps {
   allColumns: AzureLogAnalyticsMetadataColumn[];
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
   templateVariableOptions: SelectableValue<string>;
+  datasource: Datasource;
+  timeRange?: TimeRange;
 }
 
 export const FilterSection: React.FC<FilterSectionProps> = ({
@@ -26,12 +31,15 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   query,
   allColumns,
   templateVariableOptions,
+  datasource,
+  timeRange,
 }) => {
   const styles = useStyles2(getStyles);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
 
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const [filters, setFilters] = useState<BuilderQueryEditorWhereExpression[]>(builderQuery?.where?.expressions || []);
+  const [filterOptions, setFilterOptions] = useState<Record<number, Array<SelectableValue<string>>>>({});
   const hasLoadedFilters = useRef(false);
 
   const variableOptions = Array.isArray(templateVariableOptions) ? templateVariableOptions : [templateVariableOptions];
@@ -65,7 +73,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     });
   };
 
-  const onChangeFilter = (index: number, field: 'property' | 'operator' | 'value', value: string) => {
+  const onChangeFilter = async (index: number, field: 'property' | 'operator' | 'value', value: string) => {
     const updated = [...filters];
 
     if (index === -1) {
@@ -81,6 +89,16 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
 
     if (field === 'property') {
       filter.property.name = value;
+      filter.operator.value = '';
+
+      const options: Array<SelectableValue<string>> = await getFilterValues(filter);
+
+      setFilterOptions(
+        (prev): Record<number, Array<SelectableValue<string>>> => ({
+          ...prev,
+          [index]: options,
+        })
+      );
     } else if (field === 'operator') {
       filter.operator.name = value;
     } else if (field === 'value') {
@@ -88,12 +106,72 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     }
 
     updated[index] = filter;
-    updateFilters(updated);
+
+    const isValid =
+      filter.property?.name?.trim() &&
+      filter.operator?.name?.trim() &&
+      filter.operator?.value !== undefined &&
+      filter.operator?.value !== '';
+
+    if (isValid) {
+      updateFilters(updated);
+    }
+
+    setFilters(updated);
   };
 
   const onDeleteFilter = (index: number) => {
     const updated = filters.filter((_, i) => i !== index);
     updateFilters(updated);
+  };
+
+  const getFilterValues = async (filter: BuilderQueryEditorWhereExpression) => {
+    const from = timeRange?.from?.toISOString();
+    const to = timeRange?.to?.toISOString();
+
+    const kustoQuery = `
+    ${query.azureLogAnalytics?.builderQuery?.from?.property.name}
+    | where TimeGenerated >= datetime(${from}) and TimeGenerated <= datetime(${to})
+    | distinct ${filter.property.name}
+    | limit 1000
+  `;
+
+    const results: any = await lastValueFrom(
+      datasource.azureLogAnalyticsDatasource.query({
+        requestId: 'azure-logs-builder-filter-values',
+        interval: '',
+        intervalMs: 0,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Unknown,
+        startTime: 0,
+        range: timeRange || getDefaultTimeRange(),
+        targets: [
+          {
+            ...query,
+            refId: 'A',
+            queryType: AzureQueryType.LogAnalytics,
+            azureLogAnalytics: {
+              ...query.azureLogAnalytics,
+              query: kustoQuery,
+              resources: query.azureLogAnalytics?.resources ?? [],
+            },
+          },
+        ],
+      })
+    );
+    if (results.state === 'Done') {
+      const values = results.data?.[0]?.fields?.[0]?.values ?? [];
+
+      const selectable = values.toArray().map((v: any) => ({
+        label: String(v),
+        value: String(v),
+      }));
+
+      setFilterOptions(selectable);
+      return selectable;
+    }
+    return [];
   };
 
   return (
@@ -102,53 +180,58 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         <EditorField
           label="Filters"
           optional={true}
-          tooltip={`Narrow results by applying conditions to specific columns. Filters help focus on relevant data by using
-              operators such as equals, not equals, greater than, less than, or contains to define criteria that rows
-              must match to be included in the results.`}
+          tooltip={`Narrow results by applying conditions to specific columns...`}
         >
-          <>
-            {filters.length > 0 && (
-              <div className={styles.filters}>
-                {filters.map((filter, index) => (
-                  <InputGroup key={index}>
-                    <Select
-                      aria-label="column"
-                      width={inputFieldSize}
-                      value={valueToDefinition(filter.property.name)}
-                      options={selectableOptions}
-                      onChange={(e) => e.value && onChangeFilter(index, 'property', e.value)}
-                    />
-                    <Select
-                      aria-label="operator"
-                      width={12}
-                      value={{ label: filter.operator.name, value: filter.operator.name }}
-                      options={toOperatorOptions('string')}
-                      onChange={(e) => e.value && onChangeFilter(index, 'operator', e.value)}
-                    />
-                    <Input
-                      aria-label="column value"
-                      value={String(filter.operator.value ?? '')}
-                      onChange={(e) => onChangeFilter(index, 'value', e.currentTarget.value)}
-                      onPaste={(e) => {
-                        e.preventDefault();
-                        const pasted = e.clipboardData.getData('Text').trim();
-                        onChangeFilter(index, 'value', pasted);
-                      }}
-                      width={inputFieldSize}
-                    />
-                    <Button variant="secondary" icon="times" onClick={() => onDeleteFilter(index)} />
-                    {index < filters.length - 1 ? <Label>AND</Label> : <></>}
+          <div className={styles.filters}>
+            {filters.length > 0 ? (
+              filters.map((filter, index) => (
+                <InputGroup key={index}>
+                  <Select
+                    aria-label="column"
+                    width={inputFieldSize}
+                    value={valueToDefinition(filter.property.name)}
+                    options={selectableOptions}
+                    onChange={(e) => e.value && onChangeFilter(index, 'property', e.value)}
+                  />
+                  <Select
+                    aria-label="operator"
+                    width={12}
+                    value={{ label: filter.operator.name, value: filter.operator.name }}
+                    options={toOperatorOptions('string')}
+                    onChange={(e) => e.value && onChangeFilter(index, 'operator', e.value)}
+                  />
+                  <Select
+                    aria-label="column value"
+                    value={
+                      filter.operator.value
+                        ? { label: String(filter.operator.value), value: String(filter.operator.value) }
+                        : null
+                    }
+                    options={filterOptions[index] || []}
+                    onChange={(e) => e.value && onChangeFilter(index, 'value', e.value)}
+                    width={inputFieldSize}
+                    disabled={!filter.property?.name}
+                  />
+
+                  <Button variant="secondary" icon="times" onClick={() => onDeleteFilter(index)} />
+                  {index === filters.length - 1 ? (
                     <Button
                       variant="secondary"
                       style={{ marginLeft: '15px' }}
                       onClick={() => onChangeFilter(-1, 'property', '')}
                       icon="plus"
                     />
-                  </InputGroup>
-                ))}
-              </div>
+                  ) : (
+                    <></>
+                  )}
+                </InputGroup>
+              ))
+            ) : (
+              <InputGroup>
+                <Button variant="secondary" onClick={() => onChangeFilter(-1, 'property', '')} icon="plus" />
+              </InputGroup>
             )}
-          </>
+          </div>
         </EditorField>
       </EditorFieldGroup>
     </EditorRow>
