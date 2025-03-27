@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { Button, DeleteButton, Icon, Stack, Tooltip, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { ApiKey } from '../../types';
@@ -22,10 +23,18 @@ export const ApiKeysTable = ({ apiKeys, timeZone, onDelete, onMigrate }: Props) 
     <table className="filter-table">
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Role</th>
-          <th>Expires</th>
-          <th>Last used at</th>
+          <th>
+            <Trans i18nKey="api-keys.api-keys-table.name">Name</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="api-keys.api-keys-table.role">Role</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="api-keys.api-keys-table.expires">Expires</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="api-keys.api-keys-table.last-used-at">Last used at</Trans>
+          </th>
           <th style={{ width: '34px' }} />
         </tr>
       </thead>
@@ -51,10 +60,12 @@ export const ApiKeysTable = ({ apiKeys, timeZone, onDelete, onMigrate }: Props) 
                 <td>
                   <Stack justifyContent="flex-end">
                     <Button size="sm" onClick={() => onMigrate(key)}>
-                      Migrate to service account
+                      <Trans i18nKey="api-keys.api-keys-table.migrate-to-service-account">
+                        Migrate to service account
+                      </Trans>
                     </Button>
                     <DeleteButton
-                      aria-label="Delete API key"
+                      aria-label={t('api-keys.api-keys-table.aria-label-delete-api-key', 'Delete API key')}
                       size="sm"
                       onConfirm={() => onDelete(key)}
                       disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.ActionAPIKeysDelete, key)}

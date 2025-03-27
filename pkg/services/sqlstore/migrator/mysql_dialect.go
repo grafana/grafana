@@ -171,7 +171,7 @@ func (db *MySQLDialect) CleanDB(engine *xorm.Engine) error {
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
 func (db *MySQLDialect) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.DBMetas()
+	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-import { DataSourceRef, LoadingState } from '@grafana/data/src';
+import { DataSourceRef, LoadingState } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime/src';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 

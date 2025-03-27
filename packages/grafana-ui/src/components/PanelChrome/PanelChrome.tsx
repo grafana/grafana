@@ -143,6 +143,7 @@ export function PanelChrome({
   onFocus,
   onMouseMove,
   onMouseEnter,
+  onDragStart,
   showMenuAlways = false,
 }: PanelChromeProps) {
   const theme = useTheme2();
@@ -201,10 +202,12 @@ export function PanelChrome({
   const onPointerUp = (evt: React.PointerEvent) => {
     evt.stopPropagation();
 
-    const distance = Math.sqrt(
-      Math.pow(pointerDownPos.current.screenX - evt.screenX, 2) +
-        Math.pow(pointerDownPos.current.screenY - evt.screenY, 2)
+    const distance = Math.hypot(
+      pointerDownPos.current.screenX - evt.screenX,
+      pointerDownPos.current.screenY - evt.screenY
     );
+
+    pointerDownPos.current = { screenX: 0, screenY: 0 };
 
     // If we are dragging some distance or clicking on elements that should cancel dragging (panel menu, etc)
     if (
@@ -219,7 +222,10 @@ export function PanelChrome({
 
   const onPointerDown = (evt: React.PointerEvent) => {
     evt.stopPropagation();
+
     pointerDownPos.current = { screenX: evt.screenX, screenY: evt.screenY };
+
+    onDragStart?.(evt);
   };
 
   const headerContent = (

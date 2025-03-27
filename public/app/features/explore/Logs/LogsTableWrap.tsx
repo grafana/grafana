@@ -15,6 +15,7 @@ import {
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
 import { InlineField, Select, Themeable2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
@@ -492,10 +493,13 @@ export function LogsTableWrap(props: Props) {
         {logsFrames.length > 1 && (
           <div>
             <InlineField
-              label="Select query"
+              label={t('explore.logs-table-wrap.label-select-query', 'Select query')}
               htmlFor="explore_logs_table_frame_selector"
               labelWidth={22}
-              tooltip="Select a query to visualize in the table."
+              tooltip={t(
+                'explore.logs-table-wrap.tooltip-select-query-visualize-table',
+                'Select a query to visualize in the table'
+              )}
             >
               <Select
                 inputId={'explore_logs_table_frame_selector'}

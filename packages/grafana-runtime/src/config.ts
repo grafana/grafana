@@ -68,7 +68,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   namespace = 'default';
   windowTitlePrefix = '';
   buildInfo: BuildInfo;
-  newPanelTitle = '';
   bootData: BootData;
   externalUserMngLinkUrl = '';
   externalUserMngLinkName = '';
@@ -106,6 +105,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   trustedTypesDefaultPolicyEnabled = false;
   cspReportOnlyEnabled = false;
   liveEnabled = true;
+  liveMessageSizeLimit = 65536;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
@@ -118,7 +118,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rendererDefaultImageWidth = 1000;
   rendererDefaultImageHeight = 500;
   rendererDefaultImageScale = 1;
-  secretsManagerPluginEnabled = false;
   supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
@@ -159,6 +158,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     minInterval: '',
     alertStateHistoryBackend: undefined,
     alertStateHistoryPrimary: undefined,
+    recordingRulesEnabled: false,
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
@@ -215,7 +215,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
       datasources: {},
       windowTitlePrefix: 'Grafana - ',
       panels: {},
-      newPanelTitle: 'Panel Title',
       playlist_timespan: '1m',
       unsaved_changes_warning: true,
       appUrl: '',
@@ -245,6 +244,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
   }
+  geomapDefaultBaseLayer?: MapLayerOptions<any> | undefined;
+  listDashboardScopesEndpoint?: string | undefined;
+  listScopesEndpoint?: string | undefined;
 }
 
 // localstorage key: grafana.featureToggles

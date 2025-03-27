@@ -1,7 +1,7 @@
 import { each, map } from 'lodash';
 
 import { DataLinkBuiltInVars, MappingType, VariableHide } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { FieldConfigSource } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
@@ -184,7 +184,7 @@ describe('DashboardModel', () => {
     });
 
     it('table type should be deprecated', () => {
-      expect(table.type).toBe('table-old');
+      expect(table.type).toBe('table');
     });
 
     it('dashboard schema version should be set to latest', () => {
@@ -2375,6 +2375,73 @@ describe('when migrating time_options in timepicker', () => {
     model = new DashboardModel({});
 
     expect(model.timepicker).not.toHaveProperty('time_options');
+  });
+});
+
+describe('when migrating table panels at schema version 24', () => {
+  let model: DashboardModel;
+
+  afterEach(() => {
+    model = new DashboardModel({
+      panels: [],
+      schemaVersion: 23,
+    });
+  });
+
+  it('should migrate Angular table to table and set autoMigrateFrom', () => {
+    model = new DashboardModel({
+      panels: [
+        {
+          id: 1,
+          type: 'table',
+          // @ts-expect-error
+          legend: true,
+          styles: [{ thresholds: ['10', '20', '30'] }, { thresholds: ['100', '200', '300'] }],
+          targets: [{ refId: 'A' }, {}],
+        },
+      ],
+      schemaVersion: 23,
+    });
+
+    // Verify the panel was migrated to table, yes this is intentional
+    // when autoMigrateOldPanels is enabled, we should migrate to table
+    // and add the autoMigrateFrom property
+    expect(model.panels[0].type).toBe('table');
+    // Verify autoMigrateFrom was set
+    expect(model.panels[0].autoMigrateFrom).toBe('table-old');
+  });
+
+  it('should not migrate Angular table without styles', () => {
+    model = new DashboardModel({
+      panels: [
+        {
+          id: 1,
+          type: 'table',
+          // No styles property
+        },
+      ],
+      schemaVersion: 23,
+    });
+
+    // Verify the panel was not migrated
+    expect(model.panels[0].type).toBe('table');
+    expect(model.panels[0].autoMigrateFrom).toBeUndefined();
+  });
+
+  it('should not migrate React table (table2)', () => {
+    model = new DashboardModel({
+      panels: [
+        {
+          id: 1,
+          type: 'table2',
+        },
+      ],
+      schemaVersion: 23,
+    });
+
+    // Verify the panel was not migrated
+    expect(model.panels[0].type).toBe('table2');
+    expect(model.panels[0].autoMigrateFrom).toBeUndefined();
   });
 });
 

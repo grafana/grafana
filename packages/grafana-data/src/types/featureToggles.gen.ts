@@ -243,10 +243,6 @@ export interface FeatureToggles {
   */
   traceQLStreaming?: boolean;
   /**
-  * Enables metrics summary queries in the Tempo data source
-  */
-  metricsSummary?: boolean;
-  /**
   * Expose some datasources as apiservers.
   */
   datasourceAPIServers?: boolean;
@@ -361,10 +357,6 @@ export interface FeatureToggles {
   * Use the kubernetes API in the frontend for dashboards
   */
   kubernetesDashboards?: boolean;
-  /**
-  * Allow restoring objects in k8s
-  */
-  kubernetesRestore?: boolean;
   /**
   * Route the folder and dashboard service requests to k8s
   */
@@ -532,6 +524,10 @@ export interface FeatureToggles {
   * @default true
   */
   onPremToCloudMigrations?: boolean;
+  /**
+  * Enable the secrets management API and services under app platform
+  */
+  secretsManagementAppPlatform?: boolean;
   /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   */
@@ -723,6 +719,10 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
+  * Allows access to the new react-data-grid based table component.
+  */
+  tableNextGen?: boolean;
+  /**
   * Send dashboard and panel names to Loki when querying
   */
   lokiSendDashboardPanelNames?: boolean;
@@ -786,6 +786,7 @@ export interface FeatureToggles {
   unifiedStorageSearchSprinkles?: boolean;
   /**
   * Enable permission filtering on unified storage search
+  * @default true
   */
   unifiedStorageSearchPermissionFiltering?: boolean;
   /**
@@ -794,6 +795,7 @@ export interface FeatureToggles {
   managedDualWriter?: boolean;
   /**
   * Enables SRI checks for plugin assets
+  * @default false
   */
   pluginsSriChecks?: boolean;
   /**
@@ -958,14 +960,6 @@ export interface FeatureToggles {
   */
   alertingConversionAPI?: boolean;
   /**
-  * enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
-  */
-  alertingAlertmanagerExtraDedupStage?: boolean;
-  /**
-  * works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
-  */
-  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
-  /**
   * Enables the new logs panel in Explore
   */
   newLogsPanel?: boolean;
@@ -1031,4 +1025,8 @@ export interface FeatureToggles {
   * Enables the unified storage history pruner
   */
   unifiedStorageHistoryPruner?: boolean;
+  /**
+  * Enables the unified storage grpc connection pool
+  */
+  unifiedStorageGrpcConnectionPool?: boolean;
 }

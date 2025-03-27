@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 
 import { Switch, InteractiveTable, Tooltip, type CellProps, Button, ConfirmModal, type SortByFn } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { FeatureToggle, getTogglesAPI } from './AdminFeatureTogglesAPI';
 
@@ -91,15 +92,17 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
       case 'GA':
         return (
           <Tooltip content={'General availability'}>
-            <div>GA</div>
+            <div>
+              <Trans i18nKey="admin.admin-feature-toggles-table.get-stage-cell.ga">GA</Trans>
+            </div>
           </Tooltip>
         );
       case 'privatePreview':
       case 'preview':
       case 'experimental':
-        return 'Beta';
+        return t('admin.admin-feature-toggles-table.get-stage-cell.beta', 'Beta');
       case 'deprecated':
-        return 'Deprecated';
+        return t('admin.admin-feature-toggles-table.get-stage-cell.deprecated', 'Deprecated');
       default:
         return stage;
     }
@@ -156,7 +159,10 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
           </Button>
           <ConfirmModal
             isOpen={showSaveModel}
-            title="Apply feature toggle changes"
+            title={t(
+              'admin.admin-feature-toggles-table.title-apply-feature-toggle-changes',
+              'Apply feature toggle changes'
+            )}
             body={
               <div>
                 <p>

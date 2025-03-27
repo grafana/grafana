@@ -186,6 +186,29 @@ export class DefaultGridLayoutManager
     this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
   }
 
+  public duplicate(): DashboardLayoutManager {
+    const clone = this.clone({
+      key: undefined,
+      grid: this.state.grid.clone({
+        key: undefined,
+        children: this.state.grid.state.children.map((child) => {
+          if (child instanceof DashboardGridItem) {
+            return child.clone({
+              key: undefined,
+              body: child.state.body.clone({
+                key: getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(child.state.body)),
+              }),
+            });
+          }
+
+          return child.clone({ key: undefined });
+        }),
+      }),
+    });
+
+    return clone;
+  }
+
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
@@ -233,6 +256,7 @@ export class DefaultGridLayoutManager
 
     sceneGridLayout.setState({ children: [row, ...sceneGridLayout.state.children] });
 
+    this.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
     return row;
   }
 
@@ -426,7 +450,7 @@ export class DefaultGridLayoutManager
 
       currentX += panelWidth;
 
-      if (currentX + panelWidth >= GRID_COLUMN_COUNT) {
+      if (currentX + panelWidth > GRID_COLUMN_COUNT) {
         currentX = 0;
         currentY += panelHeight;
       }
@@ -467,7 +491,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
   const dashboard = useDashboard(model);
 
-  // If we are top level layout and have no children, show empty state
+  // If we are top level layout and we have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {
     return (
       <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />

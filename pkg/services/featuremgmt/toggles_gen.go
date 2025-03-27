@@ -215,10 +215,6 @@ const (
 	// Enables response streaming of TraceQL queries of the Tempo data source
 	FlagTraceQLStreaming = "traceQLStreaming"
 
-	// FlagMetricsSummary
-	// Enables metrics summary queries in the Tempo data source
-	FlagMetricsSummary = "metricsSummary"
-
 	// FlagDatasourceAPIServers
 	// Expose some datasources as apiservers.
 	FlagDatasourceAPIServers = "datasourceAPIServers"
@@ -326,10 +322,6 @@ const (
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
-
-	// FlagKubernetesRestore
-	// Allow restoring objects in k8s
-	FlagKubernetesRestore = "kubernetesRestore"
 
 	// FlagKubernetesClientDashboardsFolders
 	// Route the folder and dashboard service requests to k8s
@@ -482,6 +474,10 @@ const (
 	// FlagOnPremToCloudMigrations
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
+
+	// FlagSecretsManagementAppPlatform
+	// Enable the secrets management API and services under app platform
+	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
 
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
@@ -654,6 +650,10 @@ const (
 	// FlagNewFiltersUI
 	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
 	FlagNewFiltersUI = "newFiltersUI"
+
+	// FlagTableNextGen
+	// Allows access to the new react-data-grid based table component.
+	FlagTableNextGen = "tableNextGen"
 
 	// FlagLokiSendDashboardPanelNames
 	// Send dashboard and panel names to Loki when querying
@@ -875,14 +875,6 @@ const (
 	// Enable the alerting conversion API
 	FlagAlertingConversionAPI = "alertingConversionAPI"
 
-	// FlagAlertingAlertmanagerExtraDedupStage
-	// enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
-	FlagAlertingAlertmanagerExtraDedupStage = "alertingAlertmanagerExtraDedupStage"
-
-	// FlagAlertingAlertmanagerExtraDedupStageStopPipeline
-	// works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
-	FlagAlertingAlertmanagerExtraDedupStageStopPipeline = "alertingAlertmanagerExtraDedupStageStopPipeline"
-
 	// FlagNewLogsPanel
 	// Enables the new logs panel in Explore
 	FlagNewLogsPanel = "newLogsPanel"
@@ -946,4 +938,8 @@ const (
 	// FlagUnifiedStorageHistoryPruner
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
+
+	// FlagUnifiedStorageGrpcConnectionPool
+	// Enables the unified storage grpc connection pool
+	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
 )

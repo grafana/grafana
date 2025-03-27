@@ -9,7 +9,6 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneCSSGridLayout,
   SceneGridLayout,
   SceneGridRow,
   SceneRefreshPicker,
@@ -18,6 +17,9 @@ import {
   SceneVariableSet,
   TextBoxVariable,
   VizPanel,
+  SceneDataQuery,
+  SceneQueryRunner,
+  sceneUtils,
 } from '@grafana/scenes';
 import {
   DashboardCursorSync as DashboardCursorSyncV1,
@@ -41,6 +43,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { ResponsiveGridLayout } from '../scene/layout-responsive-grid/ResponsiveGridLayout';
 import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
@@ -48,7 +51,42 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
-import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import {
+  getPersistedDSFor,
+  getElementDatasource,
+  transformSceneToSaveModelSchemaV2,
+} from './transformSceneToSaveModelSchemaV2';
+
+// Mock dependencies
+jest.mock('../utils/dashboardSceneGraph', () => {
+  const original = jest.requireActual('../utils/dashboardSceneGraph');
+  return {
+    ...original,
+    dashboardSceneGraph: {
+      ...original.dashboardSceneGraph,
+      getElementIdentifierForVizPanel: jest.fn().mockImplementation((panel) => {
+        // Return the panel key if it exists, otherwise use panel-1 as default
+        return panel?.state?.key || 'panel-1';
+      }),
+    },
+  };
+});
+
+jest.mock('../utils/utils', () => {
+  const original = jest.requireActual('../utils/utils');
+  return {
+    ...original,
+    getDashboardSceneFor: jest.fn().mockImplementation(() => ({
+      serializer: {
+        getDSReferencesMapping: jest.fn().mockReturnValue({
+          panels: new Map([['panel-1', new Set(['A'])]]),
+          variables: new Set(),
+          annotations: new Set(),
+        }),
+      },
+    })),
+  };
+});
 
 function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {
   return new DashboardScene(state);
@@ -100,7 +138,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // The intention is to have a complete dashboard scene
     // with all the possible properties set
     dashboardScene = setupDashboardScene({
-      $data: new DashboardDataLayerSet({ annotationLayers }),
+      $data: new DashboardDataLayerSet({ annotationLayers: createAnnotationLayers() }),
       id: 1,
       title: 'Test Dashboard',
       description: 'Test Description',
@@ -377,6 +415,233 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // check annotation layer 3 with no datasource has the default datasource defined as type
     expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
   });
+
+  describe('getPersistedDSFor query', () => {
+    it('should respect datasource reference mapping when determining query datasource', () => {
+      // Setup test data
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+        // No datasource defined originally
+      };
+      const queryWithDS: SceneDataQuery = {
+        refId: 'B',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
+      };
+
+      // Mock query runner with runtime-resolved datasource
+      const queryRunner = new SceneQueryRunner({
+        queries: [queryWithoutDS, queryWithDS],
+        datasource: { uid: 'default-ds', type: 'default' },
+      });
+
+      // Get a reference to the DS references mapping
+      const dsReferencesMap = new Set(['A']);
+
+      // Test the query without DS originally - should return undefined
+      const resultA = getPersistedDSFor(queryWithoutDS, dsReferencesMap, 'query', queryRunner);
+      expect(resultA).toBeUndefined();
+
+      // Test the query with DS originally - should return the original datasource
+      const resultB = getPersistedDSFor(queryWithDS, dsReferencesMap, 'query', queryRunner);
+      expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+      // Test a query with no DS originally but not in the mapping - should get the runner's datasource
+      const queryNotInMapping: SceneDataQuery = {
+        refId: 'C',
+        // No datasource, but not in mapping
+      };
+      const resultC = getPersistedDSFor(queryNotInMapping, dsReferencesMap, 'query', queryRunner);
+      expect(resultC).toEqual({ uid: 'default-ds', type: 'default' });
+    });
+  });
+
+  describe('getPersistedDSFor variable', () => {
+    it('should respect datasource reference mapping when determining variable datasource', () => {
+      // Setup test data - variable without datasource
+      const variableWithoutDS = new QueryVariable({
+        name: 'A',
+        // No datasource defined originally
+      });
+
+      // Variable with datasource
+      const variableWithDS = new QueryVariable({
+        name: 'B',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
+      });
+
+      // Get a reference to the DS references mapping
+      const dsReferencesMap = new Set(['A']);
+
+      // Test the variable without DS originally - should return undefined
+      const resultA = getPersistedDSFor(variableWithoutDS, dsReferencesMap, 'variable');
+      expect(resultA).toBeUndefined();
+
+      // Test the variable with DS originally - should return the original datasource
+      const resultB = getPersistedDSFor(variableWithDS, dsReferencesMap, 'variable');
+      expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+      // Test a variable with no DS originally but not in the mapping - should get empty object
+      const variableNotInMapping = new QueryVariable({
+        name: 'C',
+        // No datasource, but not in mapping
+      });
+      const resultC = getPersistedDSFor(variableNotInMapping, dsReferencesMap, 'variable');
+      expect(resultC).toEqual({});
+    });
+  });
+});
+
+describe('getElementDatasource', () => {
+  it('should handle panel query datasources correctly', () => {
+    // Create test elements
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    const queryWithDS: SceneDataQuery = {
+      refId: 'B',
+      datasource: { uid: 'prometheus', type: 'prometheus' },
+    };
+
+    const queryWithoutDS: SceneDataQuery = {
+      refId: 'A',
+    };
+
+    // Mock query runner
+    const queryRunner = new SceneQueryRunner({
+      queries: [queryWithoutDS, queryWithDS],
+      datasource: { uid: 'default-ds', type: 'default' },
+    });
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
+    };
+
+    // Call the function with the panel and query with DS
+    const resultWithDS = getElementDatasource(vizPanel, queryWithDS, 'panel', queryRunner, dsReferencesMapping);
+    expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+    // Call the function with the panel and query without DS
+    const resultWithoutDS = getElementDatasource(vizPanel, queryWithoutDS, 'panel', queryRunner, dsReferencesMapping);
+    expect(resultWithoutDS).toBeUndefined();
+  });
+
+  it('should handle variable datasources correctly', () => {
+    // Create a variable set
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new QueryVariable({
+          name: 'A',
+          // No datasource
+        }),
+        new QueryVariable({
+          name: 'B',
+          datasource: { uid: 'prometheus', type: 'prometheus' },
+        }),
+      ],
+    });
+
+    // Variable with DS
+    const variableWithDS = variableSet.getByName('B');
+
+    // Variable without DS
+    const variableWithoutDS = variableSet.getByName('A');
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
+      variables: new Set<string>(['A']),
+      annotations: new Set<string>(),
+    };
+
+    // Call the function with variables
+    if (variableWithDS && sceneUtils.isQueryVariable(variableWithDS)) {
+      const resultWithDS = getElementDatasource(
+        variableSet,
+        variableWithDS,
+        'variable',
+        undefined,
+        dsReferencesMapping
+      );
+      expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
+    }
+
+    if (variableWithoutDS && sceneUtils.isQueryVariable(variableWithoutDS)) {
+      // Test with auto-assigned variable (in the mapping)
+      const resultWithoutDS = getElementDatasource(variableSet, variableWithoutDS, 'variable');
+      expect(resultWithoutDS).toEqual(undefined);
+    }
+  });
+
+  it('should return undefined for non-query variables', () => {
+    // Create a variable set with non-query variable
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new ConstantVariable({
+          name: 'constant',
+          value: 'value',
+        }),
+      ],
+    });
+
+    // Non-query variable
+    const constantVar = variableSet.getByName('constant');
+
+    // Call the function
+    // @ts-expect-error
+    const result = getElementDatasource(variableSet, constantVar, 'variable');
+    expect(result).toBeUndefined();
+  });
+
+  it('should return undefined for non-query variables', () => {
+    // Create a variable set with non-query variable types
+    const variableSet = new SceneVariableSet({
+      variables: [
+        // Use TextBoxVariable which is not a QueryVariable
+        new TextBoxVariable({
+          name: 'textVar',
+          value: 'text-value',
+        }),
+      ],
+    });
+
+    // Non-query variable - this is safe because getElementDatasource checks if it's a query variable
+    const textVar = variableSet.getByName('textVar');
+
+    // Call the function
+    // @ts-expect-error
+    const result = getElementDatasource(variableSet, textVar, 'variable');
+    expect(result).toBeUndefined();
+  });
+
+  it('should handle invalid input combinations', () => {
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new QueryVariable({
+          name: 'A',
+        }),
+      ],
+    });
+
+    const variable = variableSet.getByName('A');
+    const query: SceneDataQuery = { refId: 'A' };
+
+    if (variable && sceneUtils.isQueryVariable(variable)) {
+      // Panel with variable
+      expect(getElementDatasource(vizPanel, variable, 'panel')).toBeUndefined();
+    }
+    // Variable set with query
+    expect(getElementDatasource(variableSet, query, 'variable')).toBeUndefined();
+  });
 });
 
 function getMinimalSceneState(body: DashboardLayoutManager): Partial<DashboardSceneState> {
@@ -475,7 +740,7 @@ describe('dynamic layouts', () => {
           rows: [
             new RowItem({
               layout: new ResponsiveGridLayoutManager({
-                layout: new SceneCSSGridLayout({
+                layout: new ResponsiveGridLayout({
                   children: [
                     new ResponsiveGridItem({
                       body: new VizPanel({}),
@@ -520,9 +785,11 @@ describe('dynamic layouts', () => {
     const scene = setupDashboardScene(
       getMinimalSceneState(
         new ResponsiveGridLayoutManager({
-          layout: new SceneCSSGridLayout({
-            autoRows: 'rowString',
-            templateColumns: 'colString',
+          columnWidth: 100,
+          rowHeight: 'standard',
+          maxColumnCount: 4,
+          fillScreen: true,
+          layout: new ResponsiveGridLayout({
             children: [
               new ResponsiveGridItem({
                 body: new VizPanel({}),
@@ -538,8 +805,12 @@ describe('dynamic layouts', () => {
     const result = transformSceneToSaveModelSchemaV2(scene);
     expect(result.layout.kind).toBe('ResponsiveGridLayout');
     const respGridLayout = result.layout.spec as ResponsiveGridLayoutSpec;
-    expect(respGridLayout.col).toBe('colString');
-    expect(respGridLayout.row).toBe('rowString');
+    expect(respGridLayout.columnWidthMode).toBe('custom');
+    expect(respGridLayout.columnWidth).toBe(100);
+    expect(respGridLayout.rowHeightMode).toBe('standard');
+    expect(respGridLayout.rowHeight).toBeUndefined();
+    expect(respGridLayout.maxColumnCount).toBe(4);
+    expect(respGridLayout.fillScreen).toBe(true);
     expect(respGridLayout.items.length).toBe(2);
     expect(respGridLayout.items[0].kind).toBe('ResponsiveGridLayoutItem');
   });
@@ -571,49 +842,50 @@ describe('dynamic layouts', () => {
   });
 });
 
-const annotationLayer1 = new DashboardAnnotationsDataLayer({
-  key: 'layer1',
-  query: {
-    datasource: {
-      type: 'grafana',
-      uid: '-- Grafana --',
-    },
-    name: 'query1',
-    enable: true,
-    iconColor: 'red',
-  },
-  name: 'layer1',
-  isEnabled: true,
-  isHidden: false,
-});
-
-const annotationLayer2 = new DashboardAnnotationsDataLayer({
-  key: 'layer2',
-  query: {
-    datasource: {
-      type: 'prometheus',
-      uid: 'abcdef',
-    },
-    name: 'query2',
-    enable: true,
-    iconColor: 'blue',
-  },
-  name: 'layer2',
-  isEnabled: true,
-  isHidden: true,
-});
-
-// this could happen if a dahboard was created from code and the datasource was not defined
-const annotationLayer3NoDsDefined = new DashboardAnnotationsDataLayer({
-  key: 'layer3',
-  query: {
-    name: 'query3',
-    enable: true,
-    iconColor: 'green',
-  },
-  name: 'layer3',
-  isEnabled: true,
-  isHidden: true,
-});
-
-const annotationLayers = [annotationLayer1, annotationLayer2, annotationLayer3NoDsDefined];
+// Instead of reusing annotation layer objects, create a factory function to generate new ones each time
+function createAnnotationLayers() {
+  return [
+    new DashboardAnnotationsDataLayer({
+      key: 'layer1',
+      query: {
+        datasource: {
+          type: 'grafana',
+          uid: '-- Grafana --',
+        },
+        name: 'query1',
+        enable: true,
+        iconColor: 'red',
+      },
+      name: 'layer1',
+      isEnabled: true,
+      isHidden: false,
+    }),
+    new DashboardAnnotationsDataLayer({
+      key: 'layer2',
+      query: {
+        datasource: {
+          type: 'prometheus',
+          uid: 'abcdef',
+        },
+        name: 'query2',
+        enable: true,
+        iconColor: 'blue',
+      },
+      name: 'layer2',
+      isEnabled: true,
+      isHidden: true,
+    }),
+    // this could happen if a dahboard was created from code and the datasource was not defined
+    new DashboardAnnotationsDataLayer({
+      key: 'layer3',
+      query: {
+        name: 'query3',
+        enable: true,
+        iconColor: 'green',
+      },
+      name: 'layer3',
+      isEnabled: true,
+      isHidden: true,
+    }),
+  ];
+}

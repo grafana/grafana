@@ -7,6 +7,7 @@ import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { UpgradeBox, UpgradeContent, UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
+import { Trans, t } from 'app/core/internationalization';
 import { highlightTrial } from 'app/features/admin/utils';
 
 import { StoreState, TeamGroup } from '../../types';
@@ -113,7 +114,9 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         <div className="page-action-bar">
           {(!highlightTrial() || groups.length > 0) && (
             <>
-              <h3 className="page-sub-heading">External group sync</h3>
+              <h3 className="page-sub-heading">
+                <Trans i18nKey="teams.team-group-sync.external-group-sync">External group sync</Trans>
+              </h3>
               <Tooltip placement="auto" content={headerTooltip}>
                 <Icon className={cx(styles.icon, 'page-sub-heading-icon')} name="question-circle" />
               </Tooltip>
@@ -146,7 +149,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
                   />
                 </InlineField>
                 <Button type="submit" disabled={isReadOnly || !this.isNewGroupValid()} style={{ marginLeft: 4 }}>
-                  Add group
+                  <Trans i18nKey="teams.team-group-sync.add-group">Add group</Trans>
                 </Button>
               </InlineFieldRow>
             </form>
@@ -161,7 +164,10 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             <EmptyListCTA
               onClick={this.onToggleAdding}
               buttonIcon="users-alt"
-              title="There are no external groups to sync with"
+              title={t(
+                'teams.team-group-sync.title-there-external-groups',
+                'There are no external groups to sync with'
+              )}
               buttonTitle="Add group"
               proTip={headerTooltip}
               proTipLinkTitle="Learn more"
@@ -176,7 +182,9 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             <table className="filter-table filter-table--hover form-inline">
               <thead>
                 <tr>
-                  <th>External Group ID</th>
+                  <th>
+                    <Trans i18nKey="teams.team-group-sync.external-group-id">External Group ID</Trans>
+                  </th>
                   <th style={{ width: '1%' }} />
                 </tr>
               </thead>

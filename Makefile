@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .bingo/Variables.mk
 
 GO = go
-GO_VERSION = 1.23.7
+GO_VERSION = 1.24.1
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -60,15 +60,15 @@ NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
 
-$(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge generated and ngalert API specs
+$(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET)  ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	$(SWAGGER) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	GODEBUG=gotypesalias=0 $(GO) tool swagger mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
 .PHONY: swagger-oss-gen
-swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
+swagger-oss-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for OSS"
 	rm -f $(SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(GO) tool swagger generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -83,10 +83,10 @@ ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
 swagger-enterprise-gen:
 	@echo "skipping re-generating swagger for enterprise: not enabled"
 else
-swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
+swagger-enterprise-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for enterprise"
 	rm -f $(ENTERPRISE_SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(GO) tool swagger generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -99,8 +99,8 @@ endif
 swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
 .PHONY: swagger-validate
-swagger-validate: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
-	$(SWAGGER) validate --skip-warnings $(<)
+swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
+	GODEBUG=gotypesalias=0 $(GO) tool swagger validate --skip-warnings $(<)
 
 .PHONY: swagger-clean
 swagger-clean:
@@ -153,6 +153,19 @@ gen-cue: ## Do all CUE/Thema code generation
 gen-cuev2: ## Do all CUE code generation
 	@echo "generate code from .cue files (v2)"
 	@$(MAKE) -C ./kindsv2 all
+
+# TODO (@radiohead): uncomment once we want to start generating code for all apps.
+# For now, we want to use an explicit list of apps to generate code for.
+#
+# APPS_DIRS=$(shell find ./apps -mindepth 1 -maxdepth 1 -type d | sort)
+APPS_DIRS := ./apps/dashboard
+
+.PHONY: gen-apps
+gen-apps: ## Generate code for Grafana App SDK apps
+	for dir in $(APPS_DIRS); do \
+		$(MAKE) -C $$dir generate; \
+	done
+	./hack/update-codegen.sh
 
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
@@ -311,6 +324,13 @@ test-go-integration-memcached: ## Run integration tests for memcached cache.
 	$(GO) clean -testcache
 	MEMCACHED_HOSTS=localhost:11211 $(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -run IntegrationMemcached -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
 
+.PHONY: test-go-integration-spanner
+test-go-integration-spanner: ## Run integration tests for Spanner backend with flags. Uses spanner-emulator on localhost:9010 and localhost:9020.
+	@if [ "${WIRE_TAGS}" != "enterprise" ]; then echo "Spanner integration test require enterprise setup"; exit 1; fi
+	@echo "test backend integration spanner tests"
+	GRAFANA_TEST_DB=spanner \
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -v -run "^TestIntegration" -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
+
 .PHONY: test-js
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
@@ -434,7 +454,6 @@ protobuf: ## Compile protobuf definitions
 	go install google.golang.org/protobuf/cmd/protoc-gen-go
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
-	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
 	buf generate pkg/apis/secret/v0alpha1/decrypt --template pkg/apis/secret/v0alpha1/decrypt/buf.gen.yaml
 	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml

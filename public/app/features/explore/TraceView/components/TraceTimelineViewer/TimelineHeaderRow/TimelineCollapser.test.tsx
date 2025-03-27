@@ -35,8 +35,8 @@ describe('TimelineCollapser test', () => {
     setup();
 
     expect(screen.getByTestId('TimelineCollapser')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Expand All' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Collapse All' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expand all' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Collapse all' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Expand +1' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Collapse +1' })).toBeInTheDocument();
   });

@@ -11,8 +11,8 @@ import { ResourcePicker } from '../ResourcePicker';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
-  from?: number;
-  to?: number;
+  from?: number | null;
+  to?: number | null;
   pattern?: string;
   key?: string;
   isNew?: boolean;
@@ -149,20 +149,8 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             )}
             {mapping.type === MappingType.RangeToText && (
               <div className={styles.rangeInputWrapper}>
-                <Input
-                  type="number"
-                  value={mapping.from ?? ''}
-                  placeholder="Range start"
-                  onChange={onChangeFrom}
-                  prefix="From"
-                />
-                <Input
-                  type="number"
-                  value={mapping.to ?? ''}
-                  placeholder="Range end"
-                  onChange={onChangeTo}
-                  prefix="To"
-                />
+                <Input type="number" value={mapping.from ?? ''} placeholder="From" onChange={onChangeFrom} />
+                <Input type="number" value={mapping.to ?? ''} placeholder="To" onChange={onChangeTo} />
               </div>
             )}
             {mapping.type === MappingType.RegexToText && (

@@ -7,11 +7,9 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import {
-  histogramFieldInfo,
-  HistogramTransformerInputs,
-} from '@grafana/data/src/transformations/transformers/histogram';
+import { histogramFieldInfo, HistogramTransformerInputs } from '@grafana/data/internal';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
@@ -88,7 +86,7 @@ export const HistogramTransformerEditor = ({
           <SuggestionsInput
             suggestions={suggestions}
             value={options.bucketCount}
-            placeholder="Default: 30"
+            placeholder={t('transformers.histogram-transformer-editor.placeholder-default', 'Default: 30')}
             onChange={onVariableBucketCountChanged}
           />
         </InlineField>

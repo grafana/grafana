@@ -803,19 +803,22 @@ export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQue
   return 'expr' in model;
 }
 
-export function getInstantFromDataQuery(model: AlertDataQuery, type: string): boolean | undefined {
-  // if the datasource is not prometheus or loki, instant is defined in the model or defaults to undefined
-  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
-    if ('instant' in model) {
-      return model.instant;
-    } else {
-      if ('queryType' in model) {
-        return model.queryType === 'instant';
-      } else {
-        return undefined;
-      }
-    }
+export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): boolean | undefined {
+  const dataSourceUID = query.datasourceUid ?? query.model.datasource?.uid;
+  if (!dataSourceUID) {
+    return undefined;
   }
+
+  // find the datasource type from the UID
+  const type = getDataSourceSrv().getInstanceSettings(dataSourceUID)?.type;
+
+  // if the datasource is not prometheus or loki, return "undefined"
+  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
+    return undefined;
+  }
+
+  const { model } = query;
+
   // if the datasource is prometheus or loki, instant is defined in the model, or defaults to true
   const isInstantForPrometheus = 'instant' in model && model.instant !== undefined ? model.instant : true;
   const isInstantForLoki = 'queryType' in model && model.queryType !== undefined ? model.queryType === 'instant' : true;

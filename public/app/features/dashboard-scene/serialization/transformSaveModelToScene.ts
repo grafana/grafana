@@ -175,7 +175,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
-  const uid = dto.uid;
+  const uid = oldModel.uid;
   const serializerVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
 
   if (oldModel.templating?.list?.length) {
@@ -319,7 +319,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
-    title: panel.title,
+    title: panel.title?.substring(0, 5000),
     description: panel.description,
     pluginId: panel.type ?? 'timeseries',
     options: panel.options ?? {},
