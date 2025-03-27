@@ -42,7 +42,6 @@ import {
 import { uWrap } from './uWrap';
 
 /* ---------------------------- Cell calculations --------------------------- */
-// NOTE: This is now a fallback in case canvas-hypertxt fails
 export function getCellHeight(
   text: string,
   cellWidth: number, // width of the cell without padding
