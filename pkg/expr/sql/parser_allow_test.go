@@ -52,6 +52,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    `SELECT 1 WHERE 1 IN (1, 2, 3)`,
 			err:  nil,
 		},
+		{
+			name: "group concat in read query",
+			q:    `SELECT 1 as id, GROUP_CONCAT('will_', 'concatenate') as concat_val`,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

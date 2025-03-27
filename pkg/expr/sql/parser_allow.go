@@ -84,6 +84,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case sqlparser.Exprs:
 		return
 
+	case *sqlparser.GroupConcatExpr:
+		return
+
 	case sqlparser.GroupBy:
 		return
 
