@@ -74,6 +74,8 @@ The `No Data` state occurs when the alert rule query runs successfully but retur
 
 An alert instance is considered stale if the query returns data but its dimension or series has disappeared for two evaluation intervals. In this case, the alert instance transitions to the **Normal (MissingSeries)** state as resolved, and is then evicted.
 
+The process for handling stale alert instances is as follows:
+
 1. The alert rule runs and returns data for some label sets.
 
 1. An alert instance that previously existed is now missing.
