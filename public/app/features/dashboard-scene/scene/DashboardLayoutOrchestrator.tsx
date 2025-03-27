@@ -18,11 +18,18 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     this._onPointerMove = this._onPointerMove.bind(this);
     this._stopDraggingSync = this._stopDraggingSync.bind(this);
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    return () => {
+      document.body.removeEventListener('pointermove', this._onPointerMove);
+      document.body.removeEventListener('pointerup', this._stopDraggingSync);
+    };
   }
 
   public startDraggingSync(_evt: ReactPointerEvent, panel: VizPanel): void {
-    // this._getDashboard().state.editPane.clearSelection();
-
     const dropTarget = sceneGraph.findObject(panel, isDashboardDropTarget);
 
     if (!dropTarget || !isDashboardDropTarget(dropTarget)) {
@@ -67,7 +74,9 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._lastDropTarget?.setIsDropTarget?.(false);
       this._lastDropTarget = dropTarget;
 
-      dropTarget.setIsDropTarget?.(true);
+      if (dropTarget !== this._sourceDropTarget) {
+        dropTarget.setIsDropTarget?.(true);
+      }
     }
   }
 

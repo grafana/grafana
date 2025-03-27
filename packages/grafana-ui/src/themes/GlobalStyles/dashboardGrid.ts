@@ -123,5 +123,9 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
         all: 'inherit',
       },
     },
+
+    '.react-draggable-dragging': {
+      opacity: 0.8,
+    },
   });
 }

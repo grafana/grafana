@@ -157,11 +157,14 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     this._containerRef = ref;
   }
 
-  public getBoundingBox(): { top: number; left: number; width: number; height: number } {
-    const { width, height } = this._containerRef!.getBoundingClientRect();
-    const top = this._containerRef!.offsetTop;
-    const left = this._containerRef!.offsetLeft;
+  public getBoundingBox(): { width: number; height: number; top: number; left: number } {
+    const rect = this._containerRef!.getBoundingClientRect();
 
-    return { top, left, width: Math.floor(width), height: Math.floor(height) };
+    return {
+      width: rect.width,
+      height: rect.height,
+      top: this._containerRef!.offsetTop,
+      left: this._containerRef!.offsetLeft,
+    };
   }
 }

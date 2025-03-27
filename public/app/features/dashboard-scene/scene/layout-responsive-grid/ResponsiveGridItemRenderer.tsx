@@ -68,6 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     left: `var(${DRAGGED_ITEM_LEFT})`,
     width: `var(${DRAGGED_ITEM_WIDTH})`,
     height: `var(${DRAGGED_ITEM_HEIGHT})`,
+    opacity: 0.8,
   }),
   draggedPlaceholder: css({
     width: '100%',

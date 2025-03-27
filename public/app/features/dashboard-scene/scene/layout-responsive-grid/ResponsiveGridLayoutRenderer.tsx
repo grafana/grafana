@@ -18,7 +18,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} ref={(ref) => model.setRef(ref)}>
       {children.map((item) =>
         isLazy ? (
           <LazyLoader key={item.state.key!} className={styles.container}>

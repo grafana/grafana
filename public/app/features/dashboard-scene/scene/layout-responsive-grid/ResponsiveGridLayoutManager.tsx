@@ -76,10 +76,6 @@ export class AutoGridLayoutManager
           autoRows: getAutoRowsTemplate(rowHeight, fillScreen),
         }),
     });
-
-    // @ts-ignore
-    this.state.layout.getDragClassCancel = () => 'drag-cancel';
-    this.state.layout.isDraggable = () => true;
   }
 
   public addPanel(vizPanel: VizPanel) {
@@ -168,20 +164,19 @@ export class AutoGridLayoutManager
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({
       layout: this.state.layout.clone({
+        isDraggable: isSource && this.state.layout.state.isDraggable,
         children: this.state.layout.state.children.map((gridItem) => {
           if (gridItem instanceof AutoGridItem) {
             // Get the original panel ID from the gridItem's key
             const panelId = getPanelIdForVizPanel(gridItem.state.body);
             const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(panelId));
 
-            return gridItem.clone({
-              key: gridItemKey,
-              body: gridItem.state.body.clone({
-                key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(panelId)),
-              }),
-            });
-          }
-          throw new Error('Unexpected child type');
+          return gridItem.clone({
+            key: gridItemKey,
+            body: gridItem.state.body.clone({
+              key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(panelId)),
+            }),
+          });
         }),
       }),
     });

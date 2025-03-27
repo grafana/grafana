@@ -58,8 +58,14 @@ export interface AutoGridLayoutOptions {
 export class ResponsiveGridLayout extends SceneObjectBase<AutoGridLayoutState> implements SceneLayout {
   public static Component = AutoGridLayoutRenderer;
 
+  private _containerRef: HTMLDivElement | null = null;
   private _draggedGridItem: AutoGridItem | null = null;
-  private _draggedPosition: { top: number; left: number; width: number; height: number } | null = null;
+  private _initialGridItemPosition: {
+    pageX: number;
+    pageY: number;
+    top: number;
+    left: number;
+  } | null = null;
 
   public constructor(state: Partial<AutoGridLayoutState>) {
     super({
@@ -74,6 +80,17 @@ export class ResponsiveGridLayout extends SceneObjectBase<AutoGridLayoutState> i
     this._onDragStart = this._onDragStart.bind(this);
     this._onDragEnd = this._onDragEnd.bind(this);
     this._onDrag = this._onDrag.bind(this);
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    return () => {
+      this._resetPanelPositionAndSize();
+      document.body.removeEventListener('pointermove', this._onDrag);
+      document.body.removeEventListener('pointerup', this._onDragEnd);
+      document.body.classList.remove('dashboard-draggable-transparent-selection');
+    };
   }
 
   public isDraggable(): boolean {
@@ -92,6 +109,10 @@ export class ResponsiveGridLayout extends SceneObjectBase<AutoGridLayoutState> i
     return {
       onDragStart: this._onDragStart,
     };
+  }
+
+  public setRef(ref: HTMLDivElement | null) {
+    this._containerRef = ref;
   }
 
   private _canDrag(evt: ReactPointerEvent): boolean {
@@ -120,8 +141,11 @@ export class ResponsiveGridLayout extends SceneObjectBase<AutoGridLayoutState> i
     }
 
     this._draggedGridItem = panel.parent;
-    this._draggedPosition = this._draggedGridItem.getBoundingBox();
-    this._updatePanelPosition();
+
+    const { top, left, width, height } = this._draggedGridItem.getBoundingBox();
+    this._initialGridItemPosition = { pageX: evt.pageX, pageY: evt.pageY, top, left: left };
+    this._updatePanelSize(width, height);
+    this._updatePanelPosition(top, left);
 
     this.setState({ draggingKey: this._draggedGridItem.state.key });
 
@@ -137,7 +161,8 @@ export class ResponsiveGridLayout extends SceneObjectBase<AutoGridLayoutState> i
     window.getSelection()?.removeAllRanges();
 
     this._draggedGridItem = null;
-    this._draggedPosition = null;
+    this._initialGridItemPosition = null;
+    this._resetPanelPositionAndSize();
 
     this.setState({ draggingKey: undefined });
 
@@ -148,18 +173,15 @@ export class ResponsiveGridLayout extends SceneObjectBase<AutoGridLayoutState> i
 
   // Handle inside drag moves
   private _onDrag(evt: PointerEvent) {
-    if (!this._draggedGridItem || !this._draggedPosition) {
+    if (!this._draggedGridItem || !this._initialGridItemPosition) {
       this._onDragEnd();
       return;
     }
 
-    evt.preventDefault();
-    evt.stopPropagation();
-
-    this._draggedPosition.top = this._draggedPosition.top + evt.movementY;
-    this._draggedPosition.left = this._draggedPosition.left + evt.movementX;
-
-    this._updatePanelPosition();
+    this._updatePanelPosition(
+      this._initialGridItemPosition.top + (evt.pageY - this._initialGridItemPosition.pageY),
+      this._initialGridItemPosition.left + (evt.pageX - this._initialGridItemPosition.pageX)
+    );
 
     const dropTargetGridItemKey = document
       .elementsFromPoint(evt.clientX, evt.clientY)
@@ -191,19 +213,21 @@ export class ResponsiveGridLayout extends SceneObjectBase<AutoGridLayoutState> i
     this.setState({ children });
   }
 
-  private _updatePanelPosition() {
-    if (!this._draggedPosition) {
-      document.body.style.removeProperty(DRAGGED_ITEM_TOP);
-      document.body.style.removeProperty(DRAGGED_ITEM_LEFT);
-      document.body.style.removeProperty(DRAGGED_ITEM_WIDTH);
-      document.body.style.removeProperty(DRAGGED_ITEM_HEIGHT);
-      return;
-    }
+  private _updatePanelPosition(top: number, left: number) {
+    this._containerRef?.style.setProperty(DRAGGED_ITEM_TOP, `${top}px`);
+    this._containerRef?.style.setProperty(DRAGGED_ITEM_LEFT, `${left}px`);
+  }
 
-    document.body.style.setProperty(DRAGGED_ITEM_TOP, `${this._draggedPosition.top}px`);
-    document.body.style.setProperty(DRAGGED_ITEM_LEFT, `${this._draggedPosition.left}px`);
-    document.body.style.setProperty(DRAGGED_ITEM_WIDTH, `${this._draggedPosition.width}px`);
-    document.body.style.setProperty(DRAGGED_ITEM_HEIGHT, `${this._draggedPosition.height}px`);
+  private _updatePanelSize(width: number, height: number) {
+    this._containerRef?.style.setProperty(DRAGGED_ITEM_WIDTH, `${Math.floor(width)}px`);
+    this._containerRef?.style.setProperty(DRAGGED_ITEM_HEIGHT, `${Math.floor(height)}px`);
+  }
+
+  private _resetPanelPositionAndSize() {
+    this._containerRef?.style.removeProperty(DRAGGED_ITEM_TOP);
+    this._containerRef?.style.removeProperty(DRAGGED_ITEM_LEFT);
+    this._containerRef?.style.removeProperty(DRAGGED_ITEM_WIDTH);
+    this._containerRef?.style.removeProperty(DRAGGED_ITEM_HEIGHT);
   }
 }
 
