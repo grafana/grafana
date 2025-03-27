@@ -1,12 +1,12 @@
-name: Run dashboard search e2e
+name: run-dashboard-search-e2e
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_run:
+    workflows: 
+      - trigger-dashboard-search-e2e
+    types:
+      - completed
+  workflow_dispatch:
 
 env:
   ARCH: linux-amd64
@@ -91,7 +91,7 @@ jobs:
             path: |
               node_modules
               /home/runner/.cache/Cypress
-            key: foo
+            key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 
         - name: Restore Cached Grafana Build and Dependencies
           uses: actions/cache@v3
@@ -105,8 +105,6 @@ jobs:
               e2e/test-plugins/
               devenv/
             key: ${{ runner.os }}-grafana-${{ hashFiles('go.mod', 'package-lock.json', 'Makefile', 'pkg/storage/**/*.go', 'public/app/features/search/**/*.ts', 'public/app/features/search/**/*.tsx') }}
-        - name: Prettify the name
-          run: echo "Running tests for $(basename "${{ matrix.ini_file }}")"
         - name: Set the step name
           id: set_file_name
           run: |
@@ -116,6 +114,3 @@ jobs:
           run: |
             cp -rf ${{ matrix.ini_file }} ${{ github.workspace }}/scripts/grafana-server/custom.ini
             yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
-        - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
-          if: failure()
-          run: exit 0
