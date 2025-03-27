@@ -832,7 +832,7 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 }
 
 func resultStateReason(result eval.Result, rule *models.AlertRule) string {
-	 if result.State == eval.NoData && rule.NoDataState == models.KeepLast {
+	 if result.State == eval.NoData  {
 		 return result.State.String()
      }
 	 if rule.ExecErrState == models.KeepLastErrState || rule.NoDataState == models.KeepLast {
