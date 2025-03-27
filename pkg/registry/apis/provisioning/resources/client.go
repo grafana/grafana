@@ -216,12 +216,6 @@ func (c *ResourceClients) User() (dynamic.ResourceInterface, error) {
 	return v, err
 }
 
-// TODO: Remove this after the other PR is merged
-func (c *ResourceClients) Dashboard() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(DashboardResource)
-	return v, err
-}
-
 var UserResource = schema.GroupVersionResource{
 	Group:    iam.GROUP,
 	Version:  iam.VERSION,
