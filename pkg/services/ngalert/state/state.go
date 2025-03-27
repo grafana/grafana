@@ -835,6 +835,8 @@ func resultStateReason(result eval.Result, rule *models.AlertRule) string {
 	if rule.ExecErrState == models.KeepLastErrState || rule.NoDataState == models.KeepLast {
 		return models.ConcatReasons(result.State.String(), models.StateReasonKeepLast)
 	}
-
+	if rule.NoDataState == models.KeepLast && result.State == eval.NoData {
+		return models.StateReasonKeepLast
+    }
 	return result.State.String()
 }
