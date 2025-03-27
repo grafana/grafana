@@ -47,7 +47,7 @@ const getPageNav = (identifier?: RuleIdentifier, type?: RuleEditorPathParams['ty
 
 const RuleEditor = () => {
   const { identifier, type } = useRuleEditorPathParams();
-  const { copyFromIdentifier, queryDefaults } = useRuleEditorQueryParams();
+  const { copyFromIdentifier, queryDefaults, isManualRestore } = useRuleEditorQueryParams();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
@@ -68,8 +68,16 @@ const RuleEditor = () => {
       return <CloneRuleEditor sourceRuleId={copyFromIdentifier} />;
     }
     // new alert rule
-    return <AlertRuleForm prefill={queryDefaults} />;
-  }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, identifier, queryDefaults]);
+    return <AlertRuleForm prefill={queryDefaults} isManualRestore={isManualRestore} />;
+  }, [
+    canCreateCloudRules,
+    canCreateGrafanaRules,
+    canEditRules,
+    copyFromIdentifier,
+    identifier,
+    queryDefaults,
+    isManualRestore,
+  ]);
 
   return (
     <AlertingPageWrapper navId="alert-list" pageNav={getPageNav(identifier, type)}>
@@ -97,6 +105,7 @@ function useRuleEditorQueryParams() {
   const [searchParams] = useURLSearchParams();
   const copyFromId = searchParams.get('copyFrom') ?? undefined;
   const copyFromIdentifier = ruleId.tryParse(copyFromId);
+  const isManualRestore = searchParams.has('isManualRestore');
 
   const ruleType = translateRouteParamToRuleType(type);
 
@@ -104,5 +113,5 @@ function useRuleEditorQueryParams() {
     ? formValuesFromQueryParams(searchParams.get('defaults') ?? '', ruleType)
     : undefined;
 
-  return { copyFromIdentifier, queryDefaults };
+  return { copyFromIdentifier, queryDefaults, isManualRestore };
 }
