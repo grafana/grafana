@@ -1438,13 +1438,6 @@ var (
 			Owner:       grafanaOSSBigTent,
 		},
 		{
-			Name:        "userStorageAPI",
-			Description: "Enables the user storage API",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1611,9 +1604,9 @@ var (
 		{
 			Name:           "teamHttpHeadersMimir",
 			Description:    "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-			Stage:          FeatureStageExperimental,
+			Stage:          FeatureStagePublicPreview,
 			FrontendOnly:   false,
-			AllowSelfServe: false,
+			AllowSelfServe: true,
 			Owner:          identityAccessTeam,
 		},
 		{
@@ -1780,13 +1773,6 @@ var (
 			FrontendOnly:      true,
 		},
 		{
-			Name:         "extraLanguages",
-			Description:  "Enables additional languages",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:              "noBackdropBlur",
 			Description:       "Disables backdrop blur",
 			Stage:             FeatureStageExperimental,
@@ -1819,6 +1805,16 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:              "alertingRuleRecoverDeleted",
+			Description:       "Enables the UI functionality to recover and view deleted alert rules",
+			FrontendOnly:      true,
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
 		},
 	}
 )

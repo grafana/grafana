@@ -8,6 +8,7 @@ import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
   forceRenderChildren,
+  getDashboardSceneFor,
   getGridItemKeyForPanelId,
   getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
@@ -72,14 +73,11 @@ export class AutoGridLayoutManager
       layout:
         state.layout ??
         new AutoGridLayout({
+          isDraggable: true,
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
           autoRows: getAutoRowsTemplate(rowHeight, fillScreen),
         }),
     });
-
-    // @ts-ignore
-    this.state.layout.getDragClassCancel = () => 'drag-cancel';
-    this.state.layout.isDraggable = () => true;
   }
 
   public addPanel(vizPanel: VizPanel) {
@@ -168,6 +166,7 @@ export class AutoGridLayoutManager
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({
       layout: this.state.layout.clone({
+        isDraggable: isSource && this.state.layout.state.isDraggable,
         children: this.state.layout.state.children.map((gridItem) => {
           if (gridItem instanceof AutoGridItem) {
             // Get the original panel ID from the gridItem's key
@@ -240,7 +239,10 @@ export class AutoGridLayoutManager
     }
 
     const layoutManager = AutoGridLayoutManager.createEmpty();
-    layoutManager.state.layout.setState({ children });
+    layoutManager.state.layout.setState({
+      children,
+      isDraggable: getDashboardSceneFor(layout).state.isEditing,
+    });
 
     return layoutManager;
   }

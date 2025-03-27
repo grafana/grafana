@@ -41,13 +41,17 @@ func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.
 	}
 
 	var continueToken string
-	for {
+	for ctx.Err() == nil {
 		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
 		if err != nil {
 			return fmt.Errorf("error executing list: %w", err)
 		}
 
 		for _, item := range list.Items {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+
 			r.progress.Record(ctx, r.write(ctx, &item))
 			if err := r.progress.TooManyErrors(); err != nil {
 				return err
@@ -60,7 +64,7 @@ func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.
 		}
 	}
 
-	return nil
+	return ctx.Err()
 }
 
 func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {

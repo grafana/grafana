@@ -839,11 +839,6 @@ export interface FeatureToggles {
   */
   prometheusUsesCombobox?: boolean;
   /**
-  * Enables the user storage API
-  * @default true
-  */
-  userStorageAPI?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -1038,10 +1033,6 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Enables additional languages
-  */
-  extraLanguages?: boolean;
-  /**
   * Disables backdrop blur
   */
   noBackdropBlur?: boolean;
@@ -1057,4 +1048,9 @@ export interface FeatureToggles {
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
+  /**
+  * Enables the UI functionality to recover and view deleted alert rules
+  * @default true
+  */
+  alertingRuleRecoverDeleted?: boolean;
 }
