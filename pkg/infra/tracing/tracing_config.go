@@ -24,6 +24,7 @@ type TracingConfig struct {
 	ServiceVersion string
 
 	ProfilingIntegration bool
+	Insecure             bool
 }
 
 func ProvideTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
@@ -123,6 +124,7 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 		tc.enabled = otlpExporter
 	}
 	tc.Propagation = section.Key("propagation").MustString("")
+	tc.Insecure = section.Key("insecure").MustBool(true)
 	return tc, nil
 }
 

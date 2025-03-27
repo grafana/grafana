@@ -18,9 +18,10 @@ import { useTheme2 } from '../../../themes';
 import { Trans } from '../../../utils/i18n';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../../Pagination/Pagination';
+import { TableCellInspector } from '../TableCellInspector';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
-import { FooterItem, GrafanaTableState, BaseTableProps as Props } from '../types';
+import { FooterItem, GrafanaTableState, InspectCell, TableRTProps as Props } from '../types';
 import {
   getColumns,
   sortCaseInsensitive,
@@ -72,6 +73,7 @@ export const Table = memo((props: Props) => {
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
   const noValuesDisplayText = fieldConfig?.defaults?.noValue ?? NO_DATA_TEXT;
+  const [inspectCell, setInspectCell] = useState<InspectCell | null>(null);
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = FOOTER_ROW_HEIGHT;
@@ -324,66 +326,82 @@ export const Table = memo((props: Props) => {
   }
 
   return (
-    <div
-      {...getTableProps()}
-      className={tableStyles.table}
-      aria-label={ariaLabel}
-      role="table"
-      ref={tableDivRef}
-      style={{ width, height }}
-    >
-      <CustomScrollbar hideVerticalTrack={true}>
-        <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
-          {!noHeader && (
-            <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
-          )}
-          {itemCount > 0 ? (
-            <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
-              <RowsList
-                headerGroups={headerGroups}
-                data={data}
-                rows={rows}
-                width={width}
-                cellHeight={cellHeight}
-                headerHeight={headerHeight}
-                rowHeight={tableStyles.rowHeight}
-                itemCount={itemCount}
-                pageIndex={state.pageIndex}
-                listHeight={listHeight}
-                listRef={listRef}
-                tableState={state}
-                prepareRow={prepareRow}
-                timeRange={timeRange}
-                onCellFilterAdded={onCellFilterAdded}
-                nestedDataField={nestedDataField}
+    <>
+      <div
+        {...getTableProps()}
+        className={tableStyles.table}
+        aria-label={ariaLabel}
+        role="table"
+        ref={tableDivRef}
+        style={{ width, height }}
+      >
+        <CustomScrollbar hideVerticalTrack={true}>
+          <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
+            {!noHeader && (
+              <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
+            )}
+            {itemCount > 0 ? (
+              <div
+                data-testid={selectors.components.Panels.Visualization.Table.body}
+                ref={variableSizeListScrollbarRef}
+              >
+                <RowsList
+                  headerGroups={headerGroups}
+                  data={data}
+                  rows={rows}
+                  width={width}
+                  cellHeight={cellHeight}
+                  headerHeight={headerHeight}
+                  rowHeight={tableStyles.rowHeight}
+                  itemCount={itemCount}
+                  pageIndex={state.pageIndex}
+                  listHeight={listHeight}
+                  listRef={listRef}
+                  tableState={state}
+                  prepareRow={prepareRow}
+                  timeRange={timeRange}
+                  onCellFilterAdded={onCellFilterAdded}
+                  nestedDataField={nestedDataField}
+                  tableStyles={tableStyles}
+                  footerPaginationEnabled={Boolean(enablePagination)}
+                  enableSharedCrosshair={enableSharedCrosshair}
+                  initialRowIndex={initialRowIndex}
+                  longestField={longestField}
+                  textWrapField={textWrapField}
+                  getActions={getActions}
+                  replaceVariables={replaceVariables}
+                  setInspectCell={setInspectCell}
+                />
+              </div>
+            ) : (
+              <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
+                {noValuesDisplayText}
+              </div>
+            )}
+            {footerItems && (
+              <FooterRow
+                isPaginationVisible={Boolean(enablePagination)}
+                footerValues={footerItems}
+                footerGroups={footerGroups}
+                totalColumnsWidth={totalColumnsWidth}
                 tableStyles={tableStyles}
-                footerPaginationEnabled={Boolean(enablePagination)}
-                enableSharedCrosshair={enableSharedCrosshair}
-                initialRowIndex={initialRowIndex}
-                longestField={longestField}
-                textWrapField={textWrapField}
-                getActions={getActions}
-                replaceVariables={replaceVariables}
               />
-            </div>
-          ) : (
-            <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
-              {noValuesDisplayText}
-            </div>
-          )}
-          {footerItems && (
-            <FooterRow
-              isPaginationVisible={Boolean(enablePagination)}
-              footerValues={footerItems}
-              footerGroups={footerGroups}
-              totalColumnsWidth={totalColumnsWidth}
-              tableStyles={tableStyles}
-            />
-          )}
-        </div>
-      </CustomScrollbar>
-      {paginationEl}
-    </div>
+            )}
+          </div>
+        </CustomScrollbar>
+        {paginationEl}
+      </div>
+
+      {inspectCell !== null && (
+        <TableCellInspector
+          mode={inspectCell.mode}
+          value={inspectCell.value}
+          onDismiss={() => {
+            setInspectCell(null);
+          }}
+        />
+      )}
+    </>
   );
 });
 

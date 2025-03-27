@@ -105,6 +105,7 @@ const sortColumnsRef = { current: [] };
 const mockOptions = {
   ctx: null as unknown as CanvasRenderingContext2D,
   rows: [],
+  sortedRows: [],
   setContextMenuProps: () => {},
   setFilter: () => {},
   setIsInspecting: () => {},
