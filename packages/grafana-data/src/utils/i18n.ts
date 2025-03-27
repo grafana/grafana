@@ -19,11 +19,6 @@ const TURKISH_TURKEY = 'tr-TR';
 const CHINESE_TRADITIONAL = 'zh-Hant';
 
 /**
- * Pseudo locale.
- */
-export const PSEUDO_LOCALE = 'pseudo';
-
-/**
  * Default language.
  */
 export const DEFAULT_LANGUAGE = ENGLISH_US;

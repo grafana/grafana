@@ -3,7 +3,6 @@ import { PureComponent } from 'react';
 import * as React from 'react';
 
 import { FeatureState, ThemeRegistryItem } from '@grafana/data';
-import { PSEUDO_LOCALE } from '@grafana/data/unstable';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
@@ -24,7 +23,7 @@ import {
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
-import { LANGUAGES } from 'app/core/internationalization/constants';
+import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
