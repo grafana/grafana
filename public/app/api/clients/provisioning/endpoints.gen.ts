@@ -852,10 +852,10 @@ export type ExportJobOptions = {
 };
 export type JobSpec = {
   /** Possible enum values:
-     - `"migrate"` Migration task -- this will migrate an full instance from SQL > Git
-     - `"pr"` Process a pull request -- apply comments with preview images, links etc
-     - `"pull"` Sync the remote branch with the grafana instance
-     - `"push"` Export from grafana into the remote repository */
+     - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
+     - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
+     - `"pull"` replicates the remote branch in the local copy of the repository.
+     - `"push"` replicates the local copy of the repository in the remote branch. */
   action: 'migrate' | 'pr' | 'pull' | 'push';
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;

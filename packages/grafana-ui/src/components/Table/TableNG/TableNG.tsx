@@ -388,8 +388,9 @@ export function TableNG(props: TableNGProps) {
           isCountRowsSet,
           onSortByChange,
           osContext,
+          rows,
           // INFO: sortedRows is for correct row indexing for cell background coloring
-          rows: sortedRows,
+          sortedRows,
           setContextMenuProps,
           setFilter,
           setIsInspecting,
@@ -598,6 +599,7 @@ export function mapFrameToDataGrid({
     onSortByChange,
     osContext,
     rows,
+    sortedRows,
     setContextMenuProps,
     setFilter,
     setIsInspecting,
@@ -693,7 +695,7 @@ export function mapFrameToDataGrid({
       fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values.get(rows[rowIndex].__index));
+        const display = field.display!(field.values.get(sortedRows[rowIndex].__index));
         const colors = getCellColors(theme, fieldOptions.cellOptions, display);
         return colors;
       };
