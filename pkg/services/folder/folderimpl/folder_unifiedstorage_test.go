@@ -775,6 +775,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 		k8sclient:    fakeK8sClient,
 		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 		unifiedStore: folderStore,
+		tracer:       tracing.NewNoopTracerService(),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
@@ -866,6 +867,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 		publicDashboardService: publicDashboardFakeService,
 		registry:               make(map[string]folder.RegistryService),
 		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
+		tracer:                 tracing.NewNoopTracerService(),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
