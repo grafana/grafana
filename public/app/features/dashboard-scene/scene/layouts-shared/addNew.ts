@@ -16,12 +16,6 @@ export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
     throw new Error('Parent layout is not a LayoutParent');
   }
 
-  // If layout parent is tab item we add new tab after it rather than create a nested tab
-  if (layoutParent instanceof TabItem) {
-    const tabsLayout = sceneGraph.getAncestor(layoutParent, TabsLayoutManager);
-    return tabsLayout.addTabAfter(layoutParent);
-  }
-
   if (layout instanceof TabsLayoutManager) {
     return layout.addNewTab();
   }
@@ -50,17 +44,6 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
     }
   }
 
-  const layoutParent = layout.parent!;
-  if (!isLayoutParent(layoutParent)) {
-    throw new Error('Parent layout is not a LayoutParent');
-  }
-
-  // If adding we are adding a row to a row we add it below the current row
-  if (layoutParent instanceof RowItem) {
-    const rowsLayout = sceneGraph.getAncestor(layoutParent, RowsLayoutManager);
-    return rowsLayout.addRowBelow(layoutParent);
-  }
-
   if (layout instanceof RowsLayoutManager) {
     return layout.addNewRow();
   }
@@ -68,6 +51,11 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   if (layout instanceof TabsLayoutManager) {
     const currentTab = layout.getCurrentTab();
     return addNewRowTo(currentTab.state.layout);
+  }
+
+  const layoutParent = layout.parent!;
+  if (!isLayoutParent(layoutParent)) {
+    throw new Error('Parent layout is not a LayoutParent');
   }
 
   // If we want to add a row and current layout is custom grid or auto we migrate to rows layout
