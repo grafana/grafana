@@ -103,7 +103,6 @@ func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
 		}
 
 		row[colIndex] = val
-
 	}
 
 	ri.row++
