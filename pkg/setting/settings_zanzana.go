@@ -18,7 +18,8 @@ type ZanzanaClientSettings struct {
 	// Addr is the address of the Zanzana server.
 	// Only used when mode is set to client.
 	Addr string
-	//TODO add comment
+	// Certificate used for TLS setup
+	// Only used when mode is set to client
 	ServerCertFile string
 	// Token used to perform the exchange request.
 	// Only used when mode is set to client.
