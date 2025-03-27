@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
+import { PageInfoItem } from '@grafana/runtime/internal';
 import {
   Stack,
   Text,
@@ -229,6 +229,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                 This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email
                 us at:{' '}
               </Trans>
+              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <TextLink href="mailto:integrations+report-plugin@grafana.com">integrations@grafana.com</TextLink>
             </Text>
             <Text>
