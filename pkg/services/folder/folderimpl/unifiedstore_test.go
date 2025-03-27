@@ -189,7 +189,7 @@ func TestGetParents(t *testing.T) {
 func TestGetChildren(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
 	store := FolderUnifiedStoreImpl{
-		k8sclient: mockCli,
+		k8sclient:   mockCli,
 		userService: usertest.NewUserServiceFake(),
 	}
 
