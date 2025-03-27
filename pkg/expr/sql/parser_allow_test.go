@@ -62,6 +62,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    `SELECT 'some text' COLLATE utf8mb4_bin`,
 			err:  nil,
 		},
+		{
+			name: "allow substring_index",
+			q:    `SELECT __value__, SUBSTRING_INDEX(name, '.', -1) AS code FROM A`,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
