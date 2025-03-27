@@ -72,7 +72,7 @@ func (j *migrateFromLegacyJob) migrateLegacyResources(ctx context.Context) error
 		opts := legacy.MigrateOptions{
 			Namespace:   j.namespace,
 			WithHistory: j.options.History,
-			Resources:   []schema.GroupResource{kind},
+			Resources:   []schema.GroupResource{kind.GroupResource()},
 			Store:       parquet.NewBulkResourceWriterClient(&resourceReader{job: j}),
 			OnlyCount:   true, // first get the count
 		}

@@ -15,7 +15,7 @@ import (
 
 func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) error {
 	for _, gr := range resources.SupportedResources {
-		status, _ := dual.Status(ctx, gr)
+		status, _ := dual.Status(ctx, gr.GroupResource())
 		status.ReadUnified = false
 		status.Migrated = 0
 		status.Migrating = 0
@@ -30,7 +30,7 @@ func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) erro
 
 func (j *migrateFromLegacyJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service) error {
 	for _, gr := range resources.SupportedResources {
-		status, _ := dual.Status(ctx, gr)
+		status, _ := dual.Status(ctx, gr.GroupResource())
 		if status.ReadUnified {
 			return fmt.Errorf("unexpected state - already using unified storage for: %s", gr)
 		}

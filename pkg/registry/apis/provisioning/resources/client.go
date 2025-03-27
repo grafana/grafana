@@ -192,7 +192,7 @@ func (c *ResourceClients) ForEachUnmanagedResource(ctx context.Context, fn func(
 // ForEachSupportedResource applies the function to each supported resource
 func (c *ResourceClients) ForEachSupportedResource(ctx context.Context, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
 	for _, kind := range SupportedResources {
-		if err := c.ForEachResource(ctx, kind.WithVersion(""), fn); err != nil {
+		if err := c.ForEachResource(ctx, kind, fn); err != nil {
 			return err
 		}
 	}
@@ -200,36 +200,42 @@ func (c *ResourceClients) ForEachSupportedResource(ctx context.Context, fn func(
 }
 
 func (c *ResourceClients) Folder() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(schema.GroupVersionResource{
-		Group:    folders.GROUP,
-		Version:  folders.VERSION,
-		Resource: folders.RESOURCE,
-	})
-	return v, err
+	client, _, err := c.ForResource(FolderResource)
+	return client, err
+}
+
+func (c *ResourceClients) ForEachFolder(ctx context.Context, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
+	return c.ForEachResource(ctx, FolderResource, fn)
 }
 
 func (c *ResourceClients) User() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(schema.GroupVersionResource{
-		Group:    iam.GROUP,
-		Version:  iam.VERSION,
-		Resource: iam.UserResourceInfo.GroupResource().Resource,
-	})
+	v, _, err := c.ForResource(UserResource)
 	return v, err
 }
 
+// TODO: Remove this after the other PR is merged
 func (c *ResourceClients) Dashboard() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(schema.GroupVersionResource{
-		Group:    dashboard.GROUP,
-		Version:  dashboard.VERSION,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-	})
+	v, _, err := c.ForResource(DashboardResource)
 	return v, err
 }
 
-var SupportedResources = []schema.GroupResource{{
+var UserResource = schema.GroupVersionResource{
+	Group:    iam.GROUP,
+	Version:  iam.VERSION,
+	Resource: iam.UserResourceInfo.GroupResource().Resource,
+}
+
+var FolderResource = schema.GroupVersionResource{
 	Group:    folders.GROUP,
+	Version:  folders.VERSION,
 	Resource: folders.RESOURCE,
-}, {
+}
+
+var DashboardResource = schema.GroupVersionResource{
 	Group:    dashboard.GROUP,
+	Version:  dashboard.VERSION,
 	Resource: dashboard.DASHBOARD_RESOURCE,
-}}
+}
+
+// SupportedResources is the list of resources that are supported by provisioning
+var SupportedResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
