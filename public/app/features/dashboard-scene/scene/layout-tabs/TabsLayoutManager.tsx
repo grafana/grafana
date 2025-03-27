@@ -150,7 +150,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addTabBefore(tab: TabItem): TabItem {
-    const newTab = new TabItem();
+    const newTab = new TabItem({ isNew: true });
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab), 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex });
@@ -160,7 +160,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addTabAfter(tab: TabItem): TabItem {
-    const newTab = new TabItem();
+    const newTab = new TabItem({ isNew: true });
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });

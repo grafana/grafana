@@ -115,7 +115,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public addRowAbove(row: RowItem): RowItem {
     const index = this.state.rows.indexOf(row);
-    const newRow = new RowItem();
+    const newRow = new RowItem({ isNew: true });
     const newRows = [...this.state.rows];
 
     newRows.splice(index, 0, newRow);
@@ -135,7 +135,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       index = index + 1;
     }
 
-    const newRow = new RowItem();
+    const newRow = new RowItem({ isNew: true });
     const newRows = [...this.state.rows];
 
     newRows.splice(index + 1, 0, newRow);
