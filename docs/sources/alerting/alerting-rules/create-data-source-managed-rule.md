@@ -155,10 +155,3 @@ All alert rules and instances, irrespective of their labels, match the default n
    Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 
 {{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Restore deleted alert rules
-
-Deleted alert rules are stored for 30 days. Admins can restore deleted Grafana-managed alert rules.
-
-1. Go to **Alerts & IRM > Alerting > Recently deleted**.
-1. Click the **Restore** button to restore the alert rule.
