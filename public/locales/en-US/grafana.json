@@ -494,6 +494,18 @@
         "title": "Title",
         "updated": "Deletion Date",
         "updatedBy": "Deleted By"
+      }
+    },
+    "deletedRules": {
+      "delete-modal": {
+        "confirm": "Yes, deleted permanently",
+        "error": "Could not delete alert rule permanently",
+        "success": "Alert rule deleted permanently",
+        "title": "Delete permanently an alert rule"
+      },
+      "delete-permanently": "Delete permanently",
+      "restore-modal": {
+        "body": "Are you sure you want to delete permanently this alert rule? This action cannot be undone."
       },
       "unknown": "Unknown"
     },
