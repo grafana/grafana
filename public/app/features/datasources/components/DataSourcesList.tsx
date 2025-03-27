@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -88,6 +89,10 @@ export function DataSourcesListView({
     );
   }
 
+  const onDragEnd = (result: DropResult) => {
+    console.log('DRAG', result);
+  };
+
   const getDataSourcesList = () => {
     if (isLoading) {
       return new Array(20)
@@ -95,15 +100,34 @@ export function DataSourcesListView({
         .map((_, index) => <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />);
     }
 
-    return dataSources.map((dataSource) => (
-      <li key={dataSource.uid}>
-        <DataSourcesListCard
-          dataSource={dataSource}
-          hasWriteRights={hasWriteRights}
-          hasExploreRights={hasExploreRights}
-        />
-      </li>
-    ));
+    if (true) {
+      console.log('DRAGDROPPABLE', dataSources);
+      return (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="datasource-list" direction="vertical">
+            {(droppable) => (
+              <div ref={droppable.innerRef} {...droppable.droppableProps}>
+                {dataSources.map((dataSource, index) => (
+                  <Draggable key={dataSource.uid} draggableId={dataSource.uid} index={index}>
+                    {(draggable) => (
+                      <div key={dataSource.uid} ref={draggable.innerRef} {...draggable.draggableProps}>
+                        <DataSourcesListCard
+                          dataSource={dataSource}
+                          hasWriteRights={hasWriteRights}
+                          hasExploreRights={hasExploreRights}
+                          dragHandleProps={draggable.dragHandleProps}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {droppable.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      );
+    }
   };
 
   return (

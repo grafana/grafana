@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
+import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import Skeleton from 'react-loading-skeleton';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
+import { Card, Icon, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
@@ -13,9 +14,10 @@ export interface Props {
   dataSource: DataSourceSettings;
   hasWriteRights: boolean;
   hasExploreRights: boolean;
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }
 
-export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights }: Props) {
+export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights, dragHandleProps }: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
 
@@ -70,6 +72,12 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
           >
             Explore
           </LinkButton>
+        )}
+
+        {dragHandleProps && (
+          <span {...dragHandleProps}>
+            &nbsp;&nbsp;&nbsp; <Icon name="draggabledots" size="lg" />
+          </span>
         )}
       </Card.Tags>
     </Card>
