@@ -74,7 +74,6 @@ export const AnnoKeyFolderId = 'grafana.app/folderId';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 
-
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
 
