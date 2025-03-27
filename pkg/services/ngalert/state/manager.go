@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/url"
 	"strconv"
-	
+	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -403,45 +403,45 @@ func (st *Manager) updateLastSentAt(states StateTransitions, evaluatedAt time.Ti
 }
 
 func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger, takeImageFn takeImageFn) []StateTransition {
-	if st.applyNoDataAndErrorToAllStates {
-        if results.IsNoData() {
-            if alertRule.NoDataState == ngModels.KeepLast {
-                currentStates := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID)
-                for _, state := range currentStates {
-                    if state.State == eval.Alerting {
-                        state.LastEvaluationTime = st.clock.Now()
-                    }
-                }
-                return nil
-            } else if alertRule.NoDataState == ngModels.Alerting {
-                newState := &State{
-                    AlertRuleUID: alertRule.UID,
-                    OrgID:        alertRule.OrgID,
-                    State:        eval.NoData,
-                    StateReason:  "No data received",
-                    Labels:       extraLabels,
-                    StartsAt:     st.clock.Now(),
-                    EndsAt:       time.Time{},
-                }
-                st.cache.set(newState)
-                return []StateTransition{{State: newState}}
-            }
-        }
-        if results.IsError() && alertRule.ExecErrState == ngModels.AlertingErrState {
-            newState := &State{
-                AlertRuleUID: alertRule.UID,
-                OrgID:        alertRule.OrgID,
-                State:        eval.Alerting,
-                StateReason:  "Execution error occurred",
-                Labels:       extraLabels,
-                StartsAt:     st.clock.Now(),
-                EndsAt:       time.Time{},
-            }
-            st.cache.set(newState)
-            return []StateTransition{{State: newState}}
-        }
-    }
-	
+	if st.applyNoDataAndErrorToAllStates && results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK || alertRule.NoDataState == ngModels.KeepLast) { // If it is no data, check the mapping and switch all results to the new state
+		// aggregate UID of datasources that returned NoData into one and provide as auxiliary info via annotationa. See: https://github.com/grafana/grafana/issues/88184
+		var refIds strings.Builder
+		var datasourceUIDs strings.Builder
+		// for deduplication of datasourceUIDs
+		dsUIDSet := make(map[string]bool)
+		for i, result := range results {
+			if refid, ok := result.Instance["ref_id"]; ok {
+				if i > 0 {
+					refIds.WriteString(",")
+				}
+				refIds.WriteString(refid)
+			}
+			if dsUID, ok := result.Instance["datasource_uid"]; ok {
+				if !dsUIDSet[dsUID] {
+					if i > 0 {
+						refIds.WriteString(",")
+					}
+					datasourceUIDs.WriteString(dsUID)
+					dsUIDSet[dsUID] = true
+				}
+			}
+		}
+		annotations := map[string]string{
+			"datasource_uid": datasourceUIDs.String(),
+			"ref_id":         refIds.String(),
+		}
+		transitions := st.setNextStateForAll(alertRule, results[0], logger, annotations, takeImageFn)
+		if len(transitions) > 0 {
+			return transitions // if there are no current states for the rule. Create ones for each result
+		}
+	}
+	if st.applyNoDataAndErrorToAllStates && results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState || alertRule.ExecErrState == ngModels.KeepLastErrState) {
+		// TODO squash all errors into one, and provide as annotation
+		transitions := st.setNextStateForAll(alertRule, results[0], logger, nil, takeImageFn)
+		if len(transitions) > 0 {
+			return transitions // if there are no current states for the rule. Create ones for each result
+		}
+	}
 	transitions := make([]StateTransition, 0, len(results))
 	for _, result := range results {
 		newState := newState(ctx, logger, alertRule, result, extraLabels, st.externalURL)
