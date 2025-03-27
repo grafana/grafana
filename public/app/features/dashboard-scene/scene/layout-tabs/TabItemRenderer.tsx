@@ -22,6 +22,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   return (
     <Tab
+      ref={model.containerRef}
       truncate
       className={cx(
         isSelected && 'dashboard-selected-element',

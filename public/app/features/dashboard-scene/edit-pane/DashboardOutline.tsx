@@ -37,6 +37,7 @@ function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneO
 
   const children = collectEditableElementChildren(sceneObject);
   const elementInfo = editableElement.getEditableElementInfo();
+  const instanceName = elementInfo.instanceName === '' ? '<empty title>' : elementInfo.instanceName;
 
   return (
     <>
@@ -46,11 +47,12 @@ function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneO
         onPointerDown={(evt) => {
           onSelect?.(evt);
           setIsExpanded(!isExpanded);
+          editableElement.scrollIntoView?.();
         }}
       >
         {expandable && <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />}
         <Icon size="sm" name={elementInfo.icon} />
-        <span>{elementInfo.instanceName}</span>
+        <span>{instanceName}</span>
       </button>
 
       {expandable && isExpanded && (

@@ -42,6 +42,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 
   return (
     <div
+      ref={model.containerRef}
       data-dashboard-drop-target-key={model.state.key}
       className={cx(
         styles.wrapper,
