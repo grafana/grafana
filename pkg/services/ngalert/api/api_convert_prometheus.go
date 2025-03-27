@@ -329,10 +329,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *contextmodel.ReqContext, promNamespaces map[string][]apimodels.PrometheusRuleGroup) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	// 1. Parse the appropriate headers and query params
-	namespaceFilter := c.Query("namespace")
-	groupFilter := c.Query("group")
-
+	// 1. Parse the appropriate headers
 	workingFolderUID := getWorkingFolderUID(c)
 	logger = logger.New("working_folder_uid", workingFolderUID)
 
@@ -378,23 +375,6 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 	// 2. Convert Prometheus Rules to GMA
 	grafanaGroups := make([]*models.AlertRuleGroup, 0, len(promNamespaces))
 	for ns, rgs := range promNamespaces {
-		// Check Namespace filter
-		if namespaceFilter != "" && ns != namespaceFilter {
-			continue
-		}
-
-		// Need to filter groups here so we don't end up unnecessarily creating empty namespaces
-		if groupFilter != "" {
-			filteredRgs := make([]apimodels.PrometheusRuleGroup, 0, len(rgs))
-			for _, rg := range rgs {
-				if rg.Name != groupFilter {
-					continue
-				}
-				filteredRgs = append(filteredRgs, rg)
-			}
-			rgs = filteredRgs
-		}
-
 		logger.Debug("Creating a new namespace", "title", ns)
 		namespace, errResp := srv.getOrCreateNamespace(c, ns, logger, workingFolderUID)
 		if errResp != nil {

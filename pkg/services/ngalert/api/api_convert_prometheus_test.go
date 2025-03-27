@@ -1147,73 +1147,6 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 		}
 	})
 
-	t.Run("convert Prometheus rules but filter by namespace", func(t *testing.T) {
-		clear(ruleStore.Rules)
-
-		req.Req.Form.Set("namespace", "namespace2")
-
-		// Call the endpoint
-		response := srv.RouteConvertPrometheusPostRuleGroups(req, promGroups)
-		require.Equal(t, http.StatusAccepted, response.Status())
-
-		// Verify the rules were created
-		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
-		})
-
-		require.NoError(t, err)
-		require.Len(t, rules, 2)
-
-		for _, rule := range rules {
-			require.Equal(t, "TestGroup3", rule.RuleGroup)
-		}
-	})
-
-	t.Run("convert Prometheus rules but filter by group", func(t *testing.T) {
-		clear(ruleStore.Rules)
-
-		req.Req.Form.Del("namespace")
-		req.Req.Form.Set("group", "TestGroup1")
-
-		// Call the endpoint
-		response := srv.RouteConvertPrometheusPostRuleGroups(req, promGroups)
-		require.Equal(t, http.StatusAccepted, response.Status())
-
-		// Verify the rules were created
-		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
-		})
-
-		require.NoError(t, err)
-		require.Len(t, rules, 1)
-
-		for _, rule := range rules {
-			require.Equal(t, "TestGroup1", rule.RuleGroup)
-		}
-	})
-
-	t.Run("convert Prometheus rules but filter by namespace and group", func(t *testing.T) {
-		clear(ruleStore.Rules)
-		req.Req.Form.Set("namespace", "namespace1")
-		req.Req.Form.Set("group", "TestGroup2")
-
-		// Call the endpoint
-		response := srv.RouteConvertPrometheusPostRuleGroups(req, promGroups)
-		require.Equal(t, http.StatusAccepted, response.Status())
-
-		// Verify the rules were created
-		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
-		})
-
-		require.NoError(t, err)
-		require.Len(t, rules, 1)
-
-		for _, rule := range rules {
-			require.Equal(t, "TestGroup2", rule.RuleGroup)
-		}
-	})
-
 	t.Run("convert Prometheus rules to Grafana rules into a specified target folder", func(t *testing.T) {
 		clear(ruleStore.Rules)
 
@@ -1224,8 +1157,6 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 		folderService.ExpectedFolders = []*folder.Folder{fldr}
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
-		req.Req.Form.Del("namespace")
-		req.Req.Form.Del("group")
 		req.Req.Header.Del(recordingRulesPausedHeader)
 		req.Req.Header.Del(alertRulesPausedHeader)
 		req.Req.Header.Set(folderUIDHeader, fldr.UID)
