@@ -1372,6 +1372,14 @@
         "min-width-error": "A number between 50 and 2000 is required"
       }
     },
+    "canvas-actions": {
+      "add-panel": "Add panel",
+      "group-into-row": "Group into row",
+      "group-into-tab": "Group into tab",
+      "group-panels": "Group panels",
+      "new-row": "New row",
+      "new-tab": "New tab"
+    },
     "conditional-rendering": {
       "data": {
         "disable": "Disable",
@@ -1612,15 +1620,6 @@
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
-        "menu": {
-          "add": "Add row",
-          "add-panel": "Panel",
-          "add-row-above": "Row above",
-          "add-row-below": "Row below",
-          "move-down": "Move row down",
-          "move-row": "Move row",
-          "move-up": "Move row up"
-        },
         "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
@@ -1645,20 +1644,8 @@
     },
     "tabs-layout": {
       "description": "Organize panels into horizontal tabs",
-      "menu": {
-        "move-tab": "Move tab"
-      },
       "name": "Tabs",
       "tab": {
-        "menu": {
-          "add": "Add tab",
-          "add-panel": "Panel",
-          "add-tab-above": "Tab before",
-          "add-tab-after": "Tab after",
-          "add-tab-before": "Tab before",
-          "move-left": "Move tab left",
-          "move-right": "Move tab right"
-        },
         "new": "New tab"
       },
       "tab-options": {

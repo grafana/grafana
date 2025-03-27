@@ -106,28 +106,8 @@ export class TabItem
     this.getLayout().addPanel(panel);
   }
 
-  public onAddTabBefore() {
-    this._getParentLayout().addTabBefore(this);
-  }
-
-  public onAddTabAfter() {
-    this._getParentLayout().addTabAfter(this);
-  }
-
-  public onMoveLeft() {
-    this._getParentLayout().moveTabLeft(this);
-  }
-
-  public onMoveRight() {
-    this._getParentLayout().moveTabRight(this);
-  }
-
-  public isFirstTab(): boolean {
-    return this._getParentLayout().isFirstTab(this);
-  }
-
-  public isLastTab(): boolean {
-    return this._getParentLayout().isLastTab(this);
+  public onAddTab() {
+    this._getParentLayout().addNewTab();
   }
 
   public onChangeTitle(title: string) {
