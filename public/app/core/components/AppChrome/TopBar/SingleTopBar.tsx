@@ -89,7 +89,7 @@ export const SingleTopBar = memo(function SingleTopBar({
         />
         {!contextSrv.user.isSignedIn && <SignInLink />}
         {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
-        <ExtensionToolbarItem />
+        {config.featureToggles.extensionSidebar && <ExtensionToolbarItem />}
         {profileNode && <ProfileButton profileNode={profileNode} />}
       </Stack>
     </div>

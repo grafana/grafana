@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
+import { config, locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
@@ -27,7 +27,9 @@ export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
-  const { isOpen: isExtensionSidebarOpen } = useExtensionSidebarContext();
+  const { isOpen: isExtensionSidebarOpen } = config.featureToggles.extensionSidebar
+    ? useExtensionSidebarContext()
+    : { isOpen: false };
   const state = chrome.useState();
   const theme = useTheme2();
   const scopes = useScopes();
@@ -129,7 +131,7 @@ export function AppChrome({ children }: Props) {
           >
             {children}
           </main>
-          {isExtensionSidebarOpen && (
+          {config.featureToggles.extensionSidebar && isExtensionSidebarOpen && (
             <div className={styles.sidebarContainer}>
               <ExtensionSidebar />
             </div>
