@@ -13,8 +13,8 @@ export function ExtensionToolbarItem() {
   }
 
   // get a flat list of all components with their pluginId
-  const components = Array.from(availableComponents.entries()).flatMap(([pluginId, { exposedComponents }]) =>
-    exposedComponents.map((c) => ({ ...c, pluginId }))
+  const components = Array.from(availableComponents.entries()).flatMap(([pluginId, { addedComponents }]) =>
+    addedComponents.map((c) => ({ ...c, pluginId }))
   );
 
   if (components.length === 0) {

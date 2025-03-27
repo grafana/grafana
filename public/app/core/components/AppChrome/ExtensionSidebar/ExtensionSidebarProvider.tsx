@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 import { store, type ExtensionInfo } from '@grafana/data';
-import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
+import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
 export const EXTENSION_SIDEBAR_EXTENSION_POINT_ID = 'grafana/extension-sidebar/v0-alpha';
 const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
@@ -23,13 +23,7 @@ type ExtensionSidebarContextType = {
   /**
    * A map of all components that are available for the extension point.
    */
-  availableComponents: Map<
-    string,
-    {
-      readonly exposedComponents: ExtensionInfo[];
-      readonly addedLinks: ExtensionInfo[];
-    }
-  >;
+  availableComponents: ExtensionPointPluginMeta;
 };
 
 export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
@@ -63,7 +57,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     if (dockedMeta) {
       const plugin = availableComponents.get(dockedMeta.pluginId);
       if (plugin) {
-        const component = plugin.exposedComponents.find((c) => c.title === dockedMeta.componentTitle);
+        const component = plugin.addedComponents.find((c) => c.title === dockedMeta.componentTitle);
         if (component) {
           defaultDockedComponentId = storedDockedPluginId;
         }

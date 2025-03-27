@@ -17,6 +17,7 @@ import {
   PluginExtensionAddedLinkConfig,
   urlUtil,
   PluginExtensionPoints,
+  ExtensionInfo,
 } from '@grafana/data';
 import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
@@ -446,7 +447,20 @@ export const getExtensionPointPluginDependencies = (extensionPointId: string): s
     }, []);
 };
 
-export const getExtensionPointPluginMeta = (extensionPointId: string) => {
+export type ExtensionPointPluginMeta = Map<
+  string,
+  {
+    readonly addedComponents: ExtensionInfo[];
+    readonly addedLinks: ExtensionInfo[];
+  }
+>;
+
+/**
+ * Returns a map of plugin ids and their addedComponents and addedLinks to the extension point.
+ * @param extensionPointId - The id of the extension point.
+ * @returns A map of plugin ids and their addedComponents and addedLinks to the extension point.
+ */
+export const getExtensionPointPluginMeta = (extensionPointId: string): ExtensionPointPluginMeta => {
   return new Map(
     getExtensionPointPluginDependencies(extensionPointId)
       .map((pluginId) => {
@@ -462,7 +476,7 @@ export const getExtensionPointPluginMeta = (extensionPointId: string) => {
         return [
           pluginId,
           {
-            exposedComponents: app.extensions.addedComponents.filter((component) =>
+            addedComponents: app.extensions.addedComponents.filter((component) =>
               component.targets.includes(extensionPointId)
             ),
             addedLinks: app.extensions.addedLinks.filter((link) => link.targets.includes(extensionPointId)),
