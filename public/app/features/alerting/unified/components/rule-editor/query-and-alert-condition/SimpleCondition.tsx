@@ -57,7 +57,9 @@ export const SimpleConditionEditor = ({
 
   const isRange =
     simpleCondition.evaluator.type === EvalFunction.IsWithinRange ||
-    simpleCondition.evaluator.type === EvalFunction.IsOutsideRange;
+    simpleCondition.evaluator.type === EvalFunction.IsOutsideRange ||
+    simpleCondition.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
+    simpleCondition.evaluator.type === EvalFunction.IsWithinRangeIncluded;
 
   const thresholdFunction = thresholdFunctions.find((fn) => fn.value === simpleCondition.evaluator?.type);
 
