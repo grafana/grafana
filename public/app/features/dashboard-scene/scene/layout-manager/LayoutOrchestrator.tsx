@@ -14,6 +14,11 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
   /** Offset from top-left corner of drag handle. */
   public dragOffset = { top: 0, left: 0 };
 
+  /** The drop zone closest to the current mouse position while dragging. */
+  public activeDropZone: (DropZone & { layout: SceneObjectRef<SceneLayoutWithDragAndDrop> }) | undefined;
+
+  private _sceneLayouts: SceneLayoutWithDragAndDrop[] = [];
+
   /** Used in `ResponsiveGridLayout`'s `onPointerDown` method */
   public onDragStart = (e: PointerEvent, panel: VizPanel) => {
     const closestLayoutItem = closestOfType(panel, isDashboardLayoutItem);
@@ -27,17 +32,38 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
       return;
     }
 
+    this._sceneLayouts = sceneGraph
+      .findAllObjects(this.getRoot(), isSceneLayoutWithDragAndDrop)
+      .filter(isSceneLayoutWithDragAndDrop);
+
     document.body.setPointerCapture(e.pointerId);
+
     const targetRect = e.target.getBoundingClientRect();
     this.dragOffset = { top: e.y - targetRect.top, left: e.x - targetRect.left };
-    this.setState({ activeLayoutItemRef: closestLayoutItem.getRef() });
+
+    closestLayoutItem.containerRef.current?.style.setProperty('--x-pos', `${e.x}px`);
+    closestLayoutItem.containerRef.current?.style.setProperty('--y-pos', `${e.y}px`);
+
+    const state: Partial<LayoutOrchestratorState> = { activeLayoutItemRef: closestLayoutItem.getRef() };
+
+    this._adjustXY({ x: e.x, y: e.y }, closestLayoutItem);
+
+    this.activeDropZone = this.findClosestDropZone({ x: e.clientX, y: e.clientY });
+    if (this.activeDropZone) {
+      state.placeholder = new DropZonePlaceholder({
+        top: this.activeDropZone.top,
+        left: this.activeDropZone.left,
+        width: this.activeDropZone.right - this.activeDropZone.left,
+        height: this.activeDropZone.bottom - this.activeDropZone.top,
+      });
+    }
+
+    this.setState(state);
+
     document.addEventListener('pointermove', this.onDrag);
     document.addEventListener('pointerup', this.onDragEnd);
     document.body.classList.add('dragging-active');
   };
-
-  /** The drop zone closest to the current mouse position while dragging. */
-  public activeDropZone: (DropZone & { layout: SceneObjectRef<SceneLayoutWithDragAndDrop> }) | undefined;
 
   /** Called every tick while a panel is actively being dragged */
   public onDrag = (e: PointerEvent) => {
@@ -49,9 +75,10 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
 
     const cursorPos: Point = { x: e.clientX, y: e.clientY };
 
-    layoutItemContainer.style.setProperty('--x-pos', `${cursorPos.x}px`);
-    layoutItemContainer.style.setProperty('--y-pos', `${cursorPos.y}px`);
+    this._adjustXY(cursorPos);
+
     const closestDropZone = this.findClosestDropZone(cursorPos);
+
     if (!dropZonesAreEqual(this.activeDropZone, closestDropZone)) {
       this.activeDropZone = closestDropZone;
       if (this.activeDropZone) {
@@ -90,15 +117,7 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     }
 
     this.moveLayoutItem(activeLayoutItem, targetLayout);
-    this.setState({
-      activeLayoutItemRef: undefined,
-    });
-    this.state.placeholder?.setState({
-      top: 0,
-      left: 0,
-      width: 0,
-      height: 0,
-    });
+    this.setState({ activeLayoutItemRef: undefined, placeholder: undefined });
     this.activeDropZone = undefined;
     activeLayoutItemContainer?.removeAttribute('style');
   };
@@ -116,12 +135,9 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
   }
 
   public findClosestDropZone(p: Point) {
-    const sceneLayouts = sceneGraph
-      .findAllObjects(this.getRoot(), isSceneLayoutWithDragAndDrop)
-      .filter(isSceneLayoutWithDragAndDrop);
     let closestDropZone: (DropZone & { layout: SceneObjectRef<SceneLayoutWithDragAndDrop> }) | undefined = undefined;
     let closestDistance = Number.MAX_VALUE;
-    for (const layout of sceneLayouts) {
+    for (const layout of this._sceneLayouts) {
       const curClosestDropZone = layout.closestDropZone(p);
       if (curClosestDropZone.distanceToPoint < closestDistance) {
         closestDropZone = { ...curClosestDropZone, layout: layout.getRef() };
@@ -130,6 +146,12 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     }
 
     return closestDropZone;
+  }
+
+  private _adjustXY(p: Point, activeLayoutItem = this.state.activeLayoutItemRef?.resolve()) {
+    const container = activeLayoutItem?.containerRef.current;
+    container?.style.setProperty('--x-pos', `${p.x}px`);
+    container?.style.setProperty('--y-pos', `${p.y}px`);
   }
 }
 

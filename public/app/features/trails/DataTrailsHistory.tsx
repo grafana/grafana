@@ -1,8 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { getTimeZoneInfo, GrafanaTheme2, InternalTimeZones, TIME_FORMAT } from '@grafana/data';
-import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
+import { getTimeZoneInfo, GrafanaTheme2, InternalTimeZones, TIME_FORMAT, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   SceneComponentProps,
@@ -17,6 +16,7 @@ import {
 } from '@grafana/scenes';
 import { Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { Trans } from 'app/core/internationalization';
 import { RecordHistoryEntryEvent } from 'app/types/events';
 
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
@@ -306,7 +306,9 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     return (
       <div className={styles.container}>
-        <div className={styles.heading}>History</div>
+        <div className={styles.heading}>
+          <Trans i18nKey="trails.data-trail-history.history">History</Trans>
+        </div>
         {steps.map((step, index) => {
           let stepType = step.type;
 
@@ -349,7 +351,7 @@ export function parseTimeTooltip(urlValues: SceneObjectUrlValues): string {
     return '';
   }
 
-  const range = convertRawToRange({
+  const range = rangeUtil.convertRawToRange({
     from: urlValues.from,
     to: urlValues.to,
   });

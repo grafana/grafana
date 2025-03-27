@@ -9,7 +9,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
+	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -27,6 +31,7 @@ import (
 const tracePrefix = "sql.resource."
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
+const defaultPrunerHistoryLimit = 20
 
 type Backend interface {
 	resource.StorageBackend
@@ -211,7 +216,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 			return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 					SQLTemplate:  sqltemplate.New(b.dialect),
-					HistoryLimit: 100,
+					HistoryLimit: defaultPrunerHistoryLimit,
 					Key: &resource.ResourceKey{
 						Namespace: key.namespace,
 						Group:     key.group,
@@ -336,6 +341,9 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			Folder:      folder,
 			GUID:        guid,
 		}); err != nil {
+			if isRowAlreadyExistsError(err) {
+				return guid, unifiedbackend.ErrResourceAlreadyExists
+			}
 			return guid, fmt.Errorf("insert into resource: %w", err)
 		}
 
@@ -374,6 +382,28 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	})
 
 	return rv, nil
+}
+
+// isRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
+func isRowAlreadyExistsError(err error) bool {
+	var sqlite sqlite3.Error
+	if errors.As(err, &sqlite) {
+		return sqlite.ExtendedCode == sqlite3.ErrConstraintUnique
+	}
+
+	var pg *pgconn.PgError
+	if errors.As(err, &pg) {
+		// https://www.postgresql.org/docs/current/errcodes-appendix.html
+		return pg.Code == "23505" // unique_violation
+	}
+
+	var mysqlerr *mysql.MySQLError
+	if errors.As(err, &mysqlerr) {
+		// https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html
+		return mysqlerr.Number == 1062 // ER_DUP_ENTRY
+	}
+
+	return false
 }
 
 func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64, error) {
@@ -525,6 +555,10 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"List")
 	defer span.End()
 
+	if err := resource.MigrateListRequestVersionMatch(req, b.log); err != nil {
+		return 0, err
+	}
+
 	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
 		return 0, fmt.Errorf("missing group or resource")
 	}
@@ -544,9 +578,10 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 }
 
 type listIter struct {
-	rows   db.Rows
-	offset int64
-	listRV int64
+	rows    db.Rows
+	offset  int64
+	listRV  int64
+	sortAsc bool
 
 	// any error
 	err error
@@ -561,11 +596,11 @@ type listIter struct {
 
 // ContinueToken implements resource.ListIterator.
 func (l *listIter) ContinueToken() string {
-	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
+	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
 }
 
 func (l *listIter) ContinueTokenWithCurrentRV() string {
-	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset}.String()
+	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
 }
 
 func (l *listIter) Error() error {
@@ -608,6 +643,9 @@ var _ resource.ListIterator = (*listIter)(nil)
 
 // listLatest fetches the resources from the resource table.
 func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"listLatest")
+	defer span.End()
+
 	if req.NextPageToken != "" {
 		return 0, fmt.Errorf("only works for the first page")
 	}
@@ -615,10 +653,10 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 		return 0, fmt.Errorf("only works for the 'latest' resource version")
 	}
 
-	iter := &listIter{}
+	iter := &listIter{sortAsc: false}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
-		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
+		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
 		}
@@ -649,8 +687,11 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"listAtRevision")
+	defer span.End()
+
 	// Get the RV
-	iter := &listIter{listRV: req.ResourceVersion}
+	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
@@ -666,6 +707,10 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	if iter.listRV < 1 {
 		return 0, apierrors.NewBadRequest("expecting an explicit resource version query")
 	}
+
+	// The query below has the potential to be EXTREMELY slow if the resource_history table is big. May be helpful to know
+	// which stack is calling this.
+	b.log.Debug("listAtRevision", "ns", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "rv", iter.listRV)
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		limit := int64(0) // ignore limit
@@ -700,13 +745,20 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	return iter.listRV, err
 }
 
-// listLatest fetches the resources from the resource table.
+// getHistory fetches the resources from the resource table.
 func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"getHistory")
+	defer span.End()
 	listReq := sqlGetHistoryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Key:         req.Options.Key,
 		Trash:       req.Source == resource.ListRequest_TRASH,
 	}
+
+	// We are assuming that users want history in ascending order
+	// when they are using NotOlderThan matching, and descending order
+	// for Unset (default) and Exact matching.
+	listReq.SortAscending = req.GetVersionMatchV2() == resource.ResourceVersionMatchV2_NotOlderThan
 
 	iter := &listIter{}
 	if req.NextPageToken != "" {
@@ -715,10 +767,12 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 			return 0, fmt.Errorf("get continue token: %w", err)
 		}
 		listReq.StartRV = continueToken.ResourceVersion
+		listReq.SortAscending = continueToken.SortAscending
 	}
+	iter.sortAsc = listReq.SortAscending
 
 	// Set ExactRV when using Exact matching
-	if req.VersionMatch == resource.ResourceVersionMatch_Exact {
+	if req.VersionMatchV2 == resource.ResourceVersionMatchV2_Exact {
 		if req.ResourceVersion <= 0 {
 			return 0, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
 		}
@@ -726,13 +780,13 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 	}
 
 	// Set MinRV when using NotOlderThan matching to filter at the database level
-	if req.ResourceVersion > 0 && req.VersionMatch == resource.ResourceVersionMatch_NotOlderThan {
+	if req.ResourceVersion > 0 && req.VersionMatchV2 == resource.ResourceVersionMatchV2_NotOlderThan {
 		listReq.MinRV = req.ResourceVersion
 	}
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
-		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
+		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
 		}
@@ -789,7 +843,9 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 }
 
 // fetchLatestRV returns the current maximum RV in the resource table
-func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
+func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"fetchLatestRV")
+	defer span.End()
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
 		SQLTemplate: sqltemplate.New(d),
 		Group:       group,

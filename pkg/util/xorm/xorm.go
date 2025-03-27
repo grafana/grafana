@@ -127,8 +127,15 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	return engine, nil
 }
 
+func (engine *Engine) ResetSequenceGenerator() {
+	if engine.sequenceGenerator != nil {
+		engine.sequenceGenerator.Reset()
+	}
+}
+
 type SequenceGenerator interface {
 	Next(ctx context.Context, table, column string) (int64, error)
+	Reset()
 }
 
 type DialectExt interface {

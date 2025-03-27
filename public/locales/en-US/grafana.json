@@ -136,7 +136,7 @@
       "title": "LDAP Synchronization"
     },
     "ldap-user-groups": {
-      "no-org-found": "No match <2><0></0></2>"
+      "no-org-found": "No match"
     },
     "ldap-user-info": {
       "no-team": "No teams found via LDAP"
@@ -730,6 +730,14 @@
       "pause": {
         "label": "Pause evaluation"
       },
+      "simple-routing": {
+        "alertmanager-label": "Alertmanager:",
+        "optional-settings": {
+          "description": "Configure how notifications for this alert rule are sent.",
+          "help-info1": "Mute timings allows you to temporarily pause notifications for a specific recurring period, such as a regular maintenance window or weekends.",
+          "help-info2": "Grouping and timing options combine multiple alerts within a specific period into a single notification, allowing you to customize default options."
+        }
+      },
       "threshold": {
         "recovery": {
           "stop-alerting-above": "Stop alerting when above",
@@ -870,8 +878,38 @@
     }
   },
   "api-keys": {
+    "api-keys-action-bar": {
+      "placeholder-search-keys": "Search keys"
+    },
+    "api-keys-page-unconnected": {
+      "label-include-expired-keys": "Include expired keys"
+    },
+    "api-keys-table": {
+      "aria-label-delete-api-key": "Delete API key",
+      "expires": "Expires",
+      "last-used-at": "Last used at",
+      "migrate-to-service-account": "Migrate to service account",
+      "name": "Name",
+      "role": "Role"
+    },
     "empty-state": {
       "message": "No API keys found"
+    },
+    "migrate-to-service-accounts-card": {
+      "docs-link": {
+        "about-migration": "Find out more about the migration here."
+      },
+      "migrate-all-service-accounts": "Migrate all service accounts",
+      "migration-box-desc": {
+        "migrating": "Migrating all API keys will hide the API keys tab."
+      },
+      "title-no-api-keys-found": "No API keys found",
+      "title-switch-service-accounts": "Switch from API keys to service accounts"
+    },
+    "migration-summary": {
+      "close": "Close",
+      "migration-successful": "Migration Successful!",
+      "title-migration-summary": "Migration summary"
     }
   },
   "app-chrome": {
@@ -883,6 +921,37 @@
   "app-notification": {
     "item": {
       "trace-id": "Trace ID: {{traceId}}"
+    }
+  },
+  "auth-config": {
+    "auth-config-page-unconnected": {
+      "auth-settings": "Auth settings"
+    },
+    "auth-drawer-unconnected": {
+      "advanced-auth": "Advanced Auth",
+      "enable-insecure-email-lookup": "Enable insecure email lookup",
+      "reset": "Reset",
+      "title-auth-settings": "Auth settings"
+    },
+    "configure-auth-cta": {
+      "authentication-configuration-created-moment": "You have no authentication configuration created at the moment.",
+      "configuration-required": "Configuration required",
+      "refer-documentation-configure-authentication": "Refer to the documentation on how to configure authentication"
+    },
+    "provider-config-form": {
+      "additional-actions-menu": {
+        "label-reset-to-default-values": "Reset to default values"
+      },
+      "discard": "Discard",
+      "label-enabled": "Enabled",
+      "reset-configuration": "Are you sure you want to reset this configuration?",
+      "title-more-actions": "More actions",
+      "title-reset": "Reset",
+      "tooltip-more-actions": "More actions"
+    },
+    "server-discovery-modal": {
+      "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "The .well-known/openid-configuration endpoint for your IdP",
+      "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
     }
   },
   "bookmarks-page": {
@@ -1067,7 +1136,16 @@
       "request-data-source": "Request a new data source",
       "roadmap": "View roadmap"
     },
+    "connections-redirect-notice": {
+      "aria-label-link-to-connections": "Link to Connections",
+      "go-to-connections": "Go to connections"
+    },
+    "no-access-modal": {
+      "connection-contact-grafana-admin": "To add a new connection, contact your Grafana admin.",
+      "okay": "Okay"
+    },
     "search": {
+      "aria-label-search-all": "Search all",
       "placeholder": "Search all"
     }
   },
@@ -1323,7 +1401,8 @@
         "tab": {
           "heading": "Tab",
           "title": "Break up your dashboard into different horizontal tabs"
-        }
+        },
+        "title": "Add element"
       },
       "elements": {
         "dashboard": "Dashboard",
@@ -1342,11 +1421,6 @@
           "title": "Row header"
         }
       }
-    },
-    "editpane": {
-      "add": "Add",
-      "configure": "Configure",
-      "outline": "Outline"
     },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
@@ -1424,6 +1498,10 @@
         "layout": "Layout"
       }
     },
+    "new-panel": {
+      "configure-button": "Configure panel"
+    },
+    "new-panel-title": "New panel",
     "options": {
       "description": "Description",
       "title-option": "Title"
@@ -1431,9 +1509,7 @@
     "outline": {
       "tree": {
         "item": {
-          "collapse": "Collapse item",
-          "empty": "(empty)",
-          "expand": "Expand item"
+          "empty": "(empty)"
         }
       }
     },
@@ -1456,22 +1532,27 @@
       },
       "name": "Auto grid",
       "options": {
-        "columns": "Columns",
-        "fixed": "Fixed: {{size}}px",
-        "min": "Min: {{size}}px",
-        "one-column": "1 column",
-        "rows": "Rows",
-        "three-columns": "3 columns",
-        "two-columns": "2 columns"
+        "custom-min-height": {
+          "clear": "Clear"
+        },
+        "custom-min-width": {
+          "clear": "Clear"
+        },
+        "height-fill": "Fill screen",
+        "max-columns": "Max columns",
+        "min-height": "Row height",
+        "min-height-custom": "Custom row height",
+        "min-height-error": "A number between 50 and 2000 is required",
+        "min-width": "Min column width",
+        "min-width-custom": "Custom min width",
+        "min-width-custom-clear": "Back to standard min column width",
+        "min-width-error": "A number between 50 and 2000 is required"
       }
     },
     "rows-layout": {
       "description": "Collapsable panel groups with headings",
+      "header-hidden-tooltip": "Row header only visible in edit mode",
       "name": "Rows",
-      "options": {
-        "height-expand": "Expand",
-        "height-min": "Min"
-      },
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
@@ -1499,7 +1580,7 @@
           }
         },
         "row": {
-          "height": "Height",
+          "fill-screen": "Fill screen",
           "hide-header": "Hide row header",
           "title": "Title"
         },
@@ -1530,6 +1611,9 @@
     },
     "toolbar": {
       "add": "Add",
+      "add-new": {
+        "tooltip": "Add panels and other elements"
+      },
       "alert-rules": "Alert rules",
       "back-to-dashboard": "Back to dashboard",
       "dashboard-settings": {
@@ -1648,9 +1732,8 @@
     },
     "viz-panel": {
       "options": {
+        "configure-button-tooltip": "Edit queries and visualization options",
         "description": "Description",
-        "open-edit": "Open panel editor",
-        "plugin-type-image": "Image of plugin type",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }
@@ -1878,11 +1961,96 @@
     }
   },
   "explore": {
+    "accordian-references": {
+      "references": "References"
+    },
     "add-to-dashboard": "Add to dashboard",
+    "basic-extensions": {
+      "aria-label-add": "Add"
+    },
+    "confirm-navigation-modal": {
+      "cancel": "Cancel",
+      "open": "Open",
+      "open-in-new-tab": "Open in new tab"
+    },
+    "content-outline-item-button": {
+      "body": {
+        "aria-label-content-outline-item-collapse-button": "Content outline item collapse button"
+      }
+    },
+    "correlation-editor-mode-bar": {
+      "exit-correlation-editor": "Exit correlation editor",
+      "save": "Save"
+    },
+    "correlation-helper": {
+      "add-transformation": "Add transformation",
+      "aria-label-delete-transformation": "Delete transformation",
+      "aria-label-edit-transformation": "Edit transformation",
+      "label-description": "Description",
+      "label-label": "Label",
+      "title-correlation-details": "Correlation details"
+    },
+    "correlation-transformation-add-modal": {
+      "aria-label-field": "Field",
+      "aria-label-type": "Type",
+      "cancel": "Cancel",
+      "label-expression": "Expression",
+      "label-field": "Field",
+      "label-type": "Type",
+      "label-variable-name": "Variable name"
+    },
+    "correlation-unsaved-changes-modal": {
+      "cancel": "Cancel",
+      "continue-without-saving": "Continue without saving",
+      "save-correlation": "Save correlation"
+    },
+    "draggable-manager-demo": {
+      "click-horizontally-somewhere-colored-below": "Click and drag horizontally somewhere in the colored area, below.",
+      "draggable-manager-demo": "DraggableManager demo",
+      "dragging-a-divider": "Dragging a divider",
+      "dragging-a-sub-region": "Dragging a sub-region"
+    },
     "drilldownInfo": {
       "action": "Go to Grafana Drilldown",
       "description": "Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps and can be found under <1>Menu > Drilldown</1>",
       "title": "Explore Metrics, Logs, Traces and Profiles have moved!"
+    },
+    "explore": {
+      "title-flame-graph": "Flame graph",
+      "title-graph": "Graph",
+      "title-logs": "Logs",
+      "title-logs-sample": "Logs sample",
+      "title-node-graph": "Node graph",
+      "title-queries": "Queries",
+      "title-raw-prometheus": "Raw Prometheus",
+      "title-table": "Table",
+      "title-traces": "Traces"
+    },
+    "explore-run-query-button": {
+      "run-button": {
+        "aria-label-run-query-options": "Run query options"
+      }
+    },
+    "explore-toolbar": {
+      "outline": "Outline",
+      "tooltip-content-outline": "Content outline"
+    },
+    "get-matches-metadata": {
+      "matches": "0 matches"
+    },
+    "legacy-create-span-link-factory": {
+      "title-explore-metrics-for-this-span": "Explore metrics for this span",
+      "title-explore-split": "Explore the logs for this in split view",
+      "title-session-for-this-span": "Session for this span"
+    },
+    "live-logs": {
+      "clear-logs": "Clear logs",
+      "exit-live-mode": "Exit live mode"
+    },
+    "live-tail-button": {
+      "pause-the-live-stream": "Pause the live stream",
+      "start-live-stream-your-logs": "Start live stream your logs",
+      "stop-and-exit-the-live-stream": "Stop and exit the live stream"
     },
     "logs": {
       "logs-volume": {
@@ -1894,6 +2062,63 @@
       "no-logs-found": "No logs found.",
       "scan-for-older-logs": "Scan for older logs",
       "stop-scan": "Stop scan"
+    },
+    "logs-container": {
+      "label-logs": "Logs"
+    },
+    "logs-meta-row": {
+      "download": "Download",
+      "show-original-line": "Show original line"
+    },
+    "logs-sample-panel": {
+      "logs-sample-is-loading": "Logs sample is loading...",
+      "no-logs-sample-data": "No logs sample data.",
+      "open-in-split-view-button": {
+        "open-logs-in-split-view": "Open logs in split view"
+      },
+      "title-failed-sample-query": "Failed to load logs sample for this query"
+    },
+    "logs-table-empty-fields": {
+      "no-fields": "No fields"
+    },
+    "logs-table-multi-select": {
+      "fields": "Fields"
+    },
+    "logs-table-nav-field": {
+      "aria-label-drag-and-drop-icon": "Drag and drop icon",
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
+    },
+    "logs-table-wrap": {
+      "label-select-query": "Select query",
+      "tooltip-select-query-visualize-table": "Select a query to visualize in the table"
+    },
+    "logs-volume-panel-list": {
+      "label-reload-log-volume": "Reload log volume",
+      "loading": "Loading...",
+      "title-failed-volume-query": "Failed to load log volume for this query",
+      "title-no-logs-volume-available": "No logs volume available",
+      "title-showing-partial-data": "Showing partial data",
+      "title-unable-to-show-log-volume": "Unable to show log volume"
+    },
+    "make-datasource-setup": {
+      "aria-label-query": "query"
+    },
+    "next": "Next",
+    "no-data-source-call-to-action": {
+      "cta-element": {
+        "add-data-source": "Add data source"
+      },
+      "footer": {
+        "learn-more": "Learn more",
+        "pro-tip-define-sources-through-configuration-files": " ProTip: You can also define data sources through configuration files. "
+      }
+    },
+    "prev": "Prev",
+    "queryless-apps-extensions": {
+      "aria-label-go-queryless": "Go queryless"
+    },
+    "raw-list-item": {
+      "tooltip-copy-to-clipboard": "Copy to clipboard"
     },
     "rich-history": {
       "close-tooltip": "Close query history",
@@ -2001,6 +2226,12 @@
       "run-query-button": "Run query",
       "switch-datasource-button": "Switch data source and run query"
     },
+    "search-bar-input": {
+      "placeholder-find": "Find...",
+      "suffix": {
+        "tooltip-clear-input": "Clear input"
+      }
+    },
     "secondary-actions": {
       "add-from-query-library": "Add query from library",
       "query-add-button": "Add query",
@@ -2010,10 +2241,65 @@
       "query-inspector-button": "Query inspector",
       "query-inspector-button-aria-label": "Query inspector"
     },
+    "span-bar-section": {
+      "title-span-bar": "Span bar"
+    },
+    "span-bar-settings": {
+      "label-label": "Label",
+      "label-tag-key": "Tag key",
+      "placeholder-duration": "Duration",
+      "placeholder-enter-tag-key": "Enter tag key",
+      "tooltip-default-duration": "Default: duration"
+    },
+    "span-detail": {
+      "label-resource-attributes": "Resource attributes",
+      "label-span-attributes": "Span attributes",
+      "label-stack-trace": "Stack trace",
+      "warnings": "Warnings"
+    },
+    "span-filters": {
+      "aria-label-select-max-span-operator": "Select max span operator",
+      "aria-label-select-min-span-operator": "Select min span operator",
+      "aria-label-select-service-name": "Select service name",
+      "aria-label-select-service-name-operator": "Select service name operator",
+      "aria-label-select-span-name": "Select span name",
+      "aria-label-select-span-name-operator": "Select span name operator",
+      "label-duration": "Duration",
+      "label-service-name": "Service name",
+      "label-span-name": "Span name",
+      "label-tags": "Tags",
+      "placeholder-all-service-names": "All service names",
+      "placeholder-all-span-names": "All span names"
+    },
+    "span-filters-tags": {
+      "aria-label-add-tag": "Add tag",
+      "aria-label-input-tag-value": "Input tag value",
+      "aria-label-remove-tag": "Remove tag",
+      "aria-label-select-tag-key": "Select tag key",
+      "aria-label-select-tag-operator": "Select tag operator",
+      "aria-label-select-tag-value": "Select tag value",
+      "placeholder-select-tag": "Select tag",
+      "placeholder-select-value": "Select value",
+      "placeholder-tag-value": "Tag value",
+      "tooltip-add-tag": "Add tag",
+      "tooltip-remove-tag": "Remove tag"
+    },
+    "span-flame-graph": {
+      "flame-graph": "Flame graph"
+    },
+    "supplementary-result-error": {
+      "show-details": "Show details"
+    },
     "table": {
       "no-data": "0 series returned",
       "title": "Table",
       "title-with-name": "Table - {{name}}"
+    },
+    "timeline-collapser": {
+      "tooltip-collapse": "Collapse +1",
+      "tooltip-collapse-all": "Collapse all",
+      "tooltip-expand": "Expand +1",
+      "tooltip-expand-all": "Expand all"
     },
     "toolbar": {
       "add-to-extensions": "Add",
@@ -2035,6 +2321,32 @@
       "split-title": "Split",
       "split-tooltip": "Split the pane",
       "split-widen": "Widen pane"
+    },
+    "trace-page-actions": {
+      "give-feedback": "Give feedback",
+      "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana."
+    },
+    "trace-view": {
+      "no-data": "No data"
+    },
+    "trace-view-container": {
+      "title-trace": "Trace"
+    },
+    "unthemed-logs": {
+      "label-deduplication": "Deduplication",
+      "label-display-results": "Display results",
+      "label-prettify-json": "Prettify JSON",
+      "label-time": "Time",
+      "label-unique-labels": "Unique labels",
+      "label-wrap-lines": "Wrap lines",
+      "title-feedback": "Feedback",
+      "title-logs-volume": "Logs volume"
+    },
+    "unthemed-viewing-layer": {
+      "reset-selection": "Reset selection"
+    },
+    "unthemed-virtualized-trace-view": {
+      "title-scroll-to-top": "Scroll to top"
     }
   },
   "explore-metrics": {
@@ -2091,6 +2403,9 @@
     "description": "Changes that you made may not be saved.",
     "discard-button": "Discard unsaved changes"
   },
+  "frontendtests": {
+    "test-key": "test-key not found"
+  },
   "gen-ai": {
     "apply-suggestion": "Apply",
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
@@ -2099,6 +2414,13 @@
   "get-enterprise": {
     "requires-license": "Requires a Grafana Enterprise license",
     "title": "Enterprise"
+  },
+  "grafana": {
+    "dashboard": {
+      "edit-pane": {
+        "go-back": "Go back"
+      }
+    }
   },
   "grafana-ui": {
     "action-editor": {
@@ -2338,6 +2660,7 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "copy": "Copy to Clipboard",
+      "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",
@@ -4026,6 +4349,73 @@
       "title": "You haven't created any service accounts yet"
     }
   },
+  "serviceaccounts": {
+    "create-token-modal": {
+      "close": "Close",
+      "copy-clipboard": "Copy to clipboard",
+      "copy-to-clipboard-and-close": "Copy to clipboard and close",
+      "description-name-to-easily-identify-the-token": "Name to easily identify the token",
+      "generate-token": "Generate token",
+      "label-display-name": "Display name",
+      "label-expiration": "Expiration",
+      "label-expiration-date": "Expiration date",
+      "label-token": "Token"
+    },
+    "get-actions-cell": {
+      "add-token": "Add token",
+      "disable": "Disable",
+      "enable": "Enable"
+    },
+    "get-role-cell": {
+      "aria-label-role": "Role"
+    },
+    "service-account-list-item": {
+      "add-token": "Add token",
+      "aria-label-role": "Role",
+      "disable": "Disable",
+      "enable": "Enable",
+      "title-tokens": "Tokens"
+    },
+    "service-account-page-unconnected": {
+      "add-service-account-token": "Add service account token",
+      "delete-service-account": "Delete service account",
+      "disable-service-account": "Disable service account",
+      "enable-service-account": "Enable service account",
+      "title-delete-service-account": "Delete service account",
+      "title-disable-service-account": "Disable service account",
+      "tokens": "Tokens"
+    },
+    "service-account-permissions": {
+      "title-permissions": "Permissions"
+    },
+    "service-account-profile": {
+      "information": "Information",
+      "label-creation-date": "Creation date",
+      "label-id": "ID",
+      "label-name": "Name",
+      "label-numerical-identifier": "Numerical identifier",
+      "label-roles": "Roles",
+      "used-by": "Used by"
+    },
+    "service-account-role-row": {
+      "aria-label-role": "Role"
+    },
+    "service-account-tokens-table": {
+      "created": "Created",
+      "expires": "Expires",
+      "last-used-at": "Last used at",
+      "name": "Name"
+    },
+    "service-accounts-list-page-unconnected": {
+      "add-service-account": "Add service account",
+      "placeholder-search-service-account-by-name": "Search service account by name",
+      "title-delete-service-account": "Delete service account",
+      "title-disable-service-account": "Disable service account"
+    },
+    "token-expiration": {
+      "never": "Never"
+    }
+  },
   "share-dashboard": {
     "menu": {
       "export-json-title": "Export as JSON",
@@ -4406,11 +4796,34 @@
     }
   },
   "trails": {
+    "add-to-filters-graph-action": {
+      "add-to-filters": "Add to filters"
+    },
     "bookmarks": {
       "or-view-bookmarks": "Or view bookmarks"
     },
+    "breakdown-search-scene": {
+      "placeholder-search-for-value": "Search for value"
+    },
+    "build-normal-layout": {
+      "text-loading": "Loading..."
+    },
     "card": {
       "date-created": "Date created: "
+    },
+    "create-bookmark-saved-notification": {
+      "view-bookmarks": "View bookmarks"
+    },
+    "data-trail-card": {
+      "deleteButton-tooltip-remove-bookmark": "Remove bookmark"
+    },
+    "data-trail-history": {
+      "history": "History"
+    },
+    "data-trail-settings": {
+      "render-popover": {
+        "settings": "Settings"
+      }
     },
     "home": {
       "learn-more": "Learn more",
@@ -4418,11 +4831,31 @@
       "start-your-metrics-exploration": "Start your metrics exploration!",
       "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
     },
+    "label-breakdown-scene": {
+      "label-search": "Search",
+      "label-view": "View"
+    },
+    "metric-action-bar": {
+      "open": "Open",
+      "select-new-metric": "Select new metric",
+      "tooltip-open-in-explore": "Open in explore",
+      "tooltip-remove-existing-metric-choose": "Remove existing metric and choose a new metric"
+    },
     "metric-select": {
       "filter-by": "Filter by",
       "native-histogram": "Native Histogram",
       "new-badge": "New",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "metric-select-scene": {
+      "label-otel-experience": "OTel experience",
+      "placeholder-search-metrics": "Search metrics",
+      "title-unable-to-retrieve-all-metric-names": "Unable to retrieve all metric names",
+      "unable-to-retrieve-metric-names": "Unable to retrieve metric names"
+    },
+    "metrics-header": {
+      "explore-prometheuscompatible-metrics-without-writing-query": "Explore your Prometheus-compatible metrics without writing a query",
+      "metrics": "Metrics"
     },
     "native-histogram-banner": {
       "ch-heatmap": "Classic Histogram displayed as heatmap:",
@@ -4444,12 +4877,245 @@
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
       "show-previews-of-metric-graphs": "Show previews of metric graphs"
+    },
+    "sort-by-scene": {
+      "tooltip-sorts-values-using-standard-smart-series": "Sorts values using standard or smart time series calculations."
     }
   },
   "transformations": {
     "empty": {
       "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
       "add-transformation-header": "Start transforming data"
+    }
+  },
+  "transformers": {
+    "axis-editor": {
+      "placeholder-auto": "Auto"
+    },
+    "basic-matcher-editor": {
+      "placeholder-value-or-variable": "Value or variable"
+    },
+    "binary-operation-options-editor": {
+      "label-operation": "Operation",
+      "placeholder-field-or-number": "Field or number",
+      "placeholder-fields-or-number": "Field(s) or number"
+    },
+    "calculate-field-transformer-editor": {
+      "label-alias": "Alias",
+      "label-mode": "Mode",
+      "label-replace-all-fields": "Replace all fields"
+    },
+    "concatenate-transformer-editor": {
+      "label-label": "Label",
+      "label-name": "Name",
+      "placeholder-frame": "Frame"
+    },
+    "config-from-query-transformer-editor": {
+      "label-apply-to": "Apply to",
+      "label-apply-to-options": "Apply to options",
+      "label-config-query": "Config query"
+    },
+    "convert-field-type-transformer-editor": {
+      "label-date-format": "Date format",
+      "label-input-format": "Input format",
+      "label-join-with": "Join with",
+      "label-set-timezone": "Set timezone",
+      "tooltip-explicit-separator-joining-array-values": "Use an explicit separator when joining array values",
+      "tooltip-specify-the-output-format": "Specify the output format.",
+      "tooltip-timezone-manually": "Set the timezone of the date manually"
+    },
+    "cumulative-options-editor": {
+      "label-calculation": "Calculation",
+      "label-field": "Field",
+      "placeholder-field": "Field"
+    },
+    "draggable-field-name": {
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
+    },
+    "enum-mapping-editor": {
+      "add-enum-value": "Add enum value",
+      "generate-enum-values-from-data": "Generate enum values from data"
+    },
+    "enum-mapping-row": {
+      "remove-enum-row-aria-label-delete-enum-row": "Delete enum row",
+      "remove-enum-row-tooltip-delete": "Delete"
+    },
+    "extract-fields-transformer-editor": {
+      "label-delimiter": "Delimiter",
+      "placeholder-select-delimiter": "Select delimiter..."
+    },
+    "field-to-config-mapping-editor": {
+      "additional-settings": "Additional settings",
+      "field": "Field",
+      "select": "Select",
+      "use-as": "Use as"
+    },
+    "filter-by-name-transformer-editor": {
+      "label-from-variable": "From variable",
+      "label-identifier": "Identifier",
+      "label-use-variable": "Use variable",
+      "label-variable": "Variable",
+      "placeholder-regular-expression-pattern": "Regular expression pattern"
+    },
+    "filter-by-value-filter-editor": {
+      "label-field": "Field",
+      "label-match": "Match",
+      "label-value": "Value",
+      "placeholder-field-name": "Field name",
+      "placeholder-select-test": "Select test"
+    },
+    "filter-by-value-transformer-editor": {
+      "add-condition": "Add condition",
+      "label-conditions": "Conditions",
+      "label-filter-type": "Filter type"
+    },
+    "format-string-transfomer-editor": {
+      "label-format": "Format",
+      "label-substring-range": "Substring range"
+    },
+    "format-time-transfomer-editor": {
+      "label-format": "Format",
+      "label-set-timezone": "Set timezone",
+      "label-time-field": "Time field",
+      "tooltip-timezone-manually": "Set the timezone of the date manually"
+    },
+    "get-tooltips": {
+      "json-value": "JSON Value:"
+    },
+    "group-by-field-configuration": {
+      "placeholder-ignored": "Ignored",
+      "placeholder-select-stats": "Select stats"
+    },
+    "group-to-nested-table-transformer-editor": {
+      "label-show-field-names-in-nested-tables": "Show field names in nested tables"
+    },
+    "grouping-to-matrix-transformer-editor": {
+      "label-cell-value": "Cell value",
+      "label-column": "Column",
+      "label-empty-value": "Empty value",
+      "label-row": "Row"
+    },
+    "histogram-transformer-editor": {
+      "placeholder-default": "Default: 30"
+    },
+    "index-options-editor": {
+      "label-as-percentile": "As percentile",
+      "tooltip-transform-index-percentile": "Transform the row index as a percentile."
+    },
+    "join-by-labels-transformer-editor": {
+      "info": {
+        "input-contain-labels": "The input does not contain any labels",
+        "no-input-or-labels-found": "No input (or labels) found",
+        "title-no-input-found": "No input found",
+        "title-no-labels-found": "No labels found"
+      },
+      "tooltip-select-label-indicating-values": "Select the label indicating the values name"
+    },
+    "jsonpath-editor": {
+      "add-path": "Add path",
+      "label-alias": "Alias",
+      "label-field": "Field",
+      "placeholder-valid-objectvalue": "A valid json path, e.g. \"object.value1\" or \"object.value2[0]\"",
+      "tooltip-remove-path": "Remove path"
+    },
+    "labels-as-fields-transformer-editor": {
+      "placeholder-optional-select-label": "(Optional) Select label",
+      "tooltip-replace-value-field-label": "Replace the value field name with a label"
+    },
+    "limit-transformer-editor": {
+      "placeholder-value-or-variable": "Value or variable"
+    },
+    "long-info": {
+      "ascending-order-duplicates": "Time in ascending order, but may have duplicates",
+      "multiple-value-fields-may-exist": "Multiple value fields may exist",
+      "single-frame": "Single frame",
+      "st-field-is-time": "1st field is time field"
+    },
+    "merge-transformer-editor": {
+      "merge-effect-applied-single-frame": "Merge has no effect when applied on a single frame."
+    },
+    "multi-info": {
+      "all-values-are-numeric": "All values are numeric",
+      "multiple-frames": "Multiple frames",
+      "string-values-are-represented-as-labels": "String values are represented as labels",
+      "time-in-ascending-order": "Time in ascending order"
+    },
+    "partition-by-values-editor": {
+      "label-field": "Field",
+      "label-select-field": "Select field",
+      "partition-values-works-single-frame": "Partition by values only works with a single frame."
+    },
+    "prepare-time-series-editor": {
+      "label-format": "Format",
+      "label-info": "Info"
+    },
+    "range-matcher-editor": {
+      "and": "and",
+      "placeholder-from": "From",
+      "placeholder-to": "To"
+    },
+    "reduce-row-options-editor": {
+      "label-calculation": "Calculation",
+      "label-operation": "Operation"
+    },
+    "reduce-transformer-editor": {
+      "label-calculations": "Calculations",
+      "label-include-time": "Include time",
+      "label-labels-to-fields": "Labels to fields",
+      "label-mode": "Mode",
+      "placeholder-choose-stat": "Choose stat"
+    },
+    "regex-matcher-editor": {
+      "placeholder-value-or-variable": "Value or variable"
+    },
+    "regression-transformer-editor": {
+      "label-degree": "Degree",
+      "label-model-type": "Model type",
+      "label-predicted-points": "Predicted points",
+      "label-x-field": "X field",
+      "label-y-field": "Y field"
+    },
+    "rename-by-regex-transformer-editor": {
+      "label-match": "Match",
+      "label-replace": "Replace",
+      "placeholder-regular-expression-pattern": "Regular expression pattern",
+      "placeholder-replacement-pattern": "Replacement pattern"
+    },
+    "series-to-fields-transformer-editor": {
+      "label-field": "Field",
+      "label-mode": "Mode"
+    },
+    "sort-by-transformer-editor": {
+      "label-field": "Field",
+      "label-reverse": "Reverse",
+      "placeholder-select-field": "Select field"
+    },
+    "time-series-table-transform-editor": {
+      "label-stat": "Stat",
+      "label-time-field": "Time field",
+      "tooltip-statistic-should-calculated-series": "The statistic that should be calculated for this time series."
+    },
+    "transpose-transfomer-editor": {
+      "placeholder-field": "Field",
+      "placeholder-value": "Value"
+    },
+    "unary-operation-editor": {
+      "label-operation": "Operation",
+      "placeholder-field": "Field"
+    },
+    "wide-info": {
+      "multiple-value-fields-of-any-type": "Multiple value fields of any type",
+      "single-frame": "Single frame",
+      "st-field-is-shared-time": "1st field is shared time field",
+      "time-in-ascending-order": "Time in ascending order"
+    },
+    "window-options-editor": {
+      "label-calculation": "Calculation",
+      "label-field": "Field",
+      "label-type": "Type",
+      "label-window-size-mode": "Window size mode",
+      "placeholder-auto": "Auto",
+      "placeholder-field": "Field"
     }
   },
   "upgrade-box": {
@@ -4493,6 +5159,13 @@
   "users": {
     "empty-state": {
       "message": "No users found"
+    },
+    "token-revoked-modal": {
+      "sign-in": "Sign in"
+    },
+    "users-action-bar-unconnected": {
+      "invite": "Invite",
+      "placeholder-search-login-email": "Search user by login, email or name"
     }
   },
   "users-access-list": {
@@ -4519,17 +5192,85 @@
     }
   },
   "variables": {
+    "ad-hoc-filter": {
+      "label-and": "AND"
+    },
+    "confirm-delete-modal": {
+      "title-delete-variable": "Delete variable"
+    },
     "empty-state": {
       "button-title": "Add variable",
       "info-box-content": "Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names in your metric queries you can use variables in their place. Variables are shown as list boxes at the top of the dashboard. These drop-down lists make it easy to change the data being displayed in your dashboard.",
       "info-box-content-2": "Check out the <2>Templates and variables documentation</2> for more information.",
       "title": "There are no variables added yet"
     },
+    "legacy-variable-query-editor": {
+      "placeholder-metric-name-or-tags-query": "Metric name or tags query"
+    },
+    "no-unknowns": {
+      "no-renamed-or-missing-variables-found": "No renamed or missing variables found."
+    },
+    "query-variable-refresh-select": {
+      "description-update-values-variable": "When to update the values of this variable",
+      "label-refresh": "Refresh"
+    },
+    "query-variable-sort-select": {
+      "description-values-variable": "How to sort the values of this variable"
+    },
+    "text-box-variable-editor": {
+      "placeholder-default-value-if-any": "default value, if any",
+      "text-options": "Text options"
+    },
     "unknown-table": {
       "loading": "Loading...",
       "no-unknowns": "No renamed or missing variables found.",
       "renamed-or-missing-variables": "Renamed or missing variables",
       "variable": "Variable"
+    },
+    "variable-check-indicator": {
+      "title-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
+      "title-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
+    },
+    "variable-editor-editor-un-connected": {
+      "apply": "Apply",
+      "aria-label-variable-editor-form": "Variable editor Form",
+      "delete": "Delete",
+      "description-optional-display-name": "Optional display name",
+      "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
+      "general": "General",
+      "placeholder-descriptive-text": "Descriptive text",
+      "placeholder-label-name": "Label name",
+      "placeholder-variable-name": "Variable name"
+    },
+    "variable-editor-list": {
+      "definition": "Definition",
+      "new-variable": "New variable",
+      "variable": "Variable"
+    },
+    "variable-editor-list-row": {
+      "tooltip-duplicate-variable": "Duplicate variable",
+      "tooltip-remove-variable": "Remove variable"
+    },
+    "variable-options": {
+      "aria-label-toggle-all-values": "Toggle all values"
+    },
+    "variable-usages-button": {
+      "tooltip-show-usages": "Show usages"
+    },
+    "variables-dependencies-button": {
+      "show-dependencies": "Show dependencies",
+      "title-dependencies": "Dependencies"
+    },
+    "variables-unknown-button": {
+      "VariablesUnknownButton-tooltip-show-usages": "Show usages"
+    },
+    "variables-unknown-table": {
+      "loading": "Loading..."
+    }
+  },
+  "visualization": {
+    "data-hover-view": {
+      "link": "Link"
     }
   }
 }

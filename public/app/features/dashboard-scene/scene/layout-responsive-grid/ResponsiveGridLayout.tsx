@@ -26,6 +26,9 @@ export interface ResponsiveGridLayoutState extends SceneObjectState, ResponsiveG
 
   /** True when the items should be lazy loaded */
   isLazy?: boolean;
+
+  /** True when the items should be draggable */
+  isDraggable?: boolean;
 }
 
 export interface ResponsiveGridLayoutOptions {
@@ -87,7 +90,7 @@ export class ResponsiveGridLayout
   };
 
   public isDraggable(): boolean {
-    return true;
+    return this.state.isDraggable ?? false;
   }
 
   public getDragClass(): string {
