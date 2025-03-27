@@ -1,15 +1,31 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '../../..';
+import { Button, ButtonSelect, ClickOutsideWrapper, FilterInput, Label, Stack } from '../../..';
 import { useStyles2, useTheme2 } from '../../../../themes';
 import { Trans } from '../../../../utils/i18n';
 import { FilterType } from '../types';
 
 import { FilterList } from './FilterList';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
+
+export const operatorSelectableValues: { [key: string]: SelectableValue<string> } = {
+  Contains: { label: 'Contains', value: 'Contains', description: 'Contains' },
+  '=': { label: '=', value: '=', description: 'Equals' },
+  '!=': { label: '!=', value: '!=', description: 'Not equals' },
+  '>': { label: '>', value: '>', description: 'Greater' },
+  '>=': { label: '>=', value: '>=', description: 'Greater or Equal' },
+  '<': { label: '<', value: '<', description: 'Less' },
+  '<=': { label: '<=', value: '<=', description: 'Less or Equal' },
+  Expression: {
+    label: 'Expression',
+    value: 'Expression',
+    description: 'Bool Expression (Char $ represents the column value in the expression, e.g. "$ >= 10 && $ <= 12")',
+  },
+};
+const OPERATORS = Object.values(operatorSelectableValues);
 
 interface Props {
   name: string;
@@ -86,35 +102,42 @@ export const FilterPopup = ({
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-      <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
-        <Stack direction="column" gap={3}>
-          <Stack direction="column" gap={0.5}>
-            <Stack justifyContent="space-between" alignItems="center">
-              <Label className={styles.label}>
-                <Trans i18nKey="grafana-ui.table.filter-popup-heading">Filter by values:</Trans>
-              </Label>
-              <IconButton
-                name="text-fields"
-                tooltip="Match case"
-                style={{ color: matchCase ? theme.colors.text.link : theme.colors.text.disabled }}
-                onClick={() => {
-                  setMatchCase((s) => !s);
-                }}
-              />
-            </Stack>
-            <div className={cx(styles.listDivider)} />
-            <FilterList
-              onChange={setValues}
-              values={values}
-              options={options}
-              caseSensitive={matchCase}
-              showOperators={true}
-              searchFilter={searchFilter}
-              setSearchFilter={setSearchFilter}
-              operator={operator}
-              setOperator={setOperator}
+      <div className={styles.filterContainer} onClick={stopPropagation}>
+        <Stack direction="column">
+          <Stack alignItems="center">
+            {field && <Label className={styles.label}>{field.config.displayName || field.name}</Label>}
+            <ButtonSelect
+              variant="canvas"
+              options={OPERATORS}
+              onChange={setOperator}
+              value={operator}
+              tooltip={operator.description}
             />
           </Stack>
+
+          <div className={styles.listDivider} />
+
+          <Stack gap={1}>
+            <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
+            <Button
+              variant="secondary"
+              style={{ color: matchCase ? theme.colors.text.link : theme.colors.text.disabled }}
+              onClick={() => {
+                setMatchCase((s) => !s);
+              }}
+              icon={'text-fields'}
+            />
+          </Stack>
+
+          <FilterList
+            onChange={setValues}
+            values={values}
+            options={options}
+            caseSensitive={matchCase}
+            searchFilter={searchFilter}
+            operator={operator}
+          />
+
           <Stack gap={3}>
             <Stack>
               <Button size="sm" onClick={onFilter}>
@@ -144,7 +167,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     minWidth: '250px',
     height: '100%',
-    maxHeight: '400px',
     backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(2),
@@ -155,7 +177,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'listDivider',
     width: '100%',
     borderTop: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(0.5, 2),
   }),
   label: css({
     marginBottom: 0,
