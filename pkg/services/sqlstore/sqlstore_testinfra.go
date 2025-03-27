@@ -183,6 +183,7 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 			tb.Fatalf("failed to truncate DB tables after migrations: %v", err)
 			panic("unreachable")
 		}
+		testSQLStore.engine.ResetSequenceGenerator()
 	}
 
 	return store

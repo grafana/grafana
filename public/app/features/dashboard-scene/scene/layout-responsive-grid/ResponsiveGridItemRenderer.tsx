@@ -4,30 +4,29 @@ import { SceneComponentProps } from '@grafana/scenes';
 
 import { useDashboardState, useIsConditionallyHidden } from '../../utils/utils';
 
-import { ResponsiveGridItem } from './ResponsiveGridItem';
+import { AutoGridItem } from './ResponsiveGridItem';
 
-export interface ResponsiveGridItemProps extends SceneComponentProps<ResponsiveGridItem> {}
+export interface AutoGridItemProps extends SceneComponentProps<AutoGridItem> {}
 
-export function ResponsiveGridItemRenderer({ model }: ResponsiveGridItemProps) {
+export function AutoGridItemRenderer({ model }: AutoGridItemProps) {
   const { body } = model.useState();
-  const { showHiddenElements } = useDashboardState(model);
+  const { isEditing } = useDashboardState(model);
   const isConditionallyHidden = useIsConditionallyHidden(model);
 
-  if (isConditionallyHidden && !showHiddenElements) {
+  if (isConditionallyHidden && !isEditing) {
     return null;
   }
-  const isHiddenButVisibleElement = showHiddenElements && isConditionallyHidden;
 
   return model.state.repeatedPanels ? (
     <>
       {model.state.repeatedPanels.map((item) => (
-        <div className={cx({ 'dashboard-visible-hidden-element': isHiddenButVisibleElement })} key={item.state.key}>
+        <div className={cx({ 'dashboard-visible-hidden-element': isConditionallyHidden })} key={item.state.key}>
           <item.Component model={item} />
         </div>
       ))}
     </>
   ) : (
-    <div className={cx({ 'dashboard-visible-hidden-element': isHiddenButVisibleElement })}>
+    <div className={cx({ 'dashboard-visible-hidden-element': isConditionallyHidden })}>
       <body.Component model={body} />
     </div>
   );

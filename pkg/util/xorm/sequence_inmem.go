@@ -18,6 +18,13 @@ func newInMemSequenceGenerator() *inMemSequenceGenerator {
 	}
 }
 
+func (g *inMemSequenceGenerator) Reset() {
+	g.sequencesMu.Lock()
+	defer g.sequencesMu.Unlock()
+
+	g.nextValues = make(map[string]int)
+}
+
 func (g *inMemSequenceGenerator) Next(_ context.Context, table, column string) (int64, error) {
 	if table == "migration_log" {
 		// Don't use sequential IDs for migration log entries, as we don't clean up migration_log table between tests,

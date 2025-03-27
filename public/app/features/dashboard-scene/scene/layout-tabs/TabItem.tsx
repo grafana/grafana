@@ -1,9 +1,10 @@
 import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig, SceneObject } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
+import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { getDefaultVizPanel } from '../../utils/utils';
-import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -37,7 +38,7 @@ export class TabItem
     super({
       ...state,
       title: state?.title ?? t('dashboard.tabs-layout.tab.new', 'New tab'),
-      layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
+      layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
     });
   }
 
@@ -45,12 +46,16 @@ export class TabItem
     return {
       typeName: t('dashboard.edit-pane.elements.tab', 'Tab'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
-      icon: 'tag-alt',
+      icon: 'layers',
     };
   }
 
   public getLayout(): DashboardLayoutManager {
     return this.state.layout;
+  }
+
+  public getSlug(): string {
+    return kbn.slugifyForUrl(sceneGraph.interpolate(this, this.state.title ?? 'Tab'));
   }
 
   public switchLayout(layout: DashboardLayoutManager) {

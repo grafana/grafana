@@ -18,10 +18,10 @@ import {
   outerJoinDataFrames,
   ValueMapping,
   ThresholdsConfig,
+  applyNullInsertThreshold,
+  nullToValue,
 } from '@grafana/data';
-import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
-import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
+import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/internal';
 import {
   VizLegendOptions,
   AxisPlacement,
