@@ -530,6 +530,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 		k8sclient:    fakeK8sClient,
 		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 		unifiedStore: folderStore,
+		tracer:       tracing.NewNoopTracerService(),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)

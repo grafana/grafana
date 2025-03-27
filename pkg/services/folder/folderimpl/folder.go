@@ -645,7 +645,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 		foldersRef[i] = f.ToFolderReference()
 	}
 
-	ctx, span := s.tracer.Start(ctx, "folder.deduplicateAvailableFolders")
+	_, span := s.tracer.Start(ctx, "folder.deduplicateAvailableFolders")
 	defer span.End()
 	allFolders := append(foldersRef, rootFolders...)
 	foldersDedup := make([]*folder.FolderReference, 0)
