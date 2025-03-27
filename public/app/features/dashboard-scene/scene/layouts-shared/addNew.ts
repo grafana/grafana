@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { sceneGraph, SceneGridRow } from '@grafana/scenes';
+import { SceneGridRow } from '@grafana/scenes';
 
 import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
