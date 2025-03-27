@@ -1,14 +1,11 @@
 name: run-dashboard-search-e2e
 
 on:
-  workflow_run:
-    workflows: 
-      - trigger-dashboard-search-e2e
-    branches:
-      - e2e-async-job
-      - main
-    types:
-      - completed
+  # workflow_run:
+  #   workflows: 
+  #     - trigger-dashboard-search-e2e
+  #   types:
+  #     - completed
   workflow_dispatch:
 
 env:
