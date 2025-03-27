@@ -46,6 +46,9 @@ var (
 	_ DirectRestConfigProvider = (*eventualRestConfigProvider)(nil)
 )
 
+// eventualRestConfigProvider is a RestConfigProvider that will not return a rest config until the ready channel is closed.
+// This exists to alleviate a circular dependency between the apiserver.server's dependencies and their dependencies wanting a rest config.
+// Importantly, this is handled by wire as opposed to a mutable global.
 type eventualRestConfigProvider struct {
 	// When this channel is closed, we can start returning the rest config.
 	ready chan struct{}
