@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -21,7 +22,29 @@ import (
 var _ resource.BulkResourceWriter = (*resourceReader)(nil)
 
 type resourceReader struct {
-	job *migrateFromLegacyJob
+	repo       repository.ReaderWriter
+	legacy     legacy.LegacyMigrator
+	parser     *resources.Parser
+	folderTree *resources.FolderTree
+	progress   jobs.JobProgressRecorder
+	namespace  string
+	kind       schema.GroupResource
+	options    provisioning.MigrateJobOptions
+	userInfo   map[string]repository.CommitSignature
+}
+
+func NewResourceReader(repo repository.ReaderWriter, legacy legacy.LegacyMigrator, parser *resources.Parser, folderTree *resources.FolderTree, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource, userInfo map[string]repository.CommitSignature) *resourceReader {
+	return &resourceReader{
+		repo:       repo,
+		legacy:     legacy,
+		parser:     parser,
+		folderTree: folderTree,
+		progress:   progress,
+		options:    options,
+		namespace:  namespace,
+		kind:       kind,
+		userInfo:   userInfo,
+	}
 }
 
 // Close implements resource.BulkResourceWriter.
@@ -37,7 +60,7 @@ func (r *resourceReader) CloseWithResults() (*resource.BulkResponse, error) {
 // Write implements resource.BulkResourceWriter.
 func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	// Reuse the same parse+cleanup logic
-	parsed, err := r.job.parser.Parse(ctx, &repository.FileInfo{
+	parsed, err := r.parser.Parse(ctx, &repository.FileInfo{
 		Path: "", // empty path to ignore file system
 		Data: value,
 	}, false)
@@ -50,9 +73,9 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	parsed.Meta.SetSourceProperties(utils.SourceProperties{})
 
 	// TODO: this seems to be same logic as the export job
-	if result := r.job.write(ctx, parsed.Obj); result.Error != nil {
-		r.job.progress.Record(ctx, result)
-		if err := r.job.progress.TooManyErrors(); err != nil {
+	if result := r.write(ctx, parsed.Obj, r.folderTree); result.Error != nil {
+		r.progress.Record(ctx, result)
+		if err := r.progress.TooManyErrors(); err != nil {
 			return err
 		}
 	}
@@ -60,47 +83,41 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	return nil
 }
 
-func (j *migrateFromLegacyJob) migrateLegacyResources(ctx context.Context) error {
-	for _, kind := range resources.SupportedResources {
-		// Skip folders, they are handled separately
-		if kind == resources.FolderResource {
-			continue
-		}
-
-		j.progress.SetMessage(ctx, fmt.Sprintf("migrate %s resource", kind.Resource))
-		opts := legacy.MigrateOptions{
-			Namespace:   j.namespace,
-			WithHistory: j.options.History,
-			Resources:   []schema.GroupResource{kind.GroupResource()},
-			Store:       parquet.NewBulkResourceWriterClient(&resourceReader{job: j}),
-			OnlyCount:   true, // first get the count
-		}
-		stats, err := j.legacy.Migrate(ctx, opts)
-		if err != nil {
-			return fmt.Errorf("unable to count legacy items %w", err)
-		}
-
-		// FIXME: explain why we calculate it in this way
-		if len(stats.Summary) > 0 {
-			count := stats.Summary[0].Count //
-			history := stats.Summary[0].History
-			if history > count {
-				count = history // the number of items we will process
-			}
-			j.progress.SetTotal(ctx, int(count))
-		}
-
-		opts.OnlyCount = false // this time actually write
-		_, err = j.legacy.Migrate(ctx, opts)
-		if err != nil {
-			return fmt.Errorf("error running legacy migrate %s %w", kind.Resource, err)
-		}
+func (r *resourceReader) Migrate(ctx context.Context) error {
+	r.progress.SetMessage(ctx, fmt.Sprintf("migrate %s resource", r.kind.Resource))
+	opts := legacy.MigrateOptions{
+		Namespace:   r.namespace,
+		WithHistory: r.options.History,
+		Resources:   []schema.GroupResource{r.kind},
+		Store:       parquet.NewBulkResourceWriterClient(r),
+		OnlyCount:   true, // first get the count
 	}
+	stats, err := r.legacy.Migrate(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("unable to count legacy items %w", err)
+	}
+
+	// FIXME: explain why we calculate it in this way
+	if len(stats.Summary) > 0 {
+		count := stats.Summary[0].Count //
+		history := stats.Summary[0].History
+		if history > count {
+			count = history // the number of items we will process
+		}
+		r.progress.SetTotal(ctx, int(count))
+	}
+
+	opts.OnlyCount = false // this time actually write
+	_, err = r.legacy.Migrate(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("error running legacy migrate %s %w", r.kind.Resource, err)
+	}
+
 	return nil
 }
 
 // TODO: this is copied from the export job
-func (j *migrateFromLegacyJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
+func (r *resourceReader) write(ctx context.Context, obj *unstructured.Unstructured, folderTree *resources.FolderTree) jobs.JobResourceResult {
 	gvk := obj.GroupVersionKind()
 	result := jobs.JobResourceResult{
 		Name:     obj.GetName(),
@@ -133,7 +150,7 @@ func (j *migrateFromLegacyJob) write(ctx context.Context, obj *unstructured.Unst
 
 	name := meta.GetName()
 	manager, _ := meta.GetManagerProperties()
-	if manager.Identity == j.target.Config().GetName() {
+	if manager.Identity == r.repo.Config().GetName() {
 		result.Action = repository.FileActionIgnored
 		return result
 	}
@@ -145,16 +162,16 @@ func (j *migrateFromLegacyJob) write(ctx context.Context, obj *unstructured.Unst
 	folder := meta.GetFolder()
 
 	// Add the author in context (if available)
-	ctx = j.withAuthorSignature(ctx, meta)
+	ctx = r.withAuthorSignature(ctx, meta)
 
 	// Get the absolute path of the folder
-	fid, ok := j.folderTree.DirPath(folder, "")
+	fid, ok := folderTree.DirPath(folder, "")
 	if !ok {
 		// FIXME: Shouldn't this fail instead?
 		fid = resources.Folder{
 			Path: "__folder_not_found/" + slugify.Slugify(folder),
 		}
-		j.logger.Error("folder of item was not in tree of repository")
+		// j.logger.Error("folder of item was not in tree of repository")
 	}
 
 	result.Path = fid.Path
@@ -162,7 +179,7 @@ func (j *migrateFromLegacyJob) write(ctx context.Context, obj *unstructured.Unst
 	// Clear the metadata
 	delete(obj.Object, "metadata")
 
-	if j.options.Identifier {
+	if r.options.Identifier {
 		meta.SetName(name) // keep the identifier in the metadata
 	}
 
@@ -177,7 +194,7 @@ func (j *migrateFromLegacyJob) write(ctx context.Context, obj *unstructured.Unst
 		fileName = safepath.Join(fid.Path, fileName)
 	}
 
-	err = j.target.Write(ctx, fileName, "", body, commitMessage)
+	err = r.repo.Write(ctx, fileName, "", body, commitMessage)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to write file: %w", err)
 	}
@@ -186,8 +203,8 @@ func (j *migrateFromLegacyJob) write(ctx context.Context, obj *unstructured.Unst
 }
 
 // TODO: this is copied from the export job
-func (j *migrateFromLegacyJob) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
-	if j.userInfo == nil {
+func (r *resourceReader) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
+	if r.userInfo == nil {
 		return ctx
 	}
 	id := item.GetUpdatedBy()
@@ -198,7 +215,7 @@ func (j *migrateFromLegacyJob) withAuthorSignature(ctx context.Context, item uti
 		id = "grafana"
 	}
 
-	sig := j.userInfo[id] // lookup
+	sig := r.userInfo[id] // lookup
 	if sig.Name == "" && sig.Email == "" {
 		sig.Name = id
 	}

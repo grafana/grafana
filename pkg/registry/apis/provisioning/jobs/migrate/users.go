@@ -9,27 +9,29 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-func (j *migrateFromLegacyJob) loadUsers(ctx context.Context) error {
-	client, err := j.parser.Clients().User()
+func loadUsers(ctx context.Context, parser *resources.Parser) (map[string]repository.CommitSignature, error) {
+	client, err := parser.Clients().User()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	// TODO: use client
 	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
 	if err != nil {
-		return fmt.Errorf("failed to list users: %w", err)
+		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
 	if rawList.GetContinue() != "" {
-		return fmt.Errorf("unable to list all users in one request: %s", rawList.GetContinue())
+		return nil, fmt.Errorf("unable to list all users in one request: %s", rawList.GetContinue())
 	}
 
-	var ok bool
-	j.userInfo = make(map[string]repository.CommitSignature)
+	userInfo := make(map[string]repository.CommitSignature)
 	for _, item := range rawList.Items {
 		sig := repository.CommitSignature{}
 		// FIXME: should we improve logging here?
+		var ok bool
 		sig.Name, ok, err = unstructured.NestedString(item.Object, "spec", "login")
 		if !ok || err != nil {
 			continue
@@ -47,7 +49,8 @@ func (j *migrateFromLegacyJob) loadUsers(ctx context.Context) error {
 			}
 		}
 
-		j.userInfo["user:"+item.GetName()] = sig
+		userInfo["user:"+item.GetName()] = sig
 	}
-	return nil
+
+	return userInfo, nil
 }

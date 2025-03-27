@@ -28,7 +28,7 @@ func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) erro
 	return nil
 }
 
-func (j *migrateFromLegacyJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service) error {
+func wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service, namespace string, batch resource.BulkStoreClient) error {
 	for _, gr := range resources.SupportedResources {
 		status, _ := dual.Status(ctx, gr.GroupResource())
 		if status.ReadUnified {
@@ -42,13 +42,13 @@ func (j *migrateFromLegacyJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context
 		settings := resource.BulkSettings{
 			RebuildCollection: true, // wipes everything in the collection
 			Collection: []*resource.ResourceKey{{
-				Namespace: j.namespace,
+				Namespace: namespace,
 				Group:     gr.Group,
 				Resource:  gr.Resource,
 			}},
 		}
 		ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-		stream, err := j.batch.BulkProcess(ctx)
+		stream, err := batch.BulkProcess(ctx)
 		if err != nil {
 			return fmt.Errorf("error clearing unified %s / %w", gr, err)
 		}

@@ -130,7 +130,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return w.migrateFromLegacy(ctx, rw, buffered, *options, progress)
 	}
 
-	return w.migrateFromUnifiedStorage(ctx, rw, *options, progress)
+	return w.migrateFromAPIServer(ctx, rw, *options, progress)
 }
 
 // migrateFromLegacy will export the resources from legacy storage and import them into the target repository
@@ -140,29 +140,61 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 		return fmt.Errorf("error getting parser: %w", err)
 	}
 
-	job, err := newMigrateFromLegacyJob(ctx, rw, options, parser, w.bulk, w.legacyMigrator, progress)
-	if err != nil {
-		return fmt.Errorf("error creating job: %w", err)
-	}
-
+	var userInfo map[string]repository.CommitSignature
 	if options.History {
 		progress.SetMessage(ctx, "loading users")
-		err = job.loadUsers(ctx)
+		userInfo, err = loadUsers(ctx, parser)
 		if err != nil {
 			return fmt.Errorf("error loading users: %w", err)
 		}
 	}
+	namespace := rw.Config().Namespace
 
-	progress.SetMessage(ctx, "exporting legacy folders")
-	err = job.migrateLegacyFolders(ctx)
+	progress.SetMessage(ctx, "loading legacy folders")
+	reader := NewLegacyFolderReader(w.legacyMigrator, rw.Config().Name, namespace)
+	err = reader.Load(ctx, w.legacyMigrator, rw.Config().Name, namespace)
 	if err != nil {
-		return err
+		return fmt.Errorf("error loading folder tree: %w", err)
+	}
+
+	folderClient, err := parser.Clients().Folder()
+	if err != nil {
+		return fmt.Errorf("error getting folder client: %w", err)
+	}
+
+	folders := resources.NewFolderManager(rw, folderClient, reader.Tree())
+	progress.SetMessage(ctx, "exporting legacy folders")
+	err = folders.EnsureTreeExists(ctx, "", "", func(folder resources.Folder, created bool, err error) error {
+		result := jobs.JobResourceResult{
+			Action:   repository.FileActionCreated,
+			Name:     folder.ID,
+			Resource: resources.FolderResource.Resource,
+			Group:    resources.FolderResource.Group,
+			Path:     folder.Path,
+			Error:    err,
+		}
+
+		if !created {
+			result.Action = repository.FileActionIgnored
+		}
+
+		progress.Record(ctx, result)
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("error exporting legacy folders: %w", err)
 	}
 
 	progress.SetMessage(ctx, "exporting legacy resources")
-	err = job.migrateLegacyResources(ctx)
-	if err != nil {
-		return err
+	for _, kind := range resources.SupportedResources {
+		if kind == resources.FolderResource {
+			continue
+		}
+
+		reader := NewResourceReader(rw, w.legacyMigrator, parser, folders.Tree(), progress, options, namespace, kind.GroupResource(), userInfo)
+		if err := reader.Migrate(ctx); err != nil {
+			return fmt.Errorf("error migrating resource %s: %w", kind, err)
+		}
 	}
 
 	if buffered != nil {
@@ -184,7 +216,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	}
 
 	progress.SetMessage(ctx, "resetting unified storage")
-	if err = job.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus); err != nil {
+	if err = wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus, namespace, w.bulk); err != nil {
 		return fmt.Errorf("unable to reset unified storage %w", err)
 	}
 
@@ -211,8 +243,8 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	return err
 }
 
-// migrateFromUnifiedStorage will export the resources from unified storage and import them into the target repository
-func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+// migrateFromAPIServer will export the resources from unified storage and import them into the target repository
+func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "exporting unified storage resources")
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
@@ -264,43 +296,4 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 
 		return nil
 	})
-}
-
-// MigrationJob holds all context for a running job
-type migrateFromLegacyJob struct {
-	logger logging.Logger
-	target repository.ReaderWriter
-	legacy legacy.LegacyMigrator
-	parser *resources.Parser
-	batch  resource.BulkStoreClient
-
-	namespace string
-
-	progress jobs.JobProgressRecorder
-
-	userInfo   map[string]repository.CommitSignature
-	folderTree *resources.FolderTree
-
-	options provisioning.MigrateJobOptions
-}
-
-func newMigrateFromLegacyJob(ctx context.Context,
-	target repository.ReaderWriter,
-	options provisioning.MigrateJobOptions,
-	parser *resources.Parser,
-	batch resource.BulkStoreClient,
-	legacyMigrator legacy.LegacyMigrator,
-	progress jobs.JobProgressRecorder,
-) (*migrateFromLegacyJob, error) {
-	return &migrateFromLegacyJob{
-		namespace:  target.Config().Namespace,
-		target:     target,
-		logger:     logging.FromContext(ctx),
-		progress:   progress,
-		options:    options,
-		parser:     parser,
-		batch:      batch,
-		legacy:     legacyMigrator,
-		folderTree: resources.NewEmptyFolderTree(),
-	}, nil
 }
