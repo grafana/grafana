@@ -5,18 +5,18 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
 
-import { ResponsiveGridItem } from './ResponsiveGridItem';
+import { AutoGridItem } from './ResponsiveGridItem';
 
-export function getOptions(model: ResponsiveGridItem): OptionsPaneCategoryDescriptor[] {
+export function getOptions(model: AutoGridItem): OptionsPaneCategoryDescriptor[] {
   const repeatCategory = new OptionsPaneCategoryDescriptor({
-    title: t('dashboard.responsive-layout.item-options.repeat.title', 'Repeat options'),
+    title: t('dashboard.auto-grid.item-options.repeat.title', 'Repeat options'),
     id: 'repeat-options',
     isOpenDefault: false,
   }).addItem(
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.responsive-layout.item-options.repeat.variable.title', 'Repeat by variable'),
+      title: t('dashboard.auto-grid.item-options.repeat.variable.title', 'Repeat by variable'),
       description: t(
-        'dashboard.responsive-layout.item-options.repeat.variable.description',
+        'dashboard.auto-grid.item-options.repeat.variable.description',
         'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
       ),
       render: () => <RepeatByOption item={model} />,
@@ -28,7 +28,7 @@ export function getOptions(model: ResponsiveGridItem): OptionsPaneCategoryDescri
   return [repeatCategory, conditionalRenderingCategory];
 }
 
-function RepeatByOption({ item }: { item: ResponsiveGridItem }) {
+function RepeatByOption({ item }: { item: AutoGridItem }) {
   const { variableName } = item.useState();
 
   return (
