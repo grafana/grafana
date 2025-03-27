@@ -143,10 +143,11 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 // This is needed to ensure that we use the K8s client before enabling dual writing.
 func (o *StorageOptions) EnforceFeatureToggleAfterMode1(features featuremgmt.FeatureToggles) error {
 	// nolint:staticcheck
-	if o.StorageType != StorageTypeLegacy {
+	/* if o.StorageType != StorageTypeLegacy {
 		for rg, s := range o.UnifiedStorageConfig {
 			if s.DualWriterMode > 1 {
 				switch rg {
+				// example
 				case "playlists.playlist.grafana.app":
 					if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesPlaylists) {
 						return fmt.Errorf("feature toggle FlagKubernetesPlaylists to be set")
@@ -154,6 +155,6 @@ func (o *StorageOptions) EnforceFeatureToggleAfterMode1(features featuremgmt.Fea
 				}
 			}
 		}
-	}
+	}*/
 	return nil
 }

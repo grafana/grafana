@@ -1,12 +1,11 @@
 package options
 
 import (
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestStorageOptions_CheckFeatureToggle(t *testing.T) {
@@ -30,17 +29,10 @@ func TestStorageOptions_CheckFeatureToggle(t *testing.T) {
 			features:             featuremgmt.WithFeatures(),
 		},
 		{
-			name:                 "with unified storage, mode > 1 and with toggle for resource",
-			StorageType:          StorageTypeUnified,
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{"playlists.playlist.grafana.app": {DualWriterMode: 2}},
-			features:             featuremgmt.WithFeatures(featuremgmt.FlagKubernetesPlaylists),
-		},
-		{
-			name:                 "with unified storage, mode > 1 and without toggle for resource",
+			name:                 "with unified storage and mode > 1",
 			StorageType:          StorageTypeUnified,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{"playlists.playlist.grafana.app": {DualWriterMode: 2}},
 			features:             featuremgmt.WithFeatures(),
-			wantErr:              true,
 		},
 		{
 			name:                 "with unified storage and mode = 1",

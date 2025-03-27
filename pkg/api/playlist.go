@@ -13,12 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/middleware"
 	internalplaylist "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -26,26 +24,15 @@ import (
 
 func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 	// Register the actual handlers
-	// TODO: remove kubernetesPlaylists feature flag
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesPlaylists) {
-			// Use k8s client to implement legacy API
-			handler := newPlaylistK8sHandler(hs)
-			playlistRoute.Get("/", handler.searchPlaylists)
-			playlistRoute.Get("/:uid", handler.getPlaylist)
-			playlistRoute.Get("/:uid/items", handler.getPlaylistItems)
-			playlistRoute.Delete("/:uid", handler.deletePlaylist)
-			playlistRoute.Put("/:uid", handler.updatePlaylist)
-			playlistRoute.Post("/", handler.createPlaylist)
-		} else {
-			// Legacy handlers
-			playlistRoute.Get("/", routing.Wrap(hs.SearchPlaylists))
-			playlistRoute.Get("/:uid", hs.validateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
-			playlistRoute.Get("/:uid/items", hs.validateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
-			playlistRoute.Delete("/:uid", middleware.ReqEditorRole, hs.validateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
-			playlistRoute.Put("/:uid", middleware.ReqEditorRole, hs.validateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
-			playlistRoute.Post("/", middleware.ReqEditorRole, routing.Wrap(hs.CreatePlaylist))
-		}
+		// Use k8s client to implement legacy API
+		handler := newPlaylistK8sHandler(hs)
+		playlistRoute.Get("/", handler.searchPlaylists)
+		playlistRoute.Get("/:uid", handler.getPlaylist)
+		playlistRoute.Get("/:uid/items", handler.getPlaylistItems)
+		playlistRoute.Delete("/:uid", handler.deletePlaylist)
+		playlistRoute.Put("/:uid", handler.updatePlaylist)
+		playlistRoute.Post("/", handler.createPlaylist)
 	})
 }
 
