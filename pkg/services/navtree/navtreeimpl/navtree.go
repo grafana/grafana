@@ -332,7 +332,11 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 		for uid := range starredDashboardResult.UserStars {
 			uids = append(uids, uid)
 		}
-		starredDashboards, err := s.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardUIDs: uids, OrgID: c.SignedInUser.GetOrgID()})
+		starredDashboards, err := s.dashboardService.SearchDashboards(c.Req.Context(), &dashboards.FindPersistedDashboardsQuery{
+			DashboardUIDs: uids,
+			OrgId:         c.SignedInUser.GetOrgID(),
+			SignedInUser:  c.SignedInUser,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -348,7 +352,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
 				Id:   "starred/" + starredItem.UID,
 				Text: starredItem.Title,
-				Url:  starredItem.GetURL(),
+				Url:  starredItem.URL,
 			})
 		}
 	}
