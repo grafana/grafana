@@ -26,6 +26,12 @@ interface FilterSectionProps {
   timeRange?: TimeRange;
 }
 
+const filterDynamicColumns = (columns: string[], allColumns: AzureLogAnalyticsMetadataColumn[]) => {
+  return columns.filter((col) =>
+    allColumns.some((completeCol) => completeCol.name === col && completeCol.type !== 'dynamic')
+  );
+};
+
 export const FilterSection: React.FC<FilterSectionProps> = ({
   buildAndUpdateQuery,
   query,
@@ -45,8 +51,8 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   const variableOptions = Array.isArray(templateVariableOptions) ? templateVariableOptions : [templateVariableOptions];
 
   const availableColumns: Array<SelectableValue<string>> = builderQuery?.columns?.columns?.length
-    ? builderQuery.columns.columns.map((col) => ({ label: col, value: col }))
-    : allColumns.map((col) => ({ label: col.name, value: col.name }));
+    ? filterDynamicColumns(builderQuery.columns.columns, allColumns).map((col) => ({ label: col, value: col }))
+    : allColumns.filter((col) => col.type !== 'dynamic').map((col) => ({ label: col.name, value: col.name }));
 
   const selectableOptions = [...availableColumns, ...variableOptions];
 
@@ -180,7 +186,9 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         <EditorField
           label="Filters"
           optional={true}
-          tooltip={`Narrow results by applying conditions to specific columns...`}
+          tooltip={
+            'Narrow results by applying conditions to specific columns. Columns with the dynamic type are not available for filtering.'
+          }
         >
           <div className={styles.filters}>
             {filters.length > 0 ? (
