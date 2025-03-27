@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
+const maxFolders = 10000
+
 type FolderManager struct {
 	repo   repository.ReaderWriter
 	tree   *FolderTree
@@ -166,6 +168,10 @@ func (fm *FolderManager) EnsureTreeExists(ctx context.Context, ref, path string,
 
 func (fm *FolderManager) LoadFromServer(ctx context.Context) error {
 	return ForEachResource(ctx, fm.client, func(item *unstructured.Unstructured) error {
+		if fm.tree.Count() > maxFolders {
+			return errors.New("too many folders")
+		}
+
 		return fm.tree.AddUnstructured(item, fm.repo.Config().Name)
 	})
 }

@@ -152,8 +152,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 
 	progress.SetMessage(ctx, "loading legacy folders")
 	reader := NewLegacyFolderReader(w.legacyMigrator, rw.Config().Name, namespace)
-	err = reader.Load(ctx, w.legacyMigrator, rw.Config().Name, namespace)
-	if err != nil {
+	if err = reader.Read(ctx, w.legacyMigrator, rw.Config().Name, namespace); err != nil {
 		return fmt.Errorf("error loading folder tree: %w", err)
 	}
 

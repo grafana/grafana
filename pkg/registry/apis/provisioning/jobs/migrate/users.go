@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+const maxUsers = 10000
+
 func loadUsers(ctx context.Context, parser *resources.Parser) (map[string]repository.CommitSignature, error) {
 	client, err := parser.Clients().User()
 	if err != nil {
@@ -21,7 +23,7 @@ func loadUsers(ctx context.Context, parser *resources.Parser) (map[string]reposi
 	var count int
 	err = resources.ForEachResource(ctx, client, func(item *unstructured.Unstructured) error {
 		count++
-		if count > 10000 {
+		if count > maxUsers {
 			return errors.New("too many users")
 		}
 

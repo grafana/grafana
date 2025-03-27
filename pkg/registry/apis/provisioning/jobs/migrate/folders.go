@@ -2,6 +2,7 @@ package migrate
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -12,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+const maxFolders = 10000
 
 var _ resource.BulkResourceWriter = (*legacyFolderReader)(nil)
 
@@ -49,10 +52,14 @@ func (f *legacyFolderReader) Write(ctx context.Context, key *resource.ResourceKe
 		return fmt.Errorf("unmarshal unstructured to JSON: %w", err)
 	}
 
+	if f.tree.Count() > maxFolders {
+		return errors.New("too many folders")
+	}
+
 	return f.tree.AddUnstructured(item, f.repoName)
 }
 
-func (f *legacyFolderReader) Load(ctx context.Context, legacyMigrator legacy.LegacyMigrator, name, namespace string) error {
+func (f *legacyFolderReader) Read(ctx context.Context, legacyMigrator legacy.LegacyMigrator, name, namespace string) error {
 	_, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: namespace,
 		Resources: []schema.GroupResource{resources.FolderResource.GroupResource()},
