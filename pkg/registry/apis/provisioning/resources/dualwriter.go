@@ -134,7 +134,8 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, path string, ref stri
 	}
 
 	if ref == "" {
-		manager := NewFolderManager(r.repo, client)
+		// TODO: manager should be part of the dual writer
+		manager := NewFolderManager(r.repo, client, NewEmptyFolderTree())
 		folderName, err := manager.EnsureFolderPathExist(ctx, path)
 		if err != nil {
 			return nil, err

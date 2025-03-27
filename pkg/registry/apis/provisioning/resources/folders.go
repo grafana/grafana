@@ -17,14 +17,14 @@ import (
 
 type FolderManager struct {
 	repo   repository.Repository
-	lookup *FolderTree
+	tree   *FolderTree
 	client dynamic.ResourceInterface
 }
 
-func NewFolderManager(repo repository.Repository, client dynamic.ResourceInterface) *FolderManager {
+func NewFolderManager(repo repository.Repository, client dynamic.ResourceInterface, lookup *FolderTree) *FolderManager {
 	return &FolderManager{
 		repo:   repo,
-		lookup: NewEmptyFolderTree(),
+		tree:   lookup,
 		client: client,
 	}
 }
@@ -48,13 +48,13 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 	}
 
 	f := ParseFolder(dir, cfg.Name)
-	if fm.lookup.In(f.ID) {
+	if fm.tree.In(f.ID) {
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
-		if fm.lookup.In(f.ID) {
+		if fm.tree.In(f.ID) {
 			parent = f.ID
 			return nil
 		}
@@ -63,7 +63,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 			return fmt.Errorf("ensure folder exists: %w", err)
 		}
 
-		fm.lookup.Add(f, parent)
+		fm.tree.Add(f, parent)
 		parent = f.ID
 		return nil
 	})

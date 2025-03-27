@@ -148,7 +148,7 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.Reader, prog
 		progress:        progress,
 		parser:          parser,
 		lister:          r.lister,
-		folders:         resources.NewFolderManager(repo, folderClient),
+		folders:         resources.NewFolderManager(repo, folderClient, resources.NewEmptyFolderTree()),
 		resourcesLookup: map[resourceID]string{},
 	}
 
