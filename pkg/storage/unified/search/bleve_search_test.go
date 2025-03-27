@@ -392,7 +392,7 @@ func TestCanSearchByTitle(t *testing.T) {
 			res, err := index.Search(context.Background(), nil, query, nil)
 			require.NoError(t, err)
 			if res.TotalHits != 1 {
-				fmt.Printf("i: %d, v: %s, title: %s", i, v, title)
+				t.Logf("i: %d, v: %s, title: %s", i, v, title)
 			}
 			require.Equal(t, int64(1), res.TotalHits)
 
@@ -402,7 +402,7 @@ func TestCanSearchByTitle(t *testing.T) {
 			res, err = index.Search(context.Background(), nil, query, nil)
 			require.NoError(t, err)
 			if res.TotalHits != 1 {
-				fmt.Printf("i: %d, v: %s, title: %s", i, v, title)
+				t.Logf("i: %d, v: %s, title: %s\n", i, v, title)
 			}
 
 			require.Equal(t, int64(1), res.TotalHits)
