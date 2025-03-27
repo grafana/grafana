@@ -37,7 +37,7 @@ Before configuring SCIM with Okta, ensure you have:
 
 - Grafana Enterprise or Grafana Cloud Advanced
 - Admin access to both Grafana and Okta
-- SAML authentication configured between Grafana and Okta
+- [SAML authentication configured with Okta](../../configure-authentication/saml/#set-up-saml-with-okta)
 - SCIM feature enabled in Grafana
 
 ## Configure SCIM in Grafana
@@ -55,40 +55,9 @@ To enable SCIM provisioning in Grafana, create a service account and generate an
 
 Configure both SAML authentication and SCIM provisioning in Okta to enable automated user and team synchronization with Grafana. Start by creating a SAML application, then enable and configure SCIM provisioning for that application.
 
-### Create the SAML application
-
-1. In Okta Admin Console, select **Create App Integration**
-2. Choose **SAML 2.0** as the sign-in method
-3. Configure the General Settings with application details
-
-### Configure SAML settings
-
-Configure the following SAML settings:
-
-- **Single sign-on URL:** `https://{resource_name}/saml/acs`
-- **Audience Restriction:** `https://{resource_name}/saml/metadata`
-- **Default Relay State:** `https://{resource_name}/saml/acs`
-- **Name ID format:** Unspecified
-- **Application username:** Okta username
-- **Update application username on:** Create and update
-
-### Configure attribute mappings
-
-Add the following attribute mappings:
-
-| Attribute | Value Type | Okta Value     |
-| --------- | ---------- | -------------- |
-| Name      | Basic      | user.firstName |
-| Email     | Basic      | user.email     |
-| Login     | Basic      | user.login     |
-
-For group mapping:
-
-- Add `Groups` attribute with value `.*` (matches all groups)
-
 ### Enable SCIM provisioning
 
-1. Navigate to the **General** tab of your application
+1. Navigate to the **General** tab of your SAML App Integration in Okta
 2. Enable SCIM provisioning
    - A new provisioning tab will appear
 
@@ -113,13 +82,6 @@ In the **Integration** tab, configure:
   - Import New Users and Profile Updates
   - Push New Users
   - Push Profile Updates
-
-### Configure authentication
-
-Set up the authentication:
-
-- **Authentication Mode:** HTTP Header
-- **HTTP Header:** `Authorization: Bearer {authorization_token_created_in_grafana}`
 
 ## Test the integration
 

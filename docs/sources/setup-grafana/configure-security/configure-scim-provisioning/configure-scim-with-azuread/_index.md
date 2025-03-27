@@ -39,7 +39,7 @@ Before configuring SCIM with Azure AD, ensure you have:
 
 - Grafana Enterprise or Grafana Cloud Advanced
 - Admin access to both Grafana and Azure AD
-- SAML authentication configured between Grafana and Azure AD
+- [SAML authentication configured with Azure AD](../../configure-authentication/saml/#set-up-saml-with-azure-ad)
 - SCIM feature enabled in Grafana
 
 ## Configure SCIM in Grafana
