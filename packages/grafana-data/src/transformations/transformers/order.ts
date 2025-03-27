@@ -137,7 +137,8 @@ const createFieldsOrdererAuto =
         } else {
           // field name sort
           compareReturn =
-            allSort[i].order === Order.Asc ? (compareValA > compareValB ? 1 : -1) : compareValA < compareValB ? 1 : -1;
+            allSort[i].order === Order.Asc ? (compareValA < compareValB ? -1 : 1) : compareValA > compareValB ? -1 : 1;
+          break;
         }
       }
       return compareReturn;
