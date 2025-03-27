@@ -832,14 +832,12 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 }
 
 func resultStateReason(result eval.Result, rule *models.AlertRule) string {
-	if rule.ExecErrState == models.KeepLastErrState || rule.NoDataState == models.KeepLast {
-       return models.ConcatReasons(result.State.String(), models.StateReasonKeepLast)
-   }
-   if result.State == eval.NoData {	
-	   return result.State.String()
-  }
-  if result.State == eval.Error && rule.ExecErrState == models.KeepLastErrState {
-		return models.ConcatReasons(result.State.String(), models.StateReasonKeepLast)
-  }	  
+	 if result.State == eval.NoData && rule.NoDataState == models.KeepLast {
+		 return result.State.String()
+     }
+	 if rule.ExecErrState == models.KeepLastErrState || rule.NoDataState == models.KeepLast {
+		 return models.ConcatReasons(result.State.String(), models.StateReasonKeepLast)
+	 }	 
+    
     return result.State.String()
 }
