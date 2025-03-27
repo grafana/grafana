@@ -2391,7 +2391,7 @@ func TestSetDefaultPermissions(t *testing.T) {
 
 				// Create test object
 				key := &resource.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test", Namespace: "default"}
-				obj := &dashboardv0alpha1.Dashboard{
+				obj := &dashboardv1alpha1.Dashboard{
 					TypeMeta: metav1.TypeMeta{
 						APIVersion: "dashboard.grafana.app/v0alpha1",
 					},
