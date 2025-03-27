@@ -12,7 +12,7 @@ import {
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
 } from '../panel-edit/getPanelFrameOptions';
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
@@ -99,7 +99,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public scrollIntoView() {
-    if (this.panel.parent instanceof ResponsiveGridItem) {
+    if (this.panel.parent instanceof AutoGridItem) {
       this.panel.parent.scrollIntoView();
     }
   }
