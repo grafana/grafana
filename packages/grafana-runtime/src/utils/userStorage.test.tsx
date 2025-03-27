@@ -30,7 +30,6 @@ describe('userStorage', () => {
   const originalConfig = cloneDeep(config);
 
   beforeEach(() => {
-    config.featureToggles.userStorageAPI = true;
     config.bootData.user.isSignedIn = true;
     config.bootData.user.uid = 'abc';
     request.mockReset();
@@ -46,13 +45,6 @@ describe('userStorage', () => {
   });
 
   describe('UserStorageAPI.getItem', () => {
-    it('use localStorage if the feature flag is disabled', async () => {
-      config.featureToggles.userStorageAPI = false;
-      const storage = usePluginUserStorage();
-      storage.getItem('key');
-      expect(localStorage.getItem).toHaveBeenCalled();
-    });
-
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
       const storage = usePluginUserStorage();
@@ -78,13 +70,6 @@ describe('userStorage', () => {
   });
 
   describe('setItem', () => {
-    it('use localStorage if the feature flag is disabled', async () => {
-      config.featureToggles.userStorageAPI = false;
-      const storage = usePluginUserStorage();
-      storage.setItem('key', 'value');
-      expect(localStorage.setItem).toHaveBeenCalled();
-    });
-
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
       const storage = usePluginUserStorage();
