@@ -974,6 +974,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if !ruleToPatch.HasEditorSettings {
 		ruleToPatch.Metadata.EditorSettings = existingRule.Metadata.EditorSettings
 	}
+	if ruleToPatch.MissingSeriesEvalsToResolve != nil && *ruleToPatch.MissingSeriesEvalsToResolve == -1 {
+		ruleToPatch.MissingSeriesEvalsToResolve = existingRule.MissingSeriesEvalsToResolve
+	}
 
 	if ruleToPatch.GUID == "" {
 		ruleToPatch.GUID = existingRule.GUID

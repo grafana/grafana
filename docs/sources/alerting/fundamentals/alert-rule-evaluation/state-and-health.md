@@ -74,8 +74,13 @@ When an alert rule evaluation results in a `No Data` or `Error` state, Grafana A
 
 - `alertname`: Either `DatasourceNoData` or `DatasourceError` depending on the state.
 - `datasource_uid`: The UID of the data source that caused the state.
+- `rulename`: The name of the alert rule that originated the alert.
+
+Note that `DatasourceNoData` and `DatasourceError` alert instances are independent from the original alert instance. They have different labels, which means existing silences, mute timings, and notification policies applied to the original alert may not apply to them.
 
 You can manage these alerts like regular ones by using their labels to apply actions such as adding a silence, routing via notification policies, and more.
+
+If the alert rule is configured to send notifications directly to a selected contact point (instead of using notification policies), the `DatasourceNoData` and `DatasourceError` alerts are also sent to that contact point. Any additional notification settings defined in the alert rule, such as muting or grouping, are preserved.
 
 ### Lifecycle of stale alert instances
 
@@ -85,9 +90,9 @@ Stale alert instances that are in the **Alerting**, **No Data**, or **Error** st
 
 ## Modify the `No Data` or `Error` state
 
-In [Configure no data and error handling](ref:no-data-and-error-handling), you can change the default behaviour when the evaluation returns no data or an error. You can set the alert instance state to `Alerting`, `Normal`, or keep the last state.
+These states are supported only for Grafana-managed alert rules.
 
-Note that `No Data` and `Error` states are supported only for Grafana-managed alert rules.
+In [Configure no data and error handling](ref:no-data-and-error-handling), you can change the default behaviour when the evaluation returns no data or an error. You can set the alert instance state to `Alerting`, `Normal`, `Error`, or `Keep Last State`.
 
 {{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error-v2.png" alt="A screenshot of the `Configure no data and error handling` option in Grafana Alerting." max-width="500px" >}}
 

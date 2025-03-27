@@ -1,8 +1,6 @@
 import { ResourceKey } from 'i18next';
 import { uniq } from 'lodash';
 
-import { config } from '@grafana/runtime';
-
 export const ENGLISH_US = 'en-US';
 export const FRENCH_FRANCE = 'fr-FR';
 export const SPANISH_SPAIN = 'es-ES';
@@ -40,8 +38,55 @@ export interface LanguageDefinition<Namespace extends string = string> {
   loader: Record<Namespace, LocaleFileLoader>;
 }
 
-// New languages added recently without translations available yet
-const NEW_LANGUAGES: LanguageDefinition[] = [
+export const LANGUAGES: LanguageDefinition[] = [
+  {
+    code: ENGLISH_US,
+    name: 'English',
+    loader: {
+      grafana: () => import('../../../locales/en-US/grafana.json'),
+    },
+  },
+
+  {
+    code: FRENCH_FRANCE,
+    name: 'Français',
+    loader: {
+      grafana: () => import('../../../locales/fr-FR/grafana.json'),
+    },
+  },
+
+  {
+    code: SPANISH_SPAIN,
+    name: 'Español',
+    loader: {
+      grafana: () => import('../../../locales/es-ES/grafana.json'),
+    },
+  },
+
+  {
+    code: GERMAN_GERMANY,
+    name: 'Deutsch',
+    loader: {
+      grafana: () => import('../../../locales/de-DE/grafana.json'),
+    },
+  },
+
+  {
+    code: CHINESE_SIMPLIFIED,
+    name: '中文（简体）',
+    loader: {
+      grafana: () => import('../../../locales/zh-Hans/grafana.json'),
+    },
+  },
+
+  {
+    code: BRAZILIAN_PORTUGUESE,
+    name: 'Português Brasileiro',
+    loader: {
+      grafana: () => import('../../../locales/pt-BR/grafana.json'),
+    },
+  },
+
   {
     code: CHINESE_TRADITIONAL,
     name: '中文（繁體）',
@@ -145,61 +190,7 @@ const NEW_LANGUAGES: LanguageDefinition[] = [
       grafana: () => import('../../../locales/tr-TR/grafana.json'),
     },
   },
-];
-
-export const LANGUAGES: LanguageDefinition[] = [
-  {
-    code: ENGLISH_US,
-    name: 'English',
-    loader: {
-      grafana: () => import('../../../locales/en-US/grafana.json'),
-    },
-  },
-
-  {
-    code: FRENCH_FRANCE,
-    name: 'Français',
-    loader: {
-      grafana: () => import('../../../locales/fr-FR/grafana.json'),
-    },
-  },
-
-  {
-    code: SPANISH_SPAIN,
-    name: 'Español',
-    loader: {
-      grafana: () => import('../../../locales/es-ES/grafana.json'),
-    },
-  },
-
-  {
-    code: GERMAN_GERMANY,
-    name: 'Deutsch',
-    loader: {
-      grafana: () => import('../../../locales/de-DE/grafana.json'),
-    },
-  },
-
-  {
-    code: CHINESE_SIMPLIFIED,
-    name: '中文（简体）',
-    loader: {
-      grafana: () => import('../../../locales/zh-Hans/grafana.json'),
-    },
-  },
-
-  {
-    code: BRAZILIAN_PORTUGUESE,
-    name: 'Português Brasileiro',
-    loader: {
-      grafana: () => import('../../../locales/pt-BR/grafana.json'),
-    },
-  },
 ] satisfies Array<LanguageDefinition<'grafana'>>;
-
-if (config.featureToggles?.extraLanguages) {
-  LANGUAGES.push(...NEW_LANGUAGES);
-}
 
 if (process.env.NODE_ENV === 'development') {
   LANGUAGES.push({
