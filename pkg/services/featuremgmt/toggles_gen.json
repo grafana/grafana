@@ -165,7 +165,8 @@
       "metadata": {
         "name": "alertingAlertmanagerExtraDedupStage",
         "resourceVersion": "1738251165994",
-        "creationTimestamp": "2025-01-30T15:32:45Z"
+        "creationTimestamp": "2025-01-30T15:32:45Z",
+        "deletionTimestamp": "2025-03-25T16:57:43Z"
       },
       "spec": {
         "description": "enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching",
@@ -180,7 +181,8 @@
       "metadata": {
         "name": "alertingAlertmanagerExtraDedupStageStopPipeline",
         "resourceVersion": "1738251165994",
-        "creationTimestamp": "2025-01-30T15:32:45Z"
+        "creationTimestamp": "2025-01-30T15:32:45Z",
+        "deletionTimestamp": "2025-03-25T16:57:43Z"
       },
       "spec": {
         "description": "works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning",
@@ -1733,7 +1735,8 @@
       "metadata": {
         "name": "extraLanguages",
         "resourceVersion": "1741626708204",
-        "creationTimestamp": "2025-03-10T17:11:48Z"
+        "creationTimestamp": "2025-03-10T17:11:48Z",
+        "deletionTimestamp": "2025-03-27T09:58:35Z"
       },
       "spec": {
         "description": "Enables additional languages",
@@ -4383,6 +4386,7 @@
         "name": "userStorageAPI",
         "resourceVersion": "1736438999910",
         "creationTimestamp": "2024-11-12T11:56:41Z",
+        "deletionTimestamp": "2025-03-26T14:33:40Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-09 16:09:59.910083 +0000 UTC"
         }

@@ -189,7 +189,6 @@ pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 prometheusUsesCombobox,experimental,@grafana/oss-big-tent,false,false,false
-userStorageAPI,GA,@grafana/plugins-platform-backend,false,false,false
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 preinstallAutoUpdate,GA,@grafana/plugins-platform-backend,false,false,false
 playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -223,8 +222,6 @@ exploreMetricsUseExternalAppPlugin,preview,@grafana/observability-metrics,false,
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 alertingConversionAPI,experimental,@grafana/alerting-squad,false,false,false
-alertingAlertmanagerExtraDedupStage,experimental,@grafana/alerting-squad,false,true,false
-alertingAlertmanagerExtraDedupStageStopPipeline,experimental,@grafana/alerting-squad,false,true,false
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true
 grafanaconThemes,experimental,@grafana/grafana-frontend-platform,false,true,false
 pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -237,7 +234,6 @@ alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 grafanaManagedRecordingRulesDatasources,experimental,@grafana/alerting-squad,false,false,false
 infinityRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
-extraLanguages,experimental,@grafana/grafana-frontend-platform,false,false,true
 noBackdropBlur,experimental,@grafana/grafana-frontend-platform,false,false,true
 alertingMigrationUI,experimental,@grafana/alerting-squad,false,false,true
 unifiedStorageHistoryPruner,experimental,@grafana/search-and-storage,false,false,false

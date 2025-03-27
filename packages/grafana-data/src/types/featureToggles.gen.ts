@@ -839,11 +839,6 @@ export interface FeatureToggles {
   */
   prometheusUsesCombobox?: boolean;
   /**
-  * Enables the user storage API
-  * @default true
-  */
-  userStorageAPI?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -988,14 +983,6 @@ export interface FeatureToggles {
   */
   alertingConversionAPI?: boolean;
   /**
-  * enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
-  */
-  alertingAlertmanagerExtraDedupStage?: boolean;
-  /**
-  * works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
-  */
-  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
-  /**
   * Enables the new logs panel in Explore
   */
   newLogsPanel?: boolean;
@@ -1045,10 +1032,6 @@ export interface FeatureToggles {
   * Renders invite user button along the app
   */
   inviteUserExperimental?: boolean;
-  /**
-  * Enables additional languages
-  */
-  extraLanguages?: boolean;
   /**
   * Disables backdrop blur
   */
