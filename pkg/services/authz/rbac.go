@@ -46,6 +46,7 @@ func ProvideAuthZClient(
 	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
+	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
@@ -68,7 +69,7 @@ func ProvideAuthZClient(
 			// When running in-proc we get a injection cycle between
 			// authz client, resource client and apiserver so we need to use
 			// package level function to get rest config
-			store.NewAPIFolderStore(tracer, apiserver.GetRestConfig),
+			store.NewAPIFolderStore(tracer, restConfig.GetRestConfig),
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
