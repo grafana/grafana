@@ -2,12 +2,7 @@ import { render } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 
 import { PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
-import {
-  Trans as PluginTrans,
-  setTransComponent,
-  setUseTranslateHook,
-  useTranslate,
-} from '@grafana/runtime/src/unstable';
+import { Trans as PluginTrans, setTransComponent, setUseTranslateHook, useTranslate } from '@grafana/runtime/unstable';
 
 import { getI18next, Trans, useTranslateInternal } from './index';
 
