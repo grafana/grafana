@@ -19,6 +19,7 @@ import (
 type FolderTree struct {
 	tree    map[string]string
 	folders map[string]Folder
+	count   int
 }
 
 // In determines if the given folder is in the tree at all. That is, it answers "does the folder even exist in the Grafana instance?"
@@ -66,6 +67,11 @@ func (t *FolderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 func (t *FolderTree) Add(folder Folder, parent string) {
 	t.tree[folder.ID] = parent
 	t.folders[folder.ID] = folder
+	t.count++
+}
+
+func (t *FolderTree) Count() int {
+	return t.count
 }
 
 type WalkFunc func(ctx context.Context, folder Folder) error
@@ -113,6 +119,7 @@ func (t *FolderTree) AddUnstructured(item *unstructured.Unstructured, skipRepo s
 	}
 	t.tree[folder.ID] = meta.GetFolder()
 	t.folders[folder.ID] = folder
+	t.count++
 	return nil
 }
 
@@ -133,7 +140,8 @@ func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) *Folder
 	}
 
 	return &FolderTree{
-		tree,
-		folderIDs,
+		tree:    tree,
+		folders: folderIDs,
+		count:   len(resources.Items),
 	}
 }

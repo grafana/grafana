@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -64,7 +63,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("sync not supported until storage has migrated")
 	}
 
-	rw, ok := repo.(repository.Reader)
+	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
 		return fmt.Errorf("sync job submitted for repository that does not support read-write -- this is a bug")
 	}
@@ -132,7 +131,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 }
 
 // start a job and run it
-func (r *SyncWorker) createJob(ctx context.Context, repo repository.Reader, progress jobs.JobProgressRecorder) (*syncJob, error) {
+func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter, progress jobs.JobProgressRecorder) (*syncJob, error) {
 	cfg := repo.Config()
 	parser, err := r.parsers.GetParser(ctx, repo)
 	if err != nil {
@@ -149,7 +148,7 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.Reader, prog
 		progress:        progress,
 		parser:          parser,
 		lister:          r.lister,
-		folders:         resources.NewFolderManager(repo, folderClient),
+		folders:         resources.NewFolderManager(repo, folderClient, resources.NewEmptyFolderTree()),
 		resourcesLookup: map[resourceID]string{},
 	}
 
@@ -309,8 +308,8 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			}
 
 			result.Name = folder
-			result.Resource = folders.RESOURCE
-			result.Group = folders.GROUP
+			result.Resource = resources.FolderResource.Resource
+			result.Group = resources.FolderResource.Group
 			r.progress.Record(ctx, result)
 
 			continue
@@ -361,8 +360,8 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 				r.progress.Record(ctx, jobs.JobResourceResult{
 					Path:     safeSegment,
 					Action:   repository.FileActionCreated,
-					Resource: folders.RESOURCE,
-					Group:    folders.GROUP,
+					Resource: resources.FolderResource.Resource,
+					Group:    resources.FolderResource.Group,
 					Name:     folder,
 				})
 
