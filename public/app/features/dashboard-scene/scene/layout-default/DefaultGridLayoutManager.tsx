@@ -11,6 +11,7 @@ import {
   SceneGridItemLike,
   useSceneObjectState,
 } from '@grafana/scenes';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
@@ -20,6 +21,7 @@ import {
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
+import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
@@ -59,9 +61,12 @@ export class DefaultGridLayoutManager
     },
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
-    kind: 'GridLayout',
     isGridLayout: true,
   };
+
+  public serialize(): DashboardV2Spec['layout'] {
+    return serializeDefaultGridLayout(this);
+  }
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
 

@@ -5,6 +5,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { t } from 'app/core/internationalization';
 
 import {
@@ -12,6 +13,7 @@ import {
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
+import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -39,9 +41,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     },
     id: 'tabs-layout',
     createFromLayout: TabsLayoutManager.createFromLayout,
-    kind: 'TabsLayout',
     isGridLayout: false,
   };
+
+  public serialize(): DashboardV2Spec['layout'] {
+    return serializeTabsLayout(this);
+  }
 
   public readonly descriptor = TabsLayoutManager.descriptor;
 
