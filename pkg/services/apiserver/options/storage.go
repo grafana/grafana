@@ -148,7 +148,9 @@ func (o *StorageOptions) EnforceFeatureToggleAfterMode1(features featuremgmt.Fea
 			if s.DualWriterMode > 1 {
 				switch rg {
 				case "playlists.playlist.grafana.app":
-					if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesPlaylists) {
+					// TODO: figure out what to do with this
+					enabled := true
+					if !enabled {
 						return fmt.Errorf("feature toggle FlagKubernetesPlaylists to be set")
 					}
 				}
