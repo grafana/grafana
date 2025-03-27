@@ -101,7 +101,24 @@ func (h *k8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured,
 		return nil, err
 	}
 
-	return client.Create(newCtx, obj, v1.CreateOptions{})
+	result, err := client.Create(newCtx, obj, v1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// If the UID or Name are not set or different in the response, update the object
+	// This helps ensure consistency for subsequent operations with the same object
+	if result != nil && (len(obj.GetUID()) == 0 || obj.GetUID() != result.GetUID()) {
+		// Make sure the object has the correct server-assigned UID and Name
+		if len(result.GetUID()) > 0 {
+			obj.SetUID(result.GetUID())
+		}
+		if len(result.GetName()) > 0 {
+			obj.SetName(result.GetName())
+		}
+	}
+
+	return result, nil
 }
 
 func (h *k8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error) {
