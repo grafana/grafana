@@ -133,7 +133,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	progress.SetMessage(ctx, "start resource export")
-	resourceManager := resources.NewResourcesManager(rw, folders, nil)
+	resourceManager := resources.NewResourcesManager(rw, folders, clients, nil)
 	for _, kind := range resources.SupportedResources {
 		// skip from folders as we do them first
 		if kind == resources.FolderResource {

@@ -1,7 +1,6 @@
 package sync
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -143,13 +142,15 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter
 		return nil, fmt.Errorf("unable to get folder client: %w", err)
 	}
 
+	folders := resources.NewFolderManager(repo, folderClient, resources.NewEmptyFolderTree())
 	job := &syncJob{
 		repository:      repo,
 		progress:        progress,
 		parser:          parser,
 		lister:          r.lister,
-		folders:         resources.NewFolderManager(repo, folderClient, resources.NewEmptyFolderTree()),
+		folders:         folders,
 		resourcesLookup: map[resourceID]string{},
+		resourceManager: resources.NewResourcesManager(repo, folders, parser.Clients(), nil),
 	}
 
 	return job, nil
@@ -185,6 +186,7 @@ type syncJob struct {
 	folders         *resources.FolderManager
 	folderLookup    *resources.FolderTree
 	resourcesLookup map[resourceID]string // the path with this k8s name
+	resourceManager *resources.ResourcesManager
 }
 
 func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) error {
@@ -379,12 +381,31 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		case repository.FileActionCreated, repository.FileActionUpdated:
 			r.progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, change.Ref, change.Action))
 		case repository.FileActionDeleted:
-			r.progress.Record(ctx, r.deleteObject(ctx, change.Path, change.PreviousRef))
+			_, gvk, err := r.resourceManager.DeleteObject(ctx, change.Path, change.PreviousRef)
+			result := jobs.JobResourceResult{
+				Path:   change.Path,
+				Action: repository.FileActionDeleted,
+				Error:  err,
+			}
+
+			if gvk != nil {
+				result.Resource = gvk.Kind
+				result.Group = gvk.Group
+			}
+			r.progress.Record(ctx, result)
 		case repository.FileActionRenamed:
 			// 1. Delete
-			result := r.deleteObject(ctx, change.Path, change.PreviousRef)
-			if result.Error != nil {
-				r.progress.Record(ctx, result)
+			_, gvk, err := r.resourceManager.DeleteObject(ctx, change.Path, change.PreviousRef)
+			result := jobs.JobResourceResult{
+				Path:   change.Path,
+				Action: repository.FileActionDeleted,
+			}
+			if gvk != nil {
+				result.Resource = gvk.Kind
+				result.Group = gvk.Group
+			}
+			r.progress.Record(ctx, result)
+			if err != nil {
 				continue
 			}
 
@@ -403,49 +424,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	return nil
 }
 
-func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) jobs.JobResourceResult {
-	info, err := r.repository.Read(ctx, path, ref)
-	result := jobs.JobResourceResult{
-		Path:   path,
-		Action: repository.FileActionDeleted,
-	}
-
-	if err != nil {
-		result.Error = fmt.Errorf("failed to read file: %w", err)
-		return result
-	}
-
-	obj, gvk, _ := resources.DecodeYAMLObject(bytes.NewBuffer(info.Data))
-	if obj == nil {
-		result.Error = errors.New("no object found")
-		return result
-	}
-
-	objName := obj.GetName()
-	if objName == "" {
-		// Find the referenced file
-		objName, _ = resources.NamesFromHashedRepoPath(r.repository.Config().Name, path)
-	}
-
-	result.Name = objName
-	result.Resource = gvk.Kind
-	result.Group = gvk.Group
-
-	client, _, err := r.parser.Clients().ForKind(*gvk)
-	if err != nil {
-		result.Error = fmt.Errorf("unable to get client for deleted object: %w", err)
-		return result
-	}
-
-	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
-	if err != nil {
-		result.Error = fmt.Errorf("failed to delete: %w", err)
-		return result
-	}
-
-	return result
-}
-
+// TODO: Move to resources
 func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) jobs.JobResourceResult {
 	result := jobs.JobResourceResult{
 		Path:   path,

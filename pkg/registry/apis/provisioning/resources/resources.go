@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,7 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var ErrAlreadyInRepository = errors.New("already in repository")
@@ -24,13 +27,15 @@ type WriteOptions struct {
 type ResourcesManager struct {
 	repo     repository.ReaderWriter
 	folders  *FolderManager
+	clients  *ResourceClients
 	userInfo map[string]repository.CommitSignature
 }
 
-func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, userInfo map[string]repository.CommitSignature) *ResourcesManager {
+func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, clients *ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
 	return &ResourcesManager{
 		repo:     repo,
 		folders:  folders,
+		clients:  clients,
 		userInfo: userInfo,
 	}
 }
@@ -109,6 +114,36 @@ func (m *ResourcesManager) CreateResourceFromObject(ctx context.Context, obj *un
 	}
 
 	return fileName, nil
+}
+
+func (r *ResourcesManager) DeleteObject(ctx context.Context, path string, ref string) (string, *schema.GroupVersionKind, error) {
+	info, err := r.repo.Read(ctx, path, ref)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	obj, gvk, _ := DecodeYAMLObject(bytes.NewBuffer(info.Data))
+	if obj == nil {
+		return "", nil, fmt.Errorf("no object found")
+	}
+
+	objName := obj.GetName()
+	if objName == "" {
+		// Find the referenced file
+		objName, _ = NamesFromHashedRepoPath(r.repo.Config().Name, path)
+	}
+
+	client, _, err := r.clients.ForKind(*gvk)
+	if err != nil {
+		return "", nil, fmt.Errorf("unable to get client for deleted object: %w", err)
+	}
+
+	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to delete: %w", err)
+	}
+
+	return objName, gvk, nil
 }
 
 func (m *ResourcesManager) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {

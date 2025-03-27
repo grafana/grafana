@@ -66,6 +66,7 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	parsed.Meta.SetSourceProperties(utils.SourceProperties{})
 
 	// TODO: this seems to be same logic as the export job
+	// TODO: we should use a kind safe manager here
 	fileName, err := r.resources.CreateResourceFromObject(ctx, parsed.Obj, resources.WriteOptions{
 		Path:       "",
 		Ref:        "",
