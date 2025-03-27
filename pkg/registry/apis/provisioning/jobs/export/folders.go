@@ -17,7 +17,7 @@ import (
 )
 
 func (r *exportJob) exportFoldersFromAPIServer(ctx context.Context) error {
-	logger := r.logger
+	// FIXME: we load the entire tree in memory
 	r.progress.SetMessage(ctx, "reading folder tree from unified storage")
 	repoName := r.target.Config().Name
 	err := r.client.ForEachFolder(ctx, func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error {
@@ -44,7 +44,6 @@ func (r *exportJob) exportFoldersFromAPIServer(ctx context.Context) error {
 		if r.path != "" {
 			p = safepath.Join(r.path, p)
 		}
-		logger := logger.With("path", p)
 
 		result := jobs.JobResourceResult{
 			Name:     folder.ID,
@@ -60,7 +59,6 @@ func (r *exportJob) exportFoldersFromAPIServer(ctx context.Context) error {
 			result.Error = fmt.Errorf("failed to check if folder exists before writing: %w", err)
 			return result.Error
 		} else if err == nil {
-			logger.Info("folder already exists")
 			result.Action = repository.FileActionIgnored
 			r.progress.Record(ctx, result)
 			return nil

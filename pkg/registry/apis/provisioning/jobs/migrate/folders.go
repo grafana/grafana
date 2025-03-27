@@ -52,6 +52,7 @@ func (j *migrateFromLegacyJob) migrateLegacyFolders(ctx context.Context) error {
 
 	repoName := j.target.Config().Name
 
+	// FIXME: we load the entire tree in memory
 	j.progress.SetMessage(ctx, "migrate folder tree from legacy")
 	reader := &folderReader{
 		tree:           j.folderTree,
