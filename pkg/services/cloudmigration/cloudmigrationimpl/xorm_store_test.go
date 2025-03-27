@@ -362,6 +362,15 @@ func Test_SnapshotResources(t *testing.T) {
 			assert.Equal(t, "1", results[0].UID)
 			assert.Equal(t, "5", results[4].UID)
 		})
+
+		t.Run("only errors filter returns only error status resources", func(t *testing.T) {
+			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+				ErrorsOnly: true,
+			})
+			require.NoError(t, err)
+			assert.Len(t, results, 1)
+			assert.Equal(t, "2", results[0].UID)
+		})
 	})
 }
 

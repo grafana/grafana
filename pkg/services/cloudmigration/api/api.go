@@ -369,6 +369,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	lim := getQueryPageParams(c.QueryInt("resultLimit"), cloudmigration.ResultLimit(100))
 	col := getQueryCol(c.Query("resultSortColumn"), cloudmigration.SortColumnID)
 	dir := getQueryOrder(c.Query("resultSortOrder"), cloudmigration.SortOrderAsc)
+	errorsOnly := c.QueryBool("errorsOnly")
 
 	q := cloudmigration.GetSnapshotsQuery{
 		SnapshotUID: snapshotUid,
@@ -377,9 +378,9 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
 			ResultPage:  page,
 			ResultLimit: lim,
-			// These wrapper types sanitize the user input and handles defaults
-			SortColumn: cloudmigration.ResultSortColumn(col),
-			SortOrder:  cloudmigration.SortOrder(dir),
+			SortColumn:  col,
+			SortOrder:   dir,
+			ErrorsOnly:  errorsOnly,
 		},
 	}
 

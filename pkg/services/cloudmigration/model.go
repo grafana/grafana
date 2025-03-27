@@ -189,6 +189,7 @@ type SnapshotResultQueryParams struct {
 	ResultLimit ResultLimit
 	SortColumn  ResultSortColumn
 	SortOrder   SortOrder
+	ErrorsOnly  bool
 }
 
 type GetSnapshotsQuery struct {
