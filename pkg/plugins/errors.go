@@ -3,8 +3,9 @@ package plugins
 import (
 	"context"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"google.golang.org/grpc/metadata"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 var (
@@ -49,12 +50,11 @@ var (
 
 	ErrPluginGrpcConnectionUnavailableBaseFn = func(ctx context.Context) errutil.Base {
 		pubMsg := "Data source became unavailable during request. Please try again."
-		if kv, exists := metadata.FromIncomingContext(ctx); exists && len(kv.Get("stackID")) > 0 {
-			pubMsg = pubMsg + " If the problem persists, please contact customer support."
+		if requester, err := identity.GetRequester(ctx); err == nil && requester != nil {
+			if namespace, _ := types.ParseNamespace(requester.GetNamespace()); namespace.StackID != 0 {
+				pubMsg += " If the problem persists, please contact customer support."
+			}
 		}
-		return errutil.Internal("plugin.connectionUnavailable",
-			errutil.WithPublicMessage(pubMsg),
-			errutil.WithDownstream(),
-		)
+		return errutil.Internal("plugin.connectionUnavailable", errutil.WithPublicMessage(pubMsg))
 	}
 )

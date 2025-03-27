@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc/metadata"
 )
 
 func TestErrPluginGrpcConnectionUnavailableBase(t *testing.T) {
@@ -18,18 +18,26 @@ func TestErrPluginGrpcConnectionUnavailableBase(t *testing.T) {
 		expectedPublic string
 	}{
 		{
-			name:           "without stack ID",
-			ctx:            context.Background(),
+			name: "without stack ID in context",
+			ctx: identity.WithRequester(context.Background(), &identity.StaticRequester{
+				Namespace: "org-123",
+			}),
 			err:            errors.New("connection failed"),
 			expectedPublic: "Data source became unavailable during request. Please try again.",
 		},
 		{
-			name: "with stack ID",
-			ctx: metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
-				"stackID": "test-stack",
-			})),
+			name: "with stack ID in context",
+			ctx: identity.WithRequester(context.Background(), &identity.StaticRequester{
+				Namespace: "stack-123",
+			}),
 			err:            errors.New("connection failed"),
 			expectedPublic: "Data source became unavailable during request. Please try again. If the problem persists, please contact customer support.",
+		},
+		{
+			name:           "without static requester in context",
+			ctx:            context.Background(),
+			err:            errors.New("connection failed"),
+			expectedPublic: "Data source became unavailable during request. Please try again.",
 		},
 	}
 
