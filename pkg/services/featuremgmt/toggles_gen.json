@@ -1735,7 +1735,8 @@
       "metadata": {
         "name": "extraLanguages",
         "resourceVersion": "1741626708204",
-        "creationTimestamp": "2025-03-10T17:11:48Z"
+        "creationTimestamp": "2025-03-10T17:11:48Z",
+        "deletionTimestamp": "2025-03-27T09:58:35Z"
       },
       "spec": {
         "description": "Enables additional languages",
