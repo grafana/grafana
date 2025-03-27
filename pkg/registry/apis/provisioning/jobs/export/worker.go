@@ -95,17 +95,43 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
-	worker := newExportJob(ctx, rw, *options, clients, progress)
-
 	// Load and write all folders
-	progress.SetMessage(ctx, "start folder export")
-	err = worker.exportFoldersFromAPIServer(ctx)
+	// FIXME: we load the entire tree in memory
+	progress.SetMessage(ctx, "read folder tree from API server")
+	client, err := clients.Folder()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get folder client: %w", err)
+	}
+
+	folders := resources.NewFolderManager(rw, client, resources.NewEmptyFolderTree())
+	if err := folders.LoadFromServer(ctx); err != nil {
+		return fmt.Errorf("failed to load folders from API server: %w", err)
+	}
+
+	progress.SetMessage(ctx, "write folders to repository")
+	err = folders.EnsureTreeExists(ctx, options.Branch, options.Path, func(folder resources.Folder, created bool, err error) error {
+		result := jobs.JobResourceResult{
+			Action:   repository.FileActionCreated,
+			Name:     folder.ID,
+			Resource: resources.FolderResource.Resource,
+			Group:    resources.FolderResource.Group,
+			Path:     folder.Path,
+			Error:    err,
+		}
+
+		if !created {
+			result.Action = repository.FileActionIgnored
+		}
+
+		progress.Record(ctx, result)
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("write folders to repository: %w", err)
 	}
 
 	progress.SetMessage(ctx, "start resource export")
-	err = worker.exportResourcesFromAPIServer(ctx)
+	err = exportResourcesFromAPIServer(ctx, folders, clients, progress, *options, rw)
 	if err != nil {
 		return err
 	}

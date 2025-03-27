@@ -9,6 +9,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -16,17 +17,17 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-func (r *exportJob) exportResourcesFromAPIServer(ctx context.Context) error {
+func exportResourcesFromAPIServer(ctx context.Context, folders *resources.FolderManager, clients *resources.ResourceClients, progress jobs.JobProgressRecorder, options provisioning.ExportJobOptions, target repository.Writer) error {
 	for _, kind := range resources.SupportedResources {
 		// skip from folders as we do them first
 		if kind == resources.FolderResource {
 			continue
 		}
 
-		r.progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
-		if err := r.client.ForEachResource(ctx, kind, func(_ dynamic.ResourceInterface, item *unstructured.Unstructured) error {
-			r.progress.Record(ctx, r.exportResource(ctx, item))
-			if err := r.progress.TooManyErrors(); err != nil {
+		progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
+		if err := clients.ForEachResource(ctx, kind, func(_ dynamic.ResourceInterface, item *unstructured.Unstructured) error {
+			progress.Record(ctx, exportResource(ctx, item, folders, options, target))
+			if err := progress.TooManyErrors(); err != nil {
 				return err
 			}
 			return nil
@@ -38,7 +39,7 @@ func (r *exportJob) exportResourcesFromAPIServer(ctx context.Context) error {
 	return nil
 }
 
-func (r *exportJob) exportResource(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
+func exportResource(ctx context.Context, obj *unstructured.Unstructured, folders *resources.FolderManager, options provisioning.ExportJobOptions, target repository.Writer) jobs.JobResourceResult {
 	gvk := obj.GroupVersionKind()
 	result := jobs.JobResourceResult{
 		Name:     obj.GetName(),
@@ -71,7 +72,7 @@ func (r *exportJob) exportResource(ctx context.Context, obj *unstructured.Unstru
 
 	name := meta.GetName()
 	manager, _ := meta.GetManagerProperties()
-	if manager.Identity == r.target.Config().GetName() {
+	if manager.Identity == target.Config().GetName() {
 		result.Action = repository.FileActionIgnored
 		return result
 	}
@@ -83,13 +84,13 @@ func (r *exportJob) exportResource(ctx context.Context, obj *unstructured.Unstru
 	folder := meta.GetFolder()
 
 	// Get the absolute path of the folder
-	fid, ok := r.folderTree.DirPath(folder, "")
+	fid, ok := folders.Tree().DirPath(folder, "")
 	if !ok {
 		// FIXME: Shouldn't this fail instead?
 		fid = resources.Folder{
 			Path: "__folder_not_found/" + slugify.Slugify(folder),
 		}
-		r.logger.Error("folder of item was not in tree of repository")
+		// r.logger.Error("folder of item was not in tree of repository")
 	}
 
 	result.Path = fid.Path
@@ -97,7 +98,7 @@ func (r *exportJob) exportResource(ctx context.Context, obj *unstructured.Unstru
 	// Clear the metadata
 	delete(obj.Object, "metadata")
 
-	if r.keepIdentifier {
+	if options.Identifier {
 		meta.SetName(name) // keep the identifier in the metadata
 	}
 
@@ -111,11 +112,11 @@ func (r *exportJob) exportResource(ctx context.Context, obj *unstructured.Unstru
 	if fid.Path != "" {
 		fileName = safepath.Join(fid.Path, fileName)
 	}
-	if r.path != "" {
-		fileName = safepath.Join(r.path, fileName)
+	if options.Path != "" {
+		fileName = safepath.Join(options.Path, fileName)
 	}
 
-	err = r.target.Write(ctx, fileName, r.ref, body, commitMessage)
+	err = target.Write(ctx, fileName, options.Branch, body, commitMessage)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to write file: %w", err)
 	}
