@@ -116,6 +116,7 @@ func (r *Runner) Run(ctx context.Context) error {
 			}
 			ticker.Reset(nextSendInterval)
 		case <-ctx.Done():
+			r.markUnprocessedChecksAsErrored(ctx)
 			return ctx.Err()
 		}
 	}
@@ -227,4 +228,22 @@ func getMaxHistory(pluginConfig map[string]string) (int, error) {
 		}
 	}
 	return maxHistory, nil
+}
+
+func (r *Runner) markUnprocessedChecksAsErrored(ctx context.Context) {
+	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
+	if err != nil {
+		r.log.Error("Error getting checks", "error", err)
+		return
+	}
+
+	for _, check := range list.GetItems() {
+		if checks.GetStatusAnnotation(check) == "" {
+			r.log.Error("Check is unprocessed", "check", check.GetStaticMetadata().Identifier())
+			err := checks.SetStatusAnnotation(ctx, r.client, check, checks.StatusAnnotationError)
+			if err != nil {
+				r.log.Error("Error setting check status to error", "error", err)
+			}
+		}
+	}
 }
