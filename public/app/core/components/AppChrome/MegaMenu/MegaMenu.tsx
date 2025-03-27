@@ -43,7 +43,7 @@ export const MegaMenu = memo(
       .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
     if (config.featureToggles.pinNavItems) {
-      const bookmarksItem = findByUrl(navItems, '/bookmarks');
+      const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');
       if (bookmarksItem) {
         // Add children to the bookmarks section
         bookmarksItem.children = pinnedItems.reduce((acc: NavModelItem[], url) => {
