@@ -1,5 +1,4 @@
 import { isEqual } from 'lodash';
-import { createRef } from 'react';
 
 import {
   CustomVariable,
@@ -19,12 +18,12 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { Point, Rect } from '../layout-manager/utils';
-import { DashboardLayoutItem, IntermediateLayoutItem } from '../types/DashboardLayoutItem';
+import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getOptions } from './ResponsiveGridItemEditor';
 import { AutoGridItemRenderer } from './ResponsiveGridItemRenderer';
+import { AutoGridLayout } from './ResponsiveGridLayout';
 
 export interface AutoGridItemState extends SceneObjectState {
   body: VizPanel;
@@ -37,14 +36,17 @@ export interface AutoGridItemState extends SceneObjectState {
 
 export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements DashboardLayoutItem {
   public static Component = AutoGridItemRenderer;
-  private _prevRepeatValues?: VariableValueSingle[];
+
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: this.state.variableName ? [this.state.variableName] : [],
     onVariableUpdateCompleted: () => this.performRepeat(),
   });
+
   public readonly isDashboardLayoutItem = true;
-  public containerRef = createRef<HTMLDivElement>();
-  public cachedBoundingBox: Rect | undefined;
+
+  public _containerRef: HTMLDivElement | null = null;
+
+  private _prevRepeatValues?: VariableValueSingle[];
 
   public constructor(state: AutoGridItemState) {
     super({ ...state, conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty() });
@@ -143,77 +145,26 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     this.performRepeat();
   }
 
-  public computeBoundingBox() {
-    const itemContainer = this.containerRef.current;
-    if (!itemContainer || this.state.isHidden) {
-      // We can't actually calculate the dimensions of the rendered grid item :(
-      throw new Error('Unable to compute bounding box.');
+  public getParentGrid(): AutoGridLayout {
+    if (!(this.parent instanceof AutoGridLayout)) {
+      throw new Error('Parent is not a ResponsiveGridLayout');
     }
 
-    this.cachedBoundingBox = itemContainer.getBoundingClientRect();
-    return this.cachedBoundingBox;
+    return this.parent;
   }
 
-  public distanceToPoint(point: Point): number {
-    if (!this.cachedBoundingBox) {
-      try {
-        this.cachedBoundingBox = this.computeBoundingBox();
-      } catch (err) {
-        // If we can't actually calculate the dimensions and position of the
-        // rendered grid item, it might as well be infinitely far away.
-        return Number.POSITIVE_INFINITY;
-      }
-    }
-
-    const { top, left, bottom, right } = this.cachedBoundingBox;
-    const corners: Point[] = [
-      { x: left, y: top },
-      { x: left, y: bottom },
-      { x: right, y: top },
-      { x: right, y: bottom },
-    ];
-
-    const { distance } = closestPoint(point, ...corners);
-    return distance;
+  public setRef(ref: HTMLDivElement | null) {
+    this._containerRef = ref;
   }
 
-  toIntermediate(): IntermediateLayoutItem {
-    const gridItem = this.containerRef.current;
-
-    if (!gridItem) {
-      throw new Error('Grid item not found. Unable to convert to intermediate representation');
-    }
-
-    // calculate origin and bounding box of layout item
-    const rect = gridItem.getBoundingClientRect();
+  public getBoundingBox(): { width: number; height: number; top: number; left: number } {
+    const rect = this._containerRef!.getBoundingClientRect();
 
     return {
-      body: this.state.body,
-      origin: {
-        x: rect.left,
-        y: rect.top,
-      },
       width: rect.width,
       height: rect.height,
+      top: this._containerRef!.offsetTop,
+      left: this._containerRef!.offsetLeft,
     };
   }
-}
-
-// todo@kay: tests
-function closestPoint(referencePoint: Point, ...points: Point[]): { point: Point; distance: number } {
-  let minDistance = Number.POSITIVE_INFINITY;
-  let closestPoint = points[0];
-  for (const currentPoint of points) {
-    const distance = euclideanDistance(referencePoint, currentPoint);
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestPoint = currentPoint;
-    }
-  }
-
-  return { point: closestPoint, distance: minDistance };
-}
-
-function euclideanDistance(a: Point, b: Point): number {
-  return Math.hypot(a.x - b.x, a.y - b.y);
 }
