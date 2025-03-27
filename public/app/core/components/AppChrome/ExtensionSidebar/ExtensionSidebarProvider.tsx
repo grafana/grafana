@@ -4,8 +4,8 @@ import { store, type ExtensionInfo } from '@grafana/data';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
 export const EXTENSION_SIDEBAR_EXTENSION_POINT_ID = 'grafana/extension-sidebar/v0-alpha';
-const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
-const ENABLED_EXTENSION_SIDEBAR_PLUGINS = ['grafana-investigations-app'];
+export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
+const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = ['grafana-investigations-app'];
 
 type ExtensionSidebarContextType = {
   /**
@@ -46,7 +46,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   // get all components for this extension point, but only for the permitted plugins
   const availableComponents = new Map(
     Array.from(getExtensionPointPluginMeta(EXTENSION_SIDEBAR_EXTENSION_POINT_ID).entries()).filter(([pluginId]) =>
-      ENABLED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId)
+      PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId)
     )
   );
 
