@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 
 import { ScopeDashboardBinding } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -12,7 +13,7 @@ interface ScopesDashboardsServiceState {
   drawerOpened: boolean;
   // by keeping a track of the raw response, it's much easier to check if we got any dashboards for the currently selected scopes
   dashboards: ScopeDashboardBinding[];
-  scopeNavigations: ScopeNavigation[];
+  scopeNavigations: Array<ScopeDashboardBinding | ScopeNavigation>;
   // a filtered version of the `folders` property. this prevents a lot of unnecessary parsings in React renders
   filteredFolders: SuggestedNavigationsFoldersMap;
   // this is a grouping in folders of the `dashboards` property. it is used for filtering the dashboards and folders when the search query changes
@@ -89,27 +90,22 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
     this.updateState({ forScopeNames, loading: true });
 
-    const res = await Promise.all([
-      this.apiClient.fetchDashboards(forScopeNames),
-      this.apiClient.fetchScopeNavigations(forScopeNames),
-    ]);
+    const fetchNavigations = config.featureToggles.useScopesNavigationEndpoint
+      ? this.apiClient.fetchScopeNavigations
+      : this.apiClient.fetchDashboards;
 
-    const dashboards = res[0];
-    const scopeNavigations = res[1];
-
-    const suggestedNavigations: Array<ScopeDashboardBinding | ScopeNavigation> = [...scopeNavigations, ...dashboards];
+    const res = await fetchNavigations(forScopeNames);
 
     if (isEqual(this.state.forScopeNames, forScopeNames)) {
-      const folders = this.groupSuggestedItems(suggestedNavigations);
+      const folders = this.groupSuggestedItems(res);
       const filteredFolders = this.filterFolders(folders, this.state.searchQuery);
 
       this.updateState({
-        dashboards,
-        scopeNavigations,
+        scopeNavigations: res,
         filteredFolders,
         folders,
         loading: false,
-        drawerOpened: dashboards.length > 0,
+        drawerOpened: res.length > 0,
       });
     }
   };
