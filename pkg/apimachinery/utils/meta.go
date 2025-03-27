@@ -332,7 +332,7 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 }
 
 func (m *grafanaMetaAccessor) GetFullpath() string {
-	return m.get(AnnoKeyFullpath)
+	return m.GetAnnotation(AnnoKeyFullpath)
 }
 
 func (m *grafanaMetaAccessor) SetFullpath(path string) {
@@ -340,7 +340,7 @@ func (m *grafanaMetaAccessor) SetFullpath(path string) {
 }
 
 func (m *grafanaMetaAccessor) GetFullpathUIDs() string {
-	return m.get(AnnoKeyFullpathUIDs)
+	return m.GetAnnotation(AnnoKeyFullpathUIDs)
 }
 
 func (m *grafanaMetaAccessor) SetFullpathUIDs(uids string) {
