@@ -6,16 +6,16 @@ on:
     branches:
       - main
     paths:
-        - public/app/features/search/**/*.ts
-        - public/app/features/search/**/*.tsx
-        - pkg/storage/**/*.go
+      - public/app/features/search/**/*.ts
+      - public/app/features/search/**/*.tsx
+      - pkg/storage/**/*.go
   pull_request:
     branches:
       - main
     paths:
-        - public/app/features/search/**/*.ts
-        - public/app/features/search/**/*.tsx
-        - pkg/storage/**/*.go
+      - public/app/features/search/**/*.ts
+      - public/app/features/search/**/*.tsx
+      - pkg/storage/**/*.go
 env:
   ARCH: linux-amd64
 
