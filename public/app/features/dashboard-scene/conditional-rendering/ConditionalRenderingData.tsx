@@ -6,7 +6,7 @@ import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/da
 import { RadioButtonGroup, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { RowItem } from '../scene/layout-rows/RowItem';
 
 import { ConditionHeader } from './ConditionHeader';
@@ -31,7 +31,7 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   private _activationHandler() {
     let panelDataProviders: SceneDataProvider[] = [];
     const item = this.getConditionalLogicRoot().parent;
-    if (item instanceof ResponsiveGridItem) {
+    if (item instanceof AutoGridItem) {
       const panelData = sceneGraph.getData(item.state.body);
       if (panelData) {
         panelDataProviders.push(panelData);
@@ -71,7 +71,7 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     const item = this.getConditionalLogicRoot().parent;
 
     // extract single panel data from ResponsiveGridItem
-    if (item instanceof ResponsiveGridItem) {
+    if (item instanceof AutoGridItem) {
       const panelData = sceneGraph.getData(item.state.body).state.data;
       if (panelData) {
         data.push(panelData);

@@ -7,11 +7,11 @@ import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
 import { DropZone, Point, Rect, SceneLayoutWithDragAndDrop } from '../layout-manager/utils';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
-import { ResponsiveGridItem } from './ResponsiveGridItem';
-import { ResponsiveGridLayoutRenderer } from './ResponsiveGridLayoutRenderer';
+import { AutoGridItem } from './ResponsiveGridItem';
+import { AutoGridLayoutRenderer } from './ResponsiveGridLayoutRenderer';
 
-export interface ResponsiveGridLayoutState extends SceneObjectState, ResponsiveGridLayoutOptions {
-  children: ResponsiveGridItem[];
+export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOptions {
+  children: AutoGridItem[];
 
   /**
    * True when the item should be rendered but not visible.
@@ -22,7 +22,7 @@ export interface ResponsiveGridLayoutState extends SceneObjectState, ResponsiveG
   /**
    * For media query for screens smaller than md breakpoint
    */
-  md?: ResponsiveGridLayoutOptions;
+  md?: AutoGridLayoutOptions;
 
   /** True when the items should be lazy loaded */
   isLazy?: boolean;
@@ -31,7 +31,7 @@ export interface ResponsiveGridLayoutState extends SceneObjectState, ResponsiveG
   isDraggable?: boolean;
 }
 
-export interface ResponsiveGridLayoutOptions {
+export interface AutoGridLayoutOptions {
   /**
    * Useful for setting a height on items without specifying how many rows there will be.
    * Defaults to 320px
@@ -55,13 +55,10 @@ export interface ResponsiveGridLayoutOptions {
   justifyContent?: CSSProperties['justifyContent'];
 }
 
-export class ResponsiveGridLayout
-  extends SceneObjectBase<ResponsiveGridLayoutState>
-  implements SceneLayoutWithDragAndDrop
-{
+export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> implements SceneLayoutWithDragAndDrop {
   public layoutOrchestrator: LayoutOrchestrator | undefined;
 
-  public static Component = ResponsiveGridLayoutRenderer;
+  public static Component = AutoGridLayoutRenderer;
 
   public containerRef = createRef<HTMLDivElement>();
 
@@ -72,7 +69,7 @@ export class ResponsiveGridLayout
   public rowCount = 1;
   public scrollPos: ReturnType<typeof closestScroll> | undefined;
 
-  public constructor(state: Partial<ResponsiveGridLayoutState>) {
+  public constructor(state: Partial<AutoGridLayoutState>) {
     super({
       rowGap: 1,
       columnGap: 1,
@@ -114,7 +111,7 @@ export class ResponsiveGridLayout
     e.preventDefault();
     e.stopPropagation();
 
-    // Refresh bounding boxes for all responsive grid items
+    // Refresh bounding boxes for all auto grid items
     for (const child of this.state.children) {
       child.computeBoundingBox();
     }
@@ -169,7 +166,7 @@ export class ResponsiveGridLayout
 
     layoutItemIR.body.clearParent();
 
-    const newLayoutItem = new ResponsiveGridItem({ body: layoutItemIR.body });
+    const newLayoutItem = new AutoGridItem({ body: layoutItemIR.body });
     layoutChildren.splice(this.activeIndex ?? 0, 0, newLayoutItem);
 
     this.setState({

@@ -77,7 +77,7 @@ func Convert_V0_to_V2(in *v0alpha1.Dashboard, out *v2alpha1.Dashboard, scope con
 	}
 
 	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.
-	out.Spec.Layout = v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind{
+	out.Spec.Layout = v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
 		GridLayoutKind: &v2alpha1.DashboardGridLayoutKind{
 			Kind: "GridLayout",
 			Spec: v2alpha1.DashboardGridLayoutSpec{},
@@ -122,7 +122,7 @@ func Convert_V1_to_V2(in *v1alpha1.Dashboard, out *v2alpha1.Dashboard, scope con
 	}
 
 	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.
-	out.Spec.Layout = v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind{
+	out.Spec.Layout = v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
 		GridLayoutKind: &v2alpha1.DashboardGridLayoutKind{
 			Kind: "GridLayout",
 			Spec: v2alpha1.DashboardGridLayoutSpec{},

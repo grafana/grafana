@@ -693,7 +693,7 @@ export interface RowsLayoutRowSpec {
 	fillScreen?: boolean;
 	conditionalRendering?: ConditionalRenderingGroupKind;
 	repeat?: RowRepeatOptions;
-	layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
+	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -778,27 +778,27 @@ export const defaultConditionalRenderingTimeIntervalSpec = (): ConditionalRender
 	value: "",
 });
 
-export interface ResponsiveGridLayoutKind {
-	kind: "ResponsiveGridLayout";
-	spec: ResponsiveGridLayoutSpec;
+export interface AutoGridLayoutKind {
+	kind: "AutoGridLayout";
+	spec: AutoGridLayoutSpec;
 }
 
-export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => ({
-	kind: "ResponsiveGridLayout",
-	spec: defaultResponsiveGridLayoutSpec(),
+export const defaultAutoGridLayoutKind = (): AutoGridLayoutKind => ({
+	kind: "AutoGridLayout",
+	spec: defaultAutoGridLayoutSpec(),
 });
 
-export interface ResponsiveGridLayoutSpec {
+export interface AutoGridLayoutSpec {
 	maxColumnCount?: number;
 	columnWidthMode: "narrow" | "standard" | "wide" | "custom";
 	columnWidth?: number;
 	rowHeightMode: "short" | "standard" | "tall" | "custom";
 	rowHeight?: number;
 	fillScreen?: boolean;
-	items: ResponsiveGridLayoutItemKind[];
+	items: AutoGridLayoutItemKind[];
 }
 
-export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => ({
+export const defaultAutoGridLayoutSpec = (): AutoGridLayoutSpec => ({
 	maxColumnCount: 3,
 	columnWidthMode: "standard",
 	rowHeightMode: "standard",
@@ -806,32 +806,32 @@ export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => (
 	items: [],
 });
 
-export interface ResponsiveGridLayoutItemKind {
-	kind: "ResponsiveGridLayoutItem";
-	spec: ResponsiveGridLayoutItemSpec;
+export interface AutoGridLayoutItemKind {
+	kind: "AutoGridLayoutItem";
+	spec: AutoGridLayoutItemSpec;
 }
 
-export const defaultResponsiveGridLayoutItemKind = (): ResponsiveGridLayoutItemKind => ({
-	kind: "ResponsiveGridLayoutItem",
-	spec: defaultResponsiveGridLayoutItemSpec(),
+export const defaultAutoGridLayoutItemKind = (): AutoGridLayoutItemKind => ({
+	kind: "AutoGridLayoutItem",
+	spec: defaultAutoGridLayoutItemSpec(),
 });
 
-export interface ResponsiveGridLayoutItemSpec {
+export interface AutoGridLayoutItemSpec {
 	element: ElementReference;
-	repeat?: ResponsiveGridRepeatOptions;
+	repeat?: AutoGridRepeatOptions;
 	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
-export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({
+export const defaultAutoGridLayoutItemSpec = (): AutoGridLayoutItemSpec => ({
 	element: defaultElementReference(),
 });
 
-export interface ResponsiveGridRepeatOptions {
+export interface AutoGridRepeatOptions {
 	mode: "variable";
 	value: string;
 }
 
-export const defaultResponsiveGridRepeatOptions = (): ResponsiveGridRepeatOptions => ({
+export const defaultAutoGridRepeatOptions = (): AutoGridRepeatOptions => ({
 	mode: RepeatMode,
 	value: "",
 });
@@ -866,7 +866,7 @@ export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
 
 export interface TabsLayoutTabSpec {
 	title?: string;
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
@@ -1363,7 +1363,7 @@ export interface Spec {
 	// Whether a dashboard is editable or not.
 	editable?: boolean;
 	elements: Record<string, Element>;
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	// Links with references to other dashboards or external websites.
 	links: DashboardLink[];
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
