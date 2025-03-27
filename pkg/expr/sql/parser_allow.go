@@ -81,6 +81,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ConvertExpr, *sqlparser.ConvertType:
 		return
 
+	case *sqlparser.CollateExpr:
+		return
+
 	case sqlparser.Exprs:
 		return
 

@@ -57,6 +57,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    `SELECT 1 as id, GROUP_CONCAT('will_', 'concatenate') as concat_val`,
 			err:  nil,
 		},
+		{
+			name: "collate in read query",
+			q:    `SELECT 'some text' COLLATE utf8mb4_bin`,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
