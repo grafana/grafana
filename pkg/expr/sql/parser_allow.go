@@ -60,7 +60,7 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.BinaryExpr, *sqlparser.UnaryExpr:
 		return
 
-	case sqlparser.BoolVal:
+	case sqlparser.BoolVal, *sqlparser.NullVal:
 		return
 
 	case *sqlparser.CaseExpr, *sqlparser.When:
@@ -136,9 +136,6 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 		return
 
 	case *sqlparser.Where:
-		return
-
-	case *sqlparser.NullVal:
 		return
 
 	default:
