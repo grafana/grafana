@@ -16,11 +16,8 @@ interface Props {
   options: SelectableValue[];
   onChange: (options: SelectableValue[]) => void;
   caseSensitive?: boolean;
-  // showOperators?: boolean; // it's always true
   searchFilter: string;
-  // setSearchFilter: (value: string) => void;
   operator: SelectableValue<string>;
-  // setOperator: (item: SelectableValue<string>) => void;
 }
 
 const ITEM_HEIGHT = 28;
