@@ -1179,8 +1179,9 @@ var (
 		{
 			Name:        "azureMonitorPrometheusExemplars",
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "pinNavItems",

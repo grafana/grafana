@@ -904,16 +904,17 @@
     {
       "metadata": {
         "name": "azureMonitorPrometheusExemplars",
-        "resourceVersion": "1723028568258",
+        "resourceVersion": "1739465911959",
         "creationTimestamp": "2024-06-06T16:53:17Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-08-07 11:02:48.258776 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-13 16:58:31.95981 +0000 UTC"
         }
       },
       "spec": {
         "description": "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
-        "stage": "preview",
-        "codeowner": "@grafana/partner-datasources"
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "true"
       }
     },
     {
