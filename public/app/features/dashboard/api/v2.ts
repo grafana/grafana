@@ -154,7 +154,7 @@ export class K8sDashboardV2API
 
     return {
       uid: v.metadata.name,
-      version: parseInt(v.metadata.resourceVersion, 10) ?? 0,
+      version: v.metadata.generation ?? 0,
       id: dashId,
       status: 'success',
       url,

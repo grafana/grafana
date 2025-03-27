@@ -551,7 +551,9 @@ RowsLayoutRowKind: {
 
 RowsLayoutRowSpec: {
   title?: string
-  collapsed: bool
+  collapse?: bool
+  hideHeader?: bool
+  fillScreen?: bool
   repeat?: RowRepeatOptions
   conditionalRendering?: ConditionalRenderingGroupKind
   layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind | RowsLayoutKind
@@ -563,9 +565,13 @@ ResponsiveGridLayoutKind: {
 }
 
 ResponsiveGridLayoutSpec: {
-  row: string,
-  col: string,
-  items: [...ResponsiveGridLayoutItemKind]
+	maxColumnCount?: number | *3
+	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
+	columnWidth?: number
+	rowHeightMode: "short" | *"standard" | "tall" | "custom"
+	rowHeight?: number
+	fillScreen?: bool | *false
+	items: [...ResponsiveGridLayoutItemKind]
 }
 
 ResponsiveGridLayoutItemKind: {

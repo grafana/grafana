@@ -218,9 +218,18 @@ message ListOptions {
 }
 
 enum ResourceVersionMatch {
-  NotOlderThan = 0;
-  Exact = 1;
+  // Deprecated, use ResourceVersionMatch V2
+  DEPRECATED_NotOlderThan = 0;
+  DEPRECATED_Exact = 1;
 }
+
+enum ResourceVersionMatchV2 {
+  UNKNOWN = 0;
+  Unset = 1;
+  Exact = 2;
+  NotOlderThan = 3;
+}
+
 
 message ListRequest {
   enum Source {
@@ -236,7 +245,8 @@ message ListRequest {
   int64 resource_version = 2;
 
   // List options
-  ResourceVersionMatch version_match = 3;
+  // DEPRECATED - use version_match_v2
+  optional ResourceVersionMatch version_match = 3;
 
   // Maximum number of items to return
   // NOTE responses will also be limited by the response payload size
@@ -247,6 +257,8 @@ message ListRequest {
 
   // Select values from history or trash
   Source source = 6;
+
+  ResourceVersionMatchV2 version_match_v2 = 7;
 }
 
 message ListResponse {

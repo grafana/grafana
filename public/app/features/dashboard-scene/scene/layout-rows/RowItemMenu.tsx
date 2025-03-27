@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Dropdown, Menu, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
@@ -14,7 +14,7 @@ export function RowItemMenu({ model }: RowItemMenuProps) {
   const styles = useStyles2(getStyles);
 
   return (
-    <ToolbarButtonRow className={styles.container}>
+    <ToolbarButtonRow className={cx(styles.container, 'dashboard-canvas-add-button')}>
       <Dropdown
         placement="bottom-end"
         overlay={() => (

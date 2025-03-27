@@ -8,10 +8,11 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/joinByField';
+import { JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -68,16 +69,26 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Mode" labelWidth={8} grow>
+        <InlineField
+          label={t('transformers.series-to-fields-transformer-editor.label-mode', 'Mode')}
+          labelWidth={8}
+          grow
+        >
           <Select options={modes} value={options.mode ?? JoinMode.outer} onChange={onSetMode} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Field" labelWidth={8} grow>
+        <InlineField
+          label={t('transformers.series-to-fields-transformer-editor.label-field', 'Field')}
+          labelWidth={8}
+          grow
+        >
           <Select
             options={[...fieldNames, ...variables]}
             value={options.byField}
             onChange={onSelectField}
+            /* don't translate here as this references a field name */
+            /* eslint-disable-next-line @grafana/no-untranslated-strings */
             placeholder="time"
             isClearable
           />

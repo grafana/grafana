@@ -371,7 +371,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 
 	// Make sure the command labels are not saved
 	for k := range obj.GetLabels() {
-		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash {
+		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash || k == utils.LabelGetFullpath {
 			return nil, NewBadRequestError("can not save label: " + k)
 		}
 	}
@@ -484,6 +484,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	if found != nil && len(found.Value) > 0 {
 		rsp.Error = &ErrorResult{
 			Code:    http.StatusConflict,
+			Reason:  string(metav1.StatusReasonAlreadyExists),
 			Message: "key already exists", // TODO?? soft delete replace?
 		}
 		return rsp, nil
@@ -757,10 +758,11 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 			rsp.Items = append(rsp.Items, item)
 			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
 				t := iter.ContinueToken()
-				if req.Source == ListRequest_HISTORY {
-					// history lists in desc order, so the continue token takes the
-					// final RV in the list, and then will start from there in the next page,
-					// rather than the lists first RV
+				if req.Source == ListRequest_HISTORY || req.Source == ListRequest_TRASH {
+					// For history lists, we need to use the current RV in the continue token
+					// to ensure consistent pagination. The order depends on VersionMatch:
+					// - NotOlderThan: ascending order (oldest to newest)
+					// - Unset: descending order (newest to oldest)
 					t = iter.ContinueTokenWithCurrentRV()
 				}
 				if iter.Next() {

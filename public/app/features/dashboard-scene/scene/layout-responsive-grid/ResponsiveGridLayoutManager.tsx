@@ -1,11 +1,17 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import {
+  forceRenderChildren,
+  getGridItemKeyForPanelId,
+  getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
+} from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -15,7 +21,18 @@ import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: ResponsiveGridLayout;
+  maxColumnCount: number;
+  rowHeight: AutoGridRowHeight;
+  columnWidth: AutoGridColumnWidth;
+  fillScreen: boolean;
 }
+
+export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
+export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
+
+export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
+export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
+export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
 export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
@@ -40,13 +57,25 @@ export class ResponsiveGridLayoutManager
 
   public readonly descriptor = ResponsiveGridLayoutManager.descriptor;
 
-  public static defaultCSS = {
-    templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
-    autoRows: 'minmax(300px, auto)',
-  };
+  public constructor(state: Partial<ResponsiveGridLayoutManagerState>) {
+    const maxColumnCount = state.maxColumnCount ?? AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT;
+    const columnWidth = state.columnWidth ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH;
+    const rowHeight = state.rowHeight ?? AUTO_GRID_DEFAULT_ROW_HEIGHT;
+    const fillScreen = state.fillScreen ?? false;
 
-  public constructor(state: ResponsiveGridLayoutManagerState) {
-    super(state);
+    super({
+      ...state,
+      maxColumnCount,
+      columnWidth,
+      rowHeight,
+      fillScreen,
+      layout:
+        state.layout ??
+        new ResponsiveGridLayout({
+          templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
+          autoRows: getAutoRowsTemplate(rowHeight, fillScreen),
+        }),
+    });
 
     // @ts-ignore
     this.state.layout.getDragClassCancel = () => 'drag-cancel';
@@ -131,6 +160,11 @@ export class ResponsiveGridLayoutManager
     return panels;
   }
 
+  public editModeChanged(isEditing: boolean) {
+    this.state.layout.setState({ isDraggable: isEditing });
+    forceRenderChildren(this.state.layout, true);
+  }
+
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({
       layout: this.state.layout.clone({
@@ -157,22 +191,44 @@ export class ResponsiveGridLayoutManager
     return getEditOptions(this);
   }
 
-  public changeColumns(columns: string) {
-    this.state.layout.setState({ templateColumns: columns });
+  public onMaxColumnCountChanged(maxColumnCount: number) {
+    this.setState({ maxColumnCount: maxColumnCount });
+    this.state.layout.setState({
+      templateColumns: getTemplateColumnsTemplate(maxColumnCount, this.state.columnWidth),
+    });
   }
 
-  public changeRows(rows: string) {
-    this.state.layout.setState({ autoRows: rows });
+  public onColumnWidthChanged(columnWidth: AutoGridColumnWidth) {
+    if (columnWidth === 'custom') {
+      columnWidth = getNamedColumWidthInPixels(this.state.columnWidth);
+    }
+
+    this.setState({ columnWidth: columnWidth });
+    this.state.layout.setState({
+      templateColumns: getTemplateColumnsTemplate(this.state.maxColumnCount, this.state.columnWidth),
+    });
+  }
+
+  public onFillScreenChanged(fillScreen: boolean) {
+    this.setState({ fillScreen });
+    this.state.layout.setState({
+      autoRows: getAutoRowsTemplate(this.state.rowHeight, fillScreen),
+    });
+  }
+
+  public onRowHeightChanged(rowHeight: AutoGridRowHeight) {
+    if (rowHeight === 'custom') {
+      rowHeight = getNamedHeightInPixels(this.state.rowHeight);
+    }
+
+    this.setState({ rowHeight });
+    this.state.layout.setState({
+      autoRows: getAutoRowsTemplate(rowHeight, this.state.fillScreen),
+    });
   }
 
   public static createEmpty(): ResponsiveGridLayoutManager {
-    return new ResponsiveGridLayoutManager({
-      layout: new ResponsiveGridLayout({
-        children: [],
-        templateColumns: ResponsiveGridLayoutManager.defaultCSS.templateColumns,
-        autoRows: ResponsiveGridLayoutManager.defaultCSS.autoRows,
-      }),
-    });
+    return new ResponsiveGridLayoutManager({});
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): ResponsiveGridLayoutManager {
@@ -192,4 +248,48 @@ export class ResponsiveGridLayoutManager
 
 function ResponsiveGridLayoutManagerRenderer({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) {
   return <model.state.layout.Component model={model.state.layout} />;
+}
+
+export function getTemplateColumnsTemplate(maxColumnCount: number, columnWidth: AutoGridColumnWidth) {
+  return `repeat(auto-fit, minmax(min(max(100% / ${maxColumnCount} - ${GRID_CELL_VMARGIN}px, ${getNamedColumWidthInPixels(columnWidth)}px), 100%), 1fr))`;
+}
+
+function getNamedColumWidthInPixels(columnWidth: AutoGridColumnWidth) {
+  if (typeof columnWidth === 'number') {
+    return columnWidth;
+  }
+
+  switch (columnWidth) {
+    case 'narrow':
+      return 192;
+    case 'wide':
+      return 768;
+    case 'custom':
+    case 'standard':
+    default:
+      return 448;
+  }
+}
+
+function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
+  if (typeof rowHeight === 'number') {
+    return rowHeight;
+  }
+
+  switch (rowHeight) {
+    case 'short':
+      return 128;
+    case 'tall':
+      return 512;
+    case 'custom':
+    case 'standard':
+    default:
+      return 320;
+  }
+}
+
+export function getAutoRowsTemplate(rowHeight: AutoGridRowHeight, fillScreen: boolean) {
+  const rowHeightPixels = getNamedHeightInPixels(rowHeight);
+  const maxRowHeightValue = fillScreen ? 'auto' : `${rowHeightPixels}px`;
+  return `minmax(${rowHeightPixels}px, ${maxRowHeightValue})`;
 }
