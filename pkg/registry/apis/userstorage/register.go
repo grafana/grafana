@@ -25,10 +25,6 @@ type UserStorageAPIBuilder struct {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *UserStorageAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagUserStorageAPI) {
-		return nil
-	}
-
 	builder := &UserStorageAPIBuilder{
 		registerer: registerer,
 	}

@@ -1438,13 +1438,6 @@ var (
 			Owner:       grafanaOSSBigTent,
 		},
 		{
-			Name:        "userStorageAPI",
-			Description: "Enables the user storage API",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,

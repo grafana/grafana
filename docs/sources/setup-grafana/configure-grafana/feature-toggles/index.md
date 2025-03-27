@@ -74,7 +74,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingQueryAndExpressionsStepMode`  | Enables step mode for alerting queries and expressions                                                                              | Yes                |
 | `useSessionStorageForRedirection`      | Use session storage for handling the redirection after login                                                                        | Yes                |
 | `pluginsSriChecks`                     | Enables SRI checks for plugin assets                                                                                                |                    |
-| `userStorageAPI`                       | Enables the user storage API                                                                                                        | Yes                |
 | `azureMonitorDisableLogLimit`          | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                    |                    |
 | `preinstallAutoUpdate`                 | Enables automatic updates for pre-installed plugins                                                                                 | Yes                |
 | `reportingUseRawTimeRange`             | Uses the original report or dashboard time range instead of making an absolute transformation                                       | Yes                |
