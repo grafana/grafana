@@ -308,6 +308,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       invalidatesTags: (_result, _error, { namespace, group, rulerConfig }) => [
         { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${group}` },
         { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
+        'DeletedRules',
       ],
     }),
 
@@ -345,6 +346,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
             { type: 'GrafanaRulerRule', id: rule.grafana_alert.uid } as const,
             { type: 'GrafanaRulerRuleVersion', id: rule.grafana_alert.uid } as const,
           ]),
+          'DeletedRules',
         ];
       },
     }),
@@ -429,6 +431,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const deletedRules = values.length > 0 ? values[0][0]?.rules : [];
         return deletedRules;
       },
+      providesTags: ['DeletedRules'],
     }),
   }),
 });
