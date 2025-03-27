@@ -31,10 +31,11 @@ export function TableCellNG(props: TableCellNGProps) {
     shouldTextOverflow,
     setIsInspecting,
     setContextMenuProps,
-    cellInspect,
     getActions,
     rowBg,
   } = props;
+
+  const cellInspect = field.config.custom?.inspect ?? false;
 
   const { config: fieldConfig } = field;
   const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
@@ -144,6 +145,7 @@ export function TableCellNG(props: TableCellNGProps) {
       tableCellDiv?.style.setProperty('z-index', String(theme.zIndex.tooltip));
       tableCellDiv?.style.setProperty('white-space', 'normal');
       tableCellDiv?.style.setProperty('min-height', `${height}px`);
+      tableCellDiv?.style.setProperty('width', `${divWidth}px`);
     }
   };
 
