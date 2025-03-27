@@ -26,7 +26,20 @@ func exportResourcesFromAPIServer(ctx context.Context, folders *resources.Folder
 
 		progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
 		if err := clients.ForEachResource(ctx, kind, func(_ dynamic.ResourceInterface, item *unstructured.Unstructured) error {
-			progress.Record(ctx, exportResource(ctx, item, folders, options, target))
+			result := jobs.JobResourceResult{
+				Name:     item.GetName(),
+				Resource: kind.Resource,
+				Group:    kind.Group,
+				Action:   repository.FileActionCreated,
+			}
+
+			fileName, err := exportResource(ctx, item, folders, options, target)
+			if err != nil {
+				result.Error = fmt.Errorf("export resource: %w", err)
+			}
+			result.Path = fileName
+			progress.Record(ctx, result)
+
 			if err := progress.TooManyErrors(); err != nil {
 				return err
 			}
@@ -39,24 +52,14 @@ func exportResourcesFromAPIServer(ctx context.Context, folders *resources.Folder
 	return nil
 }
 
-func exportResource(ctx context.Context, obj *unstructured.Unstructured, folders *resources.FolderManager, options provisioning.ExportJobOptions, target repository.Writer) jobs.JobResourceResult {
-	gvk := obj.GroupVersionKind()
-	result := jobs.JobResourceResult{
-		Name:     obj.GetName(),
-		Resource: gvk.Kind,
-		Group:    gvk.Group,
-		Action:   repository.FileActionCreated,
-	}
-
+func exportResource(ctx context.Context, obj *unstructured.Unstructured, folders *resources.FolderManager, options provisioning.ExportJobOptions, target repository.Writer) (string, error) {
 	if err := ctx.Err(); err != nil {
-		result.Error = fmt.Errorf("context error: %w", err)
-		return result
+		return "", fmt.Errorf("context error: %w", err)
 	}
 
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
-		result.Error = fmt.Errorf("extract meta accessor: %w", err)
-		return result
+		return "", fmt.Errorf("extract meta accessor: %w", err)
 	}
 
 	// Message from annotations
@@ -73,8 +76,7 @@ func exportResource(ctx context.Context, obj *unstructured.Unstructured, folders
 	name := meta.GetName()
 	manager, _ := meta.GetManagerProperties()
 	if manager.Identity == target.Config().GetName() {
-		result.Action = repository.FileActionIgnored
-		return result
+		return "", nil
 	}
 
 	title := meta.FindTitle("")
@@ -93,8 +95,6 @@ func exportResource(ctx context.Context, obj *unstructured.Unstructured, folders
 		// r.logger.Error("folder of item was not in tree of repository")
 	}
 
-	result.Path = fid.Path
-
 	// Clear the metadata
 	delete(obj.Object, "metadata")
 
@@ -104,8 +104,7 @@ func exportResource(ctx context.Context, obj *unstructured.Unstructured, folders
 
 	body, err := json.MarshalIndent(obj.Object, "", "  ")
 	if err != nil {
-		result.Error = fmt.Errorf("failed to marshal dashboard: %w", err)
-		return result
+		return "", fmt.Errorf("failed to marshal dashboard: %w", err)
 	}
 
 	fileName := slugify.Slugify(title) + ".json"
@@ -118,8 +117,8 @@ func exportResource(ctx context.Context, obj *unstructured.Unstructured, folders
 
 	err = target.Write(ctx, fileName, options.Branch, body, commitMessage)
 	if err != nil {
-		result.Error = fmt.Errorf("failed to write file: %w", err)
+		return "", fmt.Errorf("failed to write file: %w", err)
 	}
 
-	return result
+	return fileName, nil
 }
