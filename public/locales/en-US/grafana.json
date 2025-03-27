@@ -2950,7 +2950,7 @@
       "move-time-range-back": "Move time range back",
       "move-time-range-forward": "Move time range forward",
       "open-search": "Open search",
-      "open-shared-modal": "Open Panel Share Modal",
+      "open-shared-modal": "Share panel snapshot",
       "paste-time-range": "Paste time range",
       "refresh-all-panels": "Refresh all panels",
       "remove-panel": "Remove Panel",
@@ -3027,7 +3027,6 @@
     },
     "extra-security-section": {
       "client-cert-label": "Client certificate path",
-      "client-cert-placeholder": "/path/to/client_cert.pem",
       "client-cert-value-label": "Client certificate content",
       "client-cert-value-placeholder": "Client certificate content in base64",
       "client-key-label": "Client key path",
@@ -4471,8 +4470,8 @@
       "success-share-type-change": "Dashboard access updated: Only specific people can now access with the link"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} public dashboards",
-      "no-upsert-perm-alert-title": "You don’t have permission to {{ mode }} a public dashboard",
+      "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{action}} public dashboards",
+      "no-upsert-perm-alert-title": "You don’t have permission to {{ action }} a public dashboard",
       "save-dashboard-changes-alert-title": "Please save your dashboard changes before updating the public configuration",
       "unsupport-data-source-alert-readmore-link": "Read more about supported data sources",
       "unsupported-data-source-alert-desc": "There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data sources may not function properly: {{unsupportedDataSources}}.",
@@ -4519,8 +4518,8 @@
       "copy-link-button": "Copy external link",
       "email-share-type-option-description": "Only people with the link can access dashboard",
       "email-share-type-option-label": "Only specific people",
-      "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} shared dashboards",
-      "no-upsert-perm-alert-title": "You don’t have permission to {{ mode }} a shared dashboard",
+      "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{action}} shared dashboards",
+      "no-upsert-perm-alert-title": "You don’t have permission to {{ action }} a shared dashboard",
       "pause-access-button": "Pause access",
       "pause-access-tooltip": "Pausing will temporarily disable access to this dashboard for all users",
       "public-share-type-option-description": "Anyone with the link can access dashboard",
