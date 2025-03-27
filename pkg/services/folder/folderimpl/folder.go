@@ -671,7 +671,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 }
 
 func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.Folder, orgID int64) []*folder.Folder {
-	ctx, span := s.tracer.Start(ctx, "folder.deduplicateAvailableFolders")
+	_, span := s.tracer.Start(ctx, "folder.deduplicateAvailableFolders")
 	defer span.End()
 	allFolders := append(folders, rootFolders...)
 	foldersDedup := make([]*folder.Folder, 0)
