@@ -146,7 +146,8 @@ func (s *ExtendedJWT) authenticateAsUser(
 				ActionsLookup: accessTokenClaims.Rest.DelegatedPermissions,
 			},
 			FetchSyncedUser: true,
-		}}, nil
+		},
+	}, nil
 }
 
 func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
