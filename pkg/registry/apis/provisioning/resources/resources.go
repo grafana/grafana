@@ -24,19 +24,29 @@ type WriteOptions struct {
 	Ref        string
 }
 
-type ResourcesManager struct {
-	repo     repository.ReaderWriter
-	folders  *FolderManager
-	clients  *ResourceClients
-	userInfo map[string]repository.CommitSignature
+type resourceID struct {
+	Name     string
+	Resource string
+	Group    string
 }
 
-func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, clients *ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
+type ResourcesManager struct {
+	repo            repository.ReaderWriter
+	folders         *FolderManager
+	parser          *Parser
+	clients         *ResourceClients
+	userInfo        map[string]repository.CommitSignature
+	resourcesLookup map[resourceID]string // the path with this k8s name
+}
+
+func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser *Parser, clients *ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
 	return &ResourcesManager{
-		repo:     repo,
-		folders:  folders,
-		clients:  clients,
-		userInfo: userInfo,
+		repo:            repo,
+		folders:         folders,
+		parser:          parser,
+		clients:         clients,
+		userInfo:        userInfo,
+		resourcesLookup: map[resourceID]string{},
 	}
 }
 
@@ -114,6 +124,46 @@ func (m *ResourcesManager) CreateResourceFromObject(ctx context.Context, obj *un
 	}
 
 	return fileName, nil
+}
+
+func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) (string, *schema.GroupVersionKind, error) {
+	// Read the referenced file
+	fileInfo, err := r.repo.Read(ctx, path, ref)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	parsed, err := r.parser.Parse(ctx, fileInfo, false) // no validation
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to parse file: %w", err)
+	}
+
+	// Check if the resource already exists
+	id := resourceID{
+		Name:     parsed.Obj.GetName(),
+		Resource: parsed.GVR.Resource,
+		Group:    parsed.GVK.Group,
+	}
+	existing, found := r.resourcesLookup[id]
+	if found {
+		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s", parsed.Obj.GetName(), path, existing)
+	}
+	r.resourcesLookup[id] = path
+
+	// Make sure the parent folders exist
+	folder, err := r.folders.EnsureFolderPathExist(ctx, path)
+	if err != nil {
+		return "", parsed.GVK, fmt.Errorf("failed to ensure folder path exists: %w", err)
+	}
+
+	parsed.Meta.SetFolder(folder)
+	parsed.Meta.SetUID("")             // clear identifiers
+	parsed.Meta.SetResourceVersion("") // clear identifiers
+
+	// Update will also create (for resources we care about)
+	_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+
+	return parsed.Obj.GetName(), parsed.GVK, err
 }
 
 func (r *ResourcesManager) DeleteObject(ctx context.Context, path string, ref string) (string, *schema.GroupVersionKind, error) {

@@ -185,7 +185,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	}
 
 	progress.SetMessage(ctx, "exporting legacy resources")
-	resourceManager := resources.NewResourcesManager(rw, folders, parser.Clients(), userInfo)
+	resourceManager := resources.NewResourcesManager(rw, folders, parser, parser.Clients(), userInfo)
 	for _, kind := range resources.SupportedResources {
 		if kind == resources.FolderResource {
 			continue

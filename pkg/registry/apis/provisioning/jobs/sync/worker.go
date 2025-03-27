@@ -149,8 +149,7 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter
 		parser:          parser,
 		lister:          r.lister,
 		folders:         folders,
-		resourcesLookup: map[resourceID]string{},
-		resourceManager: resources.NewResourcesManager(repo, folders, parser.Clients(), nil),
+		resourceManager: resources.NewResourcesManager(repo, folders, parser, parser.Clients(), nil),
 	}
 
 	return job, nil
@@ -185,7 +184,6 @@ type syncJob struct {
 	lister          resources.ResourceLister
 	folders         *resources.FolderManager
 	folderLookup    *resources.FolderTree
-	resourcesLookup map[resourceID]string // the path with this k8s name
 	resourceManager *resources.ResourcesManager
 }
 
@@ -243,6 +241,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 		return nil
 	}
 
+	// TODO: This might not work as expected!
 	// Load any existing folder information
 	r.folderLookup = resources.NewFolderTreeFromResourceList(target)
 
@@ -251,10 +250,6 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 }
 
 func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) error {
-	if len(r.resourcesLookup) > 0 {
-		return fmt.Errorf("this should be empty")
-	}
-
 	r.progress.SetTotal(ctx, len(changes))
 	r.progress.SetMessage(ctx, "replicating changes")
 
@@ -317,8 +312,18 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			continue
 		}
 
-		// Write the resource file
-		r.progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, "", change.Action))
+		name, gvk, err := r.resourceManager.WriteResourceFromFile(ctx, change.Path, "", change.Action)
+		result := jobs.JobResourceResult{
+			Path:   change.Path,
+			Action: change.Action,
+			Name:   name,
+			Error:  err,
+		}
+		if gvk != nil {
+			result.Resource = gvk.Kind
+			result.Group = gvk.Group
+		}
+		r.progress.Record(ctx, result)
 	}
 
 	r.progress.SetMessage(ctx, "changes replicated")
@@ -379,7 +384,18 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			r.progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, change.Ref, change.Action))
+			name, gvk, err := r.resourceManager.WriteResourceFromFile(ctx, change.Path, change.Ref, change.Action)
+			result := jobs.JobResourceResult{
+				Path:   change.Path,
+				Action: change.Action,
+				Name:   name,
+				Error:  err,
+			}
+			if gvk != nil {
+				result.Resource = gvk.Kind
+				result.Group = gvk.Group
+			}
+			r.progress.Record(ctx, result)
 		case repository.FileActionDeleted:
 			_, gvk, err := r.resourceManager.DeleteObject(ctx, change.Path, change.PreviousRef)
 			result := jobs.JobResourceResult{
@@ -410,7 +426,18 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			}
 
 			// 2. Create
-			r.progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated))
+			name, gvk, err := r.resourceManager.WriteResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated)
+			result = jobs.JobResourceResult{
+				Path:   change.Path,
+				Action: repository.FileActionCreated,
+				Name:   name,
+				Error:  err,
+			}
+			if gvk != nil {
+				result.Resource = gvk.Kind
+				result.Group = gvk.Group
+			}
+			r.progress.Record(ctx, result)
 		case repository.FileActionIgnored:
 			r.progress.Record(ctx, jobs.JobResourceResult{
 				Path:   change.Path,
@@ -422,58 +449,4 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	r.progress.SetMessage(ctx, "versioned changes replicated")
 
 	return nil
-}
-
-// TODO: Move to resources
-func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) jobs.JobResourceResult {
-	result := jobs.JobResourceResult{
-		Path:   path,
-		Action: action,
-	}
-
-	// Read the referenced file
-	fileInfo, err := r.repository.Read(ctx, path, ref)
-	if err != nil {
-		result.Error = fmt.Errorf("failed to read file: %w", err)
-		return result
-	}
-
-	parsed, err := r.parser.Parse(ctx, fileInfo, false) // no validation
-	if err != nil {
-		result.Error = fmt.Errorf("failed to parse file: %w", err)
-		return result
-	}
-
-	// Check if the resource already exists
-	id := resourceID{
-		Name:     parsed.Obj.GetName(),
-		Resource: parsed.GVR.Resource,
-		Group:    parsed.GVK.Group,
-	}
-	existing, found := r.resourcesLookup[id]
-	if found {
-		result.Error = fmt.Errorf("duplicate resource name: %s, %s and %s", parsed.Obj.GetName(), path, existing)
-		return result
-	}
-	r.resourcesLookup[id] = path
-
-	// Make sure the parent folders exist
-	folder, err := r.folders.EnsureFolderPathExist(ctx, path)
-	if err != nil {
-		result.Error = fmt.Errorf("failed to ensure folder path exists: %w", err)
-		return result
-	}
-
-	parsed.Meta.SetFolder(folder)
-	parsed.Meta.SetUID("")             // clear identifiers
-	parsed.Meta.SetResourceVersion("") // clear identifiers
-
-	result.Name = parsed.Obj.GetName()
-	result.Resource = parsed.GVR.Resource
-	result.Group = parsed.GVK.Group
-
-	// Update will also create (for resources we care about)
-	_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-	result.Error = err
-	return result
 }

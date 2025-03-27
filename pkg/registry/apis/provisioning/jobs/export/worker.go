@@ -31,18 +31,22 @@ type ExportWorker struct {
 
 	// Decrypt secrets in config
 	secrets secrets.Service
+
+	parsers *resources.ParserFactory
 }
 
 func NewExportWorker(clientFactory *resources.ClientFactory,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 	clonedir string,
+	parsers *resources.ParserFactory,
 ) *ExportWorker {
 	return &ExportWorker{
 		clonedir,
 		clientFactory,
 		storageStatus,
 		secrets,
+		parsers,
 	}
 }
 
@@ -133,7 +137,12 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	progress.SetMessage(ctx, "start resource export")
-	resourceManager := resources.NewResourcesManager(rw, folders, clients, nil)
+	parser, err := r.parsers.GetParser(ctx, rw)
+	if err != nil {
+		return fmt.Errorf("failed to get parser: %w", err)
+	}
+
+	resourceManager := resources.NewResourcesManager(rw, folders, parser, clients, nil)
 	for _, kind := range resources.SupportedResources {
 		// skip from folders as we do them first
 		if kind == resources.FolderResource {
