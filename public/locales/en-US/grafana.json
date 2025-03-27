@@ -1342,6 +1342,8 @@
     },
     "canvas-actions": {
       "add-panel": "Add panel",
+      "group-into-row": "Group into row",
+      "group-into-tab": "Group into tab",
       "group-panels": "Group panels",
       "new-row": "New row",
       "new-tab": "New tab"
