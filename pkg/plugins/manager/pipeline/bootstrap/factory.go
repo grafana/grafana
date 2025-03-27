@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 )
@@ -16,11 +17,12 @@ type pluginFactoryFunc func(p *plugins.FoundBundle, pluginClass plugins.Class, s
 // service to set the plugin's BaseURL, Module, Logos and Screenshots fields.
 type DefaultPluginFactory struct {
 	assetPath *assetpath.Service
+	features  *config.Features
 }
 
 // NewDefaultPluginFactory returns a new DefaultPluginFactory.
-func NewDefaultPluginFactory(assetPath *assetpath.Service) *DefaultPluginFactory {
-	return &DefaultPluginFactory{assetPath: assetPath}
+func NewDefaultPluginFactory(features *config.Features, assetPath *assetpath.Service) *DefaultPluginFactory {
+	return &DefaultPluginFactory{assetPath: assetPath, features: features}
 }
 
 func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class plugins.Class,
@@ -74,6 +76,13 @@ func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Cl
 	if err = setImages(plugin, f.assetPath, info); err != nil {
 		return nil, err
 	}
+
+	if f.features.LocalizationForPlugins {
+		if err := setTranslations(plugin, f.assetPath, info); err != nil {
+			return nil, err
+		}
+	}
+
 	return plugin, nil
 }
 
@@ -97,5 +106,15 @@ func setImages(p *plugins.Plugin, assetPath *assetpath.Service, info assetpath.P
 			return fmt.Errorf("screenshot %d relative url: %w", i, err)
 		}
 	}
+	return nil
+}
+
+func setTranslations(p *plugins.Plugin, assetPath *assetpath.Service, info assetpath.PluginInfo) error {
+	translations, err := assetPath.GetTranslations(info)
+	if err != nil {
+		return fmt.Errorf("set translations: %w", err)
+	}
+
+	p.Translations = translations
 	return nil
 }

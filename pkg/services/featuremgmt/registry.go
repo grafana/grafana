@@ -1813,6 +1813,13 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},
+		{
+			Name:         "localizationForPlugins",
+			Description:  "Enables localization for plugins",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: false,
+		},
 	}
 )
 
