@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
+import { PageInfoItem } from '@grafana/runtime/internal';
 import {
   Stack,
   Text,
