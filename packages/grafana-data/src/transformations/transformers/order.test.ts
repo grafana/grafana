@@ -5,7 +5,7 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
+import { FieldOrdering, Order, orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
 
 describe('Order Transformer', () => {
   beforeAll(() => {
@@ -25,6 +25,7 @@ describe('Order Transformer', () => {
       const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
         id: DataTransformerID.order,
         options: {
+          fieldOrder: FieldOrdering.Manual,
           indexByName: {
             time: 2,
             temperature: 0,
@@ -79,6 +80,7 @@ describe('Order Transformer', () => {
         id: DataTransformerID.order,
         disabled: true,
         options: {
+          fieldOrder: FieldOrdering.Manual,
           indexByName: {
             time: 2,
             temperature: 0,
@@ -143,6 +145,7 @@ describe('Order Transformer', () => {
       const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
         id: DataTransformerID.order,
         options: {
+          fieldOrder: FieldOrdering.Manual,
           indexByName: {
             time: 2,
             temperature: 0,
@@ -207,6 +210,7 @@ describe('Order Transformer', () => {
       const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
         id: DataTransformerID.order,
         options: {
+          fieldOrder: FieldOrdering.Manual,
           indexByName: {},
         },
       };
@@ -236,5 +240,83 @@ describe('Order Transformer', () => {
         ]);
       });
     });
+  });
+
+  describe('auto order', () => {
+    it.each`
+      labelPodOrder | labelUserOrder | fieldNameOrder | expectedFieldNameOrder
+      ${Order.Off}  | ${Order.Off}   | ${Order.Off}   | ${['Series-1', 'Series-2', 'Series-3']}
+      ${Order.Off}  | ${Order.Asc}   | ${Order.Off}   | ${['Series-2', 'Series-1', 'Series-3']}
+      ${Order.Off}  | ${Order.Off}   | ${Order.Asc}   | ${['Series-1', 'Series-2', 'Series-3']}
+      ${Order.Off}  | ${Order.Desc}  | ${Order.Off}   | ${['Series-1', 'Series-3', 'Series-2']}
+      ${Order.Off}  | ${Order.Off}   | ${Order.Desc}  | ${['Series-3', 'Series-2', 'Series-1']}
+      ${Order.Off}  | ${Order.Desc}  | ${Order.Desc}  | ${['Series-3', 'Series-1', 'Series-2']}
+      ${Order.Off}  | ${Order.Asc}   | ${Order.Asc}   | ${['Series-2', 'Series-1', 'Series-3']}
+      ${Order.Off}  | ${Order.Asc}   | ${Order.Desc}  | ${['Series-2', 'Series-3', 'Series-1']}
+      ${Order.Off}  | ${Order.Desc}  | ${Order.Asc}   | ${['Series-1', 'Series-3', 'Series-2']}
+      ${Order.Asc}  | ${Order.Off}   | ${Order.Off}   | ${['Series-1', 'Series-2', 'Series-3']}
+      ${Order.Asc}  | ${Order.Off}   | ${Order.Asc}   | ${['Series-1', 'Series-2', 'Series-3']}
+      ${Order.Asc}  | ${Order.Off}   | ${Order.Desc}  | ${['Series-2', 'Series-1', 'Series-3']}
+      ${Order.Asc}  | ${Order.Asc}   | ${Order.Off}   | ${['Series-2', 'Series-1', 'Series-3']}
+      ${Order.Asc}  | ${Order.Desc}  | ${Order.Off}   | ${['Series-1', 'Series-2', 'Series-3']}
+      ${Order.Asc}  | ${Order.Desc}  | ${Order.Desc}  | ${['Series-1', 'Series-2', 'Series-3']}
+      ${Order.Asc}  | ${Order.Asc}   | ${Order.Asc}   | ${['Series-1', 'Series-2', 'Series-3']}
+      ${Order.Asc}  | ${Order.Asc}   | ${Order.Desc}  | ${['Series-2', 'Series-1', 'Series-3']}
+      ${Order.Asc}  | ${Order.Desc}  | ${Order.Asc}   | ${['Series-1', 'Series-2', 'Series-3']}
+      ${Order.Desc} | ${Order.Asc}   | ${Order.Off}   | ${['Series-3', 'Series-2', 'Series-1']}
+      ${Order.Desc} | ${Order.Off}   | ${Order.Asc}   | ${['Series-3', 'Series-1', 'Series-2']}
+      ${Order.Desc} | ${Order.Off}   | ${Order.Desc}  | ${['Series-3', 'Series-2', 'Series-1']}
+      ${Order.Desc} | ${Order.Asc}   | ${Order.Asc}   | ${['Series-3', 'Series-2', 'Series-1']}
+      ${Order.Desc} | ${Order.Asc}   | ${Order.Desc}  | ${['Series-3', 'Series-2', 'Series-1']}
+      ${Order.Desc} | ${Order.Desc}  | ${Order.Asc}   | ${['Series-3', 'Series-1', 'Series-2']}
+      ${Order.Desc} | ${Order.Desc}  | ${Order.Off}   | ${['Series-3', 'Series-1', 'Series-2']}
+      ${Order.Desc} | ${Order.Desc}  | ${Order.Desc}  | ${['Series-3', 'Series-1', 'Series-2']}
+      ${Order.Desc} | ${Order.Off}   | ${Order.Off}   | ${['Series-3', 'Series-1', 'Series-2']}
+    `(
+      'When the order is label pod: $labelPodOrder / label user: $labelUserOrder / field name: $fieldNameOrder , then the field order is $expectedFieldNameOrder',
+      async ({ labelPodOrder, labelUserOrder, fieldNameOrder, expectedFieldNameOrder }) => {
+        const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
+          id: DataTransformerID.order,
+          options: {
+            fieldOrder: FieldOrdering.Auto,
+            fieldNameSort: { index: 3, order: fieldNameOrder },
+            labelSort: [
+              { index: 0, labelName: 'pod', order: labelPodOrder },
+              { index: 1, labelName: 'user', order: labelUserOrder },
+            ],
+          },
+        };
+
+        const data = toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'Series-1',
+              type: FieldType.number,
+              labels: { pod: 123, user: 555 },
+              values: [10.3],
+            },
+            {
+              name: 'Series-2',
+              type: FieldType.number,
+              labels: { pod: 123, user: 312 },
+              values: [100.3],
+            },
+            {
+              name: 'Series-3',
+              labels: { pod: 456, user: 555 },
+              type: FieldType.number,
+              values: [10000.3],
+            },
+          ],
+        });
+
+        await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
+          const data = received[0];
+          const ordered = data[0];
+          expect(ordered.fields.map((f) => f.name)).toEqual(expectedFieldNameOrder);
+        });
+      }
+    );
   });
 });

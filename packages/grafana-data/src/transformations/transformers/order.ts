@@ -25,10 +25,10 @@ export interface LabelSort {
 }
 
 export interface OrderFieldsTransformerOptions {
-  indexByName: Record<string, number>;
+  indexByName?: Record<string, number>;
   fieldOrder: FieldOrdering;
-  fieldNameSort: { order: Order; index: number };
-  labelSort: LabelSort[];
+  fieldNameSort?: { order: Order; index: number };
+  labelSort?: LabelSort[];
 }
 
 export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerOptions> = {
@@ -47,7 +47,7 @@ export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerO
     source.pipe(
       map((data) => {
         if (options.fieldOrder === FieldOrdering.Manual) {
-          const orderer = createFieldsOrdererManual(options.indexByName);
+          const orderer = createFieldsOrdererManual(options.indexByName!);
 
           if (!Array.isArray(data) || data.length === 0) {
             return data;
@@ -95,9 +95,14 @@ const indexOfField = (fieldName: string, indexByName: Record<string, number>) =>
 };
 
 const createFieldsOrdererAuto =
-  (fieldNameSort: { order: Order; index: number }, labelSort: LabelSort[]) =>
+  (fieldNameSort?: { order: Order; index: number }, labelSort?: LabelSort[]) =>
   (fields: Field[], data: DataFrame[], frame: DataFrame) => {
-    const allSort: Array<{ name?: String; order: Order; index: number }> = [...labelSort, fieldNameSort];
+    let allSort: Array<{ labelName?: string; order: Order; index: number }> = [...(labelSort ?? [])];
+    if (fieldNameSort !== undefined) {
+      allSort.push(fieldNameSort);
+    }
+
+    allSort = allSort.filter((s) => s.order !== Order.Off).sort((a, b) => a.index - b.index);
     if (!Array.isArray(fields) || fields.length === 0) {
       return fields;
     }
@@ -105,5 +110,36 @@ const createFieldsOrdererAuto =
       return fields;
     }
 
-    return clone(fields);
+    return clone(fields).sort((fieldA, fieldB) => {
+      let compareReturn = 0;
+      for (let i = 0; i < allSort.length; i++) {
+        let compareValA =
+          allSort[i].labelName === undefined
+            ? fieldA.name
+            : fieldA.labels
+              ? fieldA.labels[allSort[i].labelName!]
+              : undefined;
+        let compareValB =
+          allSort[i].labelName === undefined
+            ? fieldB.name
+            : fieldB.labels
+              ? fieldB.labels[allSort[i].labelName!]
+              : undefined;
+
+        if (compareValA === compareValB) {
+          continue;
+        } else if (compareValA === undefined) {
+          compareReturn = -1;
+          break;
+        } else if (compareValB === undefined) {
+          compareReturn = 1;
+          break;
+        } else {
+          // field name sort
+          compareReturn =
+            allSort[i].order === Order.Asc ? (compareValA > compareValB ? 1 : -1) : compareValA < compareValB ? 1 : -1;
+        }
+      }
+      return compareReturn;
+    });
   };
