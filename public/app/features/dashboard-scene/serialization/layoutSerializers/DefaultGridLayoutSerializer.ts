@@ -16,7 +16,6 @@ import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem'
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../../scene/layout-default/RowRepeaterBehavior';
 import { RowActions } from '../../scene/layout-default/row-actions/RowActions';
-import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { getOriginalKey, isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { calculateGridItemDimensions, isLibraryPanel } from '../../utils/utils';
@@ -24,31 +23,32 @@ import { GRID_ROW_HEIGHT } from '../const';
 
 import { buildLibraryPanel, buildVizPanel } from './utils';
 
-export class DefaultGridLayoutManagerSerializer implements LayoutManagerSerializer {
-  serialize(layoutManager: DefaultGridLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
-    return {
-      kind: 'GridLayout',
-      spec: {
-        items: getGridLayoutItems(layoutManager, isSnapshot),
-      },
-    };
-  }
+export function serializeDefaultGridLayout(
+  layoutManager: DefaultGridLayoutManager,
+  isSnapshot?: boolean
+): DashboardV2Spec['layout'] {
+  return {
+    kind: 'GridLayout',
+    spec: {
+      items: getGridLayoutItems(layoutManager, isSnapshot),
+    },
+  };
+}
 
-  deserialize(
-    layout: DashboardV2Spec['layout'],
-    elements: DashboardV2Spec['elements'],
-    preload: boolean
-  ): DashboardLayoutManager {
-    if (layout.kind !== 'GridLayout') {
-      throw new Error('Invalid layout kind');
-    }
-    return new DefaultGridLayoutManager({
-      grid: new SceneGridLayout({
-        isLazy: !(preload || contextSrv.user.authenticatedBy === 'render'),
-        children: createSceneGridLayoutForItems(layout, elements),
-      }),
-    });
+export function deserializeDefaultGridLayout(
+  layout: DashboardV2Spec['layout'],
+  elements: DashboardV2Spec['elements'],
+  preload: boolean
+): DefaultGridLayoutManager {
+  if (layout.kind !== 'GridLayout') {
+    throw new Error('Invalid layout kind');
   }
+  return new DefaultGridLayoutManager({
+    grid: new SceneGridLayout({
+      isLazy: !(preload || contextSrv.user.authenticatedBy === 'render'),
+      children: createSceneGridLayoutForItems(layout, elements),
+    }),
+  });
 }
 
 function getGridLayoutItems(

@@ -52,7 +52,6 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DSReferencesMapping } from './DashboardSceneSerializer';
-import { getLayout } from './layoutSerializers/utils';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
@@ -112,7 +111,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF annotations
 
     // layout
-    layout: getLayout(sceneDash.body),
+    layout: sceneDash.body.serialize(),
     // EOF layout
   };
 
