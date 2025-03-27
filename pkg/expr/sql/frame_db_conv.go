@@ -3,6 +3,7 @@
 package sql
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -92,6 +93,11 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		fT = data.FieldTypeTime
 	case types.Boolean:
 		fT = data.FieldTypeBool
+	case types.JSON:
+		fT = data.FieldTypeJSON
+		if col.Nullable {
+			fT = data.FieldTypeNullableJSON
+		}
 	default:
 		switch {
 		case types.IsDecimal(col.Type):
@@ -158,6 +164,34 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 
 	case data.FieldTypeBool, data.FieldTypeNullableBool:
 		return parseBoolFromInt8(val, nullable)
+
+	case data.FieldTypeJSON, data.FieldTypeNullableJSON:
+		switch v := val.(type) {
+		case types.JSONDocument:
+			// Use fmt.Sprintf to serialize JSONDocument to []byte
+			raw := json.RawMessage(v.String())
+			if nullable {
+				return &raw, nil
+			}
+			return raw, nil
+	
+		case string:
+			raw := json.RawMessage(v)
+			if nullable {
+				return &raw, nil
+			}
+			return raw, nil
+	
+		case []byte:
+			raw := json.RawMessage(v)
+			if nullable {
+				return &raw, nil
+			}
+			return raw, nil
+	
+		default:
+			return nil, fmt.Errorf("unexpected type for JSON field: %T", val)
+		}
 
 	default:
 		return nil, fmt.Errorf("unsupported field type %s for val %v", fieldType, val)
