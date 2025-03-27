@@ -67,7 +67,7 @@ func (c *syncConnector) Connect(
 				Namespace: cfg.Namespace,
 			},
 			Spec: provisioning.JobSpec{
-				Action:     provisioning.JobActionSync,
+				Action:     provisioning.JobActionPull,
 				Repository: cfg.Name,
 				Pull:       &options,
 			},
