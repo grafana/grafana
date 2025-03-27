@@ -374,14 +374,10 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 		return nil, err
 	}
 
+	// convert item to legacy folder format
+	folders, err := ss.UnstructuredToLegacyFolderList(ctx, out)
 	nodes := map[string]*folder.Folder{}
-	for _, item := range out.Items {
-		// convert item to legacy folder format
-		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
-		if f == nil {
-			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
-		}
-
+	for _, f := range folders {
 		nodes[f.UID] = f
 	}
 
