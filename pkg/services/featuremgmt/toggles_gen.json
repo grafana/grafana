@@ -4413,6 +4413,23 @@
     },
     {
       "metadata": {
+        "name": "vizActionsAuth",
+        "resourceVersion": "1743043403161",
+        "creationTimestamp": "2025-03-27T02:38:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-27 02:43:23.161142 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Allows authenticated API calls in actions",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/dataviz-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "vizAndWidgetSplit",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-06-27T10:22:13Z",

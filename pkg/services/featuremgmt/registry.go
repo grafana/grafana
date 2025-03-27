@@ -1290,6 +1290,14 @@ var (
 			Owner:       grafanaDatavizSquad,
 		},
 		{
+			Name:              "vizActionsAuth",
+			Description:       "Allows authenticated API calls in actions",
+			Stage:             FeatureStagePrivatePreview,
+			Owner:             grafanaDatavizSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:        "lokiSendDashboardPanelNames",
 			Description: "Send dashboard and panel names to Loki when querying",
 			Stage:       FeatureStageExperimental,
