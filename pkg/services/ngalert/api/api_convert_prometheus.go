@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -428,18 +427,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 	}
 
 	// 3. Update the GMA Rules in the DB
-	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
-		for _, grafanaGroup := range grafanaGroups {
-			err = srv.alertRuleService.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, *grafanaGroup, provenance)
-			if err != nil {
-				logger.Error("Failed to replace rule group", "error", err)
-				return err
-			}
-		}
-
-		return nil
-	})
-
+	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, provenance)
 	if err != nil {
 		return errorToResponse(err)
 	}

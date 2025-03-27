@@ -202,12 +202,6 @@ import (
 //       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
-// swagger:parameters RouteConvertPrometheusPostRuleGroupsParams
-type RouteConvertPrometheusPostRuleGroupsParams struct {
-	// in:path
-	DatasourceUID string
-}
-
 // swagger:parameters RouteConvertPrometheusPostRuleGroup RouteConvertPrometheusCortexPostRuleGroup
 type RouteConvertPrometheusPostRuleGroupParams struct {
 	// in: path

@@ -128,18 +128,12 @@ func (api *API) authorize(method, path string) web.Handler {
 		)
 
 	case http.MethodPost + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
-		http.MethodPost + "/api/convert/api/prom/rules/{NamespaceTitle}":
+		http.MethodPost + "/api/convert/api/prom/rules/{NamespaceTitle}",
+		http.MethodPost + "/api/convert/prometheus/config/v1/rules",
+		http.MethodPost + "/api/convert/api/prom/config/v1/rules":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleCreate),
 			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
-		)
-
-	case http.MethodPost + "/api/convert/prometheus/config/v1/rules",
-		http.MethodPost + "/api/convert/api/prom/config/v1/rules":
-		eval = ac.EvalAll(
-			ac.EvalPermission(dashboards.ActionFoldersRead),
-			ac.EvalPermission(ac.ActionAlertingRuleCreate),
-			ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID"))),
 		)
 
 	case http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
