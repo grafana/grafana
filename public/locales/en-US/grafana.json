@@ -3891,6 +3891,7 @@
         "from": "From",
         "installedVersion": "Installed Version",
         "lastCommitDate": "Last commit date:",
+        "latestReleaseDate": "Latest release date:",
         "latestVersion": "Latest Version",
         "license": "License",
         "raiseAnIssue": "Raise an issue",
@@ -3898,8 +3899,7 @@
         "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
         "repository": "Repository",
         "signature": "Signature",
-        "status": "Status",
-        "updatedAt": "Last updated:"
+        "status": "Status"
       },
       "modal": {
         "cancel": "Cancel",
