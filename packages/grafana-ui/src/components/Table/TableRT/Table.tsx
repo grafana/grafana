@@ -21,7 +21,7 @@ import { Pagination } from '../../Pagination/Pagination';
 import { TableCellInspector } from '../TableCellInspector';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
-import { FooterItem, GrafanaTableState, InspectCell, BaseTableProps as Props } from '../types';
+import { FooterItem, GrafanaTableState, InspectCell, TableRTProps as Props } from '../types';
 import {
   getColumns,
   sortCaseInsensitive,
