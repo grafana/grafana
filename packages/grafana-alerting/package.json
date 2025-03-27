@@ -3,7 +3,6 @@
   "license": "Apache-2.0",
   "name": "@grafana/alerting",
   "version": "11.6.0-pre",
-  "//": "This package is not meant to be used directly (yet), but as a dependency of Grafana",
   "private": true,
   "description": "Grafana Alerting Library – Build vertical integrations on top of the industry-leading alerting solution",
   "keywords": [

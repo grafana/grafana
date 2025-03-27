@@ -1,2 +1,2 @@
 /* type guards */
-export * from './types/guards';
+export { prometheusRuleDefinitionType, prometheusRuleType } from './types/guards';

@@ -4,4 +4,4 @@ export type * as PrometheusAPI from './prometheus/api';
 export type * as API from './common/api';
 
 /* common rule types such as labels, annotations, etc */
-export type * from './common/rules';
+export type { Annotations, Labels } from './common/rules';

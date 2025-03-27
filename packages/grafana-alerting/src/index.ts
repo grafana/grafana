@@ -1,2 +1,2 @@
 /* all types */
-export type * from './types/index';
+export type { API, GrafanaAPI, PrometheusAPI, Annotations, Labels } from './types/index';
