@@ -195,7 +195,7 @@ composableKinds: DataQuery: {
 
 				#BuilderQueryEditorOperator: {
 					name: string
-					value: #BuilderQueryEditorOperatorType
+					value: string
 					labelValue?: string
 				} @cuetsy(kind="interface")
 

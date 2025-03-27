@@ -287,33 +287,14 @@ func NewBuilderQueryEditorWhereExpression() *BuilderQueryEditorWhereExpression {
 }
 
 type BuilderQueryEditorOperator struct {
-	Name       string                         `json:"name"`
-	Value      BuilderQueryEditorOperatorType `json:"value"`
-	LabelValue *string                        `json:"labelValue,omitempty"`
+	Name       string  `json:"name"`
+	Value      string  `json:"value"`
+	LabelValue *string `json:"labelValue,omitempty"`
 }
 
 // NewBuilderQueryEditorOperator creates a new BuilderQueryEditorOperator object.
 func NewBuilderQueryEditorOperator() *BuilderQueryEditorOperator {
-	return &BuilderQueryEditorOperator{
-		Value: *NewBuilderQueryEditorOperatorType(),
-	}
-}
-
-type BuilderQueryEditorOperatorType = StringOrBoolOrFloat64OrSelectableValue
-
-// NewBuilderQueryEditorOperatorType creates a new BuilderQueryEditorOperatorType object.
-func NewBuilderQueryEditorOperatorType() *BuilderQueryEditorOperatorType {
-	return NewStringOrBoolOrFloat64OrSelectableValue()
-}
-
-type SelectableValue struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
-}
-
-// NewSelectableValue creates a new SelectableValue object.
-func NewSelectableValue() *SelectableValue {
-	return &SelectableValue{}
+	return &BuilderQueryEditorOperator{}
 }
 
 type BuilderQueryEditorReduceExpressionArray struct {
@@ -615,6 +596,23 @@ const (
 	AzureQueryTypeCustomMetricNamesQuery    AzureQueryType = "Azure Custom Metric Names"
 )
 
+type SelectableValue struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+// NewSelectableValue creates a new SelectableValue object.
+func NewSelectableValue() *SelectableValue {
+	return &SelectableValue{}
+}
+
+type BuilderQueryEditorOperatorType = StringOrBoolOrFloat64OrSelectableValue
+
+// NewBuilderQueryEditorOperatorType creates a new BuilderQueryEditorOperatorType object.
+func NewBuilderQueryEditorOperatorType() *BuilderQueryEditorOperatorType {
+	return NewStringOrBoolOrFloat64OrSelectableValue()
+}
+
 type GrafanaTemplateVariableQueryType string
 
 const (
@@ -636,18 +634,6 @@ type BaseGrafanaTemplateVariableQuery struct {
 // NewBaseGrafanaTemplateVariableQuery creates a new BaseGrafanaTemplateVariableQuery object.
 func NewBaseGrafanaTemplateVariableQuery() *BaseGrafanaTemplateVariableQuery {
 	return &BaseGrafanaTemplateVariableQuery{}
-}
-
-type StringOrBoolOrFloat64OrSelectableValue struct {
-	String          *string          `json:"String,omitempty"`
-	Bool            *bool            `json:"Bool,omitempty"`
-	Float64         *float64         `json:"Float64,omitempty"`
-	SelectableValue *SelectableValue `json:"SelectableValue,omitempty"`
-}
-
-// NewStringOrBoolOrFloat64OrSelectableValue creates a new StringOrBoolOrFloat64OrSelectableValue object.
-func NewStringOrBoolOrFloat64OrSelectableValue() *StringOrBoolOrFloat64OrSelectableValue {
-	return &StringOrBoolOrFloat64OrSelectableValue{}
 }
 
 type AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptionsQueryOrResourceGroupsQueryOrResourceNamesQueryOrMetricNamespaceQueryOrMetricDefinitionsQueryOrMetricNamesQueryOrWorkspacesQueryOrUnknownQuery struct {
@@ -804,4 +790,16 @@ func (resource *AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptio
 	}
 
 	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+}
+
+type StringOrBoolOrFloat64OrSelectableValue struct {
+	String          *string          `json:"String,omitempty"`
+	Bool            *bool            `json:"Bool,omitempty"`
+	Float64         *float64         `json:"Float64,omitempty"`
+	SelectableValue *SelectableValue `json:"SelectableValue,omitempty"`
+}
+
+// NewStringOrBoolOrFloat64OrSelectableValue creates a new StringOrBoolOrFloat64OrSelectableValue object.
+func NewStringOrBoolOrFloat64OrSelectableValue() *StringOrBoolOrFloat64OrSelectableValue {
+	return &StringOrBoolOrFloat64OrSelectableValue{}
 }
