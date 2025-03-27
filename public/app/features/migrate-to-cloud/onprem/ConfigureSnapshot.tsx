@@ -1,4 +1,4 @@
-import { useState, ChangeEvent } from 'react';
+import { useState, ChangeEvent, useEffect } from 'react';
 
 import { Button, Icon, Stack, Checkbox, Text, Box, IconName } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -18,11 +18,15 @@ interface ConfigureSnapshotProps {
 export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
   const { disabled, isLoading, onClick, resourceDependencies } = props;
   const [selectedTypes, setSelectedTypes] = useState<Set<ResourceTypeId>>(new Set());
-  const [includeAll, setIncludeAll] = useState(false);
+  const [includeAll, setIncludeAll] = useState(true);
 
   const { dependencyMap, dependentMap } = buildDependencyMaps(resourceDependencies);
-
   const resourceTypes = Array.from(dependencyMap.keys()).sort();
+
+  // Initialize with all items selected when component mounts once.
+  useEffect(() => {
+    setSelectedTypes(new Set(resourceTypes));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleIncludeAllChange = (e: ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;

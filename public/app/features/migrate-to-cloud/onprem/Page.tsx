@@ -147,6 +147,7 @@ export const Page = () => {
 
   // Because we don't delete the previous snapshot if it exists, we need to keep track of the last snapshot.
   // When reconfiguring a snapshot, we need to pause the state machine until a new snapshot is created.
+  // Reconfiguration is triggered by the user clicking the "Reconfigure snapshot" button at the end of the migration.
   useEffect(() => {
     if (
       reconfiguring &&
@@ -283,6 +284,7 @@ export const Page = () => {
     disconnectSnapshotError: disconnectResult.error,
   });
 
+  // Action Callbacks
   const handleCreateSnapshot = useCallback(
     (resourceTypes: Array<ResourceTableItem['type']>) => {
       if (sessionUid) {
@@ -328,6 +330,7 @@ export const Page = () => {
     }
   }, [performDisconnect, setUiState, sessionUid]);
 
+  // Component Rendering
   if (session.isLoading) {
     return (
       <div>
