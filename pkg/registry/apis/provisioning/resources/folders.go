@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,12 +17,12 @@ import (
 )
 
 type FolderManager struct {
-	repo   repository.Repository
+	repo   repository.ReaderWriter
 	tree   *FolderTree
 	client dynamic.ResourceInterface
 }
 
-func NewFolderManager(repo repository.Repository, client dynamic.ResourceInterface, lookup *FolderTree) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup *FolderTree) *FolderManager {
 	return &FolderManager{
 		repo:   repo,
 		tree:   lookup,
@@ -130,4 +131,33 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
 	return fm.client.Get(ctx, name, metav1.GetOptions{})
+}
+
+// ReplicateTree replicates the folder tree to the repository.
+// The function fn is called for each folder.
+// If the folder already exists, the function is called with created set to false.
+// If the folder is created, the function is called with created set to true.
+func (fm *FolderManager) ReplicateTree(ctx context.Context, tree *FolderTree, ref, path string, fn func(folder Folder, created bool, err error) error) error {
+	return tree.Walk(ctx, func(ctx context.Context, folder Folder) error {
+		p := folder.Path
+		if path != "" {
+			p = safepath.Join(path, p)
+		}
+
+		// TODO: should I check if it the folder exists in the manager tree?
+
+		_, err := fm.repo.Read(ctx, p, ref)
+		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
+			return fn(folder, false, fmt.Errorf("check if folder exists before writing: %w", err))
+		} else if err == nil {
+			return fn(folder, false, nil)
+		}
+
+		msg := fmt.Sprintf("Add folder %s", p)
+		if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
+			return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
+		}
+
+		return fn(folder, true, nil)
+	})
 }

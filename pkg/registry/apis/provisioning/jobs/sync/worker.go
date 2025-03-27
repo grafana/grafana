@@ -63,7 +63,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("sync not supported until storage has migrated")
 	}
 
-	rw, ok := repo.(repository.Reader)
+	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
 		return fmt.Errorf("sync job submitted for repository that does not support read-write -- this is a bug")
 	}
@@ -131,7 +131,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 }
 
 // start a job and run it
-func (r *SyncWorker) createJob(ctx context.Context, repo repository.Reader, progress jobs.JobProgressRecorder) (*syncJob, error) {
+func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter, progress jobs.JobProgressRecorder) (*syncJob, error) {
 	cfg := repo.Config()
 	parser, err := r.parsers.GetParser(ctx, repo)
 	if err != nil {
