@@ -20,7 +20,7 @@ import { updateExpression } from './reducer';
 export interface SimpleCondition {
   whenField?: string;
   evaluator: {
-    params: number[];
+    params: Array<number | string | undefined>;
     type: EvalFunction;
   };
 }
@@ -72,22 +72,43 @@ export const SimpleConditionEditor = ({
   };
 
   const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index?: number) => {
+    const value = event.currentTarget.value;
+
+    // Allow empty value
+    if (value === '') {
+      const newParams = produce(simpleCondition.evaluator.params, (draft) => {
+        draft[index ?? 0] = undefined;
+      });
+      onChange({ ...simpleCondition, evaluator: { ...simpleCondition.evaluator, params: newParams } });
+      return;
+    }
+    // Allow '-' for negative numbers
+    if (value === '-') {
+      const newParams = produce(simpleCondition.evaluator.params, (draft) => {
+        draft[index ?? 0] = '-';
+      });
+      onChange({ ...simpleCondition, evaluator: { ...simpleCondition.evaluator, params: newParams } });
+      return;
+    }
+
+    // Handle numeric values
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue)) {
+      return;
+    }
+
     if (isRange) {
       const newParams = produce(simpleCondition.evaluator.params, (draft) => {
-        draft[index ?? 0] = parseFloat(event.currentTarget.value);
+        draft[index ?? 0] = numericValue;
       });
-      // update the condition kept in the parent
       onChange({ ...simpleCondition, evaluator: { ...simpleCondition.evaluator, params: newParams } });
-      // update the reducer state where we store the queries
-      updateThresholdValue(parseFloat(event.currentTarget.value), index ?? 0, expressionQueriesList, dispatch);
+      updateThresholdValue(numericValue, index ?? 0, expressionQueriesList, dispatch);
     } else {
-      // update the condition kept in the parent
       onChange({
         ...simpleCondition,
-        evaluator: { ...simpleCondition.evaluator, params: [parseFloat(event.currentTarget.value)] },
+        evaluator: { ...simpleCondition.evaluator, params: [numericValue] },
       });
-      // update the reducer state where we store the queries
-      updateThresholdValue(parseFloat(event.currentTarget.value), 0, expressionQueriesList, dispatch);
+      updateThresholdValue(numericValue, 0, expressionQueriesList, dispatch);
     }
   };
 
@@ -120,14 +141,14 @@ export const SimpleConditionEditor = ({
                   <Input
                     type="number"
                     width={10}
-                    value={simpleCondition.evaluator.params[0]}
+                    value={simpleCondition.evaluator.params[0] ?? ''}
                     onChange={(event) => onEvaluateValueChange(event, 0)}
                   />
                   <ToLabel />
                   <Input
                     type="number"
                     width={10}
-                    value={simpleCondition.evaluator.params[1]}
+                    value={simpleCondition.evaluator.params[1] ?? ''}
                     onChange={(event) => onEvaluateValueChange(event, 1)}
                   />
                 </>
@@ -135,8 +156,8 @@ export const SimpleConditionEditor = ({
                 <Input
                   type="number"
                   width={10}
+                  value={simpleCondition.evaluator.params[0] ?? ''}
                   onChange={onEvaluateValueChange}
-                  value={simpleCondition.evaluator.params[0]}
                 />
               )}
             </Stack>
@@ -158,11 +179,11 @@ function updateReduceExpression(
 
   const newReduceExpression = reduceExpression
     ? produce(reduceExpression?.model, (draft) => {
-        if (draft && draft.conditions) {
-          draft.reducer = reducer;
-          draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
-        }
-      })
+      if (draft && draft.conditions) {
+        draft.reducer = reducer;
+        draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
+      }
+    })
     : undefined;
   newReduceExpression && dispatch(updateExpression(newReduceExpression));
 }
