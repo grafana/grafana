@@ -8,7 +8,7 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 
-import { RowsLayoutSerializer } from './RowsLayoutSerializer';
+import { deserializeRowsLayout, serializeRowsLayout } from './RowsLayoutSerializer';
 
 describe('deserialization', () => {
   it('should deserialize rows layout with default grid child', () => {
@@ -27,8 +27,7 @@ describe('deserialization', () => {
         ],
       },
     };
-    const serializer = new RowsLayoutSerializer();
-    const deserialized = serializer.deserialize(layout, {}, false);
+    const deserialized = deserializeRowsLayout(layout, {}, false);
     expect(deserialized).toBeInstanceOf(RowsLayoutManager);
     expect(deserialized.state.rows[0].state.layout).toBeInstanceOf(DefaultGridLayoutManager);
   });
@@ -51,8 +50,7 @@ describe('deserialization', () => {
         ],
       },
     };
-    const serializer = new RowsLayoutSerializer();
-    const deserialized = serializer.deserialize(layout, {}, false);
+    const deserialized = deserializeRowsLayout(layout, {}, false);
     expect(deserialized).toBeInstanceOf(RowsLayoutManager);
     expect(deserialized.state.rows[0].state.layout).toBeInstanceOf(DefaultGridLayoutManager);
     expect(deserialized.state.rows[0].state.collapse).toBe(true);
@@ -84,8 +82,7 @@ describe('deserialization', () => {
         ],
       },
     };
-    const serializer = new RowsLayoutSerializer();
-    const deserialized = serializer.deserialize(layout, {}, false);
+    const deserialized = deserializeRowsLayout(layout, {}, false);
     expect(deserialized).toBeInstanceOf(RowsLayoutManager);
     expect(deserialized.state.rows[0].state.layout).toBeInstanceOf(AutoGridLayoutManager);
   });
@@ -126,8 +123,7 @@ describe('deserialization', () => {
         ],
       },
     };
-    const serializer = new RowsLayoutSerializer();
-    const deserialized = serializer.deserialize(layout, {}, false);
+    const deserialized = deserializeRowsLayout(layout, {}, false);
     expect(deserialized).toBeInstanceOf(RowsLayoutManager);
     expect(deserialized.state.rows).toHaveLength(2);
     expect(deserialized.state.rows[0].state.layout).toBeInstanceOf(AutoGridLayoutManager);
@@ -143,8 +139,7 @@ describe('deserialization', () => {
         rows: [],
       },
     };
-    const serializer = new RowsLayoutSerializer();
-    const deserialized = serializer.deserialize(layout, {}, false);
+    const deserialized = deserializeRowsLayout(layout, {}, false);
     expect(deserialized).toBeInstanceOf(RowsLayoutManager);
     expect(deserialized.state.rows).toHaveLength(0);
   });
@@ -168,8 +163,7 @@ describe('deserialization', () => {
         ],
       },
     };
-    const serializer = new RowsLayoutSerializer();
-    const deserialized = serializer.deserialize(layout, {}, false);
+    const deserialized = deserializeRowsLayout(layout, {}, false);
 
     expect(deserialized).toBeInstanceOf(RowsLayoutManager);
     expect(deserialized.state.rows).toHaveLength(1);
@@ -202,8 +196,7 @@ describe('serialization', () => {
       ],
     });
 
-    const serializer = new RowsLayoutSerializer();
-    const serialized = serializer.serialize(rowsLayout);
+    const serialized = serializeRowsLayout(rowsLayout);
 
     expect(serialized).toEqual({
       kind: 'RowsLayout',
@@ -243,8 +236,7 @@ describe('serialization', () => {
       ],
     });
 
-    const serializer = new RowsLayoutSerializer();
-    const serialized = serializer.serialize(rowsLayout);
+    const serialized = serializeRowsLayout(rowsLayout);
 
     expect(serialized).toEqual({
       kind: 'RowsLayout',
@@ -283,8 +275,7 @@ describe('serialization', () => {
       ],
     });
 
-    const serializer = new RowsLayoutSerializer();
-    const serialized = serializer.serialize(rowsLayout);
+    const serialized = serializeRowsLayout(rowsLayout);
 
     expect(serialized).toEqual({
       kind: 'RowsLayout',
@@ -335,8 +326,7 @@ describe('serialization', () => {
       ],
     });
 
-    const serializer = new RowsLayoutSerializer();
-    const serialized = serializer.serialize(rowsLayout);
+    const serialized = serializeRowsLayout(rowsLayout);
 
     expect(serialized).toEqual({
       kind: 'RowsLayout',
