@@ -273,7 +273,7 @@ describe('Order Transformer', () => {
       ${Order.Desc} | ${Order.Desc}  | ${Order.Desc}  | ${['Series-3', 'Series-1', 'Series-2']}
       ${Order.Desc} | ${Order.Off}   | ${Order.Off}   | ${['Series-3', 'Series-1', 'Series-2']}
     `(
-      'When the order is (with index order as given) label pod∂: $labelPodOrder / label user: $labelUserOrder / field name: $fieldNameOrder , then the field order is $expectedFieldNameOrder',
+      'When the order is (with index order as given) label pod: $labelPodOrder / label user: $labelUserOrder / field name: $fieldNameOrder , then the field order is $expectedFieldNameOrder',
       async ({ labelPodOrder, labelUserOrder, fieldNameOrder, expectedFieldNameOrder }) => {
         const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
           id: DataTransformerID.order,
