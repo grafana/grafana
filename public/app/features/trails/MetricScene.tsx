@@ -13,6 +13,7 @@ import {
   SceneVariableSet,
 } from '@grafana/scenes';
 import { Box, Icon, LinkButton, Stack, Tab, TabsBar, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { getExploreUrl } from '../../core/utils/explore';
 
@@ -182,18 +183,21 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
           <Stack gap={1}>
             <ToolbarButton
               variant={'canvas'}
-              tooltip="Remove existing metric and choose a new metric"
+              tooltip={t(
+                'trails.metric-action-bar.tooltip-remove-existing-metric-choose',
+                'Remove existing metric and choose a new metric'
+              )}
               onClick={() => {
                 reportExploreMetrics('selected_metric_action_clicked', { action: 'unselect' });
                 trail.publishEvent(new MetricSelectedEvent(undefined));
               }}
             >
-              Select new metric
+              <Trans i18nKey="trails.metric-action-bar.select-new-metric">Select new metric</Trans>
             </ToolbarButton>
             <ToolbarButton
               variant={'canvas'}
               icon="compass"
-              tooltip="Open in explore"
+              tooltip={t('trails.metric-action-bar.tooltip-open-in-explore', 'Open in explore')}
               onClick={model.openExploreLink}
             />
             <ShareTrailButton trail={trail} />
@@ -215,7 +219,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
                 variant={'secondary'}
                 onClick={() => reportExploreMetrics('selected_metric_action_clicked', { action: 'open_from_embedded' })}
               >
-                Open
+                <Trans i18nKey="trails.metric-action-bar.open">Open</Trans>
               </LinkButton>
             )}
           </Stack>

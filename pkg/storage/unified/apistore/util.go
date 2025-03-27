@@ -38,10 +38,12 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 	}
 
 	switch opts.ResourceVersionMatch {
-	case "", metav1.ResourceVersionMatchNotOlderThan:
-		req.VersionMatch = resource.ResourceVersionMatch_NotOlderThan
+	case "":
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_Unset
+	case metav1.ResourceVersionMatchNotOlderThan:
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_NotOlderThan
 	case metav1.ResourceVersionMatchExact:
-		req.VersionMatch = resource.ResourceVersionMatch_Exact
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_Exact
 	default:
 		return nil, predicate, apierrors.NewBadRequest(
 			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
@@ -58,11 +60,18 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 			v := r.Key()
 
 			// Parse the history request from labels
-			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash {
+			// TODO: for LabelGetFullpath, we just skip this for unistore. We need a better solution for
+			// getting the full path for folders in unistore, without making a request for each parent folder.
+			// In modes 0-2 we added this label to indicate that the sql query should return that data as
+			// an annotation on the folder. However, this annotation cannot be saved to unified storage, otherwise
+			// we will have to recompute annotations for all descendants of a folder during a folder move.
+			// While we look for a better solution, unified storage will continue to return all folders & the folder
+			// service will get the full path by retrieving each parent folder.
+			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash || v == utils.LabelGetFullpath {
 				if len(requirements) != 1 {
 					return nil, predicate, apierrors.NewBadRequest("single label supported with: " + v)
 				}
-				if !opts.Predicate.Field.Empty() {
+				if opts.Predicate.Field != nil && !opts.Predicate.Field.Empty() {
 					return nil, predicate, apierrors.NewBadRequest("field selector not supported with: " + v)
 				}
 				if r.Operator() != selection.Equals {
@@ -79,7 +88,7 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 					if vals[0] != "true" {
 						return nil, predicate, apierrors.NewBadRequest("expecting true for: " + v)
 					}
-				} else {
+				} else if v == utils.LabelKeyGetHistory {
 					req.Source = resource.ListRequest_HISTORY
 					req.Options.Key.Name = vals[0]
 				}

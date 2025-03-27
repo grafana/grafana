@@ -1,4 +1,4 @@
-import { DataSourceJsonData } from '@grafana/data/src';
+import { DataSourceJsonData } from '@grafana/data';
 import { NodeGraphOptions, TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 
 import { TempoQuery as TempoBase, TempoQueryType, TraceqlFilter } from './dataquery.gen';

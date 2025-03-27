@@ -50,7 +50,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
       collapsed: isCollapsed,
 
       paneOptions: {
-        collapseBelowPixels: 250,
+        collapseBelowPixels: 150,
         snapOpenToPixels: 400,
       },
     });
@@ -99,7 +99,11 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
         </div>
         {isEditing && (
           <>
-            <div {...splitterProps} data-edit-pane-splitter={true} />
+            <div
+              {...splitterProps}
+              className={cx(splitterProps.className, styles.splitter)}
+              data-edit-pane-splitter={true}
+            />
             <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
               <DashboardEditPaneRenderer
                 editPane={editPane}
@@ -158,11 +162,18 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, isExtensionSideba
       scrollbarWidth: 'thin',
       // The fixed controls headers is otherwise rendered over the selection outlinem, Maybe there is an other solution
       paddingTop: '2px',
+      // Because the edit pane splitter handle area adds padding we can reduce it here
+      paddingRight: theme.spacing(1),
     }),
     editPane: css({
       flexDirection: 'column',
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
+      // borderLeft: `1px solid ${theme.colors.border.weak}`,
+      // background: theme.colors.background.primary,
+    }),
+    splitter: css({
+      '&:after': {
+        display: 'none',
+      },
     }),
     controlsWrapperSticky: css({
       [theme.breakpoints.up('md')]: {
