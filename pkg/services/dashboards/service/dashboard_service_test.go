@@ -13,6 +13,7 @@ import (
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -24,6 +25,7 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -2312,5 +2314,109 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 		assert.Equal(t, spec["version"], float64(2))
 		// folder annotation should not be set if not inside a folder
 		assert.Equal(t, result.GetAnnotations(), map[string]string(nil))
+	})
+}
+
+func TestSetDefaultPermissions(t *testing.T) {
+	t.Run("Should set correct default permissions", func(t *testing.T) {
+		testCases := []struct {
+			name                        string
+			rootFolder                  bool
+			featureKubernetesDashboards bool
+			expectedPermission          []accesscontrol.SetResourcePermissionCommand
+		}{
+			{
+				name:                        "without kubernetesDashboards feature in root folder",
+				rootFolder:                  true,
+				featureKubernetesDashboards: false,
+				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
+					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+				},
+			},
+			{
+				name:                        "with kubernetesDashboards feature in root folder",
+				rootFolder:                  true,
+				featureKubernetesDashboards: true,
+				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
+					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+				},
+			},
+			{
+				name:                        "without kubernetesDashboards feature in subfolder",
+				rootFolder:                  false,
+				featureKubernetesDashboards: false,
+				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
+					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+				},
+			},
+			{
+				name:                        "with kubernetesDashboards feature in subfolder",
+				rootFolder:                  false,
+				featureKubernetesDashboards: true,
+				expectedPermission:          nil,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				user := &user.SignedInUser{
+					OrgID:   1,
+					OrgRole: "Admin",
+					UserID:  1,
+				}
+				ctx := request.WithNamespace(context.Background(), "default")
+				ctx = identity.WithRequester(ctx, user)
+
+				// Setup mocks and service
+				dashboardStore := &dashboards.FakeDashboardStore{}
+				folderStore := foldertest.FakeFolderStore{}
+				features := featuremgmt.WithFeatures()
+				if tc.featureKubernetesDashboards {
+					features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards)
+				}
+
+				permService := acmock.NewMockedPermissionsService()
+				permService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+				service := &DashboardServiceImpl{
+					cfg:                       setting.NewCfg(),
+					log:                       log.New("test-logger"),
+					dashboardStore:            dashboardStore,
+					folderStore:               &folderStore,
+					features:                  features,
+					dashboardPermissions:      permService,
+					folderPermissions:         permService,
+					dashboardPermissionsReady: make(chan struct{}),
+				}
+				service.RegisterDashboardPermissions(permService)
+
+				// Create test object
+				key := &resource.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test", Namespace: "default"}
+				obj := &dashboardv0alpha1.Dashboard{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "dashboard.grafana.app/v0alpha1",
+					},
+				}
+				meta, err := utils.MetaAccessor(obj)
+				require.NoError(t, err)
+				if !tc.rootFolder {
+					meta.SetFolder("subfolder")
+				}
+				// Call the method
+				err = service.SetDefaultPermissions(ctx, key, user, meta)
+				require.NoError(t, err)
+
+				// Verify results
+				if tc.expectedPermission == nil {
+					permService.AssertNotCalled(t, "SetPermissions")
+				} else {
+					permService.AssertCalled(t, "SetPermissions", mock.Anything, mock.Anything, mock.Anything, tc.expectedPermission)
+				}
+			})
+		}
 	})
 }

@@ -990,10 +990,44 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, key *
 
 	logger := logging.FromContext(ctx)
 
-	logger.Info("TODO!!!!! check default permissions",
-		"key", key.SearchID(),
-		"user", id.GetUID(),
-		"folder", obj.GetFolder())
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return err
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	uid, err := user.GetInternalID()
+	if err != nil {
+		return err
+	}
+	var permissions []accesscontrol.SetResourcePermissionCommand
+	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) {
+		// legacy behavior
+		permissions = []accesscontrol.SetResourcePermissionCommand{
+			{UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+		}
+		if obj.GetFolder() == "" {
+			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+			}...)
+		}
+	} else {
+		if obj.GetFolder() != "" {
+			return nil
+		}
+		permissions = []accesscontrol.SetResourcePermissionCommand{
+			{UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+		}
+	}
+	svc := dr.getPermissionsService(key.Resource == "folders")
+	if _, err := svc.SetPermissions(ctx, ns.OrgID, obj.GetName(), permissions...); err != nil {
+		logger.Error("Could not set default permissions", "error", err)
+	}
 
 	return nil
 }
@@ -1600,16 +1634,6 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	if err != nil {
 		return nil, err
 	}
-
-	// Grant permissions for items created at the root folder
-	if cmd.FolderUID == "" {
-		user, _ := claims.AuthInfoFrom(ctx)
-		if user != nil && user.GetIdentityType() == claims.TypeUser {
-			meta, _ := utils.MetaAccessor(obj)
-			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
-		}
-	}
-
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
 	// Update will create if not exists (upsert!)
