@@ -105,6 +105,7 @@ const sortColumnsRef = { current: [] };
 const mockOptions = {
   osContext: null,
   rows: [],
+  sortedRows: [],
   setContextMenuProps: () => {},
   setFilter: () => {},
   setIsInspecting: () => {},
