@@ -1947,7 +1947,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 			accessControl:        ac,
 			registry:             make(map[string]folder.RegistryService),
 			metrics:              newFoldersMetrics(nil),
-			tracer:               tracing.NewNoopTracerService(),dd
+			tracer:               tracing.NewNoopTracerService(),
 		}
 	}
 
