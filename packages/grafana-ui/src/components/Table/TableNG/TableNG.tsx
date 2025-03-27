@@ -703,7 +703,10 @@ export function mapFrameToDataGrid({
   }
 
   let fieldCountWithoutWidth = 0;
-  frame.fields.map((field, fieldIndex) => {
+  frame.fields.filter((field, fieldIndex) => {
+    if (field.config?.custom?.hideFrom?.viz) {
+      return;
+    }
     if (field.type === FieldType.nestedFrames) {
       // Don't render nestedFrames type field
       return;

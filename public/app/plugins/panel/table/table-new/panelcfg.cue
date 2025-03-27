@@ -47,6 +47,7 @@ composableKinds: PanelCfg: {
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.TableFieldOptions
+					ui.HideableFieldConfig
 				} @cuetsy(kind="interface")
 			}
 		}]
