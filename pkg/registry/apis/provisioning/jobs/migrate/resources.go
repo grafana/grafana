@@ -74,11 +74,19 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	parsed.Meta.SetSourceProperties(utils.SourceProperties{})
 
 	// TODO: this seems to be same logic as the export job
-	if result := r.write(ctx, parsed.Obj, r.folderTree); result.Error != nil {
-		r.progress.Record(ctx, result)
-		if err := r.progress.TooManyErrors(); err != nil {
-			return err
-		}
+	fileName, err := r.write(ctx, parsed.Obj, r.folderTree)
+	result := jobs.JobResourceResult{
+		Name:     parsed.Meta.GetName(),
+		Resource: r.kind.Resource,
+		Group:    r.kind.Group,
+		Action:   repository.FileActionCreated,
+		Error:    err,
+		Path:     fileName,
+	}
+
+	r.progress.Record(ctx, result)
+	if err := r.progress.TooManyErrors(); err != nil {
+		return err
 	}
 
 	return nil
@@ -118,24 +126,14 @@ func (r *legacyResourceResourceMigrator) Migrate(ctx context.Context) error {
 }
 
 // TODO: this is copied from the export job
-func (r *legacyResourceResourceMigrator) write(ctx context.Context, obj *unstructured.Unstructured, folderTree *resources.FolderTree) jobs.JobResourceResult {
-	gvk := obj.GroupVersionKind()
-	result := jobs.JobResourceResult{
-		Name:     obj.GetName(),
-		Resource: gvk.Kind,
-		Group:    gvk.Group,
-		Action:   repository.FileActionCreated,
-	}
-
+func (r *legacyResourceResourceMigrator) write(ctx context.Context, obj *unstructured.Unstructured, folderTree *resources.FolderTree) (string, error) {
 	if err := ctx.Err(); err != nil {
-		result.Error = fmt.Errorf("context error: %w", err)
-		return result
+		return "", fmt.Errorf("context error: %w", err)
 	}
 
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
-		result.Error = fmt.Errorf("extract meta accessor: %w", err)
-		return result
+		return "", fmt.Errorf("extract meta accessor: %w", err)
 	}
 
 	// Message from annotations
@@ -150,10 +148,10 @@ func (r *legacyResourceResourceMigrator) write(ctx context.Context, obj *unstruc
 	}
 
 	name := meta.GetName()
+	// TODO: how to handle this better?
 	manager, _ := meta.GetManagerProperties()
 	if manager.Identity == r.repo.Config().GetName() {
-		result.Action = repository.FileActionIgnored
-		return result
+		return "", nil
 	}
 
 	title := meta.FindTitle("")
@@ -175,8 +173,6 @@ func (r *legacyResourceResourceMigrator) write(ctx context.Context, obj *unstruc
 		// j.logger.Error("folder of item was not in tree of repository")
 	}
 
-	result.Path = fid.Path
-
 	// Clear the metadata
 	delete(obj.Object, "metadata")
 
@@ -186,8 +182,7 @@ func (r *legacyResourceResourceMigrator) write(ctx context.Context, obj *unstruc
 
 	body, err := json.MarshalIndent(obj.Object, "", "  ")
 	if err != nil {
-		result.Error = fmt.Errorf("failed to marshal dashboard: %w", err)
-		return result
+		return "", fmt.Errorf("failed to marshal dashboard: %w", err)
 	}
 
 	fileName := slugify.Slugify(title) + ".json"
@@ -197,10 +192,10 @@ func (r *legacyResourceResourceMigrator) write(ctx context.Context, obj *unstruc
 
 	err = r.repo.Write(ctx, fileName, "", body, commitMessage)
 	if err != nil {
-		result.Error = fmt.Errorf("failed to write file: %w", err)
+		return "", fmt.Errorf("failed to write file: %w", err)
 	}
 
-	return result
+	return fileName, nil
 }
 
 // TODO: this is copied from the export job
