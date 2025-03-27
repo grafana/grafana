@@ -261,6 +261,11 @@ export async function addTranslationsToI18n({
   try {
     const module = await SystemJS.import(resolveModulePath(path));
     if (!module.default) {
+      console.warn(`Could not find default export for plugin ${pluginId}`, {
+        resolvedLanguage,
+        fallbackLanguage,
+        path,
+      });
       return;
     }
 

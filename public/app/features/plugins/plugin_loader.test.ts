@@ -109,6 +109,28 @@ describe('plugin_loader', () => {
       });
     });
 
+    it('should warn if no exported default is found', async () => {
+      const translations = {
+        'en-US': '/public/plugins/test-panel/locales/en-US/no-default-export.json',
+        'pt-BR': '/public/plugins/test-panel/locales/pt-BR/no-default-export.json',
+      };
+
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await addTranslationsToI18n({
+        resolvedLanguage: 'en-US',
+        fallbackLanguage: 'en-US',
+        pluginId: 'test-panel',
+        translations,
+      });
+
+      expect(consoleSpy).toHaveBeenCalledWith('Could not find default export for plugin test-panel', {
+        resolvedLanguage: 'en-US',
+        fallbackLanguage: 'en-US',
+        path: '/public/plugins/test-panel/locales/en-US/no-default-export.json',
+      });
+    });
+
     it('should warn if translations cannot be loaded', async () => {
       const translations = {
         'en-US': '/public/plugins/test-panel/locales/en-US/unknown.json',
