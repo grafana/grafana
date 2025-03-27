@@ -19,6 +19,7 @@ import {
   getDefaultTimeRange,
   locationUtil,
   urlUtil,
+  dateTime,
 } from '@grafana/data';
 import { getConfig } from 'app/core/config';
 
@@ -176,6 +177,7 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
     return {
       line: log.entry,
       timestamp: log.timeEpochNs,
+      date: dateTime(log.timeEpochMs).toISOString(),
       fields: {
         ...fields,
         ...log.labels,
