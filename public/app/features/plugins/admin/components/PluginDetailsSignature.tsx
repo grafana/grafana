@@ -3,6 +3,7 @@ import * as React from 'react';
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Alert } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { CatalogPlugin } from '../types';
 
@@ -25,7 +26,7 @@ export function PluginDetailsSignature({ className, plugin }: Props): React.Reac
   return (
     <Alert
       severity="warning"
-      title="Invalid plugin signature"
+      title={t('plugins.plugin-details-signature.title-invalid-plugin-signature', 'Invalid plugin signature')}
       data-testid={selectors.pages.PluginPage.signatureInfo}
       className={className}
     >
@@ -41,7 +42,9 @@ export function PluginDetailsSignature({ className, plugin }: Props): React.Reac
         target="_blank"
         rel="noreferrer"
       >
-        Read more about plugins signing.
+        <Trans i18nKey="plugins.plugin-details-signature.read-more-about-plugins-signing">
+          Read more about plugins signing.
+        </Trans>
       </a>
     </Alert>
   );

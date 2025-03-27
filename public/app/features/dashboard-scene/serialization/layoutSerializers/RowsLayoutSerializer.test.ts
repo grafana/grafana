@@ -2,8 +2,8 @@ import { SceneGridLayout } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
-import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
-import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
+import { AutoGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -71,7 +71,7 @@ describe('deserialization', () => {
               title: 'Row 1',
               collapse: false,
               layout: {
-                kind: 'ResponsiveGridLayout',
+                kind: 'AutoGridLayout',
                 spec: {
                   columnWidthMode: 'standard',
                   rowHeightMode: 'standard',
@@ -87,7 +87,7 @@ describe('deserialization', () => {
     const serializer = new RowsLayoutSerializer();
     const deserialized = serializer.deserialize(layout, {}, false);
     expect(deserialized).toBeInstanceOf(RowsLayoutManager);
-    expect(deserialized.state.rows[0].state.layout).toBeInstanceOf(ResponsiveGridLayoutManager);
+    expect(deserialized.state.rows[0].state.layout).toBeInstanceOf(AutoGridLayoutManager);
   });
 
   it('should handle multiple rows with different layouts', () => {
@@ -103,7 +103,7 @@ describe('deserialization', () => {
               hideHeader: undefined,
               fillScreen: undefined,
               layout: {
-                kind: 'ResponsiveGridLayout',
+                kind: 'AutoGridLayout',
                 spec: {
                   columnWidthMode: 'standard',
                   rowHeightMode: 'standard',
@@ -130,7 +130,7 @@ describe('deserialization', () => {
     const deserialized = serializer.deserialize(layout, {}, false);
     expect(deserialized).toBeInstanceOf(RowsLayoutManager);
     expect(deserialized.state.rows).toHaveLength(2);
-    expect(deserialized.state.rows[0].state.layout).toBeInstanceOf(ResponsiveGridLayoutManager);
+    expect(deserialized.state.rows[0].state.layout).toBeInstanceOf(AutoGridLayoutManager);
     expect(deserialized.state.rows[1].state.layout).toBeInstanceOf(DefaultGridLayoutManager);
     expect(deserialized.state.rows[0].state.collapse).toBe(false);
     expect(deserialized.state.rows[1].state.collapse).toBe(true);
@@ -314,11 +314,11 @@ describe('serialization', () => {
           collapse: false,
           hideHeader: undefined,
           fillScreen: undefined,
-          layout: new ResponsiveGridLayoutManager({
+          layout: new AutoGridLayoutManager({
             columnWidth: 'standard',
             rowHeight: 'standard',
             maxColumnCount: 4,
-            layout: new ResponsiveGridLayout({}),
+            layout: new AutoGridLayout({}),
           }),
         }),
         new RowItem({
@@ -350,7 +350,7 @@ describe('serialization', () => {
               hideHeader: undefined,
               fillScreen: undefined,
               layout: {
-                kind: 'ResponsiveGridLayout',
+                kind: 'AutoGridLayout',
                 spec: {
                   columnWidth: undefined,
                   rowHeight: undefined,

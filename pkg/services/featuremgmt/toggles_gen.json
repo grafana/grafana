@@ -4385,6 +4385,7 @@
         "name": "userStorageAPI",
         "resourceVersion": "1736438999910",
         "creationTimestamp": "2024-11-12T11:56:41Z",
+        "deletionTimestamp": "2025-03-26T14:33:40Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-09 16:09:59.910083 +0000 UTC"
         }

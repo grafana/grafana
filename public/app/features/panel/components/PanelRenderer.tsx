@@ -12,6 +12,7 @@ import {
 import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, usePanelContext, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
@@ -68,7 +69,11 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   }
 
   if (!plugin || !plugin.hasPluginId(pluginId)) {
-    return <div>Loading plugin panel...</div>;
+    return (
+      <div>
+        <Trans i18nKey="panel.panel-renderer.loading-plugin-panel">Loading plugin panel...</Trans>
+      </div>
+    );
   }
 
   if (!plugin.panel) {
@@ -76,7 +81,11 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   }
 
   if (!dataWithOverrides) {
-    return <div>No panel data</div>;
+    return (
+      <div>
+        <Trans i18nKey="panel.panel-renderer.no-panel-data">No panel data</Trans>
+      </div>
+    );
   }
 
   const PanelComponent = plugin.panel;
