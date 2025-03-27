@@ -53,7 +53,6 @@ export class DashboardSrv {
 
   saveJSONDashboard(json: string) {
     const parsedJson = JSON.parse(json);
-    debugger;
     return getDashboardAPI().saveDashboard({
       dashboard: parsedJson,
       folderUid: this.dashboard?.meta.folderUid || parsedJson.folderUid,
