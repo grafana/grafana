@@ -5,6 +5,7 @@ go 1.24.1
 replace (
 	github.com/grafana/grafana => ../../../..
 	github.com/grafana/grafana/pkg/apimachinery => ../../../apimachinery
+	github.com/grafana/grafana/pkg/apis => ../../../apis
 	github.com/grafana/grafana/pkg/apiserver => ../../../apiserver
 )
 
@@ -12,12 +13,12 @@ require (
 	github.com/fullstorydev/grpchan v1.1.1
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib v0.0.0-20250305132846-37f49eb947fa
-	github.com/grafana/authlib/types v0.0.0-20250224151205-5ef97131cc82
+	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
 	github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250314071911-14e2784e6979
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250327091030-e216c2f29dcc
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1
@@ -32,6 +33,8 @@ require (
 	google.golang.org/protobuf v1.36.5
 	k8s.io/apimachinery v0.32.3
 )
+
+require github.com/grafana/grafana/pkg/apis v0.0.0-20250327091030-e216c2f29dcc
 
 require (
 	cel.dev/expr v0.19.1 // indirect
@@ -122,7 +125,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/flatbuffers v25.2.10+incompatible // indirect
-	github.com/google/gnostic-models v0.6.8 // indirect
+	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
@@ -261,10 +264,11 @@ require (
 	k8s.io/apiserver v0.32.3 // indirect
 	k8s.io/component-base v0.32.3 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
+	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.5.0 // indirect
+	sigs.k8s.io/randfill v1.0.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 	xorm.io/builder v0.3.6 // indirect
 	xorm.io/core v0.7.3 // indirect
