@@ -29,22 +29,23 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlResourceDelete            = mustTemplate("resource_delete.sql")
-	sqlResourceInsert            = mustTemplate("resource_insert.sql")
-	sqlResourceUpdate            = mustTemplate("resource_update.sql")
-	sqlResourceRead              = mustTemplate("resource_read.sql")
-	sqlResourceStats             = mustTemplate("resource_stats.sql")
-	sqlResourceList              = mustTemplate("resource_list.sql")
-	sqlResourceHistoryList       = mustTemplate("resource_history_list.sql")
-	sqlResourceUpdateRV          = mustTemplate("resource_update_rv.sql")
-	sqlResourceHistoryRead       = mustTemplate("resource_history_read.sql")
-	sqlResourceHistoryUpdateRV   = mustTemplate("resource_history_update_rv.sql")
-	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
-	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
-	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
-	sqlResourceHistoryDelete     = mustTemplate("resource_history_delete.sql")
-	sqlResourceHistoryPrune      = mustTemplate("resource_history_prune.sql")
-	sqlResourceInsertFromHistory = mustTemplate("resource_insert_from_history.sql")
+	sqlResourceDelete              = mustTemplate("resource_delete.sql")
+	sqlResourceInsert              = mustTemplate("resource_insert.sql")
+	sqlResourceUpdate              = mustTemplate("resource_update.sql")
+	sqlResourceRead                = mustTemplate("resource_read.sql")
+	sqlResourceStats               = mustTemplate("resource_stats.sql")
+	sqlResourceList                = mustTemplate("resource_list.sql")
+	sqlResourceHistoryList         = mustTemplate("resource_history_list.sql")
+	sqlResourceUpdateRV            = mustTemplate("resource_update_rv.sql")
+	sqlResourceHistoryRead         = mustTemplate("resource_history_read.sql")
+	sqlResourceHistoryReadLatestRV = mustTemplate("resource_history_read_latest_rv.sql")
+	sqlResourceHistoryUpdateRV     = mustTemplate("resource_history_update_rv.sql")
+	sqlResourceHistoryInsert       = mustTemplate("resource_history_insert.sql")
+	sqlResourceHistoryPoll         = mustTemplate("resource_history_poll.sql")
+	sqlResourceHistoryGet          = mustTemplate("resource_history_get.sql")
+	sqlResourceHistoryDelete       = mustTemplate("resource_history_delete.sql")
+	sqlResourceHistoryPrune        = mustTemplate("resource_history_prune.sql")
+	sqlResourceInsertFromHistory   = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -188,6 +189,52 @@ type sqlResourceListRequest struct {
 
 func (r sqlResourceListRequest) Validate() error {
 	return nil // TODO
+}
+
+type historyReadRequest struct {
+	Key             *resource.ResourceKey
+	ResourceVersion int64
+}
+
+type sqlResourceHistoryReadRequest struct {
+	sqltemplate.SQLTemplate
+	Request  *historyReadRequest
+	Response *resource.BackendReadResponse
+}
+
+func (r sqlResourceHistoryReadRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r sqlResourceHistoryReadRequest) Results() (*resource.BackendReadResponse, error) {
+	return r.Response, nil
+}
+
+type historyReadLatestRVRequest struct {
+	Key       *resource.ResourceKey
+	EventType resource.WatchEvent_Type
+}
+
+type sqlResourceHistoryReadLatestRVRequest struct {
+	sqltemplate.SQLTemplate
+	Request  *historyReadLatestRVRequest
+	Response *resourceHistoryReadLatestRVResponse
+}
+
+func (r sqlResourceHistoryReadLatestRVRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r sqlResourceHistoryReadLatestRVRequest) Results() (*resourceHistoryReadLatestRVResponse, error) {
+	return r.Response, nil
+}
+
+type resourceHistoryReadLatestRVResponse struct {
+	ResourceVersion int64
+}
+
+func (r *resourceHistoryReadLatestRVResponse) Results() (*resourceHistoryReadLatestRVResponse, error) {
+	return r, nil
 }
 
 type historyListRequest struct {
