@@ -22,8 +22,8 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
@@ -456,7 +456,7 @@ export function useDashboardState(scene: SceneObject): DashboardSceneState {
   return dashboard.useState();
 }
 
-export function useIsConditionallyHidden(scene: RowItem | ResponsiveGridItem): boolean {
+export function useIsConditionallyHidden(scene: RowItem | AutoGridItem): boolean {
   const { conditionalRendering } = scene.useState();
 
   return !(conditionalRendering?.evaluate() ?? true);

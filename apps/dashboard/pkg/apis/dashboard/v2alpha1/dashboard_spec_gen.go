@@ -836,19 +836,19 @@ func NewDashboardRowsLayoutRowKind() *DashboardRowsLayoutRowKind {
 
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutRowSpec struct {
-	Title                *string                                                                           `json:"title,omitempty"`
-	Collapse             *bool                                                                             `json:"collapse,omitempty"`
-	HideHeader           *bool                                                                             `json:"hideHeader,omitempty"`
-	FillScreen           *bool                                                                             `json:"fillScreen,omitempty"`
-	ConditionalRendering *DashboardConditionalRenderingGroupKind                                           `json:"conditionalRendering,omitempty"`
-	Repeat               *DashboardRowRepeatOptions                                                        `json:"repeat,omitempty"`
-	Layout               DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
+	Title                *string                                                                     `json:"title,omitempty"`
+	Collapse             *bool                                                                       `json:"collapse,omitempty"`
+	HideHeader           *bool                                                                       `json:"hideHeader,omitempty"`
+	FillScreen           *bool                                                                       `json:"fillScreen,omitempty"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
+	Repeat               *DashboardRowRepeatOptions                                                  `json:"repeat,omitempty"`
+	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
 func NewDashboardRowsLayoutRowSpec() *DashboardRowsLayoutRowSpec {
 	return &DashboardRowsLayoutRowSpec{
-		Layout: *NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind(),
+		Layout: *NewDashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind(),
 	}
 }
 
@@ -952,75 +952,75 @@ func NewDashboardConditionalRenderingTimeIntervalSpec() *DashboardConditionalRen
 }
 
 // +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutKind struct {
-	Kind string                            `json:"kind"`
-	Spec DashboardResponsiveGridLayoutSpec `json:"spec"`
+type DashboardAutoGridLayoutKind struct {
+	Kind string                      `json:"kind"`
+	Spec DashboardAutoGridLayoutSpec `json:"spec"`
 }
 
-// NewDashboardResponsiveGridLayoutKind creates a new DashboardResponsiveGridLayoutKind object.
-func NewDashboardResponsiveGridLayoutKind() *DashboardResponsiveGridLayoutKind {
-	return &DashboardResponsiveGridLayoutKind{
-		Kind: "ResponsiveGridLayout",
-		Spec: *NewDashboardResponsiveGridLayoutSpec(),
+// NewDashboardAutoGridLayoutKind creates a new DashboardAutoGridLayoutKind object.
+func NewDashboardAutoGridLayoutKind() *DashboardAutoGridLayoutKind {
+	return &DashboardAutoGridLayoutKind{
+		Kind: "AutoGridLayout",
+		Spec: *NewDashboardAutoGridLayoutSpec(),
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutSpec struct {
-	MaxColumnCount  *float64                                         `json:"maxColumnCount,omitempty"`
-	ColumnWidthMode DashboardResponsiveGridLayoutSpecColumnWidthMode `json:"columnWidthMode"`
-	ColumnWidth     *float64                                         `json:"columnWidth,omitempty"`
-	RowHeightMode   DashboardResponsiveGridLayoutSpecRowHeightMode   `json:"rowHeightMode"`
-	RowHeight       *float64                                         `json:"rowHeight,omitempty"`
-	FillScreen      *bool                                            `json:"fillScreen,omitempty"`
-	Items           []DashboardResponsiveGridLayoutItemKind          `json:"items"`
+type DashboardAutoGridLayoutSpec struct {
+	MaxColumnCount  *float64                                   `json:"maxColumnCount,omitempty"`
+	ColumnWidthMode DashboardAutoGridLayoutSpecColumnWidthMode `json:"columnWidthMode"`
+	ColumnWidth     *float64                                   `json:"columnWidth,omitempty"`
+	RowHeightMode   DashboardAutoGridLayoutSpecRowHeightMode   `json:"rowHeightMode"`
+	RowHeight       *float64                                   `json:"rowHeight,omitempty"`
+	FillScreen      *bool                                      `json:"fillScreen,omitempty"`
+	Items           []DashboardAutoGridLayoutItemKind          `json:"items"`
 }
 
-// NewDashboardResponsiveGridLayoutSpec creates a new DashboardResponsiveGridLayoutSpec object.
-func NewDashboardResponsiveGridLayoutSpec() *DashboardResponsiveGridLayoutSpec {
-	return &DashboardResponsiveGridLayoutSpec{
+// NewDashboardAutoGridLayoutSpec creates a new DashboardAutoGridLayoutSpec object.
+func NewDashboardAutoGridLayoutSpec() *DashboardAutoGridLayoutSpec {
+	return &DashboardAutoGridLayoutSpec{
 		MaxColumnCount: (func(input float64) *float64 { return &input })(3),
 		FillScreen:     (func(input bool) *bool { return &input })(false),
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutItemKind struct {
-	Kind string                                `json:"kind"`
-	Spec DashboardResponsiveGridLayoutItemSpec `json:"spec"`
+type DashboardAutoGridLayoutItemKind struct {
+	Kind string                          `json:"kind"`
+	Spec DashboardAutoGridLayoutItemSpec `json:"spec"`
 }
 
-// NewDashboardResponsiveGridLayoutItemKind creates a new DashboardResponsiveGridLayoutItemKind object.
-func NewDashboardResponsiveGridLayoutItemKind() *DashboardResponsiveGridLayoutItemKind {
-	return &DashboardResponsiveGridLayoutItemKind{
-		Kind: "ResponsiveGridLayoutItem",
-		Spec: *NewDashboardResponsiveGridLayoutItemSpec(),
+// NewDashboardAutoGridLayoutItemKind creates a new DashboardAutoGridLayoutItemKind object.
+func NewDashboardAutoGridLayoutItemKind() *DashboardAutoGridLayoutItemKind {
+	return &DashboardAutoGridLayoutItemKind{
+		Kind: "AutoGridLayoutItem",
+		Spec: *NewDashboardAutoGridLayoutItemSpec(),
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutItemSpec struct {
+type DashboardAutoGridLayoutItemSpec struct {
 	Element              DashboardElementReference               `json:"element"`
-	Repeat               *DashboardResponsiveGridRepeatOptions   `json:"repeat,omitempty"`
+	Repeat               *DashboardAutoGridRepeatOptions         `json:"repeat,omitempty"`
 	ConditionalRendering *DashboardConditionalRenderingGroupKind `json:"conditionalRendering,omitempty"`
 }
 
-// NewDashboardResponsiveGridLayoutItemSpec creates a new DashboardResponsiveGridLayoutItemSpec object.
-func NewDashboardResponsiveGridLayoutItemSpec() *DashboardResponsiveGridLayoutItemSpec {
-	return &DashboardResponsiveGridLayoutItemSpec{
+// NewDashboardAutoGridLayoutItemSpec creates a new DashboardAutoGridLayoutItemSpec object.
+func NewDashboardAutoGridLayoutItemSpec() *DashboardAutoGridLayoutItemSpec {
+	return &DashboardAutoGridLayoutItemSpec{
 		Element: *NewDashboardElementReference(),
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardResponsiveGridRepeatOptions struct {
+type DashboardAutoGridRepeatOptions struct {
 	Mode  string `json:"mode"`
 	Value string `json:"value"`
 }
 
-// NewDashboardResponsiveGridRepeatOptions creates a new DashboardResponsiveGridRepeatOptions object.
-func NewDashboardResponsiveGridRepeatOptions() *DashboardResponsiveGridRepeatOptions {
-	return &DashboardResponsiveGridRepeatOptions{}
+// NewDashboardAutoGridRepeatOptions creates a new DashboardAutoGridRepeatOptions object.
+func NewDashboardAutoGridRepeatOptions() *DashboardAutoGridRepeatOptions {
+	return &DashboardAutoGridRepeatOptions{}
 }
 
 // +k8s:openapi-gen=true
@@ -1063,14 +1063,14 @@ func NewDashboardTabsLayoutTabKind() *DashboardTabsLayoutTabKind {
 
 // +k8s:openapi-gen=true
 type DashboardTabsLayoutTabSpec struct {
-	Title  *string                                                                           `json:"title,omitempty"`
-	Layout DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	Title  *string                                                                     `json:"title,omitempty"`
+	Layout DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.
 func NewDashboardTabsLayoutTabSpec() *DashboardTabsLayoutTabSpec {
 	return &DashboardTabsLayoutTabSpec{
-		Layout: *NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind(),
+		Layout: *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(),
 	}
 }
 
@@ -1688,9 +1688,9 @@ type DashboardSpec struct {
 	// Description of dashboard.
 	Description *string `json:"description,omitempty"`
 	// Whether a dashboard is editable or not.
-	Editable *bool                                                                             `json:"editable,omitempty"`
-	Elements map[string]DashboardElement                                                       `json:"elements"`
-	Layout   DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	Editable *bool                                                                       `json:"editable,omitempty"`
+	Elements map[string]DashboardElement                                                 `json:"elements"`
+	Layout   DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
 	// Links with references to other dashboards or external websites.
 	Links []DashboardDashboardLink `json:"links"`
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
@@ -1715,7 +1715,7 @@ type DashboardSpec struct {
 func NewDashboardSpec() *DashboardSpec {
 	return &DashboardSpec{
 		Editable:     (func(input bool) *bool { return &input })(true),
-		Layout:       *NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind(),
+		Layout:       *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(),
 		TimeSettings: *NewDashboardTimeSettingsSpec(),
 	}
 }
@@ -1805,23 +1805,23 @@ const (
 )
 
 // +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutSpecColumnWidthMode string
+type DashboardAutoGridLayoutSpecColumnWidthMode string
 
 const (
-	DashboardResponsiveGridLayoutSpecColumnWidthModeNarrow   DashboardResponsiveGridLayoutSpecColumnWidthMode = "narrow"
-	DashboardResponsiveGridLayoutSpecColumnWidthModeStandard DashboardResponsiveGridLayoutSpecColumnWidthMode = "standard"
-	DashboardResponsiveGridLayoutSpecColumnWidthModeWide     DashboardResponsiveGridLayoutSpecColumnWidthMode = "wide"
-	DashboardResponsiveGridLayoutSpecColumnWidthModeCustom   DashboardResponsiveGridLayoutSpecColumnWidthMode = "custom"
+	DashboardAutoGridLayoutSpecColumnWidthModeNarrow   DashboardAutoGridLayoutSpecColumnWidthMode = "narrow"
+	DashboardAutoGridLayoutSpecColumnWidthModeStandard DashboardAutoGridLayoutSpecColumnWidthMode = "standard"
+	DashboardAutoGridLayoutSpecColumnWidthModeWide     DashboardAutoGridLayoutSpecColumnWidthMode = "wide"
+	DashboardAutoGridLayoutSpecColumnWidthModeCustom   DashboardAutoGridLayoutSpecColumnWidthMode = "custom"
 )
 
 // +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutSpecRowHeightMode string
+type DashboardAutoGridLayoutSpecRowHeightMode string
 
 const (
-	DashboardResponsiveGridLayoutSpecRowHeightModeShort    DashboardResponsiveGridLayoutSpecRowHeightMode = "short"
-	DashboardResponsiveGridLayoutSpecRowHeightModeStandard DashboardResponsiveGridLayoutSpecRowHeightMode = "standard"
-	DashboardResponsiveGridLayoutSpecRowHeightModeTall     DashboardResponsiveGridLayoutSpecRowHeightMode = "tall"
-	DashboardResponsiveGridLayoutSpecRowHeightModeCustom   DashboardResponsiveGridLayoutSpecRowHeightMode = "custom"
+	DashboardAutoGridLayoutSpecRowHeightModeShort    DashboardAutoGridLayoutSpecRowHeightMode = "short"
+	DashboardAutoGridLayoutSpecRowHeightModeStandard DashboardAutoGridLayoutSpecRowHeightMode = "standard"
+	DashboardAutoGridLayoutSpecRowHeightModeTall     DashboardAutoGridLayoutSpecRowHeightMode = "tall"
+	DashboardAutoGridLayoutSpecRowHeightModeCustom   DashboardAutoGridLayoutSpecRowHeightMode = "custom"
 )
 
 // +k8s:openapi-gen=true
@@ -2041,25 +2041,25 @@ func (resource *DashboardGridLayoutItemKindOrGridLayoutRowKind) UnmarshalJSON(ra
 }
 
 // +k8s:openapi-gen=true
-type DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind struct {
-	GridLayoutKind           *DashboardGridLayoutKind           `json:"GridLayoutKind,omitempty"`
-	ResponsiveGridLayoutKind *DashboardResponsiveGridLayoutKind `json:"ResponsiveGridLayoutKind,omitempty"`
-	TabsLayoutKind           *DashboardTabsLayoutKind           `json:"TabsLayoutKind,omitempty"`
-	RowsLayoutKind           *DashboardRowsLayoutKind           `json:"RowsLayoutKind,omitempty"`
+type DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind struct {
+	GridLayoutKind     *DashboardGridLayoutKind     `json:"GridLayoutKind,omitempty"`
+	AutoGridLayoutKind *DashboardAutoGridLayoutKind `json:"AutoGridLayoutKind,omitempty"`
+	TabsLayoutKind     *DashboardTabsLayoutKind     `json:"TabsLayoutKind,omitempty"`
+	RowsLayoutKind     *DashboardRowsLayoutKind     `json:"RowsLayoutKind,omitempty"`
 }
 
-// NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind creates a new DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind object.
-func NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind() *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind {
-	return &DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}
+// NewDashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind creates a new DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind object.
+func NewDashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind() *DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind {
+	return &DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind` as JSON.
-func (resource DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind` as JSON.
+func (resource DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) MarshalJSON() ([]byte, error) {
 	if resource.GridLayoutKind != nil {
 		return json.Marshal(resource.GridLayoutKind)
 	}
-	if resource.ResponsiveGridLayoutKind != nil {
-		return json.Marshal(resource.ResponsiveGridLayoutKind)
+	if resource.AutoGridLayoutKind != nil {
+		return json.Marshal(resource.AutoGridLayoutKind)
 	}
 	if resource.TabsLayoutKind != nil {
 		return json.Marshal(resource.TabsLayoutKind)
@@ -2070,8 +2070,8 @@ func (resource DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind` from JSON.
-func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind` from JSON.
+func (resource *DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -2088,6 +2088,14 @@ func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKin
 	}
 
 	switch discriminator {
+	case "AutoGridLayout":
+		var dashboardAutoGridLayoutKind DashboardAutoGridLayoutKind
+		if err := json.Unmarshal(raw, &dashboardAutoGridLayoutKind); err != nil {
+			return err
+		}
+
+		resource.AutoGridLayoutKind = &dashboardAutoGridLayoutKind
+		return nil
 	case "GridLayout":
 		var dashboardGridLayoutKind DashboardGridLayoutKind
 		if err := json.Unmarshal(raw, &dashboardGridLayoutKind); err != nil {
@@ -2095,14 +2103,6 @@ func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKin
 		}
 
 		resource.GridLayoutKind = &dashboardGridLayoutKind
-		return nil
-	case "ResponsiveGridLayout":
-		var dashboardResponsiveGridLayoutKind DashboardResponsiveGridLayoutKind
-		if err := json.Unmarshal(raw, &dashboardResponsiveGridLayoutKind); err != nil {
-			return err
-		}
-
-		resource.ResponsiveGridLayoutKind = &dashboardResponsiveGridLayoutKind
 		return nil
 	case "RowsLayout":
 		var dashboardRowsLayoutKind DashboardRowsLayoutKind
@@ -2199,28 +2199,28 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 }
 
 // +k8s:openapi-gen=true
-type DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind struct {
-	GridLayoutKind           *DashboardGridLayoutKind           `json:"GridLayoutKind,omitempty"`
-	RowsLayoutKind           *DashboardRowsLayoutKind           `json:"RowsLayoutKind,omitempty"`
-	ResponsiveGridLayoutKind *DashboardResponsiveGridLayoutKind `json:"ResponsiveGridLayoutKind,omitempty"`
-	TabsLayoutKind           *DashboardTabsLayoutKind           `json:"TabsLayoutKind,omitempty"`
+type DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind struct {
+	GridLayoutKind     *DashboardGridLayoutKind     `json:"GridLayoutKind,omitempty"`
+	RowsLayoutKind     *DashboardRowsLayoutKind     `json:"RowsLayoutKind,omitempty"`
+	AutoGridLayoutKind *DashboardAutoGridLayoutKind `json:"AutoGridLayoutKind,omitempty"`
+	TabsLayoutKind     *DashboardTabsLayoutKind     `json:"TabsLayoutKind,omitempty"`
 }
 
-// NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind creates a new DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind object.
-func NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind() *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind {
-	return &DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind{}
+// NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind creates a new DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind object.
+func NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind() *DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind {
+	return &DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` as JSON.
-func (resource DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind` as JSON.
+func (resource DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) MarshalJSON() ([]byte, error) {
 	if resource.GridLayoutKind != nil {
 		return json.Marshal(resource.GridLayoutKind)
 	}
 	if resource.RowsLayoutKind != nil {
 		return json.Marshal(resource.RowsLayoutKind)
 	}
-	if resource.ResponsiveGridLayoutKind != nil {
-		return json.Marshal(resource.ResponsiveGridLayoutKind)
+	if resource.AutoGridLayoutKind != nil {
+		return json.Marshal(resource.AutoGridLayoutKind)
 	}
 	if resource.TabsLayoutKind != nil {
 		return json.Marshal(resource.TabsLayoutKind)
@@ -2228,8 +2228,8 @@ func (resource DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` from JSON.
-func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind` from JSON.
+func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -2246,6 +2246,14 @@ func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKin
 	}
 
 	switch discriminator {
+	case "AutoGridLayout":
+		var dashboardAutoGridLayoutKind DashboardAutoGridLayoutKind
+		if err := json.Unmarshal(raw, &dashboardAutoGridLayoutKind); err != nil {
+			return err
+		}
+
+		resource.AutoGridLayoutKind = &dashboardAutoGridLayoutKind
+		return nil
 	case "GridLayout":
 		var dashboardGridLayoutKind DashboardGridLayoutKind
 		if err := json.Unmarshal(raw, &dashboardGridLayoutKind); err != nil {
@@ -2253,14 +2261,6 @@ func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKin
 		}
 
 		resource.GridLayoutKind = &dashboardGridLayoutKind
-		return nil
-	case "ResponsiveGridLayout":
-		var dashboardResponsiveGridLayoutKind DashboardResponsiveGridLayoutKind
-		if err := json.Unmarshal(raw, &dashboardResponsiveGridLayoutKind); err != nil {
-			return err
-		}
-
-		resource.ResponsiveGridLayoutKind = &dashboardResponsiveGridLayoutKind
 		return nil
 	case "RowsLayout":
 		var dashboardRowsLayoutKind DashboardRowsLayoutKind

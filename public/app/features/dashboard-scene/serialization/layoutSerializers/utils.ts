@@ -12,7 +12,7 @@ import {
 import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import {
   DashboardV2Spec,
-  ResponsiveGridLayoutItemKind,
+  AutoGridLayoutItemKind,
   RowsLayoutRowKind,
   LibraryPanelKind,
   PanelKind,
@@ -231,10 +231,11 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
   if (!registryItem) {
     throw new Error(`Layout serializer not found for kind: ${sceneState.descriptor.kind}`);
   }
+
   return registryItem.serializer.serialize(sceneState);
 }
 
-export function getConditionalRendering(item: RowsLayoutRowKind | ResponsiveGridLayoutItemKind): ConditionalRendering {
+export function getConditionalRendering(item: RowsLayoutRowKind | AutoGridLayoutItemKind): ConditionalRendering {
   if (!item.spec.conditionalRendering) {
     return ConditionalRendering.createEmpty();
   }
