@@ -1048,4 +1048,9 @@ export interface FeatureToggles {
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
+  /**
+  * Enables the UI functionality to recover and view deleted alert rules
+  * @default true
+  */
+  alertingRuleRecoverDeleted?: boolean;
 }
