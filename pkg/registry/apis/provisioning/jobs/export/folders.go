@@ -16,15 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-// FIXME: revise logging in this method
 func (r *exportJob) exportFoldersFromAPIServer(ctx context.Context) error {
 	logger := r.logger
-	r.progress.SetMessage(ctx, "reading folder tree")
-
-	// TODO: should this be logging or message or both?
+	r.progress.SetMessage(ctx, "reading folder tree from unified storage")
 	repoName := r.target.Config().Name
-	r.progress.SetMessage(ctx, "read folder tree from unified storage")
 	err := r.client.ForEachFolder(ctx, func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error {
+		// TODO: should we stop execution if this fails?
 		err := r.folderTree.AddUnstructured(item, repoName)
 		if err != nil {
 			r.progress.Record(ctx, jobs.JobResourceResult{
@@ -41,9 +38,7 @@ func (r *exportJob) exportFoldersFromAPIServer(ctx context.Context) error {
 		return fmt.Errorf("read folders in memory to build tree: %w", err)
 	}
 
-	// create folders first is required so that empty folders exist when finished
-	r.progress.SetMessage(ctx, "write folders")
-
+	r.progress.SetMessage(ctx, "write folders to repository")
 	err = r.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path
 		if r.path != "" {

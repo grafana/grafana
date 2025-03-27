@@ -6,10 +6,8 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -19,13 +17,12 @@ import (
 )
 
 func (r *exportJob) exportResourcesFromAPIServer(ctx context.Context) error {
-	kinds := []schema.GroupVersionResource{{
-		Group:    dashboard.GROUP,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-		Version:  "v1alpha1",
-	}}
+	for _, kind := range resources.SupportedResources {
+		// skip from folders as we do them first
+		if kind == resources.FolderResource {
+			continue
+		}
 
-	for _, kind := range kinds {
 		r.progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
 		if err := r.client.ForEachResource(ctx, kind, func(_ dynamic.ResourceInterface, item *unstructured.Unstructured) error {
 			r.progress.Record(ctx, r.exportResource(ctx, item))
