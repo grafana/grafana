@@ -81,6 +81,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ConvertExpr, *sqlparser.ConvertType:
 		return
 
+	case sqlparser.Exprs:
+		return
+
 	case sqlparser.GroupBy:
 		return
 
@@ -130,6 +133,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 		return
 
 	case *sqlparser.TrimExpr:
+		return
+
+	case sqlparser.ValTuple:
 		return
 
 	case *sqlparser.With:

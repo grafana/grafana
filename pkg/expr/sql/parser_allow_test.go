@@ -47,6 +47,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    `SELECT 1 as id, NULL as null_col`,
 			err:  nil,
 		},
+		{
+			name: "val tuple in read query",
+			q:    `SELECT 1 WHERE 1 IN (1, 2, 3)`,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
