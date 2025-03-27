@@ -120,30 +120,6 @@ export class RowItem
     this.getLayout().addPanel(panel);
   }
 
-  public onAddRowAbove() {
-    this._getParentLayout().addRowAbove(this);
-  }
-
-  public onAddRowBelow() {
-    this._getParentLayout().addRowBelow(this);
-  }
-
-  public onMoveUp() {
-    this._getParentLayout().moveRowUp(this);
-  }
-
-  public onMoveDown() {
-    this._getParentLayout().moveRowDown(this);
-  }
-
-  public isFirstRow(): boolean {
-    return this._getParentLayout().isFirstRow(this);
-  }
-
-  public isLastRow(): boolean {
-    return this._getParentLayout().isLastRow(this);
-  }
-
   public setIsDropTarget(isDropTarget: boolean) {
     if (!!this.state.isDropTarget !== isDropTarget) {
       this.setState({ isDropTarget });
