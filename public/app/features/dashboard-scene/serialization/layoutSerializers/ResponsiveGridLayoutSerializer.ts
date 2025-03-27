@@ -4,8 +4,8 @@ import {
   AutoGridLayoutItemKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
-import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
+import { AutoGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
 import {
   AUTO_GRID_DEFAULT_COLUMN_WIDTH,
   AUTO_GRID_DEFAULT_ROW_HEIGHT,
@@ -13,7 +13,7 @@ import {
   AutoGridRowHeight,
   getAutoRowsTemplate,
   getTemplateColumnsTemplate,
-  ResponsiveGridLayoutManager,
+  AutoGridLayoutManager,
 } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
@@ -21,8 +21,8 @@ import { getGridItemKeyForPanelId } from '../../utils/utils';
 
 import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './utils';
 
-export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
-  serialize(layoutManager: ResponsiveGridLayoutManager): DashboardV2Spec['layout'] {
+export class AutoGridLayoutSerializer implements LayoutManagerSerializer {
+  serialize(layoutManager: AutoGridLayoutManager): DashboardV2Spec['layout'] {
     const { maxColumnCount, fillScreen, columnWidth, rowHeight, layout } = layoutManager.state;
     const defaults = defaultAutoGridLayoutSpec();
 
@@ -34,8 +34,8 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
         ...serializeAutoGridColumnWidth(columnWidth),
         ...serializeAutoGridRowHeight(rowHeight),
         items: layout.state.children.map((child) => {
-          if (!(child instanceof ResponsiveGridItem)) {
-            throw new Error('Expected ResponsiveGridItem');
+          if (!(child instanceof AutoGridItem)) {
+            throw new Error('Expected AutoGridItem');
           }
           // For serialization we should retrieve the original element key
           const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(child.state?.body);
@@ -82,7 +82,7 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
       if (!panel) {
         throw new Error(`Panel with uid ${item.spec.element.name} not found in the dashboard elements`);
       }
-      return new ResponsiveGridItem({
+      return new AutoGridItem({
         key: getGridItemKeyForPanelId(panel.spec.id),
         body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel) : buildVizPanel(panel),
         variableName: item.spec.repeat?.value,
@@ -93,12 +93,12 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
     const columnWidthCombined = columnWidthMode === 'custom' ? columnWidth : columnWidthMode;
     const rowHeightCombined = rowHeightMode === 'custom' ? rowHeight : rowHeightMode;
 
-    return new ResponsiveGridLayoutManager({
+    return new AutoGridLayoutManager({
       maxColumnCount,
       columnWidth: columnWidthCombined,
       rowHeight: rowHeightCombined,
       fillScreen: fillScreen ?? defaults.fillScreen,
-      layout: new ResponsiveGridLayout({
+      layout: new AutoGridLayout({
         templateColumns: getTemplateColumnsTemplate(
           maxColumnCount ?? defaults.maxColumnCount!,
           columnWidthCombined ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH

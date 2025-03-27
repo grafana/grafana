@@ -42,9 +42,9 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayout } from '../scene/layout-responsive-grid/ResponsiveGridLayout';
-import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridLayout } from '../scene/layout-responsive-grid/ResponsiveGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -739,10 +739,10 @@ describe('dynamic layouts', () => {
         new RowsLayoutManager({
           rows: [
             new RowItem({
-              layout: new ResponsiveGridLayoutManager({
-                layout: new ResponsiveGridLayout({
+              layout: new AutoGridLayoutManager({
+                layout: new AutoGridLayout({
                   children: [
-                    new ResponsiveGridItem({
+                    new AutoGridItem({
                       body: new VizPanel({}),
                     }),
                   ],
@@ -781,20 +781,20 @@ describe('dynamic layouts', () => {
     expect(layout2.items[0].kind).toBe('GridLayoutItem');
   });
 
-  it('should transform scene with responsive grid layout to schema v2', () => {
+  it('should transform scene with auto grid layout to schema v2', () => {
     const scene = setupDashboardScene(
       getMinimalSceneState(
-        new ResponsiveGridLayoutManager({
+        new AutoGridLayoutManager({
           columnWidth: 100,
           rowHeight: 'standard',
           maxColumnCount: 4,
           fillScreen: true,
-          layout: new ResponsiveGridLayout({
+          layout: new AutoGridLayout({
             children: [
-              new ResponsiveGridItem({
+              new AutoGridItem({
                 body: new VizPanel({}),
               }),
-              new ResponsiveGridItem({
+              new AutoGridItem({
                 body: new VizPanel({}),
               }),
             ],
