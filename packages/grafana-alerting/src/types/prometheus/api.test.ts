@@ -1,4 +1,4 @@
-import { expectNotAssignable, expectType } from 'tsd';
+import { expectTypeOf } from 'expect-type';
 
 import { Response, ErrorResponse, SuccessResponse } from '../common/api';
 
@@ -8,10 +8,10 @@ test('success response', () => {
     data: 'hello, world',
   } satisfies Response;
 
-  expectType<SuccessResponse>(response);
-  expectNotAssignable<ErrorResponse>(response);
-  expect(response).not.toHaveProperty('error');
-  expect(response).not.toHaveProperty('errorType');
+  expectTypeOf(response).toExtend<SuccessResponse>();
+  expectTypeOf(response).not.toExtend<ErrorResponse>();
+  expectTypeOf(response).not.toHaveProperty('error');
+  expectTypeOf(response).not.toHaveProperty('errorType');
 });
 
 test('error response', () => {
@@ -21,7 +21,7 @@ test('error response', () => {
     errorType: 'InternalError',
   } satisfies Response;
 
-  expectType<ErrorResponse>(response);
-  expectNotAssignable<SuccessResponse>(response);
-  expect(response).not.toHaveProperty('data');
+  expectTypeOf(response).toExtend<ErrorResponse>();
+  expectTypeOf(response).not.toExtend<SuccessResponse>();
+  expectTypeOf(response).not.toHaveProperty('data');
 });

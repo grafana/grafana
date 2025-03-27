@@ -1,4 +1,4 @@
-import { expectType } from 'tsd';
+import { expectTypeOf } from 'expect-type';
 
 import { AlertingRule, RecordingRule, Rule } from './api';
 
@@ -15,9 +15,9 @@ describe('API object definitions (DTO)', () => {
       type: 'recording',
     } satisfies Rule;
 
-    expectType<RecordingRule>(rule);
-    expect(rule).not.toHaveProperty('alerts');
-    expect(rule).toHaveProperty('type', 'recording');
+    expectTypeOf(rule).toExtend<RecordingRule>();
+    expectTypeOf(rule).toMatchObjectType<{ type: 'recording' }>();
+    expectTypeOf(rule).not.toHaveProperty('alerts');
   });
 
   test('alerting rule', () => {
@@ -36,12 +36,11 @@ describe('API object definitions (DTO)', () => {
       type: 'alerting',
     } satisfies Rule;
 
-    expectType<AlertingRule>(rule);
-    expect(rule).toHaveProperty('alerts', expect.any(Array));
-    expect(rule).toHaveProperty('type', 'alerting');
+    expectTypeOf(rule).toExtend<AlertingRule>();
+    expectTypeOf(rule).toHaveProperty('alerts').toBeArray();
 
     // these are for Grafana rules only
-    expect(rule).not.toHaveProperty('uid');
-    expect(rule).not.toHaveProperty('folderUid');
+    expectTypeOf(rule).not.toHaveProperty('uid');
+    expectTypeOf(rule).not.toHaveProperty('folderUid');
   });
 });
