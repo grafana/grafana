@@ -107,29 +107,18 @@ The data is converted as follows:
 
 Use these options to refine the visualization.
 
-#### Show values
+<!-- prettier-ignore-start -->
 
-Controls whether values are rendered inside the value boxes. Auto will render values if there is sufficient space.
+| Option | Description                                                                                     |
+| ------ | ----------------------------------------------------------------------------------------------- |
+| Show values  | Controls whether values are rendered inside the state regions. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
+| Row height  | Controls the height of boxes. 1 = maximum space and 0 = minimum space. |
+| Column width | Controls the width of boxes. 1 = maximum space and 0 = minimum space. |
+| Page size (enable pagination) | The **Page size** option lets you paginate the status history visualization to limit how many series are visible at once. This is useful when you have many series. |
+| Line width | Controls line width of state regions. |
+| Fill opacity | Controls value alignment inside state regions. |
 
-#### Row height
-
-Controls the height of boxes. 1 = maximum space and 0 = minimum space.
-
-#### Page size (enable pagination)
-
-The **Page size** option lets you paginate the status history visualization to limit how many series are visible at once. This is useful when you have many series.
-
-#### Column width
-
-Controls the width of boxes. 1 = maximum space and 0 = minimum space.
-
-#### Line width
-
-Controls line width of state regions.
-
-#### Fill opacity
-
-Controls the opacity of state regions.
+<!-- prettier-ignore-end -->
 
 ### Legend options
 
@@ -154,8 +143,6 @@ Controls the opacity of state regions.
 ### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
 
 ### Thresholds
 
