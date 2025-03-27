@@ -61,7 +61,6 @@ const ImportFromDSRules = () => {
 
     const rulerRulesToPayload = filterRulerRulesConfig(rulerRules, data.namespace, data.ruleGroup);
 
-    console.log('rulerRulesToPayload', rulerRulesToPayload);
     try {
       await convert({
         dataSourceUID: data.selectedDatasourceUID,
@@ -73,7 +72,7 @@ const ImportFromDSRules = () => {
 
       const isRootFolder = isEmpty(data.targetFolder?.uid);
 
-      const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', data.targetFolder?.title ?? '']]);
+      const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', data.targetFolder?.title ?? '']], { skipSubPath: true });
       notifyApp.success(
         t('alerting.import-to-gma.success', 'Successfully imported alert rules to Grafana-managed rules.')
       );
