@@ -72,15 +72,16 @@ const listAllFoldersSelector = createSelector(
 /**
  * Returns the whether the set of pages are 'fully loaded', and the last page number
  */
-function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undefined] {
+function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undefined, boolean] {
   const lastPage = pages.at(-1);
   const lastPageNumber = lastPage?.originalArgs?.page;
+  const lastPageLoading = lastPage?.status === PENDING_STATUS;
 
   if (!lastPage?.data) {
     // If there's no pages yet, or the last page is still loading
-    return [false, lastPageNumber];
+    return [false, lastPageNumber, lastPageLoading];
   } else {
-    return [lastPage.data.length < lastPage.originalArgs.limit, lastPageNumber];
+    return [lastPage.data.length < lastPage.originalArgs.limit, lastPageNumber, lastPageLoading];
   }
 }
 
@@ -108,14 +109,10 @@ export function useFoldersQuery(
   const requestNextPage = useCallback(
     (parentUid: string | undefined) => {
       const pages = parentUid ? state.pagesByParent[parentUid] : state.rootPages;
-      const [fullyLoaded, pageNumber] = getPagesLoadStatus(pages ?? []);
-      if (fullyLoaded) {
-        return;
-      }
+      const [fullyLoaded, pageNumber, lastPageLoading] = getPagesLoadStatus(pages ?? []);
 
-      // Check if the last page is still loading
-      const lastPage = pages?.at(-1);
-      if (lastPage?.status === PENDING_STATUS) {
+      // If fully loaded or the last page is still loading, don't request a new page
+      if (fullyLoaded || lastPageLoading) {
         return;
       }
 
