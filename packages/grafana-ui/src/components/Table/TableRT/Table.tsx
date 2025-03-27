@@ -20,7 +20,7 @@ import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../../Pagination/Pagination';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
-import { FooterItem, GrafanaTableState, BaseTableProps as Props } from '../types';
+import { FooterItem, GrafanaTableState, TableRTProps as Props } from '../types';
 import {
   getColumns,
   sortCaseInsensitive,

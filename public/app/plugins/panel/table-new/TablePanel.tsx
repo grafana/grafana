@@ -12,7 +12,7 @@ import {
   Field,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
+import { Select, TableNG, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/internal';
 
 import { getActions } from '../../../features/actions/utils';
@@ -51,7 +51,7 @@ export function TablePanel(props: Props) {
   const enableSharedCrosshair = panelContext.sync && panelContext.sync() !== DashboardCursorSync.Off;
 
   const tableElement = (
-    <Table
+    <TableNG
       height={tableHeight}
       width={width}
       data={main}

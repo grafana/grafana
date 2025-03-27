@@ -85,6 +85,7 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
+
 export { TableCellInspector, TableCellInspectorMode } from './Table/TableCellInspector';
 export {
   type TableCustomCellOptions,
@@ -101,6 +102,27 @@ export {
   type TableImageCellOptions,
   type TableJsonViewCellOptions,
 } from './Table/types';
+
+/** @internal */
+export { TableNG } from './Table/TableNG/TableNG';
+
+// export { TableCellInspector, TableCellInspectorMode } from './Table/TableNG/Cells/Tab';
+// export {
+//   type TableCustomCellOptions,
+//   type CustomCellRendererProps,
+//   type TableFieldOptions,
+//   type TableSortByFieldState,
+//   type TableFooterCalc,
+//   type AdHocFilterItem,
+//   type TableAutoCellOptions,
+//   type TableSparklineCellOptions,
+//   type TableBarGaugeCellOptions,
+//   type TableColoredBackgroundCellOptions,
+//   type TableColorTextCellOptions,
+//   type TableImageCellOptions,
+//   type TableJsonViewCellOptions,
+// } from './Table/types';
+
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab, type TabProps } from './Tabs/Tab';
