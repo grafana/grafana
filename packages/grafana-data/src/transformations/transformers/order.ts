@@ -62,7 +62,7 @@ export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerO
 
           return data.map((frame) => ({
             ...frame,
-            fields: orderer(frame.fields, data, frame),
+            fields: orderer(frame.fields),
           }));
         }
       })
@@ -95,8 +95,7 @@ const indexOfField = (fieldName: string, indexByName: Record<string, number>) =>
 };
 
 const createFieldsOrdererAuto =
-  (fieldNameSort?: { order: Order; index: number }, labelSort?: LabelSort[]) =>
-  (fields: Field[], data: DataFrame[], frame: DataFrame) => {
+  (fieldNameSort?: { order: Order; index: number }, labelSort?: LabelSort[]) => (fields: Field[]) => {
     let allSort: Array<{ labelName?: string; order: Order; index: number }> = [...(labelSort ?? [])];
     if (fieldNameSort !== undefined) {
       allSort.push(fieldNameSort);
@@ -127,6 +126,7 @@ const createFieldsOrdererAuto =
               : undefined;
 
         if (compareValA === compareValB) {
+          // if they're the same value, go to the next type of sort
           continue;
         } else if (compareValA === undefined) {
           compareReturn = -1;
