@@ -117,7 +117,7 @@ For detailed configuration steps specific to the identity provider, see:
 ### SCIM vs Team Sync
 
 {{< admonition type="warning" >}}
-Do not enable both SCIM and Team Sync simultaneously as these methods can conflict with each other.
+Do not enable both SCIM Group Sync and Team Sync simultaneously as these methods can conflict with each other.
 {{< /admonition >}}
 
 Choose one synchronization method:
@@ -126,7 +126,7 @@ Choose one synchronization method:
 - If you prefer Team Sync, do not enable SCIM provisioning
 
 {{< admonition type="warning" >}}
-**Migration Considerations:** Currently, there is no official migration path or tooling available for transitioning from Team Sync to SCIM. Attempting to migrate without proper tooling can lead to service disruption, loss of team permissions, and potential access issues. We recommend keeping your existing Team Sync setup until official migration tooling becomes available.
+**Migration Considerations:** Currently, there is no official migration path or tooling available for transitioning from Team Sync to SCIM Group Sync. Attempting to migrate without proper tooling can lead to service disruption, loss of team permissions, and potential access issues. We recommend keeping your existing Team Sync setup until official migration tooling becomes available.
 {{< /admonition >}}
 
 ### Key differences
