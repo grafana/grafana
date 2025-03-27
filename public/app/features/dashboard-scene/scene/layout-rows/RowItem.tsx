@@ -1,4 +1,11 @@
-import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
+import {
+  sceneGraph,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+  VariableDependencyConfig,
+  VizPanel,
+} from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -8,6 +15,7 @@ import { getDefaultVizPanel } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { BulkActionElement } from '../types/BulkActionElement';
+import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
@@ -24,12 +32,13 @@ export interface RowItemState extends SceneObjectState {
   collapse?: boolean;
   hideHeader?: boolean;
   fillScreen?: boolean;
+  isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
 }
 
 export class RowItem
   extends SceneObjectBase<RowItemState>
-  implements LayoutParent, BulkActionElement, EditableDashboardElement
+  implements LayoutParent, BulkActionElement, EditableDashboardElement, DashboardDropTarget
 {
   public static Component = RowItemRenderer;
 
@@ -38,6 +47,7 @@ export class RowItem
   });
 
   public readonly isEditableDashboardElement = true;
+  public readonly isDashboardDropTarget = true;
   private _layoutRestorer = new LayoutRestorer();
 
   public constructor(state?: Partial<RowItemState>) {
@@ -127,6 +137,23 @@ export class RowItem
 
   public isLastRow(): boolean {
     return this._getParentLayout().isLastRow(this);
+  }
+
+  public setIsDropTarget(isDropTarget: boolean) {
+    if (!!this.state.isDropTarget !== isDropTarget) {
+      this.setState({ isDropTarget });
+    }
+  }
+
+  public draggedPanelOutside(panel: VizPanel) {
+    this.getLayout().removePanel?.(panel);
+    this.setIsDropTarget(false);
+  }
+
+  public draggedPanelInside(panel: VizPanel) {
+    panel.clearParent();
+    this.getLayout().addPanel(panel);
+    this.setIsDropTarget(false);
   }
 
   public getRepeatVariable(): string | undefined {

@@ -10,6 +10,7 @@ import {
   SceneComponentProps,
   SceneGridItemLike,
   useSceneObjectState,
+  SceneGridLayoutDragStartEvent,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
@@ -30,6 +31,7 @@ import {
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
   useDashboard,
+  getLayoutOrchestratorFor,
 } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -72,6 +74,14 @@ export class DefaultGridLayoutManager
   }
 
   private _activationHandler() {
+    if (config.featureToggles.dashboardNewLayouts) {
+      this._subs.add(
+        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) =>
+          getLayoutOrchestratorFor(this)?.startDraggingSync(evt, panel)
+        )
+      );
+    }
+
     this._subs.add(
       this.state.grid.subscribeToState(({ children: newChildren }, { children: prevChildren }) => {
         if (newChildren.length === prevChildren.length) {
