@@ -88,7 +88,7 @@ function getStyles(theme: GrafanaTheme2) {
       boxShadow: 'none',
       border: 'none',
       background: 'transparent',
-      padding: theme.spacing(0.25, 1),
+      padding: theme.spacing(0.25, 1, 0.25, 0),
       borderRadius: theme.shape.radius.default,
       color: theme.colors.text.secondary,
       display: 'flex',

@@ -210,7 +210,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
   const selectedObject = selection?.getFirstObject();
   const [outlineCollapsed, setOutlineCollapsed] = useLocalStorage(
     'grafana.dashboard.edit-pane.outline.collapsed',
-    false
+    true
   );
   const [outlinePaneSize = 0.4, setOutlinePaneSize] = useLocalStorage('grafana.dashboard.edit-pane.outline.size', 0.4);
 
