@@ -22,6 +22,9 @@ export const mockAmdModule = `define([], function() {
   }
 });`;
 
+const mockTranslation = (value: string) =>
+  `System.register([],function(e){return{execute:function(){e("default",{"testKey":"${value}"})}}})`;
+
 const server = setupServer(
   http.get(
     '/public/plugins/mockAmdModule/module.js',
@@ -49,7 +52,26 @@ const server = setupServer(
           'Content-Type': 'text/javascript',
         },
       })
-  )
+  ),
+  http.get(
+    '/public/plugins/test-panel/locales/en-US/test-panel.json',
+    () =>
+      new HttpResponse(mockTranslation('testValue'), {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
+  ),
+  http.get(
+    '/public/plugins/test-panel/locales/pt-BR/test-panel.json',
+    () =>
+      new HttpResponse(mockTranslation('valorDeTeste'), {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
+  ),
+  http.get('/public/plugins/test-panel/locales/en-US/unknown.json', () => HttpResponse.error())
 );
 
 export { server };

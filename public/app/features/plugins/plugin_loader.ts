@@ -10,6 +10,7 @@ import {
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { getI18next } from 'app/core/internationalization';
+import { DEFAULT_LANGUAGE } from 'app/core/internationalization/constants';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
@@ -101,7 +102,12 @@ export async function importPluginModule({
 
   // Add locales to i18n for a plugin if the feature toggle is enabled and the plugin has locales
   if (config.featureToggles.localizationForPlugins && translations) {
-    await addTranslationsToI18n(pluginId, translations);
+    await addTranslationsToI18n({
+      resolvedLanguage: getI18next().resolvedLanguage ?? DEFAULT_LANGUAGE,
+      fallbackLanguage: DEFAULT_LANGUAGE,
+      pluginId,
+      translations,
+    });
   }
 
   const builtIn = builtInPlugins[path];
@@ -229,20 +235,43 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   return plugin;
 }
 
-// exported for testing only
-export async function addTranslationsToI18n(pluginId: string, translations: Record<string, string>): Promise<void[]> {
-  const promises = Object.entries(translations).map(async ([lang, path]) => {
-    try {
-      const module = await SystemJS.import(resolveModulePath(path));
-      if (!module.default) {
-        return;
-      }
+interface AddTranslationsToI18nOptions {
+  resolvedLanguage: string;
+  fallbackLanguage: string;
+  pluginId: string;
+  translations: Record<string, string>;
+}
 
-      getI18next().addResourceBundle(lang, pluginId, module.default, undefined, true);
-    } catch (e) {
-      console.warn('Could not load translation for plugin', pluginId, lang, e);
+// exported for testing purposes only
+export async function addTranslationsToI18n({
+  resolvedLanguage,
+  fallbackLanguage,
+  pluginId,
+  translations,
+}: AddTranslationsToI18nOptions): Promise<void> {
+  const resolvedPath = translations[resolvedLanguage];
+  const fallbackPath = translations[fallbackLanguage];
+  const path = resolvedPath ?? fallbackPath;
+
+  if (!path) {
+    console.warn(`Could not find any translation for plugin ${pluginId}`, { resolvedLanguage, fallbackLanguage });
+    return;
+  }
+
+  try {
+    const module = await SystemJS.import(resolveModulePath(path));
+    if (!module.default) {
+      return;
     }
-  });
 
-  return Promise.all(promises);
+    const language = resolvedPath ? resolvedLanguage : fallbackLanguage;
+    getI18next().addResourceBundle(language, pluginId, module.default, undefined, true);
+  } catch (error) {
+    console.warn(`Could not load translation for plugin ${pluginId}`, {
+      resolvedLanguage,
+      fallbackLanguage,
+      error,
+      path,
+    });
+  }
 }

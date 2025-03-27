@@ -1,82 +1,135 @@
+import { i18n } from 'i18next';
+
 import { getI18next } from 'app/core/internationalization';
 
+import { server } from './loader/pluginLoader.mock';
 import { SystemJS } from './loader/systemjs';
+import { SystemJSWithLoaderHooks } from './loader/types';
 import { addTranslationsToI18n } from './plugin_loader';
 
 describe('plugin_loader', () => {
   describe('addTranslationsToI18n', () => {
+    const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
+    const originalFetch = systemJSPrototype.fetch;
+    const originalResolve = systemJSPrototype.resolve;
+    let addResourceBundleSpy: jest.SpyInstance;
+
+    beforeAll(() => {
+      server.listen();
+      systemJSPrototype.resolve = (moduleId: string) => moduleId;
+      systemJSPrototype.shouldFetch = () => true;
+      // because server.listen() patches fetch, we need to reassign this to the systemJSPrototype
+      // this is identical to what happens in the original code: https://github.com/systemjs/systemjs/blob/main/src/features/fetch-load.js#L12
+      systemJSPrototype.fetch = window.fetch;
+    });
+
     beforeEach(() => {
+      addResourceBundleSpy = jest
+        .spyOn(getI18next(), 'addResourceBundle')
+        .mockImplementation(() => ({}) as unknown as i18n);
+    });
+
+    afterEach(() => {
+      server.resetHandlers();
       jest.clearAllMocks();
     });
 
-    it('should add translations to i18n that exist', async () => {
-      const translations = {
-        'en-US': '/public/plugins/test-panel/locales/en-US/test-panel.json',
-        'pt-BR': '/public/plugins/test-panel/locales/pt-BR/test-panel.json',
-      };
-
-      jest.spyOn(SystemJS, 'import').mockImplementation((path) => {
-        if (path === translations['en-US']) {
-          return Promise.resolve({ default: { testKey: 'testValue' } });
-        }
-        return Promise.resolve({ default: { testKey: 'valorDeTeste' } });
-      });
-
-      const addResourceBundleSpy = jest.spyOn(getI18next(), 'addResourceBundle');
-
-      await addTranslationsToI18n('pluginId', translations);
-
-      expect(addResourceBundleSpy).toHaveBeenCalledTimes(2);
-      expect(addResourceBundleSpy).toHaveBeenNthCalledWith(
-        1,
-        'en-US',
-        'pluginId',
-        { testKey: 'testValue' },
-        undefined,
-        true
-      );
-      expect(addResourceBundleSpy).toHaveBeenNthCalledWith(
-        2,
-        'pt-BR',
-        'pluginId',
-        { testKey: 'valorDeTeste' },
-        undefined,
-        true
-      );
+    afterAll(() => {
+      SystemJS.constructor.prototype.resolve = originalResolve;
+      SystemJS.constructor.prototype.fetch = originalFetch;
+      server.close();
     });
 
-    it('should add translations to i18n even if some translations do not exist', async () => {
+    it('should add translations that match the resolved language first', async () => {
       const translations = {
         'en-US': '/public/plugins/test-panel/locales/en-US/test-panel.json',
         'pt-BR': '/public/plugins/test-panel/locales/pt-BR/test-panel.json',
       };
 
-      jest.spyOn(SystemJS, 'import').mockImplementation((path) => {
-        if (path === translations['en-US']) {
-          return Promise.reject(new Error('File not found'));
-        }
-        return Promise.resolve({ default: { testKey: 'valorDeTeste' } });
+      await addTranslationsToI18n({
+        resolvedLanguage: 'pt-BR',
+        fallbackLanguage: 'en-US',
+        pluginId: 'test-panel',
+        translations,
       });
-      const consoleErrorSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      const addResourceBundleSpy = jest.spyOn(getI18next(), 'addResourceBundle');
-
-      await addTranslationsToI18n('pluginId', translations);
 
       expect(addResourceBundleSpy).toHaveBeenCalledTimes(1);
       expect(addResourceBundleSpy).toHaveBeenNthCalledWith(
         1,
         'pt-BR',
-        'pluginId',
+        'test-panel',
         { testKey: 'valorDeTeste' },
         undefined,
         true
       );
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Could not load translation for plugin',
-        'pluginId',
+    });
+
+    it('should add translations that match the fallback language if the resolved language is not in the translations', async () => {
+      const translations = {
+        'en-US': '/public/plugins/test-panel/locales/en-US/test-panel.json',
+        'pt-BR': '/public/plugins/test-panel/locales/pt-BR/test-panel.json',
+      };
+
+      await addTranslationsToI18n({
+        resolvedLanguage: 'sv-SE',
+        fallbackLanguage: 'en-US',
+        pluginId: 'test-panel',
+        translations,
+      });
+
+      expect(addResourceBundleSpy).toHaveBeenCalledTimes(1);
+      expect(addResourceBundleSpy).toHaveBeenNthCalledWith(
+        1,
         'en-US',
-        new Error('File not found')
+        'test-panel',
+        { testKey: 'testValue' },
+        undefined,
+        true
       );
+    });
+
+    it('should warn if no translations are found', async () => {
+      const translations = {
+        'en-US': '/public/plugins/test-panel/locales/en-US/test-panel.json',
+        'pt-BR': '/public/plugins/test-panel/locales/pt-BR/test-panel.json',
+      };
+
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await addTranslationsToI18n({
+        resolvedLanguage: 'sv-SE',
+        fallbackLanguage: 'sv-SE',
+        pluginId: 'test-panel',
+        translations,
+      });
+
+      expect(consoleSpy).toHaveBeenCalledWith('Could not find any translation for plugin test-panel', {
+        resolvedLanguage: 'sv-SE',
+        fallbackLanguage: 'sv-SE',
+      });
+    });
+
+    it('should warn if translations cannot be loaded', async () => {
+      const translations = {
+        'en-US': '/public/plugins/test-panel/locales/en-US/unknown.json',
+        'pt-BR': '/public/plugins/test-panel/locales/pt-BR/unknown.json',
+      };
+
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await addTranslationsToI18n({
+        resolvedLanguage: 'en-US',
+        fallbackLanguage: 'pt-BR',
+        pluginId: 'test-panel',
+        translations,
+      });
+
+      expect(consoleSpy).toHaveBeenCalledWith('Could not load translation for plugin test-panel', {
+        resolvedLanguage: 'en-US',
+        fallbackLanguage: 'pt-BR',
+        error: new TypeError('Failed to fetch'),
+        path: '/public/plugins/test-panel/locales/en-US/unknown.json',
+      });
     });
   });
 });
