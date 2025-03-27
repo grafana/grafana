@@ -1,7 +1,8 @@
 {
   "type": "panel",
-  "name": "Table (new)",
+  "name": "Table",
   "id": "table",
+  "state": "beta",
 
   "info": {
     "description": "Supports many column styles",
