@@ -46,7 +46,7 @@ func (f *folderReader) Write(ctx context.Context, key *resource.ResourceKey, val
 	return f.tree.AddUnstructured(item, f.targetRepoName)
 }
 
-func (j *migrationJob) migrateLegacyFolders(ctx context.Context) error {
+func (j *migrateFromLegacyJob) migrateLegacyFolders(ctx context.Context) error {
 	logger := j.logger
 	j.progress.SetMessage(ctx, "reading folder tree")
 

@@ -24,7 +24,7 @@ import (
 var _ resource.BulkResourceWriter = (*resourceReader)(nil)
 
 type resourceReader struct {
-	job *migrationJob
+	job *migrateFromLegacyJob
 }
 
 // Close implements resource.BulkResourceWriter.
@@ -63,7 +63,7 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	return nil
 }
 
-func (j *migrationJob) migrateLegacyResources(ctx context.Context) error {
+func (j *migrateFromLegacyJob) migrateLegacyResources(ctx context.Context) error {
 	for _, kind := range resources.SupportedResources {
 		// Skip folders, they are handled separately
 		if kind.Resource == folders.RESOURCE {
@@ -103,7 +103,7 @@ func (j *migrationJob) migrateLegacyResources(ctx context.Context) error {
 }
 
 // TODO: this is copied from the export job
-func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
+func (j *migrateFromLegacyJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
 	gvk := obj.GroupVersionKind()
 	result := jobs.JobResourceResult{
 		Name:     obj.GetName(),
@@ -224,4 +224,31 @@ func (w *MigrationWorker) removeUnprovisioned(ctx context.Context, repo reposito
 
 		return nil
 	})
+}
+
+// TODO: this is copied from the export job
+func (j *migrateFromLegacyJob) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
+	if j.userInfo == nil {
+		return ctx
+	}
+	id := item.GetUpdatedBy()
+	if id == "" {
+		id = item.GetCreatedBy()
+	}
+	if id == "" {
+		id = "grafana"
+	}
+
+	sig := j.userInfo[id] // lookup
+	if sig.Name == "" && sig.Email == "" {
+		sig.Name = id
+	}
+	t, err := item.GetUpdatedTimestamp()
+	if err == nil && t != nil {
+		sig.When = *t
+	} else {
+		sig.When = item.GetCreationTimestamp().Time
+	}
+
+	return repository.WithAuthorSignature(ctx, sig)
 }

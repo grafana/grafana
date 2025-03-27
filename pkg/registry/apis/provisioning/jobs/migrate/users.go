@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-func (j *migrationJob) loadUsers(ctx context.Context) error {
+func (j *migrateFromLegacyJob) loadUsers(ctx context.Context) error {
 	client, err := j.parser.Clients().User()
 	if err != nil {
 		return err

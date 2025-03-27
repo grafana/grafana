@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -138,27 +137,27 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 		return fmt.Errorf("error getting parser: %w", err)
 	}
 
-	worker, err := newMigrationJob(ctx, rw, options, parser, w.bulk, w.legacyMigrator, progress)
+	job, err := newMigrateFromLegacyJob(ctx, rw, options, parser, w.bulk, w.legacyMigrator, progress)
 	if err != nil {
 		return fmt.Errorf("error creating job: %w", err)
 	}
 
 	if options.History {
 		progress.SetMessage(ctx, "loading users")
-		err = worker.loadUsers(ctx)
+		err = job.loadUsers(ctx)
 		if err != nil {
 			return fmt.Errorf("error loading users: %w", err)
 		}
 	}
 
 	progress.SetMessage(ctx, "exporting legacy folders")
-	err = worker.migrateLegacyFolders(ctx)
+	err = job.migrateLegacyFolders(ctx)
 	if err != nil {
 		return err
 	}
 
 	progress.SetMessage(ctx, "exporting legacy resources")
-	err = worker.migrateLegacyResources(ctx)
+	err = job.migrateLegacyResources(ctx)
 	if err != nil {
 		return err
 	}
@@ -182,7 +181,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	}
 
 	progress.SetMessage(ctx, "resetting unified storage")
-	if err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus); err != nil {
+	if err = job.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus); err != nil {
 		return fmt.Errorf("unable to reset unified storage %w", err)
 	}
 
@@ -245,7 +244,7 @@ func (w *MigrationWorker) migrateFromUnifiedStorage(ctx context.Context, repo re
 }
 
 // MigrationJob holds all context for a running job
-type migrationJob struct {
+type migrateFromLegacyJob struct {
 	logger logging.Logger
 	target repository.ReaderWriter
 	legacy legacy.LegacyMigrator
@@ -262,15 +261,15 @@ type migrationJob struct {
 	options provisioning.MigrateJobOptions
 }
 
-func newMigrationJob(ctx context.Context,
+func newMigrateFromLegacyJob(ctx context.Context,
 	target repository.ReaderWriter,
 	options provisioning.MigrateJobOptions,
 	parser *resources.Parser,
 	batch resource.BulkStoreClient,
 	legacyMigrator legacy.LegacyMigrator,
 	progress jobs.JobProgressRecorder,
-) (*migrationJob, error) {
-	return &migrationJob{
+) (*migrateFromLegacyJob, error) {
+	return &migrateFromLegacyJob{
 		namespace:  target.Config().Namespace,
 		target:     target,
 		logger:     logging.FromContext(ctx),
@@ -281,31 +280,4 @@ func newMigrationJob(ctx context.Context,
 		legacy:     legacyMigrator,
 		folderTree: resources.NewEmptyFolderTree(),
 	}, nil
-}
-
-// TODO: this is copied from the export job
-func (j *migrationJob) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
-	if j.userInfo == nil {
-		return ctx
-	}
-	id := item.GetUpdatedBy()
-	if id == "" {
-		id = item.GetCreatedBy()
-	}
-	if id == "" {
-		id = "grafana"
-	}
-
-	sig := j.userInfo[id] // lookup
-	if sig.Name == "" && sig.Email == "" {
-		sig.Name = id
-	}
-	t, err := item.GetUpdatedTimestamp()
-	if err == nil && t != nil {
-		sig.When = *t
-	} else {
-		sig.When = item.GetCreationTimestamp().Time
-	}
-
-	return repository.WithAuthorSignature(ctx, sig)
 }

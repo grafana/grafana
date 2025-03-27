@@ -28,7 +28,7 @@ func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) erro
 	return nil
 }
 
-func (j *migrationJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service) error {
+func (j *migrateFromLegacyJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service) error {
 	for _, gr := range resources.SupportedResources {
 		status, _ := dual.Status(ctx, gr)
 		if status.ReadUnified {
