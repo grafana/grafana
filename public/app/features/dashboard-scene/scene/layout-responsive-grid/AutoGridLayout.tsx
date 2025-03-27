@@ -7,8 +7,8 @@ import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
 import { DropZone, Point, Rect, SceneLayoutWithDragAndDrop } from '../layout-manager/utils';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
-import { AutoGridItem } from './ResponsiveGridItem';
-import { AutoGridLayoutRenderer } from './ResponsiveGridLayoutRenderer';
+import { AutoGridItem } from './AutoGridItem';
+import { AutoGridLayoutRenderer } from './AutoGridLayoutRenderer';
 
 export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOptions {
   children: AutoGridItem[];

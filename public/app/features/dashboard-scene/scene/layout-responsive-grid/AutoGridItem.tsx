@@ -23,8 +23,8 @@ import { Point, Rect } from '../layout-manager/utils';
 import { DashboardLayoutItem, IntermediateLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
-import { getOptions } from './ResponsiveGridItemEditor';
-import { AutoGridItemRenderer } from './ResponsiveGridItemRenderer';
+import { getOptions } from './AutoGridItemEditor';
+import { AutoGridItemRenderer } from './AutoGridItemRenderer';
 
 export interface AutoGridItemState extends SceneObjectState {
   body: VizPanel;

@@ -15,9 +15,9 @@ import {
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
-import { AutoGridItem } from './ResponsiveGridItem';
-import { AutoGridLayout } from './ResponsiveGridLayout';
-import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
+import { AutoGridItem } from './AutoGridItem';
+import { AutoGridLayout } from './AutoGridLayout';
+import { getEditOptions } from './AutoGridLayoutManagerEditor';
 
 interface AutoGridLayoutManagerState extends SceneObjectState {
   layout: AutoGridLayout;

@@ -4,7 +4,7 @@ import { SceneComponentProps } from '@grafana/scenes';
 
 import { useDashboardState, useIsConditionallyHidden } from '../../utils/utils';
 
-import { AutoGridItem } from './ResponsiveGridItem';
+import { AutoGridItem } from './AutoGridItem';
 
 export interface AutoGridItemProps extends SceneComponentProps<AutoGridItem> {}
 

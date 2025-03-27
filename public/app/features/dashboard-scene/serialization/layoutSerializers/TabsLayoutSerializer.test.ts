@@ -1,7 +1,7 @@
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
-import { AutoGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridLayoutManager } from '../../scene/layout-responsive-grid/AutoGridLayoutManager';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 

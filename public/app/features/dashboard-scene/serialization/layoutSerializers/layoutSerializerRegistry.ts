@@ -2,8 +2,8 @@ import { Registry, RegistryItem } from '@grafana/data';
 
 import { LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 
+import { AutoGridLayoutSerializer } from './AutoGridLayoutSerializer';
 import { DefaultGridLayoutManagerSerializer } from './DefaultGridLayoutSerializer';
-import { AutoGridLayoutSerializer } from './ResponsiveGridLayoutSerializer';
 import { RowsLayoutSerializer } from './RowsLayoutSerializer';
 import { TabsLayoutSerializer } from './TabsLayoutSerializer';
 

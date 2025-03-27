@@ -7,7 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { AutoGridLayout, AutoGridLayoutState } from './ResponsiveGridLayout';
+import { AutoGridLayout, AutoGridLayoutState } from './AutoGridLayout';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, isLazy } = model.useState();

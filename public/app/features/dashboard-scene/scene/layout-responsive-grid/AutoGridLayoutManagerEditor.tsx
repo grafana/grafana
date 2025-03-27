@@ -5,7 +5,7 @@ import { Button, Combobox, ComboboxOption, Field, InlineSwitch, Input, Stack } f
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { AutoGridColumnWidth, AutoGridRowHeight, AutoGridLayoutManager } from './ResponsiveGridLayoutManager';
+import { AutoGridColumnWidth, AutoGridRowHeight, AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 export function getEditOptions(layoutManager: AutoGridLayoutManager): OptionsPaneItemDescriptor[] {
   const options: OptionsPaneItemDescriptor[] = [];
