@@ -44,7 +44,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   crossFilterRows,
   showTypeIcons,
 }) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, justifyContent);
   const headerRef = useRef<HTMLDivElement>(null);
 
   let isColumnFilterable = filterable;
@@ -99,7 +99,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   return (
     <div
       ref={headerRef}
-      style={{ display: 'flex', justifyContent }}
+      className={styles.headerCell}
       // TODO find a better solution to this issue, see: https://github.com/adazzle/react-data-grid/issues/3535
       // Unblock spacebar event
       onKeyDown={(event) => {
@@ -110,13 +110,9 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
     >
       <button className={styles.headerCellLabel} onClick={handleSort}>
         {showTypeIcons && <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" />}
-        <div>{column.name}</div>
-        {direction &&
-          (direction === 'ASC' ? (
-            <Icon name="arrow-up" size="lg" className={styles.sortIcon} />
-          ) : (
-            <Icon name="arrow-down" size="lg" className={styles.sortIcon} />
-          ))}
+        {/* Used cached displayName if available, otherwise use the column name (nested tables) */}
+        <div>{field.state?.displayName ?? column.name}</div>
+        {direction && (direction === 'ASC' ? <Icon name="arrow-up" size="lg" /> : <Icon name="arrow-down" size="lg" />)}
       </button>
 
       {isColumnFilterable && (
@@ -134,7 +130,12 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
+  headerCell: css({
+    display: 'flex',
+    gap: theme.spacing(0.5),
+    justifyContent,
+  }),
   headerCellLabel: css({
     border: 'none',
     padding: 0,
@@ -146,7 +147,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
     display: 'flex',
     alignItems: 'center',
-    marginRight: theme.spacing(0.5),
     color: theme.colors.text.secondary,
     gap: theme.spacing(1),
 
@@ -154,9 +154,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       textDecoration: 'underline',
       color: theme.colors.text.link,
     },
-  }),
-  sortIcon: css({
-    marginLeft: theme.spacing(0.5),
   }),
 });
 
