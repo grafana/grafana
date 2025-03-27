@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -147,7 +148,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     }
 
     if (!events?.length) {
-      return <p>No events found</p>;
+      return (
+        <p>
+          <Trans i18nKey="annotations.standard-annotation-query-editor.no-events-found">No events found</Trans>
+        </p>
+      );
     }
 
     const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
@@ -178,7 +183,9 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
               size="xs"
               onClick={this.onRunQuery}
             >
-              Test annotation query
+              <Trans i18nKey="annotations.standard-annotation-query-editor.test-annotation-query">
+                Test annotation query
+              </Trans>
             </Button>
           )}
         </div>
@@ -186,7 +193,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
         <Alert
           data-testid={selectors.components.Annotations.editor.resultContainer}
           severity={this.getStatusSeverity(response)}
-          title="Query result"
+          title={t('annotations.standard-annotation-query-editor.title-query-result', 'Query result')}
         >
           {this.renderStatusText(response, running)}
         </Alert>

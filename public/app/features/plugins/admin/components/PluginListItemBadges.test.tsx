@@ -65,7 +65,7 @@ describe('PluginListItemBadges', () => {
     config.licenseInfo.enabledFeatures = {};
     render(<PluginListItemBadges plugin={{ ...plugin, isEnterprise: true }} />);
     expect(screen.getByText(/enterprise/i)).toBeVisible();
-    expect(screen.getByLabelText(/lock icon/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/enterprise/i)).toBeInTheDocument();
   });
 
   it('renders a error badge (when plugin has an error)', () => {

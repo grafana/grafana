@@ -4,6 +4,7 @@ import { PureComponent } from 'react';
 import { AppEvents, PluginMeta, DataSourceApi } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import DashboardsTable from 'app/features/datasources/components/DashboardsTable';
 import { PluginDashboard } from 'app/types';
 
@@ -96,10 +97,20 @@ export class PluginDashboards extends PureComponent<Props, State> {
   render() {
     const { loading, dashboards } = this.state;
     if (loading) {
-      return <div>loading...</div>;
+      return (
+        <div>
+          <Trans i18nKey="plugins.plugin-dashboards.loading">Loading...</Trans>
+        </div>
+      );
     }
     if (!dashboards || !dashboards.length) {
-      return <div>No dashboards are included with this plugin</div>;
+      return (
+        <div>
+          <Trans i18nKey="plugins.plugin-dashboards.dashboards-included-plugin">
+            No dashboards are included with this plugin
+          </Trans>
+        </div>
+      );
     }
 
     return <DashboardsTable dashboards={dashboards} onImport={this.import} onRemove={this.remove} />;

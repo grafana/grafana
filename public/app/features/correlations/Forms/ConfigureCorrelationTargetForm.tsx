@@ -77,7 +77,10 @@ export const ConfigureCorrelationTargetForm = () => {
                 value={correlationType}
                 onChange={(value) => onChange(value.value)}
                 options={Object.values(CORR_TYPES_SELECT)}
-                aria-label="correlation type"
+                aria-label={t(
+                  'correlations.configure-correlation-target-form.aria-label-correlation-type',
+                  'Correlation type'
+                )}
               />
             </Field>
           )}

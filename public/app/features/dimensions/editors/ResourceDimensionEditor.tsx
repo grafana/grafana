@@ -5,6 +5,7 @@ import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegi
 import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
+import { t } from 'app/core/internationalization';
 
 import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
 import { MediaType, ResourceDimensionOptions, ResourcePickerSize } from '../types';
@@ -80,14 +81,22 @@ export const ResourceDimensionEditor = (
     <>
       {showSourceRadio && (
         <InlineFieldRow>
-          <InlineField label="Source" labelWidth={labelWidth} grow={true}>
+          <InlineField
+            label={t('dimensions.resource-dimension-editor.label-source', 'Source')}
+            labelWidth={labelWidth}
+            grow={true}
+          >
             <RadioButtonGroup value={mode} options={resourceOptions} onChange={onModeChange} fullWidth />
           </InlineField>
         </InlineFieldRow>
       )}
       {mode !== ResourceDimensionMode.Fixed && (
         <InlineFieldRow>
-          <InlineField label="Field" labelWidth={labelWidth} grow={true}>
+          <InlineField
+            label={t('dimensions.resource-dimension-editor.label-field', 'Field')}
+            labelWidth={labelWidth}
+            grow={true}
+          >
             <FieldNamePicker
               context={context}
               value={value.field ?? ''}

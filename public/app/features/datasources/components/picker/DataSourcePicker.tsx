@@ -14,7 +14,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
@@ -242,7 +242,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           id={inputId || 'data-source-picker'}
           className={inputHasFocus ? undefined : styles.input}
           data-testid={selectors.components.DataSourcePicker.inputV2}
-          aria-label="Select a data source"
+          aria-label={t('datasources.data-source-picker.aria-label-select-a-data-source', 'Select a data source')}
           autoComplete="off"
           prefix={currentValue ? prefixIcon : undefined}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
@@ -463,7 +463,7 @@ function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
       </ModalsController>
       {isUploadFileEnabled && (
         <Button variant="secondary" size="sm" onClick={onClickAddCSV} onKeyDown={onKeyDownLastButton}>
-          Add csv or spreadsheet
+          <Trans i18nKey="datasources.footer.add-csv-or-spreadsheet">Add csv or spreadsheet</Trans>
         </Button>
       )}
     </div>
