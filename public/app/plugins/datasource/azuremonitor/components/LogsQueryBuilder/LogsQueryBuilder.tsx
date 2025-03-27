@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
 import { EditorRows } from '@grafana/plugin-ui';
@@ -24,7 +24,7 @@ import {
 } from '../../types';
 
 import { AggregateSection } from './AggregationSection';
-import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
+import { AzureMonitorKustoQueryBuilder } from './AzureMonitorKustoQueryBuilder';
 import { FilterSection } from './FilterSection';
 import { FuzzySearch } from './FuzzySearch';
 import { GroupBySection } from './GroupBySection';
@@ -83,9 +83,14 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       const datetimeColumn = allColumns.find((col) => col.type === 'datetime')?.name || 'TimeGenerated';
 
       const timeFilterExpression: BuilderQueryEditorWhereExpression = {
-        type: BuilderQueryEditorExpressionType.Operator,
-        operator: { name: '$__timeFilter', value: datetimeColumn },
-        property: { name: datetimeColumn, type: BuilderQueryEditorPropertyType.Datetime },
+        type: BuilderQueryEditorExpressionType.Or,
+        expressions: [
+          {
+            type: BuilderQueryEditorExpressionType.Operator,
+            operator: { name: '$__timeFilter', value: datetimeColumn },
+            property: { name: datetimeColumn, type: BuilderQueryEditorPropertyType.Datetime },
+          },
+        ],
       };
 
       const updatedBuilderQuery: BuilderQueryExpression = {
@@ -109,7 +114,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         timeFilter: { expressions: [timeFilterExpression], type: BuilderQueryEditorExpressionType.And },
       };
 
-      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery);
+      const updatedQueryString = AzureMonitorKustoQueryBuilder.toQuery(updatedBuilderQuery);
 
       onQueryChange({
         ...query,

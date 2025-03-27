@@ -1,31 +1,61 @@
-import { BuilderQueryEditorWhereExpressionArray, BuilderQueryExpression } from '../../dataquery.gen';
+import {
+  BuilderQueryEditorWhereExpression,
+  BuilderQueryEditorWhereExpressionArray,
+  BuilderQueryEditorWhereExpressionItems,
+  BuilderQueryExpression,
+} from '../../dataquery.gen';
 
-const appendWhere = (
+const isNestedExpression = (
+  exp: BuilderQueryEditorWhereExpression | BuilderQueryEditorWhereExpressionItems
+): exp is BuilderQueryEditorWhereExpressionItems =>
+  'operator' in exp &&
+  'property' in exp &&
+  typeof exp.operator?.name === 'string' &&
+  typeof exp.property?.name === 'string';
+
+const buildCondition = (
+  exp: BuilderQueryEditorWhereExpression | BuilderQueryEditorWhereExpressionItems
+): string | undefined => {
+  if ('expressions' in exp && Array.isArray(exp.expressions)) {
+    const isGroupOfFilters = exp.expressions.every((e) => 'operator' in e && 'property' in e);
+
+    const nested = exp.expressions.map(buildCondition).filter((c): c is string => Boolean(c));
+
+    if (nested.length === 0) {
+      return;
+    }
+
+    const joiner = isGroupOfFilters ? ' or ' : ' and ';
+    const joined = nested.join(joiner);
+
+    return nested.length > 1 ? `(${joined})` : joined;
+  }
+
+  if (isNestedExpression(exp)) {
+    const { name: op, value } = exp.operator;
+    const { name: prop } = exp.property;
+    return op === '$__timeFilter' ? `$__timeFilter(${prop})` : `${prop} ${op} '${value}'`;
+  }
+
+  return;
+};
+
+export const appendWhere = (
   phrases: string[],
   timeFilter?: BuilderQueryEditorWhereExpressionArray,
   fuzzySearch?: BuilderQueryEditorWhereExpressionArray,
   where?: BuilderQueryEditorWhereExpressionArray
-) => {
-  const conditions: string[] = [];
+): void => {
+  const groups = [timeFilter, fuzzySearch, where];
 
-  const addCondition = (exp: any) => {
-    if (exp.operator?.name && exp.property?.name) {
-      const val = String(exp.operator.value ?? '').trim();
-      if (exp.operator.name === '$__timeFilter') {
-        conditions.push(`$__timeFilter(${exp.property.name})`);
-      } else {
-        conditions.push(`${exp.property.name} ${exp.operator.name} '${val}'`);
+  groups.forEach((group) => {
+    group?.expressions.forEach((exp) => {
+      const condition = buildCondition(exp);
+      if (condition) {
+        phrases.push(`where ${condition}`);
       }
-    }
-  };
-
-  timeFilter?.expressions?.forEach(addCondition);
-  fuzzySearch?.expressions?.forEach(addCondition);
-  where?.expressions?.forEach(addCondition);
-
-  if (conditions.length > 0) {
-    phrases.push(`where ${conditions.join(' and ')}`);
-  }
+    });
+  });
 };
 
 const appendProject = (builderQuery: BuilderQueryExpression, phrases: string[]) => {
@@ -37,16 +67,17 @@ const appendProject = (builderQuery: BuilderQueryExpression, phrases: string[]) 
 
 const appendSummarize = (builderQuery: BuilderQueryExpression, phrases: string[]) => {
   const summarizeAlreadyAdded = phrases.some((phrase) => phrase.startsWith('summarize'));
-  const reduceExprs = builderQuery.reduce?.expressions ?? [];
-
-  if (summarizeAlreadyAdded || reduceExprs.length === 0) {
+  if (summarizeAlreadyAdded) {
     return;
   }
+
+  const reduceExprs = builderQuery.reduce?.expressions ?? [];
+  const groupBy = builderQuery.groupBy?.expressions?.map((exp) => exp.property?.name).filter(Boolean) ?? [];
 
   const summarizeParts = reduceExprs
     .map((expr) => {
       if (!expr.reduce?.name) {
-        return null;
+        return;
       }
 
       const func = expr.reduce.name;
@@ -54,29 +85,24 @@ const appendSummarize = (builderQuery: BuilderQueryExpression, phrases: string[]
       if (func === 'percentile') {
         const percentileValue = expr.parameters?.[0]?.value;
         const column = expr.parameters?.[1]?.value ?? expr.property?.name ?? '';
-        if (!column) {
-          return null;
-        }
-        return `percentile(${percentileValue}, ${column})`;
+        return column ? `percentile(${percentileValue}, ${column})` : null;
       }
 
       const column = expr.property?.name ?? '';
-
-      if (func === 'count') {
-        return 'count()';
-      }
-
-      return column ? `${func}(${column})` : func;
+      return func === 'count' ? 'count()' : column ? `${func}(${column})` : func;
     })
     .filter(Boolean);
 
-  if (summarizeParts.length === 0) {
-    return;
+  if (summarizeParts.length === 0 && groupBy.length === 0) {
+    return; // nothing to summarize
   }
 
-  const groupBy = builderQuery.groupBy?.expressions?.map((exp) => exp.property?.name) || [];
-  const summarizeClause = `summarize ${summarizeParts.join(', ')}`;
-  phrases.push(groupBy.length ? `${summarizeClause} by ${groupBy.join(', ')}` : summarizeClause);
+  const summarizeClause =
+    summarizeParts.length > 0
+      ? `summarize ${summarizeParts.join(', ')}${groupBy.length > 0 ? ` by ${groupBy.join(', ')}` : ''}`
+      : `summarize by ${groupBy.join(', ')}`;
+
+  phrases.push(summarizeClause);
 };
 
 const appendOrderBy = (builderQuery: BuilderQueryExpression, phrases: string[]) => {

@@ -47,8 +47,8 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
 
     if (!hasLoadedFuzzySearch.current && builderQuery?.fuzzySearch?.expressions?.length) {
       const fuzzy = builderQuery.fuzzySearch.expressions[0];
-      setSearchTerm(removeExtraQuotes(String(fuzzy.operator?.value ?? '')));
-      setSelectedColumn(fuzzy.property?.name ?? '*');
+      setSearchTerm(removeExtraQuotes(String(fuzzy.expressions[0].operator?.value ?? '')));
+      setSelectedColumn(fuzzy.expressions[0].property?.name ?? '*');
       setIsOpen(true);
       hasLoadedFuzzySearch.current = true;
     }
@@ -72,8 +72,13 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
 
     const fuzzyExpression: BuilderQueryEditorWhereExpression = {
       type: BuilderQueryEditorExpressionType.Operator,
-      operator: { name: 'has', value: term },
-      property: { name: column || '*', type: BuilderQueryEditorPropertyType.String },
+      expressions: [
+        {
+          type: BuilderQueryEditorExpressionType.Property,
+          operator: { name: 'has', value: term },
+          property: { name: column || '*', type: BuilderQueryEditorPropertyType.String },
+        },
+      ],
     };
 
     buildAndUpdateQuery({

@@ -273,14 +273,24 @@ func NewBuilderQueryEditorWhereExpressionArray() *BuilderQueryEditorWhereExpress
 }
 
 type BuilderQueryEditorWhereExpression struct {
+	Type        BuilderQueryEditorExpressionType         `json:"type"`
+	Expressions []BuilderQueryEditorWhereExpressionItems `json:"expressions"`
+}
+
+// NewBuilderQueryEditorWhereExpression creates a new BuilderQueryEditorWhereExpression object.
+func NewBuilderQueryEditorWhereExpression() *BuilderQueryEditorWhereExpression {
+	return &BuilderQueryEditorWhereExpression{}
+}
+
+type BuilderQueryEditorWhereExpressionItems struct {
 	Property BuilderQueryEditorProperty       `json:"property"`
 	Operator BuilderQueryEditorOperator       `json:"operator"`
 	Type     BuilderQueryEditorExpressionType `json:"type"`
 }
 
-// NewBuilderQueryEditorWhereExpression creates a new BuilderQueryEditorWhereExpression object.
-func NewBuilderQueryEditorWhereExpression() *BuilderQueryEditorWhereExpression {
-	return &BuilderQueryEditorWhereExpression{
+// NewBuilderQueryEditorWhereExpressionItems creates a new BuilderQueryEditorWhereExpressionItems object.
+func NewBuilderQueryEditorWhereExpressionItems() *BuilderQueryEditorWhereExpressionItems {
+	return &BuilderQueryEditorWhereExpressionItems{
 		Property: *NewBuilderQueryEditorProperty(),
 		Operator: *NewBuilderQueryEditorOperator(),
 	}

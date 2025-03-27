@@ -34,7 +34,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   }));
 
   const selectAllOption: SelectableValue<string> = {
-    label: 'Select All Columns',
+    label: 'All Columns',
     value: '__all_columns__',
   };
 
@@ -54,6 +54,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       return;
     }
 
+    console.log('handle table change');
     buildAndUpdateQuery({
       from: {
         property: {
@@ -62,19 +63,34 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
         },
         type: BuilderQueryEditorExpressionType.Property,
       },
+      reduce: [],
+      where: [],
+      fuzzySearch: [],
+      groupBy: [],
+      orderBy: [],
+      columns: [],
     });
   };
 
-  const handleColumnsChange = (selected: SelectableValue<string> | Array<SelectableValue<string>>) => {
-    let selectedArray = Array.isArray(selected) ? selected.map((col) => col.value!) : [selected.value!];
+  const handleColumnsChange = (selected: SelectableValue<string> | Array<SelectableValue<string>> | null) => {
+    const selectedArray = Array.isArray(selected) ? selected : selected ? [selected] : [];
 
-    if (selectedArray.includes('__all_columns__')) {
-      selectedArray = allColumns.map((col) => col.name);
+    if (selectedArray.length === 0) {
+      buildAndUpdateQuery({ columns: [] });
+      return;
     }
 
-    buildAndUpdateQuery({
-      columns: selectedArray,
-    });
+    const includesAll = selectedArray.some((opt) => opt.value === '__all_columns__');
+
+    if (includesAll) {
+      buildAndUpdateQuery({
+        columns: allColumns.map((col) => col.name),
+      });
+    } else {
+      buildAndUpdateQuery({
+        columns: selectedArray.map((opt) => opt.value!),
+      });
+    }
   };
 
   const onDeleteAllColumns = () => {
@@ -82,6 +98,18 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       columns: [],
     });
   };
+
+  const allColumnNames = allColumns.length > 0 ? allColumns.map((col) => col.name) : [];
+
+  const areAllColumnsSelected =
+    allColumnNames.length > 0 &&
+    selectedColumns.length > 0 &&
+    selectedColumns.length === allColumnNames.length &&
+    allColumnNames.every((col) => selectedColumns.includes(col));
+
+  const columnSelectValue: Array<SelectableValue<string>> = areAllColumnsSelected
+    ? [selectAllOption]
+    : selectedColumns.map((col) => ({ label: col, value: col }));
 
   return (
     <EditorRow>
@@ -101,14 +129,14 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
             <Select
               aria-label="Columns"
               isMulti
-              value={selectedColumns.map((col) => ({ label: col, value: col })) || []}
+              isClearable
+              closeMenuOnSelect={false}
+              value={columnSelectValue}
               options={selectableOptions}
               placeholder="Select columns"
-              onChange={(e) => {
-                handleColumnsChange(e);
-              }}
-              isDisabled={!query.azureLogAnalytics?.builderQuery?.from?.property.name}
-              width={inputFieldSize}
+              onChange={handleColumnsChange}
+              isDisabled={!builderQuery?.from?.property.name}
+              width={30}
             />
             <Button variant="secondary" icon="times" onClick={onDeleteAllColumns} />
           </InputGroup>

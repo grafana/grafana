@@ -355,11 +355,20 @@ export interface BuilderQueryEditorOperator {
   value: string;
 }
 
-export interface BuilderQueryEditorWhereExpression {
+export interface BuilderQueryEditorWhereExpressionItems {
   operator: BuilderQueryEditorOperator;
   property: BuilderQueryEditorProperty;
   type: BuilderQueryEditorExpressionType;
 }
+
+export interface BuilderQueryEditorWhereExpression {
+  expressions: Array<BuilderQueryEditorWhereExpressionItems>;
+  type: BuilderQueryEditorExpressionType;
+}
+
+export const defaultBuilderQueryEditorWhereExpression: Partial<BuilderQueryEditorWhereExpression> = {
+  expressions: [],
+};
 
 export interface BuilderQueryEditorWhereExpressionArray {
   expressions: Array<BuilderQueryEditorWhereExpression>;
