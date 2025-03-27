@@ -1,6 +1,6 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { CoreApp, LoadingState, PanelData, SelectableValue } from '@grafana/data';
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, RadioButtonGroup } from '@grafana/ui';
@@ -13,6 +13,9 @@ interface QueryTypeFieldProps {
   query: AzureMonitorQuery;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setAzureLogsCheatSheetModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  data: PanelData | undefined;
+  onRunQuery: () => void;
+  app: CoreApp | undefined;
 }
 
 const EDITOR_MODES = [
@@ -20,7 +23,16 @@ const EDITOR_MODES = [
   { label: 'KQL', value: LogsEditorMode.Raw },
 ];
 
-export const QueryHeader = ({ query, onQueryChange, setAzureLogsCheatSheetModalOpen }: QueryTypeFieldProps) => {
+export const QueryHeader = ({
+  query,
+  onQueryChange,
+  setAzureLogsCheatSheetModalOpen,
+  data,
+  app,
+  onRunQuery,
+}: QueryTypeFieldProps) => {
+  const isLoading = useMemo(() => data?.state === LoadingState.Loading, [data?.state]);
+
   const queryTypes: Array<{ value: AzureQueryType; label: string }> = [
     { value: AzureQueryType.AzureMonitor, label: 'Metrics' },
     { value: AzureQueryType.LogAnalytics, label: 'Logs' },
@@ -106,6 +118,19 @@ export const QueryHeader = ({ query, onQueryChange, setAzureLogsCheatSheetModalO
             data-testid="azure-query-header-logs-radio-button"
           />
         )}
+        {query.azureLogAnalytics?.mode === LogsEditorMode.Builder &&
+          !!config.featureToggles.azureMonitorLogsBuilderEditor &&
+          app !== CoreApp.Explore && (
+            <Button
+              variant="primary"
+              icon={isLoading ? 'spinner' : 'play'}
+              size="sm"
+              onClick={onRunQuery}
+              data-testid={selectors.components.queryEditor.logsQueryEditor.runQuery.button}
+            >
+              Run query
+            </Button>
+          )}
       </EditorHeader>
     </span>
   );

@@ -29,6 +29,7 @@ interface LogsQueryEditorProps {
   basicLogsEnabled: boolean;
   subscriptionId?: string;
   onChange: (newQuery: AzureMonitorQuery) => void;
+  onQueryChange: (newQuery: AzureMonitorQuery) => void;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
   hideFormatAs?: boolean;
@@ -43,6 +44,7 @@ const LogsQueryEditor = ({
   subscriptionId,
   variableOptionGroup,
   onChange,
+  onQueryChange,
   setError,
   hideFormatAs,
   timeRange,
@@ -223,7 +225,7 @@ const LogsQueryEditor = ({
             query={query}
             schema={schema!}
             basicLogsEnabled={basicLogsEnabled}
-            onQueryChange={onChange}
+            onQueryChange={onQueryChange}
             templateVariableOptions={templateVariableOptions}
             datasource={datasource}
             timeRange={timeRange}
