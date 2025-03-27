@@ -92,7 +92,7 @@ export class AutoGridLayoutManager
     vizPanel.clearParent();
 
     this.state.layout.setState({
-      children: [new AutoGridItem({ body: vizPanel }), ...this.state.layout.state.children],
+      children: [...this.state.layout.state.children, new AutoGridItem({ body: vizPanel })],
     });
 
     this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
