@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -94,6 +95,7 @@ func TestGetParents(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
 	store := FolderUnifiedStoreImpl{
 		k8sclient: mockCli,
+		userService: usertest.NewUserServiceFake(),
 	}
 
 	ctx := context.Background()
