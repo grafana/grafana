@@ -134,10 +134,11 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   const getFilterValues = async (filter: BuilderQueryEditorWhereExpression) => {
     const from = timeRange?.from?.toISOString();
     const to = timeRange?.to?.toISOString();
+    const timeColumn = query.azureLogAnalytics?.timeColumn || 'TimeGenerated';
 
     const kustoQuery = `
     ${query.azureLogAnalytics?.builderQuery?.from?.property.name}
-    | where TimeGenerated >= datetime(${from}) and TimeGenerated <= datetime(${to})
+    | where ${timeColumn} >= datetime(${from}) and ${timeColumn} <= datetime(${to})
     | distinct ${filter.property.name}
     | limit 1000
   `;
