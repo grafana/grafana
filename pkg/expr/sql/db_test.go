@@ -4,6 +4,7 @@ package sql
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -203,6 +204,41 @@ func TestErrorsFromGoMySQLServerAreFlagged(t *testing.T) {
 	_, err := db.QueryFrames(context.Background(), "sqlExpressionRefId", query, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "error in go-mysql-server")
+}
+
+func TestFrameToSQLAndBack_JSONRoundtrip(t *testing.T) {
+	// Input frame with a nullable JSON field
+	frame := &data.Frame{
+		RefID: "json_test",
+		Name:  "json_test",
+		Fields: []*data.Field{
+			data.NewField("id", nil, []*int64{p(int64(1)), p(int64(2))}),
+			data.NewField("payload", nil, []*json.RawMessage{
+				p(json.RawMessage(`{"foo":1}`)),
+				p(json.RawMessage(`{"bar":"baz"}`)),
+			}),
+		},
+	}
+
+	// Create a SQL DB from the input frame
+	provider := NewFramesDBProvider(data.Frames{frame})
+	db, _ := provider.Database(nil, "frames")
+	table, _, _ := db.GetTableInsensitive(nil, frame.RefID)
+
+	// Use go-mysql-server APIs to query the table back into a frame
+	schema := table.Schema()
+	iter, _ := table.PartitionRows(nil, nil)
+	resultFrame, err := convertToDataFrame(nil, iter, schema)
+	require.NoError(t, err)
+
+	// Ensure names and metadata match
+	resultFrame.Name = frame.Name
+	resultFrame.RefID = frame.RefID
+
+	// Compare result to original
+	if diff := cmp.Diff(frame, resultFrame, data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "Frame mismatch (-want +got):\n%s", diff)
+	}
 }
 
 // p is a utility for pointers from constants
