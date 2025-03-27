@@ -19,7 +19,7 @@ import { RowItem } from './RowItem';
 import { RowItemMenu } from './RowItemMenu';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, isCollapsed, fillScreen, isHeaderHidden } = model.useState();
+  const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden } = model.useState();
   const isClone = useIsClone(model);
   const { isEditing } = useDashboardState(model);
   const isConditionallyHidden = useIsConditionallyHidden(model);

@@ -21,8 +21,8 @@ import { RowsLayoutManager } from './RowsLayoutManager';
 export interface RowItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
-  isCollapsed?: boolean;
-  isHeaderHidden?: boolean;
+  collapse?: boolean;
+  hideHeader?: boolean;
   fillScreen?: boolean;
   conditionalRendering?: ConditionalRendering;
 }
@@ -65,7 +65,7 @@ export class RowItem
     return {
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
-      icon: 'line-alt',
+      icon: 'list-ul',
     };
   }
 
@@ -137,8 +137,8 @@ export class RowItem
     this.setState({ title });
   }
 
-  public onHeaderHiddenToggle(isHeaderHidden = !this.state.isHeaderHidden) {
-    this.setState({ isHeaderHidden });
+  public onHeaderHiddenToggle(hideHeader = !this.state.hideHeader) {
+    this.setState({ hideHeader });
   }
 
   public onChangeFillScreen(fillScreen: boolean) {
@@ -163,7 +163,7 @@ export class RowItem
   }
 
   public onCollapseToggle() {
-    this.setState({ isCollapsed: !this.state.isCollapsed });
+    this.setState({ collapse: !this.state.collapse });
   }
 
   private _getParentLayout(): RowsLayoutManager {

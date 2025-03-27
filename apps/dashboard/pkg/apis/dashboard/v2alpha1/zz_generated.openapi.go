@@ -3577,11 +3577,22 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutRowSpec(ref common.Re
 							Format: "",
 						},
 					},
-					"collapsed": {
+					"collapse": {
 						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"hideHeader": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"fillScreen": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 					"conditionalRendering": {
@@ -3600,7 +3611,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardRowsLayoutRowSpec(ref common.Re
 						},
 					},
 				},
-				Required: []string{"collapsed", "layout"},
+				Required: []string{"layout"},
 			},
 		},
 		Dependencies: []string{

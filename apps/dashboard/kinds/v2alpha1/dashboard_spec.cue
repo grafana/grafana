@@ -551,7 +551,9 @@ RowsLayoutRowKind: {
 
 RowsLayoutRowSpec: {
 	title?:                string
-	collapsed:             bool
+	collapse?:             bool
+	hideHeader?:           bool
+	fillScreen?:           bool
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               RowRepeatOptions
 	layout:                GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind | RowsLayoutKind
