@@ -42,6 +42,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    `SELECT * FROM a_table WHERE a_column IS NOT NULL`,
 			err:  nil,
 		},
+		{
+			name: "null literal",
+			q:    `SELECT 1 as id, NULL as null_col`,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

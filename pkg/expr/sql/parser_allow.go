@@ -138,6 +138,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.Where:
 		return
 
+	case *sqlparser.NullVal:
+		return
+
 	default:
 		return false
 	}
