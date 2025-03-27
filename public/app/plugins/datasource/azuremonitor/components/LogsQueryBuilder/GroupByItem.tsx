@@ -10,8 +10,10 @@ import {
   BuilderQueryEditorExpressionType,
 } from '../../dataquery.gen';
 
+import { inputFieldSize } from './utils';
+
 interface GroupByItemProps {
-  groupBy: Partial<BuilderQueryEditorGroupByExpression>;
+  groupBy: BuilderQueryEditorGroupByExpression;
   columns: Array<SelectableValue<string>>;
   onChange: (item: BuilderQueryEditorGroupByExpression) => void;
   onDelete: () => void;
@@ -64,7 +66,7 @@ export const GroupByItem: React.FC<GroupByItemProps> = ({
     <InputGroup>
       <Select
         aria-label="column"
-        width="auto"
+        width={inputFieldSize}
         value={groupBy.property?.name ? { label: groupBy.property.name, value: groupBy.property.name } : null}
         options={selectableOptions}
         allowCustomValue

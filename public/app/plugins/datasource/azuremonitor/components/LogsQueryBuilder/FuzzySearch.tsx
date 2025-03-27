@@ -11,17 +11,17 @@ import {
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
-import { buildAndUpdateQuery, isOperatorExpression, removeExtraQuotes } from './utils';
+import { BuildAndUpdateOptions, removeExtraQuotes } from './utils';
 
 interface FuzzySearchProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
-  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+  buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
   templateVariableOptions: SelectableValue<string>;
 }
 
 export const FuzzySearch: React.FC<FuzzySearchProps> = ({
-  onQueryUpdate,
+  buildAndUpdateQuery,
   query,
   allColumns,
   templateVariableOptions,
@@ -29,11 +29,10 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
 
-  const hasLoadedFuzzySearch = useRef(false);
-
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedColumn, setSelectedColumn] = useState<string>('');
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const hasLoadedFuzzySearch = useRef(false);
 
   useEffect(() => {
     const currentTable = builderQuery?.from?.property.name || null;
@@ -46,56 +45,39 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
       prevTable.current = currentTable;
     }
 
-    if (!hasLoadedFuzzySearch.current && builderQuery?.where?.expressions) {
-      const fuzzyCondition = builderQuery.where.expressions.find(
-        (condition) => isOperatorExpression(condition) && condition.operator?.name === 'has'
-      );
-
-      if (fuzzyCondition && isOperatorExpression(fuzzyCondition)) {
-        setSearchTerm(removeExtraQuotes(String(fuzzyCondition.operator?.value ?? '')));
-        setSelectedColumn(fuzzyCondition.property?.name ?? '');
-        setIsOpen(true);
-      }
+    if (!hasLoadedFuzzySearch.current && builderQuery?.fuzzySearch?.expressions?.length) {
+      const fuzzy = builderQuery.fuzzySearch.expressions[0];
+      setSearchTerm(removeExtraQuotes(String(fuzzy.operator?.value ?? '')));
+      setSelectedColumn(fuzzy.property?.name ?? '*');
+      setIsOpen(true);
+      hasLoadedFuzzySearch.current = true;
     }
   }, [builderQuery]);
-
-  if (!builderQuery) {
-    return;
-  }
 
   const columnOptions: Array<SelectableValue<string>> = allColumns.map((col) => ({
     label: col.name,
     value: col.name,
   }));
 
-  const safeTemplateVariables: Array<SelectableValue<string>> = templateVariableOptions
-    ? Array.isArray(templateVariableOptions)
-      ? templateVariableOptions
-      : [templateVariableOptions]
-    : [];
+  const safeTemplateVariables: Array<SelectableValue<string>> = Array.isArray(templateVariableOptions)
+    ? templateVariableOptions
+    : [templateVariableOptions];
 
   const defaultColumn: SelectableValue<string> = { label: 'All Columns *', value: '*' };
   const selectableOptions = [defaultColumn, ...columnOptions, ...safeTemplateVariables];
 
-  const handleChange = (newSearchTerm: string, column: string) => {
-    setSearchTerm(newSearchTerm);
+  const updateFuzzySearch = (column: string, term: string) => {
+    setSearchTerm(term);
     setSelectedColumn(column);
 
-    const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = (builderQuery?.where?.expressions || [])
-      .filter((condition) => !(isOperatorExpression(condition) && condition.operator?.name === 'has'))
-      .map((exp) => exp);
-
-    updatedWhereExpressions.push({
+    const fuzzyExpression: BuilderQueryEditorWhereExpression = {
       type: BuilderQueryEditorExpressionType.Operator,
-      operator: { name: 'has', value: newSearchTerm },
+      operator: { name: 'has', value: term },
       property: { name: column || '*', type: BuilderQueryEditorPropertyType.String },
-    });
+    };
 
     buildAndUpdateQuery({
-      query,
-      onQueryUpdate,
-      allColumns,
-      where: updatedWhereExpressions,
+      fuzzySearch: term ? [fuzzyExpression] : [],
     });
   };
 
@@ -104,15 +86,8 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
     setSelectedColumn('');
     setIsOpen(false);
 
-    const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = (builderQuery?.where?.expressions || [])
-      .filter(isOperatorExpression)
-      .filter((condition) => condition.operator?.name !== 'has');
-
     buildAndUpdateQuery({
-      query,
-      onQueryUpdate,
-      allColumns,
-      where: updatedWhereExpressions,
+      fuzzySearch: [],
     });
   };
 
@@ -123,8 +98,7 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
           label="Fuzzy Search"
           optional={true}
           tooltip={`Find approximate text matches with tolerance for spelling variations. By default, fuzzy search scans all
-              columns (*) in the entire table, not just specific fields. This enables locating content across the
-              dataset even when exact spelling or column location is unknown.`}
+              columns (*) in the entire table, not just specific fields.`}
         >
           <InputGroup>
             {isOpen ? (
@@ -134,21 +108,20 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
                   type="text"
                   placeholder="Enter search term"
                   value={searchTerm}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value, selectedColumn)}
+                  onChange={(e) => updateFuzzySearch(selectedColumn, e.currentTarget.value)}
                 />
                 <Select
                   aria-label="Select Column"
                   options={selectableOptions}
-                  value={selectedColumn === '' ? defaultColumn : selectedColumn}
-                  onChange={(e) => handleChange(searchTerm ?? '', e.value ?? '')}
+                  value={{ label: selectedColumn || '*', value: selectedColumn || '*' }}
+                  onChange={(e: SelectableValue<string>) => updateFuzzySearch(e.value ?? '*', searchTerm)}
                   width="auto"
                 />
                 <Button variant="secondary" icon="times" onClick={onDeleteFuzzySearch} />
               </>
             ) : (
-              <></>
+              <Button variant="secondary" onClick={() => setIsOpen(true)} icon="plus" />
             )}
-            {!isOpen ? <Button variant="secondary" onClick={() => setIsOpen(true)} icon="plus" /> : <></>}
           </InputGroup>
         </EditorField>
       </EditorFieldGroup>

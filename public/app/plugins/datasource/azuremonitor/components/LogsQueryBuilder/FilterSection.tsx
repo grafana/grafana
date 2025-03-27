@@ -12,58 +12,35 @@ import {
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
-import {
-  buildAndUpdateQuery,
-  isOperatorExpression,
-  removeExtraQuotes,
-  toOperatorOptions,
-  valueToDefinition,
-} from './utils';
+import { BuildAndUpdateOptions, inputFieldSize, toOperatorOptions, valueToDefinition } from './utils';
 
 interface FilterSectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
-  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+  buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
   templateVariableOptions: SelectableValue<string>;
 }
 
 export const FilterSection: React.FC<FilterSectionProps> = ({
-  onQueryUpdate,
+  buildAndUpdateQuery,
   query,
   allColumns,
   templateVariableOptions,
 }) => {
   const styles = useStyles2(getStyles);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
-  const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
-  const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>(() => {
-    return (
-      builderQuery?.where?.expressions
-        ?.filter(isOperatorExpression)
-        ?.filter((exp) => !exp.property?.name?.startsWith('$__timeFilter'))
-        .filter((exp) => !exp.operator?.name?.startsWith('has'))
-        ?.map((exp) => ({
-          column: exp.property?.name || '',
-          operator: exp.operator?.name || '==',
-          value: removeExtraQuotes(String(exp.operator?.value) ?? ''),
-        })) || []
-    );
-  });
 
-  const safeTemplateVariables: Array<SelectableValue<string>> =
-    templateVariableOptions && templateVariableOptions.value
-      ? Array.isArray(templateVariableOptions)
-        ? templateVariableOptions
-        : [templateVariableOptions]
-      : [];
+  const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
+  const [filters, setFilters] = useState<BuilderQueryEditorWhereExpression[]>(builderQuery?.where?.expressions || []);
+  const hasLoadedFilters = useRef(false);
+
+  const variableOptions = Array.isArray(templateVariableOptions) ? templateVariableOptions : [templateVariableOptions];
 
   const availableColumns: Array<SelectableValue<string>> = builderQuery?.columns?.columns?.length
-    ? builderQuery?.columns.columns.map((col) => ({ label: col, value: col }))
+    ? builderQuery.columns.columns.map((col) => ({ label: col, value: col }))
     : allColumns.map((col) => ({ label: col.name, value: col.name }));
 
-  const selectableOptions = availableColumns.concat(safeTemplateVariables);
-
-  const hasLoadedFilters = useRef(false);
+  const selectableOptions = [...availableColumns, ...variableOptions];
 
   useEffect(() => {
     const currentTable = builderQuery?.from?.property.name || null;
@@ -74,78 +51,49 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
       prevTable.current = currentTable;
     }
 
-    if (!hasLoadedFilters.current && builderQuery?.where?.expressions && selectableOptions.length > 0) {
-      const filteredExpressions = builderQuery.where.expressions
-        .filter(isOperatorExpression)
-        .filter((exp) => {
-          const columnName = exp.property?.name?.trim();
-          const isTimeFilter = columnName?.startsWith('$__timeFilter');
-          const isFuzzySearch = exp.operator?.name === 'has';
-          const isValidColumn = selectableOptions.some((col) => col.value === columnName);
-
-          if (isTimeFilter || isFuzzySearch) {
-            return false;
-          }
-
-          return isValidColumn;
-        })
-        .map((exp) => ({
-          column: exp.property?.name || '',
-          operator: exp.operator?.name || '==',
-          value: removeExtraQuotes(String(exp.operator?.value) ?? ''),
-        }));
-
-      setFilters(filteredExpressions);
+    if (!hasLoadedFilters.current && builderQuery?.where?.expressions) {
+      setFilters(builderQuery.where.expressions);
       hasLoadedFilters.current = true;
     }
-  }, [builderQuery, selectableOptions]);
+  }, [builderQuery]);
 
-  if (!builderQuery) {
-    return;
-  }
-
-  const onChangeFilter = (index: number, key: keyof (typeof filters)[0], value: string) => {
-    let updatedFilters = [...filters];
-
-    if (index === -1) {
-      updatedFilters.push({ column: '', operator: '==', value: '' });
-      index = updatedFilters.length - 1;
-    } else {
-      updatedFilters[index] = { ...updatedFilters[index], [key]: value || '' };
-    }
-
-    setFilters(updatedFilters);
-
-    const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = updatedFilters.map((filter) => ({
-      type: BuilderQueryEditorExpressionType.Operator,
-      operator: { name: filter.operator, value: filter.value },
-      property: { name: filter.column, type: BuilderQueryEditorPropertyType.String },
-    }));
+  const updateFilters = (updated: BuilderQueryEditorWhereExpression[]) => {
+    setFilters(updated);
 
     buildAndUpdateQuery({
-      query,
-      onQueryUpdate,
-      allColumns,
-      where: updatedWhereExpressions,
+      where: updated,
     });
   };
 
+  const onChangeFilter = (index: number, field: 'property' | 'operator' | 'value', value: string) => {
+    const updated = [...filters];
+
+    if (index === -1) {
+      updated.push({
+        type: BuilderQueryEditorExpressionType.Operator,
+        property: { name: '', type: BuilderQueryEditorPropertyType.String },
+        operator: { name: '==', value: '' },
+      });
+      index = updated.length - 1;
+    }
+
+    const filter = updated[index];
+
+    if (field === 'property') {
+      filter.property.name = value;
+    } else if (field === 'operator') {
+      filter.operator.name = value;
+    } else if (field === 'value') {
+      filter.operator.value = value;
+    }
+
+    updated[index] = filter;
+    updateFilters(updated);
+  };
+
   const onDeleteFilter = (index: number) => {
-    const newFilters = filters.filter((_, i) => i !== index);
-    setFilters(newFilters);
-
-    const updatedWhereExpressions: BuilderQueryEditorWhereExpression[] = newFilters.map((filter) => ({
-      type: BuilderQueryEditorExpressionType.Operator,
-      operator: { name: filter.operator, value: filter.value },
-      property: { name: filter.column, type: BuilderQueryEditorPropertyType.String },
-    }));
-
-    buildAndUpdateQuery({
-      query,
-      onQueryUpdate,
-      allColumns,
-      where: updatedWhereExpressions,
-    });
+    const updated = filters.filter((_, i) => i !== index);
+    updateFilters(updated);
   };
 
   return (
@@ -165,36 +113,41 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                   <InputGroup key={index}>
                     <Select
                       aria-label="column"
-                      width={30}
-                      value={filter.column ? valueToDefinition(filter.column) : null}
+                      width={inputFieldSize}
+                      value={valueToDefinition(filter.property.name)}
                       options={selectableOptions}
-                      onChange={(e) => e.value && onChangeFilter(index, 'column', e.value)}
+                      onChange={(e) => e.value && onChangeFilter(index, 'property', e.value)}
                     />
                     <Select
                       aria-label="operator"
                       width={12}
-                      value={{ label: filter.operator, value: filter.operator }}
+                      value={{ label: filter.operator.name, value: filter.operator.name }}
                       options={toOperatorOptions('string')}
                       onChange={(e) => e.value && onChangeFilter(index, 'operator', e.value)}
                     />
                     <Input
                       aria-label="column value"
-                      value={filter.value}
+                      value={String(filter.operator.value ?? '')}
                       onChange={(e) => onChangeFilter(index, 'value', e.currentTarget.value)}
                       onPaste={(e) => {
                         e.preventDefault();
-                        const pastedText = e.clipboardData.getData('Text').trim();
-                        onChangeFilter(index, 'value', pastedText);
+                        const pasted = e.clipboardData.getData('Text').trim();
+                        onChangeFilter(index, 'value', pasted);
                       }}
-                      width={30}
+                      width={inputFieldSize}
                     />
                     <Button variant="secondary" icon="times" onClick={() => onDeleteFilter(index)} />
                     {index < filters.length - 1 ? <Label>AND</Label> : <></>}
+                    <Button
+                      variant="secondary"
+                      style={{ marginLeft: '15px' }}
+                      onClick={() => onChangeFilter(-1, 'property', '')}
+                      icon="plus"
+                    />
                   </InputGroup>
                 ))}
               </div>
             )}
-            <Button variant="secondary" onClick={() => onChangeFilter(-1, 'column', '')} icon="plus" />
           </>
         </EditorField>
       </EditorFieldGroup>

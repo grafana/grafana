@@ -1,18 +1,11 @@
 import { BuilderQueryEditorExpressionType } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn } from '../../types';
 
 import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 
 describe('AzureMonitorKustoQueryParser', () => {
-  const columns: AzureLogAnalyticsMetadataColumn[] = [
-    { name: 'TimeGenerated', type: 'datetime' },
-    { name: 'Level', type: 'string' },
-    { name: 'Message', type: 'string' },
-  ];
-
   it('returns empty string if from table is not specified', () => {
     const builderQuery: any = { from: { property: { name: '' } } };
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery, columns);
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
     expect(result).toBe('');
   });
 
@@ -22,7 +15,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       columns: { columns: ['TimeGenerated', 'Level', 'Message'] },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery, columns);
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
     expect(result).toContain('Logs');
     expect(result).toContain('project TimeGenerated, Level, Message');
   });
@@ -30,27 +23,62 @@ describe('AzureMonitorKustoQueryParser', () => {
   it('includes time filter when needed', () => {
     const builderQuery: any = {
       from: { property: { name: 'Logs' } },
+      timeFilter: {
+        expressions: [
+          {
+            type: BuilderQueryEditorExpressionType.Operator,
+            operator: { name: '$__timeFilter' },
+            property: { name: 'TimeGenerated' },
+          },
+        ],
+      },
       columns: { columns: ['TimeGenerated', 'Level'] },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery, columns);
-    expect(result).toContain('where $__timeFilter(TimeGenerated)');
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    expect(result).toContain('$__timeFilter(TimeGenerated)');
+  });
+
+  it('handles fuzzy search expressions', () => {
+    const builderQuery: any = {
+      from: { property: { name: 'Logs' } },
+      fuzzySearch: {
+        expressions: [
+          {
+            type: BuilderQueryEditorExpressionType.Operator,
+            operator: { name: 'contains', value: 'fail' },
+            property: { name: 'Message' },
+          },
+        ],
+      },
+    };
+
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    expect(result).toContain("Message contains 'fail'");
   });
 
   it('applies additional filters', () => {
     const builderQuery: any = {
       from: { property: { name: 'Logs' } },
-      columns: { columns: ['Level', 'Message'] },
+      where: {
+        expressions: [
+          {
+            type: BuilderQueryEditorExpressionType.Operator,
+            operator: { name: '==', value: 'Error' },
+            property: { name: 'Level' },
+          },
+          {
+            type: BuilderQueryEditorExpressionType.Operator,
+            operator: { name: 'contains', value: 'fail' },
+            property: { name: 'Message' },
+          },
+        ],
+      },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(
-      builderQuery,
-      columns,
-      undefined,
-      "Level == 'Error' and Message contains 'fail'"
-    );
-
-    expect(result).toContain("where $__timeFilter(TimeGenerated) and Level == 'Error' and Message contains 'fail'");
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    expect(result).toContain("Level == 'Error'");
+    expect(result).toContain("Message contains 'fail'");
   });
 
   it('handles where expressions with operator', () => {
@@ -68,8 +96,61 @@ describe('AzureMonitorKustoQueryParser', () => {
       },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery, columns);
-    expect(result).toContain("where $__timeFilter(TimeGenerated) and Level == 'Error'");
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    expect(result).toContain("Level == 'Error'");
+  });
+
+  it('handles summarize with percentile function', () => {
+    const builderQuery: any = {
+      from: { property: { name: 'Logs' } },
+      reduce: {
+        expressions: [
+          {
+            reduce: { name: 'percentile' },
+            parameters: [
+              { value: '95' },
+              { value: 'Duration' },
+            ],
+          },
+        ],
+      },
+    };
+
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    expect(result).toContain('summarize percentile(95, Duration)');
+  });
+
+  it('handles summarize with basic aggregation function like avg', () => {
+    const builderQuery: any = {
+      from: { property: { name: 'Logs' } },
+      reduce: {
+        expressions: [
+          {
+            reduce: { name: 'avg' },
+            property: { name: 'ResponseTime' },
+          },
+        ],
+      },
+    };
+
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    expect(result).toContain('summarize avg(ResponseTime)');
+  });
+
+  it('skips summarize when reduce expressions are invalid', () => {
+    const builderQuery: any = {
+      from: { property: { name: 'Logs' } },
+      reduce: {
+        expressions: [
+          {
+            reduce: null,
+          },
+        ],
+      },
+    };
+
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
+    expect(result).not.toContain('summarize');
   });
 
   it('adds summarize with groupBy', () => {
@@ -79,9 +160,17 @@ describe('AzureMonitorKustoQueryParser', () => {
       groupBy: {
         expressions: [{ property: { name: 'Level' } }],
       },
+      reduce: {
+        expressions: [
+          {
+            reduce: { name: 'count' },
+            property: { name: 'Level' },
+          },
+        ],
+      },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery, columns, 'count()');
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
     expect(result).toContain('summarize count() by Level');
   });
 
@@ -94,7 +183,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       },
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery, columns);
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
     expect(result).toContain('order by TimeGenerated desc');
   });
 
@@ -105,7 +194,7 @@ describe('AzureMonitorKustoQueryParser', () => {
       limit: 50,
     };
 
-    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery, columns);
+    const result = AzureMonitorKustoQueryParser.toQuery(builderQuery);
     expect(result).toContain('limit 50');
   });
 });

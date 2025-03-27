@@ -12,26 +12,24 @@ import {
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
 import { GroupByItem } from './GroupByItem';
-import { buildAndUpdateQuery } from './utils';
+import { BuildAndUpdateOptions } from './utils';
 
 interface GroupBySectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
-  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+  buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
   templateVariableOptions: SelectableValue<string>;
 }
 
 export const GroupBySection: React.FC<GroupBySectionProps> = ({
   query,
-  onQueryUpdate,
+  buildAndUpdateQuery,
   allColumns,
   templateVariableOptions,
 }) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
-  const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>(() => {
-    return builderQuery?.groupBy?.expressions || [];
-  });
+  const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>([]);
 
   const hasLoadedGroupBy = useRef(false);
 
@@ -50,12 +48,8 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
     }
   }, [builderQuery, groupBys]);
 
-  if (!builderQuery) {
-    return <></>;
-  }
-
   const availableColumns: Array<SelectableValue<string>> = [];
-  const columns = builderQuery.columns?.columns ?? [];
+  const columns = builderQuery?.columns?.columns ?? [];
 
   if (columns.length > 0) {
     availableColumns.push(
@@ -74,35 +68,18 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
   }
 
   const handleGroupByChange = (newItems: Array<Partial<BuilderQueryEditorGroupByExpression>>) => {
-    const cleaned: BuilderQueryEditorGroupByExpression[] = newItems.map((g) => ({
-      type: BuilderQueryEditorExpressionType.Group_by,
-      property: g.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
-      interval: g.interval,
-      focus: g.focus ?? false,
-    }));
-
-    setGroupBys(cleaned);
-
-    if (cleaned[0]?.property.name === '') {
-      return;
-    }
+    setGroupBys(newItems);
 
     buildAndUpdateQuery({
-      query,
-      onQueryUpdate,
-      allColumns,
-      groupBy: cleaned,
+      groupBy: newItems,
     });
   };
 
   const onDeleteGroupBy = (propertyName: string) => {
     setGroupBys((prevGroupBys) => {
-      const updatedGroupBys = prevGroupBys.filter((gb) => gb.property.name !== propertyName);
+      const updatedGroupBys = prevGroupBys.filter((gb) => gb.property?.name !== propertyName);
 
       buildAndUpdateQuery({
-        query,
-        onQueryUpdate,
-        allColumns,
         groupBy: updatedGroupBys,
       });
 
@@ -154,8 +131,8 @@ const makeRenderGroupBy = (
   templateVariableOptions: SelectableValue<string>
 ) => {
   return (
-    item: Partial<BuilderQueryEditorGroupByExpression>,
-    onChangeItem: (updatedItem: Partial<BuilderQueryEditorGroupByExpression>) => void,
+    item: BuilderQueryEditorGroupByExpression,
+    onChangeItem: (updatedItem: BuilderQueryEditorGroupByExpression) => void,
     onDeleteItem: () => void
   ) => (
     <GroupByItem

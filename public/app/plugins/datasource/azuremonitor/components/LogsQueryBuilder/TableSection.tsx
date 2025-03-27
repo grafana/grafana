@@ -7,18 +7,18 @@ import { Button, Select } from '@grafana/ui';
 import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType } from '../../dataquery.gen';
 import { AzureMonitorQuery, AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types';
 
-import { buildAndUpdateQuery } from './utils';
+import { BuildAndUpdateOptions, inputFieldSize } from './utils';
 
 interface TableSectionProps {
   allColumns: AzureLogAnalyticsMetadataColumn[];
   tables: AzureLogAnalyticsMetadataTable[];
   query: AzureMonitorQuery;
-  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+  buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
   templateVariableOptions?: SelectableValue<string>;
 }
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
-  const { allColumns, query, tables, onQueryUpdate, templateVariableOptions } = props;
+  const { allColumns, query, tables, buildAndUpdateQuery, templateVariableOptions } = props;
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 
@@ -55,9 +55,6 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     }
 
     buildAndUpdateQuery({
-      query,
-      onQueryUpdate,
-      allColumns,
       from: {
         property: {
           name: selectedTable.name,
@@ -76,18 +73,12 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     }
 
     buildAndUpdateQuery({
-      query,
-      onQueryUpdate,
-      allColumns,
       columns: selectedArray,
     });
   };
 
   const onDeleteAllColumns = () => {
     buildAndUpdateQuery({
-      query,
-      onQueryUpdate,
-      allColumns,
       columns: [],
     });
   };
@@ -102,6 +93,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
             options={tableOptions}
             placeholder="Select a table"
             onChange={handleTableChange}
+            width={inputFieldSize}
           />
         </EditorField>
         <EditorField label="Columns">
@@ -116,6 +108,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
                 handleColumnsChange(e);
               }}
               isDisabled={!query.azureLogAnalytics?.builderQuery?.from?.property.name}
+              width={inputFieldSize}
             />
             <Button variant="secondary" icon="times" onClick={onDeleteAllColumns} />
           </InputGroup>

@@ -1,14 +1,29 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
 
-import { BuilderQueryExpression } from '../../dataquery.gen';
+import {
+  BuilderQueryEditorExpressionType,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryEditorReduceExpression,
+  BuilderQueryEditorWhereExpression,
+  BuilderQueryEditorGroupByExpression,
+  BuilderQueryEditorOrderByExpression,
+  BuilderQueryEditorPropertyExpression,
+  BuilderQueryExpression,
+} from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
-import { AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from '../../types';
+import {
+  AzureLogAnalyticsMetadataTable,
+  AzureLogAnalyticsMetadataColumn,
+  AzureMonitorQuery,
+  EngineSchema,
+} from '../../types';
 
 import { AggregateSection } from './AggregationSection';
+import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import { FilterSection } from './FilterSection';
 import { FuzzySearch } from './FuzzySearch';
 import { GroupBySection } from './GroupBySection';
@@ -16,7 +31,7 @@ import KQLPreview from './KQLPreview';
 import { LimitSection } from './LimitSection';
 import { OrderBySection } from './OrderBySection';
 import { TableSection } from './TableSection';
-import { DEFAULT_LOGS_BUILDER_QUERY, parseQueryToBuilder } from './utils';
+import { DEFAULT_LOGS_BUILDER_QUERY } from './utils';
 
 interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
@@ -34,32 +49,76 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     return schema?.database?.tables || [];
   }, [schema?.database]);
 
-  const builderQuery: BuilderQueryExpression = query.azureLogAnalytics?.query
-    ? parseQueryToBuilder(query.azureLogAnalytics?.query)
-    : DEFAULT_LOGS_BUILDER_QUERY;
+  const builderQuery: BuilderQueryExpression = query.azureLogAnalytics?.builderQuery || DEFAULT_LOGS_BUILDER_QUERY;
 
-  const updatedBuilderQuery = { ...builderQuery };
-
-  const isBuilderQueryChanged =
-    JSON.stringify(updatedBuilderQuery) !== JSON.stringify(query.azureLogAnalytics?.builderQuery);
-
-  if (isBuilderQueryChanged) {
-    onQueryChange({
-      ...query,
-      azureLogAnalytics: {
-        ...query.azureLogAnalytics,
-        builderQuery: updatedBuilderQuery,
-      },
-    });
-  }
-
-  const allColumns = useMemo(() => {
-    if (!builderQuery.from?.property.name || !tables) {
-      return [];
-    }
-    const selectedTable = tables.find((table) => table.name === builderQuery!.from?.property.name);
+  const allColumns: AzureLogAnalyticsMetadataColumn[] = useMemo(() => {
+    const tableName = builderQuery.from?.property.name;
+    const selectedTable = tables.find((table) => table.name === tableName);
     return selectedTable?.columns || [];
   }, [builderQuery, tables]);
+
+  const buildAndUpdateQuery = useCallback(
+    ({
+      limit,
+      reduce,
+      where,
+      fuzzySearch,
+      groupBy,
+      orderBy,
+      columns,
+      from,
+    }: {
+      limit?: number;
+      reduce?: BuilderQueryEditorReduceExpression[];
+      where?: BuilderQueryEditorWhereExpression[];
+      fuzzySearch?: BuilderQueryEditorWhereExpression[];
+      groupBy?: BuilderQueryEditorGroupByExpression[];
+      orderBy?: BuilderQueryEditorOrderByExpression[];
+      columns?: string[];
+      from?: BuilderQueryEditorPropertyExpression;
+    }) => {
+      const datetimeColumn = allColumns.find((col) => col.type === 'datetime')?.name || 'TimeGenerated';
+
+      const timeFilterExpression: BuilderQueryEditorWhereExpression = {
+        type: BuilderQueryEditorExpressionType.Operator,
+        operator: { name: '$__timeFilter', value: datetimeColumn },
+        property: { name: datetimeColumn, type: BuilderQueryEditorPropertyType.Datetime },
+      };
+
+      const updatedBuilderQuery: BuilderQueryExpression = {
+        ...builderQuery,
+        ...(limit !== undefined ? { limit } : {}),
+        ...(reduce !== undefined
+          ? { reduce: { expressions: reduce, type: BuilderQueryEditorExpressionType.Reduce } }
+          : {}),
+        ...(where !== undefined ? { where: { expressions: where, type: BuilderQueryEditorExpressionType.And } } : {}),
+        ...(fuzzySearch !== undefined
+          ? { fuzzySearch: { expressions: fuzzySearch, type: BuilderQueryEditorExpressionType.And } }
+          : {}),
+        ...(groupBy !== undefined
+          ? { groupBy: { expressions: groupBy, type: BuilderQueryEditorExpressionType.Group_by } }
+          : {}),
+        ...(orderBy !== undefined
+          ? { orderBy: { expressions: orderBy, type: BuilderQueryEditorExpressionType.Order_by } }
+          : {}),
+        ...(columns !== undefined ? { columns: { columns, type: BuilderQueryEditorExpressionType.Property } } : {}),
+        ...(from !== undefined ? { from } : {}),
+        timeFilter: { expressions: [timeFilterExpression], type: BuilderQueryEditorExpressionType.And },
+      };
+
+      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery(updatedBuilderQuery);
+
+      onQueryChange({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          builderQuery: updatedBuilderQuery,
+          query: updatedQueryString,
+        },
+      });
+    },
+    [query, builderQuery, onQueryChange, allColumns]
+  );
 
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
@@ -67,13 +126,13 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         {schema && tables.length === 0 && (
           <Alert severity="warning" title="Resource loaded successfully but without any tables" />
         )}
-        <TableSection {...props} tables={tables} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
-        <FilterSection {...props} onQueryUpdate={onQueryChange} allColumns={allColumns} query={query} />
-        <AggregateSection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
-        <GroupBySection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
-        <OrderBySection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
-        <FuzzySearch {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
-        <LimitSection {...props} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
+        <TableSection {...props} tables={tables} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
+        <FilterSection {...props} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
+        <AggregateSection {...props} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
+        <GroupBySection {...props} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
+        <OrderBySection {...props} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
+        <FuzzySearch {...props} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
+        <LimitSection {...props} buildAndUpdateQuery={buildAndUpdateQuery} />
         <KQLPreview
           query={query.azureLogAnalytics?.query || ''}
           hidden={isKQLPreviewHidden}

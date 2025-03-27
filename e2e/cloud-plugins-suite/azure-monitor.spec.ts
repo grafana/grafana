@@ -200,7 +200,6 @@ describe('Azure monitor datasource', () => {
       visitDashboardAtStart: false,
       queriesForm: () => {
         e2eSelectors.queryEditor.header.select().find('input').type('Logs{enter}');
-        cy.contains('KQL').click({ force: true });
         e2eSelectors.queryEditor.resourcePicker.select.button().click();
         e2eSelectors.queryEditor.resourcePicker.search
           .input()

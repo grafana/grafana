@@ -1,158 +1,116 @@
-import {
-  BuilderQueryEditorExpressionType,
-  BuilderQueryEditorOrderByExpressionArray,
-  BuilderQueryEditorWhereExpressionArray,
-  BuilderQueryExpression,
-} from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn } from '../../types';
-
-const getDatetimeColumn = (columns: AzureLogAnalyticsMetadataColumn[]): string => {
-  return columns.find((col) => col.type === 'datetime')?.name || 'TimeGenerated';
-};
-
-const shouldApplyTimeFilter = (datetimeColumn: string, where?: BuilderQueryEditorWhereExpressionArray): boolean => {
-  const hasTimeFilter = where?.expressions?.some((exp) => exp.property?.name === datetimeColumn);
-  return !hasTimeFilter;
-};
-
-const appendFrom = (selectedTable: string, phrases: string[]) => {
-  phrases.push(selectedTable);
-};
+import { BuilderQueryEditorWhereExpressionArray, BuilderQueryExpression } from '../../dataquery.gen';
 
 const appendWhere = (
-  selectedColumns: string[],
-  filters: string | undefined,
-  datetimeColumn: string,
-  shouldApplyTimeFilter: boolean,
-  columns: AzureLogAnalyticsMetadataColumn[],
   phrases: string[],
-  where: BuilderQueryEditorWhereExpressionArray | undefined
+  timeFilter?: BuilderQueryEditorWhereExpressionArray,
+  fuzzySearch?: BuilderQueryEditorWhereExpressionArray,
+  where?: BuilderQueryEditorWhereExpressionArray
 ) => {
-  const whereConditions = new Set<string>();
+  const conditions: string[] = [];
 
-  if (shouldApplyTimeFilter) {
-    whereConditions.add(`$__timeFilter(${datetimeColumn})`);
-  }
-
-  if (filters) {
-    const validFilters = filters.split(' and ').filter((filter) => {
-      const filterColumn = filter.split(' ')[0];
-      return selectedColumns.includes(filterColumn) || columns.some((col) => col.name === filterColumn);
-    });
-    validFilters.forEach((filter) => whereConditions.add(filter));
-  }
-
-  where?.expressions?.forEach((condition) => {
-    if (condition.type === BuilderQueryEditorExpressionType.Operator) {
-      const { operator, property } = condition;
-      if (operator?.name && operator?.value && property?.name) {
-        let operatorValue = String(operator.value).trim();
-        if (
-          (operatorValue.startsWith("'") && operatorValue.endsWith("'")) ||
-          (operatorValue.startsWith('"') && operatorValue.endsWith('"'))
-        ) {
-          operatorValue = operatorValue.slice(1, -1);
-        }
-        const newCondition = `${property.name} ${operator.name} '${operatorValue}'`;
-        whereConditions.add(newCondition);
+  const addCondition = (exp: any) => {
+    if (exp.operator?.name && exp.property?.name) {
+      const val = String(exp.operator.value ?? '').trim();
+      if (exp.operator.name === '$__timeFilter') {
+        conditions.push(`$__timeFilter(${exp.property.name})`);
+      } else {
+        conditions.push(`${exp.property.name} ${exp.operator.name} '${val}'`);
       }
     }
-  });
+  };
 
-  if (whereConditions.size > 0) {
-    phrases.push(`where ${Array.from(whereConditions).join(' and ')}`);
+  timeFilter?.expressions?.forEach(addCondition);
+  fuzzySearch?.expressions?.forEach(addCondition);
+  where?.expressions?.forEach(addCondition);
+
+  if (conditions.length > 0) {
+    phrases.push(`where ${conditions.join(' and ')}`);
   }
 };
 
-const appendProject = (selectedColumns: string[], phrases: string[]) => {
+const appendProject = (builderQuery: BuilderQueryExpression, phrases: string[]) => {
+  const selectedColumns = builderQuery.columns?.columns || [];
   if (selectedColumns.length > 0) {
-    if (selectedColumns.includes('TimeGenerated') && !phrases.some((p) => p.includes('$__timeFilter'))) {
-      phrases.splice(1, 0, `where $__timeFilter(TimeGenerated)`);
-    }
     phrases.push(`project ${selectedColumns.join(', ')}`);
   }
 };
 
-const appendSummarize = (
-  selectedColumns: string[],
-  aggregation: string | undefined,
-  groupBy: string[] | undefined,
-  phrases: string[]
-) => {
-  const hasValidAggregation = !!(aggregation && aggregation.trim());
+const appendSummarize = (builderQuery: BuilderQueryExpression, phrases: string[]) => {
   const summarizeAlreadyAdded = phrases.some((phrase) => phrase.startsWith('summarize'));
-  const groupByParts = new Set<string>(groupBy);
+  const reduceExprs = builderQuery.reduce?.expressions ?? [];
 
-  if (groupBy && groupBy.length > 0) {
-    if (hasValidAggregation) {
-      if (aggregation.startsWith('percentile')) {
-        const percentileValue = selectedColumns.includes('percentileParam') ? 15 : undefined;
-        const column = selectedColumns.includes('percentileColumn');
-        phrases.push(`summarize ${aggregation}(${percentileValue}, ${column})`);
-      } else if (!summarizeAlreadyAdded) {
-        phrases.push(`summarize ${aggregation} by ${Array.from(groupByParts).join(', ')}`);
+  if (summarizeAlreadyAdded || reduceExprs.length === 0) {
+    return;
+  }
+
+  const summarizeParts = reduceExprs
+    .map((expr) => {
+      if (!expr.reduce?.name) {
+        return null;
       }
-    } else if (!summarizeAlreadyAdded) {
-      phrases.push(`summarize by ${Array.from(groupByParts).join(', ')}`);
-    }
-  } else if (hasValidAggregation && !summarizeAlreadyAdded) {
-    phrases.push(`summarize ${aggregation}`);
-  }
-};
 
-const appendOrderBy = (
-  phrases: string[],
-  orderBy?: BuilderQueryEditorOrderByExpressionArray,
-  aggregation?: string,
-  selectedColumns?: string[],
-  filters?: string
-) => {
-  if (aggregation || !orderBy?.expressions?.length) {
+      const func = expr.reduce.name;
+
+      if (func === 'percentile') {
+        const percentileValue = expr.parameters?.[0]?.value;
+        const column = expr.parameters?.[1]?.value ?? expr.property?.name ?? '';
+        if (!column) {
+          return null;
+        }
+        return `percentile(${percentileValue}, ${column})`;
+      }
+
+      const column = expr.property?.name ?? '';
+
+      if (func === 'count') {
+        return 'count()';
+      }
+
+      return column ? `${func}(${column})` : func;
+    })
+    .filter(Boolean);
+
+  if (summarizeParts.length === 0) {
     return;
   }
 
-  const isOnlyTableSelected = !selectedColumns?.length && !filters && !aggregation && !orderBy?.expressions?.length;
-  if (isOnlyTableSelected) {
+  const groupBy = builderQuery.groupBy?.expressions?.map((exp) => exp.property.name) || [];
+  const summarizeClause = `summarize ${summarizeParts.join(', ')}`;
+  phrases.push(groupBy.length ? `${summarizeClause} by ${groupBy.join(', ')}` : summarizeClause);
+};
+
+const appendOrderBy = (builderQuery: BuilderQueryExpression, phrases: string[]) => {
+  const orderBy = builderQuery.orderBy?.expressions || [];
+  if (!orderBy.length) {
     return;
   }
 
-  const orderClauses = orderBy.expressions.map((order) => `${order.property?.name} ${order.order}`).filter(Boolean);
-  if (orderClauses.length > 0) {
-    phrases.push(`order by ${orderClauses.join(', ')}`);
+  const clauses = orderBy.map((order) => `${order.property?.name} ${order.order}`).filter(Boolean);
+  if (clauses.length > 0) {
+    phrases.push(`order by ${clauses.join(', ')}`);
   }
 };
 
-const appendLimit = (limit: number | undefined, phrases: string[]) => {
-  if (limit && limit > 0) {
-    phrases.push(`limit ${limit}`);
+const appendLimit = (builderQuery: BuilderQueryExpression, phrases: string[]) => {
+  if (builderQuery.limit && builderQuery.limit > 0) {
+    phrases.push(`limit ${builderQuery.limit}`);
   }
 };
 
-const toQuery = (
-  builderQuery: BuilderQueryExpression,
-  allColumns: AzureLogAnalyticsMetadataColumn[],
-  aggregation?: string,
-  filters?: string
-): string => {
-  const { from, columns, groupBy, limit, where, orderBy } = builderQuery;
-
+const toQuery = (builderQuery: BuilderQueryExpression): string => {
+  const { from, timeFilter, fuzzySearch, where } = builderQuery;
   if (!from?.property?.name) {
     return '';
   }
 
-  const selectedTable = from.property.name;
-  const selectedColumns = columns?.columns || [];
   const phrases: string[] = [];
-  const datetimeColumn = getDatetimeColumn(allColumns);
-  const shouldTimeFilter = shouldApplyTimeFilter(datetimeColumn, where);
-  const groupByStrings = groupBy?.expressions?.map((exp) => exp.property.name) || [];
+  phrases.push(from.property.name);
 
-  appendFrom(selectedTable, phrases);
-  appendWhere(selectedColumns, filters, datetimeColumn, shouldTimeFilter, allColumns, phrases, where);
-  appendProject(selectedColumns, phrases);
-  appendSummarize(selectedColumns, aggregation, groupByStrings, phrases);
-  appendOrderBy(phrases, orderBy, aggregation, selectedColumns, filters);
-  appendLimit(limit, phrases);
+  appendWhere(phrases, timeFilter, fuzzySearch, where);
+  appendProject(builderQuery, phrases);
+  appendSummarize(builderQuery, phrases);
+  appendOrderBy(builderQuery, phrases);
+  appendLimit(builderQuery, phrases);
 
   return phrases.join('\n| ');
 };

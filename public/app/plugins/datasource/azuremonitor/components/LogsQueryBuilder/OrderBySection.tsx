@@ -12,15 +12,15 @@ import {
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
-import { buildAndUpdateQuery } from './utils';
+import { BuildAndUpdateOptions, inputFieldSize } from './utils';
 
 interface OrderBySectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
-  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+  buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
 }
 
-export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumns, onQueryUpdate }) => {
+export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumns, buildAndUpdateQuery }) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const hasLoadedOrderBy = useRef(false);
@@ -43,12 +43,8 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
     }
   }, [builderQuery, orderBy]);
 
-  if (!builderQuery) {
-    return <></>;
-  }
-
-  const groupByColumns = builderQuery?.groupBy?.expressions?.map((g) => g.property.name) || [];
-  const aggregateColumns = builderQuery?.reduce?.expressions?.map((r) => r.property.name) || [];
+  const groupByColumns = builderQuery?.groupBy?.expressions?.map((g) => g.property?.name) || [];
+  const aggregateColumns = builderQuery?.reduce?.expressions?.map((r) => r.property?.name) || [];
   const selectedColumns = builderQuery?.columns?.columns || [];
 
   const allAvailableColumns =
@@ -94,9 +90,6 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
       }
 
       buildAndUpdateQuery({
-        query,
-        onQueryUpdate,
-        allColumns,
         orderBy: updated,
       });
 
@@ -109,9 +102,6 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
       const updated = prev.filter((_, i) => i !== index);
 
       buildAndUpdateQuery({
-        query,
-        onQueryUpdate,
-        allColumns,
         orderBy: updated,
       });
 
@@ -134,7 +124,7 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
                   <InputGroup key={index}>
                     <Select
                       aria-label="Order by column"
-                      width={30}
+                      width={inputFieldSize}
                       value={entry.property?.name ? { label: entry.property.name, value: entry.property.name } : null}
                       options={columnOptions}
                       onChange={(e) => e.value && handleOrderByChange(index, 'column', e.value)}
@@ -142,18 +132,23 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
                     <Label style={{ margin: '9px 9px 0 9px' }}>BY</Label>
                     <Select
                       aria-label="Order Direction"
-                      width={12}
+                      width={inputFieldSize}
                       value={orderOptions.find((o) => o.value === entry.order) || null}
                       options={orderOptions}
                       onChange={(e) => e.value && handleOrderByChange(index, 'order', e.value)}
                     />
                     <Button variant="secondary" icon="times" onClick={() => onDeleteOrderBy(index)} />
                     {index < orderBy.length - 1 ? <Label>AND</Label> : <></>}
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleOrderByChange(-1, 'column', '')}
+                      icon="plus"
+                      style={{ marginLeft: '15px' }}
+                    />
                   </InputGroup>
                 ))}
               </div>
             )}
-            <Button variant="secondary" onClick={() => handleOrderByChange(-1, 'column', '')} icon="plus" />
           </>
         </EditorField>
       </EditorFieldGroup>

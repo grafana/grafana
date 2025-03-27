@@ -7,25 +7,23 @@ import { BuilderQueryEditorPropertyType, BuilderQueryEditorReduceExpression } fr
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
 import AggregateItem from './AggregateItem';
-import { buildAndUpdateQuery } from './utils';
+import { BuildAndUpdateOptions } from './utils';
 
 interface AggregateSectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
-  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
   templateVariableOptions: SelectableValue<string>;
+  buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
 }
-
 export const AggregateSection: React.FC<AggregateSectionProps> = ({
   query,
   allColumns,
-  onQueryUpdate,
+  buildAndUpdateQuery,
   templateVariableOptions,
 }) => {
   const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
-
   const hasLoadedAggregates = useRef(false);
 
   useEffect(() => {
@@ -38,88 +36,41 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
     }
 
     if (!hasLoadedAggregates.current && builderQuery?.reduce?.expressions?.length && aggregates.length === 0) {
-      let parsedAggregates: BuilderQueryEditorReduceExpression[];
-
-      const hasPercentile = builderQuery.reduce.expressions.find((r) => r.parameters);
-      if (hasPercentile) {
-        parsedAggregates = builderQuery.reduce.expressions
-          .filter((agg) => agg.reduce?.name)
-          .map((agg) => ({
-            property: agg.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
-            reduce: agg.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
-            parameters: agg.parameters ?? [],
-            focus: false,
-          }));
-        setAggregates(parsedAggregates);
-      } else {
-        parsedAggregates = builderQuery.reduce.expressions
-          .filter((agg) => agg.reduce?.name)
-          .map((agg) => ({
-            property: agg.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
-            reduce: agg.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
-            focus: false,
-          }));
-        setAggregates(parsedAggregates);
-      }
-
+      const parsed = builderQuery.reduce.expressions.map((agg) => ({
+        property: agg.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
+        reduce: agg.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
+        parameters: agg.parameters,
+        focus: false,
+      }));
+      setAggregates(parsed);
       hasLoadedAggregates.current = true;
     }
   }, [builderQuery, aggregates]);
 
-  if (!builderQuery) {
-    return <></>;
-  }
+  const availableColumns: Array<SelectableValue<string>> = builderQuery?.columns?.columns?.length
+    ? builderQuery.columns.columns.map((col) => ({ label: col, value: col }))
+    : allColumns.map((col) => ({ label: col.name, value: col.name }));
 
-  const availableColumns: Array<SelectableValue<string>> = [];
-  const columns = builderQuery.columns?.columns ?? [];
+  const onChange = (newItems: Array<Partial<BuilderQueryEditorReduceExpression>>) => {
+    setAggregates(newItems);
 
-  if (columns.length > 0) {
-    availableColumns.push(
-      ...columns.map((col) => ({
-        label: col,
-        value: col,
-      }))
-    );
-  } else {
-    availableColumns.push(
-      ...allColumns.map((col) => ({
-        label: col.name,
-        value: col.name,
-      }))
-    );
-  }
+    buildAndUpdateQuery({
+      reduce: newItems,
+    });
+  };
 
-  const onDeleteAggregate = (aggregateToDelete: Partial<BuilderQueryEditorReduceExpression>) => {
+  const onDeleteAggregate = (aggregateToDelete: BuilderQueryEditorReduceExpression) => {
     setAggregates((prevAggregates) => {
-      const updatedAggregates = prevAggregates.filter((agg) => agg.property?.name !== aggregateToDelete.property?.name);
+      const updatedAggregates = prevAggregates.filter(
+        (agg) =>
+          agg.property?.name !== aggregateToDelete.property?.name || agg.reduce?.name !== aggregateToDelete.reduce?.name
+      );
 
       buildAndUpdateQuery({
-        query,
-        onQueryUpdate,
-        allColumns,
         reduce: updatedAggregates.length === 0 ? [] : updatedAggregates,
       });
 
       return updatedAggregates;
-    });
-  };
-
-  const onChange = (newItems: Array<Partial<BuilderQueryEditorReduceExpression>>) => {
-    const cleaned = newItems.map(
-      (v): BuilderQueryEditorReduceExpression => ({
-        property: v.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
-        reduce: v.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.String },
-        parameters: v.parameters,
-        focus: Object.keys(v).length === 0,
-      })
-    );
-
-    setAggregates(cleaned);
-    buildAndUpdateQuery({
-      query,
-      onQueryUpdate,
-      allColumns,
-      reduce: cleaned,
     });
   };
 
@@ -130,9 +81,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
           <EditorField
             label="Aggregate"
             optional={true}
-            tooltip={`Perform calculations across rows of data, such as count, sum, average, minimum, maximum, standard
-                deviation or percentiles. Aggregates condense multiple rows into a single value based on mathematical
-                operations applied to the data.`}
+            tooltip={`Perform calculations across rows of data, such as count, sum, average, minimum, maximum, standard deviation or percentiles.`}
           >
             <EditorList
               items={aggregates}
@@ -148,11 +97,11 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
 
 function makeRenderAggregate(
   availableColumns: Array<SelectableValue<string>>,
-  onDeleteAggregate: (aggregate: Partial<BuilderQueryEditorReduceExpression>) => void,
+  onDeleteAggregate: (aggregate: BuilderQueryEditorReduceExpression) => void,
   templateVariableOptions: SelectableValue<string>
 ) {
   return function renderAggregate(
-    item: Partial<BuilderQueryEditorReduceExpression>,
+    item: BuilderQueryEditorReduceExpression,
     onChange: (item: BuilderQueryEditorReduceExpression) => void
   ) {
     return (

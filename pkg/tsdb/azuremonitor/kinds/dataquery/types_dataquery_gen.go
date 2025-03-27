@@ -189,13 +189,15 @@ const (
 )
 
 type BuilderQueryExpression struct {
-	From    *BuilderQueryEditorPropertyExpression     `json:"from,omitempty"`
-	Columns *BuilderQueryEditorColumnsExpression      `json:"columns,omitempty"`
-	Where   *BuilderQueryEditorWhereExpressionArray   `json:"where,omitempty"`
-	Reduce  *BuilderQueryEditorReduceExpressionArray  `json:"reduce,omitempty"`
-	GroupBy *BuilderQueryEditorGroupByExpressionArray `json:"groupBy,omitempty"`
-	Limit   *int64                                    `json:"limit,omitempty"`
-	OrderBy *BuilderQueryEditorOrderByExpressionArray `json:"orderBy,omitempty"`
+	From        *BuilderQueryEditorPropertyExpression     `json:"from,omitempty"`
+	Columns     *BuilderQueryEditorColumnsExpression      `json:"columns,omitempty"`
+	Where       *BuilderQueryEditorWhereExpressionArray   `json:"where,omitempty"`
+	Reduce      *BuilderQueryEditorReduceExpressionArray  `json:"reduce,omitempty"`
+	GroupBy     *BuilderQueryEditorGroupByExpressionArray `json:"groupBy,omitempty"`
+	Limit       *int64                                    `json:"limit,omitempty"`
+	OrderBy     *BuilderQueryEditorOrderByExpressionArray `json:"orderBy,omitempty"`
+	FuzzySearch *BuilderQueryEditorWhereExpressionArray   `json:"fuzzySearch,omitempty"`
+	TimeFilter  *BuilderQueryEditorWhereExpressionArray   `json:"timeFilter,omitempty"`
 }
 
 // NewBuilderQueryExpression creates a new BuilderQueryExpression object.
@@ -325,18 +327,15 @@ func NewBuilderQueryEditorReduceExpressionArray() *BuilderQueryEditorReduceExpre
 }
 
 type BuilderQueryEditorReduceExpression struct {
-	Property   BuilderQueryEditorProperty                      `json:"property"`
-	Reduce     BuilderQueryEditorProperty                      `json:"reduce"`
+	Property   *BuilderQueryEditorProperty                     `json:"property,omitempty"`
+	Reduce     *BuilderQueryEditorProperty                     `json:"reduce,omitempty"`
 	Parameters []BuilderQueryEditorFunctionParameterExpression `json:"parameters,omitempty"`
 	Focus      *bool                                           `json:"focus,omitempty"`
 }
 
 // NewBuilderQueryEditorReduceExpression creates a new BuilderQueryEditorReduceExpression object.
 func NewBuilderQueryEditorReduceExpression() *BuilderQueryEditorReduceExpression {
-	return &BuilderQueryEditorReduceExpression{
-		Property: *NewBuilderQueryEditorProperty(),
-		Reduce:   *NewBuilderQueryEditorProperty(),
-	}
+	return &BuilderQueryEditorReduceExpression{}
 }
 
 type BuilderQueryEditorFunctionParameterExpression struct {
@@ -361,17 +360,15 @@ func NewBuilderQueryEditorGroupByExpressionArray() *BuilderQueryEditorGroupByExp
 }
 
 type BuilderQueryEditorGroupByExpression struct {
-	Property BuilderQueryEditorProperty       `json:"property"`
-	Interval *BuilderQueryEditorProperty      `json:"interval,omitempty"`
-	Focus    *bool                            `json:"focus,omitempty"`
-	Type     BuilderQueryEditorExpressionType `json:"type"`
+	Property *BuilderQueryEditorProperty       `json:"property,omitempty"`
+	Interval *BuilderQueryEditorProperty       `json:"interval,omitempty"`
+	Focus    *bool                             `json:"focus,omitempty"`
+	Type     *BuilderQueryEditorExpressionType `json:"type,omitempty"`
 }
 
 // NewBuilderQueryEditorGroupByExpression creates a new BuilderQueryEditorGroupByExpression object.
 func NewBuilderQueryEditorGroupByExpression() *BuilderQueryEditorGroupByExpression {
-	return &BuilderQueryEditorGroupByExpression{
-		Property: *NewBuilderQueryEditorProperty(),
-	}
+	return &BuilderQueryEditorGroupByExpression{}
 }
 
 type BuilderQueryEditorOrderByExpressionArray struct {

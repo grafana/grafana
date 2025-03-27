@@ -379,8 +379,8 @@ export interface BuilderQueryEditorFunctionParameterExpression {
 export interface BuilderQueryEditorReduceExpression {
   focus?: boolean;
   parameters?: Array<BuilderQueryEditorFunctionParameterExpression>;
-  property: BuilderQueryEditorProperty;
-  reduce: BuilderQueryEditorProperty;
+  property?: BuilderQueryEditorProperty;
+  reduce?: BuilderQueryEditorProperty;
 }
 
 export const defaultBuilderQueryEditorReduceExpression: Partial<BuilderQueryEditorReduceExpression> = {
@@ -399,8 +399,8 @@ export const defaultBuilderQueryEditorReduceExpressionArray: Partial<BuilderQuer
 export interface BuilderQueryEditorGroupByExpression {
   focus?: boolean;
   interval?: BuilderQueryEditorProperty;
-  property: BuilderQueryEditorProperty;
-  type: BuilderQueryEditorExpressionType;
+  property?: BuilderQueryEditorProperty;
+  type?: BuilderQueryEditorExpressionType;
 }
 
 export interface BuilderQueryEditorGroupByExpressionArray {
@@ -430,10 +430,12 @@ export const defaultBuilderQueryEditorOrderByExpressionArray: Partial<BuilderQue
 export interface BuilderQueryExpression {
   columns?: BuilderQueryEditorColumnsExpression;
   from?: BuilderQueryEditorPropertyExpression;
+  fuzzySearch?: BuilderQueryEditorWhereExpressionArray;
   groupBy?: BuilderQueryEditorGroupByExpressionArray;
   limit?: number;
   orderBy?: BuilderQueryEditorOrderByExpressionArray;
   reduce?: BuilderQueryEditorReduceExpressionArray;
+  timeFilter?: BuilderQueryEditorWhereExpressionArray;
   where?: BuilderQueryEditorWhereExpressionArray;
 }
 

@@ -3,25 +3,18 @@ import { useState } from 'react';
 import { EditorRow, EditorFieldGroup, EditorField } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
-
-import { buildAndUpdateQuery } from './utils';
+import { BuildAndUpdateOptions } from './utils';
 
 interface LimitSectionProps {
-  query: AzureMonitorQuery;
-  allColumns: AzureLogAnalyticsMetadataColumn[];
-  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
+  buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
 }
 
 export const LimitSection: React.FC<LimitSectionProps> = (props) => {
-  const { query, allColumns, onQueryUpdate } = props;
-  const [limit, setLimit] = useState<number>();
+  const { buildAndUpdateQuery } = props;
+  const [limit, setLimit] = useState<number>(1000);
 
   const handleQueryLimitUpdate = (newLimit: number) => {
     buildAndUpdateQuery({
-      query,
-      onQueryUpdate,
-      allColumns,
       limit: newLimit,
     });
   };
@@ -34,10 +27,10 @@ export const LimitSection: React.FC<LimitSectionProps> = (props) => {
             className="width-5"
             type="number"
             placeholder="Enter limit"
-            value={limit ?? 1000}
+            value={limit}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const newValue = e.target.value.replace(/[^0-9]/g, '');
-              setLimit(newValue ? Number(newValue) : undefined);
+              setLimit(Number(newValue));
               handleQueryLimitUpdate(Number(newValue));
             }}
           />

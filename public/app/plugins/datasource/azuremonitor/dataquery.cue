@@ -217,8 +217,8 @@ composableKinds: DataQuery: {
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryEditorReduceExpression: {
-					property: #BuilderQueryEditorProperty
-					reduce: #BuilderQueryEditorProperty
+					property?: #BuilderQueryEditorProperty
+					reduce?: #BuilderQueryEditorProperty
 					parameters?: [...#BuilderQueryEditorFunctionParameterExpression]
 					focus?: bool
 				} @cuetsy(kind="interface")
@@ -229,10 +229,10 @@ composableKinds: DataQuery: {
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryEditorGroupByExpression: {
-					property: #BuilderQueryEditorProperty
+					property?: #BuilderQueryEditorProperty
 					interval?: #BuilderQueryEditorProperty
 					focus?: bool
-					type: #BuilderQueryEditorExpressionType
+					type?: #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryEditorGroupByExpressionArray: {
@@ -259,6 +259,8 @@ composableKinds: DataQuery: {
 					groupBy?: #BuilderQueryEditorGroupByExpressionArray
 					limit?: int
 					orderBy?: #BuilderQueryEditorOrderByExpressionArray
+					fuzzySearch?: #BuilderQueryEditorWhereExpressionArray
+					timeFilter?: #BuilderQueryEditorWhereExpressionArray
 				} @cuetsy(kind="interface")
 
 				#AzureResourceGraphQuery: {
