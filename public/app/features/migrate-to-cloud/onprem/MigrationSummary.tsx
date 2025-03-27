@@ -98,7 +98,12 @@ export function MigrationSummary(props: MigrationSummaryProps) {
 
       <Stack gap={2} wrap justifyContent="flex-end">
         {showRebuildSnapshot && (
-          <Button disabled={isBusy || uploadSnapshotIsLoading} onClick={onRebuildSnapshot} variant="secondary">
+          <Button
+            disabled={isBusy || uploadSnapshotIsLoading}
+            onClick={onRebuildSnapshot}
+            variant="secondary"
+            data-testid="migrate-to-cloud-summary-reconfigure-snapshot-button"
+          >
             <Trans i18nKey="migrate-to-cloud.summary.rebuild-snapshot">Reconfigure snapshot</Trans>
           </Button>
         )}
@@ -108,6 +113,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
             disabled={isBusy || uploadSnapshotIsLoading}
             onClick={onUploadSnapshot}
             icon={uploadSnapshotIsLoading ? 'spinner' : undefined}
+            data-testid="migrate-to-cloud-summary-upload-snapshot-button"
           >
             <Trans i18nKey="migrate-to-cloud.summary.upload-migration">Upload snapshot</Trans>
           </Button>

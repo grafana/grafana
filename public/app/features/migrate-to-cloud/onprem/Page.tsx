@@ -148,7 +148,12 @@ export const Page = () => {
   // Because we don't delete the previous snapshot if it exists, we need to keep track of the last snapshot.
   // When reconfiguring a snapshot, we need to pause the state machine until a new snapshot is created.
   useEffect(() => {
-    if (lastSnapshotUid !== snapshot.data?.uid && createSnapshotResult.isSuccess && createSnapshotResult.data?.uid) {
+    if (
+      reconfiguring &&
+      lastSnapshotUid !== snapshot.data?.uid &&
+      createSnapshotResult.isSuccess &&
+      createSnapshotResult.data?.uid
+    ) {
       setLastSnapshotUid(createSnapshotResult.data.uid);
       setReconfiguring(false);
     }
@@ -159,6 +164,7 @@ export const Page = () => {
     snapshot.data?.uid,
     setLastSnapshotUid,
     setReconfiguring,
+    reconfiguring,
   ]);
 
   // UI State Machine
@@ -246,10 +252,9 @@ export const Page = () => {
   ]);
 
   console.log('uiState', uiState);
-  console.log('snapshot.data', snapshot.data);
-  console.log('createSnapshotResult', createSnapshotResult);
-  console.log('snapshot', snapshot);
+  console.log('lastSnapshotUid', lastSnapshotUid);
   console.log('reconfiguring', reconfiguring);
+  console.log('snapshot', snapshot);
 
   const error = getError({
     snapshot: snapshot.data,

@@ -74,6 +74,7 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
               indeterminate={selectedTypes.size > 0 && !includeAll}
               value={includeAll}
               onChange={handleIncludeAllChange}
+              data-testid="migrate-to-cloud-configure-snapshot-checkbox-resource-include-all"
               //@ts-ignore
               label={
                 <Text variant="h5">
@@ -88,6 +89,7 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
               <Checkbox
                 value={selectedTypes.has(type)}
                 onChange={handleTypeChange(type)}
+                data-testid={`migrate-to-cloud-configure-snapshot-checkbox-resource-${type.toLowerCase()}`}
                 //@ts-ignore
                 label={
                   <Stack gap={1} alignItems="center">
@@ -105,6 +107,7 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
             disabled={disabled || selectedTypes.size === 0}
             onClick={handleBuildSnapshot}
             icon={isLoading ? 'spinner' : undefined}
+            data-testid="migrate-to-cloud-configure-snapshot-build-snapshot-button"
           >
             <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
           </Button>
