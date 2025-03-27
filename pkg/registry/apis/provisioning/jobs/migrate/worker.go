@@ -185,12 +185,13 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	}
 
 	progress.SetMessage(ctx, "exporting legacy resources")
+	resourceManager := resources.NewResourcesManager(rw, folders, userInfo)
 	for _, kind := range resources.SupportedResources {
 		if kind == resources.FolderResource {
 			continue
 		}
 
-		reader := NewLegacyResourceMigrator(rw, w.legacyMigrator, parser, folders.Tree(), progress, options, namespace, kind.GroupResource(), userInfo)
+		reader := NewLegacyResourceMigrator(w.legacyMigrator, parser, resourceManager, progress, options, namespace, kind.GroupResource())
 		if err := reader.Migrate(ctx); err != nil {
 			return fmt.Errorf("error migrating resource %s: %w", kind, err)
 		}

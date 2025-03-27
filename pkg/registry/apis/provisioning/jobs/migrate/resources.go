@@ -2,20 +2,16 @@ package migrate
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -23,28 +19,24 @@ var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
 
 // TODO: can we use the same migrator for folders?
 type legacyResourceResourceMigrator struct {
-	repo       repository.ReaderWriter
-	legacy     legacy.LegacyMigrator
-	parser     *resources.Parser
-	folderTree *resources.FolderTree
-	progress   jobs.JobProgressRecorder
-	namespace  string
-	kind       schema.GroupResource
-	options    provisioning.MigrateJobOptions
-	userInfo   map[string]repository.CommitSignature
+	legacy    legacy.LegacyMigrator
+	parser    *resources.Parser
+	progress  jobs.JobProgressRecorder
+	namespace string
+	kind      schema.GroupResource
+	options   provisioning.MigrateJobOptions
+	resources *resources.ResourcesManager
 }
 
-func NewLegacyResourceMigrator(repo repository.ReaderWriter, legacy legacy.LegacyMigrator, parser *resources.Parser, folderTree *resources.FolderTree, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource, userInfo map[string]repository.CommitSignature) *legacyResourceResourceMigrator {
+func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser *resources.Parser, resources *resources.ResourcesManager, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource) *legacyResourceResourceMigrator {
 	return &legacyResourceResourceMigrator{
-		repo:       repo,
-		legacy:     legacy,
-		parser:     parser,
-		folderTree: folderTree,
-		progress:   progress,
-		options:    options,
-		namespace:  namespace,
-		kind:       kind,
-		userInfo:   userInfo,
+		legacy:    legacy,
+		parser:    parser,
+		progress:  progress,
+		options:   options,
+		namespace: namespace,
+		kind:      kind,
+		resources: resources,
 	}
 }
 
@@ -74,7 +66,12 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	parsed.Meta.SetSourceProperties(utils.SourceProperties{})
 
 	// TODO: this seems to be same logic as the export job
-	fileName, err := r.write(ctx, parsed.Obj, r.folderTree)
+	fileName, err := r.resources.CreateResourceFromObject(ctx, parsed.Obj, resources.WriteOptions{
+		Path:       "",
+		Ref:        "",
+		Identifier: r.options.Identifier,
+	})
+
 	result := jobs.JobResourceResult{
 		Name:     parsed.Meta.GetName(),
 		Resource: r.kind.Resource,
@@ -123,104 +120,4 @@ func (r *legacyResourceResourceMigrator) Migrate(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-// TODO: this is copied from the export job
-func (r *legacyResourceResourceMigrator) write(ctx context.Context, obj *unstructured.Unstructured, folderTree *resources.FolderTree) (string, error) {
-	if err := ctx.Err(); err != nil {
-		return "", fmt.Errorf("context error: %w", err)
-	}
-
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return "", fmt.Errorf("extract meta accessor: %w", err)
-	}
-
-	// Message from annotations
-	commitMessage := meta.GetMessage()
-	if commitMessage == "" {
-		g := meta.GetGeneration()
-		if g > 0 {
-			commitMessage = fmt.Sprintf("Generation: %d", g)
-		} else {
-			commitMessage = "exported from grafana"
-		}
-	}
-
-	name := meta.GetName()
-	// TODO: how to handle this better?
-	manager, _ := meta.GetManagerProperties()
-	if manager.Identity == r.repo.Config().GetName() {
-		return "", nil
-	}
-
-	title := meta.FindTitle("")
-	if title == "" {
-		title = name
-	}
-	folder := meta.GetFolder()
-
-	// Add the author in context (if available)
-	ctx = r.withAuthorSignature(ctx, meta)
-
-	// Get the absolute path of the folder
-	fid, ok := folderTree.DirPath(folder, "")
-	if !ok {
-		// FIXME: Shouldn't this fail instead?
-		fid = resources.Folder{
-			Path: "__folder_not_found/" + slugify.Slugify(folder),
-		}
-		// j.logger.Error("folder of item was not in tree of repository")
-	}
-
-	// Clear the metadata
-	delete(obj.Object, "metadata")
-
-	if r.options.Identifier {
-		meta.SetName(name) // keep the identifier in the metadata
-	}
-
-	body, err := json.MarshalIndent(obj.Object, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal dashboard: %w", err)
-	}
-
-	fileName := slugify.Slugify(title) + ".json"
-	if fid.Path != "" {
-		fileName = safepath.Join(fid.Path, fileName)
-	}
-
-	err = r.repo.Write(ctx, fileName, "", body, commitMessage)
-	if err != nil {
-		return "", fmt.Errorf("failed to write file: %w", err)
-	}
-
-	return fileName, nil
-}
-
-// TODO: this is copied from the export job
-func (r *legacyResourceResourceMigrator) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
-	if r.userInfo == nil {
-		return ctx
-	}
-	id := item.GetUpdatedBy()
-	if id == "" {
-		id = item.GetCreatedBy()
-	}
-	if id == "" {
-		id = "grafana"
-	}
-
-	sig := r.userInfo[id] // lookup
-	if sig.Name == "" && sig.Email == "" {
-		sig.Name = id
-	}
-	t, err := item.GetUpdatedTimestamp()
-	if err == nil && t != nil {
-		sig.When = *t
-	} else {
-		sig.When = item.GetCreationTimestamp().Time
-	}
-
-	return repository.WithAuthorSignature(ctx, sig)
 }

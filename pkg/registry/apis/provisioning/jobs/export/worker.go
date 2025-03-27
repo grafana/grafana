@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 )
 
 type ExportWorker struct {
@@ -131,9 +133,42 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	progress.SetMessage(ctx, "start resource export")
-	err = exportResourcesFromAPIServer(ctx, folders, clients, progress, *options, rw)
-	if err != nil {
-		return err
+	resourceManager := resources.NewResourcesManager(rw, folders, nil)
+	for _, kind := range resources.SupportedResources {
+		// skip from folders as we do them first
+		if kind == resources.FolderResource {
+			continue
+		}
+
+		progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
+		if err := clients.ForEachResource(ctx, kind, func(_ dynamic.ResourceInterface, item *unstructured.Unstructured) error {
+			result := jobs.JobResourceResult{
+				Name:     item.GetName(),
+				Resource: kind.Resource,
+				Group:    kind.Group,
+				Action:   repository.FileActionCreated,
+			}
+
+			fileName, err := resourceManager.CreateResourceFromObject(ctx, item, resources.WriteOptions{
+				Path:       options.Path,
+				Ref:        options.Branch,
+				Identifier: options.Identifier,
+			})
+			if errors.Is(err, resources.ErrAlreadyInRepository) {
+				result.Action = repository.FileActionIgnored
+			} else if err != nil {
+				result.Error = fmt.Errorf("export resource: %w", err)
+			}
+			result.Path = fileName
+			progress.Record(ctx, result)
+
+			if err := progress.TooManyErrors(); err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			return fmt.Errorf("error exporting %s %w", kind.Resource, err)
+		}
 	}
 
 	if buffered != nil {
