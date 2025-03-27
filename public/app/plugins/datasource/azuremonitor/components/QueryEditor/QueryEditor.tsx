@@ -100,6 +100,9 @@ const QueryEditor = ({
         query={query}
         onQueryChange={onQueryChange}
         setAzureLogsCheatSheetModalOpen={setAzureLogsCheatSheetModalOpen}
+        onRunQuery={baseOnRunQuery}
+        data={data}
+        app={app}
       />
       <EditorForQueryType
         data={data}
@@ -108,6 +111,7 @@ const QueryEditor = ({
         query={query}
         datasource={datasource}
         onChange={onQueryChange}
+        onQueryChange={onChange}
         variableOptionGroup={variableOptionGroup}
         setError={setError}
         range={range}
@@ -129,6 +133,8 @@ interface EditorForQueryTypeProps extends Omit<AzureMonitorQueryEditorProps, 'on
   basicLogsEnabled: boolean;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
+  // Used to update the query without running it
+  onQueryChange: (newQuery: AzureMonitorQuery) => void;
 }
 
 const EditorForQueryType = ({
@@ -140,6 +146,7 @@ const EditorForQueryType = ({
   variableOptionGroup,
   onChange,
   setError,
+  onQueryChange,
   range,
 }: EditorForQueryTypeProps) => {
   switch (query.queryType) {
@@ -167,6 +174,7 @@ const EditorForQueryType = ({
           variableOptionGroup={variableOptionGroup}
           setError={setError}
           timeRange={range}
+          onQueryChange={onQueryChange}
         />
       );
 
