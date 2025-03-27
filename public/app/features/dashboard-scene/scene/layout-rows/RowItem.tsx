@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   sceneGraph,
   SceneObject,
@@ -14,6 +16,7 @@ import { ConditionalRendering } from '../../conditional-rendering/ConditionalRen
 import { getDefaultVizPanel } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
+import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -34,6 +37,7 @@ export interface RowItemState extends SceneObjectState {
   fillScreen?: boolean;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
+  isNew?: boolean;
 }
 
 export class RowItem
@@ -49,6 +53,7 @@ export class RowItem
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
   private _layoutRestorer = new LayoutRestorer();
+  public containerRef = React.createRef<HTMLDivElement>();
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -161,7 +166,7 @@ export class RowItem
   }
 
   public onChangeTitle(title: string) {
-    this.setState({ title });
+    this.setState({ title, isNew: false });
   }
 
   public onHeaderHiddenToggle(hideHeader = !this.state.hideHeader) {
@@ -199,5 +204,9 @@ export class RowItem
 
   private _getRepeatBehavior(): RowItemRepeaterBehavior | undefined {
     return this.state.$behaviors?.find((b) => b instanceof RowItemRepeaterBehavior);
+  }
+
+  public scrollIntoView() {
+    scrollCanvasElementIntoView(this, this.containerRef);
   }
 }

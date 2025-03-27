@@ -686,6 +686,7 @@ export interface FeatureToggles {
   pluginProxyPreserveTrailingSlash?: boolean;
   /**
   * Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
+  * @default true
   */
   azureMonitorPrometheusExemplars?: boolean;
   /**
@@ -1048,4 +1049,9 @@ export interface FeatureToggles {
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
+  /**
+  * Enables the UI functionality to recover and view deleted alert rules
+  * @default true
+  */
+  alertingRuleRecoverDeleted?: boolean;
 }

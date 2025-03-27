@@ -5,6 +5,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { t } from 'app/core/internationalization';
 
 import {
@@ -12,6 +13,7 @@ import {
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
+import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -39,9 +41,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     },
     id: 'tabs-layout',
     createFromLayout: TabsLayoutManager.createFromLayout,
-    kind: 'TabsLayout',
     isGridLayout: false,
   };
+
+  public serialize(): DashboardV2Spec['layout'] {
+    return serializeTabsLayout(this);
+  }
 
   public readonly descriptor = TabsLayoutManager.descriptor;
 
@@ -87,6 +92,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
   }
 
+  public switchToTab(tab: TabItem) {
+    this.setState({ currentTabIndex: this.state.tabs.indexOf(tab) });
+  }
+
   public getCurrentTab(): TabItem {
     return this.state.tabs.length > this.state.currentTabIndex
       ? this.state.tabs[this.state.currentTabIndex]
@@ -113,7 +122,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addNewTab() {
-    const newTab = new TabItem();
+    const newTab = new TabItem({ isNew: true });
     this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
     return newTab;
@@ -150,7 +159,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addTabBefore(tab: TabItem): TabItem {
-    const newTab = new TabItem();
+    const newTab = new TabItem({ isNew: true });
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab), 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex });
@@ -160,7 +169,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addTabAfter(tab: TabItem): TabItem {
-    const newTab = new TabItem();
+    const newTab = new TabItem({ isNew: true });
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });

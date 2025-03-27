@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -13,6 +15,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { getDefaultVizPanel } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
+import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -27,6 +30,10 @@ import { TabsLayoutManager } from './TabsLayoutManager';
 export interface TabItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
+  /**
+   * Used to auto focus the title input
+   */
+  isNew?: boolean;
   isDropTarget?: boolean;
 }
 
@@ -44,6 +51,7 @@ export class TabItem
   public readonly isDashboardDropTarget = true;
 
   private _layoutRestorer = new LayoutRestorer();
+  public containerRef = React.createRef<HTMLDivElement>();
 
   constructor(state?: Partial<TabItemState>) {
     super({
@@ -123,7 +131,7 @@ export class TabItem
   }
 
   public onChangeTitle(title: string) {
-    this.setState({ title });
+    this.setState({ title, isNew: false });
   }
 
   public setIsDropTarget(isDropTarget: boolean) {
@@ -155,5 +163,14 @@ export class TabItem
 
   private _getParentLayout(): TabsLayoutManager {
     return sceneGraph.getAncestor(this, TabsLayoutManager);
+  }
+
+  public scrollIntoView(): void {
+    const tabsLayout = sceneGraph.getAncestor(this, TabsLayoutManager);
+    if (tabsLayout.getCurrentTab() !== this) {
+      tabsLayout.switchToTab(this);
+    }
+
+    scrollCanvasElementIntoView(this, this.containerRef);
   }
 }
