@@ -4,19 +4,18 @@ import { useMemo } from 'react';
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
-import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
+import { CellProps, Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
 
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
 import { shouldDisablePluginInstall } from '../helpers';
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { CatalogPlugin, Permission, PluginTabIds } from '../types';
+import { CatalogPlugin, Permission, PluginTabIds, Screenshots } from '../types';
 
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import Connections from './ConnectionsTab';
 import { PluginDashboards } from './PluginDashboards';
-import { PluginScreenshotCarousel } from './PluginScreenshotCarousel';
 import { PluginUsage } from './PluginUsage';
 
 type Props = {
@@ -48,6 +47,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     []
   );
 
+  const buildScreenshotPath = (plugin: CatalogPlugin, path: string) => {
+    return `${config.appSubUrl}/api/gnet/plugins/${plugin.id}/versions/${plugin.latestVersion}/images/${path}`;
+  };
+
   if (pageId === PluginTabIds.OVERVIEW) {
     return (
       <div
@@ -76,8 +79,12 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     return <Changelog sanitizedHTML={plugin?.details?.changelog} />;
   }
 
-  if (pageId === PluginTabIds.SCREENSHOTS && plugin?.details?.screenshots) {
-    return <PluginScreenshotCarousel plugin={plugin} screenshots={plugin?.details?.screenshots} />;
+  if (pageId === PluginTabIds.SCREENSHOTS && plugin?.details?.screenshots?.length) {
+    const carouselImages: Screenshots[] = plugin?.details?.screenshots.map((screenshot) => ({
+      path: buildScreenshotPath(plugin, screenshot.path),
+      name: screenshot.name,
+    }));
+    return <Carousel images={carouselImages} />;
   }
 
   if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
