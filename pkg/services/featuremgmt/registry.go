@@ -1820,6 +1820,13 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},
+		{
+			Name:         "extensionSidebar",
+			Description:  "Enables the extension sidebar",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
 	}
 )
 

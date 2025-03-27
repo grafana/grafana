@@ -1708,6 +1708,19 @@
     },
     {
       "metadata": {
+        "name": "extensionSidebar",
+        "resourceVersion": "1743071445006",
+        "creationTimestamp": "2025-03-27T10:30:45Z"
+      },
+      "spec": {
+        "description": "Enables the extension sidebar",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "externalCorePlugins",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-09-22T08:50:13Z"

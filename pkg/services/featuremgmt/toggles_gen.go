@@ -970,4 +970,8 @@ const (
 	// FlagUnifiedStorageGrpcConnectionPool
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
+
+	// FlagExtensionSidebar
+	// Enables the extension sidebar
+	FlagExtensionSidebar = "extensionSidebar"
 )
