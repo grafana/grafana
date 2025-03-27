@@ -6,6 +6,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+type ListUsersByIdOrUidCall struct {
+	Uids []string
+	Ids  []int64
+}
+
 type FakeUserService struct {
 	ExpectedUser               *user.User
 	ExpectedSignedInUser       *user.SignedInUser
@@ -26,6 +31,8 @@ type FakeUserService struct {
 	GetByEmailFn        func(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error)
 
 	counter int
+
+	ListUsersByIdOrUidCalls []ListUsersByIdOrUidCall
 }
 
 func NewUserServiceFake() *FakeUserService {
@@ -61,6 +68,7 @@ func (f *FakeUserService) GetByUID(ctx context.Context, query *user.GetUserByUID
 }
 
 func (f *FakeUserService) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
+	f.ListUsersByIdOrUidCalls = append(f.ListUsersByIdOrUidCalls, ListUsersByIdOrUidCall{Uids: uids, Ids: ids})
 	return f.ExpectedListUsersByIdOrUid, f.ExpectedError
 }
 

@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"fmt"
 	"errors"
 	"strconv"
 	"strings"
@@ -16,10 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context, item *unstructured.Unstructured) (*folder.Folder, error) {
+func parseUnstructuredToLegacyFolder(item *unstructured.Unstructured) (*folder.Folder, string, string, error) {
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
-		return nil, err
+		return nil, "", "", err
 	}
 
 	info, _ := authlib.ParseNamespace(meta.GetNamespace())
@@ -46,16 +47,9 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		updated = &tmp
 	}
 
-	creator, err := ss.getUserFromMeta(ctx, meta.GetCreatedBy())
-	if err != nil {
-		return nil, err
-	}
-
-	updater, err := ss.getUserFromMeta(ctx, meta.GetUpdatedBy())
-	if err != nil {
-		return nil, err
-	}
-	if updater.UID == "" {
+	creator := meta.GetCreatedBy()
+	updater := meta.GetUpdatedBy()
+	if updater == "" {
 		updater = creator
 	}
 
@@ -75,9 +69,106 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		Created:      created,
 		Updated:      *updated,
 		OrgID:        info.OrgID,
-		CreatedBy:    creator.ID,
-		UpdatedBy:    updater.ID,
-	}, nil
+	}, creator, updater, nil
+}
+
+func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context, item *unstructured.Unstructured) (*folder.Folder, error) {
+	folder, creatorRaw, updaterRaw, err := parseUnstructuredToLegacyFolder(item)
+
+	creator, err := ss.getUserFromMeta(ctx, creatorRaw)
+	if err != nil {
+		return nil, err
+	}
+
+	updater, err := ss.getUserFromMeta(ctx, updaterRaw)
+	if err != nil {
+		return nil, err
+	}
+	if updater.UID == "" {
+		updater = creator
+	}
+
+	folder.CreatedBy = creator.ID
+	folder.UpdatedBy = updater.ID
+
+	return folder, nil
+}
+
+func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Context, unstructuredList *unstructured.UnstructuredList) ([]*folder.Folder, error) {
+	folders := make([]*folder.Folder, 0)
+	userIds := make([]int64, 0)
+	userUIDs := make([]string, 0)
+	for _, item := range unstructuredList.Items {
+		meta, err := utils.MetaAccessor(&item)
+		if err != nil {
+			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
+		}
+
+		creator := toUID(meta.GetCreatedBy())
+		id, err := strconv.ParseInt(creator, 10, 64)
+		if err == nil {
+			userIds = append(userIds, id)
+		} else if creator != "" {
+			userUIDs = append(userUIDs, creator)
+		}
+
+		updater := toUID(meta.GetCreatedBy())
+		id, err = strconv.ParseInt(updater, 10, 64)
+		if err == nil {
+			userIds = append(userIds, id)
+		} else if updater != "" {
+			userUIDs = append(userUIDs, updater)
+		}
+	}
+
+	allUsers, err := ss.userService.ListByIdOrUID(ctx, userUIDs, userIds)
+	if err != nil {
+		return nil, err
+	}
+
+	usersById := make(map[int64]*user.User)
+	usersByUID := make(map[string]*user.User)
+
+	for _, user := range allUsers {
+		usersById[user.ID] = user
+		usersByUID[user.UID] = user
+	}
+
+	for _, item := range unstructuredList.Items {
+		folder, creatorRaw, updaterRaw, err := parseUnstructuredToLegacyFolder(&item)
+
+		var creator *user.User
+		creatorIdentifier := toUID(creatorRaw)
+		id, err := strconv.ParseInt(creatorIdentifier, 10, 64)
+		if err == nil {
+			creator = usersById[id]
+		} else {
+			creator = usersByUID[creatorIdentifier]
+		}
+
+		if creator == nil {
+			creator = &user.User{}
+		}
+
+		var updater *user.User
+		updaterIdentifier := toUID(updaterRaw)
+		id, err = strconv.ParseInt(updaterIdentifier, 10, 64)
+		if err == nil {
+			updater = usersById[id]
+		} else {
+			updater = usersByUID[updaterIdentifier]
+		}
+
+		if updater == nil {
+			updater = creator
+		}
+
+		folder.CreatedBy = creator.ID
+		folder.UpdatedBy = updater.ID
+		folders = append(folders, folder)
+	}
+
+	return folders, nil
 }
 
 func (ss *FolderUnifiedStoreImpl) getUserFromMeta(ctx context.Context, userMeta string) (*user.User, error) {
@@ -102,6 +193,9 @@ func (ss *FolderUnifiedStoreImpl) getUser(ctx context.Context, uid string) (*use
 func toUID(rawIdentifier string) string {
 	parts := strings.Split(rawIdentifier, ":")
 	if len(parts) < 2 {
+		return ""
+	}
+	if parts[0] != "user" {
 		return ""
 	}
 	return parts[1]
