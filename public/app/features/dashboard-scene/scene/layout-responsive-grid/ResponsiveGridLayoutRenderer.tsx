@@ -4,15 +4,15 @@ import { useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { getDefaultVizPanel, useDashboardState } from '../../utils/utils';
 import { addNewRowTo, addNewTabTo } from '../layouts-shared/addNew';
 
-import { ResponsiveGridLayout, ResponsiveGridLayoutState } from './ResponsiveGridLayout';
-import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
+import { AutoGridLayout, AutoGridLayoutState } from './ResponsiveGridLayout';
+import { AutoGridLayoutManager } from './ResponsiveGridLayoutManager';
 
-export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<ResponsiveGridLayout>) {
+export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, isLazy } = model.useState();
   const styles = useStyles2(getStyles, model.state);
   const { layoutOrchestrator, isEditing } = useDashboardState(model);
@@ -20,7 +20,7 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
   const { activeLayoutItemRef } = layoutOrchestrator.useState();
   const activeLayoutItem = activeLayoutItemRef?.resolve();
   const currentLayoutIsActive = children.some((c) => c === activeLayoutItem);
-  const layoutManager = sceneGraph.getAncestor(model, ResponsiveGridLayoutManager);
+  const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen } = layoutManager.useState();
 
   useEffect(() => {
@@ -95,14 +95,14 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
               <Menu>
                 <Menu.Item
                   icon="list-ul"
-                  label="Group into row"
+                  label={t('dashboard.canvas-actions.group-into-row', 'Group into row')}
                   onClick={() => {
                     addNewRowTo(layoutManager);
                   }}
                 ></Menu.Item>
                 <Menu.Item
                   icon="layers"
-                  label="Group into tab"
+                  label={t('dashboard.canvas-actions.group-into-tab', 'Group into tab')}
                   onClick={() => {
                     addNewTabTo(layoutManager);
                   }}
@@ -125,7 +125,7 @@ export function ResponsiveGridLayoutRenderer({ model }: SceneComponentProps<Resp
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, state: ResponsiveGridLayoutState) => ({
+const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
   container: css({
     display: 'grid',
     position: 'relative',
