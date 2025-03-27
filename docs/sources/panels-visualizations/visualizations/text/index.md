@@ -69,3 +69,5 @@ Use the following options to refine your text visualization.
 | Show mini map | Displays a small outline of the embedded text in the panel preview when you choose **Code** as your text mode. |
 
 <!-- prettier-ignore-end -->
+
+ahoy
