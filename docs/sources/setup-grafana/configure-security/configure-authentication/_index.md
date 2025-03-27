@@ -94,6 +94,25 @@ Inactive authenticated users will remain logged in for a duration specified by `
 This means that a user can close a Grafana window and return before `now + login_maximum_inactive_lifetime_duration` to continue their session.
 This is true as long as the time since last user login is less than `login_maximum_lifetime_duration`.
 
+## Session handling with SSO
+
+When using SSO (Single Sign-On) authentication methods, Grafana handles sessions differently based on the configuration:
+
+### OAuth/OpenID Connect
+
+- Without refresh tokens (default):
+  - Grafana creates a session valid for up to `login_maximum_lifetime_duration` (default: 30 days).
+  - During this time, the session remains valid even if the user loses access at the IdP.
+- With refresh tokens enabled:
+  - The user receives a JWT refresh token. When the JWT expires and the refresh token is used to obtain a new token, Grafana will revalidate access with the IdP.
+  - If the user has been removed from required groups or access has been revoked, the refresh will fail and the session will be invalidated.
+
+### SAML
+
+- After successful SAML authentication, Grafana creates a session with the default session lifetime.
+- If SAML Single Logout (SLO) is properly configured, the session will be revoked when the user's access is revoked on the IdP side.
+- If SAML Single Logout (SLO) is properly configured, the session will be revoked when the user's access is revoked on the IdP side. For more information on configuring SAML and SLO, refer to the [SAML configuration documentation](./saml/#configure-single-logout).
+
 ## Settings
 
 Example:
