@@ -7,7 +7,6 @@ import (
 	"path"
 
 	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -58,18 +57,6 @@ var (
 	_ RestConfigProvider         = (*service)(nil)
 	_ registry.BackgroundService = (*service)(nil)
 	_ registry.CanBeDisabled     = (*service)(nil)
-
-	unversionedVersion = schema.GroupVersion{Group: "", Version: "v1"}
-	unversionedTypes   = []runtime.Object{
-		&metav1.Status{},
-		&metav1.WatchEvent{},
-		&metav1.APIVersions{},
-		&metav1.APIGroupList{},
-		&metav1.APIGroup{},
-		&metav1.APIResourceList{},
-		&metav1.PartialObjectMetadata{},
-		&metav1.PartialObjectMetadataList{},
-	}
 )
 
 const MaxRequestBodyBytes = 16 * 1024 * 1024 // 16MB - determined by the size of `mediumtext` on mysql, which is used to save dashboard data
@@ -115,18 +102,6 @@ type service struct {
 	unified         resource.ResourceClient
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
-}
-
-func ProvideScheme() *runtime.Scheme {
-	scheme := runtime.NewScheme()
-	// we need to add the options to empty v1
-	metav1.AddToGroupVersion(scheme, schema.GroupVersion{Group: "", Version: "v1"})
-	scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
-	return scheme
-}
-
-func ProvideCodecFactory(scheme *runtime.Scheme) serializer.CodecFactory {
-	return serializer.NewCodecFactory(scheme)
 }
 
 func ProvideService(

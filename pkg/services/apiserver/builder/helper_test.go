@@ -11,7 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
@@ -62,8 +61,8 @@ func TestAddPostStartHooks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			scheme := apiserver.ProvideScheme()
-			codecs := apiserver.ProvideCodecFactory(scheme)
+			scheme := builder.ProvideScheme()
+			codecs := builder.ProvideCodecFactory(scheme)
 			config := server.NewRecommendedConfig(codecs)
 			err := builder.AddPostStartHooks(config, tt.builders)
 			if tt.wantErr {
