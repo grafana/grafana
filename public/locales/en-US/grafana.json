@@ -299,6 +299,13 @@
       "state-no-data": "Alert state if no data or all values are null",
       "target-datasource-uid": "Target data source"
     },
+    "alert-menu": {
+      "copy-link": "Copy link",
+      "duplicate": "Duplicate",
+      "export": "Export",
+      "silence-notifications": "Silence notifications",
+      "with-modifications": "With modifications"
+    },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
         "description": {
@@ -464,6 +471,31 @@
     "dag": {
       "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
       "self-reference": "You can't link an expression to itself"
+    },
+    "delete-rule-modal": {
+      "title": "Delete rule",
+      "with-soft-delete": "Are you sure you want to delete this rule? This rule will be recoverable from the Recently deleted page by a user with an admin role.",
+      "without-soft-delete": "Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
+    },
+    "deleted-rules": {
+      "empty-state-title": "No recently deleted rules found",
+      "errorloading": "Failed to load alert deleted rules",
+      "restore": "Restore",
+      "restore-deleted-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the deleted rule by editing the rule and saving it.",
+      "restore-modal": {
+        "body": "Are you sure you want to restore this deleted alert rule definition?",
+        "confirm": "Yes, restore deleted rule",
+        "error": "Could not restore deleted alert rule",
+        "title": "Restore deleted alert rule"
+      },
+      "table": {
+        "folder": "Folder",
+        "group": "Group",
+        "title": "Title",
+        "updated": "Deletion Date",
+        "updatedBy": "Deleted By"
+      },
+      "unknown": "Unknown"
     },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluations to start alerting",
@@ -3705,6 +3737,10 @@
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",
       "title": "Alerts & IRM"
+    },
+    "alerts-recently-deleted": {
+      "subtitle": "See recently deleted alert rules",
+      "title": "Recently deleted"
     },
     "api-keys": {
       "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",

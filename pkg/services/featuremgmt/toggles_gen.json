@@ -439,6 +439,25 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleRecoverDeleted",
+        "resourceVersion": "1741351039908",
+        "creationTimestamp": "2025-03-07T09:25:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-07 12:37:19.908258 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the UI functionality to recover and view deleted alert rules",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
         "resourceVersion": "1740740039764",
         "creationTimestamp": "2025-01-16T14:08:12Z",

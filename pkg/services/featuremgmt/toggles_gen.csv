@@ -238,3 +238,4 @@ noBackdropBlur,experimental,@grafana/grafana-frontend-platform,false,false,true
 alertingMigrationUI,experimental,@grafana/alerting-squad,false,false,true
 unifiedStorageHistoryPruner,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
+alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true

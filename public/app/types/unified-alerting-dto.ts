@@ -270,6 +270,7 @@ export interface PostableGrafanaRuleDefinition {
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
   uid: string;
+  guid?: string;
   namespace_uid: string;
   rule_group: string;
   provenance?: string;
@@ -312,4 +313,8 @@ export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
 
 export type PostableRulerRuleGroupDTO = RulerRuleGroupDTO<PostableRuleDTO>;
 
+export type RulerGrafanaRuleGroupDTO = RulerRuleGroupDTO<RulerGrafanaRuleDTO>;
+
 export type RulerRulesConfigDTO = { [namespace: string]: RulerRuleGroupDTO[] };
+
+export type RulerGrafanaRulesConfigDTO = { [namespace: string]: RulerGrafanaRuleGroupDTO[] };
