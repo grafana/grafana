@@ -8,8 +8,9 @@ import {
   stringToJsRegex,
   TransformerCategory,
 } from '@grafana/data';
-import { RenameByRegexTransformerOptions } from '@grafana/data/src/transformations/transformers/renameByRegex';
+import { RenameByRegexTransformerOptions } from '@grafana/data/internal';
 import { InlineField, Input } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -83,22 +84,31 @@ export class RenameByRegexTransformerEditor extends React.PureComponent<
     return (
       <>
         <InlineField
-          label="Match"
+          label={t('transformers.rename-by-regex-transformer-editor.label-match', 'Match')}
           labelWidth={16}
           invalid={!isRegexValid}
           error={!isRegexValid ? 'Invalid pattern' : undefined}
         >
           <Input
-            placeholder="Regular expression pattern"
+            placeholder={t(
+              'transformers.rename-by-regex-transformer-editor.placeholder-regular-expression-pattern',
+              'Regular expression pattern'
+            )}
             value={regex || ''}
             onChange={this.handleRegexChange}
             onBlur={this.handleRegexBlur}
             width={25}
           />
         </InlineField>
-        <InlineField label="Replace" labelWidth={16}>
+        <InlineField
+          label={t('transformers.rename-by-regex-transformer-editor.label-replace', 'Replace')}
+          labelWidth={16}
+        >
           <Input
-            placeholder="Replacement pattern"
+            placeholder={t(
+              'transformers.rename-by-regex-transformer-editor.placeholder-replacement-pattern',
+              'Replacement pattern'
+            )}
             value={renamePattern || ''}
             onChange={this.handleRenameChange}
             onBlur={this.handleRenameBlur}

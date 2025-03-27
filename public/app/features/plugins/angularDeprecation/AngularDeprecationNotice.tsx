@@ -1,6 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+import { Trans } from 'app/core/internationalization';
 
 const LOCAL_STORAGE_KEY_PREFIX = 'grafana.angularDeprecation.dashboardNoticeAndMigration.isDismissed';
 
@@ -46,13 +47,15 @@ export function AngularDeprecationNotice({ dashboardUid, showAutoMigrateLink }: 
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Read our deprecation notice and migration advice.
+                  <Trans i18nKey="plugins.angular-deprecation-notice.deprecation-notice-migration-advice">
+                    Read our deprecation notice and migration advice.
+                  </Trans>
                 </a>
                 <br />
 
                 {showAutoMigrateLink && (
                   <Button fill="outline" size="sm" onClick={tryMigration} style={{ marginTop: 10 }}>
-                    Try migration
+                    <Trans i18nKey="plugins.angular-deprecation-notice.try-migration">Try migration</Trans>
                   </Button>
                 )}
               </div>

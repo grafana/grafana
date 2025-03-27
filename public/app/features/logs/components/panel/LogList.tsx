@@ -20,10 +20,12 @@ import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
 import { GetRowContextQueryFn } from './LogLineMenu';
 import { LogListContext } from './LogListContext';
-import { preProcessLogs, LogListModel, calculateFieldDimensions, LogFieldDimension } from './processing';
+import { preProcessLogs, LogListModel } from './processing';
 import {
+  calculateFieldDimensions,
   getLogLineSize,
   init as initVirtualization,
+  LogFieldDimension,
   resetLogLineSizes,
   ScrollToLogsEvent,
   storeLogLineSize,
@@ -99,11 +101,13 @@ export const LogList = ({
   }, [eventBus, logs.length]);
 
   useEffect(() => {
-    setProcessedLogs(
-      preProcessLogs(logs, { getFieldLinks, wrap: wrapLogMessage, escape: forceEscape, order: sortOrder, timeZone })
-    );
+    setProcessedLogs(preProcessLogs(logs, { getFieldLinks, escape: forceEscape, order: sortOrder, timeZone }));
+  }, [forceEscape, getFieldLinks, logs, sortOrder, timeZone]);
+
+  useEffect(() => {
+    resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, logs, sortOrder, timeZone, wrapLogMessage]);
+  }, [wrapLogMessage, processedLogs]);
 
   useEffect(() => {
     const handleResize = debounce(() => {

@@ -71,12 +71,18 @@ export function UserProfile({
     });
   };
 
-  const authSource = user.authLabels?.length && user.authLabels[0];
+  let authSource = user.authLabels?.length && user.authLabels[0];
+  if (user.isProvisioned) {
+    authSource = 'SCIM';
+  }
   const lockMessage = authSource ? `Synced via ${authSource}` : '';
 
-  const editLocked = user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersWrite, user);
+  const editLocked =
+    user.isExternal || user.isProvisioned || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersWrite, user);
   const passwordChangeLocked =
-    user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersPasswordUpdate, user);
+    user.isExternal ||
+    user.isProvisioned ||
+    !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersPasswordUpdate, user);
   const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersDelete, user);
   const canDisable = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersDisable, user);
   const canEnable = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersEnable, user);

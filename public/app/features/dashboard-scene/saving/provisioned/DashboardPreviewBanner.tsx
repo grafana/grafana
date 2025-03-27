@@ -1,3 +1,4 @@
+import { textUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Icon, Stack } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning';
@@ -58,7 +59,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
             <Icon name="external-link-alt" />
           </Stack>
         }
-        onRemove={() => window.open(prParam, '_blank')}
+        onRemove={() => window.open(textUtil.sanitizeUrl(prParam), '_blank')}
       >
         <Trans i18nKey="dashboard-scene.dashboard-preview-banner.value-not-saved">
           The value is not yet saved in the Grafana database
@@ -85,7 +86,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
             <Icon name="external-link-alt" />
           </Stack>
         }
-        onRemove={() => window.open(githubURL, '_blank')}
+        onRemove={() => window.open(textUtil.sanitizeUrl(githubURL), '_blank')}
       >
         <Trans i18nKey="dashboard-scene.dashboard-preview-banner.not-saved">
           The value is not yet saved in the Grafana database

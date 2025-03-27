@@ -42,10 +42,7 @@ import {
   setCorrelationsService,
   setPluginFunctionsHook,
 } from '@grafana/runtime';
-import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
-import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
-import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
-import { setUseTranslateHook } from '@grafana/runtime/src/unstable';
+import { setPanelDataErrorView, setPanelRenderer, setPluginPage } from '@grafana/runtime/internal';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -59,7 +56,7 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/componen
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useChromeHeaderHeight, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initializeCrashDetection } from './core/crash';
-import { initializeI18n, useTranslateInternal } from './core/internationalization';
+import { initializeI18n } from './core/internationalization';
 import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { CorrelationsService } from './core/services/CorrelationsService';
@@ -254,7 +251,6 @@ export class GrafanaApp {
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
       setChromeHeaderHeightHook(useChromeHeaderHeight);
-      setUseTranslateHook(useTranslateInternal);
 
       if (config.featureToggles.crashDetection) {
         initializeCrashDetection();

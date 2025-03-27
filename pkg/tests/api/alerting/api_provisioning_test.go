@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder string, nfSettings *definitions.AlertRuleNotificationSettings) (definitions.PostableRuleGroupConfig, string) {
@@ -664,14 +665,24 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
 						},
 					},
+					MissingSeriesEvalsToResolve: util.Pointer(3),
 				},
 			},
 		}
 
 		result, status, raw := apiClient.CreateOrUpdateRuleGroupProvisioning(t, originalRuleGroup)
+
 		t.Run("should create a new rule group with UIDs specified", func(t *testing.T) {
 			requireStatusCode(t, http.StatusOK, status, raw)
 			require.Equal(t, originalRuleGroup, result)
+
+			require.Len(t, result.Rules, 3)
+			for _, rule := range result.Rules {
+				require.NotEmpty(t, rule.UID)
+				if rule.UID == "rule3" {
+					require.Equal(t, 3, *rule.MissingSeriesEvalsToResolve)
+				}
+			}
 		})
 
 		t.Run("should remove a rule when updating group with a rule removed", func(t *testing.T) {

@@ -165,7 +165,8 @@
       "metadata": {
         "name": "alertingAlertmanagerExtraDedupStage",
         "resourceVersion": "1738251165994",
-        "creationTimestamp": "2025-01-30T15:32:45Z"
+        "creationTimestamp": "2025-01-30T15:32:45Z",
+        "deletionTimestamp": "2025-03-25T16:57:43Z"
       },
       "spec": {
         "description": "enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching",
@@ -180,7 +181,8 @@
       "metadata": {
         "name": "alertingAlertmanagerExtraDedupStageStopPipeline",
         "resourceVersion": "1738251165994",
-        "creationTimestamp": "2025-01-30T15:32:45Z"
+        "creationTimestamp": "2025-01-30T15:32:45Z",
+        "deletionTimestamp": "2025-03-25T16:57:43Z"
       },
       "spec": {
         "description": "works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning",
@@ -2768,7 +2770,8 @@
       "metadata": {
         "name": "metricsSummary",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-08-28T14:02:12Z"
+        "creationTimestamp": "2023-08-28T14:02:12Z",
+        "deletionTimestamp": "2024-11-25T10:47:18Z"
       },
       "spec": {
         "description": "Enables metrics summary queries in the Tempo data source",
@@ -3975,6 +3978,31 @@
         "description": "Configurable storage for dashboards, datasources, and resources",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "tableNG",
+        "resourceVersion": "1742417098717",
+        "creationTimestamp": "2025-03-19T20:44:58Z",
+        "deletionTimestamp": "2025-03-25T17:19:06Z"
+      },
+      "spec": {
+        "description": "Allows access to the new react-data-grid based table component.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "tableNextGen",
+        "resourceVersion": "1742923146714",
+        "creationTimestamp": "2025-03-25T17:19:06Z"
+      },
+      "spec": {
+        "description": "Allows access to the new react-data-grid based table component.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad"
       }
     },
     {
