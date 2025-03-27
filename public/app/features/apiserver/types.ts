@@ -55,6 +55,9 @@ export const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
 // for auditing... when saving from the UI, mark which version saved it from where
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 
+// Grant permissions to the created resource
+export const AnnoKeyGrantPermissions = 'grafana.app/grantPermissions';
+
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeySlug = 'grafana.app/slug';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
@@ -70,6 +73,7 @@ export const AnnoKeyFolderTitle = 'grafana.app/folderTitle';
 export const AnnoKeyFolderId = 'grafana.app/folderId';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
+
 
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
@@ -100,7 +104,7 @@ type GrafanaClientAnnotations = {
   [AnnoKeySavedFromUI]?: string;
   [AnnoKeyDashboardIsSnapshot]?: boolean;
   [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
-
+  [AnnoKeyGrantPermissions]?: string;
   // TODO: This should be provided by the API
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;

@@ -10,6 +10,7 @@ import {
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
   AnnoKeyMessage,
+  AnnoKeyGrantPermissions,
   DeprecatedInternalId,
   Resource,
   ResourceClient,
@@ -96,6 +97,10 @@ export class K8sDashboardV2API
       // the metadata will have the name that's the uid
       metadata: {
         ...options?.k8s,
+        annotations: {
+          ...options?.k8s?.annotations,
+          [AnnoKeyGrantPermissions]: 'default',
+        },
       },
       spec: {
         ...dashboard,

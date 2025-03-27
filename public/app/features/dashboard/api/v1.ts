@@ -9,6 +9,7 @@ import {
   ResourceForCreate,
   AnnoKeyMessage,
   AnnoKeyFolder,
+  AnnoKeyGrantPermissions,
   Resource,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
@@ -36,6 +37,9 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     const obj: ResourceForCreate<DashboardDataDTO> = {
       metadata: {
         ...options?.k8s,
+        annotations: {
+          [AnnoKeyGrantPermissions]: 'default'
+        }
       },
       spec: {
         ...dashboard,
