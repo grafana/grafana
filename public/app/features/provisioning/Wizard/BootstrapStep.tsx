@@ -132,7 +132,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
           <>
             {Boolean(state.resourceCount) && (
               <Alert severity="info" title="Note">
-                Dashboards will be unavailable while running this process.
+                Dashboards will be unavailable while running this process
               </Alert>
             )}
             {Boolean(state.fileCount) && Boolean(state.resourceCount) && (

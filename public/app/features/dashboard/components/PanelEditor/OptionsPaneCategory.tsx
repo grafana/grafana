@@ -16,7 +16,7 @@ export interface OptionsPaneCategoryProps {
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   isOpenDefault?: boolean;
   itemsCount?: number;
-  forceOpen?: number;
+  forceOpen?: boolean;
   className?: string;
   isNested?: boolean;
   children: ReactNode;
@@ -42,37 +42,24 @@ export const OptionsPaneCategory = React.memo(
       isExpanded: isOpenDefault,
     });
 
-    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? isOpenDefault);
-    const manualClickTime = useRef(0);
+    const isExpandedInitialValue = forceOpen || (savedState?.isExpanded ?? isOpenDefault);
+    const [isExpanded, setIsExpanded] = useState(isExpandedInitialValue);
     const ref = useRef<HTMLDivElement>(null);
     const [queryParams, updateQueryParams] = useQueryParams();
     const isOpenFromUrl = queryParams[CATEGORY_PARAM_NAME] === id;
 
+    // Handle opening by forceOpen param or from URL
     useEffect(() => {
-      if (manualClickTime.current) {
-        // ignore changes since the click handled the expected behavior
-        if (Date.now() - manualClickTime.current < 200) {
-          return;
-        }
-      }
-      if (isOpenFromUrl || forceOpen) {
-        if (!isExpanded) {
-          setIsExpanded(true);
-        }
-        if (isOpenFromUrl) {
+      if ((forceOpen || isOpenFromUrl) && !isExpanded) {
+        setIsExpanded(true);
+        setTimeout(() => {
           ref.current?.scrollIntoView();
-        }
+        }, 200);
       }
-    }, [forceOpen, isExpanded, isOpenFromUrl]);
+    }, [isExpanded, isOpenFromUrl, forceOpen]);
 
     const onToggle = useCallback(() => {
-      manualClickTime.current = Date.now();
-      updateQueryParams(
-        {
-          [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
-        },
-        true
-      );
+      updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id }, true);
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
     }, [updateQueryParams, isExpanded, id, setSavedState]);

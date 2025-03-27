@@ -26,7 +26,7 @@ import {
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { Alert, Badge, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
@@ -523,6 +523,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     const isLoading = metricNamesLoading && children.length === 0;
 
+    const unableToRetrieveMetricNames = t(
+      'trails.metric-select-scene.unable-to-retrieve-metric-names',
+      'Unable to retrieve metric names'
+    );
     const blockingMessage = isLoading
       ? undefined
       : missingOtelTargets
@@ -535,7 +539,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       <Tooltip
         content={
           <>
-            <h4>Unable to retrieve metric names</h4>
+            <h4>{unableToRetrieveMetricNames}</h4>
             <p>{metricNamesWarning}</p>
           </>
         }
@@ -549,7 +553,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         <div className={styles.header}>
           <Field label={'Search metrics'} className={styles.searchField}>
             <Input
-              placeholder="Search metrics"
+              placeholder={t('trails.metric-select-scene.placeholder-search-metrics', 'Search metrics')}
               prefix={<Icon name={'search'} />}
               value={metricSearch}
               onChange={model.onSearchQueryChange}
@@ -616,7 +620,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
                 <InlineSwitch
                   disabled={!isStandardOtel}
                   showLabel={true}
-                  label="OTel experience"
+                  label={t('trails.metric-select-scene.label-otel-experience', 'OTel experience')}
                   value={useOtelExperience}
                   onChange={model.onToggleOtelExperience}
                 />
@@ -625,14 +629,17 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           )}
         </div>
         {metricNamesError && (
-          <Alert title="Unable to retrieve metric names" severity="error">
+          <Alert title={unableToRetrieveMetricNames} severity="error">
             <div>We are unable to connect to your data source. Double check your data source URL and credentials.</div>
             <div>({metricNamesError})</div>
           </Alert>
         )}
         {metricNamesWarning && !warningDismissed && (
           <Alert
-            title="Unable to retrieve all metric names"
+            title={t(
+              'trails.metric-select-scene.title-unable-to-retrieve-all-metric-names',
+              'Unable to retrieve all metric names'
+            )}
             severity="warning"
             onSubmit={dismissWarning}
             onRemove={dismissWarning}

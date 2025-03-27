@@ -24,7 +24,7 @@ export function ConnectRepositoryButton({ items }: Props) {
         disabled={true}
         tooltip={`Max repositories already created (${state.repoCount})`}
       >
-        Maximum repos exist ({state.repoCount})
+        Maximum repositories exist ({state.repoCount})
       </LinkButton>
     );
   }

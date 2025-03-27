@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -93,6 +93,9 @@ func (c *ResourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.Resource
 	return info.client, info.gvr, nil
 }
 
+// ForResource returns a client for a resource.
+// If the resource has a version, it will be used.
+// If the resource does not have a version, the preferred version will be used.
 func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()

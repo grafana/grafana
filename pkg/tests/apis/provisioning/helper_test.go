@@ -17,6 +17,7 @@ import (
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -50,6 +51,41 @@ type provisioningTestHelper struct {
 	Dashboards   *apis.K8sResourceClient
 	AdminREST    *rest.RESTClient
 	ViewerREST   *rest.RESTClient
+}
+
+func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options *provisioning.SyncJobOptions) {
+	t.Helper()
+
+	var opts provisioning.SyncJobOptions
+	if options != nil {
+		opts = *options
+	}
+	body := asJSON(opts)
+
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("sync").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context())
+
+	if apierrors.IsAlreadyExists(result.Error()) {
+		// Wait for all jobs to finish as we don't have the name.
+		h.AwaitJobs(t, repo)
+		return
+	}
+
+	obj, err := result.Get()
+	require.NoError(t, err, "expecting to be able to sync repository")
+
+	unstruct, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok, "expecting unstructured object, but got %T", obj)
+
+	name := unstruct.GetName()
+	require.NotEmpty(t, name, "expecting name to be set")
+	h.AwaitJobSuccess(t, t.Context(), name)
 }
 
 func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, jobName string) {
