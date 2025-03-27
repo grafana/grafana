@@ -313,7 +313,7 @@ type GetSnapshotParams struct {
 	// default: 100
 	ResultLimit int `json:"resultLimit"`
 
-	// ResultSortColumn can be used to override the default system sort. Valid values are "default", "name", "type", and "status".
+	// ResultSortColumn can be used to override the default system sort. Valid values are "name", "resource_type", and "status".
 	// in:query
 	// required:false
 	// default: default
@@ -324,6 +324,12 @@ type GetSnapshotParams struct {
 	// required:false
 	// default: ASC
 	ResultSortOrder string `json:"resultSortOrder"`
+
+	// ErrorsOnly is used to only return resources with error statuses
+	// in:query
+	// required:false
+	// default: false
+	ErrorsOnly string `json:"errorsOnly"`
 
 	// Session UID of a session
 	// in: path

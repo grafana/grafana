@@ -422,15 +422,7 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 }
 
 func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string, params cloudmigration.SnapshotResultQueryParams) ([]cloudmigration.CloudMigrationResource, error) {
-	page, limit := params.ResultPage, params.ResultLimit
-	if page < 1 {
-		page = 1
-	}
-	if limit == 0 {
-		limit = 100
-	}
-
-	col, dir := params.SortColumn.String(), params.SortOrder.String() // get sanitized values
+	page, limit, col, dir := int(params.ResultPage), int(params.ResultLimit), string(params.SortColumn), string(params.SortOrder)
 
 	var resources []cloudmigration.CloudMigrationResource
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {

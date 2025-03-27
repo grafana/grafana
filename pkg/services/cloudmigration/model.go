@@ -171,23 +171,6 @@ const (
 	SortColumnStatus ResultSortColumn = "status"
 )
 
-func (s ResultSortColumn) String() string {
-	switch s {
-	case SortColumnID:
-		return string(SortColumnID)
-	case SortColumnName:
-		return string(SortColumnName)
-	case "type":
-		fallthrough
-	case SortColumnType:
-		return string(SortColumnType)
-	case SortColumnStatus:
-		return string(SortColumnStatus)
-	default:
-		return string(SortColumnID)
-	}
-}
-
 type SortOrder string
 
 const (
@@ -195,20 +178,15 @@ const (
 	SortOrderDesc SortOrder = "DESC"
 )
 
-func (s SortOrder) String() string {
-	switch s {
-	case SortOrderAsc:
-		return string(SortOrderAsc)
-	case SortOrderDesc:
-		return string(SortOrderDesc)
-	default:
-		return string(SortOrderAsc)
-	}
-}
+// ResultPage should be in the range [1, 10000]
+type ResultPage int
+
+// ResultLimit should be in the rage [1, 10000]
+type ResultLimit int
 
 type SnapshotResultQueryParams struct {
-	ResultPage  int
-	ResultLimit int
+	ResultPage  ResultPage
+	ResultLimit ResultLimit
 	SortColumn  ResultSortColumn
 	SortOrder   SortOrder
 }
