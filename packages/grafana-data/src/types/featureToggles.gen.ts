@@ -686,6 +686,7 @@ export interface FeatureToggles {
   pluginProxyPreserveTrailingSlash?: boolean;
   /**
   * Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
+  * @default true
   */
   azureMonitorPrometheusExemplars?: boolean;
   /**
