@@ -329,7 +329,7 @@ type GetSnapshotParams struct {
 	// in:query
 	// required:false
 	// default: false
-	ErrorsOnly string `json:"errorsOnly"`
+	ErrorsOnly bool `json:"errorsOnly"`
 
 	// Session UID of a session
 	// in: path

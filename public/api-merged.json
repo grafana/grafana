@@ -2472,8 +2472,8 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "false",
+            "type": "boolean",
+            "default": false,
             "description": "ErrorsOnly is used to only return resources with error statuses",
             "name": "errorsOnly",
             "in": "query"

@@ -16133,8 +16133,8 @@
             "in": "query",
             "name": "errorsOnly",
             "schema": {
-              "default": "false",
-              "type": "string"
+              "default": false,
+              "type": "boolean"
             }
           },
           {
