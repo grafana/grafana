@@ -34,6 +34,7 @@ func (d sqlDB) QueryContext(ctx context.Context, query string, args ...any) (db.
 	if err != nil {
 		return nil, err
 	}
+	defer stm.Close()
 	return stm.QueryContext(ctx, args...)
 }
 
@@ -43,6 +44,7 @@ func (d sqlDB) QueryRowContext(ctx context.Context, query string, args ...any) d
 		fmt.Printf("Could not prepare query row statement %v\n", err)
 		return nil
 	}
+	defer stm.Close()
 	return stm.QueryRowContext(ctx, args...)
 }
 
