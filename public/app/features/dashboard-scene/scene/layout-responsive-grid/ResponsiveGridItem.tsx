@@ -24,9 +24,9 @@ import { DashboardLayoutItem, IntermediateLayoutItem } from '../types/DashboardL
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getOptions } from './ResponsiveGridItemEditor';
-import { ResponsiveGridItemRenderer } from './ResponsiveGridItemRenderer';
+import { AutoGridItemRenderer } from './ResponsiveGridItemRenderer';
 
-export interface ResponsiveGridItemState extends SceneObjectState {
+export interface AutoGridItemState extends SceneObjectState {
   body: VizPanel;
   hideWhenNoData?: boolean;
   repeatedPanels?: VizPanel[];
@@ -35,8 +35,8 @@ export interface ResponsiveGridItemState extends SceneObjectState {
   conditionalRendering?: ConditionalRendering;
 }
 
-export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState> implements DashboardLayoutItem {
-  public static Component = ResponsiveGridItemRenderer;
+export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements DashboardLayoutItem {
+  public static Component = AutoGridItemRenderer;
   private _prevRepeatValues?: VariableValueSingle[];
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: this.state.variableName ? [this.state.variableName] : [],
@@ -46,7 +46,7 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
   public containerRef = createRef<HTMLDivElement>();
   public cachedBoundingBox: Rect | undefined;
 
-  public constructor(state: ResponsiveGridItemState) {
+  public constructor(state: AutoGridItemState) {
     super({ ...state, conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty() });
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -131,7 +131,7 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
   }
 
   public setRepeatByVariable(variableName: string | undefined) {
-    const stateUpdate: Partial<ResponsiveGridItemState> = { variableName };
+    const stateUpdate: Partial<AutoGridItemState> = { variableName };
 
     if (this.state.body.state.$variables) {
       this.state.body.setState({ $variables: undefined });
