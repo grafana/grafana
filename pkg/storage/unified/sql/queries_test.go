@@ -157,9 +157,42 @@ func TestUnifiedStorageQueries(t *testing.T) {
 								Resource:  "rs",
 								Name:      "nm",
 							},
-							EventType: resource.WatchEvent_UNKNOWN,
 						},
 						Response: NewReadResponse(),
+					},
+				},
+			},
+
+			sqlResourceHistoryReadLatestRV: {
+				{
+					Name: "single path",
+					Data: &sqlResourceHistoryReadLatestRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyReadLatestRVRequest{
+							Key: &resource.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
+						},
+						Response: new(resourceHistoryReadLatestRVResponse),
+					},
+				},
+				{
+					Name: "with WatchEvent_DELETED",
+					Data: &sqlResourceHistoryReadLatestRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyReadLatestRVRequest{
+							Key: &resource.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
+							EventType: resource.WatchEvent_DELETED,
+						},
+						Response: new(resourceHistoryReadLatestRVResponse),
 					},
 				},
 			},

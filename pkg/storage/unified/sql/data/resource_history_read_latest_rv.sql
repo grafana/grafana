@@ -1,5 +1,5 @@
 SELECT
-    MAX({{ .Ident "resource_version" }}) AS {{ .Ident "resource_version" | .Into .Response.ResourceVersion }},
+    COALESCE(MAX({{ .Ident "resource_version" }}), 0) AS {{ .Ident "resource_version" | .Into .Response.ResourceVersion }}
 
     FROM {{ .Ident "resource_history" }}
 
