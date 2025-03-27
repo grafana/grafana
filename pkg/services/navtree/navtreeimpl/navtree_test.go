@@ -53,11 +53,7 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 		}
 
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardService.On("SearchDashboards", context.Background(), &dashboards.FindPersistedDashboardsQuery{
-			DashboardUIDs: []string{"dashboard1", "dashboard2"},
-			OrgId:         1,
-			SignedInUser:  reqCtx.SignedInUser,
-		}).Return(model.HitList{
+		dashboardService.On("SearchDashboards", context.Background(), mock.Anything).Return(model.HitList{
 			{
 				UID:   "dashboard1",
 				Title: "Dashboard 1",
@@ -130,11 +126,7 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 		}
 
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardService.On("SearchDashboards", context.Background(), &dashboards.FindPersistedDashboardsQuery{
-			DashboardUIDs: []string{"dashboard1", "dashboard2", "dashboard3"},
-			OrgId:         1,
-			SignedInUser:  reqCtx.SignedInUser,
-		}).Return(model.HitList{
+		dashboardService.On("SearchDashboards", context.Background(), mock.Anything).Return(model.HitList{
 			{
 				UID:   "dashboard1",
 				Title: "C Dashboard",
