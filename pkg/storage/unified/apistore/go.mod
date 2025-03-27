@@ -137,10 +137,10 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
-	github.com/dolthub/go-icu-regex v0.0.0-20241215010122-db690dd53c90 // indirect
-	github.com/dolthub/go-mysql-server v0.19.1-0.20250206012855-c216e59c21a7 // indirect
+	github.com/dolthub/go-icu-regex v0.0.0-20250319212010-451ea8d003fa // indirect
+	github.com/dolthub/go-mysql-server v0.19.1-0.20250319232254-8c915e51131f // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
-	github.com/dolthub/vitess v0.0.0-20250123002143-3b45b8cacbfa // indirect
+	github.com/dolthub/vitess v0.0.0-20250304211657-920ca9ec2b9a // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/elazarl/goproxy v1.7.2 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
@@ -202,7 +202,7 @@ require (
 	github.com/googleapis/go-sql-spanner v1.11.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/grafana/alerting v0.0.0-20250310104713-16b885f1c79e // indirect
+	github.com/grafana/alerting v0.0.0-20250325165008-58ba6c617ff0 // indirect
 	github.com/grafana/authlib v0.0.0-20250305132846-37f49eb947fa // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect

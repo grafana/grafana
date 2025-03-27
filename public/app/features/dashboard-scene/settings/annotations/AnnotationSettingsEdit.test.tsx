@@ -39,10 +39,6 @@ jest.mock('@grafana/runtime', () => ({
       }),
     }),
   }),
-}));
-
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
-  ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,

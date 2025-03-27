@@ -92,8 +92,8 @@ var RelationsSubresource = []string{
 	RelationSubresourceSetPermissions,
 }
 
-// RelationsFolder are relations that can be added on type "folder".
-var RelationsFolder = append(
+// RelationsTyped are relations that can be added to typed resources (folders, teams, users, etc).
+var RelationsTyped = append(
 	RelationsSubresource,
 	RelationGet,
 	RelationUpdate,
@@ -160,10 +160,6 @@ func NewFolderIdent(name string) string {
 	return TypeFolderPrefix + name
 }
 
-func NewTeamIdent(name string) string {
-	return TypeTeamPrefix + name
-}
-
 func NewGroupResourceIdent(group, resource, subresource string) string {
 	return TypeGroupResoucePrefix + FormatGroupResource(group, resource, subresource)
 }
@@ -228,7 +224,7 @@ func NewFolderResourceTuple(subject, relation, group, resource, subresource, fol
 	}
 }
 
-func NewTeamResourceTuple(subject, relation, group, resource, subresource, name string) *openfgav1.TupleKey {
+func NewTypedResourceTuple(subject, relation, typ, group, resource, subresource, name string) *openfgav1.TupleKey {
 	relation = SubresourceRelation(relation)
 	var condition *openfgav1.RelationshipCondition
 	if !isSubresourceRelationSet(relation) {
@@ -247,7 +243,7 @@ func NewTeamResourceTuple(subject, relation, group, resource, subresource, name 
 	return &openfgav1.TupleKey{
 		User:      subject,
 		Relation:  relation,
-		Object:    NewTeamIdent(name),
+		Object:    NewTypedIdent(typ, name),
 		Condition: condition,
 	}
 }

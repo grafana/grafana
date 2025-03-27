@@ -1,52 +1,6 @@
 {
   "components": {
     "responses": {
-      "GetAllIntervalsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/GettableTimeIntervals"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetIntervalsByNameResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GettableTimeIntervals"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetReceiverResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GettableApiReceiver"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetReceiversResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/GettableApiReceiver"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "GettableHistoricUserConfigs": {
         "content": {
           "application/json": {
@@ -2723,6 +2677,10 @@
               "type": "string"
             },
             "type": "object"
+          },
+          "missing_series_evals_to_resolve": {
+            "format": "int64",
+            "type": "integer"
           },
           "noDataState": {
             "enum": [
@@ -6174,6 +6132,10 @@
           "metadata": {
             "$ref": "#/components/schemas/AlertRuleMetadata"
           },
+          "missing_series_evals_to_resolve": {
+            "format": "int64",
+            "type": "integer"
+          },
           "namespace_uid": {
             "type": "string"
           },
@@ -6323,26 +6285,6 @@
           "uptime",
           "versionInfo"
         ],
-        "type": "object"
-      },
-      "GettableTimeIntervals": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "provenance": {
-            "$ref": "#/components/schemas/Provenance"
-          },
-          "time_intervals": {
-            "items": {
-              "$ref": "#/components/schemas/TimeIntervalItem"
-            },
-            "type": "array"
-          },
-          "version": {
-            "type": "string"
-          }
-        },
         "type": "object"
       },
       "GettableUserConfig": {
@@ -8556,6 +8498,12 @@
           "metadata": {
             "$ref": "#/components/schemas/AlertRuleMetadata"
           },
+          "missing_series_evals_to_resolve": {
+            "description": "Number of consecutive evaluation intervals with no data for a dimension must pass\nbefore the alert state is considered stale and automatically resolved.\nIf set to 0, the value is reset to the default.",
+            "example": 3,
+            "format": "int64",
+            "type": "integer"
+          },
           "no_data_state": {
             "enum": [
               "Alerting",
@@ -8624,23 +8572,6 @@
               "type": "string"
             },
             "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "PostableTimeIntervals": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "time_intervals": {
-            "items": {
-              "$ref": "#/components/schemas/TimeIntervalItem"
-            },
-            "type": "array"
-          },
-          "version": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -8890,6 +8821,11 @@
               "team": "sre-team-1"
             },
             "type": "object"
+          },
+          "missingSeriesEvalsToResolve": {
+            "example": 2,
+            "format": "int64",
+            "type": "integer"
           },
           "noDataState": {
             "enum": [
@@ -11636,55 +11572,6 @@
         "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
         "type": "object"
       },
-      "TimeIntervalItem": {
-        "properties": {
-          "days_of_month": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "location": {
-            "type": "string"
-          },
-          "months": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "times": {
-            "items": {
-              "$ref": "#/components/schemas/TimeIntervalTimeRange"
-            },
-            "type": "array"
-          },
-          "weekdays": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "years": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "TimeIntervalTimeRange": {
-        "properties": {
-          "end_time": {
-            "type": "string"
-          },
-          "start_time": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "TimeRange": {
         "description": "Redefining this to avoid an import cycle",
         "properties": {
@@ -12966,6 +12853,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -13089,7 +12977,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
