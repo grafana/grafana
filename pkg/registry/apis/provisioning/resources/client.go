@@ -93,6 +93,9 @@ func (c *ResourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.Resource
 	return info.client, info.gvr, nil
 }
 
+// ForResource returns a client for a resource.
+// If the resource has a version, it will be used.
+// If the resource does not have a version, the preferred version will be used.
 func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()

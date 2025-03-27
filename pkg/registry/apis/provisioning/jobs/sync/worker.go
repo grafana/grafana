@@ -8,11 +8,10 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -145,18 +144,12 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.Reader, prog
 		return nil, fmt.Errorf("unable to get folder client: %w", err)
 	}
 
-	dashboardClient, err := parser.Clients().Dashboard()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get dashboard client: %w", err)
-	}
-
 	job := &syncJob{
 		repository:      repo,
 		progress:        progress,
 		parser:          parser,
 		lister:          r.lister,
 		folders:         resources.NewFolderManager(repo, folderClient),
-		dashboards:      dashboardClient,
 		resourcesLookup: map[resourceID]string{},
 	}
 
@@ -191,7 +184,6 @@ type syncJob struct {
 	parser          *resources.Parser
 	lister          resources.ResourceLister
 	folders         *resources.FolderManager
-	dashboards      dynamic.ResourceInterface
 	folderLookup    *resources.FolderTree
 	resourcesLookup map[resourceID]string // the path with this k8s name
 }
@@ -285,7 +277,12 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 				continue
 			}
 
-			client, err := r.client(change.Existing.Resource)
+			versionlessGVR := schema.GroupVersionResource{
+				Group:    change.Existing.Group,
+				Resource: change.Existing.Resource,
+			}
+
+			client, _, err := r.parser.Clients().ForResource(versionlessGVR)
 			if err != nil {
 				result.Error = fmt.Errorf("unable to get client for deleted object: %w", err)
 				r.progress.Record(ctx, result)
@@ -435,7 +432,7 @@ func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) job
 	result.Resource = gvk.Kind
 	result.Group = gvk.Group
 
-	client, err := r.client(gvk.Kind)
+	client, _, err := r.parser.Clients().ForKind(*gvk)
 	if err != nil {
 		result.Error = fmt.Errorf("unable to get client for deleted object: %w", err)
 		return result
@@ -501,14 +498,4 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 	_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
 	result.Error = err
 	return result
-}
-
-func (r *syncJob) client(kind string) (dynamic.ResourceInterface, error) {
-	switch kind {
-	case dashboard.GROUP, dashboard.DASHBOARD_RESOURCE, "Dashboard":
-		return r.dashboards, nil
-	case folders.GROUP, folders.RESOURCE, "Folder":
-		return r.folders.Client(), nil
-	}
-	return nil, fmt.Errorf("unsupported resource: %s", kind)
 }
