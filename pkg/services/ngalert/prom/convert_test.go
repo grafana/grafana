@@ -746,3 +746,40 @@ func TestPrometheusRulesToGrafana_KeepOriginalRuleDefinition(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryModelContainsRequiredParameters(t *testing.T) {
+	cfg := Config{
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 1 * time.Minute,
+	}
+	converter, err := NewConverter(cfg)
+	require.NoError(t, err)
+
+	promRule := PrometheusRule{
+		Alert: "test-alert",
+		Expr:  "up == 0",
+	}
+
+	queries, err := converter.createQuery(promRule.Expr, false, PrometheusRuleGroup{})
+	require.NoError(t, err)
+	require.Len(t, queries, 3)
+
+	for _, query := range queries {
+		var model map[string]any
+		err = json.Unmarshal(query.Model, &model)
+		require.NoError(t, err)
+
+		// Check intervalMs
+		intervalMs, exists := model["intervalMs"]
+		require.True(t, exists)
+		_, isNumber := intervalMs.(float64)
+		require.True(t, isNumber, "intervalMs should be a number")
+
+		// Check maxDataPoints
+		maxDataPoints, exists := model["maxDataPoints"]
+		require.True(t, exists)
+		_, isNumber = maxDataPoints.(float64)
+		require.True(t, isNumber, "maxDataPoints should be a number")
+	}
+}

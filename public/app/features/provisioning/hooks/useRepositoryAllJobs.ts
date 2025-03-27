@@ -38,7 +38,7 @@ export function useRepositoryAllJobs({
   watch = true,
   sort = 'created-first',
 }: RepositoryHistoricalJobsArgs = {}): [
-  (Job | HistoricJob)[] | undefined,
+  Array<Job | HistoricJob> | undefined,
   ReturnType<typeof useListJobQuery>,
   ReturnType<typeof useListHistoricJobQuery>,
 ] {

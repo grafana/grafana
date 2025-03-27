@@ -16,7 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 
 	authtypes "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -25,11 +25,11 @@ var scheme = runtime.NewScheme()
 var codecs = serializer.NewCodecFactory(scheme)
 
 func TestPrepareObjectForStorage(t *testing.T) {
-	_ = v0alpha1.AddToScheme(scheme)
+	_ = v1alpha1.AddToScheme(scheme)
 	node, err := snowflake.NewNode(rand.Int63n(1024))
 	require.NoError(t, err)
 	s := &Storage{
-		codec:     apitesting.TestCodec(codecs, v0alpha1.DashboardResourceInfo.GroupVersion()),
+		codec:     apitesting.TestCodec(codecs, v1alpha1.DashboardResourceInfo.GroupVersion()),
 		snowflake: node,
 		opts: StorageOptions{
 			EnableFolderSupport: true,
@@ -48,14 +48,14 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Error on missing name", func(t *testing.T) {
-		dashboard := v0alpha1.Dashboard{}
+		dashboard := v1alpha1.Dashboard{}
 		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "missing name")
 	})
 
 	t.Run("Error on non-empty resource version", func(t *testing.T) {
-		dashboard := v0alpha1.Dashboard{}
+		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 		dashboard.ResourceVersion = "123"
 		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
@@ -64,13 +64,13 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Generate UID and leave deprecated ID empty, if not required", func(t *testing.T) {
-		dashboard := v0alpha1.Dashboard{}
+		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 
 		encodedData, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
 
-		newObject, _, err := s.codec.Decode(encodedData, nil, &v0alpha1.Dashboard{})
+		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
 		require.NoError(t, err)
 		obj, err := utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Should keep manager info", func(t *testing.T) {
-		dashboard := v0alpha1.Dashboard{}
+		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
@@ -106,7 +106,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		encodedData, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
-		newObject, _, err := s.codec.Decode(encodedData, nil, &v0alpha1.Dashboard{})
+		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -123,7 +123,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Update should manage incrementing generation and metadata", func(t *testing.T) {
-		dashboard := v0alpha1.Dashboard{}
+		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
@@ -133,7 +133,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		encodedData, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
-		insertedObject, _, err := s.codec.Decode(encodedData, nil, &v0alpha1.Dashboard{})
+		insertedObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(insertedObject)
 		require.NoError(t, err)
@@ -153,8 +153,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		updatedObject := insertedObject.DeepCopyObject()
 		meta, err = utils.MetaAccessor(updatedObject)
 		require.NoError(t, err)
-		err = meta.SetStatus(v0alpha1.DashboardStatus{
-			Conversion: &v0alpha1.DashboardConversionStatus{
+		err = meta.SetStatus(v1alpha1.DashboardStatus{
+			Conversion: &v1alpha1.DashboardConversionStatus{
 				Failed: true,
 				Error:  "test",
 			},
@@ -169,7 +169,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, int64(1), meta.GetGeneration())
 
 		// Change the folder -- the generation should increase and the updatedBy metadata
-		dashboard2 := &v0alpha1.Dashboard{ObjectMeta: v1.ObjectMeta{
+		dashboard2 := &v1alpha1.Dashboard{ObjectMeta: v1.ObjectMeta{
 			Name: dashboard.Name,
 		}} // TODO... deep copy, See: https://github.com/grafana/grafana/pull/102258
 		meta2, err := utils.MetaAccessor(dashboard2)
@@ -183,12 +183,12 @@ func TestPrepareObjectForStorage(t *testing.T) {
 
 	s.opts.RequireDeprecatedInternalID = true
 	t.Run("Should generate internal id", func(t *testing.T) {
-		dashboard := v0alpha1.Dashboard{}
+		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 
 		encodedData, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
-		newObject, _, err := s.codec.Decode(encodedData, nil, &v0alpha1.Dashboard{})
+		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
 		require.NoError(t, err)
 		obj, err := utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -198,7 +198,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Should use deprecated ID if given it", func(t *testing.T) {
-		dashboard := v0alpha1.Dashboard{}
+		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
@@ -207,7 +207,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 
 		encodedData, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
-		newObject, _, err := s.codec.Decode(encodedData, nil, &v0alpha1.Dashboard{})
+		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -215,11 +215,11 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("calculate generation", func(t *testing.T) {
-		dash := &v0alpha1.Dashboard{
+		dash := &v1alpha1.Dashboard{
 			ObjectMeta: v1.ObjectMeta{
 				Name: "test",
 			},
-			Spec: v0alpha1.DashboardSpec{
+			Spec: v1alpha1.DashboardSpec{
 				Object: map[string]interface{}{
 					"hello": "world",
 				},
@@ -265,8 +265,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			b.Labels = map[string]string{
 				"a": "b",
 			}
-			b.Status = v0alpha1.DashboardStatus{
-				Conversion: &v0alpha1.DashboardConversionStatus{
+			b.Status = v1alpha1.DashboardStatus{
+				Conversion: &v1alpha1.DashboardConversionStatus{
 					Failed: true,
 				},
 			}
