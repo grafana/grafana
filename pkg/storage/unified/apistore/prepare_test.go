@@ -130,7 +130,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta.SetFolder("aaa")
 		require.NoError(t, err)
 
-		encodedData, err := s.prepareObjectForStorage(ctx, obj)
+		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
 		insertedObject, _, err := s.codec.Decode(encodedData, nil, &v0alpha1.Dashboard{})
@@ -283,7 +283,7 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	var err error
 
 	if old == nil {
-		raw, err = s.prepareObjectForStorage(ctx, obj)
+		raw, _, err = s.prepareObjectForStorage(ctx, obj)
 	} else {
 		raw, err = s.prepareObjectForUpdate(ctx, obj, old)
 	}
