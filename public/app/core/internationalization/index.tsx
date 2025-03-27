@@ -4,9 +4,10 @@ import { ReactElement, useMemo } from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
 import { usePluginContext } from '@grafana/data';
+import { DEFAULT_LANGUAGE } from '@grafana/data/unstable';
 import { setTransComponent, setUseTranslateHook, TransProps } from '@grafana/runtime/unstable';
 
-import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES } from './constants';
+import { NAMESPACES, VALID_LANGUAGES } from './constants';
 import { loadTranslations } from './loadTranslations';
 
 let tFunc: TFunction<string[], undefined> | undefined;
