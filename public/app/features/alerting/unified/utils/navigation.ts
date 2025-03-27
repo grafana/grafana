@@ -4,7 +4,7 @@ import { createReturnTo } from '../hooks/useReturnTo';
 
 import { createRelativeUrl } from './url';
 
-export const createListFilterLink = (values: Array<[string, string]>,options?: { skipSubPath?: boolean }) => {
+export const createListFilterLink = (values: Array<[string, string]>, options?: { skipSubPath?: boolean }) => {
   const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
   return createRelativeUrl(`/alerting/list`, params, { skipSubPath: options?.skipSubPath });
 };

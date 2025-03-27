@@ -58,7 +58,6 @@ const ImportFromDSRules = () => {
   console.log('rulerRules', rulerRules);
 
   const onSubmit = async (data: ImportFormValues) => {
-
     const rulerRulesToPayload = filterRulerRulesConfig(rulerRules, data.namespace, data.ruleGroup);
 
     try {
@@ -67,12 +66,14 @@ const ImportFromDSRules = () => {
         targetFolderUID: data.targetFolder?.uid,
         pauseRecordingRules: data.pauseRecordingRules,
         pauseAlerts: data.pauseAlertingRules,
-        payload: rulerRulesToPayload
+        payload: rulerRulesToPayload,
       }).unwrap();
 
       const isRootFolder = isEmpty(data.targetFolder?.uid);
 
-      const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', data.targetFolder?.title ?? '']], { skipSubPath: true });
+      const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', data.targetFolder?.title ?? '']], {
+        skipSubPath: true,
+      });
       notifyApp.success(
         t('alerting.import-to-gma.success', 'Successfully imported alert rules to Grafana-managed rules.')
       );
