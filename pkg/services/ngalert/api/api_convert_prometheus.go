@@ -112,7 +112,6 @@ type ConvertPrometheusSrv struct {
 	datasourceCache  datasources.CacheService
 	alertRuleService *provisioning.AlertRuleService
 	featureToggles   featuremgmt.FeatureToggles
-	xactManager      provisioning.TransactionManager
 }
 
 func NewConvertPrometheusSrv(
@@ -122,7 +121,6 @@ func NewConvertPrometheusSrv(
 	datasourceCache datasources.CacheService,
 	alertRuleService *provisioning.AlertRuleService,
 	featureToggles featuremgmt.FeatureToggles,
-	xactManager provisioning.TransactionManager,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -131,7 +129,6 @@ func NewConvertPrometheusSrv(
 		datasourceCache:  datasourceCache,
 		alertRuleService: alertRuleService,
 		featureToggles:   featureToggles,
-		xactManager:      xactManager,
 	}
 }
 
@@ -409,6 +406,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 	// 3. Update the GMA Rules in the DB
 	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, provenance)
 	if err != nil {
+		logger.Error("Failed to replace rule groups", "error", err)
 		return errorToResponse(err)
 	}
 

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -1267,7 +1266,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, ruleStore)
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles)
 
 	return srv, dsCache, ruleStore, folderService
 }

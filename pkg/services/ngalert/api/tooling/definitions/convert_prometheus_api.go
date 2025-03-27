@@ -82,7 +82,6 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// Route for mimirtool / UI
 // swagger:route POST /convert/prometheus/config/v1/rules convert_prometheus RouteConvertPrometheusPostRuleGroups
 //
 // Converts the submitted rule groups into Grafana-Managed Rules.
@@ -98,7 +97,6 @@ import (
 //       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
-// Route for cortextool
 // swagger:route POST /convert/api/prom/config/v1/rules convert_prometheus RouteConvertPrometheusCortexPostRuleGroups
 //
 // Converts the submitted rule groups into Grafana-Managed Rules.

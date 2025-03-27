@@ -190,7 +190,6 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 				api.DatasourceCache,
 				api.AlertRules,
 				api.FeatureManager,
-				api.TransactionManager,
 			),
 		), m)
 	}
