@@ -2,8 +2,8 @@ package folderimpl
 
 import (
 	"context"
-	"fmt"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -74,6 +74,9 @@ func parseUnstructuredToLegacyFolder(item *unstructured.Unstructured) (*folder.F
 
 func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context, item *unstructured.Unstructured) (*folder.Folder, error) {
 	folder, creatorRaw, updaterRaw, err := parseUnstructuredToLegacyFolder(item)
+	if err != nil {
+		return nil, err
+	}
 
 	creator, err := ss.getUserFromMeta(ctx, creatorRaw)
 	if err != nil {
@@ -133,6 +136,9 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Con
 
 	for _, item := range unstructuredList.Items {
 		folder, creatorRaw, updaterRaw, err := parseUnstructuredToLegacyFolder(&item)
+		if err != nil {
+			return nil, err
+		}
 
 		var creatorId int64
 		creatorIdentifier := toUID(creatorRaw)
