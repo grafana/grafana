@@ -146,9 +146,9 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter
 	job := &syncJob{
 		repository:      repo,
 		progress:        progress,
-		parser:          parser,
 		lister:          r.lister,
 		folders:         folders,
+		clients:         parser.Clients(),
 		resourceManager: resources.NewResourcesManager(repo, folders, parser, parser.Clients(), nil),
 	}
 
@@ -170,20 +170,13 @@ func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Reposit
 	return nil
 }
 
-type resourceID struct {
-	Name     string
-	Resource string
-	Group    string
-}
-
 // created once for each sync execution
 type syncJob struct {
 	repository      repository.Reader
 	progress        jobs.JobProgressRecorder
-	parser          *resources.Parser
 	lister          resources.ResourceLister
 	folders         *resources.FolderManager
-	folderLookup    *resources.FolderTree
+	clients         *resources.ResourceClients
 	resourceManager *resources.ResourcesManager
 }
 
@@ -241,9 +234,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 		return nil
 	}
 
-	// TODO: This might not work as expected!
-	// Load any existing folder information
-	r.folderLookup = resources.NewFolderTreeFromResourceList(target)
+	r.folders.SetTree(resources.NewFolderTreeFromResourceList(target))
 
 	// Now apply the changes
 	return r.applyChanges(ctx, changes)
@@ -278,7 +269,8 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 				Resource: change.Existing.Resource,
 			}
 
-			client, _, err := r.parser.Clients().ForResource(versionlessGVR)
+			// TODO: should we use the clients or the resource manager instead?
+			client, _, err := r.clients.ForResource(versionlessGVR)
 			if err != nil {
 				result.Error = fmt.Errorf("unable to get client for deleted object: %w", err)
 				r.progress.Record(ctx, result)
@@ -312,7 +304,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			continue
 		}
 
-		name, gvk, err := r.resourceManager.WriteResourceFromFile(ctx, change.Path, "", change.Action)
+		name, gvk, err := r.resourceManager.WriteResourceFromFile(ctx, change.Path, "")
 		result := jobs.JobResourceResult{
 			Path:   change.Path,
 			Action: change.Action,
@@ -382,68 +374,46 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			continue
 		}
 
+		result := jobs.JobResourceResult{
+			Path:   change.Path,
+			Action: change.Action,
+		}
+
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			name, gvk, err := r.resourceManager.WriteResourceFromFile(ctx, change.Path, change.Ref, change.Action)
-			result := jobs.JobResourceResult{
-				Path:   change.Path,
-				Action: change.Action,
-				Name:   name,
-				Error:  err,
-			}
-			if gvk != nil {
-				result.Resource = gvk.Kind
-				result.Group = gvk.Group
-			}
-			r.progress.Record(ctx, result)
-		case repository.FileActionDeleted:
-			_, gvk, err := r.resourceManager.DeleteObject(ctx, change.Path, change.PreviousRef)
-			result := jobs.JobResourceResult{
-				Path:   change.Path,
-				Action: repository.FileActionDeleted,
-				Error:  err,
-			}
-
-			if gvk != nil {
-				result.Resource = gvk.Kind
-				result.Group = gvk.Group
-			}
-			r.progress.Record(ctx, result)
-		case repository.FileActionRenamed:
-			// 1. Delete
-			_, gvk, err := r.resourceManager.DeleteObject(ctx, change.Path, change.PreviousRef)
-			result := jobs.JobResourceResult{
-				Path:   change.Path,
-				Action: repository.FileActionDeleted,
-			}
-			if gvk != nil {
-				result.Resource = gvk.Kind
-				result.Group = gvk.Group
-			}
-			r.progress.Record(ctx, result)
+			name, gvk, err := r.resourceManager.WriteResourceFromFile(ctx, change.Path, change.Ref)
 			if err != nil {
-				continue
+				result.Error = fmt.Errorf("write resource: %w", err)
 			}
-
-			// 2. Create
-			name, gvk, err := r.resourceManager.WriteResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated)
-			result = jobs.JobResourceResult{
-				Path:   change.Path,
-				Action: repository.FileActionCreated,
-				Name:   name,
-				Error:  err,
-			}
+			result.Name = name
 			if gvk != nil {
 				result.Resource = gvk.Kind
 				result.Group = gvk.Group
 			}
-			r.progress.Record(ctx, result)
+		case repository.FileActionDeleted:
+			name, gvk, err := r.resourceManager.RemoveResourceFromFile(ctx, change.Path, change.PreviousRef)
+			if err != nil {
+				result.Error = fmt.Errorf("delete resource: %w", err)
+			}
+			result.Name = name
+			if gvk != nil {
+				result.Resource = gvk.Kind
+				result.Group = gvk.Group
+			}
+		case repository.FileActionRenamed:
+			name, gvk, err := r.resourceManager.RenameResourceFile(ctx, change.Path, change.PreviousRef, change.Path, change.Ref)
+			if err != nil {
+				result.Error = fmt.Errorf("rename resource: %w", err)
+			}
+			result.Name = name
+			if gvk != nil {
+				result.Resource = gvk.Kind
+				result.Group = gvk.Group
+			}
 		case repository.FileActionIgnored:
-			r.progress.Record(ctx, jobs.JobResourceResult{
-				Path:   change.Path,
-				Action: repository.FileActionIgnored,
-			})
+			// do nothing
 		}
+		r.progress.Record(ctx, result)
 	}
 
 	r.progress.SetMessage(ctx, "versioned changes replicated")

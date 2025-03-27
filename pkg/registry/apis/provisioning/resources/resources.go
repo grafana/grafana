@@ -126,7 +126,7 @@ func (m *ResourcesManager) CreateResourceFromObject(ctx context.Context, obj *un
 	return fileName, nil
 }
 
-func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) (string, *schema.GroupVersionKind, error) {
+func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string) (string, *schema.GroupVersionKind, error) {
 	// Read the referenced file
 	fileInfo, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
@@ -166,7 +166,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	return parsed.Obj.GetName(), parsed.GVK, err
 }
 
-func (r *ResourcesManager) DeleteObject(ctx context.Context, path string, ref string) (string, *schema.GroupVersionKind, error) {
+func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, *schema.GroupVersionKind, error) {
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to read file: %w", err)
@@ -217,4 +217,13 @@ func (m *ResourcesManager) withAuthorSignature(ctx context.Context, item utils.G
 	}
 
 	return repository.WithAuthorSignature(ctx, sig)
+}
+
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, *schema.GroupVersionKind, error) {
+	name, gvk, err := r.RemoveResourceFromFile(ctx, previousPath, previousRef)
+	if err != nil {
+		return name, gvk, fmt.Errorf("failed to remove resource: %w", err)
+	}
+
+	return r.WriteResourceFromFile(ctx, newPath, newRef)
 }

@@ -40,6 +40,10 @@ func (fm *FolderManager) Tree() *FolderTree {
 	return fm.tree
 }
 
+func (fm *FolderManager) SetTree(tree *FolderTree) {
+	fm.tree = tree
+}
+
 // EnsureFoldersExist creates the folder structure in the cluster.
 func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error) {
 	cfg := fm.repo.Config()
