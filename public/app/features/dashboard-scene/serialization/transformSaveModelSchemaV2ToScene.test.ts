@@ -58,7 +58,6 @@ export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     name: 'dashboard-uid',
     namespace: 'default',
     labels: {},
-    generation: 123,
     resourceVersion: '123',
     creationTimestamp: 'creationTs',
     annotations: {
@@ -506,7 +505,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       it('should build a dashboard scene with a responsive grid layout', () => {
         const dashboard = cloneDeep(defaultDashboard);
         dashboard.spec.layout = {
-          kind: 'ResponsiveGridLayout',
+          kind: 'AutoGridLayout',
           spec: {
             maxColumnCount: 4,
             columnWidthMode: 'custom',
@@ -514,7 +513,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
             rowHeightMode: 'standard',
             items: [
               {
-                kind: 'ResponsiveGridLayoutItem',
+                kind: 'AutoGridLayoutItem',
                 spec: {
                   element: {
                     kind: 'ElementReference',
@@ -547,14 +546,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 spec: {
                   title: 'tab1',
                   layout: {
-                    kind: 'ResponsiveGridLayout',
+                    kind: 'AutoGridLayout',
                     spec: {
                       maxColumnCount: 4,
                       columnWidthMode: 'standard',
                       rowHeightMode: 'standard',
                       items: [
                         {
-                          kind: 'ResponsiveGridLayoutItem',
+                          kind: 'AutoGridLayoutItem',
                           spec: {
                             element: {
                               kind: 'ElementReference',
@@ -596,14 +595,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                   title: 'row1',
                   collapse: false,
                   layout: {
-                    kind: 'ResponsiveGridLayout',
+                    kind: 'AutoGridLayout',
                     spec: {
                       maxColumnCount: 4,
                       columnWidthMode: 'standard',
                       rowHeightMode: 'standard',
                       items: [
                         {
-                          kind: 'ResponsiveGridLayoutItem',
+                          kind: 'AutoGridLayoutItem',
                           spec: {
                             element: {
                               kind: 'ElementReference',

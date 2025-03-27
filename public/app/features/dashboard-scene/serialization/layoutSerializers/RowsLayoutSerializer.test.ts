@@ -71,7 +71,7 @@ describe('deserialization', () => {
               title: 'Row 1',
               collapse: false,
               layout: {
-                kind: 'ResponsiveGridLayout',
+                kind: 'AutoGridLayout',
                 spec: {
                   columnWidthMode: 'standard',
                   rowHeightMode: 'standard',
@@ -103,7 +103,7 @@ describe('deserialization', () => {
               hideHeader: undefined,
               fillScreen: undefined,
               layout: {
-                kind: 'ResponsiveGridLayout',
+                kind: 'AutoGridLayout',
                 spec: {
                   columnWidthMode: 'standard',
                   rowHeightMode: 'standard',
@@ -350,7 +350,7 @@ describe('serialization', () => {
               hideHeader: undefined,
               fillScreen: undefined,
               layout: {
-                kind: 'ResponsiveGridLayout',
+                kind: 'AutoGridLayout',
                 spec: {
                   columnWidth: undefined,
                   rowHeight: undefined,

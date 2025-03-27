@@ -51,7 +51,7 @@ export class ResponsiveGridLayoutManager
     },
     id: 'responsive-grid',
     createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
-    kind: 'ResponsiveGridLayout',
+    kind: 'AutoGridLayout',
     isGridLayout: true,
   };
 

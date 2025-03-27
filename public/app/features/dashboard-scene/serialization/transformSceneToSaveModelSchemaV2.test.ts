@@ -29,7 +29,7 @@ import {
 
 import {
   GridLayoutSpec,
-  ResponsiveGridLayoutSpec,
+  AutoGridLayoutSpec,
   RowsLayoutSpec,
   TabsLayoutSpec,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
@@ -772,9 +772,9 @@ describe('dynamic layouts', () => {
     const rowsLayout = result.layout.spec as RowsLayoutSpec;
     expect(rowsLayout.rows.length).toBe(2);
     expect(rowsLayout.rows[0].kind).toBe('RowsLayoutRow');
-    expect(rowsLayout.rows[0].spec.layout.kind).toBe('ResponsiveGridLayout');
-    const layout1 = rowsLayout.rows[0].spec.layout.spec as ResponsiveGridLayoutSpec;
-    expect(layout1.items[0].kind).toBe('ResponsiveGridLayoutItem');
+    expect(rowsLayout.rows[0].spec.layout.kind).toBe('AutoGridLayout');
+    const layout1 = rowsLayout.rows[0].spec.layout.spec as AutoGridLayoutSpec;
+    expect(layout1.items[0].kind).toBe('AutoGridLayoutItem');
 
     expect(rowsLayout.rows[1].spec.layout.kind).toBe('GridLayout');
     const layout2 = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
@@ -803,8 +803,8 @@ describe('dynamic layouts', () => {
       )
     );
     const result = transformSceneToSaveModelSchemaV2(scene);
-    expect(result.layout.kind).toBe('ResponsiveGridLayout');
-    const respGridLayout = result.layout.spec as ResponsiveGridLayoutSpec;
+    expect(result.layout.kind).toBe('AutoGridLayout');
+    const respGridLayout = result.layout.spec as AutoGridLayoutSpec;
     expect(respGridLayout.columnWidthMode).toBe('custom');
     expect(respGridLayout.columnWidth).toBe(100);
     expect(respGridLayout.rowHeightMode).toBe('standard');
@@ -812,7 +812,7 @@ describe('dynamic layouts', () => {
     expect(respGridLayout.maxColumnCount).toBe(4);
     expect(respGridLayout.fillScreen).toBe(true);
     expect(respGridLayout.items.length).toBe(2);
-    expect(respGridLayout.items[0].kind).toBe('ResponsiveGridLayoutItem');
+    expect(respGridLayout.items[0].kind).toBe('AutoGridLayoutItem');
   });
 
   it('should transform scene with tabs layout to schema v2', () => {

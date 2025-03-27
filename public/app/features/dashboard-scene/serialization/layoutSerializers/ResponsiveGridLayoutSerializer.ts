@@ -1,7 +1,7 @@
 import {
   DashboardV2Spec,
-  defaultResponsiveGridLayoutSpec,
-  ResponsiveGridLayoutItemKind,
+  defaultAutoGridLayoutSpec,
+  AutoGridLayoutItemKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
@@ -24,10 +24,10 @@ import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './uti
 export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: ResponsiveGridLayoutManager): DashboardV2Spec['layout'] {
     const { maxColumnCount, fillScreen, columnWidth, rowHeight, layout } = layoutManager.state;
-    const defaults = defaultResponsiveGridLayoutSpec();
+    const defaults = defaultAutoGridLayoutSpec();
 
     return {
-      kind: 'ResponsiveGridLayout',
+      kind: 'AutoGridLayout',
       spec: {
         maxColumnCount,
         fillScreen: fillScreen === defaults.fillScreen ? undefined : fillScreen,
@@ -40,8 +40,8 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
           // For serialization we should retrieve the original element key
           const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(child.state?.body);
 
-          const layoutItem: ResponsiveGridLayoutItemKind = {
-            kind: 'ResponsiveGridLayoutItem',
+          const layoutItem: AutoGridLayoutItemKind = {
+            kind: 'AutoGridLayoutItem',
             spec: {
               element: {
                 kind: 'ElementReference',
@@ -70,11 +70,11 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
   }
 
   deserialize(layout: DashboardV2Spec['layout'], elements: DashboardV2Spec['elements']): DashboardLayoutManager {
-    if (layout.kind !== 'ResponsiveGridLayout') {
+    if (layout.kind !== 'AutoGridLayout') {
       throw new Error('Invalid layout kind');
     }
 
-    const defaults = defaultResponsiveGridLayoutSpec();
+    const defaults = defaultAutoGridLayoutSpec();
     const { maxColumnCount, columnWidthMode, columnWidth, rowHeightMode, rowHeight, fillScreen } = layout.spec;
 
     const children = layout.spec.items.map((item) => {
