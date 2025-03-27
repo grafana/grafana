@@ -35,7 +35,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       ))}
     </>
   ) : (
-    <div ref={(ref) => model.setRef(ref)} data-auto-grid-item-drop-target={isDragging ? key : undefined}>
+    <div ref={model.containerRef} data-auto-grid-item-drop-target={isDragging ? key : undefined}>
       {isDragged && <div className={styles.draggedPlaceholder} />}
 
       <div

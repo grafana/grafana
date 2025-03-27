@@ -1,4 +1,5 @@
 import { isEqual } from 'lodash';
+import React from 'react';
 
 import {
   CustomVariable,
@@ -18,6 +19,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
+import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
@@ -43,9 +45,7 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
   });
 
   public readonly isDashboardLayoutItem = true;
-
-  public _containerRef: HTMLDivElement | null = null;
-
+  public containerRef = React.createRef<HTMLDivElement>();
   private _prevRepeatValues?: VariableValueSingle[];
 
   public constructor(state: AutoGridItemState) {
@@ -153,18 +153,18 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     return this.parent;
   }
 
-  public setRef(ref: HTMLDivElement | null) {
-    this._containerRef = ref;
-  }
-
   public getBoundingBox(): { width: number; height: number; top: number; left: number } {
-    const rect = this._containerRef!.getBoundingClientRect();
+    const rect = this.containerRef.current!.getBoundingClientRect();
 
     return {
       width: rect.width,
       height: rect.height,
-      top: this._containerRef!.offsetTop,
-      left: this._containerRef!.offsetLeft,
+      top: this.containerRef.current!.offsetTop,
+      left: this.containerRef.current!.offsetLeft,
     };
+  }
+
+  public scrollIntoView() {
+    scrollCanvasElementIntoView(this, this.containerRef);
   }
 }
