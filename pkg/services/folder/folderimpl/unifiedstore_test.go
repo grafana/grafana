@@ -190,6 +190,7 @@ func TestGetChildren(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
 	store := FolderUnifiedStoreImpl{
 		k8sclient: mockCli,
+		userService: usertest.NewUserServiceFake(),
 	}
 
 	ctx := context.Background()
