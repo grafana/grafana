@@ -6,7 +6,8 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -20,33 +21,24 @@ func (r *exportJob) exportFoldersFromAPIServer(ctx context.Context) error {
 	logger := r.logger
 	r.progress.SetMessage(ctx, "reading folder tree")
 
-	repoName := r.target.Config().Name
-
 	// TODO: should this be logging or message or both?
+	repoName := r.target.Config().Name
 	r.progress.SetMessage(ctx, "read folder tree from unified storage")
-	client, err := r.client.Folder()
-	if err != nil {
-		return err
-	}
-
-	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
-	if err != nil {
-		return fmt.Errorf("failed to list folders: %w", err)
-	}
-	if rawList.GetContinue() != "" {
-		return fmt.Errorf("unable to list all folders in one request: %s", rawList.GetContinue())
-	}
-
-	for _, item := range rawList.Items {
-		err = r.folderTree.AddUnstructured(&item, repoName)
+	err := r.client.ForEachFolder(ctx, func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error {
+		err := r.folderTree.AddUnstructured(item, repoName)
 		if err != nil {
 			r.progress.Record(ctx, jobs.JobResourceResult{
 				Name:     item.GetName(),
-				Resource: folders.RESOURCE,
-				Group:    folders.GROUP,
+				Resource: item.GroupVersionKind().Kind,
+				Group:    item.GroupVersionKind().Group,
 				Error:    err,
 			})
 		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("read folders in memory to build tree: %w", err)
 	}
 
 	// create folders first is required so that empty folders exist when finished
