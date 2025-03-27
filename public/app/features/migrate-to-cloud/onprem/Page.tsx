@@ -239,16 +239,33 @@ export const Page = () => {
       setUiState('configure');
       return;
     }
+
+    // Error handling: if we are building a snapshot and there's an error, go back to the configure state.
+    // Also display the error in the UI.
+    if (uiState === 'building' && (createSnapshotResult.error || snapshot.isError)) {
+      setUiState('configure');
+      return;
+    }
+
+    // Error handling: if we are uploading a snapshot and there's an error, force move to the uploaded state.
+    // Also display the error in the UI, so the user can reconfigure it.
+    if (uiState === 'uploading' && (uploadSnapshotResult.error || snapshotStatus === 'ERROR')) {
+      setUiState('uploaded');
+      return;
+    }
   }, [
     sessionUid,
     snapshotStatus,
     snapshot.isLoading,
     snapshot.isFetching,
+    snapshot.isError,
     setReconfiguring,
     setUiState,
     uiState,
     reconfiguring,
     snapshot.data?.results?.length,
+    createSnapshotResult.error,
+    uploadSnapshotResult.error,
   ]);
 
   console.log('uiState', uiState);
@@ -337,7 +354,7 @@ export const Page = () => {
           onRebuildSnapshot={handleRebuildSnapshot}
         />
 
-        {['built', 'uploaded'].includes(uiState) && error && (
+        {(['built', 'uploaded'].includes(uiState) || !!createSnapshotResult?.error) && error && (
           <AlertWithTraceID severity={error.severity} title={error.title} error={error.error}>
             <Text element="p">{error.body}</Text>
           </AlertWithTraceID>
