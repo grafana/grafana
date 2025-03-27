@@ -1837,6 +1837,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate(), gen.Generate()})
 	require.NoError(t, err)
 	rule1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
+	require.NoError(t, err)
 	rule2, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[1].UID})
 	require.NoError(t, err)
 
@@ -1865,6 +1866,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	// delete the second rule
 	clk.Add(1 * time.Hour)
 	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule2.UID)
+	require.NoError(t, err)
 
 	// and the first rule hour later
 	clk.Add(1 * time.Hour)
