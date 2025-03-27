@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { AsyncSelect, Button, Combobox, Select, useStyles2 } from '@grafana/ui';
+import { Button, Combobox, Select, useStyles2 } from '@grafana/ui';
 
 import {
   AzureQueryType,
