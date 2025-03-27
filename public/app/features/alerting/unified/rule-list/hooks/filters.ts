@@ -1,14 +1,16 @@
-import { compact } from 'lodash';
+import { attempt, compact, isString } from 'lodash';
+import memoize from 'micro-memoize';
 
+import { isExpressionReference } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { AlertQuery, PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
+import { getDatasourceAPIUid } from '../../utils/datasource';
 import { parseMatcher } from '../../utils/matchers';
 import { isPluginProvidedRule, prometheusRuleType } from '../../utils/rules';
-import { getDataSourceUID } from '../../utils/datasource';
 
 /**
  * @returns True if the group matches the filter, false otherwise. Keeps rules intact
@@ -111,12 +113,13 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
       try {
         const parsedQuery: AlertQuery[] = JSON.parse(rule.query);
 
-        const filterDataSourceUids = compact(
-          filterState.dataSourceNames.map((name) => getDataSourceUID({ rulesSourceName: name }))
-        );
-        const datasourceUids = parsedQuery.map((q) => q.datasourceUid);
-        const containsSpecificDataSource = datasourceUids.some((uid) => filterDataSourceUids.includes(uid));
-        if (!containsSpecificDataSource) {
+        const filterDataSourceUids = mapDataSourceNamesToUids(filterState.dataSourceNames);
+        const queryDataSourceUids = parsedQuery
+          .map((q) => q.datasourceUid)
+          .filter((uid) => !isExpressionReference(uid));
+
+        const queryIncludesDataSource = queryDataSourceUids.some((uid) => filterDataSourceUids.includes(uid));
+        if (!queryIncludesDataSource) {
           return false;
         }
       } catch (error) {
@@ -136,3 +139,11 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
     return { name: matcherQuery, value: '', isRegex: true, isEqual: true };
   }
 }
+
+// Memoize the function to avoid calling getDatasourceAPIUid for the filter values multiple times
+const mapDataSourceNamesToUids = memoize(
+  (names: string[]): string[] => {
+    return names.map((name) => attempt(getDatasourceAPIUid, name)).filter(isString);
+  },
+  { maxSize: 1 }
+);

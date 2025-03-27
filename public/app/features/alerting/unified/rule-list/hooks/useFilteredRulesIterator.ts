@@ -1,7 +1,7 @@
 import { AsyncIterableX, empty, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
-import { catchError, filter, flatMap, map } from 'ix/asynciterable/operators';
-import { compact, includes, isEmpty } from 'lodash';
+import { catchError, flatMap, map } from 'ix/asynciterable/operators';
+import { includes, isEmpty } from 'lodash';
 
 import {
   DataSourceRuleGroupIdentifier,
