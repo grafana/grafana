@@ -767,10 +767,6 @@ const (
 	// Use new combobox component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 
-	// FlagUserStorageAPI
-	// Enables the user storage API
-	FlagUserStorageAPI = "userStorageAPI"
-
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
@@ -950,10 +946,6 @@ const (
 	// FlagInviteUserExperimental
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
-
-	// FlagExtraLanguages
-	// Enables additional languages
-	FlagExtraLanguages = "extraLanguages"
 
 	// FlagNoBackdropBlur
 	// Disables backdrop blur

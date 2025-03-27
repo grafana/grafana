@@ -8,7 +8,7 @@ import { Tab, useElementSelection } from '@grafana/ui';
 import { TabItem } from './TabItem';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
-  const { title, key } = model.useState();
+  const { title, key, isDropTarget } = model.useState();
   const parentLayout = model.getParentLayout();
   const { tabs, currentTabIndex } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
@@ -25,7 +25,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
       truncate
       className={cx(
         isSelected && 'dashboard-selected-element',
-        isSelectable && !isSelected && 'dashboard-selectable-element'
+        isSelectable && !isSelected && 'dashboard-selectable-element',
+        isDropTarget && 'dashboard-drop-target'
       )}
       active={isActive}
       role="presentation"
@@ -34,6 +35,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
       aria-selected={isActive}
       onPointerDown={onSelect}
       label={titleInterpolated}
+      data-dashboard-drop-target-key={model.state.key}
     />
   );
 }

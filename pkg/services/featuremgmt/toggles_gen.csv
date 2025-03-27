@@ -189,7 +189,6 @@ pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 prometheusUsesCombobox,experimental,@grafana/oss-big-tent,false,false,false
-userStorageAPI,GA,@grafana/plugins-platform-backend,false,false,false
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 preinstallAutoUpdate,GA,@grafana/plugins-platform-backend,false,false,false
 playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -213,7 +212,7 @@ investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,fal
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,preview,@grafana/identity-access-team,false,false,false
-teamHttpHeadersMimir,experimental,@grafana/identity-access-team,false,false,false
+teamHttpHeadersMimir,preview,@grafana/identity-access-team,false,false,false
 ABTestFeatureToggleA,experimental,@grafana/sharing-squad,false,false,false
 templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
 ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
@@ -235,7 +234,6 @@ alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 grafanaManagedRecordingRulesDatasources,experimental,@grafana/alerting-squad,false,false,false
 infinityRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
-extraLanguages,experimental,@grafana/grafana-frontend-platform,false,false,true
 noBackdropBlur,experimental,@grafana/grafana-frontend-platform,false,false,true
 alertingMigrationUI,experimental,@grafana/alerting-squad,false,false,true
 unifiedStorageHistoryPruner,experimental,@grafana/search-and-storage,false,false,false
