@@ -42,7 +42,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	// Get the items to check
 	items, err := check.Items(ctx)
 	if err != nil {
-		setErr := checks.SetStatusAnnotation(ctx, client, obj, "error")
+		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
 		if setErr != nil {
 			return setErr
 		}
@@ -52,7 +52,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	steps := check.Steps()
 	failures, err := runStepsInParallel(ctx, &c.Spec, steps, items)
 	if err != nil {
-		setErr := checks.SetStatusAnnotation(ctx, client, obj, "error")
+		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
 		if setErr != nil {
 			return setErr
 		}
@@ -63,7 +63,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 		Failures: failures,
 		Count:    int64(len(items)),
 	}
-	err = checks.SetStatusAnnotation(ctx, client, obj, "processed")
+	err = checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationProcessed)
 	if err != nil {
 		return err
 	}

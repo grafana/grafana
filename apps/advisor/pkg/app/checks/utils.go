@@ -12,8 +12,10 @@ import (
 )
 
 const (
-	TypeLabel        = "advisor.grafana.app/type"
-	StatusAnnotation = "advisor.grafana.app/status"
+	TypeLabel                 = "advisor.grafana.app/type"
+	StatusAnnotation          = "advisor.grafana.app/status"
+	StatusAnnotationError     = "error"
+	StatusAnnotationProcessed = "processed"
 )
 
 func NewCheckReportFailure(

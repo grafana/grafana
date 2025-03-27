@@ -240,7 +240,7 @@ func (r *Runner) markUnprocessedChecksAsErrored(ctx context.Context) {
 	for _, check := range list.GetItems() {
 		if checks.GetStatusAnnotation(check) == "" {
 			r.log.Error("Check is unprocessed", "check", check.GetStaticMetadata().Identifier())
-			err := checks.SetStatusAnnotation(ctx, r.client, check, "error")
+			err := checks.SetStatusAnnotation(ctx, r.client, check, checks.StatusAnnotationError)
 			if err != nil {
 				r.log.Error("Error setting check status to error", "error", err)
 			}
