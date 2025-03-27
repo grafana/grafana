@@ -27,7 +27,9 @@ class UserSessions extends PureComponent<Props> {
       <div className={styles.wrapper}>
         {sessions.length > 0 && (
           <>
-            <h3 className="page-sub-heading">Sessions</h3>
+            <h3 className="page-sub-heading">
+              <Trans i18nKey="profile.user-sessions.sessions">Sessions</Trans>
+            </h3>
             <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
               <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.sessionsTable}>
                 <thead>
@@ -54,7 +56,13 @@ class UserSessions extends PureComponent<Props> {
                 <tbody>
                   {sessions.map((session: UserSession, index) => (
                     <tr key={index}>
-                      {session.isActive ? <td>Now</td> : <td>{session.seenAt}</td>}
+                      {session.isActive ? (
+                        <td>
+                          <Trans i18nKey="profile.user-sessions.now">Now</Trans>
+                        </td>
+                      ) : (
+                        <td>{session.seenAt}</td>
+                      )}
                       <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                       <td>{session.clientIp}</td>
                       <td>

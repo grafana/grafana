@@ -17,7 +17,7 @@ import {
   type SceneVariable,
 } from '@grafana/scenes';
 import { Stack, LinkButton } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { MetricsLogsConnector } from '../Integrations/logs/base';
 import { createLabelsCrossReferenceConnector } from '../Integrations/logs/labelsCrossReference';
@@ -170,7 +170,10 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
             <LinkButton
               href={`${config.appSubUrl}/a/grafana-lokiexplore-app`} // We prefix with the appSubUrl for environments that don't host grafana at the root.
               target="_blank"
-              tooltip="Navigate to the Explore Logs app"
+              tooltip={t(
+                'trails.related-logs-scene.tooltip-navigate-to-the-explore-logs-app',
+                'Navigate to the Explore Logs app'
+              )}
               variant="secondary"
               size="sm"
               onClick={() => reportExploreMetrics('related_logs_action_clicked', { action: 'open_explore_logs' })}

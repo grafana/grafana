@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, PluginErrorCode } from '@grafana/data';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControlsButton } from '../components/InstallControls';
@@ -51,7 +52,9 @@ export const PluginActions = ({ plugin }: Props) => {
       {needReload && (
         <Stack alignItems="center">
           <Icon name="exclamation-triangle" />
-          <span className={styles.message}>Refresh the page to see the changes</span>
+          <span className={styles.message}>
+            <Trans i18nKey="plugins.plugin-actions.refresh-changes">Refresh the page to see the changes</Trans>
+          </span>
         </Stack>
       )}
     </Stack>

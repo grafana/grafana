@@ -5,6 +5,7 @@ import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginTyp
 import { config } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
@@ -160,7 +161,9 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
 
   return (
     <div>
-      <p>Page not found.</p>
+      <p>
+        <Trans i18nKey="plugins.plugin-details-body.page-not-found">Page not found.</Trans>
+      </p>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { renderMarkdown } from '@grafana/data';
 import { Alert } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { CatalogPlugin } from '../types';
 
@@ -17,7 +18,12 @@ export function PluginDetailsDeprecatedWarning(props: Props): React.ReactElement
   const isWarningVisible = plugin.isDeprecated && !dismissed;
 
   return isWarningVisible ? (
-    <Alert severity="warning" title="Deprecated" className={className} onRemove={() => setDismissed(true)}>
+    <Alert
+      severity="warning"
+      title={t('plugins.plugin-details-deprecated-warning.title-deprecated', 'Deprecated')}
+      className={className}
+      onRemove={() => setDismissed(true)}
+    >
       <p>
         This {plugin.type} plugin is{' '}
         <a

@@ -4,6 +4,7 @@ import React, { useState, ChangeEvent, FocusEvent, useCallback } from 'react';
 import { rangeUtil, PanelData, DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { Trans, t } from 'app/core/internationalization';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {
@@ -159,11 +160,14 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
     return (
       <>
         <InlineLabel tooltip={tooltip} htmlFor="cache-timeout-id">
-          Cache timeout
+          <Trans i18nKey="query.query-group-options-editor.render-cache-timeout-option.cache-timeout">
+            Cache timeout
+          </Trans>
         </InlineLabel>
         <Input
           id="cache-timeout-id"
           type="text"
+          // eslint-disable-next-line @grafana/no-untranslated-strings
           placeholder="60"
           spellCheck={false}
           onBlur={onCacheTimeoutBlur}
@@ -182,7 +186,9 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 
     return (
       <>
-        <InlineLabel tooltip={tooltip}>Cache TTL</InlineLabel>
+        <InlineLabel tooltip={tooltip}>
+          <Trans i18nKey="query.query-group-options-editor.render-query-caching-ttloption.cache-ttl">Cache TTL</Trans>
+        </InlineLabel>
         <Input
           type="number"
           placeholder={`${dataSource.cachingConfig.TTLMs}`}
@@ -210,7 +216,9 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
             </>
           }
         >
-          Max data points
+          <Trans i18nKey="query.query-group-options-editor.render-max-data-points-option.max-data-points">
+            Max data points
+          </Trans>
         </InlineLabel>
         <Input
           id="max-data-points-input"
@@ -223,7 +231,11 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         {isAuto && (
           <>
             <span className={cx(styles.noSquish, styles.operator)}>=</span>
-            <span className={cx(styles.noSquish, styles.left)}>Width of panel</span>
+            <span className={cx(styles.noSquish, styles.left)}>
+              <Trans i18nKey="query.query-group-options-editor.render-max-data-points-option.width-of-panel">
+                Width of panel
+              </Trans>
+            </span>
           </>
         )}
       </>
@@ -246,7 +258,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
           }
           htmlFor="min-interval-input"
         >
-          Min interval
+          <Trans i18nKey="query.query-group-options-editor.render-interval-option.min-interval">Min interval</Trans>
         </InlineLabel>
         <Input
           id="min-interval-input"
@@ -266,11 +278,15 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
             </>
           }
         >
-          Interval
+          <Trans i18nKey="query.query-group-options-editor.render-interval-option.interval">Interval</Trans>
         </InlineLabel>
         <span className={styles.noSquish}>{realInterval}</span>
         <span className={cx(styles.noSquish, styles.operator)}>=</span>
-        <span className={cx(styles.noSquish, styles.left)}>Time range / max data points</span>
+        <span className={cx(styles.noSquish, styles.left)}>
+          <Trans i18nKey="query.query-group-options-editor.render-interval-option.time-range-max-data-points">
+            Time range / max data points
+          </Trans>
+        </span>
       </>
     );
   };
@@ -299,7 +315,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
     <QueryOperationRow
       id="Query options"
       index={0}
-      title="Query options"
+      title={t('query.query-group-options-editor.Query options-title-query-options', 'Query options')}
       headerElement={renderCollapsedText()}
       isOpen={isOpen}
       onOpen={onOpenOptions}
@@ -322,11 +338,12 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
             </>
           }
         >
-          Relative time
+          <Trans i18nKey="query.query-group-options-editor.relative-time">Relative time</Trans>
         </InlineLabel>
         <Input
           id="relative-time-input"
           type="text"
+          // eslint-disable-next-line @grafana/no-untranslated-strings
           placeholder="1h"
           onChange={onRelativeTimeChange}
           onBlur={onOverrideTime}
@@ -344,11 +361,12 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
             </>
           }
         >
-          Time shift
+          <Trans i18nKey="query.query-group-options-editor.time-shift">Time shift</Trans>
         </InlineLabel>
         <Input
           id="time-shift-input"
           type="text"
+          // eslint-disable-next-line @grafana/no-untranslated-strings
           placeholder="1h"
           onChange={onTimeShiftChange}
           onBlur={onTimeShift}
@@ -358,7 +376,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         {(timeRangeShift || timeRangeFrom) && (
           <>
             <InlineLabel htmlFor="hide-time-info-switch" className={styles.firstColumn}>
-              Hide time info
+              <Trans i18nKey="query.query-group-options-editor.hide-time-info">Hide time info</Trans>
             </InlineLabel>
             <InlineSwitch
               id="hide-time-info-switch"
