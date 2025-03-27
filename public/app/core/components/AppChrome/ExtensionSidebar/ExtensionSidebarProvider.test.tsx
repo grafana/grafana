@@ -162,7 +162,9 @@ describe('Utility Functions', () => {
     it('should create a valid component ID', () => {
       const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
 
-      expect(componentId).toBe(JSON.stringify({ pluginId: 'test-plugin', componentTitle: 'Test Component' }));
+      expect(componentId).toBe(
+        JSON.stringify({ pluginId: mockPluginMeta.pluginId, componentTitle: mockComponent.title })
+      );
     });
   });
 
@@ -172,8 +174,8 @@ describe('Utility Functions', () => {
 
       const meta = getComponentMetaFromComponentId(componentId);
       expect(meta).toEqual({
-        pluginId: 'test-plugin',
-        componentTitle: 'Test Component',
+        pluginId: mockPluginMeta.pluginId,
+        componentTitle: mockComponent.title,
       });
     });
 
@@ -183,7 +185,7 @@ describe('Utility Functions', () => {
     });
 
     it('should return undefined for missing required fields', () => {
-      const meta = getComponentMetaFromComponentId(JSON.stringify({ pluginId: 'test-plugin' }));
+      const meta = getComponentMetaFromComponentId(JSON.stringify({ pluginId: mockPluginMeta.pluginId }));
       expect(meta).toBeUndefined();
     });
 
