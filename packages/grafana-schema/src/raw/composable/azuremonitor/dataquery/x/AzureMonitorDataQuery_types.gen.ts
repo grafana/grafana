@@ -352,7 +352,7 @@ export type BuilderQueryEditorOperatorType = (string | boolean | number | Select
 export interface BuilderQueryEditorOperator {
   labelValue?: string;
   name: string;
-  value: BuilderQueryEditorOperatorType;
+  value: string;
 }
 
 export interface BuilderQueryEditorWhereExpression {

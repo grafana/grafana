@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, Select, useStyles2 } from '@grafana/ui';
+import { Button, Combobox, Select, useStyles2 } from '@grafana/ui';
 
 import {
   AzureQueryType,
@@ -26,6 +26,12 @@ interface FilterSectionProps {
   timeRange?: TimeRange;
 }
 
+const filterDynamicColumns = (columns: string[], allColumns: AzureLogAnalyticsMetadataColumn[]) => {
+  return columns.filter((col) =>
+    allColumns.some((completeCol) => completeCol.name === col && completeCol.type !== 'dynamic')
+  );
+};
+
 export const FilterSection: React.FC<FilterSectionProps> = ({
   buildAndUpdateQuery,
   query,
@@ -39,14 +45,13 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
 
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const [filters, setFilters] = useState<BuilderQueryEditorWhereExpression[]>(builderQuery?.where?.expressions || []);
-  const [filterOptions, setFilterOptions] = useState<Record<number, Array<SelectableValue<string>>>>({});
   const hasLoadedFilters = useRef(false);
 
   const variableOptions = Array.isArray(templateVariableOptions) ? templateVariableOptions : [templateVariableOptions];
 
   const availableColumns: Array<SelectableValue<string>> = builderQuery?.columns?.columns?.length
-    ? builderQuery.columns.columns.map((col) => ({ label: col, value: col }))
-    : allColumns.map((col) => ({ label: col.name, value: col.name }));
+    ? filterDynamicColumns(builderQuery.columns.columns, allColumns).map((col) => ({ label: col, value: col }))
+    : allColumns.filter((col) => col.type !== 'dynamic').map((col) => ({ label: col.name, value: col.name }));
 
   const selectableOptions = [...availableColumns, ...variableOptions];
 
@@ -90,15 +95,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     if (field === 'property') {
       filter.property.name = value;
       filter.operator.value = '';
-
-      const options: Array<SelectableValue<string>> = await getFilterValues(filter);
-
-      setFilterOptions(
-        (prev): Record<number, Array<SelectableValue<string>>> => ({
-          ...prev,
-          [index]: options,
-        })
-      );
     } else if (field === 'operator') {
       filter.operator.name = value;
     } else if (field === 'value') {
@@ -113,11 +109,10 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
       filter.operator?.value !== undefined &&
       filter.operator?.value !== '';
 
+    setFilters(updated);
     if (isValid) {
       updateFilters(updated);
     }
-
-    setFilters(updated);
   };
 
   const onDeleteFilter = (index: number) => {
@@ -128,10 +123,11 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   const getFilterValues = async (filter: BuilderQueryEditorWhereExpression) => {
     const from = timeRange?.from?.toISOString();
     const to = timeRange?.to?.toISOString();
+    const timeColumn = query.azureLogAnalytics?.timeColumn || 'TimeGenerated';
 
     const kustoQuery = `
     ${query.azureLogAnalytics?.builderQuery?.from?.property.name}
-    | where TimeGenerated >= datetime(${from}) and TimeGenerated <= datetime(${to})
+    | where ${timeColumn} >= datetime(${from}) and ${timeColumn} <= datetime(${to})
     | distinct ${filter.property.name}
     | limit 1000
   `;
@@ -148,11 +144,9 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         range: timeRange || getDefaultTimeRange(),
         targets: [
           {
-            ...query,
             refId: 'A',
             queryType: AzureQueryType.LogAnalytics,
             azureLogAnalytics: {
-              ...query.azureLogAnalytics,
               query: kustoQuery,
               resources: query.azureLogAnalytics?.resources ?? [],
             },
@@ -168,7 +162,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         value: String(v),
       }));
 
-      setFilterOptions(selectable);
       return selectable;
     }
     return [];
@@ -180,7 +173,9 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         <EditorField
           label="Filters"
           optional={true}
-          tooltip={`Narrow results by applying conditions to specific columns...`}
+          tooltip={
+            'Narrow results by applying conditions to specific columns. Columns with the dynamic type are not available for filtering.'
+          }
         >
           <div className={styles.filters}>
             {filters.length > 0 ? (
@@ -200,14 +195,14 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                     options={toOperatorOptions('string')}
                     onChange={(e) => e.value && onChangeFilter(index, 'operator', e.value)}
                   />
-                  <Select
+                  <Combobox
                     aria-label="column value"
                     value={
                       filter.operator.value
                         ? { label: String(filter.operator.value), value: String(filter.operator.value) }
                         : null
                     }
-                    options={filterOptions[index] || []}
+                    options={() => getFilterValues(filter)}
                     onChange={(e) => e.value && onChangeFilter(index, 'value', e.value)}
                     width={inputFieldSize}
                     disabled={!filter.property?.name}
