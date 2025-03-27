@@ -25,12 +25,14 @@ type ConvertPrometheusApi interface {
 	RouteConvertPrometheusCortexGetRuleGroup(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusCortexGetRules(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusCortexPostRuleGroup(*contextmodel.ReqContext) response.Response
+	RouteConvertPrometheusCortexPostRuleGroups(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusDeleteNamespace(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusDeleteRuleGroup(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusGetNamespace(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusGetRuleGroup(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusGetRules(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusPostRuleGroup(*contextmodel.ReqContext) response.Response
+	RouteConvertPrometheusPostRuleGroups(*contextmodel.ReqContext) response.Response
 }
 
 func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusCortexDeleteNamespace(ctx *contextmodel.ReqContext) response.Response {
@@ -63,6 +65,9 @@ func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusCortexPostRuleGroup(
 	namespaceTitleParam := web.Params(ctx.Req)[":NamespaceTitle"]
 	return f.handleRouteConvertPrometheusCortexPostRuleGroup(ctx, namespaceTitleParam)
 }
+func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusCortexPostRuleGroups(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteConvertPrometheusCortexPostRuleGroups(ctx)
+}
 func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusDeleteNamespace(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	namespaceTitleParam := web.Params(ctx.Req)[":NamespaceTitle"]
@@ -92,6 +97,9 @@ func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusPostRuleGroup(ctx *c
 	// Parse Path Parameters
 	namespaceTitleParam := web.Params(ctx.Req)[":NamespaceTitle"]
 	return f.handleRouteConvertPrometheusPostRuleGroup(ctx, namespaceTitleParam)
+}
+func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusPostRuleGroups(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteConvertPrometheusPostRuleGroups(ctx)
 }
 
 func (api *API) RegisterConvertPrometheusApiEndpoints(srv ConvertPrometheusApi, m *metrics.API) {
@@ -168,6 +176,18 @@ func (api *API) RegisterConvertPrometheusApiEndpoints(srv ConvertPrometheusApi, 
 				m,
 			),
 		)
+		group.Post(
+			toMacaronPath("/api/convert/api/prom/config/v1/rules"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/convert/api/prom/config/v1/rules"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/convert/api/prom/config/v1/rules",
+				api.Hooks.Wrap(srv.RouteConvertPrometheusCortexPostRuleGroups),
+				m,
+			),
+		)
 		group.Delete(
 			toMacaronPath("/api/convert/prometheus/config/v1/rules/{NamespaceTitle}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
@@ -237,6 +257,18 @@ func (api *API) RegisterConvertPrometheusApiEndpoints(srv ConvertPrometheusApi, 
 				http.MethodPost,
 				"/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
 				api.Hooks.Wrap(srv.RouteConvertPrometheusPostRuleGroup),
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/convert/prometheus/config/v1/rules"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/convert/prometheus/config/v1/rules"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/convert/prometheus/config/v1/rules",
+				api.Hooks.Wrap(srv.RouteConvertPrometheusPostRuleGroups),
 				m,
 			),
 		)
