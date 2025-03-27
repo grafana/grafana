@@ -105,7 +105,7 @@ export type GetSnapshotApiArg = {
   /** ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC. */
   resultSortOrder?: string;
   /** ErrorsOnly is used to only return resources with error statuses */
-  errorsOnly?: string;
+  errorsOnly?: boolean;
   /** Session UID of a session */
   uid: string;
   /** UID of a snapshot */
