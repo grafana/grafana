@@ -34,7 +34,14 @@ describe('ShareLinkTab', () => {
   beforeAll(() => {
     advanceTo(fakeCurrentDate);
 
-    config.appUrl = 'http://dashboards.grafana.com/grafana/';
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...window.location,
+        host: 'dashboards.grafana.com',
+      },
+      writable: true,
+    });
+    config.appSubUrl= '/grafana'
     config.rendererAvailable = true;
     config.bootData.user.orgId = 1;
     config.featureToggles.dashboardSceneForViewers = true;
