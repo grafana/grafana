@@ -21,13 +21,13 @@ steps:
 
   - template: tasks/_docker-build.yml@templates
     parameters:
-      imageName: "digital-grafana-base"
+      imageName: "digital-dashboard-base"
       imageTags: "11.5.0,latest"
       containerRegistry: "vettadigitalcontainers-Platform"
       enableCache: false
 
   - template: tasks/_docker-push.yml@templates
     parameters:
-      imageName: "digital-grafana-base"
+      imageName: "digital-dashboard-base"
       imageTags: "11.5.0,latest"
       containerRegistry: "vettadigitalcontainers-Platform"
