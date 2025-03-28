@@ -112,7 +112,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
                 <FeatureHighlightWrapper>
                   <>
                     <Icon
-                      className={styles.icon}
+                      className={cx(styles.icon, level > 0 && styles.deepIcon)}
                       name={toIconName(link.icon) ?? 'link'}
                       size={level === 0 ? 'lg' : 'md'}
                     />
@@ -126,8 +126,8 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
                 <Text truncate>{link.text}</Text>
                 {/* @PERCONA */}
                 {!!link.showDot && !link.icon && <Dot right={-8} top={2} />}
-                {link.isNew && <FeatureBadge featureState={FeatureState.new} />}
               </div>
+              {link.isNew && <FeatureBadge featureState={FeatureState.new} />}
             </div>
           </MegaMenuItemText>
         </div>
@@ -249,6 +249,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   // @PERCONA
   relativeText: css({
     position: 'relative',
+  }),
+  // @PERCONA
+  deepIcon: css({
+    marginRight: theme.spacing(-1.5),
   }),
 });
 
