@@ -305,6 +305,14 @@ describe('ResponseTransformers', () => {
               ],
               current: { value: ['1'], text: ['1'] },
             },
+            // Query variable with minimal props and without current
+            {
+              name: 'org_id',
+              label: 'Org ID',
+              hide: 2,
+              type: 'query',
+              query: 'label_values(grafanacloud_org_info{org_slug="$org_slug"}, org_id)',
+            },
           ],
         },
         panels: [
@@ -627,6 +635,7 @@ describe('ResponseTransformers', () => {
       validateVariablesV1ToV2(spec.variables[5], dashboardV1.templating?.list?.[5]);
       validateVariablesV1ToV2(spec.variables[6], dashboardV1.templating?.list?.[6]);
       validateVariablesV1ToV2(spec.variables[7], dashboardV1.templating?.list?.[7]);
+      validateVariablesV1ToV2(spec.variables[8], dashboardV1.templating?.list?.[8]);
     });
   });
 
@@ -938,8 +947,9 @@ describe('ResponseTransformers', () => {
       label: v1.label,
       description: v1.description,
       hide: transformVariableHideToEnum(v1.hide),
-      skipUrlSync: v1.skipUrlSync,
+      skipUrlSync: Boolean(v1.skipUrlSync),
     };
+
     const v2Common = {
       name: v2.spec.name,
       label: v2.spec.label,
