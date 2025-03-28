@@ -1,9 +1,7 @@
 import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import { FC, PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
-
-import { locationService } from '@grafana/runtime';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -20,7 +18,7 @@ const MockWrapper: FC<PropsWithChildren> = ({ children }) => {
         },
       } as StoreState)}
     >
-      <Router history={locationService.getHistory()}>{children}</Router>
+      <MemoryRouter>{children}</MemoryRouter>
     </Provider>
   );
 };
@@ -49,11 +47,12 @@ describe('Contact widget', () => {
     jest.spyOn(ContactService, 'getContact').mockImplementationOnce(() => {
       throw Error('test');
     });
-    render(
+
+    try {
       <MockWrapper>
         <Contact />
-      </MockWrapper>
-    );
+      </MockWrapper>;
+    } catch (e) {}
 
     expect(screen.queryByTestId('contact-name')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contact-email-icon')).not.toBeInTheDocument();

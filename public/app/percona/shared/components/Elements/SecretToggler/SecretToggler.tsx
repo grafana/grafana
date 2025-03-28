@@ -7,7 +7,13 @@ import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
 import { getStyles } from './SecretToggler.styles';
 import { SecretTogglerProps } from './SecretToggler.types';
 
-export const SecretToggler: FC<SecretTogglerProps> = ({ secret, readOnly, fieldProps, small, maxLength }) => {
+export const SecretToggler: FC<SecretTogglerProps> = ({
+  secret,
+  readOnly = true,
+  fieldProps,
+  small = false,
+  maxLength,
+}) => {
   const [visible, setVisible] = useState(false);
   const styles = useStyles(getStyles);
 
@@ -44,9 +50,4 @@ export const SecretToggler: FC<SecretTogglerProps> = ({ secret, readOnly, fieldP
       {iconButton}
     </div>
   );
-};
-
-SecretToggler.defaultProps = {
-  readOnly: true,
-  small: false,
 };

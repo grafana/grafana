@@ -176,41 +176,46 @@ export const Table: FC<TableProps> = ({
             >
               <table {...getTableProps()} data-testid="table">
                 <thead data-testid="table-thead">
-                  {headerGroups.map((headerGroup) => (
-                    /* eslint-disable-next-line react/jsx-key */
-                    <tr data-testid="table-tbody-tr" {...headerGroup.getHeaderGroupProps()}>
-                      {headerGroup.headers.map((column) => (
-                        /* eslint-disable-next-line react/jsx-key */
-                        <th
-                          className={style.tableHeader(column.width)}
-                          {...column.getHeaderProps([
+                  {headerGroups.map((headerGroup) => {
+                    const { key: headerGroupKey, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
+                    return (
+                      <tr data-testid="table-tbody-tr" key={headerGroupKey} {...headerGroupProps}>
+                        {headerGroup.headers.map((column) => {
+                          const { key: headerKey, ...columnProps } = column.getHeaderProps([
                             {
                               className: column.className,
                               style: column.style,
                             },
                             getColumnProps(column),
                             getHeaderProps(column),
-                          ])}
-                        >
-                          {column.render('Header')}
-                          {!!column.tooltipInfo && (
-                            <Tooltip interactive content={column.tooltipInfo} placement="bottom-end">
-                              <Icon tabIndex={0} name="info-circle" size="sm" className={style.infoIcon} />
-                            </Tooltip>
-                          )}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
+                          ]);
+
+                          return (
+                            <th className={style.tableHeader(column.width)} key={headerKey} {...columnProps}>
+                              {column.render('Header')}
+                              {!!column.tooltipInfo && (
+                                <Tooltip interactive content={column.tooltipInfo} placement="bottom-end">
+                                  <Icon tabIndex={0} name="info-circle" size="sm" className={style.infoIcon} />
+                                </Tooltip>
+                              )}
+                            </th>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
                 </thead>
                 <tbody {...getTableBodyProps()} data-testid="table-tbody">
                   {children
                     ? children(showPagination ? page : rows, tableInstance)
                     : (showPagination ? page : rows).map((row) => {
                         prepareRow(row);
+
+                        const { key: rowKey, ...rowProps } = row.getRowProps(getRowProps(row));
+
                         return (
                           <React.Fragment key={row.id}>
-                            <tr data-testid="table-tbody-tr" {...row.getRowProps(getRowProps(row))}>
+                            <tr data-testid="table-tbody-tr" key={rowKey} {...rowProps}>
                               {row.cells.map((cell) => {
                                 return (
                                   <td

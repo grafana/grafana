@@ -147,7 +147,7 @@ describe('PublicDashboardPage', () => {
     it('Should update title', async () => {
       setup(undefined, newState);
       await waitFor(() => {
-        expect(document.title).toBe('My dashboard - Percona Monitoring and Management');
+        expect(document.title).toBe('My dashboard - Grafana');
       });
     });
 
