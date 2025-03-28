@@ -65,4 +65,14 @@ describe('dashboard utils', () => {
 
     expect(url).toBe('/dashboard/new?orgId=1&filter=A');
   });
+
+  it('Use windows.host as hostname and port', () => {
+    const url = getDashboardUrl({
+      uid: '',
+      currentQueryParams: '?orgId=1&filter=A',
+      absolute: true,
+    });
+
+    expect(url).toBe('http://localhost/dashboard/new?orgId=1&filter=A');
+  });
 });
