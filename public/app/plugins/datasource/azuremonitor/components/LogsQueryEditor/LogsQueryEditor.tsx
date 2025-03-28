@@ -115,6 +115,19 @@ const LogsQueryEditor = ({
   }, [query, onChange]);
 
   useEffect(() => {
+    if (query.azureLogAnalytics?.mode === LogsEditorMode.Raw && query.azureLogAnalytics?.builderQuery !== undefined) {
+      onQueryChange({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          builderQuery: undefined,
+          query: '',
+        },
+      });
+    }
+  }, [query.azureLogAnalytics?.mode, onQueryChange, query]);
+
+  useEffect(() => {
     const getBasicLogsUsage = async (query: AzureMonitorQuery) => {
       try {
         if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && !!query.azureLogAnalytics.query) {

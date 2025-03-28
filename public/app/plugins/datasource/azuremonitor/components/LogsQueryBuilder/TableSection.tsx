@@ -22,12 +22,6 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 
-  useEffect(() => {
-    if (query.azureLogAnalytics?.query === '') {
-      buildAndUpdateQuery({});
-    }
-  }, [query.azureLogAnalytics?.query, buildAndUpdateQuery]);
-
   const tableOptions: Array<SelectableValue<string>> = tables.map((t) => ({
     label: t.name,
     value: t.name,

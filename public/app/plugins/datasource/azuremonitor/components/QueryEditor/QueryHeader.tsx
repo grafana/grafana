@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CoreApp, LoadingState, PanelData, SelectableValue } from '@grafana/data';
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, RadioButtonGroup } from '@grafana/ui';
+import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 
 import { LogsEditorMode } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
@@ -33,6 +33,11 @@ export const QueryHeader = ({
 }: QueryTypeFieldProps) => {
   const isLoading = useMemo(() => data?.state === LoadingState.Loading, [data?.state]);
 
+  const [showModeSwitchWarning, setShowModeSwitchWarning] = useState(false);
+  const [pendingModeChange, setPendingModeChange] = useState<LogsEditorMode | null>(null);
+
+  const currentMode = query.azureLogAnalytics?.mode;
+
   const queryTypes: Array<{ value: AzureQueryType; label: string }> = [
     { value: AzureQueryType.AzureMonitor, label: 'Metrics' },
     { value: AzureQueryType.LogAnalytics, label: 'Logs' },
@@ -53,7 +58,6 @@ export const QueryHeader = ({
   );
 
   useEffect(() => {
-    // Check for the mode property on a logs analytics query, if it's not set default it to Builder
     if (query.azureLogAnalytics && query.azureLogAnalytics.mode === undefined) {
       const updatedQuery = {
         ...query,
@@ -67,22 +71,62 @@ export const QueryHeader = ({
   }, [query, onQueryChange]);
 
   const onLogsModeChange = (newMode: LogsEditorMode) => {
-    if (query.azureLogAnalytics) {
-      const updatedQuery = {
-        ...query,
-        azureLogAnalytics: {
-          ...query.azureLogAnalytics,
-          mode: newMode,
-          query: '',
-        },
-      };
-      onQueryChange(updatedQuery);
+    if (newMode === currentMode) {
+      return;
     }
+
+    const goingToBuilder = newMode === LogsEditorMode.Builder;
+    const goingToRaw = newMode === LogsEditorMode.Raw;
+
+    const hasRawKql = !!query.azureLogAnalytics?.query;
+    const hasBuilderQuery = !!query.azureLogAnalytics?.builderQuery;
+
+    if ((goingToBuilder && hasRawKql) || (goingToRaw && hasBuilderQuery)) {
+      setPendingModeChange(newMode);
+      setShowModeSwitchWarning(true);
+    } else {
+      applyModeChange(newMode);
+    }
+  };
+
+  const applyModeChange = (mode: LogsEditorMode) => {
+    const updatedQuery = {
+      ...query,
+      azureLogAnalytics: {
+        ...query.azureLogAnalytics,
+        mode,
+        query: '',
+        builderQuery: mode === LogsEditorMode.Raw ? undefined : query.azureLogAnalytics?.builderQuery,
+      },
+    };
+    onQueryChange(updatedQuery);
   };
 
   return (
     <span data-testid={selectors.components.queryEditor.header.select}>
       <EditorHeader>
+        <ConfirmModal
+          isOpen={showModeSwitchWarning}
+          title="Switch editor mode?"
+          body={
+            pendingModeChange === LogsEditorMode.Builder
+              ? 'Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?'
+              : 'Switching to KQL will discard your current builder settings. Are you sure?'
+          }
+          confirmText={`Switch to ${pendingModeChange === LogsEditorMode.Builder ? 'Builder' : 'KQL'}`}
+          onConfirm={() => {
+            if (pendingModeChange) {
+              applyModeChange(pendingModeChange);
+            }
+            setShowModeSwitchWarning(false);
+            setPendingModeChange(null);
+          }}
+          onDismiss={() => {
+            setShowModeSwitchWarning(false);
+            setPendingModeChange(null);
+          }}
+        />
+
         <InlineSelect
           label="Service"
           value={query.queryType === AzureQueryType.TraceExemplar ? AzureQueryType.AzureTraces : query.queryType}
@@ -97,8 +141,7 @@ export const QueryHeader = ({
             variant="secondary"
             size="sm"
             onClick={() => {
-              setAzureLogsCheatSheetModalOpen((prevValue: boolean) => !prevValue);
-
+              setAzureLogsCheatSheetModalOpen((prev) => !prev);
               reportInteraction('grafana_azure_logs_query_patterns_opened', {
                 version: 'v2',
                 editorMode: query.azureLogAnalytics,
@@ -114,7 +157,7 @@ export const QueryHeader = ({
             size="sm"
             options={EDITOR_MODES}
             value={query.azureLogAnalytics?.mode || LogsEditorMode.Builder}
-            onChange={(newMode: LogsEditorMode) => onLogsModeChange(newMode)}
+            onChange={onLogsModeChange}
             data-testid="azure-query-header-logs-radio-button"
           />
         )}
