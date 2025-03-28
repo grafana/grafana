@@ -222,7 +222,8 @@ type GetChildrenQuery struct {
 	// array of folder uids to filter by
 	FolderUIDs []string `json:"-"`
 
-	ReturnOnlyRefs bool
+	// Deprecated: this is a temporary flag, and will be removed once we migrate the alerting use case
+	RefOnly bool
 }
 
 type HasEditPermissionInFoldersQuery struct {

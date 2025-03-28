@@ -78,13 +78,13 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagNestedFolders) {
 		q := &folder.GetChildrenQuery{
-			OrgID:          c.SignedInUser.GetOrgID(),
-			Limit:          c.QueryInt64("limit"),
-			Page:           c.QueryInt64("page"),
-			UID:            c.Query("parentUid"),
-			Permission:     permission,
-			SignedInUser:   c.SignedInUser,
-			ReturnOnlyRefs: true,
+			OrgID:        c.SignedInUser.GetOrgID(),
+			Limit:        c.QueryInt64("limit"),
+			Page:         c.QueryInt64("page"),
+			UID:          c.Query("parentUid"),
+			Permission:   permission,
+			SignedInUser: c.SignedInUser,
+			RefOnly:      true, // nolint:staticcheck
 		}
 
 		folders, err := hs.folderService.GetChildren(c.Req.Context(), q)
@@ -99,6 +99,7 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 				UID:       f.UID,
 				Title:     f.Title,
 				ParentUID: f.ParentUID,
+				ManagedBy: f.ManagedBy,
 			})
 			metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetFolders).Inc()
 		}

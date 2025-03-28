@@ -237,14 +237,22 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 			continue
 		}
 
-		// TODO: remove this check once we migrate alerting to using just the refs
-		if q.ReturnOnlyRefs {
-			hits = append(hits, &folder.Folder{
+		// TODO:  Remove this once we migrate the alerting use case.
+		// This is a temporary flag, and will be removed once we migrate the alerting use case to
+		// expect a folder ref too for children folders.
+		if q.RefOnly { // nolint:staticcheck
+			f := &folder.Folder{
 				ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:       item.Name,
 				Title:     item.Title,
 				ParentUID: item.Folder,
-			})
+			}
+
+			if item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND) != "" {
+				f.ManagedBy = utils.ParseManagerKindString(item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND))
+			}
+
+			hits = append(hits, f)
 			continue
 		}
 
