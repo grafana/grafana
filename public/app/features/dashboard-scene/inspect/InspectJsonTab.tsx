@@ -17,7 +17,7 @@ import {
 } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelInspectorStyles2 } from 'app/features/inspector/styles';
@@ -164,6 +164,10 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     const styles = useStyles2(getPanelInspectorStyles2);
     const options = model.getOptions();
 
+    async function pasteFromClipboard() {
+      return model.setState({ jsonText: await navigator.clipboard.readText() });
+    }
+
     return (
       <div className={styles.wrap}>
         <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
@@ -180,6 +184,15 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
               Apply
             </Button>
           )}
+        </div>
+
+        <div className={styles.buttonGroup}>
+          <Button onClick={() => navigator.clipboard.writeText(jsonText.toString())}>
+            <Trans i18nKey="tag-filter.copy_to_clipboard_button">Copy to Clipboard</Trans>
+          </Button>
+          <Button onClick={() => pasteFromClipboard()}>
+            <Trans i18nKey="tag-filter.paste_from_clipboard_button">Paste from Clipboard</Trans>
+          </Button>
         </div>
 
         <div className={styles.content}>
