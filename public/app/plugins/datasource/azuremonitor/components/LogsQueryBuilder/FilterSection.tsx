@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, Combobox, Label, Select, useStyles2 } from '@grafana/ui';
+import { Button, ComboboxOption, Label, useStyles2 } from '@grafana/ui';
 
 import {
   AzureQueryType,
@@ -16,7 +16,8 @@ import {
 import Datasource from '../../datasource';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
-import { BuildAndUpdateOptions, inputFieldSize, toOperatorOptions, valueToDefinition } from './utils';
+import { FilterItem } from './FilterItem';
+import { BuildAndUpdateOptions } from './utils';
 
 interface FilterSectionProps {
   query: AzureMonitorQuery;
@@ -41,7 +42,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   datasource,
   timeRange,
 }) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(() => ({ filters: css({ marginBottom: '8px' }) }));
   const builderQuery = query.azureLogAnalytics?.builderQuery;
 
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
@@ -61,9 +62,15 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
 
   const selectableOptions = [...availableColumns, ...variableOptions];
 
+  const usedColumnsInOtherGroups = (currentGroupIndex: number): string[] => {
+    return filters
+      .flatMap((group, idx) => (idx !== currentGroupIndex ? group.expressions : []))
+      .map((exp) => exp.property.name)
+      .filter(Boolean);
+  };
+
   useEffect(() => {
     const currentTable = builderQuery?.from?.property.name || null;
-
     if (prevTable.current !== currentTable) {
       setFilters([]);
       hasLoadedFilters.current = false;
@@ -82,10 +89,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
 
   const updateFilters = (updated: BuilderQueryEditorWhereExpression[]) => {
     setFilters(updated);
-
-    buildAndUpdateQuery({
-      where: updated,
-    });
+    buildAndUpdateQuery({ where: updated });
   };
 
   const onAddOrFilters = (
@@ -96,22 +100,18 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   ) => {
     const updated = [...filters];
     const group = updated[groupIndex];
-
     if (!group) {
       return;
     }
 
-    let filter: BuilderQueryEditorWhereExpressionItems;
-
-    if (filterIndex !== undefined) {
-      filter = { ...group.expressions[filterIndex] };
-    } else {
-      filter = {
-        type: BuilderQueryEditorExpressionType.Operator,
-        property: { name: '', type: BuilderQueryEditorPropertyType.String },
-        operator: { name: '==', value: '' },
-      };
-    }
+    let filter: BuilderQueryEditorWhereExpressionItems =
+      filterIndex !== undefined
+        ? { ...group.expressions[filterIndex] }
+        : {
+            type: BuilderQueryEditorExpressionType.Operator,
+            property: { name: '', type: BuilderQueryEditorPropertyType.String },
+            operator: { name: '==', value: '' },
+          };
 
     if (field === 'property') {
       filter.property.name = value;
@@ -122,11 +122,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
       filter.operator.value = value;
     }
 
-    const isValid =
-      filter.property?.name?.trim() &&
-      filter.operator?.name?.trim() &&
-      filter.operator?.value !== undefined &&
-      filter.operator?.value !== '';
+    const isValid = filter.property.name && filter.operator.name && filter.operator.value !== '';
 
     if (filterIndex !== undefined) {
       group.expressions[filterIndex] = filter;
@@ -136,7 +132,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
 
     updated[groupIndex] = group;
     setFilters(updated);
-
     if (isValid) {
       updateFilters(updated);
     }
@@ -156,19 +151,15 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         ],
       },
     ];
-
     updateFilters(updated);
   };
 
   const onDeleteFilter = (groupIndex: number, filterIndex: number) => {
     const updated = [...filters];
-
     updated[groupIndex].expressions.splice(filterIndex, 1);
-
     if (updated[groupIndex].expressions.length === 0) {
       updated.splice(groupIndex, 1);
     }
-
     updateFilters(updated);
   };
 
@@ -206,29 +197,25 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         ],
       })
     );
+
     if (results.state === 'Done') {
       const values = results.data?.[0]?.fields?.[0]?.values ?? [];
 
-      const selectable = values.toArray().map((v: any) => ({
-        label: String(v),
-        value: String(v),
-      }));
-
-      return selectable;
+      return values.toArray().map(
+        (v: any): ComboboxOption<string> => ({
+          label: String(v),
+          value: String(v),
+        })
+      );
     }
+
     return [];
   };
 
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField
-          label="Filters"
-          optional={true}
-          tooltip={
-            'Narrow results by applying conditions to specific columns. Columns with the dynamic type are not available for filtering.'
-          }
-        >
+        <EditorField label="Filters" optional tooltip="Narrow results by applying conditions to specific columns.">
           <div className={styles.filters}>
             {filters.length === 0 || filters.every((g) => g.expressions.length === 0) ? (
               <InputGroup>
@@ -236,97 +223,37 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
               </InputGroup>
             ) : (
               <>
-                {filters.map((group, groupIndex) =>
-                  group.expressions.length > 0 ? (
-                    <div key={groupIndex}>
-                      {groupIndex > 0 && filters[groupIndex - 1]?.expressions.length > 0 ? (
-                        <Label
-                          style={{
-                            paddingTop: '9px',
-                            paddingLeft: '14px',
-                            paddingRight: '14px',
-                          }}
-                        >
-                          AND
-                        </Label>
-                      ) : null}
-
-                      <InputGroup>
-                        <>
-                          {group.expressions.map((filter, filterIndex) => (
-                            <InputGroup key={`${groupIndex}-${filterIndex}`}>
-                              <Select
-                                aria-label="column"
-                                width={inputFieldSize}
-                                value={valueToDefinition(filter.property.name)}
-                                options={selectableOptions}
-                                onChange={(e) =>
-                                  e.value && onAddOrFilters(groupIndex, 'property', e.value, filterIndex)
-                                }
-                              />
-                              <Select
-                                aria-label="operator"
-                                width={12}
-                                value={{
-                                  label: filter.operator.name,
-                                  value: filter.operator.name,
-                                }}
-                                options={toOperatorOptions('string')}
-                                onChange={(e) =>
-                                  e.value && onAddOrFilters(groupIndex, 'operator', e.value, filterIndex)
-                                }
-                              />
-                              <Combobox
-                                aria-label="column value"
-                                value={
-                                  filter.operator.value
-                                    ? {
-                                        label: String(filter.operator.value),
-                                        value: String(filter.operator.value),
-                                      }
-                                    : null
-                                }
-                                options={() => getFilterValues(filter)}
-                                onChange={(e) => e.value && onAddOrFilters(groupIndex, 'value', e.value, filterIndex)}
-                                width={inputFieldSize}
-                                disabled={!filter.property?.name}
-                              />
-
-                              <Button
-                                variant="secondary"
-                                icon="times"
-                                onClick={() => onDeleteFilter(groupIndex, filterIndex)}
-                              />
-
-                              {filterIndex < group.expressions.length - 1 ? (
-                                <Label
-                                  style={{
-                                    paddingTop: '9px',
-                                    paddingLeft: '14px',
-                                    paddingRight: '14px',
-                                  }}
-                                >
-                                  OR
-                                </Label>
-                              ) : (
-                                <></>
-                              )}
-                            </InputGroup>
-                          ))}
-
-                          <Button
-                            variant="secondary"
-                            style={{ marginLeft: '15px' }}
-                            onClick={() => onAddOrFilters(groupIndex, 'property', '')}
-                            icon="plus"
+                {filters.map((group, groupIndex) => (
+                  <div key={groupIndex}>
+                    {groupIndex > 0 && filters[groupIndex - 1]?.expressions.length > 0 && (
+                      <Label style={{ padding: '9px 14px' }}>AND</Label>
+                    )}
+                    <InputGroup>
+                      <>
+                        {group.expressions.map((filter, filterIndex) => (
+                          <FilterItem
+                            key={`${groupIndex}-${filterIndex}`}
+                            filter={filter}
+                            filterIndex={filterIndex}
+                            groupIndex={groupIndex}
+                            usedColumns={usedColumnsInOtherGroups(groupIndex)}
+                            selectableOptions={selectableOptions}
+                            onChange={onAddOrFilters}
+                            onDelete={onDeleteFilter}
+                            getFilterValues={getFilterValues}
+                            showOr={filterIndex < group.expressions.length - 1}
                           />
-                        </>
-                      </InputGroup>
-                    </div>
-                  ) : null
-                )}
-
-                {/* Add group button only when at least one group has filters */}
+                        ))}
+                      </>
+                      <Button
+                        variant="secondary"
+                        style={{ marginLeft: '15px' }}
+                        onClick={() => onAddOrFilters(groupIndex, 'property', '')}
+                        icon="plus"
+                      />
+                    </InputGroup>
+                  </div>
+                ))}
                 {filters.some((g) => g.expressions.length > 0) && (
                   <Button variant="secondary" onClick={onAddAndFilters} style={{ marginTop: '8px' }}>
                     Add group
@@ -340,7 +267,3 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     </EditorRow>
   );
 };
-
-const getStyles = () => ({
-  filters: css({ marginBottom: '8px' }),
-});

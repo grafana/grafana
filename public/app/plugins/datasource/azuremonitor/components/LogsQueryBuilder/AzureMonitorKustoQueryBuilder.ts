@@ -34,7 +34,8 @@ const buildCondition = (
   if (isNestedExpression(exp)) {
     const { name: op, value } = exp.operator;
     const { name: prop } = exp.property;
-    return op === '$__timeFilter' ? `$__timeFilter(${prop})` : `${prop} ${op} '${value}'`;
+    const escapedValue = String(value).replace(/'/g, "''");
+    return op === '$__timeFilter' ? `$__timeFilter(${prop})` : `${prop} ${op} '${escapedValue}'`;
   }
 
   return;
@@ -94,7 +95,7 @@ const appendSummarize = (builderQuery: BuilderQueryExpression, phrases: string[]
     .filter(Boolean);
 
   if (summarizeParts.length === 0 && groupBy.length === 0) {
-    return; // nothing to summarize
+    return;
   }
 
   const summarizeClause =

@@ -54,7 +54,6 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       return;
     }
 
-    console.log('handle table change');
     buildAndUpdateQuery({
       from: {
         property: {
