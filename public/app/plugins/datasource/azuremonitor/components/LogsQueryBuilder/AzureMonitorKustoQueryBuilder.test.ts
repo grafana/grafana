@@ -9,7 +9,7 @@ describe('AzureMonitorKustoQueryParser', () => {
     expect(result).toBe('');
   });
 
-  it('builds a simple query with table and project', () => {
+  it('builds a query with table and project', () => {
     const builderQuery: any = {
       from: { property: { name: 'Logs' } },
       columns: { columns: ['TimeGenerated', 'Level', 'Message'] },

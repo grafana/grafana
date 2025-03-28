@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
@@ -21,6 +21,12 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   const { allColumns, query, tables, buildAndUpdateQuery, templateVariableOptions } = props;
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
+
+  useEffect(() => {
+    if (query.azureLogAnalytics?.query === '') {
+      buildAndUpdateQuery({});
+    }
+  }, [query.azureLogAnalytics?.query, buildAndUpdateQuery]);
 
   const tableOptions: Array<SelectableValue<string>> = tables.map((t) => ({
     label: t.name,

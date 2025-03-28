@@ -1,9 +1,8 @@
-import { range } from 'lodash';
 import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { InputGroup, AccessoryButton } from '@grafana/plugin-ui';
-import { Select, Label } from '@grafana/ui';
+import { Select, Label, Input } from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -113,12 +112,19 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
 
       {isPercentile ? (
         <>
-          <Select
-            aria-label="percentile value"
-            options={range(0, 101, 5).map((n) => ({ label: n.toString(), value: n.toString() }))}
-            value={percentileValue ? { label: percentileValue, value: percentileValue } : ''}
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            step={1}
+            value={percentileValue ?? ''}
             width={inputFieldSize}
-            onChange={(e) => handlePercentileChange(e.value)}
+            onChange={(e) => {
+              const val = Number(e.currentTarget.value);
+              if (!isNaN(val) && val >= 0 && val <= 100) {
+                handlePercentileChange(val.toString());
+              }
+            }}
           />
           <Label style={{ margin: '9px 9px 0 9px' }}>OF</Label>
         </>

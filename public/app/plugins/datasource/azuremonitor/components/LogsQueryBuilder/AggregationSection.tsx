@@ -29,7 +29,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   useEffect(() => {
     const currentTable = builderQuery?.from?.property.name || null;
 
-    if (prevTable.current !== currentTable) {
+    if (prevTable.current !== currentTable || builderQuery?.reduce?.expressions.length === 0) {
       setAggregates([]);
       hasLoadedAggregates.current = false;
       prevTable.current = currentTable;

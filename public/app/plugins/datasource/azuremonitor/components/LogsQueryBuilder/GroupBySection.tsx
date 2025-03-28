@@ -36,7 +36,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
   useEffect(() => {
     const currentTable = builderQuery?.from?.property.name || null;
 
-    if (prevTable.current !== currentTable) {
+    if (prevTable.current !== currentTable || builderQuery?.groupBy?.expressions.length === 0) {
       setGroupBys([]);
       hasLoadedGroupBy.current = false;
       prevTable.current = currentTable;

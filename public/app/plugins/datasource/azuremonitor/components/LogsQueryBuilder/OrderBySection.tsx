@@ -32,7 +32,7 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
   useEffect(() => {
     const currentTable = builderQuery?.from?.property.name || null;
 
-    if (prevTable.current !== currentTable) {
+    if (prevTable.current !== currentTable || builderQuery?.orderBy?.expressions.length === 0) {
       setOrderBy([]);
       hasLoadedOrderBy.current = false;
       prevTable.current = currentTable;

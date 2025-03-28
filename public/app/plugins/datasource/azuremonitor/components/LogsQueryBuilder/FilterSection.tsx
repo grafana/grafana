@@ -71,7 +71,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
 
   useEffect(() => {
     const currentTable = builderQuery?.from?.property.name || null;
-    if (prevTable.current !== currentTable) {
+    if (prevTable.current !== currentTable || builderQuery?.where?.expressions.length === 0) {
       setFilters([]);
       hasLoadedFilters.current = false;
       prevTable.current = currentTable;
