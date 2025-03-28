@@ -3,23 +3,14 @@ import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../ty
 
 import { filterFieldsByNameTransformer } from './filterByName';
 import { DataTransformerID } from './ids';
-import { FieldOrdering, Order, orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
+import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
 import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
-
-export interface LabelSort {
-  labelName: string;
-  order: Order;
-  index: number;
-}
 
 export interface OrganizeFieldsTransformerOptions
   extends OrderFieldsTransformerOptions,
     RenameFieldsTransformerOptions {
   excludeByName: Record<string, boolean>;
   includeByName?: Record<string, boolean>;
-  fieldOrder: FieldOrdering;
-  fieldNameSort: { order: Order; index: number };
-  labelSort: LabelSort[];
 }
 
 export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransformerOptions> = {

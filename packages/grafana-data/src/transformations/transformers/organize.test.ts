@@ -5,6 +5,7 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
+import { FieldOrdering } from './order';
 import { organizeFieldsTransformer, OrganizeFieldsTransformerOptions } from './organize';
 
 describe('OrganizeFields Transformer', () => {
@@ -26,6 +27,7 @@ describe('OrganizeFields Transformer', () => {
       const cfg: DataTransformerConfig<OrganizeFieldsTransformerOptions> = {
         id: DataTransformerID.organize,
         options: {
+          fieldOrder: FieldOrdering.Manual,
           indexByName: {
             time: 2,
             temperature: 0,
@@ -76,6 +78,7 @@ describe('OrganizeFields Transformer', () => {
       const cfg: DataTransformerConfig<OrganizeFieldsTransformerOptions> = {
         id: DataTransformerID.organize,
         options: {
+          fieldOrder: FieldOrdering.Manual,
           excludeByName: {},
           indexByName: {},
           includeByName: {
@@ -114,6 +117,7 @@ describe('OrganizeFields Transformer', () => {
       const cfg: DataTransformerConfig<OrganizeFieldsTransformerOptions> = {
         id: DataTransformerID.organize,
         options: {
+          fieldOrder: FieldOrdering.Manual,
           indexByName: {
             time: 2,
             temperature: 0,

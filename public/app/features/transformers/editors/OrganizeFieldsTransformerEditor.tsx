@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import {
   createOrderFieldsComparer,
-  LabelSort,
+  AutoSortOption,
   Order,
   FieldOrdering,
   OrganizeFieldsTransformerOptions,
@@ -39,7 +39,9 @@ import { getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
-const FIELD_NAME = 'fieldName';
+type AutoSortOptions = Array<{ order: Order; index: number; labelName?: string }>;
+
+const FIELD_NAME = '!{{fieldName}}';
 
 const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
   const { indexByName, excludeByName, renameByName, includeByName } = options;
@@ -48,28 +50,20 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
   const distinctLabels = Array.from(getDistinctLabels(input));
 
-  const sortedLabels = useMemo(
-    (): Array<{ order: Order; index: number; labelName?: string }> => [...(options.labelSort ?? [])],
-    [options.labelSort]
-  );
-
-  // if fieldNameSort is there, add it to the array so the unsorted labels will get the right index
-  if (options.fieldNameSort) {
-    sortedLabels.push({ ...options.fieldNameSort });
-  }
-
-  const unSortedLabels: LabelSort[] = differenceWith(
+  // find labels that exist for the data but do not have an existing sort and append them to the list of possible options
+  const unSortedLabels: AutoSortOption[] = differenceWith(
     distinctLabels,
-    options.labelSort,
+    options.autoSortOptions ?? [],
     (distLabl, sortLabel) => distLabl === sortLabel.labelName
-  ).map((label, i) => ({ labelName: label, order: Order.Off, index: sortedLabels.length + i }));
+  ).map((label, i) => ({ labelName: label, order: Order.Off, index: (options.autoSortOptions?.length ?? 0) + i }));
 
   const allAutoSortOptions = useMemo(
-    (): Array<{ order: Order; index: number; labelName?: string }> => [...sortedLabels, ...unSortedLabels],
-    [sortedLabels, unSortedLabels]
+    (): AutoSortOptions => [...(options.autoSortOptions ?? []), ...unSortedLabels],
+    [options.autoSortOptions, unSortedLabels]
   );
 
-  if (!options.fieldNameSort) {
+  // if the field name sort was not already set, add it to the end
+  if ((options.autoSortOptions ?? []).findIndex((aso) => aso.labelName === undefined) === -1) {
     allAutoSortOptions.push({
       index: allAutoSortOptions.length,
       order: Order.Off,
@@ -126,50 +120,6 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
     [onChange, options, fieldNames]
   );
 
-  const onDragEndLabels = useCallback(
-    (result: DropResult) => {
-      if (!result || !result.destination) {
-        return;
-      }
-
-      const startIndex = result.source.index;
-      const endIndex = result.destination.index;
-
-      if (startIndex === endIndex) {
-        return;
-      }
-
-      const isFieldName = result.draggableId === FIELD_NAME;
-
-      if (isFieldName) {
-        onChange({
-          ...options,
-          fieldNameSort: { order: options.fieldNameSort?.order ?? Order.Off, index: endIndex },
-        });
-      } else {
-        // const labelDetails = allAutoSortOptions.find((l) => l.labelName === result.draggableId);
-        const newOptsLabels = options.labelSort ? [...options.labelSort] : [];
-        const labelSortIndex = newOptsLabels.findIndex((l) => l.labelName === result.draggableId);
-
-        if (labelSortIndex === -1) {
-          newOptsLabels.push({ labelName: result.draggableId, order: Order.Off, index: endIndex });
-        } else {
-          newOptsLabels[labelSortIndex] = {
-            labelName: newOptsLabels[labelSortIndex].labelName!,
-            order: newOptsLabels[labelSortIndex].order!,
-            index: endIndex,
-          };
-        }
-
-        onChange({
-          ...options,
-          labelSort: newOptsLabels,
-        });
-      }
-    },
-    [onChange, options]
-  );
-
   const onRenameField = useCallback(
     (from: string, to: string) => {
       onChange({
@@ -183,32 +133,44 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
     [onChange, options]
   );
 
+  // when any option in auto mode is changed, even if the sort is off, we save what we have at that time so the indexes are preserved and fields don't jump around
   const onChangeSort = useCallback(
-    (isFieldName: boolean, labelName: string, sortOrder: Order) => {
-      if (isFieldName) {
-        const fieldNameOpt = allAutoSortOptions.find((opt) => opt.labelName === undefined);
-        onChange({
-          ...options,
-          fieldNameSort: { index: options.fieldNameSort?.index ?? fieldNameOpt?.index, order: sortOrder },
-        });
-      } else {
-        const optionsLabels = options.labelSort ?? [];
-        const fieldOptionsIdx = optionsLabels.findIndex((label) => label.labelName === labelName);
-        if (fieldOptionsIdx === -1) {
-          //  not found in options, add
-          const labelIndex = allAutoSortOptions.findIndex((label) => label.labelName === labelName);
-          const newLabelSort: LabelSort = { labelName, index: labelIndex, order: sortOrder };
-          onChange({ ...options, labelSort: [...optionsLabels, newLabelSort] });
-        } else {
-          let labelSort = optionsLabels[fieldOptionsIdx];
-          const newLabelSortArr = optionsLabels.filter((v, i) => i !== fieldOptionsIdx);
-          if (sortOrder !== Order.Off) {
-            labelSort.order = sortOrder;
-            newLabelSortArr.push(labelSort);
-          }
-          onChange({ ...options, labelSort: newLabelSortArr });
-        }
+    (sortOptionString: string, sortOrder: Order) => {
+      const allOptions = [...allAutoSortOptions];
+      const changedIdx = allOptions.findIndex(
+        (label) =>
+          (sortOptionString === FIELD_NAME && label.labelName === undefined) || label.labelName === sortOptionString
+      );
+      allOptions[changedIdx].order = sortOrder;
+      onChange({ ...options, autoSortOptions: allOptions });
+    },
+    [allAutoSortOptions, onChange, options]
+  );
+
+  const onDragEndLabels = useCallback(
+    (result: DropResult) => {
+      if (!result || !result.destination) {
+        return;
       }
+      const startIndex = result.source.index;
+      const endIndex = result.destination.index;
+
+      if (startIndex === endIndex) {
+        return;
+      }
+
+      const allOptions = [...allAutoSortOptions];
+      const changedIdx = allOptions.findIndex(
+        (label) =>
+          (result.draggableId === FIELD_NAME && label.labelName === undefined) || label.labelName === result.draggableId
+      );
+
+      allOptions[changedIdx].index = endIndex;
+
+      onChange({
+        ...options,
+        autoSortOptions: allOptions,
+      });
     },
     [allAutoSortOptions, onChange, options]
   );
@@ -374,7 +336,7 @@ interface DraggableLabelProps {
   index: number;
   order?: Order;
   isFieldName: boolean;
-  onChangeSort: (isFieldName: boolean, labelName: string, order: Order) => void;
+  onChangeSort: (sortOptionString: string, order: Order) => void;
 }
 
 const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort }: DraggableLabelProps) => {
@@ -402,8 +364,8 @@ const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort 
               { label: 'DESC', value: Order.Desc },
             ]}
             value={order ?? Order.Off}
-            onChange={(v) => {
-              onChangeSort(isFieldName, labelKeyName, v);
+            onChange={(order) => {
+              onChangeSort(isFieldName ? FIELD_NAME : labelKeyName, order);
             }}
           />
         </Box>
