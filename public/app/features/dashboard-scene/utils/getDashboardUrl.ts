@@ -1,5 +1,5 @@
 import { UrlQueryMap, urlUtil } from '@grafana/data';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import { locationSearchToObject } from '@grafana/runtime';
 
 export interface DashboardUrlOptions {
   uid?: string;
@@ -77,7 +77,7 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
   const relativeUrl = urlUtil.renderUrl(path, params);
 
   if (options.absolute) {
-    return config.appUrl + relativeUrl.slice(1);
+    return window.location.host + relativeUrl;
   }
 
   return relativeUrl;
