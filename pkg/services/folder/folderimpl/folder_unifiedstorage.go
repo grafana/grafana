@@ -216,32 +216,17 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 	}
 
 	hitList := make([]*model.Hit, len(parsedResults.Hits))
-	foldersMap := map[string]*folder.Folder{}
 	for i, item := range parsedResults.Hits {
-		f, ok := foldersMap[item.Folder]
-		if !ok {
-			f, err = s.Get(ctx, &folder.GetFolderQuery{
-				UID:          &item.Folder,
-				OrgID:        query.OrgID,
-				SignedInUser: query.SignedInUser,
-			})
-			if err != nil {
-				return nil, err
-			}
-			foldersMap[item.Folder] = f
-		}
 		slug := slugify.Slugify(item.Title)
 		hitList[i] = &model.Hit{
-			ID:          item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
-			UID:         item.Name,
-			OrgID:       query.OrgID,
-			Title:       item.Title,
-			URI:         "db/" + slug,
-			URL:         dashboards.GetFolderURL(item.Name, slug),
-			Type:        model.DashHitFolder,
-			FolderUID:   item.Folder,
-			FolderTitle: f.Title,
-			FolderID:    f.ID, // nolint:staticcheck
+			ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+			UID:       item.Name,
+			OrgID:     query.OrgID,
+			Title:     item.Title,
+			URI:       "db/" + slug,
+			URL:       dashboards.GetFolderURL(item.Name, slug),
+			Type:      model.DashHitFolder,
+			FolderUID: item.Folder,
 		}
 	}
 
