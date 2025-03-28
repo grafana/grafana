@@ -23,9 +23,7 @@ describe('BackupInventory', () => {
           },
         } as StoreState)}
       >
-        <MemoryRouter>
-        {wrapWithGrafanaContextMock(<BackupInventory />)}
-        </MemoryRouter>
+        <MemoryRouter>{wrapWithGrafanaContextMock(<BackupInventory />)}</MemoryRouter>
       </Provider>
     );
 

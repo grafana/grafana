@@ -91,7 +91,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
   useLocation: () => ({
     pathname: 'http://localhost/graph/pmm-database-checks/all-checks',
-  })
+  }),
 }));
 
 const setFilteredData = jest.fn();
@@ -103,10 +103,7 @@ describe('Filter', () => {
   });
 
   it('should render the filter', async () => {
-    render(
-   
-      <Filter columns={columns} rawData={data} setFilteredData={setFilteredData} hasBackendFiltering={false} />
-     );
+    render(<Filter columns={columns} rawData={data} setFilteredData={setFilteredData} hasBackendFiltering={false} />);
     expect(screen.getByTestId('advance-filter-button')).toBeInTheDocument();
     expect(screen.getByTestId('clear-all-button')).toBeInTheDocument();
     expect(screen.getByTestId('filter')).toBeInTheDocument();

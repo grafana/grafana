@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-
 import { ServiceAgentStatus } from '../../Inventory.types';
 
 import { StatusBadge } from './StatusBadge';

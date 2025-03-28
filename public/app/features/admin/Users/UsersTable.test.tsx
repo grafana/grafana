@@ -23,15 +23,15 @@ const setup = (propOverrides?: object) => {
 
   render(
     <Provider
-            store={configureStore({
-              percona: {
-                user: { isAuthorized: true },
-              },
-            } as StoreState)}
-          >
-    <MemoryRouter>
-      <UsersTable {...props} />
-    </MemoryRouter>
+      store={configureStore({
+        percona: {
+          user: { isAuthorized: true },
+        },
+      } as StoreState)}
+    >
+      <MemoryRouter>
+        <UsersTable {...props} />
+      </MemoryRouter>
     </Provider>
   );
 };
