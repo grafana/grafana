@@ -41,7 +41,7 @@ describe('ShareLinkTab', () => {
       },
       writable: true,
     });
-    config.appSubUrl= '/grafana'
+    config.appSubUrl = '/grafana';
     config.rendererAvailable = true;
     config.bootData.user.orgId = 1;
     config.featureToggles.dashboardSceneForViewers = true;
