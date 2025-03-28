@@ -279,10 +279,10 @@ describe('Order Transformer', () => {
           id: DataTransformerID.order,
           options: {
             fieldOrder: FieldOrdering.Auto,
-            fieldNameSort: { index: 3, order: fieldNameOrder },
-            labelSort: [
+            autoSortOptions: [
               { index: 0, labelName: 'pod', order: labelPodOrder },
               { index: 1, labelName: 'user', order: labelUserOrder },
+              { index: 2, order: fieldNameOrder },
             ],
           },
         };
