@@ -15,6 +15,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -233,6 +234,17 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	for _, item := range res.Hits {
 		// filter out k6 folders if request is not from a service account
 		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
+			continue
+		}
+
+		// TODO: remove this check once we migrate alerting to using just the refs
+		if q.ReturnOnlyRefs {
+			hits = append(hits, &folder.Folder{
+				ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+				UID:       item.Name,
+				Title:     item.Title,
+				ParentUID: item.Folder,
+			})
 			continue
 		}
 

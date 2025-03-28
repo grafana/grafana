@@ -221,6 +221,8 @@ type GetChildrenQuery struct {
 
 	// array of folder uids to filter by
 	FolderUIDs []string `json:"-"`
+
+	ReturnOnlyRefs bool
 }
 
 type HasEditPermissionInFoldersQuery struct {
