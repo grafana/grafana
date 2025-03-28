@@ -388,4 +388,55 @@ func TestGetChildren(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, result, 1)
 	})
+
+	t.Run("should not do get requests for the children if RefOnly is true", func(t *testing.T) {
+		mockCli.On("Search", mock.Anything, orgID, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Fields: []*resource.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_FOLDER,
+						Operator: string(selection.In),
+						Values:   []string{"folder1"},
+					},
+				},
+			},
+			Limit:  folderSearchLimit, // should default to folderSearchLimit
+			Offset: 0,                 // should be set as limit * (page - 1)
+			Page:   1,                 // should be set to 1 by default
+		}).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key:   &resource.ResourceKey{Name: "folder2", Resource: "folder"},
+						Cells: [][]byte{[]byte("folder1")},
+					},
+					{
+						Key:   &resource.ResourceKey{Name: "folder3", Resource: "folder"},
+						Cells: [][]byte{[]byte("folder1")},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
+		// only get the parent folder in this request
+		mockCli.On("Get", mock.Anything, "folder1", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{"name": "folder1"},
+			},
+		}, nil).Once()
+
+		// don't set page or limit - should be automatically added
+		result, err := store.GetChildren(ctx, folder.GetChildrenQuery{
+			UID:     "folder1",
+			OrgID:   orgID,
+			RefOnly: true, // nolint:staticcheck
+		})
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		require.Equal(t, "folder2", result[0].UID)
+		require.Equal(t, "folder3", result[1].UID)
+	})
 }
