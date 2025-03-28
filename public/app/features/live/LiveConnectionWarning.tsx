@@ -5,6 +5,7 @@ import { Unsubscribable } from 'rxjs';
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Alert, stylesFactory } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {}
@@ -52,7 +53,14 @@ export class LiveConnectionWarning extends PureComponent<Props, State> {
 
       return (
         <div className={this.styles.foot}>
-          <Alert severity={'warning'} className={this.styles.warn} title="connection to server is lost..." />
+          <Alert
+            severity={'warning'}
+            className={this.styles.warn}
+            title={t(
+              'live.live-connection-warning.title-connection-to-server-is-lost',
+              'Connection to server is lost...'
+            )}
+          />
         </div>
       );
     }

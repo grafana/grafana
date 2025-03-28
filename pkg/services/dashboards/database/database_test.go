@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -187,6 +188,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		queryResult, err := dashboardStore.GetDashboardUIDByID(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, queryResult.UID, savedDash.UID)
+		require.Equal(t, queryResult.FolderUID, savedFolder.UID)
 	})
 
 	t.Run("Shouldn't be able to get a dashboard with just an OrgID", func(t *testing.T) {
@@ -964,7 +966,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderServiceWithFlagOn := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -1084,7 +1086,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 
 	folderServiceWithFlagOn := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	user := &user.SignedInUser{
 		OrgID: 1,

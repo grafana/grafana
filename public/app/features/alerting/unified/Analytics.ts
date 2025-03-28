@@ -1,7 +1,6 @@
 import { isEmpty } from 'lodash';
 
-import { createMonitoringLogger } from '@grafana/runtime';
-import { config, reportInteraction } from '@grafana/runtime/src';
+import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import { RuleNamespace } from '../../../types/unified-alerting';
@@ -216,6 +215,14 @@ export const trackRuleVersionsRestoreFail = async (
   payload: RuleVersionComparisonProps & { origin: Origin; error: Error }
 ) => {
   reportInteraction('grafana_alerting_rule_versions_restore_error', { ...payload });
+};
+
+export const trackDeletedRuleRestoreSuccess = async () => {
+  reportInteraction('grafana_alerting_deleted_rule_restore_success');
+};
+
+export const trackDeletedRuleRestoreFail = async () => {
+  reportInteraction('grafana_alerting_deleted_rule_restore_error');
 };
 
 interface RulesSearchInteractionPayload {

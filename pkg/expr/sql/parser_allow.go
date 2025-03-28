@@ -60,7 +60,7 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.BinaryExpr, *sqlparser.UnaryExpr:
 		return
 
-	case sqlparser.BoolVal:
+	case sqlparser.BoolVal, *sqlparser.NullVal:
 		return
 
 	case *sqlparser.CaseExpr, *sqlparser.When:
@@ -79,6 +79,15 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 		return
 
 	case *sqlparser.ConvertExpr, *sqlparser.ConvertType:
+		return
+
+	case *sqlparser.CollateExpr:
+		return
+
+	case sqlparser.Exprs:
+		return
+
+	case *sqlparser.GroupConcatExpr:
 		return
 
 	case sqlparser.GroupBy:
@@ -132,6 +141,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.TrimExpr:
 		return
 
+	case sqlparser.ValTuple:
+		return
+
 	case *sqlparser.With:
 		return
 
@@ -177,7 +189,7 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "lower", "upper":
 		return
-	case "substring":
+	case "substring", "substring_index":
 		return
 
 	// Date functions

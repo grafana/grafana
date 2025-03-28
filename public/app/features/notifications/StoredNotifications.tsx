@@ -75,7 +75,7 @@ export function StoredNotifications() {
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleAllCheckboxToggle(event.target.checked)}
         />
         <Button disabled={selectedNotificationIds.length === 0} onClick={clearSelectedNotifications}>
-          Dismiss notifications
+          <Trans i18nKey="notifications.stored-notifications.dismiss-notifications">Dismiss notifications</Trans>
         </Button>
       </div>
       <ul className={styles.list}>
