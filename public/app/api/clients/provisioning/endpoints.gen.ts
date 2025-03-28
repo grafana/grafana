@@ -34,15 +34,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['HistoricJob'],
       }),
-      getHistoricJobStatus: build.query<GetHistoricJobStatusApiResponse, GetHistoricJobStatusApiArg>({
-        query: (queryArg) => ({
-          url: `/historicjobs/${queryArg.name}/status`,
-          params: {
-            pretty: queryArg.pretty,
-          },
-        }),
-        providesTags: ['HistoricJob'],
-      }),
       listJob: build.query<ListJobApiResponse, ListJobApiArg>({
         query: (queryArg) => ({
           url: `/jobs`,
@@ -65,15 +56,6 @@ const injectedRtkApi = api
       getJob: build.query<GetJobApiResponse, GetJobApiArg>({
         query: (queryArg) => ({
           url: `/jobs/${queryArg.name}`,
-          params: {
-            pretty: queryArg.pretty,
-          },
-        }),
-        providesTags: ['Job'],
-      }),
-      getJobStatus: build.query<GetJobStatusApiResponse, GetJobStatusApiArg>({
-        query: (queryArg) => ({
-          url: `/jobs/${queryArg.name}/status`,
           params: {
             pretty: queryArg.pretty,
           },
@@ -382,13 +364,6 @@ export type GetHistoricJobApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type GetHistoricJobStatusApiResponse = /** status 200 OK */ HistoricJob;
-export type GetHistoricJobStatusApiArg = {
-  /** name of the HistoricJob */
-  name: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-};
 export type ListJobApiResponse = /** status 200 OK */ JobList;
 export type ListJobApiArg = {
   /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
@@ -436,13 +411,6 @@ export type ListJobApiArg = {
 };
 export type GetJobApiResponse = /** status 200 OK */ Job;
 export type GetJobApiArg = {
-  /** name of the Job */
-  name: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-};
-export type GetJobStatusApiResponse = /** status 200 OK */ Job;
-export type GetJobStatusApiArg = {
   /** name of the Job */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -884,10 +852,10 @@ export type ExportJobOptions = {
 };
 export type JobSpec = {
   /** Possible enum values:
-     - `"migrate"` Migration task -- this will migrate an full instance from SQL > Git
-     - `"pr"` Process a pull request -- apply comments with preview images, links etc
-     - `"pull"` Sync the remote branch with the grafana instance
-     - `"push"` Export from grafana into the remote repository */
+     - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
+     - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
+     - `"pull"` replicates the remote branch in the local copy of the repository.
+     - `"push"` replicates the local copy of the repository in the remote branch. */
   action: 'migrate' | 'pr' | 'pull' | 'push';
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
@@ -1321,10 +1289,8 @@ export type ResourceStats = {
 export const {
   useListHistoricJobQuery,
   useGetHistoricJobQuery,
-  useGetHistoricJobStatusQuery,
   useListJobQuery,
   useGetJobQuery,
-  useGetJobStatusQuery,
   useListRepositoryQuery,
   useCreateRepositoryMutation,
   useDeletecollectionRepositoryMutation,

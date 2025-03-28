@@ -19,22 +19,21 @@ const mockVariable = mockDataSource({
   type: 'datasource',
 });
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
-      getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-      getInstanceSettings: () => ({
-        ...mockDS,
-        meta: {
-          ...mockDS.meta,
-          alerting: true,
-          mixed: true,
-        },
-      }),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
+    getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
+    getInstanceSettings: () => ({
+      ...mockDS,
+      meta: {
+        ...mockDS.meta,
+        alerting: true,
+        mixed: true,
+      },
     }),
-  };
-});
+  }),
+}));
 
 describe('QueryGroup', () => {
   // QueryGroup relies on this being present
