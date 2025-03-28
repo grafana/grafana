@@ -41,11 +41,13 @@ export const ComboboxList = <T extends string | number>({
     (index: number) => {
       const firstGroupItem = isNewGroup(options[index], index > 0 ? options[index - 1] : undefined);
       const hasDescription = 'description' in options[index];
+      const hasGroup = 'group' in options[index];
+
       let itemHeight = MENU_OPTION_HEIGHT;
       if (hasDescription) {
         itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
       }
-      if (firstGroupItem) {
+      if (firstGroupItem && hasGroup) {
         itemHeight += MENU_OPTION_HEIGHT;
       }
       return itemHeight;
@@ -104,8 +106,8 @@ export const ComboboxList = <T extends string | number>({
                   id={groupHeaderId}
                   className={cx(
                     styles.optionGroupHeader,
-                    item.group && styles.newOptionGroupLabel,
-                    virtualRow.index === 0 && styles.newOptionGroupNoBorder
+                    item.group && styles.optionGroupLabel,
+                    virtualRow.index === 0 && styles.optionFirstGroupHeader
                   )}
                 >
                   {item.group}

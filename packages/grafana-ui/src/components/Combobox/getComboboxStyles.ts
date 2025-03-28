@@ -49,7 +49,11 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
 
-    newOptionGroupLabel: css({
+    optionFirstGroupHeader: css({
+      borderTop: 'none',
+    }),
+
+    optionGroupLabel: css({
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       letterSpacing: 0,
@@ -57,10 +61,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightLight,
       padding: MENU_ITEM_PADDING,
-    }),
-
-    newOptionGroupNoBorder: css({
-      borderTop: 'none',
     }),
 
     option: css({

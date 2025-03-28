@@ -320,7 +320,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       <Portal>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
-          style={{ ...floatStyles }}
+          style={{
+            ...floatStyles,
+            width: floatStyles.width + 24, // account for checkbox
+          }}
           {...getMenuProps({ ref: floatingRef })}
         >
           {isOpen && (
