@@ -83,7 +83,6 @@ func TestClientServer(t *testing.T) {
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := infraDB.InitTestDB(t)
 
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address
@@ -91,7 +90,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, prometheus.NewPedanticRegistry(), nil, nil, nil)
 	require.NoError(t, err)
 	var client resource.ResourceStoreClient
 
