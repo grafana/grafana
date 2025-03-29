@@ -565,6 +565,37 @@
       "rule-group-error": "Error loading rule group",
       "title": "Edit evaluation group"
     },
+    "import-to-gma": {
+      "action-button": "Import",
+      "datasource": {
+        "label": "Datasource",
+        "required-message": "Please select a datasource"
+      },
+      "error": "Failed to import alert rules: {{error}}",
+      "filters": "Filters",
+      "group": {
+        "description": "Type to search for an existing group or create a new one",
+        "label": "Group"
+      },
+      "namespace": {
+        "description": "Type to search for an existing namespace",
+        "label": "Namespace"
+      },
+      "optional-settings": "Optional settings",
+      "pageTitle": "Import alert rules from a datasource to Grafana-managed rules",
+      "pause": {
+        "label": "Pause alerting rules",
+        "tooltip": "Imported alerting rules will be paused."
+      },
+      "pause-recording": {
+        "label": "Pause recording rules",
+        "tooltip": "Imported recording rules will be paused."
+      },
+      "success": "Successfully imported alert rules to Grafana-managed rules.",
+      "target-folder": {
+        "label": "Target Folder (optional)"
+      }
+    },
     "irm-integration": {
       "connection-method": "How to connect to IRM",
       "disabled-description": "Enable Grafana IRM to use this integration",
@@ -590,6 +621,8 @@
         "new-recording-rule": "New recording rule",
         "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
       },
+      "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
+      "no-rules": "No rules found.",
       "section": {
         "dataSourceManaged": {
           "title": "Data source-managed"
@@ -600,7 +633,8 @@
           "loading": "Loading...",
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
-        }
+        },
+        "loading-rules": "Loading rules from {{numberOfSources}} {{sources}}"
       }
     },
     "manage-permissions": {
@@ -618,6 +652,10 @@
       "description": "Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of time.",
       "save": "Save mute timing",
       "saving": "Saving mute timing"
+    },
+    "namespace-and-group-filter": {
+      "select-group": "Select group",
+      "select-namespace": "Select namespace"
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
@@ -827,6 +865,10 @@
       "filter-view": {
         "no-more-results": "No more results – showing {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters."
+      },
+      "import-to-gma": {
+        "new-badge": "New!",
+        "text": "Import to Grafana-managed rules"
       },
       "new-alert-rule": "New alert rule",
       "pagination": {
