@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -364,19 +365,25 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
 
+	page := getQueryPageParams(c.QueryInt("resultPage"), cloudmigration.ResultPage(1))
+	lim := getQueryPageParams(c.QueryInt("resultLimit"), cloudmigration.ResultLimit(100))
+	col := getQueryCol(c.Query("resultSortColumn"), cloudmigration.SortColumnID)
+	order := getQueryOrder(c.Query("resultSortOrder"), cloudmigration.SortOrderAsc)
+	errorsOnly := c.QueryBool("errorsOnly")
+
 	q := cloudmigration.GetSnapshotsQuery{
 		SnapshotUID: snapshotUid,
 		SessionUID:  sessUid,
-		ResultPage:  c.QueryInt("resultPage"),
-		ResultLimit: c.QueryInt("resultLimit"),
 		OrgID:       c.SignedInUser.OrgID,
+		SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  page,
+			ResultLimit: lim,
+			SortColumn:  col,
+			SortOrder:   order,
+			ErrorsOnly:  errorsOnly,
+		},
 	}
-	if q.ResultLimit == 0 {
-		q.ResultLimit = 100
-	}
-	if q.ResultPage < 1 {
-		q.ResultPage = 1
-	}
+
 	snapshot, err := cma.cloudMigrationService.GetSnapshot(ctx, q)
 	if err != nil {
 		span.SetStatus(codes.Error, "error retrieving snapshot")
@@ -387,6 +394,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 
 	results := snapshot.Resources
 
+	// convert the results to DTOs
 	dtoResults := make([]MigrateDataResponseItemDTO, len(results))
 	for i := 0; i < len(results); i++ {
 		dtoResults[i] = MigrateDataResponseItemDTO{
@@ -427,6 +435,43 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	return response.JSON(http.StatusOK, respDto)
 }
 
+type PageParam interface {
+	~int // any int or underlying int type
+}
+
+func getQueryPageParams[D PageParam](page int, def D) D {
+	if page < 1 || page > 10000 {
+		return def
+	}
+	return D(page)
+}
+
+func getQueryCol(col string, defaultCol cloudmigration.ResultSortColumn) cloudmigration.ResultSortColumn {
+	switch strings.ToLower(col) {
+	case string(cloudmigration.SortColumnID):
+		return cloudmigration.SortColumnID
+	case string(cloudmigration.SortColumnName):
+		return cloudmigration.SortColumnName
+	case string(cloudmigration.SortColumnType):
+		return cloudmigration.SortColumnType
+	case string(cloudmigration.SortColumnStatus):
+		return cloudmigration.SortColumnStatus
+	default:
+		return defaultCol
+	}
+}
+
+func getQueryOrder(order string, defaultOrder cloudmigration.SortOrder) cloudmigration.SortOrder {
+	switch strings.ToUpper(order) {
+	case string(cloudmigration.SortOrderAsc):
+		return cloudmigration.SortOrderAsc
+	case string(cloudmigration.SortOrderDesc):
+		return cloudmigration.SortOrderDesc
+	default:
+		return defaultOrder
+	}
+}
+
 // swagger:route GET /cloudmigration/migration/{uid}/snapshots migrations getShapshotList
 //
 // Get a list of snapshots for a session.
@@ -450,16 +495,11 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 	}
 	q := cloudmigration.ListSnapshotsQuery{
 		SessionUID: uid,
-		Limit:      c.QueryInt("limit"),
-		Page:       c.QueryInt("page"),
-		Sort:       c.Query("sort"),
-		OrgID:      c.SignedInUser.OrgID,
-	}
-	if q.Limit == 0 {
-		q.Limit = 100
-	}
-	if q.Page < 1 {
-		q.Page = 1
+		Limit:      getQueryPageParams(c.QueryInt("limit"), 100),
+		Page:       getQueryPageParams(c.QueryInt("page"), 1),
+		// TODO: change to pattern used by GetSnapshot results
+		Sort:  c.Query("sort"),
+		OrgID: c.SignedInUser.OrgID,
 	}
 
 	snapshotList, err := cma.cloudMigrationService.GetSnapshotList(ctx, q)
