@@ -1054,4 +1054,8 @@ export interface FeatureToggles {
   * @default true
   */
   alertingRuleRecoverDeleted?: boolean;
+  /**
+  * Use proxy-based read-only objects for plugin extensions instead of deep cloning
+  */
+  extensionsReadOnlyProxy?: boolean;
 }

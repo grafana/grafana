@@ -966,4 +966,8 @@ const (
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
+
+	// FlagExtensionsReadOnlyProxy
+	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
+	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
 )

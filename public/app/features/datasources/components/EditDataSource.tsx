@@ -199,7 +199,7 @@ export function EditDataSourceView({
             <Component
               context={{
                 dataSource,
-                dataSourceMeta: dataSourceMeta,
+                dataSourceMeta,
                 testingStatus,
                 setJsonData: (jsonData) =>
                   onOptionsChange({
