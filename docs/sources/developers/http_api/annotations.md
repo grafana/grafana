@@ -24,6 +24,10 @@ Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annot
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
+{{% admonition type="note" %}}
+Changing the color of annotations is not supported by this API endpoint. However, it is supported by the [Dashboard API endpoint](/docs/grafana/latest/developers/http_api/dashboard/#create--update-dashboard).
+{{% /admonition %}}
+
 ## Find Annotations
 
 `GET /api/annotations?from=1506676478816&to=1507281278816&tags=tag1&tags=tag2&limit=100`
