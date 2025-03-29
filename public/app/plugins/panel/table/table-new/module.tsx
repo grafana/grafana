@@ -9,6 +9,7 @@ import {
   FieldConfigProperty,
 } from '@grafana/data';
 import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
+import { commonOptionsBuilder } from '@grafana/ui';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
@@ -98,13 +99,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           name: 'Column filter',
           description: 'Enables/disables field filters in table',
           defaultValue: defaultTableFieldOptions.filterable,
-        })
-        .addBooleanSwitch({
-          path: 'hidden',
-          name: 'Hide in table',
-          defaultValue: undefined,
-          hideFromDefaults: true,
         });
+      commonOptionsBuilder.addHideFrom(builder);
     },
   })
   .setPanelOptions((builder) => {

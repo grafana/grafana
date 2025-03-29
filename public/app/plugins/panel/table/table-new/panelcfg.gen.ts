@@ -59,4 +59,4 @@ export const defaultOptions: Partial<Options> = {
   sortBy: [],
 };
 
-export interface FieldConfig extends ui.TableFieldOptions {}
+export interface FieldConfig extends ui.TableFieldOptions, ui.HideableFieldConfig {}
