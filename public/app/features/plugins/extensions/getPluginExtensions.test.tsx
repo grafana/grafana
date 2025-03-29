@@ -1,24 +1,13 @@
 import * as React from 'react';
 
-import {
-  type PluginExtensionAddedLinkConfig,
-  type PluginExtensionAddedComponentConfig,
-  PluginExtensionTypes,
-} from '@grafana/data';
+import { PluginExtensionAddedComponentConfig, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import {
-  getObservablePluginComponents,
-  getObservablePluginExtensions,
-  getObservablePluginLinks,
-  getPluginExtensions,
-} from './getPluginExtensions';
+import { getPluginExtensions } from './getPluginExtensions';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
-import { pluginExtensionRegistries } from './registry/setup';
-import type { GetExtensions } from './types';
 import { isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
@@ -72,9 +61,9 @@ describe('getPluginExtensions()', () => {
   const extensionPoint3 = 'grafana/datasources/config/v1';
   const pluginId = 'grafana-basic-app';
   // Sample extension configs that are used in the tests below
-  let link1: PluginExtensionAddedLinkConfig;
-  let link2: PluginExtensionAddedLinkConfig;
-  let component1: PluginExtensionAddedComponentConfig;
+  let link1: PluginExtensionAddedLinkConfig,
+    link2: PluginExtensionAddedLinkConfig,
+    component1: PluginExtensionAddedComponentConfig;
 
   beforeEach(() => {
     link1 = {
@@ -573,176 +562,5 @@ describe('getPluginExtensions()', () => {
         description: component1.description,
       })
     );
-  });
-});
-
-describe('getObservablePluginExtensions()', () => {
-  const extensionPointId = 'grafana/dashboard/panel/menu/v1';
-  const pluginId = 'grafana-basic-app';
-
-  beforeEach(() => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
-    pluginExtensionRegistries.addedLinksRegistry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Link 1',
-          description: 'Link 1 description',
-          path: `/a/${pluginId}/declare-incident`,
-          targets: extensionPointId,
-          configure: jest.fn().mockReturnValue({}),
-        },
-      ],
-    });
-
-    pluginExtensionRegistries.addedComponentsRegistry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Component 1',
-          description: 'Component 1 description',
-          targets: extensionPointId,
-          component: () => {
-            return <div>Hello world!</div>;
-          },
-        },
-      ],
-    });
-  });
-
-  it('should emit the initial state when no changes are made to the registries', () => {
-    const observable = getObservablePluginExtensions({ extensionPointId });
-
-    observable.subscribe((value: ReturnType<GetExtensions>) => {
-      expect(value.extensions).toHaveLength(2);
-      expect(value.extensions[0].pluginId).toBe(pluginId);
-      expect(value.extensions[1].pluginId).toBe(pluginId);
-    });
-  });
-
-  it('should emit the new state when the registries change', () => {
-    const observable = getObservablePluginExtensions({ extensionPointId });
-    const subscriber = jest.fn();
-
-    observable.subscribe(subscriber);
-
-    // Initial state
-    expect(subscriber).toHaveBeenCalledTimes(2);
-    expect(subscriber.mock.calls[1][0].extensions).toHaveLength(2);
-    expect(subscriber.mock.calls[1][0].extensions[0].pluginId).toBe(pluginId);
-    expect(subscriber.mock.calls[1][0].extensions[1].pluginId).toBe(pluginId);
-
-    // Register new link extension
-    pluginExtensionRegistries.addedLinksRegistry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Link 2',
-          description: 'Link 2 description',
-          path: `/a/${pluginId}/declare-incident`,
-          targets: extensionPointId,
-          configure: jest.fn().mockReturnValue({}),
-        },
-      ],
-    });
-
-    expect(subscriber).toHaveBeenCalledTimes(3);
-    expect(subscriber.mock.calls[2][0].extensions).toHaveLength(3);
-    expect(subscriber.mock.calls[2][0].extensions[0].pluginId).toBe(pluginId);
-    expect(subscriber.mock.calls[2][0].extensions[1].pluginId).toBe(pluginId);
-    expect(subscriber.mock.calls[2][0].extensions[2].pluginId).toBe(pluginId);
-  });
-});
-
-describe('getObservablePluginLinks()', () => {
-  const extensionPointId = 'grafana/dashboard/panel/menu/v1';
-  const pluginId = 'grafana-basic-app';
-
-  beforeEach(() => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
-    pluginExtensionRegistries.addedLinksRegistry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Link 1',
-          description: 'Link 1 description',
-          path: `/a/${pluginId}/declare-incident`,
-          targets: extensionPointId,
-          configure: jest.fn().mockReturnValue({}),
-        },
-      ],
-    });
-
-    pluginExtensionRegistries.addedComponentsRegistry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Component 1',
-          description: 'Component 1 description',
-          targets: extensionPointId,
-          component: () => {
-            return <div>Hello world!</div>;
-          },
-        },
-      ],
-    });
-  });
-
-  it('should only emit the links', () => {
-    const observable = getObservablePluginLinks({ extensionPointId });
-
-    observable.subscribe((value: ReturnType<GetExtensions>) => {
-      expect(value.extensions).toHaveLength(1);
-      expect(value.extensions[0].pluginId).toBe(pluginId);
-      expect(value.extensions[0].type).toBe(PluginExtensionTypes.link);
-    });
-  });
-});
-
-describe('getObservablePluginComponents()', () => {
-  const extensionPointId = 'grafana/dashboard/panel/menu/v1';
-  const pluginId = 'grafana-basic-app';
-
-  beforeEach(() => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
-    pluginExtensionRegistries.addedLinksRegistry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Link 1',
-          description: 'Link 1 description',
-          path: `/a/${pluginId}/declare-incident`,
-          targets: extensionPointId,
-          configure: jest.fn().mockReturnValue({}),
-        },
-      ],
-    });
-
-    pluginExtensionRegistries.addedComponentsRegistry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Component 1',
-          description: 'Component 1 description',
-          targets: extensionPointId,
-          component: () => {
-            return <div>Hello world!</div>;
-          },
-        },
-      ],
-    });
-  });
-
-  it('should only emit the components', () => {
-    const observable = getObservablePluginComponents({ extensionPointId });
-
-    observable.subscribe((value: ReturnType<GetExtensions>) => {
-      expect(value.extensions).toHaveLength(1);
-      expect(value.extensions[0].pluginId).toBe(pluginId);
-      expect(value.extensions[0].type).toBe(PluginExtensionTypes.component);
-    });
   });
 });

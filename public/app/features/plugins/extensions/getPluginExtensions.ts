@@ -1,5 +1,4 @@
 import { isString } from 'lodash';
-import { filter, map, Observable } from 'rxjs';
 
 import {
   PluginExtensionTypes,
@@ -7,15 +6,13 @@ import {
   type PluginExtensionLink,
   type PluginExtensionComponent,
 } from '@grafana/data';
-import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
 
 import { log } from './logs/log';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { RegistryType } from './registry/Registry';
-import { pluginExtensionRegistries } from './registry/setup';
 import type { PluginExtensionRegistries } from './registry/types';
-import { GetExtensions, GetExtensionsOptions, GetPluginExtensions } from './types';
+import { GetExtensions, GetPluginExtensions } from './types';
 import {
   getReadOnlyProxy,
   generateExtensionId,
@@ -24,78 +21,6 @@ import {
   getLinkExtensionOverrides,
   getLinkExtensionPathWithTracking,
 } from './utils';
-
-/**
- * Returns an observable that emits plugin extensions whenever the core extensions registries change.
- * The observable will emit the initial state of the extensions and then emit again whenever
- * either the added components registry or the added links registry changes.
- *
- * @param options - The options for getting plugin extensions
- * @returns An Observable that emits the plugin extensions for the given extension point any time the registries change
- */
-
-export const getObservablePluginExtensions = (
-  options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
-): Observable<ReturnType<GetExtensions>> => {
-  return new Observable((subscriber) => {
-    let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]> | undefined;
-    let addedLinksRegistry: RegistryType<Array<AddedLinkRegistryItem<object>>> | undefined;
-
-    const emitExtensions = () => {
-      subscriber.next(
-        getPluginExtensions({
-          ...options,
-          addedComponentsRegistry,
-          addedLinksRegistry,
-        })
-      );
-    };
-
-    // Reading the initial state of the registries
-    Promise.all([
-      pluginExtensionRegistries.addedComponentsRegistry.getState(),
-      pluginExtensionRegistries.addedLinksRegistry.getState(),
-    ]).then(([currentAddedComponentsRegistry, currentAddedLinksRegistry]) => {
-      addedComponentsRegistry = currentAddedComponentsRegistry;
-      addedLinksRegistry = currentAddedLinksRegistry;
-      emitExtensions();
-    });
-
-    const addedComponentsSub = pluginExtensionRegistries.addedComponentsRegistry
-      .asObservable()
-      .subscribe((currentAddedComponentsRegistry) => {
-        addedComponentsRegistry = currentAddedComponentsRegistry;
-        emitExtensions();
-      });
-
-    const addedLinksSub = pluginExtensionRegistries.addedLinksRegistry
-      .asObservable()
-      .subscribe((currentAddedLinksRegistry) => {
-        addedLinksRegistry = currentAddedLinksRegistry;
-        emitExtensions();
-      });
-
-    // Cleanup subscriptions
-    return () => {
-      addedComponentsSub?.unsubscribe();
-      addedLinksSub?.unsubscribe();
-    };
-  });
-};
-
-export const getObservablePluginLinks: GetObservablePluginLinks = (options) => {
-  return getObservablePluginExtensions(options).pipe(
-    map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.link)),
-    filter((extensions) => extensions.length > 0)
-  );
-};
-
-export const getObservablePluginComponents: GetObservablePluginComponents = (options) => {
-  return getObservablePluginExtensions(options).pipe(
-    map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.component)),
-    filter((extensions) => extensions.length > 0)
-  );
-};  
 
 export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
   let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
