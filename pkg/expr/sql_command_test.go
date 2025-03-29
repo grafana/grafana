@@ -15,7 +15,7 @@ import (
 )
 
 func TestNewCommand(t *testing.T) {
-	cmd, err := NewSQLCommand("a", "select a from foo, bar", 0)
+	cmd, err := NewSQLCommand("a", "", "select a from foo, bar", 0)
 	if err != nil && strings.Contains(err.Error(), "feature is not enabled") {
 		return
 	}
@@ -123,7 +123,7 @@ func TestSQLCommandCellLimits(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd, err := NewSQLCommand("a", "select a from foo, bar", tt.limit)
+			cmd, err := NewSQLCommand("a", "", "select a from foo, bar", tt.limit)
 			require.NoError(t, err, "Failed to create SQL command")
 
 			vars := mathexp.Vars{}

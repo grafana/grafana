@@ -77,6 +77,7 @@ type ClassicQuery struct {
 // SQLQuery requires the sqlExpression feature flag
 type SQLExpression struct {
 	Expression string `json:"expression" jsonschema:"minLength=1,example=SELECT * FROM A LIMIT 1"`
+	Format     string `json:"format"`
 }
 
 //-------------------------------
