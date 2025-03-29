@@ -106,7 +106,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 
 	tags := []string{"Editor"}
 	return &builder.APIRoutes{
-		Root: []builder.APIRouteHandler{
+		Namespace: []builder.APIRouteHandler{
 			{
 				Path: "current",
 				Spec: &spec3.PathProps{
@@ -115,6 +115,18 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 							Tags:        tags,
 							Summary:     "Current configuration with details",
 							Description: "Show details about the current flags and where they come from",
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
 									StatusCodeResponses: map[int]*spec3.Response{
@@ -140,6 +152,18 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 							Tags:        tags,
 							Summary:     "Update individual toggles",
 							Description: "Patch some of the toggles (keyed by the toggle name)",
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+							},
 							RequestBody: &spec3.RequestBody{
 								RequestBodyProps: spec3.RequestBodyProps{
 									Required:    true,
