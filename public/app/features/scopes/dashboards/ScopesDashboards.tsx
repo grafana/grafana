@@ -27,7 +27,8 @@ export function ScopesDashboards() {
   }
 
   const { scopesDashboardsService } = scopeServices;
-  const { loading, forScopeNames, dashboards, searchQuery, filteredFolders } = scopesDashboardsService.state;
+  const { loading, forScopeNames, dashboards, scopeNavigations, searchQuery, filteredFolders } =
+    scopesDashboardsService.state;
   const { changeSearchQuery, updateFolder, clearSearchQuery } = scopesDashboardsService;
 
   if (!loading) {
@@ -40,13 +41,15 @@ export function ScopesDashboards() {
           <Trans i18nKey="scopes.dashboards.noResultsNoScopes">No scopes selected</Trans>
         </div>
       );
-    } else if (dashboards.length === 0) {
+    } else if (dashboards.length === 0 && scopeNavigations.length === 0) {
       return (
         <div
           className={cx(styles.container, styles.noResultsContainer)}
           data-testid="scopes-dashboards-notFoundForScope"
         >
-          <Trans i18nKey="scopes.dashboards.noResultsForScopes">No dashboards found for the selected scopes</Trans>
+          <Trans i18nKey="scopes.dashboards.noResultsForScopes">
+            No dashboards or links found for the selected scopes
+          </Trans>
         </div>
       );
     }
