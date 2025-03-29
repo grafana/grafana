@@ -5,19 +5,64 @@
   "metrics": false,
   "routes": [
     {
+      "method": "GET",
+      "path": "alertmanager/api/v2/silences",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },    
+    {
       "method": "POST",
       "path": "alertmanager/api/v2/silences",
-      "reqRole": "Editor"
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/silence",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
     },
     {
       "method": "DELETE",
       "path": "alertmanager/api/v2/silence",
-      "reqRole": "Editor"
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
     },
     {
       "method": "GET",
-      "path": "alertmanager/api/v2/silences",
-      "reqRole": "Viewer"
+      "path": "alertmanager/api/v2/alerts/groups",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/alerts",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "POST",
+      "path": "alertmanager/api/v2/alerts",
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/status",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/receivers",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "api/v1/alerts",
+      "reqRole": "Admin",
+      "reqAction": "alert.instances.external:read"      
     },
     {
       "method": "POST",
@@ -30,17 +75,7 @@
     {
       "method": "DELETE",
       "reqRole": "Editor"
-    },
-    {
-      "method": "GET",
-      "path": "alertmanager/api/v2/alerts",
-      "reqRole": "Viewer"
-    },
-    {
-      "method": "GET",
-      "path": "api/v1/alerts",
-      "reqRole": "Admin"
-    }
+    }    
   ],
   "info": {
     "description": "Add external Alertmanagers (supports Prometheus and Mimir implementations) so you can use the Grafana Alerting UI to manage silences, contact points, and notification policies.",
