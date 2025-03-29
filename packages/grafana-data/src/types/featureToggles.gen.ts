@@ -836,7 +836,8 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
-  * Use new combobox component for Prometheus query editor
+  * Use new **Combobox** component for Prometheus query editor
+  * @default true
   */
   prometheusUsesCombobox?: boolean;
   /**
@@ -951,7 +952,7 @@ export interface FeatureToggles {
   */
   ABTestFeatureToggleA?: boolean;
   /**
-  * Use new combobox component for template variables
+  * Use new **Combobox** component for template variables
   */
   templateVariablesUsesCombobox?: boolean;
   /**
