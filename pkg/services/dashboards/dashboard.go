@@ -91,7 +91,7 @@ type Store interface {
 	ValidateDashboardBeforeSave(ctx context.Context, dashboard *Dashboard, overwrite bool) (bool, error)
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
-	CountInOrg(ctx context.Context, orgID int64) (int64, error)
+	CountInOrg(ctx context.Context, orgID int64, isFolder bool) (int64, error)
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
 	CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)

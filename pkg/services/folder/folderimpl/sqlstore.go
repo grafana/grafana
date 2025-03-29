@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -32,6 +33,23 @@ var _ folder.Store = (*FolderStoreImpl)(nil)
 
 func ProvideStore(db db.DB) *FolderStoreImpl {
 	return &FolderStoreImpl{db: db, log: log.New("folder-store")}
+}
+
+func (ss *FolderStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	type result struct {
+		Count int64
+	}
+	r := result{}
+	if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if _, err := sess.SQL("SELECT COUNT(*) AS count FROM folder WHERE org_id=?", orgID).Get(&r); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+
+	return r.Count, nil
 }
 
 func (ss *FolderStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {

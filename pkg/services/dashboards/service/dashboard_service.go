@@ -480,7 +480,7 @@ func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID 
 		return resp.Stats[0].Count, nil
 	}
 
-	return dr.dashboardStore.CountInOrg(ctx, orgID)
+	return dr.dashboardStore.CountInOrg(ctx, orgID, false)
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
