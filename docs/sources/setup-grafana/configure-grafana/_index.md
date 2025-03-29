@@ -818,15 +818,15 @@ Set to `false` to disable the snapshot feature (default `true`).
 
 #### `external_enabled`
 
-Set to `false` to disable external snapshot publish endpoint (default `true`).
+Set to `true` to enable external snapshot publish endpoint (default `false`).
 
 #### `external_snapshot_url`
 
-Set root URL to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots.raintank.io).
+Set root URL to a Grafana instance where you want to publish external snapshots.
 
 #### `external_snapshot_name`
 
-Set name for external snapshot button. Defaults to `Publish to snapshots.raintank.io`.
+Set name for external snapshot button.
 
 #### `public_mode`
 
