@@ -18,6 +18,10 @@ import {
   getAppPluginConfigs,
   getAppPluginIdFromExposedComponentId,
   getAppPluginDependencies,
+  getMutationObserverProxy,
+  readOnlyCopy,
+  isReadOnlyProxy,
+  isMutationObserverProxy,
 } from './utils';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
@@ -227,7 +231,7 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy.a = 'b';
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
     });
 
     it('should not be possible to modify values in proxied array', () => {
@@ -235,7 +239,7 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy[0] = 2;
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
     });
 
     it('should not be possible to modify nested objects in proxied object', () => {
@@ -248,7 +252,58 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy.a.c = 'testing';
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
+    });
+
+    // This is to record what we are not able to do currently.
+    // (Due to Proxy.get() invariants limitations: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy/Proxy/get#invariants)
+    it('should not work with any objects that are already frozen', () => {
+      const obj = {
+        a: {
+          b: {
+            c: {
+              d: 'd',
+            },
+          },
+        },
+      };
+
+      Object.freeze(obj);
+      Object.freeze(obj.a);
+      Object.freeze(obj.a.b);
+
+      const proxy = getReadOnlyProxy(obj);
+
+      expect(() => {
+        proxy.a.b.c.d = 'testing';
+      }).toThrow(
+        "'get' on proxy: property 'a' is a read-only and non-configurable data property on the proxy target but the proxy did not return its actual value (expected '#<Object>' but got '#<Object>')"
+      );
+
+      expect(obj.a.b.c.d).toBe('d');
+    });
+
+    it('should throw a TypeError if a proxied object is trying to be frozen', () => {
+      const obj = {
+        a: {
+          b: {
+            c: {
+              d: 'd',
+            },
+          },
+        },
+      };
+
+      const proxy = getReadOnlyProxy(obj);
+
+      expect(() => Object.freeze(proxy)).toThrow(TypeError);
+      expect(() => Object.freeze(proxy.a)).toThrow(TypeError);
+      expect(() => Object.freeze(proxy.a.b)).toThrow(TypeError);
+
+      // Check if the original object is not frozen
+      expect(Object.isFrozen(obj)).toBe(false);
+      expect(Object.isFrozen(obj.a)).toBe(false);
+      expect(Object.isFrozen(obj.a.b)).toBe(false);
     });
 
     it('should not be possible to modify nested arrays in proxied object', () => {
@@ -261,7 +316,7 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy.a.c[0] = 'testing';
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
     });
 
     it('should be possible to modify source object', () => {
@@ -316,6 +371,191 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(source.isSame(proxy.a)).toBe(true);
       expect(source).not.toBe(proxy.a);
+    });
+  });
+
+  describe('getMutationObserverProxy()', () => {
+    beforeEach(() => {
+      jest.spyOn(console, 'warn').mockImplementation();
+    });
+
+    afterEach(() => {
+      jest.mocked(console.warn).mockClear();
+    });
+
+    it('should not be possible to modify values in proxied object, but logs a warning', () => {
+      const proxy = getMutationObserverProxy({ a: 'a' });
+
+      expect(() => {
+        proxy.a = 'b';
+      }).not.toThrow();
+
+      expect(console.warn).toHaveBeenCalledWith(
+        `Extensions: Attempted to mutate object property "a"`,
+        expect.any(String) // The stack trace
+      );
+
+      expect(proxy.a).toBe('b');
+    });
+
+    it('should be possible to set new values, but logs a warning', () => {
+      const obj: { a: string; b?: string } = { a: 'a' };
+      const proxy = getMutationObserverProxy(obj);
+
+      expect(() => {
+        Object.defineProperty(proxy, 'b', {
+          value: 'b',
+          writable: false,
+        });
+      }).not.toThrow();
+
+      expect(console.warn).toHaveBeenCalledWith(
+        `Extensions: Attempted to define object property "b"`,
+        expect.any(String) // The stack trace
+      );
+
+      expect(proxy.b).toBe('b');
+    });
+
+    it('should be possible to delete properties, but logs a warning', () => {
+      const proxy = getMutationObserverProxy({
+        a: {
+          c: 'c',
+        },
+        b: 'b',
+      });
+
+      expect(() => {
+        // @ts-ignore - This is to test the logic
+        delete proxy.a.c;
+      }).not.toThrow();
+
+      expect(console.warn).toHaveBeenCalledWith(
+        `Extensions: Attempted to delete object property "c"`,
+        expect.any(String) // The stack trace
+      );
+
+      expect(proxy.a.c).toBeUndefined();
+    });
+  });
+
+  describe('readOnlyCopy()', () => {
+    const originalEnv = config.buildInfo.env;
+
+    beforeEach(() => {
+      jest.spyOn(console, 'warn').mockImplementation();
+      config.featureToggles.extensionsReadOnlyProxy = false;
+    });
+
+    afterEach(() => {
+      config.buildInfo.env = originalEnv;
+      jest.mocked(console.warn).mockClear();
+    });
+
+    it('should return the same value for primitive types', () => {
+      expect(readOnlyCopy(1)).toBe(1);
+      expect(readOnlyCopy('a')).toBe('a');
+      expect(readOnlyCopy(true)).toBe(true);
+      expect(readOnlyCopy(false)).toBe(false);
+      expect(readOnlyCopy(null)).toBe(null);
+      expect(readOnlyCopy(undefined)).toBe(undefined);
+    });
+
+    it('should return a read-only proxy of the original object if the feature flag is enabled', () => {
+      config.featureToggles.extensionsReadOnlyProxy = true;
+
+      const obj = { a: 'a' };
+      const copy = readOnlyCopy(obj);
+
+      expect(copy).not.toBe(obj);
+      expect(copy.a).toBe('a');
+      expect(isReadOnlyProxy(copy)).toBe(true);
+      expect(() => {
+        copy.a = 'b';
+      }).toThrow(TypeError);
+    });
+
+    it('should return a read-only proxy of a deep-copy of the original object in dev mode', () => {
+      config.featureToggles.extensionsReadOnlyProxy = false;
+      config.buildInfo.env = 'development';
+
+      const obj = { a: 'a' };
+      const copy = readOnlyCopy(obj);
+
+      expect(copy).not.toBe(obj);
+      expect(copy.a).toBe('a');
+      expect(isReadOnlyProxy(copy)).toBe(true);
+      expect(() => {
+        copy.a = 'b';
+      }).toThrow(TypeError);
+
+      // Also test that we can handle frozen objects
+      // (This is not possible with getReadOnlyProxy, as it throws an error when the object is already frozen)
+      const obj2 = {
+        a: {
+          b: {
+            c: {
+              d: 'd',
+            },
+          },
+        },
+      };
+
+      Object.freeze(obj2);
+      Object.freeze(obj2.a);
+      Object.freeze(obj2.a.b);
+
+      const copy2 = readOnlyCopy(obj2);
+
+      expect(() => {
+        copy2.a.b.c.d = 'testing';
+      }).toThrow("'set' on proxy: trap returned falsish for property 'd'");
+
+      expect(copy2.a.b.c.d).toBe('d');
+    });
+
+    it('should return a writable deep-copy of the original object in production mode', () => {
+      config.featureToggles.extensionsReadOnlyProxy = false;
+      config.buildInfo.env = 'production';
+
+      const obj = { a: 'a' };
+      const copy = readOnlyCopy(obj);
+
+      expect(copy).not.toBe(obj);
+      expect(copy.a).toBe('a');
+      expect(isMutationObserverProxy(copy)).toBe(true);
+      expect(() => {
+        copy.a = 'b';
+      }).not.toThrow();
+
+      expect(console.warn).toHaveBeenCalledWith(
+        `Extensions: Attempted to mutate object property "a"`,
+        expect.any(String) // The stack trace
+      );
+
+      expect(copy.a).toBe('b');
+    });
+
+    it('should allow freezing the object in production mode', () => {
+      config.featureToggles.extensionsReadOnlyProxy = false;
+      config.buildInfo.env = 'production';
+
+      const obj = { a: 'a', b: { c: 'c' } };
+      const copy = readOnlyCopy(obj);
+
+      expect(() => {
+        Object.freeze(copy);
+        Object.freeze(copy.b);
+      }).not.toThrow();
+
+      expect(Object.isFrozen(copy)).toBe(true);
+      expect(Object.isFrozen(copy.b)).toBe(true);
+      expect(copy.b).toEqual({ c: 'c' });
+
+      expect(console.warn).toHaveBeenCalledWith(
+        `Extensions: Attempted to define object property "a"`,
+        expect.any(String) // The stack trace
+      );
     });
   });
 

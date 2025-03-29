@@ -14,7 +14,7 @@ import * as errors from './errors';
 import { log } from './logs/log';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { generateExtensionId, getExtensionPointPluginDependencies, isGrafanaDevMode } from './utils';
+import { generateExtensionId, getExtensionPointPluginDependencies, isGrafanaDevMode, readOnlyCopy } from './utils';
 import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 
 // Returns an array of component extensions for the given extension point
@@ -85,14 +85,13 @@ export function usePluginComponents<Props extends object = {}>({
   }, [extensionPointId, limitPerPlugin, pluginContext, registryState, isLoadingAppPlugins]);
 }
 
-// exported so it can be used in tests
 export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
   registryItem: AddedComponentRegistryItem<Props>,
   extensionPointId: string
 ): ComponentTypeWithExtensionMeta<Props> {
   const { component: Component, ...config } = registryItem;
   function ComponentWithMeta(props: Props) {
-    return <Component {...props} />;
+    return <Component {...readOnlyCopy(props)} />;
   }
 
   ComponentWithMeta.displayName = Component.displayName;

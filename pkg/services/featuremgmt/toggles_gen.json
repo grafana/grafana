@@ -1728,6 +1728,21 @@
     },
     {
       "metadata": {
+        "name": "extensionsReadOnlyProxy",
+        "resourceVersion": "1743273254521",
+        "creationTimestamp": "2025-03-29T18:34:14Z"
+      },
+      "spec": {
+        "description": "Use proxy-based read-only objects for plugin extensions instead of deep cloning",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "externalCorePlugins",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-09-22T08:50:13Z"
