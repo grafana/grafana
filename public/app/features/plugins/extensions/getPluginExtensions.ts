@@ -1,5 +1,5 @@
 import { isString } from 'lodash';
-import { BehaviorSubject, combineLatest, filter, map, Observable, from, of, merge, switchMap, shareReplay } from 'rxjs';
+import { combineLatest, filter, map, Observable, from, of, merge, switchMap, shareReplay } from 'rxjs';
 
 import {
   PluginExtensionTypes,
