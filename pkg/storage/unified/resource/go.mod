@@ -6,6 +6,7 @@ replace (
 	github.com/grafana/grafana => ../../../..
 	github.com/grafana/grafana/pkg/apimachinery => ../../../apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../../apiserver
+	github.com/grafana/grafana/pkg/infra/log => ../../../infra/log
 )
 
 require (
@@ -18,7 +19,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250314071911-14e2784e6979
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a // indirect
+	github.com/grafana/grafana/pkg/infra/log v0.0.0-20250326101500-d0dbd1d156a4
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
@@ -134,9 +135,10 @@ require (
 	github.com/grafana/alerting v0.0.0-20250325165008-58ba6c617ff0 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/grafana-app-sdk v0.35.1 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.35.0 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/sqlds/v4 v4.1.3 // indirect
@@ -212,7 +214,7 @@ require (
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/tjhop/slog-gokit v0.1.3 // indirect
+	github.com/tjhop/slog-gokit v0.1.4 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
