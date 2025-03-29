@@ -1,5 +1,5 @@
 # This has to correspond to the version the Drone runners have
-FROM mcr.microsoft.com/windows:1809
+FROM mcr.microsoft.com/windows:2009-KB4579311
 
 WORKDIR C:\\App
 
