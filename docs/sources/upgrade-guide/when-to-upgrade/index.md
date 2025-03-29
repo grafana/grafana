@@ -30,7 +30,7 @@ We split Grafana OSS and Grafana Enterprise releases into three main categories:
 - **Major release (once a year, in April/May)**: These are like a minor release, but accompanied by [GrafanaCON](https://grafana.com/events/grafanacon/) and a comprehensive upgrade guide for users who like to upgrade only once a year.
 - **Patching release (every month)**: These include bug fixes for currently supported versions, as well as any security vulnerability patches.
 
-You can choose your cadence: For frequent self-managed updates, you should follow the minor release (for example, upgrade 10.1 to 10.2), which also gives you access to the latest features. If you need a longer period to review our new releases, you should follow the major releases. Both strategies get patching releases with security fixes (high severity security fixes also result in ad-hoc patch releases). We’ll get into additional guidance on upgrade cadences later in this guide.
+You can choose your cadence: For frequent self-managed updates, you should follow the minor release (for example, upgrade 11.1 to 11.2), which also gives you access to the latest features. If you need a longer period to review our new releases, you should follow the major releases. Both strategies get patching releases with security fixes (high severity security fixes also result in ad-hoc patch releases). We’ll get into additional guidance on upgrade cadences later in this guide.
 
 ## How to find the specifics for a release
 
@@ -88,22 +88,19 @@ For self-managed Grafana (both Enterprise and OSS), the support for versions is 
 - Support for each minor release extends to nine months after the release date.
 - Support for the last minor release of a major version is extended an additional six months, for a total of 15 months of support after the release date.
 
-Here is an overview of projected version support through 2024:
+Here is an overview of projected version support through 2025:
 
-| **Version**               | **Release date** | **Support end of life (EOL)**          |
-| ------------------------- | ---------------- | -------------------------------------- |
-| 10.3                      | January 2024     | NO LONGER SUPPORTED as of October 2024 |
-| 10.4 (Last minor of 10.0) | March 2024       | June 2025 (extended support)           |
-| 11.0                      | May 2024         | February 2025                          |
-| 11.1                      | June 2024        | March 2025                             |
-| 11.2                      | August 2024      | May 2025                               |
-| 11.3                      | October 2024     | July 2025                              |
-| 11.4                      | December 2024    | September 2025                         |
-| 11.5                      | January 2025     | October 2025                           |
-
-{{< admonition type="note" >}}
-Grafana 9.5.x was the last supported minor for the 9.0 major release and is no longer supported as of July 2024.
-{{< /admonition >}}
+| **Version**             | **Release date** | **Support end of life (EOL)**           |
+| ----------------------- | ---------------- | --------------------------------------- |
+| 10.4 (Last minor of 10) | March 2024       | June 2025 (extended support)            |
+| 11.0                    | May 2024         | NO LONGER SUPPORTED as of February 2025 |
+| 11.1                    | June 2024        | NO LONGER SUPPORTED as of March 2025    |
+| 11.2                    | August 2024      | May 2025                                |
+| 11.3                    | October 2024     | July 2025                               |
+| 11.4                    | December 2024    | September 2025                          |
+| 11.5                    | January 2025     | October 2025                            |
+| 11.6 (Last minor of 11) | March 2025       | June 2026                               |
+| 12.0                    | May 2025         | January 2026                            |
 
 ## How are these versions supported?
 
@@ -127,11 +124,11 @@ A critical feature degradation usually meets one of the following criteria:
 
 Based on your needs, choose your ideal upgrade strategy. Here’s what that might look like in practice:
 
-| **Strategy/cadence**                      | **Advantages/disadvantages**                                                                                                                                                                                                                                                                                           | **Example upgrade procedure**                                                                                                                                                                                                                                               |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Minor / bi-monthly (11.1 to 11.2)**     | Our recommended strategy. It combines up-to-date, secure releases with access to latest features as soon as they're released. <ul><li>Small changelog to review</li><li>Highest compatibility with actively maintained plugins</li><li>Easy migration to [Grafana Cloud](https://grafana.com/products/cloud)</li></ul> | <ul><li>**June 2024**: You review the 11.1 changelog and deploy the release to testing</li><li>**July 2024**: You deploy 11.1 to production</li><li>**August 2024**: 11.2 is released</li></ul>                                                                             |
-| **Major / yearly (10.0 to 11.0)**         | Yearly upgrade path that still gives access to up-to-date features presented at GrafanaCON.<ul><li>Big changelog to review</li><li>High compatibility with plugins</li><li>Relatively easy migration to [Grafana Cloud](https://grafana.com/products/cloud)</li></ul>                                                  | <ul><li>**April 2024**: 11.0 is released, you start a big changelog review</li><li>**May 2024**: You deploy 11.0 to testing</li><li>**June 2024**: You deploy 11.0 to production</li><li>**April 2025**: 12.0 is released</li></ul>                                         |
-| **Previous major / yearly (9.5 to 10.4)** | Release with extended support timeline<ul><li>Limited compatibility with actively developed plugins</li><li>Big changelog to review</li><li>Migrations to Grafana Cloud might require professional support</li></ul>                                                                                                   | <ul><li>**April 2024**: 11.0 is released, marking the previous minor (10.4.x) with extended support, you start a big changelog review (9.5.x to 10.4.x)</li><li>**May 2024**: You deploy 10.4.x to testing</li><li>**June 2024**: You deploy 10.4.x to production</li></ul> |
+| **Strategy/cadence**                       | **Advantages/disadvantages**                                                                                                                                                                                                                                                                                           | **Example upgrade procedure**                                                                                                                                                                                                                                               |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Minor / bi-monthly (11.1 to 11.2)**      | Our recommended strategy. It combines up-to-date, secure releases with access to latest features as soon as they're released. <ul><li>Small changelog to review</li><li>Highest compatibility with actively maintained plugins</li><li>Easy migration to [Grafana Cloud](https://grafana.com/products/cloud)</li></ul> | <ul><li>**January 2025**: You review the 11.5 changelog and deploy the release to testing</li><li>**February 2025**: You deploy 11.5 to production</li><li>**March 2025**: 11.6 is released</li></ul>                                                                       |
+| **Major / yearly (10.0 to 11.0)**          | Yearly upgrade path that still gives access to up-to-date features presented at GrafanaCON.<ul><li>Big changelog to review</li><li>High compatibility with plugins</li><li>Relatively easy migration to [Grafana Cloud](https://grafana.com/products/cloud)</li></ul>                                                  | <ul><li>**May 2024**: 11.0 is released, you start a big changelog review</li><li>**June 2024**: You deploy 11.0 to testing</li><li>**July 2024**: You deploy 11.0 to production</li><li>**May 2025**: 12.0 is released</li></ul>                                            |
+| **Previous major / yearly (10.4 to 11.6)** | Release with extended support timeline<ul><li>Limited compatibility with actively developed plugins</li><li>Big changelog to review</li><li>Migrations to Grafana Cloud might require professional support</li></ul>                                                                                                   | <ul><li>**May 2025**: 12.0 is released, marking the previous minor (11.6.x) with extended support, you start a big changelog review (10.4.x to 11.6.x)</li><li>**June 2025**: You deploy 11.6.x to testing</li><li>**July 2025**: You deploy 11.6.x to production</li></ul> |
 
 Follow the “minor” strategy for the most flexibility, as you can also occasionally lengthen the cadence to a full quarter and still rely on your currently deployed minor release being supported with security fixes.
 
