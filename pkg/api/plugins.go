@@ -602,3 +602,15 @@ func mdFilepath(mdFilename string) (string, error) {
 		return "", ErrUnexpectedFileExtension
 	}
 }
+
+// OnCallPluginScopeResolver provides an ScopeAttributeResolver able to
+// resolve the grafana-irm-app plugin scope to both the oncall and irm scopes.
+func OnCallPluginScopeResolver() (string, ac.ScopeAttributeResolver) {
+	prefix := "plugins:id:"
+	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
+		if initialScope == "plugins:id:grafana-irm-app" {
+			return []string{initialScope, "plugins:id:grafana-oncall-app"}, nil
+		}
+		return []string{initialScope}, nil
+	})
+}
