@@ -6,7 +6,7 @@ export class App extends React.PureComponent<AppRootProps> {
   render() {
     return (
       <div data-testid={testIds.appA.container} className="page-container">
-        Hello Grafana!
+        Hello Grafana!!!!!
       </div>
     );
   }
