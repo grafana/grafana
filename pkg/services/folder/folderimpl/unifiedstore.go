@@ -452,6 +452,19 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 	return *res, err
 }
 
+func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	resp, err := ss.k8sclient.GetStats(ctx, orgID)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(resp.Stats) != 1 {
+		return 0, fmt.Errorf("expected 1 stat, got %d", len(resp.Stats))
+	}
+
+	return resp.Stats[0].Count, nil
+}
+
 func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {
 	ds, err := v0alpha1.UnstructuredToDescendantCounts(u)
 	if err != nil {

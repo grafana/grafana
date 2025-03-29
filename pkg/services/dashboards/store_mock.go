@@ -95,8 +95,8 @@ func (_m *FakeDashboardStore) CountDashboardsInFolders(ctx context.Context, requ
 }
 
 // CountInOrg provides a mock function with given fields: ctx, orgID
-func (_m *FakeDashboardStore) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
-	ret := _m.Called(ctx, orgID)
+func (_m *FakeDashboardStore) CountInOrg(ctx context.Context, orgID int64, isFolder bool) (int64, error) {
+	ret := _m.Called(ctx, orgID, isFolder)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Count")
@@ -104,19 +104,19 @@ func (_m *FakeDashboardStore) CountInOrg(ctx context.Context, orgID int64) (int6
 
 	var r0 int64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) (int64, error)); ok {
-		return rf(ctx, orgID)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, bool) (int64, error)); ok {
+		return rf(ctx, orgID, isFolder)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64) int64); ok {
-		r0 = rf(ctx, orgID)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, bool) int64); ok {
+		r0 = rf(ctx, orgID, isFolder)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(int64)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
-		r1 = rf(ctx, orgID)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, bool) error); ok {
+		r1 = rf(ctx, orgID, isFolder)
 	} else {
 		r1 = ret.Error(1)
 	}

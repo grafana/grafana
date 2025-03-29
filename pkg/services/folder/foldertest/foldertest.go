@@ -94,3 +94,7 @@ func (s *FakeService) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQ
 	s.LastQuery = q
 	return s.ExpectedFolders, s.ExpectedError
 }
+
+func (s *FakeService) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {
+	return int64(len(s.ExpectedFolders)), s.ExpectedError
+}
