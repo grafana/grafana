@@ -1,6 +1,6 @@
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 export function cardChrome(theme: GrafanaTheme2): string {
   return `
@@ -42,16 +42,13 @@ export function mediaUp(breakpoint: string) {
 const isGrafanaTheme2 = (theme: GrafanaTheme | GrafanaTheme2): theme is GrafanaTheme2 => theme.hasOwnProperty('v1');
 export const focusCss = (theme: GrafanaTheme | GrafanaTheme2) => {
   const isTheme2 = isGrafanaTheme2(theme);
-  const firstColor = isTheme2 ? theme.colors.background.canvas : theme.colors.bodyBg;
   const secondColor = isTheme2 ? theme.colors.primary.main : theme.colors.formFocusOutline;
 
   return `
-  outline: 2px dotted transparent;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 2px ${firstColor}, 0 0 0px 4px ${secondColor};
-  transition-property: outline, outline-offset, box-shadow;
-  transition-duration: 0.2s;
-  transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1);`;
+  outline: 2px dotted ${secondColor};
+  outline-offset: 0px;
+  box-shadow: none;
+  `;
 };
 
 export function getMouseFocusStyles(theme: GrafanaTheme | GrafanaTheme2) {
@@ -61,14 +58,22 @@ export function getMouseFocusStyles(theme: GrafanaTheme | GrafanaTheme2) {
   };
 }
 
-export function getFocusStyles(theme: GrafanaTheme2) {
+export function getFocusStyles(theme: GrafanaTheme2, backgroundColor?: string) {
+  let contrast = 1;
+  let focusColor = theme.colors.primary.main;
+
+  if (backgroundColor && backgroundColor !== 'transparent') {
+    contrast = colorManipulator.getContrastRatio(backgroundColor, focusColor);
+
+    if (contrast < 2) {
+      focusColor = theme.colors.text.maxContrast;
+    }
+  }
+
   return {
-    outline: '2px dotted transparent',
-    outlineOffset: '2px',
-    boxShadow: `0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.primary.main}`,
-    transitionTimingFunction: `cubic-bezier(0.19, 1, 0.22, 1)`,
-    transitionDuration: '0.2s',
-    transitionProperty: 'outline, outline-offset, box-shadow',
+    outline: `2px solid ${focusColor}`,
+    outlineOffset: '0px',
+    boxShadow: `none`,
   };
 }
 
