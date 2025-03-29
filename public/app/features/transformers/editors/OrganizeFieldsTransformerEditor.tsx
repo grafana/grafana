@@ -58,7 +58,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
   ).map((label, i) => ({ labelName: label, order: Order.Off, index: (options.autoSortOptions?.length ?? 0) + i }));
 
   const allAutoSortOptions = useMemo(
-    (): AutoSortOptions => [...(options.autoSortOptions ?? []), ...unSortedLabels],
+    (): AutoSortOptions => [...(options.autoSortOptions ?? []), ...unSortedLabels].sort((a, b) => a.index - b.index),
     [options.autoSortOptions, unSortedLabels]
   );
 
@@ -159,17 +159,24 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
         return;
       }
 
-      const allOptions = [...allAutoSortOptions];
-      const changedIdx = allOptions.findIndex(
-        (label) =>
-          (result.draggableId === FIELD_NAME && label.labelName === undefined) || label.labelName === result.draggableId
-      );
+      let delta = startIndex - endIndex;
+      const isForward = delta < 0;
+      delta = Math.abs(delta);
 
-      allOptions[changedIdx].index = endIndex;
+      const allOptions = [...allAutoSortOptions];
+      const changedSort = allOptions.splice(startIndex, 1)[0];
+      changedSort.index = endIndex;
+
+      for (let i = 0; i < delta; i++) {
+        const changeIndex = allOptions.findIndex((opt) => opt.index === (isForward ? startIndex + 1 : endIndex) + i);
+        allOptions[changeIndex].index = allOptions[changeIndex].index + (isForward ? -1 : 1);
+      }
+
+      allOptions.push(changedSort);
 
       onChange({
         ...options,
-        autoSortOptions: allOptions,
+        autoSortOptions: allOptions.sort((a, b) => a.index - b.index),
       });
     },
     [allAutoSortOptions, onChange, options]

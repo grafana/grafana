@@ -46,25 +46,19 @@ export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerO
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
-        if (options.fieldOrder === FieldOrdering.Manual) {
-          const orderer = createFieldsOrdererManual(options.indexByName!);
-
-          if (!Array.isArray(data) || data.length === 0) {
-            return data;
-          }
-
-          return data.map((frame) => ({
-            ...frame,
-            fields: orderer(frame.fields, data, frame),
-          }));
-        } else {
-          const orderer = createFieldsOrdererAuto(options.autoSortOptions);
-
-          return data.map((frame) => ({
-            ...frame,
-            fields: orderer(frame.fields),
-          }));
+        if (!Array.isArray(data) || data.length === 0) {
+          return data;
         }
+
+        const orderer =
+          options.fieldOrder === FieldOrdering.Manual
+            ? createFieldsOrdererManual(options.indexByName!)
+            : createFieldsOrdererAuto(options.autoSortOptions);
+
+        return data.map((frame) => ({
+          ...frame,
+          fields: orderer(frame.fields, data, frame),
+        }));
       })
     ),
 };
@@ -131,7 +125,6 @@ const createFieldsOrdererAuto = (autoSortOptions?: AutoSortOption[]) => (fields:
         compareReturn = 1;
         break;
       } else {
-        // field name sort
         compareReturn =
           allSort[i].order === Order.Asc ? (compareValA < compareValB ? -1 : 1) : compareValA > compareValB ? -1 : 1;
         break;
