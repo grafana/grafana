@@ -1,23 +1,20 @@
+import { css } from '@emotion/css';
 import { ReactNode, useState } from 'react';
 
 import { rangeUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingTimeIntervalKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { Field, Input, Stack } from '@grafana/ui';
+import { InlineField, Input, Stack, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
+import { DeleteConditionButton } from './DeleteConditionButton';
 import { handleDeleteNonGroupCondition } from './shared';
 
 export type IntervalConditionValue = string;
 type ConditionalRenderingIntervalState = ConditionalRenderingBaseState<IntervalConditionValue>;
 
 export class ConditionalRenderingInterval extends ConditionalRenderingBase<ConditionalRenderingIntervalState> {
-  public get title(): string {
-    return t('dashboard.conditional-rendering.interval.label', 'Time range interval');
-  }
-
   public constructor(state: ConditionalRenderingIntervalState) {
     super(state);
 
@@ -67,16 +64,20 @@ export class ConditionalRenderingInterval extends ConditionalRenderingBase<Condi
 }
 
 function ConditionalRenderingIntervalRenderer({ model }: SceneComponentProps<ConditionalRenderingInterval>) {
+  const styles = useStyles2(getStyles);
   const { value } = model.useState();
   const [isValid, setIsValid] = useState(validateIntervalRegex.test(value));
 
   return (
-    <Stack direction="column">
-      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
-      <Field
+    <Stack direction="row" justifyContent="space-between" alignItems="center">
+      <InlineField
+        shrink
+        grow
+        transparent
+        className={styles.label}
         invalid={!isValid}
         error={t('dashboard.conditional-rendering.interval.invalid-message', 'Invalid interval')}
-        label={t('dashboard.conditional-rendering.interval.input-label', 'Value')}
+        label={t('dashboard.conditional-rendering.interval.input-label', 'Time range interval')}
       >
         <Input
           value={value}
@@ -85,9 +86,20 @@ function ConditionalRenderingIntervalRenderer({ model }: SceneComponentProps<Con
             model.setStateAndNotify({ value: e.currentTarget.value });
           }}
         />
-      </Field>
+      </InlineField>
+      <DeleteConditionButton model={model} />
     </Stack>
   );
 }
 
-export const validateIntervalRegex = /^(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])?$/;
+const validateIntervalRegex = /^(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])?$/;
+
+const getStyles = () => ({
+  label: css({
+    margin: 0,
+
+    '& > label': css({
+      paddingLeft: 0,
+    }),
+  }),
+});
