@@ -368,7 +368,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	page := getQueryPageParams(c.QueryInt("resultPage"), cloudmigration.ResultPage(1))
 	lim := getQueryPageParams(c.QueryInt("resultLimit"), cloudmigration.ResultLimit(100))
 	col := getQueryCol(c.Query("resultSortColumn"), cloudmigration.SortColumnID)
-	dir := getQueryOrder(c.Query("resultSortOrder"), cloudmigration.SortOrderAsc)
+	order := getQueryOrder(c.Query("resultSortOrder"), cloudmigration.SortOrderAsc)
 	errorsOnly := c.QueryBool("errorsOnly")
 
 	q := cloudmigration.GetSnapshotsQuery{
@@ -379,7 +379,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 			ResultPage:  page,
 			ResultLimit: lim,
 			SortColumn:  col,
-			SortOrder:   dir,
+			SortOrder:   order,
 			ErrorsOnly:  errorsOnly,
 		},
 	}
