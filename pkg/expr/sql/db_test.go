@@ -4,6 +4,7 @@ package sql
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -203,6 +204,80 @@ func TestErrorsFromGoMySQLServerAreFlagged(t *testing.T) {
 	_, err := db.QueryFrames(context.Background(), "sqlExpressionRefId", query, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "error in go-mysql-server")
+}
+
+func TestFrameToSQLAndBack_JSONRoundtrip(t *testing.T) {
+	expectedFrame := &data.Frame{
+		RefID: "json_test",
+		Name:  "json_test",
+		Fields: []*data.Field{
+			data.NewField("id", nil, []*int64{p(int64(1)), p(int64(2))}),
+			data.NewField("payload", nil, []*json.RawMessage{
+				p(json.RawMessage(`{"foo":1}`)),
+				p(json.RawMessage(`{"bar":"baz"}`)),
+			}),
+		},
+	}
+
+	sqlDB := &DB{}
+
+	query := `SELECT * FROM json_test`
+
+	resultFrame, err := sqlDB.QueryFrames(context.Background(), "json_test", query, data.Frames{expectedFrame})
+	require.NoError(t, err)
+
+	// Ensure consistent names for comparison
+	resultFrame.Name = expectedFrame.Name
+	resultFrame.RefID = expectedFrame.RefID
+
+	if diff := cmp.Diff(expectedFrame, resultFrame, data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "Frame mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestQueryFrames_JSONFilter(t *testing.T) {
+	input := &data.Frame{
+		RefID: "A",
+		Name:  "A",
+		Fields: []*data.Field{
+			data.NewField("title", nil, []*string{
+				p("Bug report"),
+				p("Feature request"),
+			}),
+			data.NewField("labels", nil, []*json.RawMessage{
+				p(json.RawMessage(`["type/bug", "priority/high"]`)),
+				p(json.RawMessage(`["type/feature", "priority/low"]`)),
+			}),
+		},
+	}
+
+	expected := &data.Frame{
+		RefID: "B",
+		Name:  "B",
+		Fields: []*data.Field{
+			data.NewField("title", nil, []*string{
+				p("Bug report"),
+			}),
+			data.NewField("labels", nil, []*json.RawMessage{
+				p(json.RawMessage(`["type/bug", "priority/high"]`)),
+			}),
+		},
+	}
+
+	sqlDB := &DB{}
+
+	query := `SELECT title, labels FROM A WHERE json_contains(labels, '"type/bug"')`
+
+	result, err := sqlDB.QueryFrames(context.Background(), "B", query, data.Frames{input})
+	require.NoError(t, err)
+
+	// Ensure frame names match for comparison
+	result.Name = expected.Name
+	result.RefID = expected.RefID
+
+	if diff := cmp.Diff(expected, result, data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "Result mismatch (-want +got):\n%s", diff)
+	}
 }
 
 // p is a utility for pointers from constants

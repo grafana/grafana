@@ -3,6 +3,7 @@
 package sql
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -90,7 +91,18 @@ func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
 		if field.NilAt(ri.row) {
 			continue
 		}
-		row[colIndex], _ = field.ConcreteAt(ri.row)
+		val, _ := field.ConcreteAt(ri.row)
+
+		// If the field is JSON, convert json.RawMessage to types.JSONDocument
+		if raw, ok := val.(json.RawMessage); ok {
+			doc, _, err := types.JSON.Convert(raw)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert json.RawMessage to JSONDocument: %w", err)
+			}
+			val = doc
+		}
+
+		row[colIndex] = val
 	}
 
 	ri.row++
@@ -156,6 +168,8 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 		return types.Boolean
 	case data.FieldTypeTime, data.FieldTypeNullableTime:
 		return types.Timestamp
+	case data.FieldTypeJSON, data.FieldTypeNullableJSON:
+		return types.JSON
 	default:
 		fmt.Printf("------- Unsupported field type: %v", fieldType)
 		return types.JSON
