@@ -64,8 +64,9 @@ func schema_pkg_apis_investigations_v0alpha1_Investigation(ref common.ReferenceC
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationSpec"),
+							Description: "Spec is the spec of the Investigation",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationSpec"),
 						},
 					},
 					"status": {
@@ -126,11 +127,6 @@ func schema_pkg_apis_investigations_v0alpha1_InvestigationCollectable(ref common
 						},
 					},
 					"queries": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -240,8 +236,9 @@ func schema_pkg_apis_investigations_v0alpha1_InvestigationIndex(ref common.Refer
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationIndexSpec"),
+							Description: "Spec is the spec of the InvestigationIndex",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationIndexSpec"),
 						},
 					},
 					"status": {
