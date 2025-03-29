@@ -1,4 +1,4 @@
-import { isString, get } from 'lodash';
+import { isString, get, isNumber, isBoolean } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import {
@@ -48,7 +48,7 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
 
   const ext = fieldExtractors.getIfExists(options.format ?? FieldExtractorID.Auto);
   if (!ext) {
-    throw new Error('unkonwn extractor');
+    throw new Error('unknown extractor');
   }
 
   const count = frame.length;
@@ -79,7 +79,7 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
       if (filteredPaths.length > 0) {
         filteredPaths.forEach((path: JSONPath) => {
           const key = path.alias && path.alias.length > 0 ? path.alias : path.path;
-          newObj[key] = get(obj, path.path) ?? 'Not Found';
+          newObj[key] = get(obj, path.path) ?? (isNumber(obj) || isBoolean(obj) ? obj : 'Not Found');
         });
 
         obj = newObj;
