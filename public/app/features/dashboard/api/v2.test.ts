@@ -5,6 +5,8 @@ import {
   AnnoKeyFolderId,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
+  AnnoKeyMessage,
+  AnnoKeySavedFromUI,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 
@@ -55,6 +57,10 @@ jest.mock('@grafana/runtime', () => ({
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
+    buildInfo: {
+      ...jest.requireActual('@grafana/runtime').config.buildInfo,
+      versionString: '10.0.0',
+    },
   },
 }));
 
@@ -135,6 +141,7 @@ describe('v2 dashboard API', () => {
 
         annotations: {
           [AnnoKeyFolder]: 'new-folder',
+          [AnnoKeyMessage]: 'test save',
         },
       },
     };
@@ -202,6 +209,7 @@ describe('v2 dashboard API', () => {
             name: 'existing-dash',
             annotations: {
               [AnnoKeyFolder]: 'folderUidXyz',
+              [AnnoKeySavedFromUI]: '10.0.0',
             },
           },
           spec: {
