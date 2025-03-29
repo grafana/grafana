@@ -23,14 +23,14 @@ type DashboardService interface {
 	// To fetch a dashboard under root by title should set the folder UID to point to an empty string
 	// eg. util.Pointer("")
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
-	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
+	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error) // use sparely only if you truly need dashboard.Data
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error)
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
-	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error)
+	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*DashboardRef, error)
 	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
@@ -91,7 +91,7 @@ type Store interface {
 	ValidateDashboardBeforeSave(ctx context.Context, dashboard *Dashboard, overwrite bool) (bool, error)
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
-	CountInOrg(ctx context.Context, orgID int64) (int64, error)
+	CountInOrg(ctx context.Context, orgID int64, isFolder bool) (int64, error)
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
 	CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)

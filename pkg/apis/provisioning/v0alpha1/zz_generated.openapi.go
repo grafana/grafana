@@ -724,7 +724,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"action": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"migrate\"` Migration task -- this will migrate an full instance from SQL > Git\n - `\"pr\"` Process a pull request -- apply comments with preview images, links etc\n - `\"pull\"` Sync the remote branch with the grafana instance\n - `\"push\"` Export from grafana into the remote repository",
+							Description: "Possible enum values:\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
