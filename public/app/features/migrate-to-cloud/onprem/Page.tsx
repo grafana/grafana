@@ -74,7 +74,7 @@ const SORT_COLUMN_TO_API_COLUMN: Record<string, string> = {
   status: 'status',
 };
 
-function useGetLatestSnapshot(sessionUid?: string, page = 1, sortParams?: SortParams) {
+function useGetLatestSnapshot(sessionUid?: string, page = 1, sortParams?: SortParams, showErrors = false) {
   const [shouldPoll, setShouldPoll] = useState(false);
 
   const listResult = useGetShapshotListQuery(
@@ -91,6 +91,7 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1, sortParams?: SortPa
           resultPage: page,
           resultSortColumn: sortParams?.column ? SORT_COLUMN_TO_API_COLUMN[sortParams.column] : undefined,
           resultSortOrder: sortParams?.direction,
+          errorsOnly: showErrors,
         }
       : skipToken;
 
@@ -136,7 +137,8 @@ export const Page = () => {
   const session = useGetLatestSession();
   const [page, setPage] = useState(1);
   const [sortParams, setSortParams] = useState({} as SortParams);
-  const snapshot = useGetLatestSnapshot(session.data?.uid, page, sortParams);
+  const [showErrors, setShowErrors] = useState(false);
+  const snapshot = useGetLatestSnapshot(session.data?.uid, page, sortParams, showErrors);
   const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
@@ -229,6 +231,8 @@ export const Page = () => {
             uploadSnapshotIsLoading={uploadSnapshotResult.isLoading || SNAPSHOT_UPLOADING_STATUSES.includes(status)}
             onUploadSnapshot={handleUploadSnapshot}
             showRebuildSnapshot={showRebuildSnapshot}
+            onShowErrors={() => setShowErrors(!showErrors)}
+            isShowingErrors={showErrors}
           />
         )}
 
@@ -264,7 +268,10 @@ export const Page = () => {
               resources={snapshot.data.results}
               localPlugins={localPlugins}
               onChangePage={setPage}
-              numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
+              numberOfPages={Math.ceil(
+                (showErrors ? snapshot?.data?.stats?.statuses?.['ERROR'] || 0 : snapshot?.data?.stats?.total || 0) /
+                  PAGE_SIZE
+              )}
               page={page}
               onChangeSort={(a) =>
                 setSortParams({
