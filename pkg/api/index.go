@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/open-feature/go-sdk/openfeature"
 	"net/http"
 	"strings"
 
@@ -251,7 +253,10 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 	if pref.IsValidThemeID(themePrefId) {
 		theme := pref.GetThemeByID(themePrefId)
 		// TODO refactor
-		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagExtraThemes) || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
+		ctx := context.Background()
+		if !theme.IsExtra ||
+			hs.openFeature.Client.Boolean(ctx, featuremgmt.FlagExtraThemes, false, openfeature.TransactionContext(ctx)) ||
+			hs.openFeature.Client.Boolean(ctx, featuremgmt.FlagGrafanaconThemes, false, openfeature.TransactionContext(ctx)) {
 			return theme
 		}
 	}
