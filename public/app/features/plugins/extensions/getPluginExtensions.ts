@@ -1,5 +1,5 @@
 import { isString } from 'lodash';
-import { filter, map, Observable } from 'rxjs';
+import { BehaviorSubject, combineLatest, filter, map, Observable, from, of, merge, switchMap, shareReplay } from 'rxjs';
 
 import {
   PluginExtensionTypes,
@@ -37,50 +37,25 @@ import {
 export const getObservablePluginExtensions = (
   options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
 ): Observable<ReturnType<GetExtensions>> => {
-  return new Observable((subscriber) => {
-    let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]> | undefined;
-    let addedLinksRegistry: RegistryType<Array<AddedLinkRegistryItem<object>>> | undefined;
-
-    const emitExtensions = () => {
-      subscriber.next(
-        getPluginExtensions({
-          ...options,
-          addedComponentsRegistry,
-          addedLinksRegistry,
-        })
-      );
-    };
-
-    // Reading the initial state of the registries
-    Promise.all([
-      pluginExtensionRegistries.addedComponentsRegistry.getState(),
-      pluginExtensionRegistries.addedLinksRegistry.getState(),
-    ]).then(([currentAddedComponentsRegistry, currentAddedLinksRegistry]) => {
-      addedComponentsRegistry = currentAddedComponentsRegistry;
-      addedLinksRegistry = currentAddedLinksRegistry;
-      emitExtensions();
-    });
-
-    const addedComponentsSub = pluginExtensionRegistries.addedComponentsRegistry
-      .asObservable()
-      .subscribe((currentAddedComponentsRegistry) => {
-        addedComponentsRegistry = currentAddedComponentsRegistry;
-        emitExtensions();
-      });
-
-    const addedLinksSub = pluginExtensionRegistries.addedLinksRegistry
-      .asObservable()
-      .subscribe((currentAddedLinksRegistry) => {
-        addedLinksRegistry = currentAddedLinksRegistry;
-        emitExtensions();
-      });
-
-    // Cleanup subscriptions
-    return () => {
-      addedComponentsSub?.unsubscribe();
-      addedLinksSub?.unsubscribe();
-    };
-  });
+  return combineLatest([
+    from(pluginExtensionRegistries.addedComponentsRegistry.getState()),
+    from(pluginExtensionRegistries.addedLinksRegistry.getState()),
+  ]).pipe(
+    switchMap(([initialComponents, initialLinks]) =>
+      combineLatest([
+        merge(of(initialComponents), pluginExtensionRegistries.addedComponentsRegistry.asObservable()),
+        merge(of(initialLinks), pluginExtensionRegistries.addedLinksRegistry.asObservable()),
+      ])
+    ),
+    map(([components, links]) =>
+      getPluginExtensions({
+        ...options,
+        addedComponentsRegistry: components,
+        addedLinksRegistry: links,
+      })
+    ),
+    shareReplay(1)
+  );
 };
 
 export const getObservablePluginLinks: GetObservablePluginLinks = (options) => {

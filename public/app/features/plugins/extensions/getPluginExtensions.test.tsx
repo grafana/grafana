@@ -623,37 +623,41 @@ describe('getObservablePluginExtensions()', () => {
     });
   });
 
-  it('should emit the new state when the registries change', () => {
+  it('should emit the new state when the registries change', (done) => {
     const observable = getObservablePluginExtensions({ extensionPointId });
     const subscriber = jest.fn();
 
     observable.subscribe(subscriber);
 
     // Initial state
-    expect(subscriber).toHaveBeenCalledTimes(2);
-    expect(subscriber.mock.calls[1][0].extensions).toHaveLength(2);
-    expect(subscriber.mock.calls[1][0].extensions[0].pluginId).toBe(pluginId);
-    expect(subscriber.mock.calls[1][0].extensions[1].pluginId).toBe(pluginId);
+    setTimeout(() => {
+      expect(subscriber).toHaveBeenCalledTimes(2);
+      expect(subscriber.mock.calls[1][0].extensions).toHaveLength(2);
+      expect(subscriber.mock.calls[1][0].extensions[0].pluginId).toBe(pluginId);
+      expect(subscriber.mock.calls[1][0].extensions[1].pluginId).toBe(pluginId);
 
-    // Register new link extension
-    pluginExtensionRegistries.addedLinksRegistry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Link 2',
-          description: 'Link 2 description',
-          path: `/a/${pluginId}/declare-incident`,
-          targets: extensionPointId,
-          configure: jest.fn().mockReturnValue({}),
-        },
-      ],
-    });
+      // Register new link extension
+      pluginExtensionRegistries.addedLinksRegistry.register({
+        pluginId,
+        configs: [
+          {
+            title: 'Link 2',
+            description: 'Link 2 description',
+            path: `/a/${pluginId}/declare-incident`,
+            targets: extensionPointId,
+            configure: jest.fn().mockReturnValue({}),
+          },
+        ],
+      });
 
-    expect(subscriber).toHaveBeenCalledTimes(3);
-    expect(subscriber.mock.calls[2][0].extensions).toHaveLength(3);
-    expect(subscriber.mock.calls[2][0].extensions[0].pluginId).toBe(pluginId);
-    expect(subscriber.mock.calls[2][0].extensions[1].pluginId).toBe(pluginId);
-    expect(subscriber.mock.calls[2][0].extensions[2].pluginId).toBe(pluginId);
+      expect(subscriber).toHaveBeenCalledTimes(3);
+      expect(subscriber.mock.calls[2][0].extensions).toHaveLength(3);
+      expect(subscriber.mock.calls[2][0].extensions[0].pluginId).toBe(pluginId);
+      expect(subscriber.mock.calls[2][0].extensions[1].pluginId).toBe(pluginId);
+      expect(subscriber.mock.calls[2][0].extensions[2].pluginId).toBe(pluginId);
+
+      done();
+    }, 0);
   });
 });
 
