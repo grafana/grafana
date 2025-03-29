@@ -281,24 +281,6 @@ type CreateSnapshotResponseDTO struct {
 	SnapshotUID string `json:"uid"`
 }
 
-// swagger:enum ResultSortColumn
-type ResultSortColumn string
-
-const (
-	ResultSortColumnDefault ResultSortColumn = "default"
-	ResultSortColumnName    ResultSortColumn = "name"
-	ResultSortColumnType    ResultSortColumn = "type"
-	ResultSortColumnStatus  ResultSortColumn = "status"
-)
-
-// swagger:enum ResultSortDirection
-type ResultSortDirection string
-
-const (
-	ResultSortDirectionAsc  ResultSortColumn = "ASC"
-	ResultSortDirectionDesc ResultSortColumn = "DESC"
-)
-
 // swagger:parameters getSnapshot
 type GetSnapshotParams struct {
 	// ResultPage is used for pagination with ResultLimit
