@@ -61,7 +61,10 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 
 	var groups = []schema.GroupVersion{{
 		Group:   "dashboard.grafana.app",
-		Version: "v0alpha1",
+		Version: "v1alpha1", // pretty much anything in spec
+	}, {
+		Group:   "dashboard.grafana.app",
+		Version: "v2alpha1", // strict spec
 	}, {
 		Group:   "folder.grafana.app",
 		Version: "v0alpha1",
