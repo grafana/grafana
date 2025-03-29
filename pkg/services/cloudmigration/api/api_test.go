@@ -664,7 +664,7 @@ func TestGetQueryCol(t *testing.T) {
 		},
 		{
 			name:       "returns type column",
-			col:        "type",
+			col:        "resource_type",
 			defaultCol: cloudmigration.SortColumnID,
 			expected:   cloudmigration.SortColumnType,
 		},
