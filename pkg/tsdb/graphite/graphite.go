@@ -315,7 +315,8 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origR
 
 		frames = append(frames, data.NewFrame(refId,
 			data.NewField("time", nil, timeVector),
-			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: target})))
+			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: target})).SetMeta(
+			&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}))
 
 		if setting.Env == setting.Dev {
 			logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
