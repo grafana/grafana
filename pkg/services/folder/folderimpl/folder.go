@@ -204,16 +204,7 @@ func (s *Service) DBMigration(db db.DB) {
 
 func (s *Service) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		resp, err := s.k8sclient.GetStats(ctx, orgID)
-		if err != nil {
-			return 0, err
-		}
-
-		if len(resp.Stats) != 1 {
-			return 0, fmt.Errorf("expected 1 stat, got %d", len(resp.Stats))
-		}
-
-		return resp.Stats[0].Count, nil
+		return s.unifiedStore.CountInOrg(ctx, orgID)
 	}
 
 	return s.store.CountInOrg(ctx, orgID)
