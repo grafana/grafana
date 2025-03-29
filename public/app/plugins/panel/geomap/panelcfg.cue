@@ -34,17 +34,18 @@ composableKinds: PanelCfg: {
 				} @cuetsy(kind="interface")
 
 				MapViewConfig: {
-					id:         string | *"zero"
-					lat?:       int64 | *0
-					lon?:       int64 | *0
-					zoom?:      int64 | *1
-					minZoom?:   int64
-					maxZoom?:   int64
-					padding?:   int64
-					allLayers?: bool | *true
-					lastOnly?:  bool
-					layer?:     string
-					shared?:    bool
+					id:                 string | *"zero"
+					lat?:               int64 | *0
+					lon?:               int64 | *0
+					zoom?:              int64 | *1
+					minZoom?:           int64
+					maxZoom?:           int64
+					padding?:           int64
+					allLayers?:         bool | *true
+					lastOnly?:          bool
+					layer?:             string
+					shared?:            bool
+					dashboardVariable?: bool
 				} @cuetsy(kind="interface")
 
 				ControlsOptions: {
