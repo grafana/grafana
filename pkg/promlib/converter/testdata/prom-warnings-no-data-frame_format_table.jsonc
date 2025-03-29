@@ -1,0 +1,84 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "table",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "vector"
+//      },
+//      "notices": [
+//          {
+//              "severity": "warning",
+//              "text": "warning 1"
+//          },
+//          {
+//              "severity": "warning",
+//              "text": "warning 2"
+//          }
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 0 Rows
+//  +-------------------+-----------------+
+//  | Name: Time        | Name: Value     |
+//  | Labels:           | Labels:         |
+//  | Type: []time.Time | Type: []float64 |
+//  +-------------------+-----------------+
+//  +-------------------+-----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "table",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "resultType": "vector"
+          },
+          "notices": [
+            {
+              "severity": "warning",
+              "text": "warning 1"
+            },
+            {
+              "severity": "warning",
+              "text": "warning 2"
+            }
+          ]
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [],
+          []
+        ]
+      }
+    }
+  ]
+}
