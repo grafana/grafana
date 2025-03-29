@@ -1800,6 +1800,13 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:        "azureMonitorLogsBuilderEditor",
+			Description: "Enables the logs builder mode for the Azure Monitor data source",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:              "unifiedStorageGrpcConnectionPool",
 			Description:       "Enables the unified storage grpc connection pool",
 			Stage:             FeatureStageExperimental,
