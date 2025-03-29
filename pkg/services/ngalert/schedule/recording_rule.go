@@ -161,6 +161,11 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	evalTotalFailures := r.metrics.EvalFailures.WithLabelValues(orgID)
 	evalStart := r.clock.Now()
 
+	if ev.rule.IsPaused {
+		logger.Debug("Skip recording rule evaluation because it is paused")
+		return
+	}
+
 	defer func() {
 		evalTotal.Inc()
 		end := r.clock.Now()
@@ -171,11 +176,6 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 
 		r.evaluationDoneTestHook(ev)
 	}()
-
-	if ev.rule.IsPaused {
-		logger.Debug("Skip recording rule evaluation because it is paused")
-		return
-	}
 
 	ctx, span := r.tracer.Start(ctx, "recording rule execution", trace.WithAttributes(
 		attribute.String("rule_uid", ev.rule.UID),
