@@ -699,7 +699,7 @@ describe('getObservablePluginLinks()', () => {
   it('should only emit the links', () => {
     const observable = getObservablePluginLinks({ extensionPointId });
 
-    observable.subscribe((links: PluginExtensionLink[]) => {
+    observable.subscribe((links) => {
       expect(links).toHaveLength(1);
       expect(links[0].pluginId).toBe(pluginId);
       expect(links[0].type).toBe(PluginExtensionTypes.link);
@@ -745,7 +745,7 @@ describe('getObservablePluginComponents()', () => {
   it('should only emit the components', () => {
     const observable = getObservablePluginComponents({ extensionPointId });
 
-    observable.subscribe((components: PluginExtensionComponent[]) => {
+    observable.subscribe((components) => {
       expect(components).toHaveLength(1);
       expect(components[0].pluginId).toBe(pluginId);
       expect(components[0].type).toBe(PluginExtensionTypes.component);
