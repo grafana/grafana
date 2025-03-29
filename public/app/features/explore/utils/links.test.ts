@@ -701,13 +701,13 @@ describe('explore links utils', () => {
       expect(allVariablesDefinedInQuery('test')).toBe(true);
     });
 
-    it('returns deduplicated list of variables', () => {
+    it('returns list of unique variables', () => {
       const dataLink = makeDataLinkWithQuery('test ${test} ${foo} ${test:raw} $test');
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const variables = getVariableUsageInfo(dataLink, scopedVars).variables;
-      expect(variables).toHaveLength(2);
+      const uniqVariables = getVariableUsageInfo(dataLink, scopedVars).uniqVariables;
+      expect(uniqVariables).toHaveLength(2);
     });
   });
 });

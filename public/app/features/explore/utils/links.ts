@@ -52,6 +52,8 @@ const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilte
  */
 export interface ExploreFieldLinkModel extends LinkModel<Field> {
   variables: VariableInterpolation[];
+  // Resource attributes used in the link
+  resourceAttributes?: string[];
 }
 
 const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
@@ -89,6 +91,23 @@ export const exploreDataLinkPostProcessorFactory = (
     return links.length ? first(links) : undefined;
   };
   return exploreDataLinkPostProcessor;
+};
+
+// TODO: Doc
+const getResourceAttributes = (variables: VariableInterpolation[]) => {
+  const pattern = /^tags\["([^"]+)"\]$/;
+
+  return variables.reduce((acc: string[], variable) => {
+    if (variable.variableName === '__span' && variable.fieldPath && pattern.test(variable.fieldPath)) {
+      // Extract the attribute name
+      const match = pattern.exec(variable.fieldPath);
+      if (match && match[1]) {
+        acc.push(match[1]);
+      }
+    }
+
+    return acc;
+  }, []);
 };
 
 /**
@@ -196,11 +215,11 @@ export const getFieldLinksForExplore = (options: {
       let variables: VariableInterpolation[] = [];
 
       // if the link has no variables (static link), add it with the right key but an empty value so we know what field the static link is associated with
-      if (variableData.variables.length === 0) {
+      if (variableData.uniqVariables.length === 0) {
         const fieldName = field.name.toString();
         variables.push({ variableName: fieldName, value: '', match: '' });
       } else {
-        variables = variableData.variables;
+        variables = variableData.uniqVariables;
       }
       if (variableData.allVariablesDefined) {
         if (!link.internal) {
@@ -212,7 +231,12 @@ export const getFieldLinksForExplore = (options: {
             linkModel.title = getTitleFromHref(linkModel.href);
           }
           linkModel.target = linkModel.target ?? '_blank';
-          return { ...linkModel, variables: variables };
+          let resourceAttributes: string[] = [];
+          if (link.origin === DataLinkConfigOrigin.Correlations && link.url.length > 0) {
+            resourceAttributes = getResourceAttributes(variableData.variables);
+          }
+
+          return { ...linkModel, variables, resourceAttributes };
         } else {
           const splitFnWithTracking = (options?: SplitOpenOptions<DataQuery>) => {
             reportInteraction(DATA_LINK_USAGE_KEY, {
@@ -316,15 +340,16 @@ const builtInVariables = [
 export function getVariableUsageInfo(
   query: object,
   scopedVars: ScopedVars
-): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
+): { variables: VariableInterpolation[]; uniqVariables: VariableInterpolation[]; allVariablesDefined: boolean } {
   let variables: VariableInterpolation[] = [];
   const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
   // This adds info to the variables array while interpolating
   replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
-  variables = uniqBy(variables, 'variableName');
+  const uniqVariables = uniqBy(variables, 'variableName');
   return {
-    variables: variables,
-    allVariablesDefined: variables
+    variables,
+    uniqVariables,
+    allVariablesDefined: uniqVariables
       // We filter out builtin variables as they should be always defined but sometimes only later, like
       // __range_interval which is defined in prometheus at query time.
       .filter((v) => !builtInVariables.includes(v.variableName))

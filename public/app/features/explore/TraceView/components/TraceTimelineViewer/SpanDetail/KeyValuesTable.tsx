@@ -18,13 +18,14 @@ import { PropsWithChildren } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, Link, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
-import { TraceLink, TNil } from '../../types';
+import { SpanLinkDef } from '../../types';
 
 import jsonMarkup from './jsonMarkup';
+import { getBestLinkByAttribute } from './span-utils';
 
 const copyIconClassName = 'copyIcon';
 
@@ -56,6 +57,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
       [`&:not(:hover) .${copyIconClassName}`]: {
         visibility: 'hidden',
+      },
+      'a span': {
+        textDecoration: 'underline',
       },
     }),
     keyColumn: css({
@@ -110,11 +114,11 @@ export const LinkValue = ({ href, title = '', children }: PropsWithChildren<Link
 
 export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  links?: SpanLinkDef[];
 };
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {
-  const { data, linksGetter } = props;
+  const { data, links } = props;
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
@@ -125,20 +129,9 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
               __html: jsonMarkup(parseIfComplexJson(row.value)),
             };
             const jsonTable = <div className={styles.jsonTable} dangerouslySetInnerHTML={markup} />;
-            const links = linksGetter ? linksGetter(data, i) : null;
-            let valueMarkup;
-            if (links && links.length) {
-              // TODO: handle multiple items
-              valueMarkup = (
-                <div>
-                  <LinkValue href={links[0].url} title={links[0].text}>
-                    {jsonTable}
-                  </LinkValue>
-                </div>
-              );
-            } else {
-              valueMarkup = jsonTable;
-            }
+            const keyLink = getBestLinkByAttribute(row.key, links);
+            const valueMarkup = keyLink ? <Link href={keyLink.href}>{jsonTable}</Link> : jsonTable;
+
             return (
               // `i` is necessary in the key because row.key can repeat
               <tr className={styles.row} key={`${row.key}-${i}`}>

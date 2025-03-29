@@ -67,22 +67,6 @@ describe('KeyValuesTable tests', () => {
     expect(screen.getByRole('row', { name: 'jsonkey { "hello": "world" }' })).toBeInTheDocument();
   });
 
-  it('renders a single link correctly', () => {
-    setup({
-      linksGetter: (array, i) =>
-        array[i].key === 'span.kind'
-          ? [
-              {
-                url: `http://example.com/?kind=${encodeURIComponent(array[i].value)}`,
-                text: `More info about ${array[i].value}`,
-              },
-            ]
-          : [],
-    } as KeyValuesTableProps);
-
-    expect(screen.getByRole('row', { name: 'span.kind More info about client' })).toBeInTheDocument();
-  });
-
   it('renders a <CopyIcon /> for each data element', () => {
     setup();
 
