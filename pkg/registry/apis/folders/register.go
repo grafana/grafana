@@ -49,6 +49,7 @@ type FolderAPIBuilder struct {
 	namespacer           request.NamespaceMapper
 	folderSvc            folder.Service
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	dashboardPermissions dashboards.PermissionsRegistrationService
 	storage              grafanarest.Storage
 
 	authorizer authorizer.Authorizer
@@ -63,6 +64,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
+	dashboardPermissions dashboards.PermissionsRegistrationService,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
@@ -80,6 +82,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		namespacer:           request.GetNamespaceMapper(cfg),
 		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
+		dashboardPermissions: dashboardPermissions,
 		cfg:                  cfg,
 		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
@@ -156,31 +159,25 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
+		RequireDeprecatedInternalID: true,
 		EnableFolderSupport:         true,
-		RequireDeprecatedInternalID: true})
 
-	folderStore := &folderStorage{
-		tableConverter:       resourceInfo.TableConverter(),
-		folderPermissionsSvc: b.folderPermissionsSvc,
-		features:             b.features,
-		cfg:                  b.cfg,
-	}
+		// Will set default permissions for root folders
+		Permissions: b.dashboardPermissions.SetDefaultPermissions,
+	})
 
+	storage[resourceInfo.StoragePath()] = legacyStore
 	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 		if err != nil {
 			return err
 		}
 
-		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
+		storage[resourceInfo.StoragePath()], err = dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
 		if err != nil {
 			return err
 		}
-
-		folderStore.store = dw
 	}
-	storage[resourceInfo.StoragePath()] = folderStore
-
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
 		getter: storage[resourceInfo.StoragePath()].(rest.Getter), // Get the parents
 	}

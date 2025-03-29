@@ -42,14 +42,14 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	)
 
 	t.Run("Error getting auth info from context", func(t *testing.T) {
-		_, err := s.prepareObjectForStorage(context.Background(), nil)
+		_, _, err := s.prepareObjectForStorage(context.Background(), nil)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "missing auth info")
 	})
 
 	t.Run("Error on missing name", func(t *testing.T) {
 		dashboard := v1alpha1.Dashboard{}
-		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "missing name")
 	})
@@ -58,7 +58,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 		dashboard.ResourceVersion = "123"
-		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Error(t, err)
 		require.Equal(t, storage.ErrResourceVersionSetOnCreate, err)
 	})
@@ -67,7 +67,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 
-		encodedData, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		encodedData, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
 
 		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
@@ -103,7 +103,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			TimestampMillis: now.UnixMilli(),
 		})
 
-		encodedData, err := s.prepareObjectForStorage(ctx, obj)
+		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
 		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
@@ -130,7 +130,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta.SetFolder("aaa")
 		require.NoError(t, err)
 
-		encodedData, err := s.prepareObjectForStorage(ctx, obj)
+		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
 		insertedObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
@@ -186,7 +186,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 
-		encodedData, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		encodedData, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
 		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
 		require.NoError(t, err)
@@ -205,7 +205,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.NoError(t, err)
 		meta.SetDeprecatedInternalID(1) // nolint:staticcheck
 
-		encodedData, err := s.prepareObjectForStorage(ctx, obj)
+		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
 		require.NoError(t, err)
@@ -283,7 +283,7 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	var err error
 
 	if old == nil {
-		raw, err = s.prepareObjectForStorage(ctx, obj)
+		raw, _, err = s.prepareObjectForStorage(ctx, obj)
 	} else {
 		raw, err = s.prepareObjectForUpdate(ctx, obj, old)
 	}

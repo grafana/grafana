@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -1251,6 +1252,55 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 	return dr.dashboardStore.GetDashboardsByPluginID(ctx, query)
 }
 
+// (sometimes) called by the k8s storage engine after creating an object
+func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, key *resource.ResourceKey, id claims.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultPermissions")
+	defer span.End()
+
+	logger := logging.FromContext(ctx)
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return err
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	uid, err := user.GetInternalID()
+	if err != nil {
+		return err
+	}
+	var permissions []accesscontrol.SetResourcePermissionCommand
+	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) {
+		// legacy behavior
+		permissions = []accesscontrol.SetResourcePermissionCommand{
+			{UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+		}
+		if obj.GetFolder() == "" {
+			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+			}...)
+		}
+	} else {
+		if obj.GetFolder() != "" {
+			return nil
+		}
+		permissions = []accesscontrol.SetResourcePermissionCommand{
+			{UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+		}
+	}
+	svc := dr.getPermissionsService(key.Resource == "folders")
+	if _, err := svc.SetPermissions(ctx, ns.OrgID, obj.GetName(), permissions...); err != nil {
+		logger.Error("Could not set default permissions", "error", err)
+	}
+
+	return nil
+}
+
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultPermissions")
 	defer span.End()
@@ -1292,6 +1342,10 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 }
 
 func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context, cmd *folder.CreateFolderCommand, f *folder.Folder, provisioned bool) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		return
+	}
+
 	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultFolderPermissions")
 	defer span.End()
 
@@ -1881,7 +1935,6 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	if err != nil {
 		return nil, err
 	}
-
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
 	// Update will create if not exists (upsert!)
