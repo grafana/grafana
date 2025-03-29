@@ -607,7 +607,6 @@ export function mapFrameToDataGrid({
     sortColumnsRef,
     styles,
     textWrap,
-    fieldConfig,
     theme,
     timeRange,
     getActions,
@@ -617,9 +616,6 @@ export function mapFrameToDataGrid({
 
   const columns: TableColumn[] = [];
   const hasNestedFrames = getIsNestedTable(frame);
-
-  const cellInspect = fieldConfig?.defaults?.custom?.inspect ?? false;
-  const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
 
   // If nested frames, add expansion control column
   if (hasNestedFrames) {
@@ -753,13 +749,12 @@ export function mapFrameToDataGrid({
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
                 textWrap,
-                cellInspect,
+                field,
                 cellType
               )
             }
             setIsInspecting={setIsInspecting}
             setContextMenuProps={setContextMenuProps}
-            cellInspect={cellInspect}
             getActions={getActions}
             rowBg={rowBg}
           />
@@ -799,7 +794,6 @@ export function mapFrameToDataGrid({
           justifyContent={justifyColumnContent}
           filter={filter}
           setFilter={setFilter}
-          filterable={filterable}
           onColumnResize={onColumnResize}
           headerCellRefs={headerCellRefs}
           crossFilterOrder={crossFilterOrder}
