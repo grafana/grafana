@@ -283,8 +283,12 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		row.token.id = version
 	}
 	if err == nil {
-		row.RV = version
-		dash.ResourceVersion = fmt.Sprintf("%d", row.RV)
+		row.RV = updated.UnixMilli()
+		// the updated timestamp is not set when the dashboard is soft deleted
+		if deleted.Valid {
+			row.RV = deleted.Time.UnixMilli()
+		}
+		dash.ResourceVersion = strconv.FormatInt(row.RV, 10)
 		dash.Namespace = a.namespacer(orgId)
 		dash.APIVersion = fmt.Sprintf("%s/%s", dashboard.GROUP, apiVersion.String)
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
