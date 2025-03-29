@@ -1650,7 +1650,7 @@ var (
 			Description:     "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
 			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaObservabilityMetricsSquad,
-			FrontendOnly:    true,
+			FrontendOnly:    false,
 			RequiresRestart: true,
 		},
 		{
