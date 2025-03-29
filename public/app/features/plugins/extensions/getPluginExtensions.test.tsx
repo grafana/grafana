@@ -4,8 +4,6 @@ import {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedComponentConfig,
   PluginExtensionTypes,
-  PluginExtensionLink,
-  PluginExtensionComponent,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
