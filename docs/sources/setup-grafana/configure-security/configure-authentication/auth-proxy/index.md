@@ -150,7 +150,7 @@ header_property = username
 auto_sign_up = true
 ```
 
-Launch the Grafana container, using our custom grafana.ini to replace `/etc/grafana/grafana.ini`. We don't expose
+Launch the Grafana container, using our custom `grafana.ini` to replace `/etc/grafana/grafana.ini`. We don't expose
 any ports for this container as it will only be connected to by our Apache container.
 
 ```bash
@@ -161,7 +161,7 @@ docker run -i -v $(pwd)/grafana.ini:/etc/grafana/grafana.ini --name grafana graf
 
 For this example we use the official Apache docker image available at [Docker Hub](https://hub.docker.com/_/httpd/)
 
-- Create a file `httpd.conf` with the following contents
+- Create a file named `httpd.conf` with the following contents
 
 ```bash
 ServerRoot "/usr/local/apache2"
@@ -216,13 +216,13 @@ ProxyPass / http://grafana:3000/
 ProxyPassReverse / http://grafana:3000/
 ```
 
-- Create a htpasswd file. We create a new user **anthony** with the password **password**
+- Create a `htpasswd` file. We create a new user **anthony** with the password **password**
 
   ```bash
   htpasswd -bc htpasswd anthony password
   ```
 
-- Launch the httpd container using our custom httpd.conf and our htpasswd file. The container will listen on port 80, and we create a link to the **grafana** container so that this container can resolve the hostname **grafana** to the Grafana container’s IP address.
+- Launch the Apache HTTP server container using our custom `httpd.conf` and our `htpasswd` file. The container will listen on port 80, and we create a link to the **grafana** container so that this container can resolve the hostname **grafana** to the Grafana container’s IP address.
 
   ```bash
   docker run -i -p 80:80 --link grafana:grafana -v $(pwd)/httpd.conf:/usr/local/apache2/conf/httpd.conf -v $(pwd)/htpasswd:/tmp/htpasswd httpd:2.4
@@ -230,11 +230,11 @@ ProxyPassReverse / http://grafana:3000/
 
 ### Use grafana.
 
-With our Grafana and Apache containers running, you can now connect to http://localhost/ and log in using the username/password we created in the htpasswd file.
+With our Grafana and Apache containers running, you can now connect to http://localhost/ and log in using the username and password we created in the `htpasswd` file.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If the user is deleted from Grafana, the user will be not be able to login and resync until after the `sync_ttl` has expired.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Team Sync (Enterprise only)
 
@@ -309,9 +309,9 @@ curl -H "X-WEBAUTH-USER: leonard" -H "X-WEBAUTH-GROUPS: lokiteamOnExternalSystem
 
 With this, the user `leonard` will be automatically placed into the Loki team as part of Grafana authentication.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 An empty `X-WEBAUTH-GROUPS` or the absence of a groups header will remove the user from all teams.
-{{% /admonition %}}
+{{< /admonition >}}
 
 [Learn more about Team Sync](../../configure-team-sync/)
 
@@ -321,5 +321,5 @@ With `enable_login_token` set to `true` Grafana will, after successful auth prox
 a login token and cookie. You only have to configure your auth proxy to provide headers for the /login route.
 Requests via other routes will be authenticated using the cookie.
 
-Use settings `login_maximum_inactive_lifetime_duration` and `login_maximum_lifetime_duration` under `[auth]` to control session
+Use the settings `login_maximum_inactive_lifetime_duration` and `login_maximum_lifetime_duration` under `[auth]` to control session
 lifetime.
