@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 
 import { NodeGraph } from './NodeGraph';
-import { ZoomMode } from './panelcfg.gen';
+import { LayoutAlgorithm, ZoomMode } from './panelcfg.gen';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
 
 jest.mock('react-use/lib/useMeasure', () => {
@@ -26,6 +26,7 @@ describe('NodeGraph', () => {
       <NodeGraph
         dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
         getLinks={() => []}
+        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
     const zoomIn = await screen.findByTitle(/Zoom in/);
@@ -44,6 +45,7 @@ describe('NodeGraph', () => {
         dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
         zoomMode={ZoomMode.Cooperative}
         getLinks={() => []}
+        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -62,6 +64,7 @@ describe('NodeGraph', () => {
         dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
         zoomMode={ZoomMode.Greedy}
         getLinks={() => []}
+        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -85,6 +88,7 @@ describe('NodeGraph', () => {
           ]),
         ]}
         getLinks={() => []}
+        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -97,7 +101,9 @@ describe('NodeGraph', () => {
   });
 
   it('renders with single node', async () => {
-    render(<NodeGraph dataFrames={[makeNodesDataFrame(1)]} getLinks={() => []} />);
+    render(
+      <NodeGraph dataFrames={[makeNodesDataFrame(1)]} getLinks={() => []} layoutAlgorithm={LayoutAlgorithm.Force} />
+    );
     const circle = await screen.findByText('', { selector: 'circle' });
     await screen.findByText(/service:0/);
     expect(getXY(circle)).toEqual({ x: 0, y: 0 });
@@ -117,6 +123,7 @@ describe('NodeGraph', () => {
             },
           ];
         }}
+        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -146,6 +153,7 @@ describe('NodeGraph', () => {
           ]),
         ]}
         getLinks={() => []}
+        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -165,6 +173,7 @@ describe('NodeGraph', () => {
           ]),
         ]}
         getLinks={() => []}
+        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -188,6 +197,7 @@ describe('NodeGraph', () => {
         ]}
         getLinks={() => []}
         nodeLimit={2}
+        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -213,6 +223,7 @@ describe('NodeGraph', () => {
         ]}
         getLinks={() => []}
         nodeLimit={3}
+        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -241,6 +252,7 @@ describe('NodeGraph', () => {
         ]}
         getLinks={() => []}
         nodeLimit={3}
+        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 

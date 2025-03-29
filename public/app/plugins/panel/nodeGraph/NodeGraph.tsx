@@ -4,7 +4,7 @@ import { memo, MouseEvent, useCallback, useEffect, useMemo, useState } from 'rea
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { Icon, Spinner, useStyles2 } from '@grafana/ui';
+import { Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 
 import { Edge } from './Edge';
 import { EdgeLabel } from './EdgeLabel';
@@ -13,6 +13,7 @@ import { Marker } from './Marker';
 import { Node } from './Node';
 import { ViewControls } from './ViewControls';
 import { Config, defaultConfig, useLayout } from './layout';
+import { LayoutAlgorithm } from './panelcfg.gen';
 import { EdgeDatumLayout, NodeDatum, NodesMarker, ZoomMode } from './types';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { useContextMenu } from './useContextMenu';
@@ -70,6 +71,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     pointerEvents: 'none',
   }),
+  layoutAlgorithm: css({
+    label: 'layoutAlgorithm',
+    pointerEvents: 'all',
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    zIndex: 1,
+  }),
   legend: css({
     label: 'legend',
     background: theme.colors.background.secondary,
@@ -113,8 +122,9 @@ interface Props {
   nodeLimit?: number;
   panelId?: string;
   zoomMode?: ZoomMode;
+  layoutAlgorithm?: LayoutAlgorithm;
 }
-export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }: Props) {
+export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, layoutAlgorithm }: Props) {
   const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
 
@@ -166,7 +176,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }
     nodeCountLimit,
     width,
     focusedNodeId,
-    processed.hasFixedPositions
+    processed.hasFixedPositions,
+    layoutAlgorithm
   );
 
   // If we move from grid to graph layout, and we have focused node lets get its position to center there. We want to
@@ -199,6 +210,13 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }
 
   const highlightId = useHighlight(focusedNodeId);
 
+  const handleLayoutChange = (cfg: Config) => {
+    if (cfg.layoutAlgorithm !== config.layoutAlgorithm) {
+      setFocusedNodeId(undefined);
+    }
+    setConfig(cfg);
+  };
+
   return (
     <div ref={topLevelRef} className={styles.wrapper}>
       {loading ? (
@@ -207,6 +225,26 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }
           <Spinner />
         </div>
       ) : null}
+
+      {!layoutAlgorithm && (
+        <div className={styles.layoutAlgorithm}>
+          <RadioButtonGroup
+            size="sm"
+            options={[
+              { label: 'Layered', value: LayoutAlgorithm.Layered },
+              { label: 'Force', value: LayoutAlgorithm.Force },
+            ]}
+            value={config.layoutAlgorithm}
+            onChange={(value) => {
+              handleLayoutChange({
+                ...config,
+                gridLayout: false,
+                layoutAlgorithm: value,
+              });
+            }}
+          />
+        </div>
+      )}
 
       {dataFrames.length && processed.nodes.length ? (
         <svg
@@ -267,12 +305,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }
         <div className={styles.viewControlsWrapper}>
           <ViewControls<Config>
             config={config}
-            onConfigChange={(cfg) => {
-              if (cfg.gridLayout !== config.gridLayout) {
-                setFocusedNodeId(undefined);
-              }
-              setConfig(cfg);
-            }}
+            onConfigChange={handleLayoutChange}
             onMinus={onStepDown}
             onPlus={onStepUp}
             scale={scale}
