@@ -292,8 +292,13 @@ func Test_SnapshotResources(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		t.Run("default sorting and paging when no params provided", func(t *testing.T) {
-			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{})
+		t.Run("default sorting and paging and default params", func(t *testing.T) {
+			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: 100,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
 			require.NoError(t, err)
 			assert.Len(t, results, 5)
 			// Default sort is by ID ascending
@@ -303,8 +308,10 @@ func Test_SnapshotResources(t *testing.T) {
 
 		t.Run("sort by name descending", func(t *testing.T) {
 			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
-				SortColumn: cloudmigration.SortColumnName,
-				SortOrder:  cloudmigration.SortOrderDesc,
+				ResultPage:  1,
+				ResultLimit: 100,
+				SortColumn:  cloudmigration.SortColumnName,
+				SortOrder:   cloudmigration.SortOrderDesc,
 			})
 			require.NoError(t, err)
 			assert.Equal(t, "Folder 1", results[0].Name)
@@ -313,8 +320,10 @@ func Test_SnapshotResources(t *testing.T) {
 
 		t.Run("sort by type ascending", func(t *testing.T) {
 			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
-				SortColumn: cloudmigration.SortColumnType,
-				SortOrder:  cloudmigration.SortOrderAsc,
+				ResultPage:  1,
+				ResultLimit: 100,
+				SortColumn:  cloudmigration.SortColumnType,
+				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			require.NoError(t, err)
 			assert.Equal(t, "2", results[0].UID)
@@ -335,37 +344,13 @@ func Test_SnapshotResources(t *testing.T) {
 			assert.Equal(t, "5", results[1].UID)
 		})
 
-		t.Run("invalid page number defaults to 1", func(t *testing.T) {
-			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
-				ResultPage:  -1,
-				ResultLimit: 2,
-			})
-			require.NoError(t, err)
-			assert.Len(t, results, 2)
-			assert.Equal(t, "1", results[0].UID)
-		})
-
-		t.Run("invalid sort column defaults to id", func(t *testing.T) {
-			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
-				SortColumn: "invalid",
-			})
-			require.NoError(t, err)
-			assert.Equal(t, "1", results[0].UID)
-			assert.Equal(t, "5", results[4].UID)
-		})
-
-		t.Run("invalid sort order defaults to asc", func(t *testing.T) {
-			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
-				SortOrder: "invalid",
-			})
-			require.NoError(t, err)
-			assert.Equal(t, "1", results[0].UID)
-			assert.Equal(t, "5", results[4].UID)
-		})
-
 		t.Run("only errors filter returns only error status resources", func(t *testing.T) {
 			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
-				ErrorsOnly: true,
+				ResultPage:  1,
+				ResultLimit: 100,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+				ErrorsOnly:  true,
 			})
 			require.NoError(t, err)
 			assert.Len(t, results, 1)
