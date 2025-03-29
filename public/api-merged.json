@@ -17969,6 +17969,9 @@
         "language": {
           "type": "string"
         },
+        "locale": {
+          "type": "string"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -18586,6 +18589,10 @@
         },
         "language": {
           "description": "Selected language (beta)",
+          "type": "string"
+        },
+        "locale": {
+          "description": "Selected locale (beta)",
           "type": "string"
         },
         "navbar": {
@@ -22037,6 +22044,9 @@
           "type": "string"
         },
         "language": {
+          "type": "string"
+        },
+        "locale": {
           "type": "string"
         },
         "navbar": {

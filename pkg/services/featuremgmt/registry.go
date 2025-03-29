@@ -1800,6 +1800,12 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:        "localeFormatPreference",
+			Description: "Specify the locale so we can show the correct format for numbers and dates",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+		},
+		{
 			Name:              "unifiedStorageGrpcConnectionPool",
 			Description:       "Enables the unified storage grpc connection pool",
 			Stage:             FeatureStageExperimental,
