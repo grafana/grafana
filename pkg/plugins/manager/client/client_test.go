@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type stackIDKey string
+
 func TestQueryData(t *testing.T) {
 	t.Run("Empty registry should return not registered error", func(t *testing.T) {
 		registry := fakes.NewFakePluginRegistry()
@@ -50,8 +52,13 @@ func TestQueryData(t *testing.T) {
 				shouldPassThrough: false,
 			},
 			{
-				err:               plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("unavailable"),
-				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("unavailable"),
+				err:               plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()).Errorf("unavailable"),
+				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()).Errorf("unavailable"),
+				shouldPassThrough: true,
+			},
+			{
+				err:               plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.WithValue(context.Background(), stackIDKey("stackID"), "test-stack")).Errorf("unavailable"),
+				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.WithValue(context.Background(), stackIDKey("stackID"), "test-stack")).Errorf("unavailable"),
 				shouldPassThrough: true,
 			},
 			{
