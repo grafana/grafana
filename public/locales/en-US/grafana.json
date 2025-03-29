@@ -1114,6 +1114,12 @@
       "success": "Dashboard {{name}} moved to Recently deleted"
     }
   },
+  "carousel": {
+    "close": "Close",
+    "error": "Something went wrong loading images",
+    "next": "Next",
+    "previous": "Previous"
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copied"

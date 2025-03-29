@@ -63,6 +63,16 @@ export const usePluginDetailsTabs = (
       });
     }
 
+    if (isPublished && plugin?.details?.screenshots?.length) {
+      navModelChildren.push({
+        text: PluginTabLabels.SCREENSHOTS,
+        id: PluginTabIds.SCREENSHOTS,
+        icon: 'camera',
+        url: `${pathname}?page=${PluginTabIds.SCREENSHOTS}`,
+        active: PluginTabIds.SCREENSHOTS === currentPageId,
+      });
+    }
+
     if (isPublished && isNarrowScreen && config.featureToggles.pluginsDetailsRightPanel) {
       navModelChildren.push({
         text: PluginTabLabels.PLUGINDETAILS,
