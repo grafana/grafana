@@ -16,6 +16,8 @@ import { isGrafanaManagedRuleByType } from '../../utils/rules';
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
+import { GenAIAlertDescriptionButton } from './GenAIAlertDescriptionButton';
+import { GenAIAlertSummaryButton } from './GenAIAlertSummaryButton';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useDashboardQuery } from './useDashboardQuery';
@@ -89,6 +91,36 @@ const AnnotationsStep = () => {
 
   const handleEditDashboardAnnotation = () => {
     setShowPanelSelector(true);
+  };
+
+  const handleGenerateDescription = (description: string) => {
+    // Find if description annotation already exists
+    const descIndex = annotations.findIndex((a) => a.key === Annotation.description);
+
+    if (descIndex >= 0) {
+      // Update existing description annotation
+      const updatedAnnotations = [...annotations];
+      updatedAnnotations[descIndex] = { ...updatedAnnotations[descIndex], value: description };
+      setValue('annotations', updatedAnnotations);
+    } else {
+      // Add new description annotation
+      append({ key: Annotation.description, value: description });
+    }
+  };
+
+  const handleGenerateSummary = (summary: string) => {
+    // Find if summary annotation already exists
+    const summaryIndex = annotations.findIndex((a) => a.key === Annotation.summary);
+
+    if (summaryIndex >= 0) {
+      // Update existing summary annotation
+      const updatedAnnotations = [...annotations];
+      updatedAnnotations[summaryIndex] = { ...updatedAnnotations[summaryIndex], value: summary };
+      setValue('annotations', updatedAnnotations);
+    } else {
+      // Add new summary annotation
+      append({ key: Annotation.summary, value: summary });
+    }
   };
 
   function getAnnotationsSectionDescription() {
@@ -173,18 +205,30 @@ const AnnotationsStep = () => {
                       invalid={!!errors.annotations?.[index]?.value?.message}
                       error={errors.annotations?.[index]?.value?.message}
                     >
-                      <ValueInputComponent
-                        data-testid={`annotation-value-${index}`}
-                        className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
-                        {...register(`annotations.${index}.value`)}
-                        placeholder={
-                          isUrl
-                            ? 'https://'
-                            : (annotationField.key && `Enter a ${annotationField.key}...`) ||
-                              'Enter custom annotation content...'
-                        }
-                        defaultValue={annotationField.value}
-                      />
+                      <div className={styles.inputWithButton}>
+                        <ValueInputComponent
+                          data-testid={`annotation-value-${index}`}
+                          className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
+                          {...register(`annotations.${index}.value`)}
+                          placeholder={
+                            isUrl
+                              ? 'https://'
+                              : (annotationField.key && `Enter a ${annotationField.key}...`) ||
+                                'Enter custom annotation content...'
+                          }
+                          defaultValue={annotationField.value}
+                        />
+                        {annotationField.key === Annotation.description && (
+                          <div className={styles.aiButtonContainer}>
+                            <GenAIAlertDescriptionButton onGenerate={handleGenerateDescription} />
+                          </div>
+                        )}
+                        {annotationField.key === Annotation.summary && (
+                          <div className={styles.aiButtonContainer}>
+                            <GenAIAlertSummaryButton onGenerate={handleGenerateSummary} />
+                          </div>
+                        )}
+                      </div>
                     </Field>
                     {!annotationLabels[annotation] && (
                       <Button
@@ -279,6 +323,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   annotationValueContainer: css({
     display: 'flex',
+  }),
+
+  inputWithButton: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    position: 'relative',
+  }),
+
+  aiButtonContainer: css({
+    marginLeft: theme.spacing(1),
+    alignSelf: 'flex-start',
   }),
 });
 
