@@ -108,4 +108,3 @@ export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
 
   return ComponentWithMeta;
 }
-
