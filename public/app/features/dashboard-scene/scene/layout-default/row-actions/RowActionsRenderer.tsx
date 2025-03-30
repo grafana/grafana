@@ -8,7 +8,7 @@ import { t } from 'app/core/internationalization';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { getDashboardSceneFor, getQueryRunnerFor } from '../../../utils/utils';
+import { getQueryRunnerFor, useDashboard, useDashboardState } from '../../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 
@@ -16,10 +16,10 @@ import { RowActions } from './RowActions';
 import { RowOptionsButton } from './RowOptionsButton';
 
 export function RowActionsRenderer({ model }: SceneComponentProps<RowActions>) {
-  const dashboard = getDashboardSceneFor(model);
   const row = model.getParent();
   const { title, children } = row.useState();
-  const { meta, isEditing } = dashboard.useState();
+  const dashboard = useDashboard(model);
+  const { meta, isEditing } = useDashboardState(model);
   const styles = useStyles2(getStyles);
 
   const isUsingDashboardDS = useMemo(

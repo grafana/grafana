@@ -170,6 +170,8 @@ func SetupConfig(
 			operationAlt = "get" + operationAlt[len("read"):]
 		} else if strings.HasPrefix(operationAlt, "patch") {
 			operationAlt = "update" + operationAlt[len("patch"):]
+		} else if strings.HasPrefix(operationAlt, "put") {
+			operationAlt = "replace" + operationAlt[len("put"):]
 		}
 
 		// Audit our options here
@@ -244,6 +246,18 @@ func SetupConfig(
 	info2.GitTreeState = info.GitTreeState
 
 	serverConfig.EffectiveVersion = v
+
+	// set priority for aggregated discovery
+	for i, b := range builders {
+		gvs := GetGroupVersions(b)
+		if len(gvs) == 0 {
+			return fmt.Errorf("builder did not return any API group versions: %T", b)
+		}
+		pvs := scheme.PrioritizedVersionsForGroup(gvs[0].Group)
+		for j, gv := range pvs {
+			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 15000+i, len(pvs)-j)
+		}
+	}
 
 	if err := AddPostStartHooks(serverConfig, builders); err != nil {
 		return err
@@ -360,7 +374,7 @@ func InstallAPIs(
 			if currentMode != mode {
 				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
 			}
-			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
+			return dualwrite.NewDualWriter(gr, currentMode, legacy, storage)
 		}
 	}
 

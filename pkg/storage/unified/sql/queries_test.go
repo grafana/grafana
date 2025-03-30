@@ -136,6 +136,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "single path",
 					Data: &sqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
+						},
 					},
 				},
 			},
@@ -143,9 +147,9 @@ func TestUnifiedStorageQueries(t *testing.T) {
 			sqlResourceHistoryRead: {
 				{
 					Name: "single path",
-					Data: &sqlResourceReadRequest{
+					Data: &sqlResourceHistoryReadRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Request: &resource.ReadRequest{
+						Request: &historyReadRequest{
 							ResourceVersion: 123,
 							Key: &resource.ResourceKey{
 								Namespace: "ns",
@@ -159,31 +163,49 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
+			sqlResourceHistoryReadLatestRV: {
+				{
+					Name: "single path",
+					Data: &sqlResourceHistoryReadLatestRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyReadLatestRVRequest{
+							Key: &resource.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
+						},
+						Response: new(resourceHistoryReadLatestRVResponse),
+					},
+				},
+				{
+					Name: "with WatchEvent_DELETED",
+					Data: &sqlResourceHistoryReadLatestRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyReadLatestRVRequest{
+							Key: &resource.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
+							EventType: resource.WatchEvent_DELETED,
+						},
+						Response: new(resourceHistoryReadLatestRVResponse),
+					},
+				},
+			},
+
 			sqlResourceHistoryUpdateRV: {
 				{
 					Name: "single path",
 					Data: &sqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-					},
-				},
-			},
-
-			sqlResoureceHistoryUpdateUid: {
-				{
-					Name: "modify uids in history",
-					Data: &sqlResourceHistoryUpdateRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						WriteEvent: resource.WriteEvent{
-							Key: &resource.ResourceKey{
-								Namespace: "nn",
-								Group:     "gg",
-								Resource:  "rr",
-								Name:      "name",
-							},
-							PreviousRV: 1234,
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
 						},
-						OldUID: "old-uid",
-						NewUID: "new-uid",
 					},
 				},
 			},
@@ -243,6 +265,22 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						},
 						Trash:   true,
 						StartRV: 123456,
+					},
+				},
+			},
+
+			sqlResourceHistoryPrune: {
+				{
+					Name: "simple",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+							Name:      "na",
+						},
+						HistoryLimit: 100,
 					},
 				},
 			},

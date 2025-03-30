@@ -36,154 +36,6 @@
         }
       }
     },
-    "/apis/dashboard.grafana.app/v0alpha1/librarypanels": {
-      "get": {
-        "tags": [
-          "LibraryPanel"
-        ],
-        "description": "list objects of kind LibraryPanel",
-        "operationId": "listLibraryPanelForAllNamespaces",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "list",
-        "x-kubernetes-group-version-kind": {
-          "group": "dashboard.grafana.app",
-          "version": "v0alpha1",
-          "kind": "LibraryPanel"
-        }
-      },
-      "parameters": [
-        {
-          "name": "allowWatchBookmarks",
-          "in": "query",
-          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "continue",
-          "in": "query",
-          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "fieldSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "labelSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "limit",
-          "in": "query",
-          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersion",
-          "in": "query",
-          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersionMatch",
-          "in": "query",
-          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "sendInitialEvents",
-          "in": "query",
-          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "timeoutSeconds",
-          "in": "query",
-          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "watch",
-          "in": "query",
-          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
     "/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/dashboards": {
       "get": {
         "tags": [
@@ -289,27 +141,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardList"
                 }
               }
             }
@@ -359,9 +211,19 @@
         ],
         "requestBody": {
           "content": {
-            "*/*": {
+            "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
               }
             }
           },
@@ -373,17 +235,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               }
             }
@@ -393,17 +255,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               }
             }
@@ -413,17 +275,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               }
             }
@@ -561,15 +423,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK",
@@ -634,17 +487,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               }
             }
@@ -694,9 +547,19 @@
         ],
         "requestBody": {
           "content": {
-            "*/*": {
+            "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
               }
             }
           },
@@ -708,17 +571,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               }
             }
@@ -728,17 +591,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               }
             }
@@ -804,15 +667,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK",
@@ -937,17 +791,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               }
             }
@@ -957,17 +811,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               }
             }
@@ -1025,7 +879,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardWithAccessInfo"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardWithAccessInfo"
                 }
               }
             }
@@ -1058,22 +912,6 @@
             "type": "string",
             "uniqueItems": true
           }
-        },
-        {
-          "name": "path",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "version",
-          "in": "query",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
         }
       ]
     },
@@ -1090,27 +928,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList"
                 }
               }
             }
@@ -1248,17 +1086,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               }
             }
@@ -1600,12 +1438,7 @@
         "type": "object",
         "additionalProperties": true
       },
-      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
-        "type": "object",
-        "additionalProperties": true,
-        "x-kubernetes-preserve-unknown-fields": true
-      },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.AnnotationActions": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions": {
         "type": "object",
         "required": [
           "canAdd",
@@ -1627,7 +1460,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.AnnotationPermission": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationPermission": {
         "type": "object",
         "required": [
           "dashboard",
@@ -1638,7 +1471,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.AnnotationActions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions"
               }
             ]
           },
@@ -1646,16 +1479,18 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.AnnotationActions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard": {
         "type": "object",
         "required": [
-          "spec"
+          "metadata",
+          "spec",
+          "status"
         ],
         "properties": {
           "apiVersion": {
@@ -1667,7 +1502,6 @@
             "type": "string"
           },
           "metadata": {
-            "description": "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
             "default": {},
             "allOf": [
               {
@@ -1676,10 +1510,18 @@
             ]
           },
           "spec": {
-            "description": "The dashboard body (unstructured for now)",
+            "description": "Spec is the spec of the Dashboard",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "status": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardStatus"
               }
             ]
           }
@@ -1692,8 +1534,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardAccess": {
-        "description": "Information about how the requesting user can use a given dashboard",
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardAccess": {
         "type": "object",
         "required": [
           "canSave",
@@ -1705,7 +1546,7 @@
         ],
         "properties": {
           "annotationsPermissions": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.AnnotationPermission"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationPermission"
           },
           "canAdmin": {
             "type": "boolean",
@@ -1737,8 +1578,38 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardList": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus": {
+        "description": "ConversionStatus is the status of the conversion of the dashboard.",
         "type": "object",
+        "required": [
+          "failed",
+          "storedVersion",
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "description": "The error message from the conversion. Empty if the conversion has not failed.",
+            "type": "string",
+            "default": ""
+          },
+          "failed": {
+            "description": "Whether from another version has failed. If true, means that the dashboard is not valid, and the caller should instead fetch the stored version.",
+            "type": "boolean",
+            "default": false
+          },
+          "storedVersion": {
+            "description": "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardList": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -1750,7 +1621,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.Dashboard"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
                 }
               ]
             }
@@ -1776,11 +1647,26 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardWithAccessInfo": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardStatus": {
+        "type": "object",
+        "properties": {
+          "conversion": {
+            "description": "Optional conversion status.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardWithAccessInfo": {
         "description": "This is like the legacy DTO where access and metadata are all returned in a single call",
         "type": "object",
         "required": [
+          "metadata",
           "spec",
+          "status",
           "access"
         ],
         "properties": {
@@ -1788,7 +1674,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.DashboardAccess"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardAccess"
               }
             ]
           },
@@ -1801,7 +1687,6 @@
             "type": "string"
           },
           "metadata": {
-            "description": "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
             "default": {},
             "allOf": [
               {
@@ -1810,10 +1695,18 @@
             ]
           },
           "spec": {
-            "description": "The dashboard body (unstructured for now)",
+            "description": "Spec is the spec of the Dashboard",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "status": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardStatus"
               }
             ]
           }
@@ -1826,7 +1719,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanel": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel": {
         "type": "object",
         "required": [
           "spec"
@@ -1854,7 +1747,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelSpec"
               }
             ]
           },
@@ -1862,7 +1755,7 @@
             "description": "Status will show errors",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelStatus"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelStatus"
               }
             ]
           }
@@ -1875,7 +1768,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelList": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList": {
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -1888,7 +1781,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanel"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
                 }
               ]
             }
@@ -1914,7 +1807,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelSpec": {
         "type": "object",
         "required": [
           "type",
@@ -1973,7 +1866,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.dashboard.v0alpha1.LibraryPanelStatus": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelStatus": {
         "type": "object",
         "properties": {
           "missing": {
@@ -1993,6 +1886,11 @@
             }
           }
         }
+      },
+      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
+        "type": "object",
+        "additionalProperties": true,
+        "x-kubernetes-preserve-unknown-fields": true
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

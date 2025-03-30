@@ -13,7 +13,7 @@ import {
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
 import { MultiValueVariable, sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
@@ -1054,6 +1054,33 @@ describe('transformSceneToSaveModel', () => {
       saveModel = transformSceneToSaveModel(scene);
       expect(saveModel.panels?.[1].gridPos?.h).toBe(34);
     });
+  });
+});
+
+describe('Given a scene with custom quick ranges', () => {
+  it('should save quick ranges to save model', () => {
+    const dashboardWithCustomSettings = {
+      ...dashboard_to_load1,
+      timepicker: {
+        ...dashboard_to_load1.timepicker,
+        quick_ranges: [
+          {
+            display: 'Last 6 hours',
+            from: 'now-6h',
+            to: 'now',
+          },
+          {
+            display: 'Last 3 days',
+            from: 'now-3d',
+            to: 'now',
+          },
+        ],
+      },
+    };
+    const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as DashboardDataDTO, meta: {} });
+    const saveModel = transformSceneToSaveModel(scene);
+
+    expect(saveModel).toMatchSnapshot();
   });
 });
 

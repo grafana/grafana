@@ -101,6 +101,7 @@ export {
   type TableImageCellOptions,
   type TableJsonViewCellOptions,
 } from './Table/types';
+
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab, type TabProps } from './Tabs/Tab';
@@ -336,4 +337,5 @@ export {
   useElementSelection,
   type ElementSelectionContextState,
   type ElementSelectionContextItem,
+  type UseElementSelectionResult,
 } from './ElementSelectionContext/ElementSelectionContext';

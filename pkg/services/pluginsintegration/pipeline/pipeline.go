@@ -27,7 +27,7 @@ func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pf finder.Finder, pr
 		FindFunc: pf.Find,
 		FindFilterFuncs: []discovery.FindFilterFunc{
 			discovery.NewPermittedPluginTypesFilterStep([]plugins.Type{
-				plugins.TypeDataSource, plugins.TypeApp, plugins.TypePanel, plugins.TypeSecretsManager,
+				plugins.TypeDataSource, plugins.TypeApp, plugins.TypePanel,
 			}),
 			func(ctx context.Context, _ plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 				return NewDuplicatePluginIDFilterStep(pr).Filter(ctx, b)

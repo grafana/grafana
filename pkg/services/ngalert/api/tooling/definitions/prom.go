@@ -152,8 +152,9 @@ type AlertingRule struct {
 	// required: true
 	Name string `json:"name,omitempty"`
 	// required: true
-	Query    string  `json:"query,omitempty"`
-	Duration float64 `json:"duration,omitempty"`
+	Query         string  `json:"query,omitempty"`
+	Duration      float64 `json:"duration,omitempty"`
+	KeepFiringFor float64 `json:"keepFiringFor,omitempty"`
 	// required: true
 	Annotations promlabels.Labels `json:"annotations,omitempty"`
 	// required: true

@@ -220,6 +220,10 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	} else {
 		dec := json.NewDecoder(res.Body)
 		err = dec.Decode(&msr)
+		if err != nil {
+			// Invalid JSON response from Elasticsearch
+			err = backend.DownstreamError(err)
+		}
 	}
 	if err != nil {
 		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start), "improvedParsingEnabled", improvedParsingEnabled)
@@ -239,7 +243,8 @@ func StreamMultiSearchResponse(body io.Reader, msr *MultiSearchResponse) error {
 
 	_, err := dec.Token() // reads the `{` opening brace
 	if err != nil {
-		return err
+		// Invalid JSON response from Elasticsearch
+		return backend.DownstreamError(err)
 	}
 
 	for dec.More() {

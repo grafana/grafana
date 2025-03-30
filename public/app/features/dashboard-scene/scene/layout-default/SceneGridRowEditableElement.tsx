@@ -1,8 +1,8 @@
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
-import { Alert, Button, Input, TextLink } from '@grafana/ui';
+import { Alert, Input, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -25,9 +25,9 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeId: 'panel',
+      typeName: t('dashboard.edit-pane.elements.row', 'Row'),
+      instanceName: sceneGraph.interpolate(this._row, this._row.state.title, undefined, 'text'),
       icon: 'line-alt',
-      name: sceneGraph.interpolate(this._row, this._row.state.title, undefined, 'text'),
     };
   }
 
@@ -71,14 +71,6 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
     if (layoutManager instanceof DefaultGridLayoutManager) {
       layoutManager.removeRow(this._row);
     }
-  }
-
-  public renderActions(): ReactNode {
-    return (
-      <>
-        <Button size="sm" variant="destructive" fill="outline" onClick={() => this.onDelete()} icon="trash-alt" />
-      </>
-    );
   }
 }
 

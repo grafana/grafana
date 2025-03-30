@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -100,36 +98,6 @@ const (
 	// Mode5 uses storage regardless of the background sync state
 	Mode5
 )
-
-// TODO: make this function private as there should only be one public way of setting the dual writing mode
-// NewDualWriter returns a new DualWriter.
-func NewDualWriter(
-	mode DualWriterMode,
-	legacy Storage,
-	unified Storage,
-	reg prometheus.Registerer,
-	resource string,
-) Storage {
-	metrics := &dualWriterMetrics{}
-	metrics.init(reg)
-	switch mode {
-	case Mode0:
-		return legacy
-	case Mode1:
-		// read and write only from legacy storage
-		return newDualWriterMode1(legacy, unified, metrics, resource)
-	case Mode2:
-		// write to both, read from storage but use legacy as backup
-		return newDualWriterMode2(legacy, unified, metrics, resource)
-	case Mode3:
-		// write to both, read from storage only
-		return newDualWriterMode3(legacy, unified, metrics, resource)
-	case Mode4, Mode5:
-		return unified
-	default:
-		return newDualWriterMode1(legacy, unified, metrics, resource)
-	}
-}
 
 type NamespacedKVStore interface {
 	Get(ctx context.Context, key string) (string, bool, error)
@@ -253,16 +221,4 @@ func extractSpec(obj runtime.Object) []byte {
 		return nil
 	}
 	return jsonObj
-}
-
-func getName(o runtime.Object) string {
-	if o == nil {
-		return ""
-	}
-	accessor, err := meta.Accessor(o)
-	if err != nil {
-		klog.Error("failed to get object name: ", err)
-		return ""
-	}
-	return accessor.GetName()
 }

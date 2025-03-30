@@ -8,9 +8,9 @@ import { Trans } from 'app/core/internationalization';
 import { STOP_GENERATION_TEXT } from './GenAIButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
 import { QuickFeedback } from './QuickFeedback';
-import { StreamStatus, useOpenAIStream } from './hooks';
+import { StreamStatus, useLLMStream } from './hooks';
 import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { getFeedbackMessage, Message, DEFAULT_OAI_MODEL, QuickFeedbackType, sanitizeReply } from './utils';
+import { getFeedbackMessage, Message, DEFAULT_LLM_MODEL, QuickFeedbackType, sanitizeReply } from './utils';
 
 export interface GenAIHistoryProps {
   history: string[];
@@ -41,8 +41,8 @@ export const GenAIHistory = ({
     [updateHistory]
   );
 
-  const { setMessages, stopGeneration, reply, streamStatus, error } = useOpenAIStream({
-    model: DEFAULT_OAI_MODEL,
+  const { setMessages, stopGeneration, reply, streamStatus, error } = useLLMStream({
+    model: DEFAULT_LLM_MODEL,
     temperature,
     onResponse,
   });

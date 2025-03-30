@@ -49,6 +49,14 @@ describe('Unified Alerting matchers', () => {
       expect(matchers[0].name).toBe('alertname');
       expect(matchers[0].value).toBe('TestData 1');
     });
+
+    it('should not crash when matcher is not valid', () => {
+      expect(() => {
+        parseQueryParamMatchers(['alertname']);
+      }).not.toThrow();
+
+      expect(parseQueryParamMatchers(['alertname'])).toHaveLength(0);
+    });
   });
 
   describe('normalizeMatchers', () => {

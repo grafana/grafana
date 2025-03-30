@@ -347,6 +347,16 @@ export class BackendSrv implements BackendService {
   }
 
   showErrorAlert(config: BackendSrvRequest, err: FetchError) {
+    // do not show non-user error alerts for api keys or render tokens, they are used for kiosk mode and reporting and can't react to error pop-ups
+    if (
+      (err.status < 400 || err.status >= 500) &&
+      this.dependencies.contextSrv.isSignedIn &&
+      (this.dependencies.contextSrv.user.authenticatedBy === 'apikey' ||
+        this.dependencies.contextSrv.user.authenticatedBy === 'render')
+    ) {
+      return;
+    }
+
     if (config.showErrorAlert === false) {
       return;
     }
@@ -592,7 +602,7 @@ export class BackendSrv implements BackendService {
     // NOTE: When this is removed, we can also remove most instances of:
     // jest.mock('app/features/live/dashboard/dashboardWatcher
     deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
-    return getDashboardAPI().getDashboardDTO(uid);
+    return getDashboardAPI('v1').getDashboardDTO(uid);
   }
 
   validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {

@@ -374,6 +374,10 @@ func (sl *ServerLockService) createLock(ctx context.Context,
 		}
 		lockRow.Id = id
 	} else {
+		if sl.SQLStore.GetDBType() == migrator.Spanner {
+			rawSQL += " THEN RETURN id" // Required for successful LastInsertId call.
+		}
+
 		res, err := dbSession.Exec(
 			rawSQL,
 			lockRow.OperationUID, lockRow.LastExecution, 0)

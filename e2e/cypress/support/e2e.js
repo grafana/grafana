@@ -51,8 +51,8 @@ beforeEach(() => {
     cy.setLocalStorage('grafana.featureToggles', 'dashboardScene=false');
   }
 
-  if (Cypress.env('useV2DashboardsAPI')) {
-    cy.logToConsole('enabling v2 dashboards API in localstorage');
-    cy.setLocalStorage('grafana.featureToggles', 'useV2DashboardsAPI=true');
+  if (Cypress.env('kubernetesDashboards')) {
+    cy.logToConsole('enabling kubernetes dashboards API in localstorage');
+    cy.setLocalStorage('grafana.featureToggles', 'kubernetesDashboards=true');
   }
 });
