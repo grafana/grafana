@@ -601,3 +601,138 @@ func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 		}
 	}
 }
+
+func TestGetQueryPageParams(t *testing.T) {
+	tests := []struct {
+		name     string
+		page     int
+		def      int
+		expected int
+	}{
+		{
+			name:     "returns default when page is 0",
+			page:     0,
+			def:      1,
+			expected: 1,
+		},
+		{
+			name:     "returns default when page is negative",
+			page:     -1,
+			def:      1,
+			expected: 1,
+		},
+		{
+			name:     "returns default when page exceeds max",
+			page:     10001,
+			def:      1,
+			expected: 1,
+		},
+		{
+			name:     "returns page when within valid range",
+			page:     100,
+			def:      1,
+			expected: 100,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getQueryPageParams(tt.page, tt.def)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGetQueryCol(t *testing.T) {
+	tests := []struct {
+		name       string
+		col        string
+		defaultCol cloudmigration.ResultSortColumn
+		expected   cloudmigration.ResultSortColumn
+	}{
+		{
+			name:       "returns id column",
+			col:        "id",
+			defaultCol: cloudmigration.SortColumnName,
+			expected:   cloudmigration.SortColumnID,
+		},
+		{
+			name:       "returns name column",
+			col:        "name",
+			defaultCol: cloudmigration.SortColumnID,
+			expected:   cloudmigration.SortColumnName,
+		},
+		{
+			name:       "returns type column",
+			col:        "resource_type",
+			defaultCol: cloudmigration.SortColumnID,
+			expected:   cloudmigration.SortColumnType,
+		},
+		{
+			name:       "returns status column",
+			col:        "status",
+			defaultCol: cloudmigration.SortColumnID,
+			expected:   cloudmigration.SortColumnStatus,
+		},
+		{
+			name:       "returns default for unknown column",
+			col:        "unknown",
+			defaultCol: cloudmigration.SortColumnID,
+			expected:   cloudmigration.SortColumnID,
+		},
+		{
+			name:       "case insensitive column matching",
+			col:        "NaMe",
+			defaultCol: cloudmigration.SortColumnID,
+			expected:   cloudmigration.SortColumnName,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getQueryCol(tt.col, tt.defaultCol)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGetQueryOrder(t *testing.T) {
+	tests := []struct {
+		name         string
+		order        string
+		defaultOrder cloudmigration.SortOrder
+		expected     cloudmigration.SortOrder
+	}{
+		{
+			name:         "returns ASC order",
+			order:        "ASC",
+			defaultOrder: cloudmigration.SortOrderDesc,
+			expected:     cloudmigration.SortOrderAsc,
+		},
+		{
+			name:         "returns DESC order",
+			order:        "DESC",
+			defaultOrder: cloudmigration.SortOrderAsc,
+			expected:     cloudmigration.SortOrderDesc,
+		},
+		{
+			name:         "returns default for unknown order",
+			order:        "unknown",
+			defaultOrder: cloudmigration.SortOrderAsc,
+			expected:     cloudmigration.SortOrderAsc,
+		},
+		{
+			name:         "case insensitive order matching",
+			order:        "aSc",
+			defaultOrder: cloudmigration.SortOrderDesc,
+			expected:     cloudmigration.SortOrderAsc,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getQueryOrder(tt.order, tt.defaultOrder)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
