@@ -17,5 +17,11 @@ const exportMuteTimingsHandler = () => http.get('/api/v1/provisioning/mute-timin
 const exportSpecificMuteTimingsHandler = () =>
   http.get('/api/v1/provisioning/mute-timings/:name/export', getProvisioningHelper);
 
-const handlers = [exportMuteTimingsHandler(), exportSpecificMuteTimingsHandler()];
+// Used by folder picker to load provisioning settings
+const provisioningSettingsHandler = () =>
+  http.get('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/settings', () =>
+    HttpResponse.json({ items: [] })
+  );
+
+const handlers = [exportMuteTimingsHandler(), exportSpecificMuteTimingsHandler(), provisioningSettingsHandler()];
 export default handlers;

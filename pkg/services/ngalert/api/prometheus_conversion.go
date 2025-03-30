@@ -83,6 +83,44 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroup(
 	return f.svc.RouteConvertPrometheusPostRuleGroup(ctx, namespaceTitle, promGroup)
 }
 
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroups(ctx *contextmodel.ReqContext) response.Response {
+	body, err := io.ReadAll(ctx.Req.Body)
+	if err != nil {
+		return errorToResponse(err)
+	}
+	defer func() { _ = ctx.Req.Body.Close() }()
+
+	var m string
+
+	// Parse content-type only if it's not empty,
+	// otherwise we'll assume it's yaml
+	contentType := ctx.Req.Header.Get("content-type")
+	if contentType != "" {
+		m, _, err = mime.ParseMediaType(contentType)
+		if err != nil {
+			return errorToResponse(err)
+		}
+	}
+
+	var promNamespaces map[string][]apimodels.PrometheusRuleGroup
+
+	switch m {
+	case "application/yaml", "":
+		// mimirtool does not send content-type, so if it's empty, we assume it's yaml
+		if err := yaml.Unmarshal(body, &promNamespaces); err != nil {
+			return errorToResponse(err)
+		}
+	case "application/json":
+		if err := json.Unmarshal(body, &promNamespaces); err != nil {
+			return errorToResponse(err)
+		}
+	default:
+		return errorToResponse(errorUnsupportedMediaType.Errorf("unsupported media type: %s, only application/yaml and application/json are supported", m))
+	}
+
+	return f.svc.RouteConvertPrometheusPostRuleGroups(ctx, promNamespaces)
+}
+
 // cortextool
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexGetRules(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteConvertPrometheusGetRules(ctx)
@@ -106,4 +144,8 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexGetRuleG
 
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexPostRuleGroup(ctx *contextmodel.ReqContext, namespaceTitle string) response.Response {
 	return f.handleRouteConvertPrometheusPostRuleGroup(ctx, namespaceTitle)
+}
+
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexPostRuleGroups(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteConvertPrometheusPostRuleGroups(ctx)
 }

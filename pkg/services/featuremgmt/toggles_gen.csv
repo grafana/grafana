@@ -153,7 +153,7 @@ alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,fal
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
-azureMonitorPrometheusExemplars,preview,@grafana/partner-datasources,false,false,false
+azureMonitorPrometheusExemplars,GA,@grafana/partner-datasources,false,false,false
 pinNavItems,GA,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 ssoSettingsLDAP,preview,@grafana/identity-access-team,false,true,false
@@ -167,6 +167,7 @@ prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,fa
 alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 newFiltersUI,GA,@grafana/dashboards-squad,false,false,false
+tableNextGen,experimental,@grafana/dataviz-squad,false,false,false
 lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
 alertingPrometheusRulesPrimary,experimental,@grafana/alerting-squad,false,false,true
 exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
@@ -187,8 +188,7 @@ managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
-prometheusUsesCombobox,experimental,@grafana/oss-big-tent,false,false,false
-userStorageAPI,GA,@grafana/plugins-platform-backend,false,false,false
+prometheusUsesCombobox,GA,@grafana/oss-big-tent,false,false,false
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 preinstallAutoUpdate,GA,@grafana/plugins-platform-backend,false,false,false
 playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -212,7 +212,7 @@ investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,fal
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,preview,@grafana/identity-access-team,false,false,false
-teamHttpHeadersMimir,experimental,@grafana/identity-access-team,false,false,false
+teamHttpHeadersMimir,preview,@grafana/identity-access-team,false,false,false
 ABTestFeatureToggleA,experimental,@grafana/sharing-squad,false,false,false
 templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
 ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
@@ -222,8 +222,6 @@ exploreMetricsUseExternalAppPlugin,preview,@grafana/observability-metrics,false,
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 alertingConversionAPI,experimental,@grafana/alerting-squad,false,false,false
-alertingAlertmanagerExtraDedupStage,experimental,@grafana/alerting-squad,false,true,false
-alertingAlertmanagerExtraDedupStageStopPipeline,experimental,@grafana/alerting-squad,false,true,false
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true
 grafanaconThemes,experimental,@grafana/grafana-frontend-platform,false,true,false
 pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -236,8 +234,8 @@ alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 grafanaManagedRecordingRulesDatasources,experimental,@grafana/alerting-squad,false,false,false
 infinityRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
-extraLanguages,experimental,@grafana/grafana-frontend-platform,false,false,true
 noBackdropBlur,experimental,@grafana/grafana-frontend-platform,false,false,true
 alertingMigrationUI,experimental,@grafana/alerting-squad,false,false,true
 unifiedStorageHistoryPruner,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
+alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
