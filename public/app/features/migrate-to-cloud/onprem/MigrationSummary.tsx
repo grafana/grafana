@@ -91,7 +91,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
 
         <MigrationInfo title={t('migrate-to-cloud.summary.errored-resource-count', 'Errors')}>
           {errorCount}
-          <Space h={3} layout="inline" />
+          <Space h={5} layout="inline" />
           <Checkbox
             label={t('migrate-to-cloud.summary.show-errors', 'highlight errors')}
             value={isShowingErrors}

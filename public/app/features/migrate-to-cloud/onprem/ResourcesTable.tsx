@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { DefaultSortTypes } from 'react-table';
 
-import { InteractiveTable, Pagination, Stack, type FetchDataFunc } from '@grafana/ui';
+import { InteractiveTable, Pagination, Stack, Column, type FetchDataFunc } from '@grafana/ui';
 
 import { LocalPlugin } from '../../plugins/admin/types';
 import { MigrateDataResponseItemDto } from '../api';
@@ -21,10 +20,10 @@ export interface ResourcesTableProps {
   onChangeSort: FetchDataFunc<ResourceTableItem>;
 }
 
-const columns = [
-  { id: 'name', header: 'Name', cell: NameCell, sortType: 'alphanumeric' as DefaultSortTypes },
-  { id: 'type', header: 'Type', cell: TypeCell, sortType: 'alphanumeric' as DefaultSortTypes },
-  { id: 'status', header: 'Status', cell: StatusCell, sortType: 'alphanumeric' as DefaultSortTypes },
+const columns: Array<Column<ResourceTableItem>> = [
+  { id: 'name', header: 'Name', cell: NameCell, sortType: 'alphanumeric' },
+  { id: 'resource_type', header: 'Type', cell: TypeCell, sortType: 'alphanumeric' },
+  { id: 'status', header: 'Status', cell: StatusCell, sortType: 'alphanumeric' },
 ];
 
 export function ResourcesTable({
