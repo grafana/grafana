@@ -35,6 +35,18 @@ const (
 	existingDSUID = "test-ds"
 )
 
+func folderToFolderReference(f folder.Folder) folder.FolderReference {
+	return folder.FolderReference{
+		ID:           f.ID,
+		UID:          f.UID,
+		Title:        f.Title,
+		ParentUID:    f.ParentUID,
+		Fullpath:     f.Fullpath,
+		FullpathUIDs: f.FullpathUIDs,
+		ManagedBy:    f.ManagedBy,
+	}
+}
+
 func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	simpleGroup := apimodels.PrometheusRuleGroup{
 		Name:     "Test Group",

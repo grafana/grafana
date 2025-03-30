@@ -28,7 +28,7 @@ import (
 )
 
 type RuleStoreReader interface {
-	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
+	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.FolderReference, error)
 	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
 }
 

@@ -171,7 +171,7 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 	return hits, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	// the general folder is saved as an empty string in the database
 	if q.UID == folder.GeneralFolderUID {
 		q.UID = ""
@@ -230,7 +230,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	}
 
 	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
-	hits := make([]*folder.Folder, 0)
+	hits := make([]*folder.FolderReference, 0)
 	for _, item := range res.Hits {
 		// filter out k6 folders if request is not from a service account
 		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
@@ -241,7 +241,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		// This is a temporary flag, and will be removed once we migrate the alerting use case to
 		// expect a folder ref too for children folders.
 		if q.RefOnly { // nolint:staticcheck
-			f := &folder.Folder{
+			f := &folder.FolderReference{
 				ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:       item.Name,
 				Title:     item.Title,
@@ -262,7 +262,14 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 			return nil, err
 		}
 
-		hits = append(hits, f)
+		hits = append(hits, &folder.FolderReference{
+			ID:           f.ID,
+			UID:          f.UID,
+			Title:        f.Title,
+			ParentUID:    f.ParentUID,
+			FullpathUIDs: f.FullpathUIDs,
+			ManagedBy:    f.ManagedBy,
+		})
 	}
 
 	return hits, nil
