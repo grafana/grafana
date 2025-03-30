@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -138,7 +139,12 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NotEmpty(t, snapshotUid)
 
 		//retrieve it from the db
-		snapshot, err := s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, 0, 0)
+		snapshot, err := s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: 100,
+			SortColumn:  cloudmigration.SortColumnID,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
@@ -147,7 +153,12 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NoError(t, err)
 
 		//retrieve it again
-		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, 0, 0)
+		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: 100,
+			SortColumn:  cloudmigration.SortColumnID,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
@@ -162,7 +173,12 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NoError(t, err)
 
 		// now we expect not to find the snapshot
-		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, 0, 0)
+		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: 100,
+			SortColumn:  cloudmigration.SortColumnID,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
 		require.ErrorIs(t, err, cloudmigration.ErrSnapshotNotFound)
 		require.Nil(t, snapshot)
 	})
@@ -174,9 +190,14 @@ func Test_SnapshotResources(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
-	t.Run("tests CRUD of snapshot resources", func(t *testing.T) {
+	t.Run("test CRUD of snapshot resources", func(t *testing.T) {
 		// Get the default rows from the test
-		resources, err := s.getSnapshotResources(ctx, "poiuy", 0, 100)
+		resources, err := s.getSnapshotResources(ctx, "poiuy", cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: 100,
+			SortColumn:  cloudmigration.SortColumnID,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
 		assert.NoError(t, err)
 		assert.Len(t, resources, 3)
 		for _, r := range resources {
@@ -204,7 +225,12 @@ func Test_SnapshotResources(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Get resources again
-		resources, err = s.getSnapshotResources(ctx, "poiuy", 0, 100)
+		resources, err = s.getSnapshotResources(ctx, "poiuy", cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: 100,
+			SortColumn:  cloudmigration.SortColumnID,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
 		assert.NoError(t, err)
 		assert.Len(t, resources, 4)
 		// ensure existing resource was updated from ERROR
@@ -240,9 +266,96 @@ func Test_SnapshotResources(t *testing.T) {
 		err = s.deleteSnapshotResources(ctx, "poiuy")
 		assert.NoError(t, err)
 		// make sure they're gone
-		resources, err = s.getSnapshotResources(ctx, "poiuy", 0, 100)
+		resources, err = s.getSnapshotResources(ctx, "poiuy", cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: 100,
+			SortColumn:  cloudmigration.SortColumnID,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
 		assert.NoError(t, err)
 		assert.Len(t, resources, 0)
+	})
+
+	t.Run("test pagination and sorting", func(t *testing.T) {
+		// Create test data
+		resources := []cloudmigration.CloudMigrationResource{
+			{UID: "1", SnapshotUID: "abc123", Name: "Dashboard 1", Type: cloudmigration.DashboardDataType, Status: cloudmigration.ItemStatusOK},
+			{UID: "2", SnapshotUID: "abc123", Name: "Alert 1", Type: cloudmigration.AlertRuleType, Status: cloudmigration.ItemStatusError},
+			{UID: "3", SnapshotUID: "abc123", Name: "Dashboard 2", Type: cloudmigration.DashboardDataType, Status: cloudmigration.ItemStatusPending},
+			{UID: "4", SnapshotUID: "abc123", Name: "Folder 1", Type: cloudmigration.FolderDataType, Status: cloudmigration.ItemStatusOK},
+			{UID: "5", SnapshotUID: "abc123", Name: "Alert 2", Type: cloudmigration.AlertRuleType, Status: cloudmigration.ItemStatusOK},
+		}
+
+		err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
+			_, err := sess.Insert(resources)
+			return err
+		})
+		require.NoError(t, err)
+
+		t.Run("default sorting and paging and default params", func(t *testing.T) {
+			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: 100,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, results, 5)
+			// Default sort is by ID ascending
+			assert.Equal(t, "1", results[0].UID)
+			assert.Equal(t, "5", results[4].UID)
+		})
+
+		t.Run("sort by name descending", func(t *testing.T) {
+			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: 100,
+				SortColumn:  cloudmigration.SortColumnName,
+				SortOrder:   cloudmigration.SortOrderDesc,
+			})
+			require.NoError(t, err)
+			assert.Equal(t, "Folder 1", results[0].Name)
+			assert.Equal(t, "Alert 1", results[4].Name)
+		})
+
+		t.Run("sort by type ascending", func(t *testing.T) {
+			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: 100,
+				SortColumn:  cloudmigration.SortColumnType,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Equal(t, "2", results[0].UID)
+			assert.Equal(t, "5", results[1].UID)
+		})
+
+		t.Run("sort by status with pagination", func(t *testing.T) {
+			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  2,
+				ResultLimit: 2,
+				SortColumn:  cloudmigration.SortColumnStatus,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, results, 2)
+			// secondary sort is by ID ascending by default
+			assert.Equal(t, "4", results[0].UID)
+			assert.Equal(t, "5", results[1].UID)
+		})
+
+		t.Run("only errors filter returns only error status resources", func(t *testing.T) {
+			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: 100,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+				ErrorsOnly:  true,
+			})
+			require.NoError(t, err)
+			assert.Len(t, results, 1)
+			assert.Equal(t, "2", results[0].UID)
+		})
 	})
 }
 
