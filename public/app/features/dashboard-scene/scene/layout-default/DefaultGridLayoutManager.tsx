@@ -1,3 +1,6 @@
+import { css, cx } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -13,8 +16,9 @@ import {
   SceneGridLayoutDragStartEvent,
 } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Button, useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
 import {
@@ -34,6 +38,7 @@ import {
   getGridItemKeyForPanelId,
   useDashboard,
   getLayoutOrchestratorFor,
+  getDefaultVizPanel,
 } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -505,6 +510,8 @@ export class DefaultGridLayoutManager
 function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<DefaultGridLayoutManager>) {
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
   const dashboard = useDashboard(model);
+  const { isEditing } = dashboard.useState();
+  const styles = useStyles2(getStyles);
 
   // If we are top level layout and we have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {
@@ -513,5 +520,40 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
     );
   }
 
-  return <model.state.grid.Component model={model.state.grid} />;
+  return (
+    <div className={styles.container}>
+      {model.state.grid.Component && <model.state.grid.Component model={model.state.grid} />}
+      {isEditing && (
+        <div className={cx(styles.addAction, 'dashboard-canvas-add-button')}>
+          <Button variant="primary" fill="text" icon="plus" onClick={() => model.addPanel(getDefaultVizPanel())}>
+            <Trans i18nKey="dashboard.canvas-actions.add-panel">Add panel</Trans>
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      width: '100%',
+      display: 'flex',
+      flexGrow: 1,
+      flexDirection: 'column',
+      '> div:first-child': {
+        flexGrow: `0 !important`,
+        minHeight: '250px',
+      },
+      '&:hover': {
+        '.dashboard-canvas-add-button': {
+          opacity: 1,
+          filter: 'unset',
+        },
+      },
+    }),
+    addAction: css({
+      padding: theme.spacing(1, 0),
+    }),
+  };
 }
