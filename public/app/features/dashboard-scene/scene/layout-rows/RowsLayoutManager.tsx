@@ -1,5 +1,5 @@
 import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { DashboardV2Spec, RowsLayoutKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { t } from 'app/core/internationalization';
 
 import {
@@ -37,7 +37,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     get description() {
       return t('dashboard.rows-layout.description', 'Collapsable panel groups with headings');
     },
-    id: 'rows-layout',
+    id: 'RowsLayout',
     createFromLayout: RowsLayoutManager.createFromLayout,
     isGridLayout: false,
   };
