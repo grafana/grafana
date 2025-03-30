@@ -2655,6 +2655,7 @@
         "edit-action": "Edit action"
       },
       "modal": {
+        "action-authentication-description": "Use the authentication method of the data source to make authenticated requests",
         "action-body": "Body",
         "action-method": "Method",
         "action-query-params": "Query parameters",
@@ -2925,6 +2926,7 @@
       "right-axis-indicator": "(right y-axis)"
     },
     "viz-tooltip": {
+      "action-authentication-label": "Authentication",
       "actions-confirmation-input-placeholder": "Are you sure you want to {{ actionTitle }}?",
       "actions-confirmation-label": "Confirmation message",
       "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",

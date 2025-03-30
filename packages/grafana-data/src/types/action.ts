@@ -35,6 +35,7 @@ interface FetchOptions {
   body?: string;
   queryParams?: Array<[string, string]>;
   headers?: Array<[string, string]>;
+  datasourceUid?: string;
 }
 
 export enum HttpRequestMethod {

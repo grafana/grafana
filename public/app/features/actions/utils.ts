@@ -13,7 +13,7 @@ import {
   textUtil,
   ValueLinkConfig,
 } from '@grafana/data';
-import { BackendDataSourceResponse, getBackendSrv } from '@grafana/runtime';
+import { BackendDataSourceResponse, config, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
@@ -74,16 +74,11 @@ export const getActions = (
 
 /** @internal */
 const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunction) => {
-  /**
-   * TODO/Questions
-   * 1. How do we check if Infinity is enabled/properly configured? - url match, auth set up?
-   * 2.
-   */
-  const isInfinityEnabled = true;
-  if (isInfinityEnabled) {
+  const useInfinityDatasource = config.featureToggles.vizActionsAuth && action.fetch.datasourceUid;
+  if (useInfinityDatasource) {
     try {
       const url = new URL(getUrl(replaceVariables(action.fetch.url)));
-      const requestId = getNextRequestId(); // SQR102
+      const requestId = getNextRequestId();
       const infinityUrl = `api/ds/query?ds_type=yesoreyeram-infinity-datasource&requestId=${requestId}`;
 
       const requestHeaders: any = [];
@@ -97,8 +92,6 @@ const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunctio
         params: queryParams,
         body_type: 'raw',
         body_content_type: contentType,
-        // 'body_graphql_query': '',
-        // 'body_graphql_variables': '',
       };
 
       if (action.fetch.headers) {
@@ -124,26 +117,19 @@ const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunctio
         data: {
           queries: [
             {
-              refId: 'A', // @TODO
+              refId: 'A',
               datasource: {
                 type: 'yesoreyeram-infinity-datasource',
-                uid: 'bdta2ryyr1kaoa', // @TODO
+                uid: action.fetch.datasourceUid,
               },
               type: 'json',
               source: 'url',
               format: 'as-is',
               url,
               url_options: infinityUrlOptions,
-              // 'root_selector': '',
-              // 'columns': [],
-              // 'filters': [],
-              // 'global_query_id': '',
-              // 'datasourceId': 45251,
-              // 'intervalMs': 2000,
-              // 'maxDataPoints': 1844
             },
           ],
-          from: Date.now().toString(), // @TODO
+          from: Date.now().toString(),
           to: Date.now().toString(),
         },
       };
