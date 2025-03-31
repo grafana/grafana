@@ -226,11 +226,15 @@ func TestFrameToSQLAndBack_JSONRoundtrip(t *testing.T) {
 	resultFrame, err := db.QueryFrames(context.Background(), "json_test", query, data.Frames{expectedFrame})
 	require.NoError(t, err)
 
-	// Ensure consistent names for comparison
-	resultFrame.Name = expectedFrame.Name
-	resultFrame.RefID = expectedFrame.RefID
+	// Use custom compare options that ignore Name and RefID
+	opts := append(
+		data.FrameTestCompareOptions(),
+		cmp.FilterPath(func(p cmp.Path) bool {
+			return p.String() == "Name" || p.String() == "RefID"
+		}, cmp.Ignore()),
+	)
 
-	if diff := cmp.Diff(expectedFrame, resultFrame, data.FrameTestCompareOptions()...); diff != "" {
+	if diff := cmp.Diff(expectedFrame, resultFrame, opts...); diff != "" {
 		require.FailNowf(t, "Frame mismatch (-want +got):\n%s", diff)
 	}
 }
@@ -266,11 +270,15 @@ func TestQueryFrames_JSONFilter(t *testing.T) {
 	result, err := db.QueryFrames(context.Background(), "B", query, data.Frames{input})
 	require.NoError(t, err)
 
-	// Ensure frame names match for comparison
-	result.Name = expected.Name
-	result.RefID = expected.RefID
+	// Use custom compare options that ignore Name and RefID
+	opts := append(
+		data.FrameTestCompareOptions(),
+		cmp.FilterPath(func(p cmp.Path) bool {
+			return p.String() == "Name" || p.String() == "RefID"
+		}, cmp.Ignore()),
+	)
 
-	if diff := cmp.Diff(expected, result, data.FrameTestCompareOptions()...); diff != "" {
+	if diff := cmp.Diff(expected, result, opts...); diff != "" {
 		require.FailNowf(t, "Result mismatch (-want +got):\n%s", diff)
 	}
 }
