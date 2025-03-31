@@ -43,8 +43,8 @@ composableKinds: PanelCfg: {
 					// Unit for the secondary stat to override what ever is set in the data frame.
 					secondaryStatUnit?: string
 				}
-				ZoomMode:        "cooperative" | "greedy" @cuetsy(kind="enum")
-				LayoutAlgorithm: "layered" | "force"      @cuetsy(kind="enum")
+				ZoomMode:        "cooperative" | "greedy"     @cuetsy(kind="enum")
+				LayoutAlgorithm: "layered" | "force" | "grid" @cuetsy(kind="enum")
 				Options: {
 					nodes?: NodeOptions
 					edges?: EdgeOptions

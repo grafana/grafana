@@ -3,8 +3,6 @@ import { useState } from 'react';
 
 import { Button, HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
 
-import { LayoutAlgorithm } from './panelcfg.gen';
-
 function getStyles() {
   return {
     wrapper: css({
@@ -54,24 +52,6 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
             title={'Zoom out'}
             variant="secondary"
             disabled={disableZoomOut}
-          />
-        </HorizontalGroup>
-        <HorizontalGroup spacing="xs">
-          <Button
-            icon={'code-branch'}
-            onClick={() => onConfigChange({ ...config, gridLayout: false, layoutAlgorithm: LayoutAlgorithm.Layered })}
-            size={'md'}
-            title={'Default layout'}
-            variant="secondary"
-            disabled={!config.gridLayout}
-          />
-          <Button
-            icon={'apps'}
-            onClick={() => onConfigChange({ ...config, gridLayout: true, layoutAlgorithm: undefined })}
-            size={'md'}
-            title={'Grid layout'}
-            variant="secondary"
-            disabled={config.gridLayout}
           />
         </HorizontalGroup>
       </VerticalGroup>

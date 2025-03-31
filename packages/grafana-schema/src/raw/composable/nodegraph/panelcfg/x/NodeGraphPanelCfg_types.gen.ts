@@ -28,6 +28,7 @@ export enum ZoomMode {
 
 export enum LayoutAlgorithm {
   Force = 'force',
+  Grid = 'grid',
   Layered = 'layered',
 }
 

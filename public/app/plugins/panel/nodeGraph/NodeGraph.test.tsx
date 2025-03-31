@@ -5,6 +5,17 @@ import { NodeGraph } from './NodeGraph';
 import { LayoutAlgorithm, ZoomMode } from './panelcfg.gen';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
 
+jest.mock('./layout', () => {
+  const actual = jest.requireActual('./layout');
+  return {
+    ...actual,
+    defaultConfig: {
+      ...actual.defaultConfig,
+      layoutAlgorithm: 'force',
+    },
+  };
+});
+
 jest.mock('react-use/lib/useMeasure', () => {
   return {
     __esModule: true,
@@ -252,11 +263,10 @@ describe('NodeGraph', () => {
         ]}
         getLinks={() => []}
         nodeLimit={3}
-        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
-    const button = await screen.findByTitle(/Grid layout/);
+    const button = await screen.findByText('Grid');
     await userEvent.click(button);
 
     await expectNodePositionCloseTo('service:0', { x: -60, y: -60 });

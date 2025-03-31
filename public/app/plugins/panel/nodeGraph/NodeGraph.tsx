@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { memo, MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
@@ -12,7 +12,7 @@ import { Legend } from './Legend';
 import { Marker } from './Marker';
 import { Node } from './Node';
 import { ViewControls } from './ViewControls';
-import { Config, defaultConfig, useLayout } from './layout';
+import { Config, defaultConfig, useLayout, LayoutCache } from './layout';
 import { LayoutAlgorithm } from './panelcfg.gen';
 import { EdgeDatumLayout, NodeDatum, NodesMarker, ZoomMode } from './types';
 import { useCategorizeFrames } from './useCategorizeFrames';
@@ -111,6 +111,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
+export const NODE_LIMIT_TO_SHOW_LAYERED_LAYOUT = 500;
+
 // Limits the number of visible nodes, mainly for performance reasons. Nodes above the limit are accessible by expanding
 // parts of the graph. The specific number is arbitrary but should be a number of nodes where panning, zooming and other
 // interactions will be without any lag for most users.
@@ -130,6 +132,22 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
 
   const [measureRef, { width, height }] = useMeasure();
   const [config, setConfig] = useState<Config>(defaultConfig);
+
+  // Layout cache to avoid recalculating layouts
+  const layoutCacheRef = useRef<LayoutCache>({});
+
+  // Update the config when layoutAlgorithm changes via the panel options
+  useEffect(() => {
+    if (layoutAlgorithm) {
+      setConfig((prevConfig) => {
+        return {
+          ...prevConfig,
+          gridLayout: layoutAlgorithm === LayoutAlgorithm.Grid,
+          layoutAlgorithm,
+        };
+      });
+    }
+  }, [layoutAlgorithm]);
 
   const firstNodesDataFrame = nodesDataFrames[0];
   const firstEdgesDataFrame = edgesDataFrames[0];
@@ -177,7 +195,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
     width,
     focusedNodeId,
     processed.hasFixedPositions,
-    layoutAlgorithm
+    layoutCacheRef.current
   );
 
   // If we move from grid to graph layout, and we have focused node lets get its position to center there. We want to
@@ -217,6 +235,11 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
     setConfig(cfg);
   };
 
+  // Clear the layout cache when data changes
+  useEffect(() => {
+    layoutCacheRef.current = {};
+  }, [firstNodesDataFrame, firstEdgesDataFrame]);
+
   return (
     <div ref={topLevelRef} className={styles.wrapper}>
       {loading ? (
@@ -231,14 +254,17 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
           <RadioButtonGroup
             size="sm"
             options={[
-              { label: 'Layered', value: LayoutAlgorithm.Layered },
+              ...(processed.nodes.length <= NODE_LIMIT_TO_SHOW_LAYERED_LAYOUT
+                ? [{ label: 'Layered', value: LayoutAlgorithm.Layered }]
+                : []),
               { label: 'Force', value: LayoutAlgorithm.Force },
+              { label: 'Grid', value: LayoutAlgorithm.Grid },
             ]}
-            value={config.layoutAlgorithm}
+            value={config.gridLayout ? LayoutAlgorithm.Grid : config.layoutAlgorithm}
             onChange={(value) => {
               handleLayoutChange({
                 ...config,
-                gridLayout: false,
+                gridLayout: value === LayoutAlgorithm.Grid,
                 layoutAlgorithm: value,
               });
             }}
