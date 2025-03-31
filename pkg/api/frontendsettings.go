@@ -154,6 +154,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Sort:            getPanelSort(panel.ID),
 			Angular:         panel.Angular,
 			LoadingStrategy: hs.pluginAssets.LoadingStrategy(c.Req.Context(), panel),
+			Translations:    panel.Translations,
 		}
 	}
 
@@ -489,6 +490,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 			LoadingStrategy:           hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
+			Translations:              plugin.Translations,
 		}
 
 		if ds.JsonData == nil {
@@ -571,8 +573,9 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					Signature: ds.Signature,
 					Module:    ds.Module,
 					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
-					BaseURL: ds.BaseURL,
-					Angular: ds.Angular,
+					BaseURL:      ds.BaseURL,
+					Angular:      ds.Angular,
+					Translations: ds.Translations,
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
@@ -597,6 +600,7 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		Extensions:      plugin.Extensions,
 		Dependencies:    plugin.Dependencies,
 		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),
+		Translations:    plugin.Translations,
 	}
 
 	if settings.Enabled {
