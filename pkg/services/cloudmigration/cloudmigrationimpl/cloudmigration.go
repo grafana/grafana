@@ -566,7 +566,7 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 	defer span.End()
 
 	orgID, sessionUid, snapshotUid := query.OrgID, query.SessionUID, query.SnapshotUID
-	snapshot, err := s.store.GetSnapshotByUID(ctx, orgID, sessionUid, snapshotUid, query.ResultPage, query.ResultLimit)
+	snapshot, err := s.store.GetSnapshotByUID(ctx, orgID, sessionUid, snapshotUid, query.SnapshotResultQueryParams)
 	if err != nil {
 		return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
 	}
@@ -615,7 +615,7 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		}
 
 		// Refresh the snapshot after the update
-		snapshot, err = s.store.GetSnapshotByUID(ctx, orgID, sessionUid, snapshotUid, query.ResultPage, query.ResultLimit)
+		snapshot, err = s.store.GetSnapshotByUID(ctx, orgID, sessionUid, snapshotUid, query.SnapshotResultQueryParams)
 		if err != nil {
 			return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
 		}

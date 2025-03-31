@@ -34,6 +34,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 			SkipHostEnvVarsEnabled:      features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
 			SriChecksEnabled:            features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
 			PluginsCDNSyncLoaderEnabled: features.IsEnabledGlobally(featuremgmt.FlagPluginsCDNSyncLoader),
+			LocalizationForPlugins:      features.IsEnabledGlobally(featuremgmt.FlagLocalizationForPlugins),
 		},
 		cfg.AngularSupportEnabled,
 		cfg.GrafanaComAPIURL,
