@@ -1,4 +1,4 @@
-import { PromAlertingRuleState, PromRuleDTO, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
+import { PromAlertingRuleState, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { mockGrafanaPromAlertingRule, mockPromAlertingRule, mockPromRecordingRule } from '../../mocks';
 import { RuleHealth } from '../../search/rulesSearchParser';
@@ -63,6 +63,7 @@ describe('ruleFilter', () => {
   it('should filter by labels', () => {
     const rule = mockPromAlertingRule({
       labels: { severity: 'critical', team: 'ops' },
+      alerts: [],
     });
 
     expect(ruleFilter(rule, getFilter({ labels: ['severity=critical'] }))).toBe(true);
@@ -129,12 +130,12 @@ describe('ruleFilter', () => {
   it('should filter by rule health', () => {
     const healthyRule = mockPromAlertingRule({
       name: 'Healthy Rule',
-      health: 'OK',
+      health: RuleHealth.Ok,
     });
 
     const errorRule = mockPromAlertingRule({
       name: 'Error Rule',
-      health: 'Error',
+      health: RuleHealth.Error,
     });
 
     expect(ruleFilter(healthyRule, getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(true);
@@ -172,12 +173,11 @@ describe('ruleFilter', () => {
     let getDataSourceUIDSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      // Setup spy on getDataSourceUID
-      getDataSourceUIDSpy = jest.spyOn(datasourceUtils, 'getDataSourceUID').mockImplementation((args: any) => {
-        if (args && args.rulesSourceName === 'prometheus') {
+      getDataSourceUIDSpy = jest.spyOn(datasourceUtils, 'getDatasourceAPIUid').mockImplementation((ruleSourceName) => {
+        if (ruleSourceName === 'prometheus') {
           return 'datasource-uid-1';
         }
-        if (args && args.rulesSourceName === 'loki') {
+        if (ruleSourceName === 'loki') {
           return 'datasource-uid-3';
         }
         return undefined;

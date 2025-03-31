@@ -1,15 +1,11 @@
-import { produce } from 'immer';
 import { useCallback } from 'react';
 
 import { useDispatch } from 'app/types/store';
 import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
-import { RulesFilter } from '../../search/rulesSearchParser';
-
-import { groupFilter, ruleFilter } from './filters';
 
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
 
@@ -27,7 +23,7 @@ export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOption
   const [getGroups] = useLazyGetGroupsQuery();
 
   return useCallback(
-    async function* (ruleSource: DataSourceRulesSourceIdentifier, groupLimit: number, filterState?: RulesFilter) {
+    async function* (ruleSource: DataSourceRulesSourceIdentifier, groupLimit: number) {
       const getRuleSourceGroupsWithCache = async (fetchOptions: FetchGroupsOptions) => {
         const response = await getGroups({
           ruleSource: { uid: ruleSource.uid },
@@ -47,9 +43,7 @@ export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOption
           });
         }
 
-        return produce(response, (draft) => {
-          draft.data.groups = filterGroups(response.data.groups, filterState);
-        });
+        return response;
       };
 
       yield* genericGroupsGenerator(getRuleSourceGroupsWithCache, groupLimit);
@@ -63,7 +57,7 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
   const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
 
   const getGroupsAndProvideCache = useCallback(
-    async (fetchOptions: FetchGroupsOptions, filterState?: RulesFilter) => {
+    async (fetchOptions: FetchGroupsOptions) => {
       const response = await getGrafanaGroups(fetchOptions).unwrap();
 
       // This is not mandatory to preload ruler rules, but it improves the UX
@@ -89,19 +83,29 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
         await Promise.allSettled(cacheAndRulerPreload);
       }
 
-      return produce(response, (draft) => {
-        draft.data.groups = filterGroups(response.data.groups, filterState);
-      });
+      return response;
     },
     [getGrafanaGroups, dispatch, hookOptions.populateCache]
   );
 
   return useCallback(
-    async function* (groupLimit: number, filterState?: RulesFilter) {
-      yield* genericGroupsGenerator((options) => getGroupsAndProvideCache(options, filterState), groupLimit);
+    async function* (groupLimit: number) {
+      yield* genericGroupsGenerator(getGroupsAndProvideCache, groupLimit);
     },
     [getGroupsAndProvideCache]
   );
+}
+
+export function toPageless<TGroup extends PromRuleGroupDTO>(
+  generator: AsyncGenerator<TGroup[], void, unknown>
+): AsyncGenerator<TGroup, void, unknown> {
+  return (async function* () {
+    for await (const batch of generator) {
+      for (const item of batch) {
+        yield item;
+      }
+    }
+  })();
 }
 
 // Generator lazily provides groups one by one only when needed
@@ -113,32 +117,13 @@ async function* genericGroupsGenerator<TGroup>(
   groupLimit: number
 ) {
   let response = await fetchGroups({ groupLimit });
-  yield* response.data.groups;
+  yield response.data.groups;
 
   let lastToken: string | undefined = response.data?.groupNextToken;
 
   while (lastToken) {
     response = await fetchGroups({ groupNextToken: lastToken, groupLimit: groupLimit });
-
-    yield* response.data.groups;
+    yield response.data.groups;
     lastToken = response.data?.groupNextToken;
   }
-}
-
-function filterGroups<TRule extends PromRuleDTO, TGroup extends PromRuleGroupDTO<TRule>>(
-  groups: TGroup[],
-  filterState?: RulesFilter
-) {
-  return groups.reduce<TGroup[]>((acc, group) => {
-    if (!filterState) {
-      acc.push(group);
-      return acc;
-    }
-
-    const filteredRules = group.rules.filter((rule) => ruleFilter(rule, filterState));
-    if (filteredRules.length > 0 && groupFilter(group, filterState)) {
-      acc.push({ ...group, rules: filteredRules });
-    }
-    return acc;
-  }, []);
 }

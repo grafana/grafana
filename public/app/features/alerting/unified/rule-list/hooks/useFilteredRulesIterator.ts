@@ -18,6 +18,7 @@ import {
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { getDataSourceByUid, getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 
+import { groupFilter, ruleFilter } from './filters';
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
 export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
@@ -50,9 +51,14 @@ export function useFilteredRulesIteratorProvider() {
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
     // create the iterable sequence for Grafana managed implementation
-    const grafanaIterator = from(grafanaGroupsGenerator(groupLimit, normalizedFilterState)).pipe(
-      flatMap((group) => group.rules.map((rule) => [group, rule] as const)),
-      map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule)),
+    const grafanaIterator = from(grafanaGroupsGenerator(groupLimit)).pipe(
+      flatMap((groups) =>
+        groups
+          .filter((group) => groupFilter(group, normalizedFilterState))
+          .flatMap((group) => group.rules.map((rule) => [group, rule] as const))
+          .filter(([_, rule]) => ruleFilter(rule, normalizedFilterState))
+          .map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
+      ),
       catchError(() => empty())
     );
 
@@ -63,7 +69,7 @@ export function useFilteredRulesIteratorProvider() {
 
     // create the iterable sequence for upstream Prometheus / Mimir managed implementation
     const prometheusRulesSourceIterables = externalRulesSourcesToFetchFrom.map((dataSourceIdentifier) => {
-      const generator = prometheusGroupsGenerator(dataSourceIdentifier, groupLimit, normalizedFilterState);
+      const generator = prometheusGroupsGenerator(dataSourceIdentifier, groupLimit);
       return from(generator).pipe(
         map((group) => [dataSourceIdentifier, group] as const),
         catchError(() => empty())
@@ -75,8 +81,13 @@ export function useFilteredRulesIteratorProvider() {
     const otherIterables = prometheusRulesSourceIterables.slice(1);
 
     const dataSourcesIterator = merge(source, ...otherIterables).pipe(
-      flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
-      map(([rulesSource, group, rule]) => mapRuleToRuleWithOrigin(rulesSource, group, rule))
+      flatMap(([rulesSource, groups]) =>
+        groups
+          .filter((group) => groupFilter(group, normalizedFilterState))
+          .flatMap((group) => group.rules.map((rule) => [rulesSource, group, rule] as const))
+          .filter(([_, __, rule]) => ruleFilter(rule, normalizedFilterState))
+          .map(([rulesSource, group, rule]) => mapRuleToRuleWithOrigin(rulesSource, group, rule))
+      )
     );
 
     return merge(grafanaIterator, dataSourcesIterator);
