@@ -13,6 +13,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
+// History keeps track of completed jobs
 type History interface {
 	// Adds a job to the history
 	WriteJob(ctx context.Context, job *provisioning.Job) error
@@ -24,6 +25,8 @@ type History interface {
 	GetJob(ctx context.Context, repo string, uid string) (*provisioning.Job, error)
 }
 
+// NewStorageBackedHistory creates a History client backed by unified storage
+// This should be replaced by loki when running in cloud
 func NewStorageBackedHistory(store rest.Storage) (History, error) {
 	var ok bool
 	history := &storageBackedHistory{}
