@@ -2,7 +2,9 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -20,7 +22,7 @@ type jobsConnector struct {
 }
 
 func (*jobsConnector) New() runtime.Object {
-	return &provisioning.Job{}
+	return &provisioning.Repository{}
 }
 
 func (*jobsConnector) Destroy() {}
@@ -30,7 +32,7 @@ func (*jobsConnector) ProducesMIMETypes(verb string) []string {
 }
 
 func (c *jobsConnector) ProducesObject(verb string) any {
-	return c.New()
+	return &provisioning.Job{}
 }
 
 func (*jobsConnector) ConnectMethods() []string {
@@ -38,7 +40,7 @@ func (*jobsConnector) ConnectMethods() []string {
 }
 
 func (*jobsConnector) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, ""
+	return nil, true, "" // path -> uid
 }
 
 func (c *jobsConnector) Connect(
@@ -54,24 +56,33 @@ func (c *jobsConnector) Connect(
 	cfg := repo.Config()
 
 	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		prefix := fmt.Sprintf("/%s/jobs/", name)
+		idx := strings.Index(r.URL.Path, prefix)
 		if r.Method == http.MethodGet {
-			query := r.URL.Query()
-			if query.Has("job") {
-				job, err := c.historic.GetJob(ctx, name, query.Get("job"))
+			if idx > 0 {
+				jobUID := r.URL.Path[idx+len(prefix):]
+				if !validBlobID(jobUID) {
+					responder.Error(apierrors.NewBadRequest(fmt.Sprintf("invalid job uid: %s", jobUID)))
+					return
+				}
+				job, err := c.historic.GetJob(ctx, name, jobUID)
 				if err != nil {
 					responder.Error(err)
 					return
 				}
-				responder.Object(http.StatusOK, &provisioning.JobList{Items: []provisioning.Job{*job}})
+				responder.Object(http.StatusOK, job)
 				return
 			}
-
 			recent, err := c.historic.RecentJobs(ctx, name)
 			if err != nil {
 				responder.Error(err)
 				return
 			}
 			responder.Object(http.StatusOK, recent)
+			return
+		}
+		if idx > 0 {
+			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
 			return
 		}
 

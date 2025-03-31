@@ -243,23 +243,22 @@ const injectedRtkApi = api
         providesTags: ['Repository'],
       }),
       getRepositoryJobs: build.query<GetRepositoryJobsApiResponse, GetRepositoryJobsApiArg>({
-        query: (queryArg) => ({
-          url: `/repositories/${queryArg.name}/jobs`,
-          params: {
-            job: queryArg.job,
-          },
-        }),
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs` }),
         providesTags: ['Repository'],
       }),
       createRepositoryJobs: build.mutation<CreateRepositoryJobsApiResponse, CreateRepositoryJobsApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs`, method: 'POST', body: queryArg.job }),
         invalidatesTags: ['Repository'],
       }),
+      getRepositoryJobsWithPath: build.query<GetRepositoryJobsWithPathApiResponse, GetRepositoryJobsWithPathApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs/${queryArg.uid}` }),
+        providesTags: ['Repository'],
+      }),
       getRepositoryRenderWithPath: build.query<
         GetRepositoryRenderWithPathApiResponse,
         GetRepositoryRenderWithPathApiArg
       >({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/render/${queryArg.path}` }),
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/render/${queryArg.guid}` }),
         providesTags: ['Repository'],
       }),
       getRepositoryResources: build.query<GetRepositoryResourcesApiResponse, GetRepositoryResourcesApiArg>({
@@ -646,23 +645,28 @@ export type GetRepositoryHistoryWithPathApiArg = {
 };
 export type GetRepositoryJobsApiResponse = /** status 200 OK */ JobList;
 export type GetRepositoryJobsApiArg = {
-  /** name of the Job */
+  /** name of the Repository */
   name: string;
-  /** job UUID */
-  job?: string;
 };
 export type CreateRepositoryJobsApiResponse = /** status 200 OK */ Job;
 export type CreateRepositoryJobsApiArg = {
-  /** name of the Job */
+  /** name of the Repository */
   name: string;
   job: Job;
+};
+export type GetRepositoryJobsWithPathApiResponse = /** status 200 OK */ Job;
+export type GetRepositoryJobsWithPathApiArg = {
+  /** name of the Repository */
+  name: string;
+  /** Original Job UID */
+  uid: string;
 };
 export type GetRepositoryRenderWithPathApiResponse = unknown;
 export type GetRepositoryRenderWithPathApiArg = {
   /** name of the Repository */
   name: string;
-  /** path to the resource */
-  path: string;
+  /** Image GUID */
+  guid: string;
 };
 export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceList;
 export type GetRepositoryResourcesApiArg = {
@@ -1285,6 +1289,7 @@ export const {
   useGetRepositoryHistoryWithPathQuery,
   useGetRepositoryJobsQuery,
   useCreateRepositoryJobsMutation,
+  useGetRepositoryJobsWithPathQuery,
   useGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,

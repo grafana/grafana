@@ -804,7 +804,7 @@ spec:
 
 	sub = oas.Paths.Paths[repoprefix+"/jobs"]
 	if sub != nil {
-		sub.Post.Description = "Sync from repository into Grafana"
+		sub.Post.Description = "Register a job for this repository"
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{
@@ -852,16 +852,6 @@ spec:
 		}
 
 		sub.Get.Description = "List recent jobs"
-		sub.Get.Parameters = append(sub.Get.Parameters, &spec3.Parameter{
-			ParameterProps: spec3.ParameterProps{
-				Name:        "job",
-				In:          "query",
-				Example:     "",
-				Description: "job UUID",
-				Schema:      spec.StringProperty(),
-				Required:    false,
-			},
-		})
 		sub.Get.Responses = &spec3.Responses{
 			ResponsesProps: spec3.ResponsesProps{
 				StatusCodeResponses: map[int]*spec3.Response{
@@ -886,6 +876,45 @@ spec:
 		}
 	}
 
+	sub = oas.Paths.Paths[repoprefix+"/jobs/{path}"]
+	if sub != nil {
+		sub.Post = nil
+		sub.Get.Description = "Get job by UID"
+		sub.Get.Responses = &spec3.Responses{
+			ResponsesProps: spec3.ResponsesProps{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Content: map[string]*spec3.MediaType{
+								"application/json": {
+									MediaTypeProps: spec3.MediaTypeProps{
+										Schema: &spec.Schema{
+											SchemaProps: spec.SchemaProps{
+												Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "Job"),
+											},
+										},
+									},
+								},
+							},
+							Description: "OK",
+						},
+					},
+				},
+			},
+		}
+
+		// Change the {path} to {uid}
+		for _, v := range sub.Parameters {
+			if v.Name == "path" {
+				v.Name = "uid"
+				v.Description = "Original Job UID"
+			}
+		}
+
+		delete(oas.Paths.Paths, repoprefix+"/jobs/{path}")
+		oas.Paths.Paths[repoprefix+"/jobs/{uid}"] = sub
+	}
+
 	delete(oas.Paths.Paths, repoprefix+"/render")
 	sub = oas.Paths.Paths[repoprefix+"/render/{path}"]
 	if sub != nil {
@@ -904,6 +933,17 @@ spec:
 				},
 			},
 		}
+
+		// Change the {path} to {uid}
+		for _, v := range sub.Parameters {
+			if v.Name == "path" {
+				v.Name = "guid"
+				v.Description = "Image GUID"
+			}
+		}
+
+		delete(oas.Paths.Paths, repoprefix+"/render/{path}")
+		oas.Paths.Paths[repoprefix+"/render/{guid}"] = sub
 	}
 
 	// Add any missing definitions

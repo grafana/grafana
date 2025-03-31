@@ -1903,16 +1903,6 @@
         ],
         "description": "List recent jobs",
         "operationId": "getRepositoryJobs",
-        "parameters": [
-          {
-            "name": "job",
-            "in": "query",
-            "description": "job UUID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1929,14 +1919,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v0alpha1",
-          "kind": "Job"
+          "kind": "Repository"
         }
       },
       "post": {
         "tags": [
           "Repository"
         ],
-        "description": "Sync from repository into Grafana",
+        "description": "Register a job for this repository",
         "operationId": "createRepositoryJobs",
         "requestBody": {
           "content": {
@@ -2005,14 +1995,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v0alpha1",
-          "kind": "Job"
+          "kind": "Repository"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the Job",
+          "description": "name of the Repository",
           "required": true,
           "schema": {
             "type": "string",
@@ -2031,7 +2021,66 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/render/{path}": {
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/jobs/{uid}": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "Get job by UID",
+        "operationId": "getRepositoryJobsWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Repository"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Repository",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "uid",
+          "in": "path",
+          "description": "Original Job UID",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/render/{guid}": {
       "get": {
         "tags": [
           "Repository"
@@ -2075,9 +2124,9 @@
           }
         },
         {
-          "name": "path",
+          "name": "guid",
           "in": "path",
-          "description": "path to the resource",
+          "description": "Image GUID",
           "required": true,
           "schema": {
             "type": "string",
