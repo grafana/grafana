@@ -291,7 +291,6 @@ export class V2DashboardSerializer
       }
     }
 
-    console.log('dsReferencesMap', this.defaultDsReferencesMap);
   }
 
   getDSReferencesMapping() {
