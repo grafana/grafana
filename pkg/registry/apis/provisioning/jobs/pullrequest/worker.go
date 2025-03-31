@@ -14,6 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// maxNumberOfPreviews is the maximum number of previews to show in a pull request comment.
+const maxNumberOfPreviews = 10
+
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*repository.FileInfo, error)
@@ -103,6 +106,13 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 			progress.Record(ctx, result)
 			continue
 		}
+
+		if len(previews) >= maxNumberOfPreviews {
+			result.Action = repository.FileActionIgnored
+			progress.Record(ctx, result)
+			continue
+		}
+
 		result.Action = f.Action
 
 		fileInfo, err := prRepo.Read(ctx, f.Path, ref)
@@ -140,6 +150,11 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 
 	if len(previews) == 0 {
 		progress.SetFinalMessage(ctx, "no previews to add")
+		return nil
+	}
+
+	if len(previews) > maxNumberOfPreviews {
+		progress.SetFinalMessage(ctx, "too many previews to add")
 		return nil
 	}
 
