@@ -15,7 +15,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -342,7 +342,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 				return row, fmt.Errorf("JSON unmarshal error for: %s // %w", dash.Name, err)
 			}
 		}
-		dash.Spec.Remove("id")
+		// Ignore any saved values for id/version/uid
+		delete(dash.Spec.Object, "id")
+		delete(dash.Spec.Object, "version")
+		delete(dash.Spec.Object, "uid")
 	}
 	return row, err
 }
@@ -401,6 +404,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 		})
 		if old != nil {
 			dash.Spec.Set("id", old.ID)
+			dash.Spec.Set("version", float64(old.Version))
 		} else {
 			dash.Spec.Remove("id") // existing of "id" makes it an update
 			created = true

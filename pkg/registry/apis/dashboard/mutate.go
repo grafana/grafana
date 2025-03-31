@@ -28,11 +28,15 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 
 	switch v := obj.(type) {
 	case *dashboardV0.Dashboard:
+		delete(v.Spec.Object, "uid")
+		delete(v.Spec.Object, "version")
 		if id, ok := v.Spec.Object["id"].(float64); ok {
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
 	case *dashboardV1.Dashboard:
+		delete(v.Spec.Object, "uid")
+		delete(v.Spec.Object, "version")
 		if id, ok := v.Spec.Object["id"].(float64); ok {
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)

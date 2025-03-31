@@ -15,7 +15,7 @@ const styles = getStyles(theme);
 describe('LogLine', () => {
   let log: LogListModel;
   beforeEach(() => {
-    log = createLogLine({ labels: { place: 'luna' } });
+    log = createLogLine({ labels: { place: 'luna' }, entry: `log message 1` });
   });
 
   test('Renders a log line', () => {
@@ -31,7 +31,7 @@ describe('LogLine', () => {
       />
     );
     expect(screen.getByText(log.timestamp)).toBeInTheDocument();
-    expect(screen.getByText(log.body)).toBeInTheDocument();
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
   test('Renders a log line with no timestamp', () => {
@@ -47,7 +47,7 @@ describe('LogLine', () => {
       />
     );
     expect(screen.queryByText(log.timestamp)).not.toBeInTheDocument();
-    expect(screen.getByText(log.body)).toBeInTheDocument();
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
   test('Renders a log line with displayed fields', () => {
@@ -80,7 +80,7 @@ describe('LogLine', () => {
       />
     );
     expect(screen.getByText(log.timestamp)).toBeInTheDocument();
-    expect(screen.getByText(log.body)).toBeInTheDocument();
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
     expect(screen.getByText('luna')).toBeInTheDocument();
   });
 

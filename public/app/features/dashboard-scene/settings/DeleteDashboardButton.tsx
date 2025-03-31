@@ -6,6 +6,7 @@ import { Button, ConfirmModal, Modal, Space, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
+import { ProvisionedResourceDeleteModal } from '../saving/provisioned/ProvisionedResourceDeleteModal';
 import { DashboardScene } from '../scene/DashboardScene';
 
 interface ButtonProps {
@@ -51,6 +52,10 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
 
   if (dashboard.state.meta.provisioned && showModal) {
     return <ProvisionedDeleteModal dashboardId={dashboard.state.meta.provisionedExternalId} onClose={toggleModal} />;
+  }
+
+  if (dashboard.isManagedRepository() && showModal) {
+    return <ProvisionedResourceDeleteModal resource={dashboard} onDismiss={toggleModal} />;
   }
 
   return (

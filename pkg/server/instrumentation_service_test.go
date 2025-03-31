@@ -18,7 +18,7 @@ import (
 func TestRunInstrumentationService(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.HTTPPort = "3001"
-	s, err := NewInstrumentationService(log.New("test-logger"), cfg)
+	s, err := NewInstrumentationService(log.New("test-logger"), cfg, prometheus.DefaultGatherer)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)

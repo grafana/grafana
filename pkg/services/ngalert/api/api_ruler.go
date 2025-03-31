@@ -641,31 +641,34 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 
 	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
-			Title:                r.Title,
-			Condition:            r.Condition,
-			Data:                 ApiAlertQueriesFromAlertQueries(r.Data),
-			Updated:              r.Updated,
-			UpdatedBy:            userIdToName(r.UpdatedBy),
-			IntervalSeconds:      r.IntervalSeconds,
-			Version:              r.Version,
-			UID:                  r.UID,
-			NamespaceUID:         r.NamespaceUID,
-			RuleGroup:            r.RuleGroup,
-			NoDataState:          apimodels.NoDataState(r.NoDataState),
-			ExecErrState:         apimodels.ExecutionErrorState(r.ExecErrState),
-			Provenance:           apimodels.Provenance(provenance),
-			IsPaused:             r.IsPaused,
-			NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(r.NotificationSettings),
-			Record:               ApiRecordFromModelRecord(r.Record),
-			Metadata:             AlertRuleMetadataFromModelMetadata(r.Metadata),
-			GUID:                 r.GUID,
+			Title:                       r.Title,
+			Condition:                   r.Condition,
+			Data:                        ApiAlertQueriesFromAlertQueries(r.Data),
+			Updated:                     r.Updated,
+			UpdatedBy:                   userIdToName(r.UpdatedBy),
+			IntervalSeconds:             r.IntervalSeconds,
+			Version:                     r.Version,
+			UID:                         r.UID,
+			NamespaceUID:                r.NamespaceUID,
+			RuleGroup:                   r.RuleGroup,
+			NoDataState:                 apimodels.NoDataState(r.NoDataState),
+			ExecErrState:                apimodels.ExecutionErrorState(r.ExecErrState),
+			Provenance:                  apimodels.Provenance(provenance),
+			IsPaused:                    r.IsPaused,
+			NotificationSettings:        AlertRuleNotificationSettingsFromNotificationSettings(r.NotificationSettings),
+			Record:                      ApiRecordFromModelRecord(r.Record),
+			Metadata:                    AlertRuleMetadataFromModelMetadata(r.Metadata),
+			GUID:                        r.GUID,
+			MissingSeriesEvalsToResolve: r.MissingSeriesEvalsToResolve,
 		},
 	}
 	forDuration := model.Duration(r.For)
+	keepFiringForDuration := model.Duration(r.KeepFiringFor)
 	gettableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
-		For:         &forDuration,
-		Annotations: r.Annotations,
-		Labels:      r.Labels,
+		For:           &forDuration,
+		KeepFiringFor: &keepFiringForDuration,
+		Annotations:   r.Annotations,
+		Labels:        r.Labels,
 	}
 	return gettableExtendedRuleNode
 }

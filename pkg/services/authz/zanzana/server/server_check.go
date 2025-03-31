@@ -76,6 +76,39 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
+	var (
+		resourceIdent       = resource.ResourceIdent()
+		resourceCtx         = resource.Context()
+		subresourceRelation = common.SubresourceRelation(relation)
+	)
+
+	if resource.HasSubresource() {
+		// Check if subject has access as a subresource
+		res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			TupleKey: &openfgav1.CheckRequestTupleKey{
+				User:     subject,
+				Relation: subresourceRelation,
+				Object:   resourceIdent,
+			},
+			Context:          resourceCtx,
+			ContextualTuples: contextuals,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		if res.GetAllowed() {
+			return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+		}
+	}
+
+	if resourceIdent == "" {
+		return &authzv1.CheckResponse{Allowed: false}, nil
+	}
+
 	// Check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,
@@ -83,7 +116,7 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     subject,
 			Relation: relation,
-			Object:   resource.ResourceIdent(),
+			Object:   resourceIdent,
 		},
 		ContextualTuples: contextuals,
 	})
@@ -105,10 +138,10 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 	var (
 		folderIdent    = resource.FolderIdent()
 		resourceCtx    = resource.Context()
-		folderRelation = common.FolderResourceRelation(relation)
+		folderRelation = common.SubresourceRelation(relation)
 	)
 
-	if folderIdent != "" && common.IsFolderResourceRelation(folderRelation) {
+	if folderIdent != "" && common.IsSubresourceRelation(folderRelation) {
 		// Check if subject has access as a sub resource for the folder
 		res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 			StoreId:              store.ID,

@@ -32,6 +32,41 @@ func TestAllowQuery(t *testing.T) {
 			q:    example_all_allowed_functions,
 			err:  nil,
 		},
+		{
+			name: "paren select allowed",
+			q:    `(SELECT * FROM a_table) UNION ALL (SELECT * FROM a_table2)`,
+			err:  nil,
+		},
+		{
+			name: "allows keywords 'is', 'not', 'null'",
+			q:    `SELECT * FROM a_table WHERE a_column IS NOT NULL`,
+			err:  nil,
+		},
+		{
+			name: "null literal",
+			q:    `SELECT 1 as id, NULL as null_col`,
+			err:  nil,
+		},
+		{
+			name: "val tuple in read query",
+			q:    `SELECT 1 WHERE 1 IN (1, 2, 3)`,
+			err:  nil,
+		},
+		{
+			name: "group concat in read query",
+			q:    `SELECT 1 as id, GROUP_CONCAT('will_', 'concatenate') as concat_val`,
+			err:  nil,
+		},
+		{
+			name: "collate in read query",
+			q:    `SELECT 'some text' COLLATE utf8mb4_bin`,
+			err:  nil,
+		},
+		{
+			name: "allow substring_index",
+			q:    `SELECT __value__, SUBSTRING_INDEX(name, '.', -1) AS code FROM A`,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -129,7 +164,17 @@ var example_case_statement = `SELECT
   END AS category
 FROM metrics`
 
-var example_all_allowed_functions = `SELECT
+var example_all_allowed_functions = `WITH sample_data AS (
+  SELECT 
+    100 AS value,
+    'example' AS name,
+    NOW() AS created_at
+  UNION ALL SELECT 
+    50 AS value,
+    'test' AS name,
+    DATE_SUB(NOW(), INTERVAL 1 DAY) AS created_at
+)
+SELECT
   -- Conditional functions
   IF(value > 100, 'High', 'Low') AS conditional_if,
   COALESCE(value, 0) AS conditional_coalesce,
@@ -191,6 +236,6 @@ var example_all_allowed_functions = `SELECT
   -- Type conversion
   CAST(value AS CHAR) AS type_cast,
   CONVERT(value, CHAR) AS type_convert
-FROM metrics
+FROM sample_data
 GROUP BY name, value, created_at
 LIMIT 10`

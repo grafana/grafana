@@ -377,23 +377,23 @@ func (_m *FakeDashboardService) GetDashboards(ctx context.Context, query *GetDas
 }
 
 // GetDashboardsSharedWithUser provides a mock function with given fields: ctx, user
-func (_m *FakeDashboardService) GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error) {
+func (_m *FakeDashboardService) GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*DashboardRef, error) {
 	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDashboardsSharedWithUser")
 	}
 
-	var r0 []*Dashboard
+	var r0 []*DashboardRef
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester) ([]*Dashboard, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester) ([]*DashboardRef, error)); ok {
 		return rf(ctx, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester) []*Dashboard); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester) []*DashboardRef); ok {
 		r0 = rf(ctx, user)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*Dashboard)
+			r0 = ret.Get(0).([]*DashboardRef)
 		}
 	}
 
@@ -555,6 +555,24 @@ func (_m *FakeDashboardService) SoftDeleteDashboard(ctx context.Context, orgID i
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
 		r0 = rf(ctx, orgID, dashboardUid)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CleanUpDashboard provides a mock function with given fields: ctx, dashboardUID, orgId
+func (_m *FakeDashboardService) CleanUpDashboard(ctx context.Context, dashboardUID string, orgId int64) error {
+	ret := _m.Called(ctx, dashboardUID, orgId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CleanUpDashboard")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
+		r0 = rf(ctx, dashboardUID, orgId)
 	} else {
 		r0 = ret.Error(0)
 	}
