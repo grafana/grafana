@@ -5128,7 +5128,8 @@
       "week-start-label": "Week start"
     },
     "theme": {
-      "default-label": "Default"
+      "default-label": "Default",
+      "experimental": "Experimental"
     },
     "title": "Preferences"
   },
