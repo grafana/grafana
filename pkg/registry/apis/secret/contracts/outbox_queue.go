@@ -10,7 +10,7 @@ import (
 type OutboxMessageType int
 
 const (
-	CreateSecretOutboxMessage OutboxMessageType = iota
+	CreateSecretOutboxMessage OutboxMessageType = iota + 1
 	UpdateSecretOutboxMessage
 	DeleteSecretOutboxMessage
 )
@@ -49,7 +49,7 @@ type OutboxMessage struct {
 
 type OutboxQueue interface {
 	// Appends a message to the outbox queue
-	Append(ctx context.Context, message AppendOutboxMessage) error
+	Append(ctx context.Context, message AppendOutboxMessage) (string, error)
 	// Receives at most n messages from the outbox queue
 	ReceiveN(ctx context.Context, n uint) ([]OutboxMessage, error)
 	// Deletes a message from the outbox queue

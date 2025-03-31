@@ -118,6 +118,6 @@ func TestTransaction(t *testing.T) {
 
 	require.NoError(t, db.QueryCommitTx(txID))
 
-	// The row should have been deleted when the transaction wascommitted
+	// The row should have been deleted when the transaction was committed
 	require.Empty(t, db.outboxQueue)
 }

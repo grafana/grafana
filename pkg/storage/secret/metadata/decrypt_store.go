@@ -2,7 +2,6 @@ package metadata
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	claims "github.com/grafana/authlib/types"
@@ -29,10 +28,7 @@ func ProvideDecryptStorage(
 		return &decryptStorage{}, nil
 	}
 
-	keepers, err := keeperService.GetKeepers()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get keepers: %w", err)
-	}
+	keepers := keeperService.GetKeepers()
 
 	return &decryptStorage{db: db, keeperMetadataStorage: keeperMetadataStorage, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage, allowList: allowList}, nil
 }

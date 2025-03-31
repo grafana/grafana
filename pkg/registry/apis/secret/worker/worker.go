@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
+// Consumes and processes messages from the secure value outbox queue
 type Worker struct {
 	config                     Config
 	database                   contracts.Database

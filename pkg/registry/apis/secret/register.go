@@ -2,7 +2,9 @@ package secret
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,14 +19,19 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,9 +45,13 @@ var (
 
 type SecretAPIBuilder struct {
 	tracer                     tracing.Tracer
+	log                        *log.ConcreteLogger
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
+	secretsOutboxQueue         contracts.OutboxQueue
+	database                   contracts.Database
 	accessClient               claims.AccessClient
+	worker                     *worker.Worker
 	decryptersAllowList        map[string]struct{}
 	isDevMode                  bool // REMOVE ME
 }
@@ -49,11 +60,35 @@ func NewSecretAPIBuilder(
 	tracer tracing.Tracer,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
+	secretsOutboxQueue contracts.OutboxQueue,
+	db db.DB,
+	keeperService secretkeeper.Service,
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
 	isDevMode bool, // REMOVE ME
 ) *SecretAPIBuilder {
-	return &SecretAPIBuilder{tracer, secureValueMetadataStorage, keeperMetadataStorage, accessClient, decryptersAllowList, isDevMode}
+	database := database.New(db)
+
+	return &SecretAPIBuilder{
+		tracer:                     tracer,
+		log:                        log.New("secret.SecretAPIBuilder"),
+		secureValueMetadataStorage: secureValueMetadataStorage,
+		keeperMetadataStorage:      keeperMetadataStorage,
+		secretsOutboxQueue:         secretsOutboxQueue,
+		database:                   database,
+		accessClient:               accessClient,
+		worker: worker.NewWorker(worker.Config{
+			BatchSize:      1,
+			ReceiveTimeout: 5 * time.Second,
+		},
+			database,
+			secretsOutboxQueue,
+			secureValueMetadataStorage,
+			keeperMetadataStorage,
+			keeperService.GetKeepers(),
+		),
+		decryptersAllowList: decryptersAllowList,
+		isDevMode:           isDevMode}
 }
 
 func RegisterAPIService(
@@ -63,6 +98,9 @@ func RegisterAPIService(
 	tracer tracing.Tracer,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
+	outboxQueue contracts.OutboxQueue,
+	db db.DB,
+	keeperService secretkeeper.Service,
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
 ) (*SecretAPIBuilder, error) {
@@ -88,6 +126,9 @@ func RegisterAPIService(
 		tracer,
 		secureValueMetadataStorage,
 		keeperMetadataStorage,
+		outboxQueue,
+		db,
+		keeperService,
 		accessClient,
 		nil, // OSS does not need an allow list.
 		cfg.SecretsManagement.IsDeveloperMode,
@@ -143,7 +184,7 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	secureRestStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
 		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
-		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueMetadataStorage, nil, nil, secureValueResource),
+		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueMetadataStorage, b.database, b.secretsOutboxQueue, secureValueResource),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
 		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, keeperResource),
@@ -283,7 +324,15 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 // TODO: use this for starting the outbox queue async process?
 func (b *SecretAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
 	return map[string]genericapiserver.PostStartHookFunc{
-		"start-outbox-queue-workers": func(context genericapiserver.PostStartHookContext) error {
+		"start-outbox-queue-workers": func(hookCtx genericapiserver.PostStartHookContext) error {
+			go func() {
+				if err := b.worker.ControlLoop(hookCtx.Context); err != nil {
+					if !errors.Is(err, context.Canceled) {
+						b.log.Error("secrets worker exited control loop with error: %+v", err)
+					}
+				}
+			}()
+
 			return nil
 		},
 	}, nil

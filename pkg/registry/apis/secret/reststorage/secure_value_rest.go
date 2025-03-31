@@ -141,7 +141,7 @@ func (s *SecureValueRest) Create(
 		}
 		object = createdSecureValue
 
-		if err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
+		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
 			Type:      contracts.CreateSecretOutboxMessage,
 			Name:      sv.Name,
 			Namespace: sv.Namespace,
