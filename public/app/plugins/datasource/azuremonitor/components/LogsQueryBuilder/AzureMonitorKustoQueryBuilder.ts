@@ -91,12 +91,7 @@ const appendSummarize = (builderQuery: BuilderQueryExpression, phrases: string[]
     builderQuery.groupBy?.expressions
       ?.map((exp) => exp.property?.name)
       .filter(Boolean)
-      .map((name) => {
-        if (name?.startsWith('$')) {
-          return name;
-        }
-        return `'${name!.replace(/'/g, "''")}'`;
-      }) ?? [];
+      .map((name) => name ?? '') ?? [];
 
   const summarizeParts = reduceExprs
     .map((expr) => {
