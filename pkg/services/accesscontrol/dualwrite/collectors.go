@@ -10,6 +10,7 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -167,8 +168,7 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
 			}
 
-			// For resource actions on folders we need to merge the tuples into one with combined
-			// group_resources.
+			// For resource actions on folders we need to merge the tuples into one with combined subresources.
 			if zanzana.IsFolderResourceTuple(tuple) {
 				key := tupleStringWithoutCondition(tuple)
 				if t, ok := tuples[tuple.Object][key]; ok {
@@ -386,8 +386,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
 			}
 
-			// For resource actions on folders we need to merge the tuples into one with combined
-			// group_resources.
+			// For resource actions on folders we need to merge the tuples into one with combined subresources.
 			if zanzana.IsFolderResourceTuple(tuple) {
 				key := tupleStringWithoutCondition(tuple)
 				if t, ok := tuples[tuple.Object][key]; ok {
@@ -449,8 +448,7 @@ func fixedRolePermissionsCollector(store db.DB) legacyTupleCollector {
 				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
 			}
 
-			// For resource actions on folders we need to merge the tuples into one with combined
-			// group_resources.
+			// For resource actions on folders we need to merge the tuples into one with combined subresources.
 			if zanzana.IsFolderResourceTuple(tuple) {
 				key := tupleStringWithoutCondition(tuple)
 				if t, ok := tuples[tuple.Object][key]; ok {
@@ -472,7 +470,7 @@ func fixedRolePermissionsCollector(store db.DB) legacyTupleCollector {
 func anonymousRoleBindingsCollector(cfg *setting.Cfg, store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		tuples := make(map[string]map[string]*openfgav1.TupleKey)
-		object := zanzana.NewTupleEntry(zanzana.TypeRole, zanzana.TranslateBasicRole(cfg.Anonymous.OrgRole), "")
+		object := zanzana.NewTupleEntry(zanzana.TypeRole, zanzana.TranslateBasicRole(string(org.RoleViewer)), "")
 		// Object should be set to delete obsolete permissions
 		tuples[object] = make(map[string]*openfgav1.TupleKey)
 

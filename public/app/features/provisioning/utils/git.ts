@@ -1,3 +1,5 @@
+import { RepositorySpec } from 'app/api/clients/provisioning';
+
 /**
  * Validates a Git branch name according to the following rules:
  * 1. The branch name cannot start with `/`, end with `/`, `.`, or whitespace.
@@ -12,3 +14,13 @@ export function validateBranchName(branchName?: string) {
 
   return branchName && branchNameRegex.test(branchName!);
 }
+
+export const getRepoHref = (github?: RepositorySpec['github']) => {
+  if (!github?.url) {
+    return undefined;
+  }
+  if (!github.branch) {
+    return github.url;
+  }
+  return `${github.url}/tree/${github.branch}`;
+};

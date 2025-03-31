@@ -1,12 +1,13 @@
 import { cx } from '@emotion/css';
+import { ReactNode } from 'react';
 
 import { useStyles2 } from '../../themes';
 
 import { getComboboxStyles } from './getComboboxStyles';
 
 interface Props {
-  label: string;
-  description?: string;
+  label: ReactNode;
+  description?: ReactNode;
   id: string;
   isGroup?: boolean;
 }

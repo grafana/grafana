@@ -21,7 +21,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
@@ -31,7 +31,7 @@ import {
   isGrafanaAlertingRuleByType,
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
-  rulerRuleType,
+  isProvisionedRuleGroup,
 } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -67,7 +67,7 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
 
   return folderGroups
     .map<SelectableValue<string>>((group) => {
-      const isProvisioned = isProvisionedGroup(group);
+      const isProvisioned = isProvisionedRuleGroup(group);
       return {
         label: group.name,
         value: group.name,
@@ -79,12 +79,6 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
     })
 
     .sort(sortByLabel);
-};
-
-const isProvisionedGroup = (group: RulerRuleGroupDTO) => {
-  return group.rules.some(
-    (rule) => rulerRuleType.grafana.rule(rule) && Boolean(rule.grafana_alert.provenance) === true
-  );
 };
 
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {

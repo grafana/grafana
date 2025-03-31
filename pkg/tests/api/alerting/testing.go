@@ -454,7 +454,7 @@ func (a apiClient) PostConfiguration(t *testing.T, c apimodels.PostableUserConfi
 	return false, errors.New(data.Message)
 }
 
-func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) (apimodels.UpdateRuleGroupResponse, int, string) {
+func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig, permanentlyDelete bool) (apimodels.UpdateRuleGroupResponse, int, string) {
 	t.Helper()
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
@@ -462,6 +462,14 @@ func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *
 	require.NoError(t, err)
 
 	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s", a.url, folder)
+	uri, err := url.Parse(u)
+	require.NoError(t, err)
+	q := uri.Query()
+	if permanentlyDelete {
+		q.Set("deletePermanently", "true")
+	}
+	uri.RawQuery = q.Encode()
+	u = uri.String()
 	// nolint:gosec
 	resp, err := http.Post(u, "application/json", &buf)
 	require.NoError(t, err)
@@ -477,9 +485,9 @@ func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *
 	return m, resp.StatusCode, string(b)
 }
 
-func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) apimodels.UpdateRuleGroupResponse {
+func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig, permanentlyDelete bool) apimodels.UpdateRuleGroupResponse {
 	t.Helper()
-	m, status, raw := a.PostRulesGroupWithStatus(t, folder, group)
+	m, status, raw := a.PostRulesGroupWithStatus(t, folder, group, permanentlyDelete)
 	requireStatusCode(t, http.StatusAccepted, status, raw)
 	return m
 }
@@ -520,22 +528,21 @@ func (a apiClient) PostRulesExportWithStatus(t *testing.T, folder string, group 
 	return resp.StatusCode, string(b)
 }
 
-func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string) (int, string) {
+func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string, permanently bool) (int, string) {
 	t.Helper()
 
 	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s/%s", a.url, folder, group)
 	req, err := http.NewRequest(http.MethodDelete, u, nil)
 	require.NoError(t, err)
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	require.NoError(t, err)
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	b, err := io.ReadAll(resp.Body)
+
+	if permanently {
+		req.URL.RawQuery = url.Values{"deletePermanently": []string{"true"}}.Encode()
+	}
+
+	resp, status, err := sendRequestRaw(t, req)
 	require.NoError(t, err)
 
-	return resp.StatusCode, string(b)
+	return status, string(resp)
 }
 
 func (a apiClient) PostSilence(t *testing.T, s apimodels.PostableSilence) (apimodels.PostSilencesOKBody, int, string) {
@@ -655,6 +662,15 @@ func (a apiClient) GetDeletedRulesWithStatus(t *testing.T) (apimodels.NamespaceC
 	q.Add("deleted", "true")
 	req.URL.RawQuery = q.Encode()
 	return sendRequestJSON[apimodels.NamespaceConfigResponse](t, req, http.StatusOK)
+}
+
+func (a apiClient) DeleteRuleFromTrashByGUID(t *testing.T, ruleGUID string) (int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/ruler/grafana/api/v1/trash/rule/guid/%s", a.url, ruleGUID), nil)
+	require.NoError(t, err)
+	raw, status, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+	return status, string(raw)
 }
 
 func (a apiClient) ExportRulesWithStatus(t *testing.T, params *apimodels.AlertRulesExportParameters) (int, string) {
@@ -1003,24 +1019,6 @@ func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.
 	return sendRequestJSON[data.Frame](t, req, http.StatusOK)
 }
 
-func (a apiClient) GetAllTimeIntervalsWithStatus(t *testing.T) ([]apimodels.GettableTimeIntervals, int, string) {
-	t.Helper()
-
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals", a.url), nil)
-	require.NoError(t, err)
-
-	return sendRequestJSON[[]apimodels.GettableTimeIntervals](t, req, http.StatusOK)
-}
-
-func (a apiClient) GetTimeIntervalByNameWithStatus(t *testing.T, name string) (apimodels.GettableTimeIntervals, int, string) {
-	t.Helper()
-
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals/%s", a.url, name), nil)
-	require.NoError(t, err)
-
-	return sendRequestJSON[apimodels.GettableTimeIntervals](t, req, http.StatusOK)
-}
-
 func (a apiClient) CreateReceiverWithStatus(t *testing.T, receiver apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, int, string) {
 	t.Helper()
 
@@ -1129,16 +1127,26 @@ func (a apiClient) RawConvertPrometheusPostRuleGroup(t *testing.T, namespaceTitl
 		path = "%s/api/convert/api/prom/rules/%s"
 	}
 
-	data, err := yaml.Marshal(promGroup)
-	require.NoError(t, err)
+	// Based on the content-type header, marshal the data to JSON or YAML
+	contentType := headers["Content-Type"]
+	var data []byte
+	var err error
+	if contentType == "application/json" {
+		data, err = json.Marshal(promGroup)
+		require.NoError(t, err)
+	} else {
+		data, err = yaml.Marshal(promGroup)
+		require.NoError(t, err)
+	}
+
 	buf := bytes.NewReader(data)
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(path, a.url, namespaceTitle), buf)
 	require.NoError(t, err)
-	req.Header.Add("X-Grafana-Alerting-Datasource-UID", datasourceUID)
+	req.Header.Set("X-Grafana-Alerting-Datasource-UID", datasourceUID)
 
 	for key, value := range headers {
-		req.Header.Add(key, value)
+		req.Header.Set(key, value)
 	}
 
 	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)

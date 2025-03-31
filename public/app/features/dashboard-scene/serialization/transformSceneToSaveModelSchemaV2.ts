@@ -5,10 +5,14 @@ import { config } from '@grafana/runtime';
 import {
   behaviors,
   dataLayers,
+  QueryVariable,
   SceneDataQuery,
   SceneDataTransformer,
+  SceneQueryRunner,
+  SceneVariables,
   SceneVariableSet,
   VizPanel,
+  sceneUtils,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
@@ -47,7 +51,7 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
-import { getLayout } from './layoutSerializers/utils';
+import { DSReferencesMapping } from './DashboardSceneSerializer';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
@@ -64,6 +68,8 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
   const controlsState = sceneDash.controls?.state;
   const refreshPicker = controlsState?.refreshPicker;
+
+  const dsReferencesMapping: DSReferencesMapping = scene.serializer.getDSReferencesMapping();
 
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
@@ -93,11 +99,11 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF time settings
 
     // variables
-    variables: getVariables(sceneDash),
+    variables: getVariables(sceneDash, dsReferencesMapping),
     // EOF variables
 
     // elements
-    elements: getElements(scene),
+    elements: getElements(scene, dsReferencesMapping),
     // EOF elements
 
     // annotations
@@ -105,7 +111,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF annotations
 
     // layout
-    layout: getLayout(sceneDash.body),
+    layout: sceneDash.body.serialize(),
     // EOF layout
   };
 
@@ -140,89 +146,95 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(scene: DashboardScene) {
+function getElements(scene: DashboardScene, dsReferencesMapping: DSReferencesMapping) {
   const panels = scene.state.body.getVizPanels() ?? [];
-
-  const panelsArray = panels.map((vizPanel: VizPanel) => {
-    if (isLibraryPanel(vizPanel)) {
-      const behavior = getLibraryPanelBehavior(vizPanel)!;
-      const elementSpec: LibraryPanelKind = {
-        kind: 'LibraryPanel',
-        spec: {
-          id: getPanelIdForVizPanel(vizPanel),
-          title: vizPanel.state.title,
-          libraryPanel: {
-            uid: behavior.state.uid,
-            name: behavior.state.name,
-          },
-        },
-      };
-      return elementSpec;
-    } else {
-      // Handle type conversion for color mode
-      const rawColor = vizPanel.state.fieldConfig.defaults.color;
-      let color: FieldColor | undefined;
-
-      if (rawColor) {
-        const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
-
-        if (convertedMode) {
-          color = {
-            ...rawColor,
-            mode: convertedMode,
-          };
-        }
-      }
-
-      // Remove null from the defaults because schema V2 doesn't support null for these fields
-      const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
-      const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
-      const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
-
-      const defaults: FieldConfig = Object.fromEntries(
-        Object.entries({
-          ...vizPanel.state.fieldConfig.defaults,
-          decimals,
-          min,
-          max,
-          color,
-        }).filter(([_, value]) => value !== undefined)
-      );
-
-      const vizFieldConfig: FieldConfigSource = {
-        ...vizPanel.state.fieldConfig,
-        defaults,
-      };
-
-      const elementSpec: PanelKind = {
-        kind: 'Panel',
-        spec: {
-          id: getPanelIdForVizPanel(vizPanel),
-          title: vizPanel.state.title,
-          description: vizPanel.state.description ?? '',
-          links: getPanelLinks(vizPanel),
-          data: {
-            kind: 'QueryGroup',
-            spec: {
-              queries: getVizPanelQueries(vizPanel),
-              transformations: getVizPanelTransformations(vizPanel),
-              queryOptions: getVizPanelQueryOptions(vizPanel),
-            },
-          },
-          vizConfig: {
-            kind: vizPanel.state.pluginId,
-            spec: {
-              pluginVersion: vizPanel.state.pluginVersion ?? '',
-              options: vizPanel.state.options,
-              fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
-            },
-          },
-        },
-      };
-      return elementSpec;
-    }
+  const panelsArray = panels.map((vizPanel) => {
+    return vizPanelToSchemaV2(vizPanel, dsReferencesMapping);
   });
   return createElements(panelsArray, scene);
+}
+
+export function vizPanelToSchemaV2(
+  vizPanel: VizPanel,
+  dsReferencesMapping?: DSReferencesMapping
+): PanelKind | LibraryPanelKind {
+  if (isLibraryPanel(vizPanel)) {
+    const behavior = getLibraryPanelBehavior(vizPanel)!;
+    const elementSpec: LibraryPanelKind = {
+      kind: 'LibraryPanel',
+      spec: {
+        id: getPanelIdForVizPanel(vizPanel),
+        title: vizPanel.state.title,
+        libraryPanel: {
+          uid: behavior.state.uid,
+          name: behavior.state.name,
+        },
+      },
+    };
+    return elementSpec;
+  }
+
+  // Handle type conversion for color mode
+  const rawColor = vizPanel.state.fieldConfig.defaults.color;
+  let color: FieldColor | undefined;
+
+  if (rawColor) {
+    const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
+
+    if (convertedMode) {
+      color = {
+        ...rawColor,
+        mode: convertedMode,
+      };
+    }
+  }
+
+  // Remove null from the defaults because schema V2 doesn't support null for these fields
+  const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
+  const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
+  const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
+
+  const defaults: FieldConfig = Object.fromEntries(
+    Object.entries({
+      ...vizPanel.state.fieldConfig.defaults,
+      decimals,
+      min,
+      max,
+      color,
+    }).filter(([_, value]) => value !== undefined)
+  );
+
+  const vizFieldConfig: FieldConfigSource = {
+    ...vizPanel.state.fieldConfig,
+    defaults,
+  };
+
+  const elementSpec: PanelKind = {
+    kind: 'Panel',
+    spec: {
+      id: getPanelIdForVizPanel(vizPanel),
+      title: vizPanel.state.title,
+      description: vizPanel.state.description ?? '',
+      links: getPanelLinks(vizPanel),
+      data: {
+        kind: 'QueryGroup',
+        spec: {
+          queries: getVizPanelQueries(vizPanel, dsReferencesMapping),
+          transformations: getVizPanelTransformations(vizPanel),
+          queryOptions: getVizPanelQueryOptions(vizPanel),
+        },
+      },
+      vizConfig: {
+        kind: vizPanel.state.pluginId,
+        spec: {
+          pluginVersion: vizPanel.state.pluginVersion ?? '',
+          options: vizPanel.state.options,
+          fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
+        },
+      },
+    },
+  };
+  return elementSpec;
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
@@ -233,20 +245,20 @@ function getPanelLinks(panel: VizPanel): DataLink[] {
   return [];
 }
 
-function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
+function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferencesMapping): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
-  const datasource = queryRunner?.state.datasource ?? getDefaultDataSourceRef();
 
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
+      const queryDatasource = getElementDatasource(vizPanel, query, 'panel', queryRunner, dsReferencesMapping);
       const dataQuery: DataQueryKind = {
         kind: getDataQueryKind(query),
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
-        datasource: query.datasource ?? datasource,
+        datasource: queryDatasource,
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
@@ -341,13 +353,13 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
 
 function createElements(panels: Element[], scene: DashboardScene): Record<string, Element> {
   return panels.reduce<Record<string, Element>>((elements, panel) => {
-    let elementKey = scene.getElementIdentifierForPanel(panel.spec.id);
+    let elementKey = scene.serializer.getElementIdForPanel(panel.spec.id);
     elements[elementKey!] = panel;
     return elements;
   }, {});
 }
 
-function getVariables(oldDash: DashboardSceneState) {
+function getVariables(oldDash: DashboardSceneState, dsReferencesMapping?: DSReferencesMapping) {
   const variablesSet = oldDash.$variables;
 
   // variables is an array of all variables kind (union)
@@ -363,7 +375,7 @@ function getVariables(oldDash: DashboardSceneState) {
   > = [];
 
   if (variablesSet instanceof SceneVariableSet) {
-    variables = sceneVariablesSetToSchemaV2Variables(variablesSet);
+    variables = sceneVariablesSetToSchemaV2Variables(variablesSet, false, dsReferencesMapping);
   }
 
   return variables;
@@ -581,4 +593,127 @@ function validateRowsLayout(layout: unknown) {
   if (!('rows' in layout.spec) || !Array.isArray(layout.spec.rows)) {
     throw new Error('Layout spec items is not an array');
   }
+}
+
+function getAutoAssignedDSRef(
+  element: VizPanel | SceneVariables,
+  type: 'panels' | 'variables',
+  elementMapReferences?: DSReferencesMapping
+): Set<string> {
+  if (!elementMapReferences) {
+    return new Set();
+  }
+  if (type === 'panels' && isVizPanel(element)) {
+    const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(element);
+    return elementMapReferences.panels.get(elementKey) || new Set();
+  }
+
+  return elementMapReferences.variables;
+}
+
+/**
+ * Determines if a data source reference should be persisted for a query or variable
+ */
+export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable>(
+  element: T,
+  autoAssignedDsRef: Set<string>,
+  type: 'query' | 'variable',
+  context?: SceneQueryRunner
+): DataSourceRef | undefined {
+  // Get the element identifier - refId for queries, name for variables
+  const elementId = getElementIdentifier(element, type);
+
+  // If the element is in the auto-assigned set, it didn't have a datasource specified
+  if (autoAssignedDsRef?.has(elementId)) {
+    return undefined;
+  }
+
+  // Return appropriate datasource reference based on element type
+  if (type === 'query') {
+    if ('datasource' in element && element.datasource) {
+      // If element has its own datasource, use that
+      return element.datasource;
+    }
+
+    // For queries missing a datasource but not in auto-assigned set, use datasource from context (queryRunner)
+    return context?.state?.datasource;
+  }
+
+  if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
+    return element.state.datasource || {};
+  }
+
+  return undefined;
+}
+
+/**
+ * Helper function to extract which identifier to use from a query or variable element
+ * @returns refId for queries, name for variables
+ * TODO: we will add annotations in the future
+ */
+function getElementIdentifier<T extends SceneDataQuery | QueryVariable>(
+  element: T,
+  type: 'query' | 'variable'
+): string {
+  // when is type query look for refId
+  if (type === 'query') {
+    return 'refId' in element ? element.refId : '';
+  }
+  // when is type variable look for the name of the variable
+  return 'state' in element && 'name' in element.state ? element.state.name : '';
+}
+
+function isVizPanel(element: VizPanel | SceneVariables): element is VizPanel {
+  // FIXME: is there another way to do this?
+  return 'pluginId' in element.state;
+}
+
+function isSceneVariables(element: VizPanel | SceneVariables): element is SceneVariables {
+  // Check for properties unique to SceneVariables but not in VizPanel
+  return !('pluginId' in element.state) && ('variables' in element.state || 'getValue' in element);
+}
+
+function isSceneDataQuery(query: SceneDataQuery | QueryVariable): query is SceneDataQuery {
+  return 'refId' in query && !('state' in query);
+}
+
+/**
+ * Get the persisted datasource for a query or variable
+ * When a query or variable is created it could not have a datasource set
+ * we want to respect that and not overwrite it with the auto assigned datasources
+ * resolved in runtime
+ *
+ */
+export function getElementDatasource(
+  element: VizPanel | SceneVariables,
+  queryElement: SceneDataQuery | QueryVariable,
+  type: 'panel' | 'variable',
+  queryRunner?: SceneQueryRunner,
+  dsReferencesMapping?: DSReferencesMapping
+): DataSourceRef | undefined {
+  if (type === 'panel') {
+    if (!queryRunner || !isVizPanel(element) || !isSceneDataQuery(queryElement)) {
+      return undefined;
+    }
+    // Get datasource for panel query
+    const autoAssignedRefs = getAutoAssignedDSRef(element, 'panels', dsReferencesMapping);
+    return getPersistedDSFor(queryElement, autoAssignedRefs, 'query', queryRunner);
+  }
+
+  if (type === 'variable') {
+    if (!isSceneVariables(element) || isSceneDataQuery(queryElement)) {
+      return undefined;
+    }
+    // Get datasource for variable
+    if (!sceneUtils.isQueryVariable(queryElement)) {
+      return undefined;
+    }
+    const autoAssignedRefs = getAutoAssignedDSRef(element, 'variables', dsReferencesMapping);
+    // Important: Only return the datasource if it's not in auto-assigned refs
+    // and if the result would not be an empty object
+    const result = getPersistedDSFor(queryElement, autoAssignedRefs, 'variable');
+    return Object.keys(result || {}).length > 0 ? result : undefined;
+  }
+
+  return undefined;
 }

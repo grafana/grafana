@@ -1,12 +1,19 @@
 import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { t } from 'app/core/internationalization';
 
-import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
+import {
+  NewObjectAddedToCanvasEvent,
+  ObjectRemovedFromCanvasEvent,
+  ObjectsReorderedOnCanvasEvent,
+} from '../../edit-pane/shared';
+import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -28,13 +35,16 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       return t('dashboard.rows-layout.name', 'Rows');
     },
     get description() {
-      return t('dashboard.rows-layout.description', 'Rows layout');
+      return t('dashboard.rows-layout.description', 'Collapsable panel groups with headings');
     },
     id: 'rows-layout',
     createFromLayout: RowsLayoutManager.createFromLayout,
-
-    kind: 'RowsLayout',
+    isGridLayout: false,
   };
+
+  public serialize(): DashboardV2Spec['layout'] {
+    return serializeRowsLayout(this);
+  }
 
   public readonly descriptor = RowsLayoutManager.descriptor;
 
@@ -70,9 +80,21 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     throw new Error('Method not implemented.');
   }
 
+  public duplicate(): DashboardLayoutManager {
+    const newRows = this.state.rows.map((row) => row.duplicate());
+    return this.clone({ rows: newRows, key: undefined });
+  }
+
+  public duplicateRow(row: RowItem) {
+    const newRow = row.duplicate();
+    this.setState({ rows: [...this.state.rows, newRow] });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+  }
+
   public addNewRow(): RowItem {
-    const row = new RowItem();
+    const row = new RowItem({ isNew: true });
     this.setState({ rows: [...this.state.rows, row] });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
     return row;
   }
 
@@ -96,18 +118,20 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     });
   }
 
-  public addRowAbove(row: RowItem) {
+  public addRowAbove(row: RowItem): RowItem {
     const index = this.state.rows.indexOf(row);
-    const newRow = new RowItem();
+    const newRow = new RowItem({ isNew: true });
     const newRows = [...this.state.rows];
 
     newRows.splice(index, 0, newRow);
 
     this.setState({ rows: newRows });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+
+    return newRow;
   }
 
-  public addRowBelow(row: RowItem) {
+  public addRowBelow(row: RowItem): RowItem {
     const rows = this.state.rows;
     let index = rows.indexOf(row);
 
@@ -116,13 +140,15 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       index = index + 1;
     }
 
-    const newRow = new RowItem();
+    const newRow = new RowItem({ isNew: true });
     const newRows = [...this.state.rows];
 
     newRows.splice(index + 1, 0, newRow);
 
     this.setState({ rows: newRows });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+
+    return newRow;
   }
 
   public removeRow(row: RowItem) {
@@ -149,6 +175,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     rows.splice(originalIndex, 1);
     rows.splice(moveToIndex, 0, row);
     this.setState({ rows });
+    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
   public moveRowDown(row: RowItem) {
@@ -170,6 +197,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     rows.splice(originalIndex, 1);
 
     this.setState({ rows });
+    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
   public isFirstRow(row: RowItem): boolean {
@@ -186,9 +214,13 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): RowsLayoutManager {
-    let rows: RowItem[];
+    let rows: RowItem[] = [];
 
-    if (layout instanceof DefaultGridLayoutManager) {
+    if (layout instanceof TabsLayoutManager) {
+      for (const tab of layout.state.tabs) {
+        rows.push(new RowItem({ layout: tab.state.layout.clone(), title: tab.state.title }));
+      }
+    } else if (layout instanceof DefaultGridLayoutManager) {
       const config: Array<{
         title?: string;
         isCollapsed?: boolean;
@@ -234,7 +266,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         (rowConfig) =>
           new RowItem({
             title: rowConfig.title,
-            isCollapsed: !!rowConfig.isCollapsed,
+            collapse: !!rowConfig.isCollapsed,
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
               rowConfig.isDraggable,

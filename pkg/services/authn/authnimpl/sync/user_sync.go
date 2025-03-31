@@ -7,6 +7,8 @@ import (
 	"strconv"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -44,6 +46,14 @@ var (
 		"user.sync.fetch-not-found",
 		errutil.WithPublicMessage("User not found"),
 	)
+	errMismatchedExternalUID = errutil.Unauthorized(
+		"user.sync.mismatched-externalUID",
+		errutil.WithPublicMessage("Mismatched externalUID"),
+	)
+	errEmptyExternalUID = errutil.Unauthorized(
+		"user.sync.empty-externalUID",
+		errutil.WithPublicMessage("Empty externalUID"),
+	)
 )
 
 var (
@@ -63,6 +73,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 		log:                   log.New("user.sync"),
 		tracer:                tracer,
 		features:              features,
+		lastSeenSF:            &singleflight.Group{},
 	}
 }
 
@@ -74,6 +85,7 @@ type UserSync struct {
 	log                   log.Logger
 	tracer                tracing.Tracer
 	features              featuremgmt.FeatureToggles
+	lastSeenSF            *singleflight.Group
 }
 
 // SyncUserHook syncs a user with the database
@@ -186,19 +198,14 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 	}
 
 	goCtx := context.WithoutCancel(ctx)
-	go func(userID int64) {
-		defer func() {
-			if err := recover(); err != nil {
-				s.log.Error("Panic during user last seen sync", "err", err)
-			}
-		}()
-
-		if err := s.userService.UpdateLastSeenAt(goCtx,
-			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil &&
-			!errors.Is(err, user.ErrLastSeenUpToDate) {
+	// nolint:dogsled
+	_, _, _ = s.lastSeenSF.Do(fmt.Sprintf("%d-%d", id.GetOrgID(), userID), func() (interface{}, error) {
+		err := s.userService.UpdateLastSeenAt(goCtx, &user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: id.GetOrgID()})
+		if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
-	}(userID)
+		return nil, nil
+	})
 
 	return nil
 }
@@ -233,7 +240,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 		return nil
 	}
 
-	// If a user does not a connection to a specific auth module, create it.
+	// If a user does not have a connection to a specific auth module, create it.
 	// This can happen when: using multiple auth client where the same user exists in several or
 	// changing to new auth client
 	if createConnection {
@@ -266,6 +273,8 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity, userAuth *login.UserAuth) error {
 	ctx, span := s.tracer.Start(ctx, "user.sync.updateUserAttributes")
 	defer span.End()
+
+	needsConnectionCreation := userAuth == nil
 
 	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthenticatedBy); errProtection != nil {
 		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
@@ -307,14 +316,38 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		needsUpdate = true
 	}
 
-	if needsUpdate {
+	span.SetAttributes(
+		attribute.String("identity.ID", id.ID),
+		attribute.String("identity.ExternalUID", id.ExternalUID),
+	)
+	if usr.IsProvisioned {
+		s.log.Debug("User is provisioned", "id,UID", id.UID)
+		needsConnectionCreation = false
+		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
+		if err != nil {
+			s.log.Error("Error getting auth info", "error", err)
+			return err
+		}
+
+		if id.ExternalUID == "" {
+			s.log.Error("externalUID is empty", "id", id.UID)
+			return errEmptyExternalUID.Errorf("externalUID is empty")
+		}
+
+		if id.ExternalUID != authInfo.ExternalUID {
+			s.log.Error("mismatched externalUID", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
+			return errMismatchedExternalUID.Errorf("externalUID mistmatch")
+		}
+	}
+
+	if needsUpdate && !usr.IsProvisioned {
 		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", fmt.Sprintf("%v", updateCmd))
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
 			return err
 		}
 	}
 
-	return s.upsertAuthConnection(ctx, usr.ID, id, userAuth == nil)
+	return s.upsertAuthConnection(ctx, usr.ID, id, needsConnectionCreation)
 }
 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {

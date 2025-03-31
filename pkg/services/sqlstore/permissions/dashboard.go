@@ -2,7 +2,6 @@ package permissions
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -61,59 +60,41 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 	var dashboardActionSets []string
 	if queryType == searchstore.TypeFolder {
 		folderAction = dashboards.ActionFoldersRead
-		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
-		}
+		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		if needEdit {
 			folderAction = dashboards.ActionDashboardsCreate
-			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-				folderActionSets = []string{"folders:edit", "folders:admin"}
-			}
+			folderActionSets = []string{"folders:edit", "folders:admin"}
 		}
 	} else if queryType == searchstore.TypeDashboard {
 		dashboardAction = dashboards.ActionDashboardsRead
-		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
-			dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
-		}
+		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
+		dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
 		if needEdit {
 			dashboardAction = dashboards.ActionDashboardsWrite
-			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-				folderActionSets = []string{"folders:edit", "folders:admin"}
-				dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
-			}
+			folderActionSets = []string{"folders:edit", "folders:admin"}
+			dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
 		}
 	} else if queryType == searchstore.TypeAlertFolder {
 		folderAction = accesscontrol.ActionAlertingRuleRead
-		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
-		}
+		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		if needEdit {
 			folderAction = accesscontrol.ActionAlertingRuleCreate
-			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-				folderActionSets = []string{"folders:edit", "folders:admin"}
-			}
+			folderActionSets = []string{"folders:edit", "folders:admin"}
 		}
 	} else if queryType == searchstore.TypeAnnotation {
 		dashboardAction = accesscontrol.ActionAnnotationsRead
-		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
-			dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
-		}
+		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
+		dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
 	} else {
 		folderAction = dashboards.ActionFoldersRead
 		dashboardAction = dashboards.ActionDashboardsRead
-		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
-			dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
-		}
+		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
+		dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
 		if needEdit {
 			folderAction = dashboards.ActionDashboardsCreate
 			dashboardAction = dashboards.ActionDashboardsWrite
-			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-				folderActionSets = []string{"folders:edit", "folders:admin"}
-				dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
-			}
+			folderActionSets = []string{"folders:edit", "folders:admin"}
+			dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
 		}
 	}
 

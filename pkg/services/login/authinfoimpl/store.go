@@ -107,10 +107,11 @@ func (s *Store) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuer
 
 func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	authUser := &login.UserAuth{
-		UserId:     cmd.UserId,
-		AuthModule: cmd.AuthModule,
-		AuthId:     cmd.AuthId,
-		Created:    GetTime(),
+		UserId:      cmd.UserId,
+		AuthModule:  cmd.AuthModule,
+		AuthId:      cmd.AuthId,
+		ExternalUID: cmd.ExternalUID,
+		Created:     GetTime(),
 	}
 
 	if cmd.OAuthToken != nil {

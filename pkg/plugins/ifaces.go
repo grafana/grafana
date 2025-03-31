@@ -98,11 +98,6 @@ type BackendFactoryProvider interface {
 	BackendFactory(ctx context.Context, p *Plugin) backendplugin.PluginFactoryFunc
 }
 
-type SecretsPluginManager interface {
-	// SecretsManager returns a secretsmanager plugin
-	SecretsManager(ctx context.Context) *Plugin
-}
-
 type StaticRouteResolver interface {
 	Routes(ctx context.Context) []*StaticRoute
 }

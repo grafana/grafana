@@ -6,7 +6,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { PanelProps } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   LocationServiceProvider,
@@ -203,7 +203,7 @@ describe('DashboardScenePage', () => {
 
     // Wish I could use the menu here but unable t get it to open when I click the menu button
     // Somethig with Dropdown that is not working inside react-testing
-    await userEvent.click(screen.getByLabelText('Menu for panel with title Panel B'));
+    await userEvent.click(screen.getByLabelText('Menu for panel Panel B'));
 
     const inspectMenuItem = await screen.findAllByText('Inspect');
 

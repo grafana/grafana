@@ -1,4 +1,4 @@
-import { GitHubRepositoryConfig, LocalRepositoryConfig, RepositorySpec } from './api';
+import { GitHubRepositoryConfig, LocalRepositoryConfig, RepositorySpec } from '../../api/clients/provisioning';
 
 export type RepositoryFormData = Omit<RepositorySpec, 'github' | 'local'> &
   GitHubRepositoryConfig &
@@ -12,3 +12,29 @@ export interface ProvisioningPreview {
 }
 
 export type WorkflowOption = 'branch' | 'write';
+
+export type HistoryItem = {
+  ref: string;
+  message: string;
+  createdAt?: number;
+  authors: AuthorInfo[];
+};
+
+export type AuthorInfo = {
+  name: string;
+  username: string;
+  avatarURL?: string;
+};
+
+export type FileDetails = {
+  path: string;
+  size: string;
+  hash: string;
+};
+
+export type HistoryListResponse = {
+  apiVersion?: string;
+  kind?: string;
+  metadata?: any;
+  items?: HistoryItem[];
+};

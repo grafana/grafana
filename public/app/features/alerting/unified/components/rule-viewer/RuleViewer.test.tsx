@@ -17,6 +17,7 @@ import {
   mockDataSource,
   mockPluginLinkExtension,
   mockPromAlertingRule,
+  mockRulerGrafanaRecordingRule,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { grantPermissionsHelper } from '../../test/test-utils';
@@ -182,6 +183,30 @@ describe('RuleViewer', () => {
       for (const menuItem of menuItems) {
         expect(menuItem.get()).toBeInTheDocument();
       }
+    });
+
+    it('shows paused state correctly for recording rules', async () => {
+      const recordingRule = getGrafanaRule({
+        name: 'Test recording rule',
+        rulerRule: mockRulerGrafanaRecordingRule(
+          {},
+          {
+            is_paused: true,
+            title: 'Test recording',
+            record: {
+              metric: 'test_recording',
+              from: 'A',
+            },
+          }
+        ),
+      });
+
+      const recordingRuleIdentifier = ruleId.fromCombinedRule('grafana', recordingRule);
+      await renderRuleViewer(recordingRule, recordingRuleIdentifier, ActiveTab.Details);
+
+      expect(await screen.findByText('Test recording rule')).toBeInTheDocument();
+      expect(await screen.findByRole('status', { name: 'Alert evaluation currently paused' })).toBeInTheDocument();
+      expect(screen.queryByText(/last evaluation duration/i)).not.toBeInTheDocument();
     });
 
     it('renders silencing form correctly and shows alert rule name', async () => {

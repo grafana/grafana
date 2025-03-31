@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { config } from '@grafana/runtime/src';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { CombinedRule } from '../../../../../types/unified-alerting';

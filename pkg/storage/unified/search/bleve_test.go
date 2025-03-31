@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -39,11 +40,8 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering))
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
 	require.NoError(t, err)
-
-	// AVOID NPE in test
-	resource.NewIndexMetrics(backend.opts.Root, backend)
 
 	rv := int64(10)
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
@@ -598,4 +596,105 @@ func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteReque
 
 func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
 	return nil, nil
+}
+
+func TestSafeInt64ToInt(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   int64
+		want    int
+		wantErr bool
+	}{
+		{
+			name:  "Valid int64 within int range",
+			input: 42,
+			want:  42,
+		},
+		{
+			name:    "Overflow int64 value",
+			input:   math.MaxInt64,
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "Underflow int64 value",
+			input:   math.MinInt64,
+			want:    0,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := safeInt64ToInt(tt.input)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_isValidPath(t *testing.T) {
+	tests := []struct {
+		name    string
+		dir     string
+		safeDir string
+		want    bool
+	}{
+		{
+			name:    "valid path",
+			dir:     "/path/to/my-file/",
+			safeDir: "/path/to/",
+			want:    true,
+		},
+		{
+			name:    "valid path without trailing slash",
+			dir:     "/path/to/my-file",
+			safeDir: "/path/to",
+			want:    true,
+		},
+		{
+			name:    "path with double slashes",
+			dir:     "/path//to//my-file/",
+			safeDir: "/path/to/",
+			want:    true,
+		},
+		{
+			name:    "invalid path: ..",
+			dir:     "/path/../above/",
+			safeDir: "/path/to/",
+		},
+		{
+			name:    "invalid path: \\",
+			dir:     "\\path/to",
+			safeDir: "/path/to/",
+		},
+		{
+			name:    "invalid path: not under safe dir",
+			dir:     "/path/to.txt",
+			safeDir: "/path/to/",
+		},
+		{
+			name:    "invalid path: empty paths",
+			dir:     "",
+			safeDir: "/path/to/",
+		},
+		{
+			name:    "invalid path: different path",
+			dir:     "/other/path/to/my-file/",
+			safeDir: "/Some/other/path",
+		},
+		{
+			name:    "invalid path: empty safe path",
+			dir:     "/path/to/",
+			safeDir: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, isValidPath(tt.dir, tt.safeDir))
+		})
+	}
 }
