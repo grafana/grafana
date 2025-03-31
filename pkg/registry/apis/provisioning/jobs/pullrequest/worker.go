@@ -96,6 +96,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 
 	progress.SetMessage(ctx, "processing pull request files")
 	previews := make([]resourcePreview, 0, len(files))
+	var tooManyFiles bool
 	for _, f := range files {
 		result := jobs.JobResourceResult{
 			Path: f.Path,
@@ -110,6 +111,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		if len(previews) >= maxNumberOfPreviews {
 			result.Action = repository.FileActionIgnored
 			progress.Record(ctx, result)
+			tooManyFiles = true
 			continue
 		}
 
@@ -153,7 +155,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return nil
 	}
 
-	if len(previews) > maxNumberOfPreviews {
+	if tooManyFiles {
 		progress.SetFinalMessage(ctx, "too many previews to add")
 		return nil
 	}
