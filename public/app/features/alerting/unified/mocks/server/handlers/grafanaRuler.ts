@@ -114,7 +114,12 @@ export const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
         return new HttpResponse(null, { status: 403 });
       }
 
-      return HttpResponse.json(undefined, { status: 200 });
+      return HttpResponse.json(
+        {
+          message: 'Rules deleted',
+        },
+        { status: 202 }
+      );
     }
   );
 
