@@ -83,7 +83,7 @@ export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
         {!job.status?.progress && <Spinner size={24} />}
         <Text element="h4" color="secondary">
-          {job.status?.message ?? t('provisioning.job-status.state', '{state}', { state: job.status?.state! })}
+          {job.status?.message ?? job.status?.state ?? ''}
         </Text>
       </Stack>
     );
