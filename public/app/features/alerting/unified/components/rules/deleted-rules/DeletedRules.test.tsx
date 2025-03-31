@@ -24,46 +24,33 @@ beforeEach(() => {
     AccessControlAction.AlertingInstanceCreate,
   ]);
 });
+
+function renderDeletedRules() {
+  const folder = {
+    title: 'Folder A',
+    uid: grafanaRulerRule.grafana_alert.namespace_uid,
+    id: 1,
+    type: DashboardSearchItemType.DashDB,
+    accessControl: {
+      [AccessControlAction.AlertingRuleUpdate]: true,
+    },
+  };
+  setFolderResponse(mockFolder(folder));
+
+  return render(
+    <>
+      <AppNotificationList />
+      <DeletedRules deletedRules={[grafanaRulerRule]} />
+    </>
+  );
+}
 describe('render Deleted rules page', () => {
   it('should show recently deleted rules', async () => {
-    const folder = {
-      title: 'Folder A',
-      uid: grafanaRulerRule.grafana_alert.namespace_uid,
-      id: 1,
-      type: DashboardSearchItemType.DashDB,
-      accessControl: {
-        [AccessControlAction.AlertingRuleUpdate]: true,
-      },
-    };
-    setFolderResponse(mockFolder(folder));
-
-    render(
-      <>
-        <AppNotificationList />
-        <DeletedRules deletedRules={[grafanaRulerRule]} />
-      </>
-    );
+    renderDeletedRules();
     expect(screen.getByText('Grafana-rule')).toBeInTheDocument();
   });
   it('should render restore button', async () => {
-    const folder = {
-      title: 'Folder A',
-      uid: grafanaRulerRule.grafana_alert.namespace_uid,
-      id: 1,
-      type: DashboardSearchItemType.DashDB,
-      accessControl: {
-        [AccessControlAction.AlertingRuleUpdate]: true,
-      },
-    };
-    setFolderResponse(mockFolder(folder));
-
-    const { user } = render(
-      <>
-        <AppNotificationList />
-        <DeletedRules deletedRules={[grafanaRulerRule]} />
-      </>
-    );
-
+    const { user } = renderDeletedRules();
     const restoreButtons = screen.getAllByRole('button', { name: /restore/i });
     await user.click(restoreButtons[0]);
     expect(
@@ -74,24 +61,7 @@ describe('render Deleted rules page', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
   });
   it('should render delete permanently button', async () => {
-    const folder = {
-      title: 'Folder A',
-      uid: grafanaRulerRule.grafana_alert.namespace_uid,
-      id: 1,
-      type: DashboardSearchItemType.DashDB,
-      accessControl: {
-        [AccessControlAction.AlertingRuleUpdate]: true,
-      },
-    };
-    setFolderResponse(mockFolder(folder));
-
-    const { user } = render(
-      <>
-        <AppNotificationList />
-        <DeletedRules deletedRules={[grafanaRulerRule]} />
-      </>
-    );
-
+    const { user } = renderDeletedRules();
     const restoreButtons = screen.getAllByRole('button', { name: /delete permanently/i });
     await user.click(restoreButtons[0]);
     expect(
