@@ -367,7 +367,7 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 		},
 		Spec: provisioning.JobSpec{
 			Repository: obj.GetName(),
-			Action:     provisioning.JobActionSync,
+			Action:     provisioning.JobActionPull,
 			Pull:       syncOptions,
 		},
 	})

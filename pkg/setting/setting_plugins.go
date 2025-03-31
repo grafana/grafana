@@ -29,8 +29,9 @@ func extractPluginSettings(sections []*ini.Section) PluginSettings {
 var (
 	defaultPreinstallPlugins = map[string]InstallPlugin{
 		// Default preinstalled plugins
-		"grafana-lokiexplore-app": {"grafana-lokiexplore-app", "", ""},
-		"grafana-pyroscope-app":   {"grafana-pyroscope-app", "", ""},
+		"grafana-lokiexplore-app":   {"grafana-lokiexplore-app", "", ""},
+		"grafana-pyroscope-app":     {"grafana-pyroscope-app", "", ""},
+		"grafana-exploretraces-app": {"grafana-exploretraces-app", "", ""},
 	}
 )
 

@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -25,14 +24,14 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 	lookup := make(map[string]*provisioning.ResourceListItem, len(target.Items))
 	for _, item := range target.Items {
 		if item.Path == "" {
-			if item.Group != folders.GROUP {
+			if item.Group != resources.FolderResource.Group {
 				return nil, fmt.Errorf("empty path on a non folder")
 			}
 			continue
 		}
 
 		// TODO: why do we have to do this here?
-		if item.Group == folders.GROUP && !strings.HasSuffix(item.Path, "/") {
+		if item.Group == resources.FolderResource.Group && !strings.HasSuffix(item.Path, "/") {
 			item.Path = item.Path + "/"
 		}
 
@@ -44,7 +43,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 	for _, file := range source {
 		check, ok := lookup[file.Path]
 		if ok {
-			if check.Hash != file.Hash && check.Resource != folders.RESOURCE {
+			if check.Hash != file.Hash && check.Resource != resources.FolderResource.Resource {
 				changes = append(changes, ResourceFileChange{
 					Action:   repository.FileActionUpdated,
 					Path:     check.Path,
@@ -56,7 +55,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
-			if check.Resource != folders.RESOURCE {
+			if check.Resource != resources.FolderResource.Resource {
 				delete(lookup, file.Path)
 			}
 
@@ -101,7 +100,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 
 	// Paths found in grafana, without a matching path in the repository
 	for _, v := range lookup {
-		if v.Resource == folders.RESOURCE && keep.Exists(v.Path) {
+		if v.Resource == resources.FolderResource.Resource && keep.Exists(v.Path) {
 			continue
 		}
 

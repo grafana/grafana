@@ -1,13 +1,16 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
+import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/ResponsiveGridLayoutSerializer';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
   forceRenderChildren,
+  getDashboardSceneFor,
   getGridItemKeyForPanelId,
   getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
@@ -51,9 +54,12 @@ export class AutoGridLayoutManager
     },
     id: 'auto-grid',
     createFromLayout: AutoGridLayoutManager.createFromLayout,
-    kind: 'AutoGridLayout',
     isGridLayout: true,
   };
+
+  public serialize(): DashboardV2Spec['layout'] {
+    return serializeAutoGridLayout(this);
+  }
 
   public readonly descriptor = AutoGridLayoutManager.descriptor;
 
@@ -72,14 +78,11 @@ export class AutoGridLayoutManager
       layout:
         state.layout ??
         new AutoGridLayout({
+          isDraggable: true,
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
           autoRows: getAutoRowsTemplate(rowHeight, fillScreen),
         }),
     });
-
-    // @ts-ignore
-    this.state.layout.getDragClassCancel = () => 'drag-cancel';
-    this.state.layout.isDraggable = () => true;
   }
 
   public addPanel(vizPanel: VizPanel) {
@@ -89,7 +92,7 @@ export class AutoGridLayoutManager
     vizPanel.clearParent();
 
     this.state.layout.setState({
-      children: [new AutoGridItem({ body: vizPanel }), ...this.state.layout.state.children],
+      children: [...this.state.layout.state.children, new AutoGridItem({ body: vizPanel })],
     });
 
     this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
@@ -168,6 +171,7 @@ export class AutoGridLayoutManager
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({
       layout: this.state.layout.clone({
+        isDraggable: isSource && this.state.layout.state.isDraggable,
         children: this.state.layout.state.children.map((gridItem) => {
           if (gridItem instanceof AutoGridItem) {
             // Get the original panel ID from the gridItem's key
@@ -240,7 +244,10 @@ export class AutoGridLayoutManager
     }
 
     const layoutManager = AutoGridLayoutManager.createEmpty();
-    layoutManager.state.layout.setState({ children });
+    layoutManager.state.layout.setState({
+      children,
+      isDraggable: getDashboardSceneFor(layout).state.isEditing,
+    });
 
     return layoutManager;
   }
