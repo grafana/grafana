@@ -302,10 +302,7 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
         const transformationSpec: DataTransformerConfig = {
           id: transformation.id,
           disabled: transformation.disabled,
-          filter: {
-            id: transformation.filter?.id ?? '',
-            options: transformation.filter?.options ?? {},
-          },
+          filter: transformation.filter,
           ...(transformation.topic && { topic: transformation.topic }),
           options: transformation.options,
         };
