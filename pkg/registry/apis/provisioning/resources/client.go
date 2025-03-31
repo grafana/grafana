@@ -160,13 +160,17 @@ func (c *ResourceClients) ForEachResource(ctx context.Context, kind schema.Group
 // ForEachResource applies the function to each resource in the discovery client
 func ForEachResource(ctx context.Context, client dynamic.ResourceInterface, fn func(item *unstructured.Unstructured) error) error {
 	var continueToken string
-	for {
+	for ctx.Err() == nil {
 		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
 		if err != nil {
 			return fmt.Errorf("error executing list: %w", err)
 		}
 
 		for _, item := range list.Items {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+
 			if err := fn(&item); err != nil {
 				return err
 			}

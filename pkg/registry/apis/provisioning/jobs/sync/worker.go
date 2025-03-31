@@ -51,7 +51,7 @@ func NewSyncWorker(
 }
 
 func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
-	return job.Spec.Action == provisioning.JobActionSync
+	return job.Spec.Action == provisioning.JobActionPull
 }
 
 func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
@@ -245,6 +245,9 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	r.progress.SetMessage(ctx, "replicating changes")
 
 	for _, change := range changes {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		if err := r.progress.TooManyErrors(); err != nil {
 			return err
 		}
@@ -339,6 +342,9 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	r.progress.SetMessage(ctx, "replicating versioned changes")
 
 	for _, change := range diff {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		if err := r.progress.TooManyErrors(); err != nil {
 			return err
 		}
