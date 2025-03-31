@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -504,6 +505,12 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 				return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
 			}
 		}
+
+		var statusErr *k8serrors.StatusError
+		if errors.As(err, &statusErr) {
+			return response.Error(int(statusErr.ErrStatus.Code), statusErr.ErrStatus.Message, err)
+		}
+
 		return response.Error(http.StatusInternalServerError, "Failed to delete dashboard", err)
 	}
 
