@@ -54,6 +54,9 @@ enabled = true
 # Organization name that should be used for unauthenticated users
 org_name = Main Org.
 
+# Role for unauthenticated users, other valid values are `Editor` and `Admin`
+org_role = Viewer
+
 # Hide the Grafana version text from the footer and help tooltip for unauthenticated users (default: false)
 hide_version = true
 

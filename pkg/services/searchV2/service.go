@@ -165,7 +165,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 		usr = &user.SignedInUser{
 			OrgID:       orga.ID,
 			OrgName:     orga.Name,
-			OrgRole:     org.RoleViewer,
+			OrgRole:     org.RoleType(s.cfg.Anonymous.OrgRole),
 			IsAnonymous: true,
 		}
 	} else {
