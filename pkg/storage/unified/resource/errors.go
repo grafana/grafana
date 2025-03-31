@@ -43,8 +43,8 @@ func AsErrorResult(err error) *ErrorResult {
 		return nil
 	}
 
-	apistatus, ok := err.(apierrors.APIStatus)
-	if ok {
+	var apistatus apierrors.APIStatus
+	if errors.As(err, &apistatus) {
 		s := apistatus.Status()
 		res := &ErrorResult{
 			Message: s.Message,

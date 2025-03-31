@@ -2456,6 +2456,21 @@ func RunTestGuaranteedUpdateChecksStoredData(ctx context.Context, t *testing.T, 
 	}
 }
 
+func RunTestValidUpdate(ctx context.Context, t *testing.T, store storage.Interface) {
+	pod := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}
+	key, pod := testPropagateStore(ctx, t, store, pod)
+
+	err := store.GuaranteedUpdate(ctx, key, &example.Pod{}, false, nil,
+		storage.SimpleUpdate(func(o runtime.Object) (runtime.Object, error) {
+			pod := o.(*example.Pod)
+			pod.Spec.Hostname = "example"
+			return pod, nil
+		}), pod)
+	if err != nil {
+		t.Errorf("got error on update: %v", err)
+	}
+}
+
 func RunTestGuaranteedUpdateWithConflict(ctx context.Context, t *testing.T, store storage.Interface) {
 	key, _ := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}})
 
