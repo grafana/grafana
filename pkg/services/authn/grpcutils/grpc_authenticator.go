@@ -13,11 +13,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,11 +28,11 @@ func NewInProcGrpcAuthenticator() interceptors.Authenticator {
 			authn.NewUnsafeAccessTokenVerifier(authn.VerifierConfig{}),
 			authn.NewUnsafeIDTokenVerifier(authn.VerifierConfig{}),
 		),
-		tracing.NewNoopTracerService(),
+		noop.NewTracerProvider().Tracer(""),
 	)
 }
 
-func NewAuthenticator(cfg *GrpcServerConfig, tracer tracing.Tracer) interceptors.Authenticator {
+func NewAuthenticator(cfg *GrpcServerConfig, tracer trace.Tracer) interceptors.Authenticator {
 	client := http.DefaultClient
 	if cfg.AllowInsecure {
 		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
@@ -50,7 +50,7 @@ func NewAuthenticator(cfg *GrpcServerConfig, tracer tracing.Tracer) interceptors
 	return NewAuthenticatorInterceptor(auth, tracer)
 }
 
-func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer tracing.Tracer, fallback interceptors.Authenticator) interceptors.Authenticator {
+func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer trace.Tracer, fallback interceptors.Authenticator) interceptors.Authenticator {
 	authCfg := ReadGrpcServerConfig(cfg)
 	authenticator := NewAuthenticator(authCfg, tracer)
 	if !authCfg.LegacyFallback {
@@ -96,7 +96,7 @@ type authenticatorWithFallback struct {
 	authenticator interceptors.Authenticator
 	fallback      interceptors.Authenticator
 	metrics       *metrics
-	tracer        tracing.Tracer
+	tracer        trace.Tracer
 }
 
 type contextFallbackKey struct{}
