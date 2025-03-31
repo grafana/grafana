@@ -49,6 +49,6 @@ type snowflakeSequenceGenerator struct{}
 
 func (g *snowflakeSequenceGenerator) Reset() {}
 func (g *snowflakeSequenceGenerator) Next(_ context.Context, table, column string) (int64, error) {
-	snowflakeID := rand.Int64()
+	snowflakeID := int64(rand.Int32())
 	return snowflakeID, nil
 }

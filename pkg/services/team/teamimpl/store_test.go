@@ -3,6 +3,7 @@ package teamimpl
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"strings"
 	"testing"
 
@@ -33,450 +34,448 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Run("Testing Team commands and queries", func(t *testing.T) {
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
-		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest())
-		require.NoError(t, err)
-		quotaService := quotaimpl.ProvideService(sqlStore, cfg)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
-		require.NoError(t, err)
-		// testOrgID, err := orgSvc.GetOrCreate(context.Background(), fmt.Sprintf("testOrg-%d", rand.Int64()))
-		testOrgID := int64(1)
-		require.NoError(t, err)
-		testUser := &user.SignedInUser{
-			OrgID: testOrgID,
-			Permissions: map[int64]map[string][]string{
-				1: {
-					ac.ActionTeamsRead:         []string{ac.ScopeTeamsAll},
-					ac.ActionOrgUsersRead:      []string{ac.ScopeUsersAll},
-					serviceaccounts.ActionRead: []string{serviceaccounts.ScopeAll},
-				},
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	require.NoError(t, err)
+	testOrgID, err := orgSvc.GetOrCreate(context.Background(), fmt.Sprintf("test-org-%d", rand.Int63()))
+	require.NoError(t, err)
+	userSvc, err := userimpl.ProvideService(
+		sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
+	require.NoError(t, err)
+
+	testUser := &user.SignedInUser{
+		OrgID: testOrgID,
+		Permissions: map[int64]map[string][]string{
+			testOrgID: {
+				ac.ActionTeamsRead:         []string{ac.ScopeTeamsAll},
+				ac.ActionOrgUsersRead:      []string{ac.ScopeUsersAll},
+				serviceaccounts.ActionRead: []string{serviceaccounts.ScopeAll},
 			},
-		}
-		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(),
-		)
-		require.NoError(t, err)
+		},
+	}
 
-		t.Run("Given saved users and two teams", func(t *testing.T) {
-			var userIds []int64
-			var team1, team2 team.Team
-			var usr *user.User
-			var userCmd user.CreateUserCommand
-			var err error
+	t.Run("Given saved users and two teams", func(t *testing.T) {
+		var userIds []int64
+		var team1, team2 team.Team
+		var usr *user.User
+		var userCmd user.CreateUserCommand
+		var err error
 
-			setup := func() {
-				for i := 0; i < 5; i++ {
-					userCmd = user.CreateUserCommand{
-						Email: fmt.Sprint("user", i, "@test.com"),
-						Name:  fmt.Sprint("user", i),
-						Login: fmt.Sprint("loginuser", i),
-					}
-					usr, err = userSvc.Create(context.Background(), &userCmd)
-					require.NoError(t, err)
-					userIds = append(userIds, usr.ID)
+		setup := func() {
+			for i := range 5 {
+				userCmd = user.CreateUserCommand{
+					Email: fmt.Sprint("user", i, "@test.com"),
+					Name:  fmt.Sprint("user", i),
+					Login: fmt.Sprint("loginuser", i),
 				}
-				team1, err = teamSvc.CreateTeam(context.Background(), "group1 name", "test1@test.com", testOrgID)
+				usr, err = userSvc.Create(context.Background(), &userCmd)
 				require.NoError(t, err)
-				team2, err = teamSvc.CreateTeam(context.Background(), "group2 name", "test2@test.com", testOrgID)
-				require.NoError(t, err)
+				userIds = append(userIds, usr.ID)
 			}
-			setup()
+			team1, err = teamSvc.CreateTeam(context.Background(), "group1 name", "test1@test.com", testOrgID)
+			require.NoError(t, err)
+			team2, err = teamSvc.CreateTeam(context.Background(), "group2 name", "test2@test.com", testOrgID)
+			require.NoError(t, err)
+		}
+		setup()
 
-			t.Run("Should be able to create teams and add users", func(t *testing.T) {
-				query := &team.SearchTeamsQuery{OrgID: testOrgID, Name: "group1 name", Page: 1, Limit: 10, SignedInUser: testUser}
-				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
-				require.NoError(t, err)
-				require.Equal(t, query.Page, 1)
+		t.Run("Should be able to create teams and add users", func(t *testing.T) {
+			query := &team.SearchTeamsQuery{OrgID: testOrgID, Name: "group1 name", Page: 1, Limit: 10, SignedInUser: testUser}
+			queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+			require.NoError(t, err)
+			require.Equal(t, query.Page, 1)
 
-				t.Fatal(queryResult, testOrgID)
-				team1 := queryResult.Teams[0]
-				require.Equal(t, team1.Name, "group1 name")
-				require.Equal(t, team1.Email, "test1@test.com")
-				require.Equal(t, team1.OrgID, testOrgID)
-				require.EqualValues(t, team1.MemberCount, 0)
+			team1 := queryResult.Teams[0]
+			require.Equal(t, team1.Name, "group1 name")
+			require.Equal(t, team1.Email, "test1@test.com")
+			require.Equal(t, team1.OrgID, testOrgID)
+			require.EqualValues(t, team1.MemberCount, 0)
 
-				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					err := AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, 0)
-					if err != nil {
-						return err
-					}
-					return AddOrUpdateTeamMemberHook(sess, userIds[1], testOrgID, team1.ID, true, 0)
-				})
-				require.NoError(t, err)
-
-				q1 := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
-				q1Result, err := teamSvc.GetTeamMembers(context.Background(), q1)
-				require.NoError(t, err)
-				require.Equal(t, 2, len(q1Result))
-				require.Equal(t, q1Result[0].TeamID, team1.ID)
-				require.Equal(t, q1Result[0].Login, "loginuser0")
-				require.Equal(t, q1Result[0].OrgID, testOrgID)
-				require.Equal(t, q1Result[1].TeamID, team1.ID)
-				require.Equal(t, q1Result[1].Login, "loginuser1")
-				require.Equal(t, q1Result[1].OrgID, testOrgID)
-				require.Equal(t, q1Result[1].External, true)
-
-				q2 := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, External: true, SignedInUser: testUser}
-				q2Result, err := teamSvc.GetTeamMembers(context.Background(), q2)
-				require.NoError(t, err)
-				require.Equal(t, len(q2Result), 1)
-				require.Equal(t, q2Result[0].TeamID, team1.ID)
-				require.Equal(t, q2Result[0].Login, "loginuser1")
-				require.Equal(t, q2Result[0].OrgID, testOrgID)
-				require.Equal(t, q2Result[0].External, true)
-
-				queryResult, err = teamSvc.SearchTeams(context.Background(), query)
-				require.NoError(t, err)
-				team1 = queryResult.Teams[0]
-				require.EqualValues(t, team1.MemberCount, 2)
-
-				getTeamQuery := &team.GetTeamByIDQuery{OrgID: testOrgID, ID: team1.ID, SignedInUser: testUser}
-				getTeamQueryResult, err := teamSvc.GetTeamByID(context.Background(), getTeamQuery)
-				require.NoError(t, err)
-				team1 = getTeamQueryResult
-				require.Equal(t, team1.Name, "group1 name")
-				require.Equal(t, team1.Email, "test1@test.com")
-				require.Equal(t, team1.OrgID, testOrgID)
-				require.EqualValues(t, team1.MemberCount, 2)
-
-				getIDsQuery := &team.GetTeamIDsByUserQuery{OrgID: testOrgID, UserID: userIds[0]}
-				getIDResult, err := teamSvc.GetTeamIDsByUser(context.Background(), getIDsQuery)
-				require.NoError(t, err)
-
-				require.Equal(t, len(getIDResult), 1)
-				require.Equal(t, getIDResult[0], team1.ID)
-			})
-
-			t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
-				setup()
-				userId := userIds[1]
-
-				teamQuery := &team.SearchTeamsQuery{OrgID: testOrgID, Name: "group1 name", Page: 1, Limit: 10, SignedInUser: testUser}
-				teamQueryResult, err := teamSvc.SearchTeams(context.Background(), teamQuery)
-				require.NoError(t, err)
-				require.Equal(t, teamQuery.Page, 1)
-
-				team1 := teamQueryResult.Teams[0]
-
-				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userId, testOrgID, team1.ID, true, 0)
-				})
-				require.NoError(t, err)
-
-				memberQuery := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, External: true, SignedInUser: testUser}
-				memberQueryResult, err := teamSvc.GetTeamMembers(context.Background(), memberQuery)
-				require.NoError(t, err)
-				require.Equal(t, len(memberQueryResult), 1)
-				require.Equal(t, memberQueryResult[0].TeamID, team1.ID)
-				require.Equal(t, memberQueryResult[0].Login, "loginuser1")
-				require.Equal(t, memberQueryResult[0].OrgID, testOrgID)
-				require.Equal(t, memberQueryResult[0].External, true)
-			})
-
-			t.Run("Should be able to update users in a team", func(t *testing.T) {
-				userId := userIds[0]
-
-				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userId, testOrgID, team1.ID, false, 0)
-				})
-				require.NoError(t, err)
-
-				qBeforeUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
-				qBeforeUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qBeforeUpdate)
-				require.NoError(t, err)
-				require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
-
-				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userId, testOrgID, team1.ID, false, team.PermissionTypeAdmin)
-				})
-				require.NoError(t, err)
-
-				qAfterUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
-				qAfterUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
-				require.NoError(t, err)
-				require.Equal(t, qAfterUpdateResult[0].Permission, team.PermissionTypeAdmin)
-			})
-
-			t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
-				setup()
-				userID := userIds[0]
-
-				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userID, testOrgID, team1.ID, false, 0)
-				})
-				require.NoError(t, err)
-
-				qBeforeUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
-				qBeforeUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qBeforeUpdate)
-				require.NoError(t, err)
-				require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
-
-				invalidPermissionLevel := 2
-				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userID, testOrgID, team1.ID, false, team.PermissionType(invalidPermissionLevel))
-				})
-				require.NoError(t, err)
-
-				qAfterUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
-				qAfterUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
-				require.NoError(t, err)
-				require.EqualValues(t, qAfterUpdateResult[0].Permission, 0)
-			})
-
-			t.Run("Should be able to search for teams", func(t *testing.T) {
-				query := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "group", Page: 1, SignedInUser: testUser}
-				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
-				require.NoError(t, err)
-				require.Equal(t, len(queryResult.Teams), 2)
-				require.EqualValues(t, queryResult.TotalCount, 2)
-
-				query2 := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "", SignedInUser: testUser}
-				require.Equal(t, len(queryResult.Teams), 2)
-				query2Result, err := teamSvc.SearchTeams(context.Background(), query2)
-				require.NoError(t, err)
-				require.Equal(t, len(query2Result.Teams), 2)
-			})
-
-			t.Run("Should be able to sort teams by descending member count order", func(t *testing.T) {
-				sortOpts, err := sortopts.ParseSortQueryParam("memberCount-desc")
-				require.NoError(t, err)
-
-				// Add a team member
-				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					err := AddOrUpdateTeamMemberHook(sess, userIds[2], testOrgID, team1.ID, false, 0)
-					if err != nil {
-						return err
-					}
-					err = AddOrUpdateTeamMemberHook(sess, userIds[3], testOrgID, team1.ID, false, 0)
-					if err != nil {
-						return err
-					}
-					return AddOrUpdateTeamMemberHook(sess, userIds[2], testOrgID, team2.ID, false, 0)
-				})
-				require.NoError(t, err)
-				defer func() {
-					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-						err := RemoveTeamMemberHook(sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: userIds[2], TeamID: team1.ID})
-						if err != nil {
-							return err
-						}
-						err = RemoveTeamMemberHook(sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: userIds[3], TeamID: team1.ID})
-						if err != nil {
-							return err
-						}
-						return RemoveTeamMemberHook(sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: userIds[2], TeamID: team2.ID})
-					})
-					require.NoError(t, err)
-				}()
-
-				query := &team.SearchTeamsQuery{OrgID: testOrgID, SortOpts: sortOpts, SignedInUser: testUser}
-				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
-				require.NoError(t, err)
-				require.Equal(t, len(queryResult.Teams), 2)
-				require.EqualValues(t, queryResult.TotalCount, 2)
-				require.Greater(t, queryResult.Teams[0].MemberCount, queryResult.Teams[1].MemberCount)
-			})
-
-			t.Run("Should be able to sort teams by descending name order", func(t *testing.T) {
-				sortOpts, err := sortopts.ParseSortQueryParam("name-desc")
-				require.NoError(t, err)
-
-				query := &team.SearchTeamsQuery{OrgID: testOrgID, SortOpts: sortOpts, SignedInUser: testUser}
-				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
-				require.NoError(t, err)
-				require.Equal(t, len(queryResult.Teams), 2)
-				require.EqualValues(t, queryResult.TotalCount, 2)
-				require.Equal(t, queryResult.Teams[0].Name, team2.Name)
-				require.Equal(t, queryResult.Teams[1].Name, team1.Name)
-			})
-
-			t.Run("Should be able to query teams by ids", func(t *testing.T) {
-				allTeamsQuery := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "", SignedInUser: testUser}
-				allTeamsQueryResult, err := teamSvc.SearchTeams(context.Background(), allTeamsQuery)
-				require.NoError(t, err)
-				require.Equal(t, len(allTeamsQueryResult.Teams), 2)
-
-				teamIds := make([]int64, 0)
-				for _, team := range allTeamsQueryResult.Teams {
-					teamIds = append(teamIds, team.ID)
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				err := AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, 0)
+				if err != nil {
+					return err
 				}
-
-				query := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, TeamIds: teamIds}
-				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
-				require.NoError(t, err)
-				require.Equal(t, len(queryResult.Teams), 2)
-				require.EqualValues(t, queryResult.TotalCount, 2)
-				require.Equal(t, queryResult.Teams[0].ID, teamIds[0])
-				require.Equal(t, queryResult.Teams[1].ID, teamIds[1])
+				return AddOrUpdateTeamMemberHook(sess, userIds[1], testOrgID, team1.ID, true, 0)
 			})
+			require.NoError(t, err)
 
-			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
-				setup()
-				groupId := team2.ID
+			q1 := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+			q1Result, err := teamSvc.GetTeamMembers(context.Background(), q1)
+			require.NoError(t, err)
+			require.Equal(t, 2, len(q1Result))
+			require.Equal(t, q1Result[0].TeamID, team1.ID)
+			require.Equal(t, q1Result[0].Login, "loginuser0")
+			require.Equal(t, q1Result[0].OrgID, testOrgID)
+			require.Equal(t, q1Result[1].TeamID, team1.ID)
+			require.Equal(t, q1Result[1].Login, "loginuser1")
+			require.Equal(t, q1Result[1].OrgID, testOrgID)
+			require.Equal(t, q1Result[1].External, true)
+
+			q2 := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, External: true, SignedInUser: testUser}
+			q2Result, err := teamSvc.GetTeamMembers(context.Background(), q2)
+			require.NoError(t, err)
+			require.Equal(t, len(q2Result), 1)
+			require.Equal(t, q2Result[0].TeamID, team1.ID)
+			require.Equal(t, q2Result[0].Login, "loginuser1")
+			require.Equal(t, q2Result[0].OrgID, testOrgID)
+			require.Equal(t, q2Result[0].External, true)
+
+			queryResult, err = teamSvc.SearchTeams(context.Background(), query)
+			require.NoError(t, err)
+			team1 = queryResult.Teams[0]
+			require.EqualValues(t, team1.MemberCount, 2)
+
+			getTeamQuery := &team.GetTeamByIDQuery{OrgID: testOrgID, ID: team1.ID, SignedInUser: testUser}
+			getTeamQueryResult, err := teamSvc.GetTeamByID(context.Background(), getTeamQuery)
+			require.NoError(t, err)
+			team1 = getTeamQueryResult
+			require.Equal(t, team1.Name, "group1 name")
+			require.Equal(t, team1.Email, "test1@test.com")
+			require.Equal(t, team1.OrgID, testOrgID)
+			require.EqualValues(t, team1.MemberCount, 2)
+
+			getIDsQuery := &team.GetTeamIDsByUserQuery{OrgID: testOrgID, UserID: userIds[0]}
+			getIDResult, err := teamSvc.GetTeamIDsByUser(context.Background(), getIDsQuery)
+			require.NoError(t, err)
+
+			require.Equal(t, len(getIDResult), 1)
+			require.Equal(t, getIDResult[0], team1.ID)
+		})
+
+		t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {
+			// sqlStore = db.InitTestDB(t)
+			// setup()
+			userId := userIds[1]
+
+			teamQuery := &team.SearchTeamsQuery{OrgID: testOrgID, Name: "group1 name", Page: 1, Limit: 10, SignedInUser: testUser}
+			teamQueryResult, err := teamSvc.SearchTeams(context.Background(), teamQuery)
+			require.NoError(t, err)
+			require.Equal(t, teamQuery.Page, 1)
+
+			team1 := teamQueryResult.Teams[0]
+
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				return AddOrUpdateTeamMemberHook(sess, userId, testOrgID, team1.ID, true, 0)
+			})
+			require.NoError(t, err)
+
+			memberQuery := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, External: true, SignedInUser: testUser}
+			memberQueryResult, err := teamSvc.GetTeamMembers(context.Background(), memberQuery)
+			require.NoError(t, err)
+			require.Equal(t, len(memberQueryResult), 1)
+			require.Equal(t, memberQueryResult[0].TeamID, team1.ID)
+			require.Equal(t, memberQueryResult[0].Login, "loginuser1")
+			require.Equal(t, memberQueryResult[0].OrgID, testOrgID)
+			require.Equal(t, memberQueryResult[0].External, true)
+		})
+
+		t.Run("Should be able to update users in a team", func(t *testing.T) {
+			userId := userIds[0]
+
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				return AddOrUpdateTeamMemberHook(sess, userId, testOrgID, team1.ID, false, 0)
+			})
+			require.NoError(t, err)
+
+			qBeforeUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+			qBeforeUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qBeforeUpdate)
+			require.NoError(t, err)
+			require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
+
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				return AddOrUpdateTeamMemberHook(sess, userId, testOrgID, team1.ID, false, team.PermissionTypeAdmin)
+			})
+			require.NoError(t, err)
+
+			qAfterUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+			qAfterUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
+			require.NoError(t, err)
+			require.Equal(t, qAfterUpdateResult[0].Permission, team.PermissionTypeAdmin)
+		})
+
+		t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
+			// sqlStore = db.InitTestDB(t)
+			// setup()
+			userID := userIds[0]
+
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				return AddOrUpdateTeamMemberHook(sess, userID, testOrgID, team1.ID, false, 0)
+			})
+			require.NoError(t, err)
+
+			qBeforeUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+			qBeforeUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qBeforeUpdate)
+			require.NoError(t, err)
+			require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
+
+			invalidPermissionLevel := 2
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				return AddOrUpdateTeamMemberHook(sess, userID, testOrgID, team1.ID, false, team.PermissionType(invalidPermissionLevel))
+			})
+			require.NoError(t, err)
+
+			qAfterUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+			qAfterUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
+			require.NoError(t, err)
+			require.EqualValues(t, qAfterUpdateResult[0].Permission, 0)
+		})
+
+		t.Run("Should be able to search for teams", func(t *testing.T) {
+			query := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "group", Page: 1, SignedInUser: testUser}
+			queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+			require.NoError(t, err)
+			require.Equal(t, len(queryResult.Teams), 2)
+			require.EqualValues(t, queryResult.TotalCount, 2)
+
+			query2 := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "", SignedInUser: testUser}
+			require.Equal(t, len(queryResult.Teams), 2)
+			query2Result, err := teamSvc.SearchTeams(context.Background(), query2)
+			require.NoError(t, err)
+			require.Equal(t, len(query2Result.Teams), 2)
+		})
+
+		t.Run("Should be able to sort teams by descending member count order", func(t *testing.T) {
+			sortOpts, err := sortopts.ParseSortQueryParam("memberCount-desc")
+			require.NoError(t, err)
+
+			// Add a team member
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				err := AddOrUpdateTeamMemberHook(sess, userIds[2], testOrgID, team1.ID, false, 0)
+				if err != nil {
+					return err
+				}
+				err = AddOrUpdateTeamMemberHook(sess, userIds[3], testOrgID, team1.ID, false, 0)
+				if err != nil {
+					return err
+				}
+				return AddOrUpdateTeamMemberHook(sess, userIds[2], testOrgID, team2.ID, false, 0)
+			})
+			require.NoError(t, err)
+			defer func() {
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, groupId, false, 0)
+					err := RemoveTeamMemberHook(sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: userIds[2], TeamID: team1.ID})
+					if err != nil {
+						return err
+					}
+					err = RemoveTeamMemberHook(sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: userIds[3], TeamID: team1.ID})
+					if err != nil {
+						return err
+					}
+					return RemoveTeamMemberHook(sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: userIds[2], TeamID: team2.ID})
 				})
 				require.NoError(t, err)
+			}()
 
-				query := &team.GetTeamsByUserQuery{
-					OrgID:  testOrgID,
-					UserID: userIds[0],
-					SignedInUser: &user.SignedInUser{
-						OrgID:       testOrgID,
-						Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}, ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
-					},
-				}
-				queryResult, err := teamSvc.GetTeamsByUser(context.Background(), query)
-				require.NoError(t, err)
-				require.Equal(t, len(queryResult), 1)
-				require.Equal(t, queryResult[0].Name, "group2 name")
-				require.Equal(t, queryResult[0].Email, "test2@test.com")
+			query := &team.SearchTeamsQuery{OrgID: testOrgID, SortOpts: sortOpts, SignedInUser: testUser}
+			queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+			require.NoError(t, err)
+			require.Equal(t, len(queryResult.Teams), 2)
+			require.EqualValues(t, queryResult.TotalCount, 2)
+			require.Greater(t, queryResult.Teams[0].MemberCount, queryResult.Teams[1].MemberCount)
+		})
+
+		t.Run("Should be able to sort teams by descending name order", func(t *testing.T) {
+			sortOpts, err := sortopts.ParseSortQueryParam("name-desc")
+			require.NoError(t, err)
+
+			query := &team.SearchTeamsQuery{OrgID: testOrgID, SortOpts: sortOpts, SignedInUser: testUser}
+			queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+			require.NoError(t, err)
+			require.Equal(t, len(queryResult.Teams), 2)
+			require.EqualValues(t, queryResult.TotalCount, 2)
+			require.Equal(t, queryResult.Teams[0].Name, team2.Name)
+			require.Equal(t, queryResult.Teams[1].Name, team1.Name)
+		})
+
+		t.Run("Should be able to query teams by ids", func(t *testing.T) {
+			allTeamsQuery := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "", SignedInUser: testUser}
+			allTeamsQueryResult, err := teamSvc.SearchTeams(context.Background(), allTeamsQuery)
+			require.NoError(t, err)
+			require.Equal(t, len(allTeamsQueryResult.Teams), 2)
+
+			teamIds := make([]int64, 0)
+			for _, team := range allTeamsQueryResult.Teams {
+				teamIds = append(teamIds, team.ID)
+			}
+
+			query := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, TeamIds: teamIds}
+			queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+			require.NoError(t, err)
+			require.Equal(t, len(queryResult.Teams), 2)
+			require.EqualValues(t, queryResult.TotalCount, 2)
+			require.Equal(t, queryResult.Teams[0].ID, teamIds[0])
+			require.Equal(t, queryResult.Teams[1].ID, teamIds[1])
+		})
+
+		t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
+			// sqlStore = db.InitTestDB(t)
+			// setup()
+			groupId := team2.ID
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, groupId, false, 0)
 			})
+			require.NoError(t, err)
 
-			t.Run("Should be able to remove users from a group", func(t *testing.T) {
+			query := &team.GetTeamsByUserQuery{
+				OrgID:  testOrgID,
+				UserID: userIds[0],
+				SignedInUser: &user.SignedInUser{
+					OrgID:       testOrgID,
+					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}, ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
+				},
+			}
+			queryResult, err := teamSvc.GetTeamsByUser(context.Background(), query)
+			require.NoError(t, err)
+			require.Equal(t, len(queryResult), 1)
+			require.Equal(t, queryResult[0].Name, "group2 name")
+			require.Equal(t, queryResult[0].Email, "test2@test.com")
+		})
+
+		t.Run("Should be able to remove users from a group", func(t *testing.T) {
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, 0)
+			})
+			require.NoError(t, err)
+
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				return RemoveTeamMemberHook(sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, TeamID: team1.ID, UserID: userIds[0]})
+			})
+			require.NoError(t, err)
+
+			q2 := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+			q2Result, err := teamSvc.GetTeamMembers(context.Background(), q2)
+			require.NoError(t, err)
+			require.Equal(t, len(q2Result), 0)
+		})
+
+		t.Run("Should have empty teams", func(t *testing.T) {
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
+			})
+			require.NoError(t, err)
+
+			t.Run("A user should be able to remove the admin permission for the last admin", func(t *testing.T) {
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 					return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, 0)
 				})
 				require.NoError(t, err)
+			})
 
+			t.Run("A user should be able to remove the last member", func(t *testing.T) {
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 					return RemoveTeamMemberHook(sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, TeamID: team1.ID, UserID: userIds[0]})
 				})
 				require.NoError(t, err)
-
-				q2 := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
-				q2Result, err := teamSvc.GetTeamMembers(context.Background(), q2)
-				require.NoError(t, err)
-				require.Equal(t, len(q2Result), 0)
 			})
 
-			t.Run("Should have empty teams", func(t *testing.T) {
+			t.Run("A user should be able to remove the admin permission if there are other admins", func(t *testing.T) {
+				// sqlStore = db.InitTestDB(t)
+				// setup()
+
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
+					err := AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
+					if err != nil {
+						return err
+					}
+					return AddOrUpdateTeamMemberHook(sess, userIds[1], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
 				})
 				require.NoError(t, err)
-
-				t.Run("A user should be able to remove the admin permission for the last admin", func(t *testing.T) {
-					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-						return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, 0)
-					})
-					require.NoError(t, err)
+				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+					return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, 0)
 				})
-
-				t.Run("A user should be able to remove the last member", func(t *testing.T) {
-					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-						return RemoveTeamMemberHook(sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, TeamID: team1.ID, UserID: userIds[0]})
-					})
-					require.NoError(t, err)
-				})
-
-				t.Run("A user should be able to remove the admin permission if there are other admins", func(t *testing.T) {
-					sqlStore = db.InitTestDB(t)
-					setup()
-
-					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-						err := AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
-						if err != nil {
-							return err
-						}
-						return AddOrUpdateTeamMemberHook(sess, userIds[1], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
-					})
-					require.NoError(t, err)
-					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-						return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, 0)
-					})
-					require.NoError(t, err)
-				})
+				require.NoError(t, err)
 			})
+		})
 
-			t.Run("Should not return hidden users in team member count", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
-				setup()
-				signedInUser := &user.SignedInUser{
-					Login: "loginuser0",
-					OrgID: testOrgID,
-					Permissions: map[int64]map[string][]string{
-						testOrgID: {
-							ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
-							ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
-						},
+		t.Run("Should not return hidden users in team member count", func(t *testing.T) {
+			// sqlStore = db.InitTestDB(t)
+			// setup()
+			signedInUser := &user.SignedInUser{
+				Login: "loginuser0",
+				OrgID: testOrgID,
+				Permissions: map[int64]map[string][]string{
+					testOrgID: {
+						ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
+						ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
 					},
+				},
+			}
+			hiddenUsers := map[string]struct{}{"loginuser0": {}, "loginuser1": {}}
+
+			teamId := team1.ID
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				err := AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, teamId, false, 0)
+				if err != nil {
+					return err
 				}
-				hiddenUsers := map[string]struct{}{"loginuser0": {}, "loginuser1": {}}
-
-				teamId := team1.ID
-				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					err := AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, teamId, false, 0)
-					if err != nil {
-						return err
-					}
-					err = AddOrUpdateTeamMemberHook(sess, userIds[1], testOrgID, teamId, false, 0)
-					if err != nil {
-						return err
-					}
-					return AddOrUpdateTeamMemberHook(sess, userIds[2], testOrgID, teamId, false, 0)
-				})
-
-				searchQuery := &team.SearchTeamsQuery{OrgID: testOrgID, Page: 1, Limit: 10, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
-				searchQueryResult, err := teamSvc.SearchTeams(context.Background(), searchQuery)
-				require.NoError(t, err)
-				require.Equal(t, len(searchQueryResult.Teams), 2)
-				team1 := searchQueryResult.Teams[0]
-				require.EqualValues(t, team1.MemberCount, 2)
-
-				getTeamQuery := &team.GetTeamByIDQuery{OrgID: testOrgID, ID: teamId, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
-				getTeamQueryResult, err := teamSvc.GetTeamByID(context.Background(), getTeamQuery)
-				require.NoError(t, err)
-				require.EqualValues(t, getTeamQueryResult.MemberCount, 2)
+				err = AddOrUpdateTeamMemberHook(sess, userIds[1], testOrgID, teamId, false, 0)
+				if err != nil {
+					return err
+				}
+				return AddOrUpdateTeamMemberHook(sess, userIds[2], testOrgID, teamId, false, 0)
 			})
+			require.NoError(t, err)
 
-			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
-				quotaService := quotaimpl.ProvideService(sqlStore, cfg)
-				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
-				require.NoError(t, err)
-				userSvc, err := userimpl.ProvideService(
-					sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-					quotaService, supportbundlestest.NewFakeBundleService(),
-				)
-				require.NoError(t, err)
-				setup()
-				userCmd = user.CreateUserCommand{
-					Email:            fmt.Sprint("sa", 1, "@test.com"),
-					Name:             fmt.Sprint("sa", 1),
-					Login:            fmt.Sprint("login-sa", 1),
-					IsServiceAccount: true,
+			searchQuery := &team.SearchTeamsQuery{OrgID: testOrgID, Page: 1, Limit: 10, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
+			searchQueryResult, err := teamSvc.SearchTeams(context.Background(), searchQuery)
+			require.NoError(t, err)
+			require.Equal(t, len(searchQueryResult.Teams), 2)
+			team1 := searchQueryResult.Teams[0]
+			require.EqualValues(t, 2, team1.MemberCount)
+
+			getTeamQuery := &team.GetTeamByIDQuery{OrgID: testOrgID, ID: teamId, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
+			getTeamQueryResult, err := teamSvc.GetTeamByID(context.Background(), getTeamQuery)
+			require.NoError(t, err)
+			require.EqualValues(t, 2, getTeamQueryResult.MemberCount)
+		})
+
+		t.Run("Should be able to exclude service accounts from team members", func(t *testing.T) {
+			// sqlStore = db.InitTestDB(t)
+			// quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+			// orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+			// require.NoError(t, err)
+			// userSvc, err := userimpl.ProvideService(
+			// sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+			// quotaService, supportbundlestest.NewFakeBundleService(),
+			// )
+			// require.NoError(t, err)
+			// setup()
+			userCmd = user.CreateUserCommand{
+				Email:            fmt.Sprint("sa", 1, "@test.com"),
+				Name:             fmt.Sprint("sa", 1),
+				Login:            fmt.Sprint("login-sa", 1),
+				IsServiceAccount: true,
+			}
+			serviceAccount, err := userSvc.Create(context.Background(), &userCmd)
+			require.NoError(t, err)
+
+			groupId := team2.ID
+			dbErr := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				// add service account to team
+				err := AddOrUpdateTeamMemberHook(sess, serviceAccount.ID, testOrgID, groupId, false, 0)
+				if err != nil {
+					return err
 				}
-				serviceAccount, err := userSvc.Create(context.Background(), &userCmd)
-				require.NoError(t, err)
-
-				groupId := team2.ID
-				dbErr := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					// add service account to team
-					err := AddOrUpdateTeamMemberHook(sess, serviceAccount.ID, testOrgID, groupId, false, 0)
-					if err != nil {
-						return err
-					}
-					// add user to team
-					return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, groupId, false, 0)
-				})
-				require.NoError(t, dbErr)
-
-				teamMembersQuery := &team.GetTeamMembersQuery{
-					OrgID:        testOrgID,
-					SignedInUser: testUser,
-					TeamID:       groupId,
-				}
-				teamMembersQueryResult, err := teamSvc.GetTeamMembers(context.Background(), teamMembersQuery)
-				require.NoError(t, err)
-				// should not receive service account from query
-				require.Equal(t, len(teamMembersQueryResult), 1)
+				// add user to team
+				return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, groupId, false, 0)
 			})
+			require.NoError(t, dbErr)
+
+			teamMembersQuery := &team.GetTeamMembersQuery{
+				OrgID:        testOrgID,
+				SignedInUser: testUser,
+				TeamID:       groupId,
+			}
+			teamMembersQueryResult, err := teamSvc.GetTeamMembers(context.Background(), teamMembersQuery)
+			require.NoError(t, err)
+			// should not receive service account from query
+			require.Equal(t, 1, len(teamMembersQueryResult))
 		})
 	})
 }
@@ -492,13 +491,20 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 	}
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+	quotaService := quotaimpl.ProvideService(store, cfg)
+	orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
+	require.NoError(t, err)
 	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
-	testOrgID := int64(1)
+
+	// Create test org
+	testOrgID, err := orgSvc.GetOrCreate(context.Background(), fmt.Sprintf("test-org-%d", rand.Int63()))
+	require.NoError(t, err)
 
 	// Seed 10 teams
-	for i := 1; i <= 10; i++ {
-		_, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%d", i), fmt.Sprintf("team-%d@example.org", i), testOrgID)
+	teams := make([]team.Team, 10)
+	for i := range teams {
+		teams[i], err = teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%d", i), fmt.Sprintf("team-%d@example.org", i), testOrgID)
 		require.NoError(t, err)
 	}
 
@@ -509,7 +515,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 				OrgID: testOrgID,
 				SignedInUser: &user.SignedInUser{
 					OrgID:       testOrgID,
-					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
+					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
 				},
 			},
 			expectedTeamCount: 10,
@@ -520,7 +526,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 				OrgID: testOrgID,
 				SignedInUser: &user.SignedInUser{
 					OrgID:       testOrgID,
-					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {""}}},
+					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionTeamsRead: {""}}},
 				},
 			},
 			expectedTeamCount: 0,
@@ -531,10 +537,10 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 				OrgID: testOrgID,
 				SignedInUser: &user.SignedInUser{
 					OrgID: testOrgID,
-					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {
-						"teams:id:1",
-						"teams:id:5",
-						"teams:id:9",
+					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionTeamsRead: {
+						fmt.Sprintf("teams:id:%d", teams[0].ID),
+						fmt.Sprintf("teams:id:%d", teams[5].ID),
+						fmt.Sprintf("teams:id:%d", teams[9].ID),
 					}}},
 				},
 			},
@@ -565,7 +571,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	testOrgID := int64(2)
+	testOrgID := rand.Int63()
 	userIds := make([]int64, 4)
 
 	// Seed 2 teams with 2 members
@@ -614,7 +620,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMembers)
 	}
 
-	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+	store, cfg := db.InitTestDBWithCfg(t)
 	setup(store, cfg)
 	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)

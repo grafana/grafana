@@ -346,8 +346,8 @@ func newSQLite3DB(tb TestingTB) (*testDB, error) {
 	}
 	tb.Cleanup(func() {
 		// Do best efforts at cleaning up after ourselves.
-		_ = tmp.Close()
-		_ = os.Remove(tmp.Name())
+		// _ = tmp.Close()
+		// _ = os.Removetmp.Name())
 	})
 
 	// For tests, set sync=OFF for faster commits. Reference: https://www.sqlite.org/pragma.html#pragma_synchronous
