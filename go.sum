@@ -1597,8 +1597,8 @@ github.com/grafana/grafana-app-sdk v0.35.1 h1:zEXubzsQrxGBOzXJJMBwhEClC/tvPi0sfK
 github.com/grafana/grafana-app-sdk v0.35.1/go.mod h1:Zx5MkVppYK+ElSDUAR6+fjzOVo6I/cIgk+ty+LmNOxI=
 github.com/grafana/grafana-app-sdk/logging v0.35.0 h1:I7idbLxj5JPc5hS9oauNRK1CgHLnY7ui66A3AsX5FyM=
 github.com/grafana/grafana-app-sdk/logging v0.35.0/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
-github.com/grafana/grafana-aws-sdk v0.33.0 h1:mhuu9xyHvFgRJLXkahm9fHmS5PoNdzqIGGs+/u6NKNQ=
-github.com/grafana/grafana-aws-sdk v0.33.0/go.mod h1:wjp8cLGt8NvrtZinUefObnn2BwpwXQ+aArT3S/RqW+4=
+github.com/grafana/grafana-aws-sdk v0.34.0 h1:NzX5NFECFfopc/1tdGL7zBUmTVo0FSJViOa9BiXeIL4=
+github.com/grafana/grafana-aws-sdk v0.34.0/go.mod h1:j3vi+cXYHEFqjhBGrI6/lw1TNM+dl0Y3f0cSnDOPy+s=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 h1:OfCkitCuomzZKW1WYHrG8MxKwtMhALb7jqoj+487eTg=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6/go.mod h1:V7y2BmsWxS3A9Ohebwn4OiSfJJqi//4JQydQ8fHTduo=
 github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 h1:S4kHwr//AqhtL9xHBtz1gqVgZQeCRGTxjgsRBAkpjKY=
@@ -1655,8 +1655,8 @@ github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc h1:GN2Lv3MGO7AS6PrR
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
 github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56 h1:SDGrP81Vcd102L3UJEryRd1eestRw73wt+b8vnVEFe0=
 github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56/go.mod h1:S4+611dxnKt8z/ulbvaJzcgSHsuhjVc1QHNTcr1R7Fw=
-github.com/grafana/sqlds/v4 v4.1.7 h1:X5703emD4yZ7AF0cBbh4kwFS4smPL5yVNWRQFjUOOe8=
-github.com/grafana/sqlds/v4 v4.1.7/go.mod h1:LnEai8vDHLPvJmggLqamDzMV6ldnzjZmRfMWoUQBKCE=
+github.com/grafana/sqlds/v4 v4.2.0 h1:7qZmuTzLMZFtszX14NyefU3R6WVtx27i7WduRDLKKOE=
+github.com/grafana/sqlds/v4 v4.2.0/go.mod h1:OyEREvYCd2U/qXiIK/iprQ/4VUF2TTemIixFdUeGsOc=
 github.com/grafana/tempo v1.5.1-0.20241001135150-ed943d7a56b2 h1:XMreZ1SPjLpd9zhql5FXKFYwAcgBzS2E2MOPx4n+FyY=
 github.com/grafana/tempo v1.5.1-0.20241001135150-ed943d7a56b2/go.mod h1:UKONJhBCxmL+0ri27VMledCVzZIJqnl6Ah24A5vCRzs=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 h1:UH//fgunKIs4JdUbpDl1VZCDaL56wXCB/5+wF6uHfaI=
