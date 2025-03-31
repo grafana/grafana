@@ -18,8 +18,8 @@ export const ConfirmDeletedPermanentlyModal = ({
   guid,
 }: ModalProps) => {
   const [remove] = alertRuleApi.endpoints.removePermanentlyDeletedRule.useMutation();
-  const title = t('alerting.deletedRules.delete-modal.title', 'Delete permanently an alert rule');
-  const confirmText = t('alerting.deletedRules.delete-modal.confirm', 'Yes, deleted permanently')
+  const title = t('alerting.deleted-rules.delete-modal.title', 'Delete permanently an alert rule');
+  const confirmText = t('alerting.deleted-rules.delete-modal.confirm', 'Yes, deleted permanently')
   const appNotification = useAppNotification();
 
   const styles = useStyles2(getStyles);
@@ -31,10 +31,10 @@ export const ConfirmDeletedPermanentlyModal = ({
     return remove({ guid })
       .then(() => {
         onDismiss();
-        appNotification.success(t('alerting.deletedRules.delete-modal.success', 'Alert rule deleted permanently'));
+        appNotification.success(t('alerting.deleted-rules.delete-modal.success', 'Alert rule deleted permanently'));
       })
       .catch((err) => {
-        appNotification.error(t('alerting.deletedRules.delete-modal.error', 'Could not delete alert rule permanently'));
+        appNotification.error(t('alerting.deleted-rules.delete-modal.error', 'Could not delete alert rule permanently'));
       });
   }
 
@@ -47,7 +47,7 @@ export const ConfirmDeletedPermanentlyModal = ({
       confirmButtonVariant={'destructive'}
       body={
         <Stack direction="column" gap={2}>
-          <Trans i18nKey="alerting.deletedRules.restore-modal.body">
+          <Trans i18nKey="alerting.deleted-rules.delete-modal.body">
             Are you sure you want to delete permanently this alert rule? This action cannot be undone.
           </Trans>
         </Stack>

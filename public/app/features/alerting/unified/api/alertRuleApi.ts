@@ -438,6 +438,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/trash/rule/guid/${guid}`,
         method: 'DELETE',
       }),
+      invalidatesTags: ['DeletedRules'],
     }),
   }),
 });
