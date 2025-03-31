@@ -51,7 +51,7 @@ var (
 	ErrPluginGrpcConnectionUnavailableBaseFn = func(ctx context.Context) errutil.Base {
 		pubMsg := "Data source became unavailable during request. Please try again."
 		if requester, err := identity.GetRequester(ctx); err == nil && requester != nil {
-			if namespace, _ := types.ParseNamespace(requester.GetNamespace()); namespace.StackID != 0 {
+			if namespace, err := types.ParseNamespace(requester.GetNamespace()); err != nil && namespace.StackID != 0 {
 				pubMsg += " If the problem persists, please contact customer support."
 			}
 		}
