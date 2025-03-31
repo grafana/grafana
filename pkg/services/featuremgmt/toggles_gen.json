@@ -441,7 +441,8 @@
       "metadata": {
         "name": "alertingRuleSequentialEvaluation",
         "resourceVersion": "1742580089675",
-        "creationTimestamp": "2025-03-21T18:01:29Z"
+        "creationTimestamp": "2025-03-21T18:01:29Z",
+        "deletionTimestamp": "2025-03-31T17:26:04Z"
       },
       "spec": {
         "description": "Enables the alerting rule sequential evaluation feature",

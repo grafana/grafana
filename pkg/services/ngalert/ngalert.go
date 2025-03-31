@@ -380,14 +380,13 @@ func (ng *AlertNG) init() error {
 	}
 	ng.RecordingWriter = recordingWriter
 
-	jitterStrategy := schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles)
 	schedCfg := schedule.SchedulerCfg{
 		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
 		C:                    clk,
 		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
 		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
 		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
-		JitterEvaluations:    jitterStrategy,
+		JitterEvaluations:    schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
@@ -397,7 +396,6 @@ func (ng *AlertNG) init() error {
 		Tracer:               ng.tracer,
 		Log:                  log.New("ngalert.scheduler"),
 		RecordingWriter:      ng.RecordingWriter,
-		EnableSequences:      useSequences(ng.FeatureToggles, jitterStrategy),
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
@@ -519,10 +517,6 @@ func (ng *AlertNG) init() error {
 	})
 
 	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
-}
-
-func useSequences(featureToggles featuremgmt.FeatureToggles, jitterStrategy schedule.JitterStrategy) bool {
-	return jitterStrategy == schedule.JitterByGroup && featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingRuleSequentialEvaluation)
 }
 
 // initInstanceStore initializes the instance store based on the feature toggles.

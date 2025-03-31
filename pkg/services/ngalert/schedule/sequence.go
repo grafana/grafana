@@ -30,6 +30,8 @@ type groupKey struct {
 //
 // The function returns a slice of sequences, where each sequence represents a chain of rules
 // that should be evaluated in order.
+//
+// NOTE: This currently only chains rules in imported groups.
 func (sch *schedule) buildSequences(items []readyToRunItem, runJobFn func(next readyToRunItem, prev ...readyToRunItem) func()) []sequence {
 	// Step 1: Group rules by their folder and group name
 	groups := map[groupKey][]readyToRunItem{}
@@ -61,28 +63,14 @@ func (sch *schedule) buildSequences(items []readyToRunItem, runJobFn func(next r
 	for _, key := range keys {
 		groupItems := groups[key]
 
-		// If there's only one rule in the group, no need to build a sequence
-		if len(groupItems) == 1 {
-			result = append(result, sequence(groupItems[0]))
+		if sch.shouldEvaluateSequentially(groupItems) {
+			result = append(result, sch.buildSequence(key, groupItems, runJobFn))
 			continue
 		}
 
-		slices.SortFunc(groupItems, func(a, b readyToRunItem) int {
-			return models.RulesGroupComparer(a.rule, b.rule)
-		})
-
-		// iterate over the group items backwards to set the afterEval callback
-		for i := len(groupItems) - 2; i >= 0; i-- {
-			groupItems[i].Evaluation.afterEval = runJobFn(groupItems[i+1], groupItems[i])
-		}
-
-		uids := make([]string, 0, len(groupItems))
 		for _, item := range groupItems {
-			uids = append(uids, item.rule.UID)
+			result = append(result, sequence(item))
 		}
-		sch.log.Debug("Sequence created", "folder", key.folderTitle, "group", key.groupName, "sequence", strings.Join(uids, "->"))
-
-		result = append(result, sequence(groupItems[0]))
 	}
 
 	// sort the sequences by UID
@@ -91,4 +79,43 @@ func (sch *schedule) buildSequences(items []readyToRunItem, runJobFn func(next r
 	})
 
 	return result
+}
+
+func (sch *schedule) buildSequence(groupKey groupKey, groupItems []readyToRunItem, runJobFn func(next readyToRunItem, prev ...readyToRunItem) func()) sequence {
+	slices.SortFunc(groupItems, func(a, b readyToRunItem) int {
+		return models.RulesGroupComparer(a.rule, b.rule)
+	})
+
+	// iterate over the group items backwards to set the afterEval callback
+	for i := len(groupItems) - 2; i >= 0; i-- {
+		groupItems[i].Evaluation.afterEval = runJobFn(groupItems[i+1], groupItems[i])
+	}
+
+	uids := make([]string, 0, len(groupItems))
+	for _, item := range groupItems {
+		uids = append(uids, item.rule.UID)
+	}
+	sch.log.Debug("Sequence created", "folder", groupKey.folderTitle, "group", groupKey.groupName, "sequence", strings.Join(uids, "->"))
+
+	return sequence(groupItems[0])
+}
+
+func (sch *schedule) shouldEvaluateSequentially(groupItems []readyToRunItem) bool {
+	// if jitter by rule is enabled, we can't evaluate rules sequentially
+	if sch.jitterEvaluations == JitterByRule {
+		return false
+	}
+
+	// if there is only one rule, there are no rules to chain
+	if len(groupItems) == 1 {
+		return false
+	}
+
+	// only evaluate rules in imported groups sequentially
+	if groupItems[0].rule.ImportedFromPrometheus() {
+		return true
+	}
+
+	// default to false
+	return false
 }

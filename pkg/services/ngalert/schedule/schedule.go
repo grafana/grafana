@@ -109,8 +109,6 @@ type schedule struct {
 	tracer tracing.Tracer
 
 	recordingWriter RecordingWriter
-
-	enableSequences bool
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -131,7 +129,6 @@ type SchedulerCfg struct {
 	Log                    log.Logger
 	RecordingWriter        RecordingWriter
 	RuleStopReasonProvider AlertRuleStopReasonProvider
-	EnableSequences        bool
 }
 
 // NewScheduler returns a new scheduler.
@@ -162,7 +159,6 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		tracer:                 cfg.Tracer,
 		recordingWriter:        cfg.RecordingWriter,
 		ruleStopReasonProvider: cfg.RuleStopReasonProvider,
-		enableSequences:        cfg.EnableSequences,
 	}
 
 	return &sch
@@ -398,12 +394,8 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
 	}
 
-	if sch.enableSequences {
-		sequences := sch.buildSequences(readyToRun, sch.runJobFn)
-		sch.runSequences(sequences, step)
-	} else {
-		sch.runItems(readyToRun, step)
-	}
+	sequences := sch.buildSequences(readyToRun, sch.runJobFn)
+	sch.runSequences(sequences, step)
 
 	// Stop old routines for rules that got restarted.
 	for _, oldRoutine := range restartedRules {
@@ -437,12 +429,6 @@ func (sch *schedule) runJobFn(next readyToRunItem, prev ...readyToRunItem) func(
 			orgID := fmt.Sprint(key.OrgID)
 			sch.metrics.EvaluationMissed.WithLabelValues(orgID, next.rule.Title).Inc()
 		}
-	}
-}
-
-func (sch *schedule) runItems(readyToRun []readyToRunItem, step int64) {
-	for i := range readyToRun {
-		time.AfterFunc(time.Duration(int64(i)*step), sch.runJobFn(readyToRun[i]))
 	}
 }
 

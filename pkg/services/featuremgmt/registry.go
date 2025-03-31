@@ -1806,14 +1806,6 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},
-		{
-			Name:              "alertingRuleSequentialEvaluation",
-			Description:       "Enables the alerting rule sequential evaluation feature",
-			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-		},
 	}
 )
 

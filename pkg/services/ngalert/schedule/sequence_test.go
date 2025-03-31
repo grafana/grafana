@@ -53,6 +53,7 @@ func TestSequence(t *testing.T) {
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
 	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
+	gen := models.RuleGen.With(models.RuleGen.WithNamespaceUID("ns1"))
 
 	t.Run("should set callbacks in correct order", func(t *testing.T) {
 		nextByGroup := map[string][]string{}
@@ -72,45 +73,69 @@ func TestSequence(t *testing.T) {
 			{
 				ruleRoutine: &fakeSequenceRule{UID: "3", Group: "rg2"},
 				Evaluation: Evaluation{
-					rule:        &models.AlertRule{UID: "3", NamespaceUID: "ns1", RuleGroup: "rg2"},
+					rule: gen.With(
+						models.RuleGen.WithUID("3"),
+						models.RuleGen.WithGroupIndex(1),
+						models.RuleGen.WithGroupName("rg2"),
+						models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
+					).GenerateRef(),
 					folderTitle: "folder1",
 				},
 			},
 			{
 				ruleRoutine: &fakeSequenceRule{UID: "4", Group: "rg2"},
 				Evaluation: Evaluation{
-					rule:        &models.AlertRule{UID: "4", NamespaceUID: "ns1", RuleGroup: "rg2"},
+					rule: gen.With(
+						models.RuleGen.WithUID("4"),
+						models.RuleGen.WithGroupIndex(2),
+						models.RuleGen.WithGroupName("rg2"),
+						models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
+					).GenerateRef(),
 					folderTitle: "folder1",
 				},
 			},
 			{
 				ruleRoutine: &fakeSequenceRule{UID: "5", Group: "rg2"},
 				Evaluation: Evaluation{
-					rule:        &models.AlertRule{UID: "5", NamespaceUID: "ns1", RuleGroup: "rg2"},
+					rule: gen.With(
+						models.RuleGen.WithUID("5"),
+						models.RuleGen.WithGroupIndex(3),
+						models.RuleGen.WithGroupName("rg2"),
+						models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
+					).GenerateRef(),
 					folderTitle: "folder1",
 				},
 			},
 			{
 				ruleRoutine: &fakeSequenceRule{UID: "1", Group: "rg1"},
 				Evaluation: Evaluation{
-					rule:        &models.AlertRule{UID: "1", NamespaceUID: "ns1", RuleGroup: "rg1"},
+					rule: gen.With(
+						models.RuleGen.WithUID("1"),
+						models.RuleGen.WithGroupIndex(1),
+						models.RuleGen.WithGroupName("rg1"),
+					).GenerateRef(),
 					folderTitle: "folder1",
 				},
 			},
 			{
 				ruleRoutine: &fakeSequenceRule{UID: "2", Group: "rg1"},
 				Evaluation: Evaluation{
-					rule:        &models.AlertRule{UID: "2", NamespaceUID: "ns1", RuleGroup: "rg1"},
+					rule: gen.With(
+						models.RuleGen.WithUID("2"),
+						models.RuleGen.WithGroupIndex(2),
+						models.RuleGen.WithGroupName("rg1"),
+					).GenerateRef(),
 					folderTitle: "folder1",
 				},
 			},
 		}
 		sequences := sch.buildSequences(items, callback)
-		require.Equal(t, 2, len(sequences))
+		require.Equal(t, 3, len(sequences))
 
 		// Ensure sequences are sorted by UID
-		require.Equal(t, sequences[0].rule.UID, "1")
-		require.Equal(t, sequences[1].rule.UID, "3")
+		require.Equal(t, "1", sequences[0].rule.UID)
+		require.Equal(t, "2", sequences[1].rule.UID)
+		require.Equal(t, "3", sequences[2].rule.UID)
 
 		// Run the sequences
 		for _, sequence := range sequences {
@@ -119,9 +144,16 @@ func TestSequence(t *testing.T) {
 
 		// Verify the callbacks were called in the correct order. Since we dont sort these slices they should
 		// be in the same order as the items that were added to the sequences
-		require.Equal(t, []string{"2"}, nextByGroup["rg1"])
-		require.Equal(t, []string{"1"}, prevByGroup["rg1"])
+		require.Nil(t, nextByGroup["rg1"])
+		require.Nil(t, prevByGroup["rg1"])
 		require.Equal(t, []string{"4", "5"}, nextByGroup["rg2"])
 		require.Equal(t, []string{"3", "4"}, prevByGroup["rg2"])
 	})
+}
+
+func addPrometheusMetadata(rule *models.AlertRule) *models.AlertRule {
+	rule.Metadata.PrometheusStyleRule = &models.PrometheusStyleRule{
+		OriginalRuleDefinition: "test",
+	}
+	return rule
 }

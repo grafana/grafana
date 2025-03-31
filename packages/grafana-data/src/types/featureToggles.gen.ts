@@ -1048,8 +1048,4 @@ export interface FeatureToggles {
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
-  /**
-  * Enables the alerting rule sequential evaluation feature
-  */
-  alertingRuleSequentialEvaluation?: boolean;
 }

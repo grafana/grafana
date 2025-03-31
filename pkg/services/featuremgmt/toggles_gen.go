@@ -962,8 +962,4 @@ const (
 	// FlagUnifiedStorageGrpcConnectionPool
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
-
-	// FlagAlertingRuleSequentialEvaluation
-	// Enables the alerting rule sequential evaluation feature
-	FlagAlertingRuleSequentialEvaluation = "alertingRuleSequentialEvaluation"
 )
