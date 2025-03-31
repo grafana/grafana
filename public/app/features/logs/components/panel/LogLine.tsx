@@ -55,11 +55,11 @@ export const LogLine = ({
       return;
     }
     const calculatedHeight = typeof style.height === 'number' ? style.height : undefined;
-    const actualHeight = hasUnderOrOverflow(logLineRef.current, calculatedHeight);
+    const actualHeight = hasUnderOrOverflow(logLineRef.current, calculatedHeight, log.collapsed);
     if (actualHeight) {
       onOverflow(index, log.uid, actualHeight);
     }
-  }, [index, log.uid, onOverflow, style.height]);
+  }, [index, log.collapsed, log.uid, onOverflow, style.height]);
 
   const handleMouseOver = useCallback(() => onLogLineHover?.(log), [log, onLogLineHover]);
 

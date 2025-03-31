@@ -255,19 +255,26 @@ export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: 
   return dimensions;
 };
 
-export const TRUNCATION_LINE_COUNT = 4;
+export const TRUNCATION_LINE_COUNT = Math.round(window.innerHeight / getLineHeight() / 2);
 export function getTruncationLength() {
   return (window.innerWidth / measureTextWidth('e')) * (TRUNCATION_LINE_COUNT + 1);
 }
 
-export function hasUnderOrOverflow(element: HTMLDivElement, calculatedHeight?: number): number | null {
+export function hasUnderOrOverflow(
+  element: HTMLDivElement,
+  calculatedHeight?: number,
+  collapsed?: boolean
+): number | null {
+  if (collapsed !== undefined && calculatedHeight) {
+    calculatedHeight -= getLineHeight();
+  }
   const height = calculatedHeight ?? element.clientHeight;
   if (element.scrollHeight > height) {
-    return element.scrollHeight;
+    return collapsed !== undefined ? element.scrollHeight + getLineHeight() : element.scrollHeight;
   }
   const child = element.children[1];
   if (child instanceof HTMLDivElement && child.clientHeight < height) {
-    return child.clientHeight;
+    return collapsed !== undefined ? child.clientHeight + getLineHeight() : child.clientHeight;
   }
   return null;
 }
