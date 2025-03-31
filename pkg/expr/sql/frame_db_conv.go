@@ -176,11 +176,11 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 			return raw, nil
 
 		default:
-			return nil, fmt.Errorf("unexpected type for JSON field: %T", val)
+			return nil, fmt.Errorf("JSON field does not support val %v of type %T", val, val)
 		}
 
 	default:
-		return nil, fmt.Errorf("unsupported field type %s for val %v", fieldType, val)
+		return nil, fmt.Errorf("unsupported field type %s for val %v of type %T", fieldType, val, val)
 	}
 }
 
