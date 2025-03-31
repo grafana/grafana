@@ -264,7 +264,6 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 	if ref == "" {
 		if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
 			parsed.Errors = append(parsed.Errors, err)
-			return parsed, nil
 		}
 
 		// FIXME: I don't like this parsed strategy here
