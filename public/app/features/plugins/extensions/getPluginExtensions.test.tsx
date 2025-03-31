@@ -611,30 +611,21 @@ describe('getObservablePluginExtensions()', () => {
     });
   });
 
-  it('should emit the initial state when no changes are made to the registries', () => {
-    const observable = getObservablePluginExtensions({ extensionPointId });
+it('should emit the initial state when no changes are made to the registries', async () => {
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
 
-    observable.subscribe((value: ReturnType<GetExtensions>) => {
-      expect(value.extensions).toHaveLength(2);
-      expect(value.extensions[0].pluginId).toBe(pluginId);
-      expect(value.extensions[1].pluginId).toBe(pluginId);
+    await expect(observable).toEmitValuesWith((received) => {
+      const { extensions } = received[0];
+      expect(extensions).toHaveLength(2);
+      expect(extensions[0].pluginId).toBe(pluginId);
+      expect(extensions[1].pluginId).toBe(pluginId);
     });
   });
 
-  it('should emit the new state when the registries change', (done) => {
-    const observable = getObservablePluginExtensions({ extensionPointId });
-    const subscriber = jest.fn();
+it('should emit the new state when the registries change', async () => {
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(take(2));
 
-    observable.subscribe(subscriber);
-
-    // Initial state
     setTimeout(() => {
-      expect(subscriber).toHaveBeenCalledTimes(2);
-      expect(subscriber.mock.calls[1][0].extensions).toHaveLength(2);
-      expect(subscriber.mock.calls[1][0].extensions[0].pluginId).toBe(pluginId);
-      expect(subscriber.mock.calls[1][0].extensions[1].pluginId).toBe(pluginId);
-
-      // Register new link extension
       pluginExtensionRegistries.addedLinksRegistry.register({
         pluginId,
         configs: [
@@ -647,15 +638,20 @@ describe('getObservablePluginExtensions()', () => {
           },
         ],
       });
+    }, 10);
 
-      expect(subscriber).toHaveBeenCalledTimes(3);
-      expect(subscriber.mock.calls[2][0].extensions).toHaveLength(3);
-      expect(subscriber.mock.calls[2][0].extensions[0].pluginId).toBe(pluginId);
-      expect(subscriber.mock.calls[2][0].extensions[1].pluginId).toBe(pluginId);
-      expect(subscriber.mock.calls[2][0].extensions[2].pluginId).toBe(pluginId);
+    await expect(observable).toEmitValuesWith((received) => {
+      const { extensions } = received[0];
+      expect(extensions).toHaveLength(2);
+      expect(extensions[0].pluginId).toBe(pluginId);
+      expect(extensions[1].pluginId).toBe(pluginId);
 
-      done();
-    }, 0);
+      const { extensions: extensions2 } = received[1];
+      expect(extensions2).toHaveLength(3);
+      expect(extensions2[0].pluginId).toBe(pluginId);
+      expect(extensions2[1].pluginId).toBe(pluginId);
+      expect(extensions2[2].pluginId).toBe(pluginId);
+    });
   });
 });
 
@@ -694,10 +690,11 @@ describe('getObservablePluginLinks()', () => {
     });
   });
 
-  it('should only emit the links', () => {
-    const observable = getObservablePluginLinks({ extensionPointId });
+  it('should only emit the links', async () => {
+    const observable = getObservablePluginLinks({ extensionPointId }).pipe(first());
 
-    observable.subscribe((links) => {
+    await expect(observable).toEmitValuesWith((received) => {
+      const links = received[0];
       expect(links).toHaveLength(1);
       expect(links[0].pluginId).toBe(pluginId);
       expect(links[0].type).toBe(PluginExtensionTypes.link);
@@ -740,10 +737,11 @@ describe('getObservablePluginComponents()', () => {
     });
   });
 
-  it('should only emit the components', () => {
-    const observable = getObservablePluginComponents({ extensionPointId });
+it('should only emit the components', async () => {
+    const observable = getObservablePluginComponents({ extensionPointId }).pipe(first());
 
-    observable.subscribe((components) => {
+    await expect(observable).toEmitValuesWith((received) => {
+      const components = received[0];
       expect(components).toHaveLength(1);
       expect(components[0].pluginId).toBe(pluginId);
       expect(components[0].type).toBe(PluginExtensionTypes.component);

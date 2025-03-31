@@ -38,15 +38,10 @@ export const getObservablePluginExtensions = (
   options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
 ): Observable<ReturnType<GetExtensions>> => {
   return combineLatest([
-    from(pluginExtensionRegistries.addedComponentsRegistry.getState()),
-    from(pluginExtensionRegistries.addedLinksRegistry.getState()),
+    pluginExtensionRegistries.addedComponentsRegistry.asObservable(),
+    pluginExtensionRegistries.addedLinksRegistry.asObservable(),
   ]).pipe(
-    switchMap(([initialComponents, initialLinks]) =>
-      combineLatest([
-        merge(of(initialComponents), pluginExtensionRegistries.addedComponentsRegistry.asObservable()),
-        merge(of(initialLinks), pluginExtensionRegistries.addedLinksRegistry.asObservable()),
-      ])
-    ),
+    filter(([components, links]) => Boolean(components) && Boolean(links)), // filter out uninitialized registries
     map(([components, links]) =>
       getPluginExtensions({
         ...options,
@@ -61,14 +56,14 @@ export const getObservablePluginExtensions = (
 export const getObservablePluginLinks: GetObservablePluginLinks = (options) => {
   return getObservablePluginExtensions(options).pipe(
     map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.link)),
-    filter((extensions) => extensions.length > 0)
+    filter((extensions) => extensions.length)
   );
 };
 
 export const getObservablePluginComponents: GetObservablePluginComponents = (options) => {
   return getObservablePluginExtensions(options).pipe(
     map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.component)),
-    filter((extensions) => extensions.length > 0)
+    filter((extensions) => extensions.length)
   );
 };
 
