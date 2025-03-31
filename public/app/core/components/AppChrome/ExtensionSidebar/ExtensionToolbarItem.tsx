@@ -49,7 +49,7 @@ export function ExtensionToolbarItem() {
             active={dockedComponentId === id}
             label={c.title}
             onClick={() => {
-              if (isOpen) {
+              if (isOpen && dockedComponentId === id) {
                 setDockedComponentId(undefined);
               } else {
                 setDockedComponentId(id);
