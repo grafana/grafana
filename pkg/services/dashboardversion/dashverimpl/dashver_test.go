@@ -73,7 +73,7 @@ func TestDashboardVersionService(t *testing.T) {
 		obj, err := utils.MetaAccessor(dash)
 		require.NoError(t, err)
 		obj.SetUpdatedTimestamp(&updatedTimestamp)
-		mockCli.On("GetUserFromMeta", mock.Anything, "user:1").Return(&user.User{ID: 1}, nil)
+		mockCli.On("GetUsersFromMeta", mock.Anything, []string{"user:1", ""}).Return(map[string]*user.User{"user:1": {ID: 1}}, nil)
 		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
 			Items: []unstructured.Unstructured{*dash}}, nil).Once()
 		res, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
@@ -93,7 +93,7 @@ func TestDashboardVersionService(t *testing.T) {
 			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(10), "hello": "world"}),
 		})
 
-		mockCli.On("GetUserFromMeta", mock.Anything, "user:2").Return(&user.User{ID: 2}, nil)
+		mockCli.On("GetUsersFromMeta", mock.Anything, []string{"user:1", "user:2"}).Return(map[string]*user.User{"user:1": {ID: 1}, "user:2": {ID: 2}}, nil)
 		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
 			Items: []unstructured.Unstructured{{
 				Object: map[string]any{
@@ -269,7 +269,7 @@ func TestListDashboardVersions(t *testing.T) {
 			Return(&dashboards.DashboardRef{UID: "uid"}, nil)
 
 		query := dashver.ListDashboardVersionsQuery{DashboardID: 42}
-		mockCli.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		mockCli.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 		mockCli.On("List", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{
 			Items: []unstructured.Unstructured{{Object: map[string]any{
 				"metadata": map[string]any{
