@@ -40,7 +40,11 @@ export function AppChrome({ children }: Props) {
   const isScopesDashboardsOpen = Boolean(
     scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
-  const styles = useStyles2(getStyles, Boolean(state.actions) || !!scopes?.state.enabled, isExtensionSidebarOpen);
+  const styles = useStyles2(
+    getStyles,
+    Boolean(state.actions) || !!scopes?.state.enabled,
+    isExtensionSidebarOpen && !state.chromeless
+  );
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
@@ -125,13 +129,13 @@ export function AppChrome({ children }: Props) {
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-              [styles.pageContainerMenuDockedExtensionSidebar]: isExtensionSidebarOpen,
+              [styles.pageContainerMenuDockedExtensionSidebar]: !state.chromeless && isExtensionSidebarOpen,
             })}
             id="pageContent"
           >
             {children}
           </main>
-          {config.featureToggles.extensionSidebar && isExtensionSidebarOpen && (
+          {!state.chromeless && config.featureToggles.extensionSidebar && isExtensionSidebarOpen && (
             <div className={styles.sidebarContainer}>
               <ExtensionSidebar />
             </div>
