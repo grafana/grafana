@@ -1465,7 +1465,8 @@
       "metadata": {
         "name": "disableSecretsCompatibility",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-07-12T20:27:37Z"
+        "creationTimestamp": "2022-07-12T20:27:37Z",
+        "deletionTimestamp": "2025-03-31T16:49:34Z"
       },
       "spec": {
         "description": "Disable duplicated secret storage in legacy tables",

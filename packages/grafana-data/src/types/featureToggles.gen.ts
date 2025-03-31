@@ -95,10 +95,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Disable duplicated secret storage in legacy tables
-  */
-  disableSecretsCompatibility?: boolean;
-  /**
   * Logs the path for requests that are instrumented as unknown
   */
   logRequestsInstrumentedAsUnknown?: boolean;
