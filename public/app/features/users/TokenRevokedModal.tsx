@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, InfoBox, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 import { getModalStyles } from '@grafana/ui/internal';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   maxConcurrentSessions?: number;
@@ -23,7 +23,14 @@ export const TokenRevokedModal = (props: Props) => {
   return (
     <Portal>
       <div className={modalStyles.modal}>
-        <InfoBox title="You have been automatically signed out" severity="warning" className={styles.infobox}>
+        <InfoBox
+          title={t(
+            'users.token-revoked-modal.title-you-have-been-automatically-signed-out',
+            'You have been automatically signed out'
+          )}
+          severity="warning"
+          className={styles.infobox}
+        >
           <div className={styles.text}>
             <p>
               Your session token was automatically revoked because you have reached
