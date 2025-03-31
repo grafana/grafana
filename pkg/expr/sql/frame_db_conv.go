@@ -95,9 +95,6 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		fT = data.FieldTypeBool
 	case types.JSON:
 		fT = data.FieldTypeJSON
-		if col.Nullable {
-			fT = data.FieldTypeNullableJSON
-		}
 	default:
 		switch {
 		case types.IsDecimal(col.Type):
