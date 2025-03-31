@@ -20,10 +20,10 @@ type History interface {
 	WriteJob(ctx context.Context, job *provisioning.Job) error
 
 	// Gets recent jobs for a repository
-	RecentJobs(ctx context.Context, namespace string, repo string) (*provisioning.JobList, error)
+	RecentJobs(ctx context.Context, namespace, repo string) (*provisioning.JobList, error)
 
 	// find a specific job from the original UID
-	GetJob(ctx context.Context, namespace string, uid string) (*provisioning.Job, error)
+	GetJob(ctx context.Context, namespace, repo, uid string) (*provisioning.Job, error)
 }
 
 // NewStorageBackedHistory creates a History client backed by unified storage
@@ -111,7 +111,7 @@ func (s *storageBackedHistory) RecentJobs(ctx context.Context, namespace, repo s
 }
 
 // GetJob implements History.
-func (s *storageBackedHistory) GetJob(ctx context.Context, namespace, job string) (*provisioning.Job, error) {
+func (s *storageBackedHistory) GetJob(ctx context.Context, namespace, repo, job string) (*provisioning.Job, error) {
 	jobs, err := s.getJobs(ctx, namespace, labels.Set{
 		LabelJobOriginalUID: job,
 	})

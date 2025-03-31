@@ -66,7 +66,7 @@ func (c *jobsConnector) Connect(
 					responder.Error(apierrors.NewBadRequest(fmt.Sprintf("invalid job uid: %s", jobUID)))
 					return
 				}
-				job, err := c.historic.GetJob(ctx, cfg.Namespace, jobUID)
+				job, err := c.historic.GetJob(ctx, cfg.Namespace, name, jobUID)
 				if err != nil {
 					responder.Error(err)
 					return
