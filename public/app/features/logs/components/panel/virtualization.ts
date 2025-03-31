@@ -203,7 +203,7 @@ export function getLogLineSize(
 
   const { height } = measureTextHeight(textToMeasure, getLogContainerWidth(container), optionsWidth);
   // When the log is collapsed, add an extra line for the expand/collapse control
-  return logs[index].collapsed === false ? height + 1 : height;
+  return logs[index].collapsed === false ? height + lineHeight : height;
 }
 
 export interface LogFieldDimension {
