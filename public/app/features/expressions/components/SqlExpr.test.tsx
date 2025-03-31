@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react';
-import { SqlExpr } from './SqlExpr';
+
 import { ExpressionQuery } from '../types';
+
+import { SqlExpr } from './SqlExpr';
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
