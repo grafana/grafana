@@ -175,20 +175,6 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 			}
 			return raw, nil
 
-		case string:
-			raw := json.RawMessage(v)
-			if nullable {
-				return &raw, nil
-			}
-			return raw, nil
-
-		case []byte:
-			raw := json.RawMessage(v)
-			if nullable {
-				return &raw, nil
-			}
-			return raw, nil
-
 		default:
 			return nil, fmt.Errorf("unexpected type for JSON field: %T", val)
 		}
