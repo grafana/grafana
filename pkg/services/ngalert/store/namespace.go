@@ -33,7 +33,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 
 func folderToFolderReference(f *folder.Folder) *folder.FolderReference {
 	return &folder.FolderReference{
-		ID:           f.ID,
+		ID:           f.ID, // nolint:staticcheck
 		UID:          f.UID,
 		Title:        f.Title,
 		ParentUID:    f.ParentUID,

@@ -262,14 +262,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 			return nil, err
 		}
 
-		hits = append(hits, &folder.FolderReference{
-			ID:           f.ID,
-			UID:          f.UID,
-			Title:        f.Title,
-			ParentUID:    f.ParentUID,
-			FullpathUIDs: f.FullpathUIDs,
-			ManagedBy:    f.ManagedBy,
-		})
+		hits = append(hits, f.ToFolderReference())
 	}
 
 	return hits, nil

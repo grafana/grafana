@@ -64,6 +64,7 @@ type Folder struct {
 }
 
 type FolderReference struct {
+	// Deprecated: use UID instead
 	ID           int64  `xorm:"pk autoincr 'id'"`
 	UID          string `xorm:"uid"`
 	Title        string

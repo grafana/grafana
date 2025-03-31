@@ -432,16 +432,7 @@ func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.Get
 
 	// add "shared with me" folder on the 1st page
 	if (q.Page == 0 || q.Page == 1) && len(q.FolderUIDs) != 0 {
-		// TODO: convert SharedWithMeFolder to folderRef
-		SharedWithMeFolderRef := folder.FolderReference{
-			ID:           folder.SharedWithMeFolder.ID,
-			UID:          folder.SharedWithMeFolder.UID,
-			Title:        folder.SharedWithMeFolder.Title,
-			ParentUID:    folder.SharedWithMeFolder.ParentUID,
-			FullpathUIDs: folder.SharedWithMeFolder.FullpathUIDs,
-			ManagedBy:    folder.SharedWithMeFolder.ManagedBy,
-		}
-		children = append([]*folder.FolderReference{&SharedWithMeFolderRef}, children...)
+		children = append([]*folder.FolderReference{folder.SharedWithMeFolder.ToFolderReference()}, children...)
 	}
 
 	return children, nil

@@ -566,16 +566,7 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 
 	// add "shared with me" folder on the 1st page
 	if (q.Page == 0 || q.Page == 1) && len(q.FolderUIDs) != 0 {
-		// TODO: convert SharedWithMeFolder to folderRef
-		SharedWithMeFolderRef := folder.FolderReference{
-			ID:           folder.SharedWithMeFolder.ID,
-			UID:          folder.SharedWithMeFolder.UID,
-			Title:        folder.SharedWithMeFolder.Title,
-			ParentUID:    folder.SharedWithMeFolder.ParentUID,
-			FullpathUIDs: folder.SharedWithMeFolder.FullpathUIDs,
-			ManagedBy:    folder.SharedWithMeFolder.ManagedBy,
-		}
-		children = append([]*folder.FolderReference{&SharedWithMeFolderRef}, children...)
+		children = append([]*folder.FolderReference{folder.SharedWithMeFolder.ToFolderReference()}, children...)
 	}
 
 	return children, nil
@@ -659,14 +650,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 
 	for _, f := range dashFolders {
 		if f.ParentUID != "" {
-			nonRootFolders = append(nonRootFolders, &folder.FolderReference{
-				ID:           f.ID,
-				UID:          f.UID,
-				Title:        f.Title,
-				ParentUID:    f.ParentUID,
-				FullpathUIDs: f.FullpathUIDs,
-				ManagedBy:    f.ManagedBy,
-			})
+			nonRootFolders = append(nonRootFolders, f.ToFolderReference())
 		}
 	}
 
