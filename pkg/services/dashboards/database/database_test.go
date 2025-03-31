@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -84,13 +85,17 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Positive(t, len(savedFolder.UID))
 	})
 
-	t.Run("Should be able to get dashboard counts per org", func(t *testing.T) {
+	t.Run("Should be able to get counts per org", func(t *testing.T) {
 		setup()
-		count, err := dashboardStore.CountInOrg(context.Background(), 1)
+		count, err := dashboardStore.CountInOrg(context.Background(), 1, false)
 		require.NoError(t, err)
 		require.Equal(t, int64(3), count)
 
-		count, err = dashboardStore.CountInOrg(context.Background(), 2)
+		count, err = dashboardStore.CountInOrg(context.Background(), 2, false)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), count)
+
+		count, err = dashboardStore.CountInOrg(context.Background(), 1, true)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), count)
 	})
@@ -187,6 +192,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		queryResult, err := dashboardStore.GetDashboardUIDByID(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, queryResult.UID, savedDash.UID)
+		require.Equal(t, queryResult.FolderUID, savedFolder.UID)
 	})
 
 	t.Run("Shouldn't be able to get a dashboard with just an OrgID", func(t *testing.T) {
@@ -964,7 +970,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderServiceWithFlagOn := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -1084,7 +1090,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 
 	folderServiceWithFlagOn := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	user := &user.SignedInUser{
 		OrgID: 1,

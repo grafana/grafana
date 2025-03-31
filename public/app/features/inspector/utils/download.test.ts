@@ -105,7 +105,7 @@ describe('inspector download', () => {
           rows: [{ timeEpochMs: 100, entry: 'testEntry' } as unknown as LogRowModel],
         },
         'test',
-        `testLabel: 1\nsecondTestLabel: 2\n\n\n100\ttestEntry\n`,
+        `testLabel: 1\nsecondTestLabel: 2\n\n\n100\t1970-01-01T00:00:00.100Z\ttestEntry\n`,
       ],
     ])('should, when logsModel is %s and title is %s, resolve in %s', async (logsModel, title, expected) => {
       downloadLogsModelAsTxt(logsModel, title);
