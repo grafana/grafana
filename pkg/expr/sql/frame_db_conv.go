@@ -165,7 +165,6 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeJSON, data.FieldTypeNullableJSON:
 		switch v := val.(type) {
 		case types.JSONDocument:
-			// Use fmt.Sprintf to serialize JSONDocument to []byte
 			raw := json.RawMessage(v.String())
 			if nullable {
 				return &raw, nil
