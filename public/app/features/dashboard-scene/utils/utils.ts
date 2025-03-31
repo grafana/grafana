@@ -17,6 +17,7 @@ import { t } from 'app/core/internationalization';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
+import { DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
@@ -476,4 +477,8 @@ export function useInterpolatedTitle<T extends SceneObjectState & { title?: stri
   }
 
   return sceneGraph.interpolate(scene, title, undefined, 'text');
+}
+
+export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
+  return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }

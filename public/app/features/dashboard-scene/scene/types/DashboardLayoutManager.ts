@@ -18,6 +18,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   descriptor: Readonly<LayoutRegistryItem>;
 
   /**
+   * Serializer for layout
+   */
+  serialize(): DashboardV2Spec['layout'];
+
+  /**
    * Adds a new panel to the layout
    */
   addPanel(panel: VizPanel): void;

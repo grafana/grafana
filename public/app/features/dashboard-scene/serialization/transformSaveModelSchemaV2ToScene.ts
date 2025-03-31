@@ -63,7 +63,7 @@ import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSes
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
-import { layoutSerializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
+import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
@@ -142,9 +142,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     meta.canSave = false;
   }
 
-  const layoutManager: DashboardLayoutManager = layoutSerializerRegistry
+  const layoutManager: DashboardLayoutManager = layoutDeserializerRegistry
     .get(dashboard.layout.kind)
-    .serializer.deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
+    .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
   //createLayoutManager(dashboard);
 
