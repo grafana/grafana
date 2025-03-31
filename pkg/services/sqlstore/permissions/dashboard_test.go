@@ -186,8 +186,11 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			t.Run(tt.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
 				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, features, recursiveQueriesAreSupported, store.GetDialect())
 
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+
 				var result int
-				err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				err = store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 					q, params := filter.Where()
 					recQry, recQryParams := filter.With()
 					params = append(recQryParams, params...)
