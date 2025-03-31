@@ -19,7 +19,6 @@ import (
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
-	"gocloud.dev/gcerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -119,14 +118,13 @@ func (s *cdkBackend) GetResourceStats(ctx context.Context, namespace string, min
 
 func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
 	if event.Type == WatchEvent_ADDED {
-		path := s.getPath(event.Key, 0)
-		iter := s.bucket.List(&blob.ListOptions{Prefix: path + "/", Delimiter: "/"})
-		if _, err := iter.Next(ctx); !errors.Is(err, io.EOF) && gcerrors.Code(err) != gcerrors.NotFound {
-			if err == nil {
-				// The folder already exists. Not OK!
-				return 0, backend.ErrResourceAlreadyExists
-			}
-			return 0, err
+		// ReadResource deals with deleted values (i.e. a file exists but has generation -999).
+		resp := s.ReadResource(ctx, &ReadRequest{Key: event.Key})
+		if resp.Error != nil && resp.Error.Code != http.StatusNotFound {
+			return 0, GetError(resp.Error)
+		}
+		if resp.Value != nil {
+			return 0, backend.ErrResourceAlreadyExists
 		}
 	}
 
