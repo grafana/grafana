@@ -1611,17 +1611,6 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		require.Contains(t, sharedFoldersUIDs, ancestorFoldersWithoutPermissions[1].UID)
 		require.NotContains(t, sharedFoldersUIDs, ancestorFoldersWithPermissions[1].UID)
 
-		sharedDashboards, err := dashboardService.GetDashboardsSharedWithUser(context.Background(), &signedInUser)
-		sharedDashboardsUIDs := make([]string, 0)
-		for _, d := range sharedDashboards {
-			sharedDashboardsUIDs = append(sharedDashboardsUIDs, d.UID)
-		}
-
-		require.NoError(t, err)
-		require.Len(t, sharedDashboards, 1)
-		require.Contains(t, sharedDashboardsUIDs, dash1.UID)
-		require.NotContains(t, sharedDashboardsUIDs, dash2.UID)
-
 		t.Cleanup(func() {
 			//guardian.New = origNewGuardian
 			toDelete := make([]string, 0, len(ancestorFoldersWithPermissions)+len(ancestorFoldersWithoutPermissions))

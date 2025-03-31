@@ -1395,10 +1395,6 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashbo
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.DashboardRef, error) {
-	return dr.getDashboardsSharedWithUser(ctx, user)
-}
-
 func (dr *DashboardServiceImpl) getDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.DashboardRef, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.getDashboardsSharedWithUser")
 	defer span.End()
