@@ -1,5 +1,5 @@
 import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   Spec as DashboardV2Spec,
   GridLayoutItemKind,

@@ -1,6 +1,6 @@
-import { Spec as DashboardV2Spec } from '../v2alpha1/types.spec.gen';
+import { Spec } from './v2alpha1/types.spec.gen';
 
-export const handyTestingSchema: DashboardV2Spec = {
+export const handyTestingSchema: Spec = {
   title: 'Default Dashboard',
   description: 'This is a default dashboard',
   cursorSync: 'Off',

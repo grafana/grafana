@@ -16,7 +16,7 @@ import {
   SceneGridRow,
   SceneGridItem,
 } from '@grafana/scenes';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   AdhocVariableKind,
   ConstantVariableKind,
