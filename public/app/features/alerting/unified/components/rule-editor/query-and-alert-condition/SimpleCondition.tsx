@@ -73,7 +73,7 @@ export const SimpleConditionEditor = ({
     updateThresholdFunction(value.value ?? EvalFunction.IsAbove, expressionQueriesList, dispatch);
   };
 
-  const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index?: number) => {
+  const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index = 0) => {
     const value = event.currentTarget.value;
 
     // Allow empty value
@@ -99,19 +99,11 @@ export const SimpleConditionEditor = ({
       return;
     }
 
-    if (isRange) {
-      const newParams = produce(simpleCondition.evaluator.params, (draft) => {
-        draft[index ?? 0] = numericValue;
-      });
-      onChange({ ...simpleCondition, evaluator: { ...simpleCondition.evaluator, params: newParams } });
-      updateThresholdValue(numericValue, index ?? 0, expressionQueriesList, dispatch);
-    } else {
-      onChange({
-        ...simpleCondition,
-        evaluator: { ...simpleCondition.evaluator, params: [numericValue] },
-      });
-      updateThresholdValue(numericValue, 0, expressionQueriesList, dispatch);
-    }
+    const newParams = produce(simpleCondition.evaluator.params, (draft) => {
+      draft[index] = numericValue;
+    });
+    onChange({ ...simpleCondition, evaluator: { ...simpleCondition.evaluator, params: newParams } });
+    updateThresholdValue(numericValue, index, expressionQueriesList, dispatch);
   };
 
   const styles = useStyles2(getStyles);
