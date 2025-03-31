@@ -137,10 +137,10 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
-	github.com/dolthub/go-icu-regex v0.0.0-20250319212010-451ea8d003fa // indirect
-	github.com/dolthub/go-mysql-server v0.19.1-0.20250319232254-8c915e51131f // indirect
+	github.com/dolthub/go-icu-regex v0.0.0-20250327004329-6799764f2dad // indirect
+	github.com/dolthub/go-mysql-server v0.19.1-0.20250327192031-fead86387efc // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
-	github.com/dolthub/vitess v0.0.0-20250304211657-920ca9ec2b9a // indirect
+	github.com/dolthub/vitess v0.0.0-20250325024605-8131be3ca6d3 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/elazarl/goproxy v1.7.2 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
