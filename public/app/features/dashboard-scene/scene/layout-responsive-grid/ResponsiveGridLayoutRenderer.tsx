@@ -25,6 +25,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   return (
     <div
       className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
+      ref={model.containerRef}
     >
       {children.map((item) =>
         isLazy ? (
