@@ -211,19 +211,19 @@ func TestFrameToSQLAndBack_JSONRoundtrip(t *testing.T) {
 		RefID: "json_test",
 		Name:  "json_test",
 		Fields: []*data.Field{
-			data.NewField("id", nil, []*int64{p(int64(1)), p(int64(2))}),
-			data.NewField("payload", nil, []*json.RawMessage{
-				p(json.RawMessage(`{"foo":1}`)),
-				p(json.RawMessage(`{"bar":"baz"}`)),
+			data.NewField("id", nil, []int64{1, 2}),
+			data.NewField("payload", nil, []json.RawMessage{
+				json.RawMessage(`{"foo":1}`),
+				json.RawMessage(`{"bar":"baz"}`),
 			}),
 		},
 	}
 
-	sqlDB := &DB{}
+	db := DB{}
 
 	query := `SELECT * FROM json_test`
 
-	resultFrame, err := sqlDB.QueryFrames(context.Background(), "json_test", query, data.Frames{expectedFrame})
+	resultFrame, err := db.QueryFrames(context.Background(), "json_test", query, data.Frames{expectedFrame})
 	require.NoError(t, err)
 
 	// Ensure consistent names for comparison
@@ -240,13 +240,10 @@ func TestQueryFrames_JSONFilter(t *testing.T) {
 		RefID: "A",
 		Name:  "A",
 		Fields: []*data.Field{
-			data.NewField("title", nil, []*string{
-				p("Bug report"),
-				p("Feature request"),
-			}),
-			data.NewField("labels", nil, []*json.RawMessage{
-				p(json.RawMessage(`["type/bug", "priority/high"]`)),
-				p(json.RawMessage(`["type/feature", "priority/low"]`)),
+			data.NewField("title", nil, []string{"Bug report", "Feature request"}),
+			data.NewField("labels", nil, []json.RawMessage{
+				json.RawMessage(`["type/bug", "priority/high"]`),
+				json.RawMessage(`["type/feature", "priority/low"]`),
 			}),
 		},
 	}
@@ -255,20 +252,18 @@ func TestQueryFrames_JSONFilter(t *testing.T) {
 		RefID: "B",
 		Name:  "B",
 		Fields: []*data.Field{
-			data.NewField("title", nil, []*string{
-				p("Bug report"),
-			}),
-			data.NewField("labels", nil, []*json.RawMessage{
-				p(json.RawMessage(`["type/bug", "priority/high"]`)),
+			data.NewField("title", nil, []string{"Bug report"}),
+			data.NewField("labels", nil, []json.RawMessage{
+				json.RawMessage(`["type/bug", "priority/high"]`),
 			}),
 		},
 	}
 
-	sqlDB := &DB{}
+	db := DB{}
 
 	query := `SELECT title, labels FROM A WHERE json_contains(labels, '"type/bug"')`
 
-	result, err := sqlDB.QueryFrames(context.Background(), "B", query, data.Frames{input})
+	result, err := db.QueryFrames(context.Background(), "B", query, data.Frames{input})
 	require.NoError(t, err)
 
 	// Ensure frame names match for comparison
