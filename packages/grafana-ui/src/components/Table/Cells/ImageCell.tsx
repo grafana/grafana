@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import { getCellLinks } from '../../../utils';
 import { DataLinksContextMenu } from '../../DataLinks/DataLinksContextMenu';
 import { TableCellProps } from '../types';
