@@ -90,6 +90,7 @@ export { VizTooltipRow } from '../components/VizTooltip/VizTooltipRow';
 export { getContentItems } from '../components/VizTooltip/utils';
 export { ColorIndicator, ColorPlacement, type VizTooltipItem } from '../components/VizTooltip/types';
 export { mapMouseEventToMode } from '../components/VizLegend/utils';
+export { Carousel } from '../components/Carousel/Carousel';
 
 export { getFocusStyles, getMouseFocusStyles, getTooltipContainerStyles } from '../themes/mixins';
 
