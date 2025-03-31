@@ -81,10 +81,11 @@ type SetAuthInfoCommand struct {
 }
 
 type UpdateAuthInfoCommand struct {
-	AuthModule string
-	AuthId     string
-	UserId     int64
-	OAuthToken *oauth2.Token
+	AuthModule  string
+	AuthId      string
+	UserId      int64
+	OAuthToken  *oauth2.Token
+	ExternalUID string
 }
 
 type DeleteAuthInfoCommand struct {
