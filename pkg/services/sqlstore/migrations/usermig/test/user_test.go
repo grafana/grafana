@@ -1,7 +1,6 @@
 package test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -34,7 +33,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 
 	t.Cleanup(func() {
 		if err := x.Close(); err != nil {
-			fmt.Printf("failed to close xorm engine: %v", err)
+			t.Logf("failed to close xorm engine: %v", err)
 		}
 	})
 
