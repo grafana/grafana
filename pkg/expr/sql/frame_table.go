@@ -95,12 +95,12 @@ func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
 
 		// If the field is JSON, convert json.RawMessage to types.JSONDocument
 		if raw, ok := val.(json.RawMessage); ok {
-			doc, converted, err := types.JSON.Convert(raw)
+			doc, inRange, err := types.JSON.Convert(raw)
 			if err != nil {
 				return nil, fmt.Errorf("failed to convert json.RawMessage to JSONDocument: %w", err)
 			}
-			if !converted {
-				return nil, fmt.Errorf("unexpected JSON conversion issue at row %d, column %s: value required type coercion", ri.row, ri.ft.Frame.Fields[colIndex].Name)
+			if !inRange {
+				return nil, fmt.Errorf("invalid JSON value detected at row %d, column %s: value required type coercion", ri.row, ri.ft.Frame.Fields[colIndex].Name)
 			}
 			val = doc
 		}
