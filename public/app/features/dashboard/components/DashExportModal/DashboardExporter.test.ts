@@ -534,7 +534,7 @@ describe('DashboardExporter', () => {
 
   describe('DashboardExporter V2', () => {
     beforeAll(() => {
-      config.featureToggles.useV2DashboardsAPI = true;
+      config.featureToggles.dashboardNewLayouts = true;
       config.buildInfo.version = '11.6.0';
       config.panels['timeseries'] = {
         id: 'timeseries',
@@ -556,7 +556,7 @@ describe('DashboardExporter', () => {
     });
 
     afterAll(() => {
-      config.featureToggles.useV2DashboardsAPI = false;
+      config.featureToggles.dashboardNewLayouts = false;
     });
 
     const setup = async () => {
