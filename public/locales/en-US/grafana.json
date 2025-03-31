@@ -4739,7 +4739,8 @@
     "repository-resources": {
       "columns": {
         "history": "History",
-        "view": "View"
+        "view-dashboard": "View",
+        "view-folder": "View"
       },
       "placeholder-search": "Search"
     },
