@@ -1,11 +1,12 @@
 package options
 
 import (
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestStorageOptions_CheckFeatureToggle(t *testing.T) {
