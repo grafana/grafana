@@ -34,6 +34,7 @@ import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
 import { DashboardChangeInfo } from './shared';
+import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 
 export class DashboardSceneChangeTracker {
   private _changeTrackerSub: Unsubscribable | undefined;
@@ -140,6 +141,9 @@ export class DashboardSceneChangeTracker {
       return true;
     }
     if (payload.changedObject instanceof AutoGridLayoutManager) {
+      return true;
+    }
+    if (payload.changedObject instanceof AutoGridItem) {
       return true;
     }
 
