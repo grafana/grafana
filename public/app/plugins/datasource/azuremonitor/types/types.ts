@@ -145,11 +145,14 @@ export interface AzureResourceSummaryItem {
 export interface RawAzureSubscriptionItem {
   subscriptionName: string;
   subscriptionId: string;
+  subscriptionURI: string;
+  count: number;
 }
 
 export interface RawAzureResourceGroupItem {
   resourceGroupURI: string;
   resourceGroupName: string;
+  count: number;
 }
 
 export interface RawAzureResourceItem {
@@ -226,10 +229,11 @@ export interface LegacyAzureGetMetricMetadataQuery {
 }
 
 export interface AzureGetResourceNamesQuery {
-  subscriptionId: string;
+  subscriptionId?: string;
   resourceGroup?: string;
   metricNamespace?: string;
   region?: string;
+  uri?: string;
 }
 
 export interface AzureMonitorLocations {

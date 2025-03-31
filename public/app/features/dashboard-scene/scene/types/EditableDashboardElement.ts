@@ -1,10 +1,7 @@
 import { ReactNode } from 'react';
 
 import { IconName } from '@grafana/data';
-import { SceneObject } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
-
-import { MultiSelectedEditableDashboardElement } from './MultiSelectedEditableDashboardElement';
 
 /**
  * Interface for elements that have options
@@ -29,24 +26,34 @@ export interface EditableDashboardElement {
   renderActions?(): ReactNode;
 
   /**
+   * Supports delete action
+   */
+  onDelete?(): void;
+
+  /**
+   * Supports duplicate action
+   */
+  onDuplicate?(): void;
+
+  /**
+   * Supports copy action
+   */
+  onCopy?(): void;
+
+  /**
    * creates a new multi-selection element from a list of selected items
    */
-  createMultiSelectedElement?(items: SceneObject[]): MultiSelectedEditableDashboardElement;
+  createMultiSelectedElement?(elements: this[]): EditableDashboardElement;
 
   /**
-   * Return custom title for the edit panel header
+   * scroll element into view (when selected from outline)
    */
-  renderTitle?(): ReactNode;
-
-  /**
-   * determines if first edit panel header can be collapsed
-   */
-  isOpenable?: Readonly<boolean>;
+  scrollIntoView?(): void;
 }
 
 export interface EditableDashboardElementInfo {
-  name: string;
-  typeId: string;
+  instanceName: string;
+  typeName: string;
   icon: IconName;
 }
 

@@ -24,6 +24,7 @@ type RuleStore struct {
 	// OrgID -> RuleGroup -> Namespace -> Rules
 	Rules       map[int64][]*models.AlertRule
 	History     map[string][]*models.AlertRule
+	Deleted     map[int64][]*models.AlertRule
 	Hook        func(cmd any) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []any
 	Folders     map[int64][]*folder.Folder
@@ -102,10 +103,10 @@ func (f *RuleStore) GetRecordedCommands(predicate func(cmd any) (any, bool)) []a
 	return result
 }
 
-func (f *RuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs ...string) error {
+func (f *RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *models.UserUID, permanently bool, UIDs ...string) error {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "DeleteAlertRulesByUID",
-		Params: []any{orgID, UIDs},
+		Params: []any{orgID, user, permanently, UIDs},
 	})
 
 	rules := f.Rules[orgID]
@@ -127,6 +128,14 @@ func (f *RuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs .
 
 	f.Rules[orgID] = result
 	return nil
+}
+
+func (f *RuleStore) DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ruleGUID string) (int64, error) {
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "DeleteRuleFromTrashByGUID",
+		Params: []any{orgID, ruleGUID},
+	})
+	return 0, nil
 }
 
 func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) (*models.AlertRule, error) {
@@ -215,11 +224,7 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 			continue
 		}
 		if q.ImportedPrometheusRule != nil {
-			hasOriginalRuleDefinition := r.PrometheusRuleDefinition() != ""
-			if *q.ImportedPrometheusRule && !hasOriginalRuleDefinition {
-				continue
-			}
-			if !*q.ImportedPrometheusRule && hasOriginalRuleDefinition {
+			if *q.ImportedPrometheusRule != r.ImportedFromPrometheus() {
 				continue
 			}
 		}
@@ -463,4 +468,16 @@ func (f *RuleStore) GetAlertRuleVersions(_ context.Context, orgID int64, guid st
 	}
 
 	return f.History[guid], nil
+}
+
+func (f *RuleStore) ListDeletedRules(_ context.Context, orgID int64) ([]*models.AlertRule, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{Name: "ListDeletedRules", Params: []any{orgID}})
+	}()
+	if err := f.Hook(orgID); err != nil {
+		return nil, err
+	}
+	return f.Deleted[orgID], nil
 }

@@ -47,4 +47,8 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
       this.centrifugeWorker.getStream(address) as Promise<comlink.Remote<Observable<LiveChannelEvent<T>>>>
     );
   };
+
+  publish: CentrifugeSrv['publish'] = (address, data, options) => {
+    return this.centrifugeWorker.publish(address, data, options);
+  };
 }

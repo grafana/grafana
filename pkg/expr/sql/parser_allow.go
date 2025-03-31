@@ -60,7 +60,10 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.BinaryExpr, *sqlparser.UnaryExpr:
 		return
 
-	case sqlparser.BoolVal:
+	case sqlparser.BoolVal, *sqlparser.NullVal:
+		return
+
+	case *sqlparser.CaseExpr, *sqlparser.When:
 		return
 
 	case sqlparser.ColIdent, *sqlparser.ColName, sqlparser.Columns:
@@ -75,7 +78,16 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ComparisonExpr:
 		return
 
-	case *sqlparser.ConvertExpr:
+	case *sqlparser.ConvertExpr, *sqlparser.ConvertType:
+		return
+
+	case *sqlparser.CollateExpr:
+		return
+
+	case sqlparser.Exprs:
+		return
+
+	case *sqlparser.GroupConcatExpr:
 		return
 
 	case sqlparser.GroupBy:
@@ -84,13 +96,19 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.IndexHints:
 		return
 
+	case *sqlparser.IntervalExpr:
+		return
+
 	case *sqlparser.Into:
+		return
+
+	case *sqlparser.IsExpr:
 		return
 
 	case *sqlparser.JoinTableExpr, sqlparser.JoinCondition:
 		return
 
-	case *sqlparser.Select, sqlparser.SelectExprs:
+	case *sqlparser.Select, sqlparser.SelectExprs, *sqlparser.ParenSelect:
 		return
 
 	case *sqlparser.SetOp:
@@ -120,6 +138,12 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case sqlparser.TableName, sqlparser.TableExprs, sqlparser.TableIdent:
 		return
 
+	case *sqlparser.TrimExpr:
+		return
+
+	case sqlparser.ValTuple:
+		return
+
 	case *sqlparser.With:
 		return
 
@@ -136,16 +160,54 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 	b = true // so don't have to return true in every case but default
 
 	switch strings.ToLower(f.Name.String()) {
-	case "if":
+	// Conditional functions
+	case "if", "coalesce", "ifnull", "nullif":
 		return
 
+	// Aggregation functions
 	case "sum", "avg", "count", "min", "max":
 		return
-
-	case "coalesce":
+	case "stddev", "std", "stddev_pop":
+		return
+	case "variance", "var_pop":
 		return
 
+	// Mathematical functions
+	case "abs":
+		return
+	case "round", "floor", "ceiling", "ceil":
+		return
+	case "sqrt", "pow", "power":
+		return
+	case "mod", "log", "log10", "exp":
+		return
+	case "sign":
+		return
+
+	// String functions
+	case "concat", "length", "char_length":
+		return
+	case "lower", "upper":
+		return
+	case "substring", "substring_index":
+		return
+
+	// Date functions
 	case "str_to_date":
+		return
+	case "date_format", "now", "curdate", "curtime":
+		return
+	case "date_add", "date_sub":
+		return
+	case "year", "month", "day", "weekday":
+		return
+	case "datediff":
+		return
+	case "unix_timestamp", "from_unixtime":
+		return
+
+	// Type conversion
+	case "cast":
 		return
 
 	default:

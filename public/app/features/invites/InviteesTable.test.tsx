@@ -55,7 +55,7 @@ describe('InviteesTable', () => {
     expect(rows.length).toEqual(6);
 
     rows.forEach((row) => {
-      expect(within(row).getByRole('button', { name: 'Revoke Invite' })).toBeInTheDocument();
+      expect(within(row).getByRole('button', { name: 'Revoke invite' })).toBeInTheDocument();
     });
   });
 });

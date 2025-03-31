@@ -191,7 +191,7 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	case 1:
 		b.log.Debug("executing single query")
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
-		if alertQueryWithoutExpression(req) {
+		if err == nil && alertQueryWithoutExpression(req) {
 			b.log.Debug("handling alert query without expression")
 			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
 		}
@@ -419,7 +419,8 @@ func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req
 		return nil, errors.New("no queries to convert")
 	}
 	if qdr == nil {
-		return nil, errors.New("queryDataResponse is nil")
+		b.log.Debug("unexpected response of nil from datasource", "datasource.type", req.PluginId, "datasource.uid", req.UID)
+		return nil, errors.New("unexpected response of nil from datasource")
 	}
 	refID := req.Request.Queries[0].RefID
 	if _, exist := qdr.Responses[refID]; !exist {

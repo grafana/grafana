@@ -5,6 +5,7 @@ import { Button, Field, FieldSet, Input, Stack } from '@grafana/ui';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
+import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Team } from 'app/types';
 
@@ -47,12 +48,12 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
   return (
     <Stack direction={'column'} gap={3}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
-        <FieldSet label="Team details">
-          <Field label="Numerical identifier" disabled={true}>
+        <FieldSet label={t('teams.team-settings.label-team-details', 'Team details')}>
+          <Field label={t('teams.team-settings.label-numerical-identifier', 'Numerical identifier')} disabled={true}>
             <Input value={team.id} id="id-input" />
           </Field>
           <Field
-            label="Name"
+            label={t('teams.team-settings.label-name', 'Name')}
             disabled={!canWriteTeamSettings}
             required
             invalid={!!errors.name}
@@ -62,20 +63,21 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
           </Field>
 
           {contextSrv.licensedAccessControlEnabled() && canListRoles && (
-            <Field label="Role">
+            <Field label={t('teams.team-settings.label-role', 'Role')}>
               <TeamRolePicker teamId={team.id} roleOptions={roleOptions} disabled={!canUpdateRoles} maxWidth="100%" />
             </Field>
           )}
 
           <Field
-            label="Email"
+            label={t('teams.team-settings.label-email', 'Email')}
             description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
             disabled={!canWriteTeamSettings}
           >
+            {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
             <Input {...register('email')} placeholder="team@email.com" type="email" id="email-input" />
           </Field>
           <Button type="submit" disabled={!canWriteTeamSettings}>
-            Save
+            <Trans i18nKey="teams.team-settings.save">Save</Trans>
           </Button>
         </FieldSet>
       </form>

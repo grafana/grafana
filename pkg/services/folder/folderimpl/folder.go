@@ -18,8 +18,8 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 
+	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -91,6 +91,7 @@ func ProvideService(
 	resourceClient resource.ResourceClient,
 	dual dualwrite.Service,
 	sorter sort.Service,
+	restConfig apiserver.RestConfigProvider,
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
@@ -118,7 +119,7 @@ func ProvideService(
 			dual,
 			request.GetNamespaceMapper(cfg),
 			v0alpha1.FolderResourceInfo.GroupVersionResource(),
-			apiserver.GetRestConfig,
+			restConfig.GetRestConfig,
 			dashboardStore,
 			userService,
 			resourceClient,
@@ -136,7 +137,7 @@ func ProvideService(
 			dual,
 			request.GetNamespaceMapper(cfg),
 			dashboardalpha1.DashboardResourceInfo.GroupVersionResource(),
-			apiserver.GetRestConfig,
+			restConfig.GetRestConfig,
 			dashboardStore,
 			userService,
 			resourceClient,
@@ -154,6 +155,7 @@ func (s *Service) DBMigration(db db.DB) {
 	ctx := context.Background()
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
+		deleteOldFolders := true
 		if db.GetDialect().DriverName() == migrator.SQLite {
 			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
@@ -168,6 +170,10 @@ func (s *Service) DBMigration(db db.DB) {
 				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
 				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
 			`)
+		} else if db.GetDialect().DriverName() == migrator.Spanner {
+			// We may eventually make this migration work with Spanner, but for now don't do anything.
+			// We intend to store dashboards and folders only in unified storage when using spanner.
+			deleteOldFolders = false
 		} else {
 			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
@@ -180,11 +186,13 @@ func (s *Service) DBMigration(db db.DB) {
 			return err
 		}
 
-		// covered by UQE_folder_org_id_uid
-		_, err = sess.Exec(`
+		if deleteOldFolders {
+			// covered by UQE_folder_org_id_uid
+			_, err = sess.Exec(`
 			DELETE FROM folder WHERE NOT EXISTS
 				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
 		`)
+		}
 		return err
 	})
 	if err != nil {
@@ -192,6 +200,14 @@ func (s *Service) DBMigration(db db.DB) {
 	}
 
 	s.log.Debug("syncing dashboard and folder tables finished")
+}
+
+func (s *Service) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		return s.unifiedStore.CountInOrg(ctx, orgID)
+	}
+
+	return s.store.CountInOrg(ctx, orgID)
 }
 
 func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
@@ -358,6 +374,9 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		f.Fullpath = f.Title   // set full path to the folder title (unescaped)
 		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
+
+	f.CreatedBy = dashFolder.CreatedBy
+	f.UpdatedBy = dashFolder.UpdatedBy
 
 	return f, err
 }
@@ -1241,12 +1260,6 @@ func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (b
 	var evaluators []accesscontrol.Evaluator
 	currentFolderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID)
 	for action, scopes := range permissions {
-		// Skip unexpanded action sets - they have no impact if action sets are not enabled
-		if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-			if action == "folders:view" || action == "folders:edit" || action == "folders:admin" {
-				continue
-			}
-		}
 		for _, scope := range newFolderAndParentUIDs {
 			if slices.Contains(scopes, scope) {
 				evaluators = append(evaluators, accesscontrol.EvalPermission(action, currentFolderScope))

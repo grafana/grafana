@@ -24,6 +24,14 @@ try {
       },
     },
   };
+  // Fix so scenes can access `@grafana/schema` nested dist import paths e.g.
+  // import {} from '@grafana/schema/dist/esm/raw/composable/bargauge/panelcfg/x/BarGaugePanelCfg_types.gen'
+  if (pkgJson.content.name === '@grafana/schema') {
+    exports['./dist/*'] = {
+      types: './dist/*',
+      default: './dist/*',
+    };
+  }
 
   pkgJson.update({
     main: cjsIndex,
@@ -49,7 +57,7 @@ try {
           },
           require: {
             types: cjsTypes.replace('index', aliasName),
-            default: cjsTypes.replace('index', aliasName),
+            default: cjsIndex.replace('index', aliasName),
           },
         },
       },

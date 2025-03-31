@@ -7,7 +7,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -29,10 +29,11 @@ var (
 		resource.SEARCH_FIELD_CREATED_BY,
 		resource.SEARCH_FIELD_UPDATED,
 		resource.SEARCH_FIELD_UPDATED_BY,
-		resource.SEARCH_FIELD_REPOSITORY_NAME,
-		resource.SEARCH_FIELD_REPOSITORY_PATH,
-		resource.SEARCH_FIELD_REPOSITORY_HASH,
-		resource.SEARCH_FIELD_REPOSITORY_TIME,
+		resource.SEARCH_FIELD_MANAGER_KIND,
+		resource.SEARCH_FIELD_MANAGER_ID,
+		resource.SEARCH_FIELD_SOURCE_PATH,
+		resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+		resource.SEARCH_FIELD_SOURCE_TIME,
 	}
 )
 
@@ -75,6 +76,12 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (v0alph
 	}
 
 	for i, row := range result.Results.Rows {
+		if len(row.Cells) != len(result.Results.Columns) {
+			// there should never be mismatch len between # Columns and # Cells in a row. This indicates a bug in our
+			// code
+			return v0alpha1.SearchResults{}, fmt.Errorf("error parsing Search Response: mismatch number of columns and cells")
+		}
+
 		fields := &common.Unstructured{}
 		for colIndex, col := range result.Results.Columns {
 			if _, ok := excludedFields[col.Name]; !ok {

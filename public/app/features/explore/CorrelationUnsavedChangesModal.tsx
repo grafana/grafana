@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { Button, Modal } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 interface UnsavedChangesModalProps {
   message: string;
@@ -21,13 +22,15 @@ export const CorrelationUnsavedChangesModal = ({ onSave, onDiscard, onCancel, me
       <h5>{message}</h5>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onCancel} fill="outline">
-          Cancel
+          <Trans i18nKey="explore.correlation-unsaved-changes-modal.cancel">Cancel</Trans>
         </Button>
         <Button variant="destructive" onClick={onDiscard}>
-          Continue without saving
+          <Trans i18nKey="explore.correlation-unsaved-changes-modal.continue-without-saving">
+            Continue without saving
+          </Trans>
         </Button>
         <Button variant="primary" onClick={onSave}>
-          Save correlation
+          <Trans i18nKey="explore.correlation-unsaved-changes-modal.save-correlation">Save correlation</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

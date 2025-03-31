@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -56,10 +57,10 @@ type Folder struct {
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
 
-	// When the folder belongs to a repository
+	// The folder is managed by an external process
 	// NOTE: this is only populated when folders are managed by unified storage
 	// This is not ever used by xorm, but the translation functions flow through this type
-	Repository string `json:"repository,omitempty"`
+	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
@@ -174,6 +175,10 @@ type GetFoldersQuery struct {
 	WithFullpathUIDs bool
 	BatchSize        uint64
 
+	// Pagination options
+	Limit int64
+	Page  int64
+
 	// OrderByTitle is used to sort the folders by title
 	// Set to true when ordering is meaningful (used for listing folders)
 	// otherwise better to keep it false since ordering can have a performance impact
@@ -216,6 +221,9 @@ type GetChildrenQuery struct {
 
 	// array of folder uids to filter by
 	FolderUIDs []string `json:"-"`
+
+	// Deprecated: this is a temporary flag, and will be removed once we migrate the alerting use case
+	RefOnly bool
 }
 
 type HasEditPermissionInFoldersQuery struct {

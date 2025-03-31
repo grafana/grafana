@@ -10,10 +10,22 @@ import {
   VizPanelState,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
-import { DashboardV2Spec, PanelKind, PanelQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  DashboardV2Spec,
+  AutoGridLayoutItemKind,
+  RowsLayoutRowKind,
+  LibraryPanelKind,
+  PanelKind,
+  PanelQueryKind,
+  QueryVariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
+import { conditionalRenderingSerializerRegistry } from '../../conditional-rendering/serializers';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
+import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
@@ -23,8 +35,6 @@ import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
-
-import { layoutSerializerRegistry } from './layoutSerializerRegistry';
 
 export function buildVizPanel(panel: PanelKind): VizPanel {
   const titleItems: SceneObject[] = [];
@@ -47,7 +57,7 @@ export function buildVizPanel(panel: PanelKind): VizPanel {
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.spec.id),
-    title: panel.spec.title,
+    title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
     options: panel.spec.vizConfig.spec.options,
@@ -74,6 +84,50 @@ export function buildVizPanel(panel: PanelKind): VizPanel {
       timeFrom: queryOptions.timeFrom,
       timeShift: queryOptions.timeShift,
       hideTimeOverride: queryOptions.hideTimeOverride,
+    });
+  }
+
+  return new VizPanel(vizPanelState);
+}
+
+export function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
+  const titleItems: SceneObject[] = [];
+
+  if (config.featureToggles.angularDeprecationUI) {
+    titleItems.push(new AngularDeprecation());
+  }
+
+  titleItems.push(
+    new VizPanelLinks({
+      rawLinks: [],
+      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+    })
+  );
+
+  titleItems.push(new PanelNotices());
+
+  const vizPanelState: VizPanelState = {
+    key: getVizPanelKeyForPanelId(panel.spec.id),
+    titleItems,
+    $behaviors: [
+      new LibraryPanelBehavior({
+        uid: panel.spec.libraryPanel.uid,
+        name: panel.spec.libraryPanel.name,
+      }),
+    ],
+    extendPanelContext: setDashboardPanelContext,
+    pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
+    title: panel.spec.title,
+    options: {},
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+  };
+
+  if (!config.publicDashboardAccessToken) {
+    vizPanelState.menu = new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
     });
   }
 
@@ -127,13 +181,38 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
-      datasource = query.spec.datasource;
+      if (!query.spec.datasource?.uid) {
+        const defaultDatasource = config.bootData.settings.defaultDatasource;
+        const dsList = config.bootData.settings.datasources;
+        // this is look up by type
+        const bestGuess = Object.values(dsList).find((ds) => ds.meta.id === query.spec.query.kind);
+        datasource = bestGuess ? { uid: bestGuess.uid, type: bestGuess.meta.id } : dsList[defaultDatasource];
+      } else {
+        datasource = query.spec.datasource;
+      }
     } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
       isMixedDatasource = true;
     }
   });
 
-  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
+  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : datasource;
+}
+
+export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
+  let datasource: DataSourceRef | undefined = undefined;
+
+  if (!datasource) {
+    if (!variable.spec.datasource?.uid) {
+      const defaultDatasource = config.bootData.settings.defaultDatasource;
+      const dsList = config.bootData.settings.datasources;
+      // this is look up by type
+      const bestGuess = Object.values(dsList).find((ds) => ds.meta.id === variable.spec.query.kind);
+      datasource = bestGuess ? { uid: bestGuess.uid, type: bestGuess.meta.id } : dsList[defaultDatasource];
+    } else {
+      datasource = variable.spec.datasource;
+    }
+  }
+  return datasource;
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
@@ -146,9 +225,20 @@ function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
 }
 
 export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['layout'] {
-  const registryItem = layoutSerializerRegistry.get(sceneState.descriptor.kind ?? '');
-  if (!registryItem) {
-    throw new Error(`Layout serializer not found for kind: ${sceneState.descriptor.kind}`);
+  return sceneState.serialize();
+}
+
+export function getConditionalRendering(item: RowsLayoutRowKind | AutoGridLayoutItemKind): ConditionalRendering {
+  if (!item.spec.conditionalRendering) {
+    return ConditionalRendering.createEmpty();
   }
-  return registryItem.serializer.serialize(sceneState);
+  const rootGroup = conditionalRenderingSerializerRegistry
+    .get(item.spec.conditionalRendering.kind)
+    .serializer.deserialize(item.spec.conditionalRendering);
+
+  if (rootGroup && !(rootGroup instanceof ConditionalRenderingGroup)) {
+    throw new Error(`Conditional rendering must always start with a root group`);
+  }
+
+  return new ConditionalRendering({ rootGroup: rootGroup });
 }

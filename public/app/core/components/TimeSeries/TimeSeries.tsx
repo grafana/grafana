@@ -1,9 +1,8 @@
 import { Component } from 'react';
 
 import { DataFrame, TimeRange } from '@grafana/data';
-import { hasVisibleLegendSeries, PlotLegend } from '@grafana/ui/src/components/uPlot/PlotLegend';
-import { UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
-import { withTheme2 } from '@grafana/ui/src/themes/ThemeContext';
+import { withTheme2 } from '@grafana/ui';
+import { hasVisibleLegendSeries, PlotLegend, UPlotConfigBuilder } from '@grafana/ui/internal';
 
 import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 
