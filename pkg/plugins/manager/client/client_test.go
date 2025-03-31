@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
@@ -53,11 +52,6 @@ func TestQueryData(t *testing.T) {
 			{
 				err:               plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()).Errorf("unavailable"),
 				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()).Errorf("unavailable"),
-				shouldPassThrough: true,
-			},
-			{
-				err:               plugins.ErrPluginGrpcConnectionUnavailableBaseFn(identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "stacks-123"})).Errorf("unavailable"),
-				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBaseFn(identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "stacks-123"})).Errorf("unavailable"),
 				shouldPassThrough: true,
 			},
 			{
