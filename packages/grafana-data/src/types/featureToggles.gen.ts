@@ -1055,4 +1055,8 @@ export interface FeatureToggles {
   * @default true
   */
   alertingRuleRecoverDeleted?: boolean;
+  /**
+  * Enables localization for plugins
+  */
+  localizationForPlugins?: boolean;
 }

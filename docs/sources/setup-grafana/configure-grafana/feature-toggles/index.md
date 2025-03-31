@@ -222,6 +222,7 @@ Experimental features might be changed or removed without prior notice.
 | `newLogsPanel`                              | Enables the new logs panel in Explore                                                                                                                                                                                                                                             |
 | `pluginsCDNSyncLoader`                      | Load plugins from CDN synchronously                                                                                                                                                                                                                                               |
 | `assetSriChecks`                            | Enables SRI checks for Grafana JavaScript assets                                                                                                                                                                                                                                  |
+| `localizationForPlugins`                    | Enables localization for plugins                                                                                                                                                                                                                                                  |
 
 ## Development feature toggles
 

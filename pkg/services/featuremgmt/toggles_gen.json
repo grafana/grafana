@@ -2471,6 +2471,18 @@
     },
     {
       "metadata": {
+        "name": "localizationForPlugins",
+        "resourceVersion": "1742561476144",
+        "creationTimestamp": "2025-03-21T12:51:16Z"
+      },
+      "spec": {
+        "description": "Enables localization for plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "logQLScope",
         "resourceVersion": "1741643492217",
         "creationTimestamp": "2024-11-11T11:53:24Z",
