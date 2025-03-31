@@ -1,9 +1,10 @@
-import { ReactNode } from 'react';
+import { css } from '@emotion/css';
 
-import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { ConditionalRendering } from './ConditionalRendering';
-import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
 import { ConditionalRenderingKindTypes } from './serializers';
 import { ConditionValues } from './shared';
 
@@ -12,10 +13,8 @@ export interface ConditionalRenderingBaseState<V = ConditionValues> extends Scen
 }
 
 export abstract class ConditionalRenderingBase<
-  S extends ConditionalRenderingBaseState<ConditionValues>,
+  S extends ConditionalRenderingBaseState = ConditionalRenderingBaseState,
 > extends SceneObjectBase<S> {
-  public static Component = ConditionalRenderingBaseRenderer;
-
   public constructor(state: S) {
     super(state);
 
@@ -25,7 +24,7 @@ export abstract class ConditionalRenderingBase<
   private _baseActivationHandler() {
     // Similarly to the ConditionalRendering activation handler,
     // this ensures that all children are activated when conditional rendering is activated
-    // We need this in order to allow children to subscribe to variable changes etc.
+    // We need this to allow children to subscribe to variable changes, etc.
     this.forEachChild((child) => {
       if (!child.isActive) {
         this._subs.add(child.activate());
@@ -39,26 +38,62 @@ export abstract class ConditionalRenderingBase<
 
   public abstract evaluate(): boolean;
 
-  public abstract render(): ReactNode;
-
-  public abstract onDelete(): void;
-
-  public getConditionalLogicRoot(): ConditionalRendering {
-    return sceneGraph.getAncestor(this, ConditionalRendering);
+  public onDelete() {
+    this._getConditionalLogicRoot().deleteItem(this);
   }
 
-  public getRootGroup(): ConditionalRenderingGroup {
-    return this.getConditionalLogicRoot().state.rootGroup;
+  public render(withWrapper = true) {
+    return <ConditionalRenderingBaseRenderer model={this} withWrapper={withWrapper} />;
+  }
+
+  public getItem(): SceneObject {
+    return this._getConditionalLogicRoot().parent!;
+  }
+
+  public notifyChange() {
+    this._getConditionalLogicRoot().notifyChange();
   }
 
   public setStateAndNotify(state: Partial<S>) {
     this.setState(state);
-    this.getConditionalLogicRoot().notifyChange();
+    this.notifyChange();
+  }
+
+  private _getConditionalLogicRoot(): ConditionalRendering {
+    return sceneGraph.getAncestor(this, ConditionalRendering);
   }
 }
 
-function ConditionalRenderingBaseRenderer({
+function ConditionalRenderingBaseRenderer<T extends ConditionalRenderingBase>({
   model,
-}: SceneComponentProps<ConditionalRenderingBase<ConditionalRenderingBaseState>>) {
-  return model.render();
+  withWrapper,
+}: SceneComponentProps<T> & { withWrapper: boolean }) {
+  const styles = useStyles2(getStyles);
+
+  const comp = <model.Component model={model} key={model.state.key} />;
+
+  if (!withWrapper) {
+    return comp;
+  }
+
+  return (
+    <Stack direction="column">
+      <Text variant="bodySmall">{model.title}</Text>
+      <Stack direction="row" gap={1} justifyContent="stretch" alignItems="baseline">
+        <div className={styles.body}>{comp}</div>
+
+        <IconButton
+          aria-label={t('dashboard.conditional-rendering.shared.delete-condition', 'Delete Condition')}
+          name="trash-alt"
+          onClick={() => model.onDelete()}
+        />
+      </Stack>
+    </Stack>
+  );
 }
+
+const getStyles = () => ({
+  body: css({
+    flex: 1,
+  }),
+});

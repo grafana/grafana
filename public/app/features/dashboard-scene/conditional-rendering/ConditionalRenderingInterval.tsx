@@ -1,21 +1,23 @@
-import { ReactNode, useState } from 'react';
+import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { rangeUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingTimeIntervalKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Field, Input, Stack } from '@grafana/ui';
+import { Field, Input, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { handleDeleteNonGroupCondition } from './shared';
 
 export type IntervalConditionValue = string;
+
 type ConditionalRenderingIntervalState = ConditionalRenderingBaseState<IntervalConditionValue>;
 
 export class ConditionalRenderingInterval extends ConditionalRenderingBase<ConditionalRenderingIntervalState> {
+  public static Component = ConditionalRenderingIntervalRenderer;
+
   public get title(): string {
-    return t('dashboard.conditional-rendering.interval.label', 'Time range interval');
+    return t('dashboard.conditional-rendering.interval.label', 'Dashboard time range less than');
   }
 
   public constructor(state: ConditionalRenderingIntervalState) {
@@ -25,11 +27,7 @@ export class ConditionalRenderingInterval extends ConditionalRenderingBase<Condi
   }
 
   private _activationHandler() {
-    this._subs.add(
-      sceneGraph.getTimeRange(this).subscribeToState(() => {
-        this.getConditionalLogicRoot().notifyChange();
-      })
-    );
+    this._subs.add(sceneGraph.getTimeRange(this).subscribeToState(() => this.notifyChange()));
   }
 
   public evaluate(): boolean {
@@ -48,14 +46,6 @@ export class ConditionalRenderingInterval extends ConditionalRenderingBase<Condi
     return false;
   }
 
-  public render(): ReactNode {
-    return <ConditionalRenderingIntervalRenderer model={this} />;
-  }
-
-  public onDelete() {
-    handleDeleteNonGroupCondition(this);
-  }
-
   public serialize(): ConditionalRenderingTimeIntervalKind {
     return {
       kind: 'ConditionalRenderingTimeInterval',
@@ -69,25 +59,29 @@ export class ConditionalRenderingInterval extends ConditionalRenderingBase<Condi
 function ConditionalRenderingIntervalRenderer({ model }: SceneComponentProps<ConditionalRenderingInterval>) {
   const { value } = model.useState();
   const [isValid, setIsValid] = useState(validateIntervalRegex.test(value));
+  const styles = useStyles2(getStyles);
 
   return (
-    <Stack direction="column">
-      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
-      <Field
-        invalid={!isValid}
-        error={t('dashboard.conditional-rendering.interval.invalid-message', 'Invalid interval')}
-        label={t('dashboard.conditional-rendering.interval.input-label', 'Value')}
-      >
-        <Input
-          value={value}
-          onChange={(e) => {
-            setIsValid(validateIntervalRegex.test(e.currentTarget.value));
-            model.setStateAndNotify({ value: e.currentTarget.value });
-          }}
-        />
-      </Field>
-    </Stack>
+    <Field
+      invalid={!isValid}
+      error={t('dashboard.conditional-rendering.interval.invalid-message', 'Invalid interval')}
+      className={styles.container}
+    >
+      <Input
+        value={value}
+        onChange={(e) => {
+          setIsValid(validateIntervalRegex.test(e.currentTarget.value));
+          model.setStateAndNotify({ value: e.currentTarget.value });
+        }}
+      />
+    </Field>
   );
 }
 
-export const validateIntervalRegex = /^(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])?$/;
+const getStyles = () => ({
+  container: css({
+    margin: 0,
+  }),
+});
+
+const validateIntervalRegex = /^(\d+(?:\.\d+)?)(ms|[Mwdhmsy])?$/;

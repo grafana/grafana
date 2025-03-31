@@ -11,13 +11,15 @@ export function useConditionalRenderingEditor(
     return null;
   }
 
+  const title = t('dashboard.conditional-rendering.title', 'Show/Hide Rules');
+
   return new OptionsPaneCategoryDescriptor({
-    title: t('dashboard.conditional-rendering.title', 'Conditional rendering options'),
+    title,
     id: 'conditional-rendering-options',
     isOpenDefault: true,
   }).addItem(
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.conditional-rendering.title', 'Conditional rendering options'),
+      title,
       render: () => <conditionalRendering.Component model={conditionalRendering} />,
     })
   );

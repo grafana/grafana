@@ -515,7 +515,7 @@ GridLayoutItemKind: {
 
 GridLayoutRowKind: {
   kind: "GridLayoutRow"
-  spec: GridLayoutRowSpec 
+  spec: GridLayoutRowSpec
 }
 
 GridLayoutRowSpec: {
@@ -928,6 +928,7 @@ ConditionalRenderingGroupKind: {
 }
 
 ConditionalRenderingGroupSpec: {
+	outcome: "show" | "hide"
   condition: "and" | "or"
   items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
 }
@@ -955,7 +956,7 @@ ConditionalRenderingDataSpec: {
 ConditionalRenderingTimeIntervalKind: {
   kind: "ConditionalRenderingTimeInterval"
   spec: ConditionalRenderingTimeIntervalSpec
-} 
+}
 
 ConditionalRenderingTimeIntervalSpec: {
   value: string

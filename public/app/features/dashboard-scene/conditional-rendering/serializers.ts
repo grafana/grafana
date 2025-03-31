@@ -31,6 +31,7 @@ export class ConditionalRenderingGroupSerializer implements ConditionalRendering
   deserialize(model: ConditionalRenderingGroupKind): ConditionalRenderingGroup {
     return new ConditionalRenderingGroup({
       condition: model.spec.condition,
+      outcome: model.spec.outcome,
       value: model.spec.items.map((item: ConditionalRenderingKindTypes) => {
         const serializerRegistryItem = conditionalRenderingSerializerRegistry.getIfExists(item.kind);
         if (!serializerRegistryItem) {

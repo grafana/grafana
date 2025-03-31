@@ -1424,42 +1424,46 @@
     },
     "conditional-rendering": {
       "data": {
-        "disable": "Disable",
-        "enable": "Enable",
-        "label": "Data"
+        "disable": "No data",
+        "enable": "Has data",
+        "label": "Query result"
       },
       "group": {
         "add": {
-          "button": "Add condition based on",
-          "data": "Data",
-          "interval": "Interval",
-          "variable": "Variable value"
+          "button": "Add rule",
+          "data": "Query result",
+          "interval": "Dashboard time range less than",
+          "placeholder": "Select rule type",
+          "variable": "Template variable"
         },
         "condition": {
-          "label": "Evaluate conditions",
-          "meet-all": "Meet all",
-          "meet-any": "Meet any"
+          "all": "And",
+          "any": "Or",
+          "label": "Match rules"
         },
-        "label": "Group"
+        "label": "Group",
+        "outcome": {
+          "hide": "Hide",
+          "label": "Rules outcome",
+          "show": "Show"
+        }
       },
       "interval": {
-        "input-label": "Value",
         "invalid-message": "Invalid interval",
-        "label": "Time range interval"
+        "label": "Dashboard time range less than"
       },
       "shared": {
         "delete-condition": "Delete Condition"
       },
-      "title": "Conditional rendering options",
+      "title": "Show/Hide Rules",
       "variable": {
-        "label": "Variable",
+        "label": "Template variable",
+        "name": "Name",
         "operator": {
           "equals": "Equals",
-          "not-equal": "Not equal"
+          "not-equals": "Not equals"
         },
-        "select-operator": "Operator",
-        "select-variable": "Select variable",
-        "value-input": "Value"
+        "value": "Value"
       }
     },
     "default-layout": {

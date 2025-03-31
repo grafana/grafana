@@ -1,25 +1,25 @@
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { PanelData, SelectableValue } from '@grafana/data';
+import { PanelData } from '@grafana/data';
 import { SceneComponentProps, SceneDataProvider, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { RadioButtonGroup, Stack } from '@grafana/ui';
+import { Combobox, ComboboxOption } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { RowItem } from '../scene/layout-rows/RowItem';
 
-import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { handleDeleteNonGroupCondition } from './shared';
 
 export type DataConditionValue = boolean;
 
 type ConditionalRenderingDataState = ConditionalRenderingBaseState<DataConditionValue>;
 
 export class ConditionalRenderingData extends ConditionalRenderingBase<ConditionalRenderingDataState> {
+  public static Component = ConditionalRenderingDataRenderer;
+
   public get title(): string {
-    return t('dashboard.conditional-rendering.data.label', 'Data');
+    return t('dashboard.conditional-rendering.data.label', 'Query result');
   }
 
   public constructor(state: ConditionalRenderingDataState) {
@@ -30,56 +30,49 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
 
   private _activationHandler() {
     let panelDataProviders: SceneDataProvider[] = [];
-    const item = this.getConditionalLogicRoot().parent;
+
+    const item = this.getItem();
+
     if (item instanceof AutoGridItem) {
       const panelData = sceneGraph.getData(item.state.body);
+
       if (panelData) {
         panelDataProviders.push(panelData);
       }
-    }
-    // extract multiple panel data from RowItem
-    if (item instanceof RowItem) {
+    } else if (item instanceof RowItem) {
       const panels = item.getLayout().getVizPanels();
+
       for (const panel of panels) {
         const panelData = sceneGraph.getData(panel);
+
         if (panelData) {
           panelDataProviders.push(panelData);
         }
       }
     }
 
-    panelDataProviders.forEach((d) => {
-      this._subs.add(
-        d.subscribeToState(() => {
-          this.getConditionalLogicRoot().notifyChange();
-        })
-      );
+    panelDataProviders.forEach((dataProvider) => {
+      this._subs.add(dataProvider.subscribeToState(() => this.notifyChange()));
     });
   }
 
   public evaluate(): boolean {
     const { value } = this.state;
 
-    // enable/disable condition
     if (!value) {
       return true;
     }
 
     let data: PanelData[] = [];
 
-    // get ResponsiveGridItem or RowItem
-    const item = this.getConditionalLogicRoot().parent;
+    const item = this.getItem();
 
-    // extract single panel data from ResponsiveGridItem
     if (item instanceof AutoGridItem) {
       const panelData = sceneGraph.getData(item.state.body).state.data;
       if (panelData) {
         data.push(panelData);
       }
-    }
-
-    // extract multiple panel data from RowItem
-    if (item instanceof RowItem) {
+    } else if (item instanceof RowItem) {
       const panels = item.getLayout().getVizPanels();
       for (const panel of panels) {
         const panelData = sceneGraph.getData(panel).state.data;
@@ -89,7 +82,6 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
       }
     }
 
-    // early return if no panel data
     if (!data.length) {
       return false;
     }
@@ -107,14 +99,6 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     return false;
   }
 
-  public render(): ReactNode {
-    return <ConditionalRenderingDataRenderer model={this} />;
-  }
-
-  public onDelete() {
-    handleDeleteNonGroupCondition(this);
-  }
-
   public serialize(): ConditionalRenderingDataKind {
     return {
       kind: 'ConditionalRenderingData',
@@ -128,23 +112,24 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
 function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<ConditionalRenderingData>) {
   const { value } = model.useState();
 
-  const enableConditionOptions: Array<SelectableValue<true | false>> = useMemo(
+  const enableConditionOptions: Array<ComboboxOption<1 | 0>> = useMemo(
     () => [
-      { label: t('dashboard.conditional-rendering.data.enable', 'Enable'), value: true },
-      { label: t('dashboard.conditional-rendering.data.disable', 'Disable'), value: false },
+      { label: t('dashboard.conditional-rendering.data.enable', 'Has data'), value: 1 },
+      { label: t('dashboard.conditional-rendering.data.disable', 'No data'), value: 0 },
     ],
     []
   );
 
+  const enableConditionOption = useMemo(
+    () => enableConditionOptions.find((option) => Boolean(option.value) === value) ?? enableConditionOptions[0],
+    [enableConditionOptions, value]
+  );
+
   return (
-    <Stack direction="column">
-      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
-      <RadioButtonGroup
-        fullWidth
-        options={enableConditionOptions}
-        value={value}
-        onChange={(value) => model.setStateAndNotify({ value: value })}
-      />
-    </Stack>
+    <Combobox
+      options={enableConditionOptions}
+      value={enableConditionOption}
+      onChange={({ value }) => model.setStateAndNotify({ value: Boolean(value) })}
+    />
   );
 }

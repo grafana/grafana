@@ -924,6 +924,7 @@ ConditionalRenderingGroupKind: {
 }
 
 ConditionalRenderingGroupSpec: {
+	outcome: "show" | "hide"
 	condition: "and" | "or"
 	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
 }
