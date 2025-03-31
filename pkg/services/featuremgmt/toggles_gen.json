@@ -1699,17 +1699,16 @@
     {
       "metadata": {
         "name": "exploreMetricsUseExternalAppPlugin",
-        "resourceVersion": "1741883352541",
+        "resourceVersion": "1743019185639",
         "creationTimestamp": "2025-01-21T23:24:50Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-03-13 16:29:12.541156 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-26 19:59:45.639604 +0000 UTC"
         }
       },
       "spec": {
         "description": "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
         "stage": "preview",
         "codeowner": "@grafana/observability-metrics",
-        "frontend": true,
         "requiresRestart": true
       }
     },
