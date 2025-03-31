@@ -26,21 +26,9 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 
 	namespaceMap := make(map[string]*folder.FolderReference)
 	for _, f := range folders {
-		namespaceMap[f.UID] = folderToFolderReference(f)
+		namespaceMap[f.UID] = f.ToFolderReference()
 	}
 	return namespaceMap, nil
-}
-
-func folderToFolderReference(f *folder.Folder) *folder.FolderReference {
-	return &folder.FolderReference{
-		ID:           f.ID, // nolint:staticcheck
-		UID:          f.UID,
-		Title:        f.Title,
-		ParentUID:    f.ParentUID,
-		Fullpath:     f.Fullpath,
-		FullpathUIDs: f.FullpathUIDs,
-		ManagedBy:    f.ManagedBy,
-	}
 }
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
@@ -52,7 +40,7 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 	if len(f) == 0 {
 		return nil, dashboards.ErrFolderAccessDenied
 	}
-	return folderToFolderReference(f[0]), nil
+	return f[0].ToFolderReference(), nil
 }
 
 // GetNamespaceChildren gets namespace (folder) children (first level) by its UID.

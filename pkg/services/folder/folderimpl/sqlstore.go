@@ -368,15 +368,6 @@ func (ss *FolderStoreImpl) GetChildren(ctx context.Context, q folder.GetChildren
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
 		}
 
-		// TODO: Do we need this? (Maicon)
-		/*
-			if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, idx int) error {
-				folders[idx].WithURL()
-				return nil
-			}); err != nil {
-				ss.log.Debug("failed to set URL to folders", "err", err)
-			}
-		*/
 		return nil
 	})
 	return folders, err
