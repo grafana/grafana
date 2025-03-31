@@ -23,7 +23,7 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           'X-Grafana-Alerting-Recording-Rules-Paused': pauseRecordingRules,
           'X-Grafana-Alerting-Alert-Rules-Paused': pauseAlerts,
           'X-Grafana-Alerting-Folder-UID': targetFolderUID,
-          'X-Disable-Provenance': true
+          'X-Disable-Provenance': true,
         },
       }),
     }),
