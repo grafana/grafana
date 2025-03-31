@@ -51,7 +51,7 @@ func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, p
 }
 
 // CreateResource writes an object to the repository
-func (m *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
+func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", fmt.Errorf("context error: %w", err)
 	}
@@ -72,12 +72,12 @@ func (m *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 		}
 	}
 
-	ctx = m.withAuthorSignature(ctx, meta)
+	ctx = r.withAuthorSignature(ctx, meta)
 
 	name := meta.GetName()
 	manager, _ := meta.GetManagerProperties()
 	// TODO: how we should handle this?
-	if manager.Identity == m.repo.Config().GetName() {
+	if manager.Identity == r.repo.Config().GetName() {
 		// If it's already in the repository, we don't need to write it
 		return "", ErrAlreadyInRepository
 	}
@@ -89,7 +89,7 @@ func (m *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	folder := meta.GetFolder()
 
 	// Get the absolute path of the folder
-	fid, ok := m.folders.Tree().DirPath(folder, "")
+	fid, ok := r.folders.Tree().DirPath(folder, "")
 	if !ok {
 		// FIXME: Shouldn't this fail instead?
 		fid = Folder{
@@ -118,7 +118,7 @@ func (m *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 		fileName = safepath.Join(options.Path, fileName)
 	}
 
-	err = m.repo.Write(ctx, fileName, options.Ref, body, commitMessage)
+	err = r.repo.Write(ctx, fileName, options.Ref, body, commitMessage)
 	if err != nil {
 		return "", fmt.Errorf("failed to write file: %w", err)
 	}
