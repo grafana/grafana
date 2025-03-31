@@ -26,6 +26,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { AutoGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
@@ -34,7 +35,6 @@ import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
 import { DashboardChangeInfo } from './shared';
-import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 
 export class DashboardSceneChangeTracker {
   private _changeTrackerSub: Unsubscribable | undefined;
