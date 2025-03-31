@@ -15,14 +15,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.package }}
-      - uses: actions/setup-node@v4
+      - uses: dagger/dagger-for-github@8.0.0
         with:
-          node-version-file: '.nvmrc'
-          cache: 'yarn'
-          cache-dependency-path: 'yarn.lock'
-      - run: yarn install --immutable --check-cache
-      - run: yarn e2e:plugin:build
-      - uses: ./.github/workflows/actions/start-grafana-server
-        with:
-          package: grafana.tar.gz
-      - run: ./e2e/run-suite various-suite
+          verb: run
+          dagger-flags: '--quiet'
+          args: go run ./pkg/build/e2e -package=grafana.tar.gz -suite="various suite"
+      - run: ls -al videos
