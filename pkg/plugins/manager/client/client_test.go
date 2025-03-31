@@ -8,13 +8,12 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/stretchr/testify/require"
 )
-
-type stackIDKey string
 
 func TestQueryData(t *testing.T) {
 	t.Run("Empty registry should return not registered error", func(t *testing.T) {
@@ -57,8 +56,8 @@ func TestQueryData(t *testing.T) {
 				shouldPassThrough: true,
 			},
 			{
-				err:               plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.WithValue(context.Background(), stackIDKey("stackID"), "test-stack")).Errorf("unavailable"),
-				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.WithValue(context.Background(), stackIDKey("stackID"), "test-stack")).Errorf("unavailable"),
+				err:               plugins.ErrPluginGrpcConnectionUnavailableBaseFn(identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "stacks-123"})).Errorf("unavailable"),
+				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBaseFn(identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "stacks-123"})).Errorf("unavailable"),
 				shouldPassThrough: true,
 			},
 			{
