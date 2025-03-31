@@ -1001,6 +1001,10 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
+  * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+  */
+  useScopesNavigationEndpoint?: boolean;
+  /**
   * Enables the alert rule version history restore feature
   * @default true
   */

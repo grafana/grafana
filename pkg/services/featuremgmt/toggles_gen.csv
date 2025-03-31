@@ -226,6 +226,7 @@ newLogsPanel,experimental,@grafana/observability-logs,false,false,true
 grafanaconThemes,experimental,@grafana/grafana-frontend-platform,false,true,false
 pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
 alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
+useScopesNavigationEndpoint,experimental,@grafana/grafana-frontend-platform,false,false,true
 alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
 newShareReportDrawer,experimental,@grafana/sharing-squad,false,false,false
 rendererDisableAppPluginsPreload,experimental,@grafana/sharing-squad,false,false,true

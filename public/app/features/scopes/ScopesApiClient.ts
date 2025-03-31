@@ -3,6 +3,7 @@ import { getBackendSrv } from '@grafana/runtime';
 
 import { getAPINamespace } from '../../api/utils';
 
+import { ScopeNavigation } from './dashboards/types';
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './selector/types';
 import { getEmptyScopeObject } from './utils';
 
@@ -98,6 +99,18 @@ export class ScopesApiClient {
           scope: scopeNames,
         }
       );
+
+      return response?.items ?? [];
+    } catch (err) {
+      return [];
+    }
+  };
+
+  public fetchScopeNavigations = async (scopeNames: string[]): Promise<ScopeNavigation[]> => {
+    try {
+      const response = await getBackendSrv().get<{ items: ScopeNavigation[] }>(apiUrl + `/find/scope_navigations`, {
+        scope: scopeNames,
+      });
 
       return response?.items ?? [];
     } catch (err) {
