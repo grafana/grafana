@@ -18,6 +18,8 @@ const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
 // Clearance around the popover to prevent it from being too close to the edge of the viewport
 const POPOVER_PADDING = 16;
 
+const SCROLL_CONTAINER_PADDING = 8;
+
 export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, isOpen: boolean) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
@@ -70,7 +72,7 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
 
     const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
 
-    return size + MENU_ITEM_PADDING * 2 + scrollbarWidth;
+    return size + SCROLL_CONTAINER_PADDING + MENU_ITEM_PADDING * 2 + scrollbarWidth;
   }, [items, scrollbarWidth]);
 
   const floatStyles = {
