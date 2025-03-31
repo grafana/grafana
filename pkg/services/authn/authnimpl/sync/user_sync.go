@@ -339,7 +339,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 			return errEmptyExternalUID.Errorf("externalUID is empty")
 		}
 
-		if id.ExternalUID != authInfo.ExternalUID { // TODO: this probaable should be removed
+		if id.ExternalUID != authInfo.ExternalUID {
 			s.log.Error("mismatched externalUID", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
 			return errMismatchedExternalUID.Errorf("externalUID mistmatch")
 		}
