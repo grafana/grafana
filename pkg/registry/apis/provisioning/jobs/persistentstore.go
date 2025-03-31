@@ -365,7 +365,7 @@ func (s *persistentStore) cleanupClaims(ctx context.Context) error {
 
 func (s *persistentStore) Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error) {
 	if spec.Repository == "" {
-		return nil, apifmt.Errorf("missing repository in job '%s'", spec)
+		return nil, errors.New("missing repository in job")
 	}
 
 	job := &provisioning.Job{

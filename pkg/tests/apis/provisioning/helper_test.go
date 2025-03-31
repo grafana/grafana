@@ -57,11 +57,9 @@ func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 	if options == nil {
 		options = &provisioning.SyncJobOptions{}
 	}
-	body := asJSON(&provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   options,
-		},
+	body := asJSON(&provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   options,
 	})
 
 	result := h.AdminREST.Post().

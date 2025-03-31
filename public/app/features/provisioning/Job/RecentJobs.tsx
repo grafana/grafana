@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
 import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
-import { HistoricJob, Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
+import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
@@ -16,7 +16,7 @@ interface Props {
 
 type JobCell = {
   row: {
-    original: Job | HistoricJob;
+    original: Job;
   };
 };
 
