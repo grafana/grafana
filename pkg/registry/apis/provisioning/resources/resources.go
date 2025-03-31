@@ -205,7 +205,7 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 	return objName, gvk, nil
 }
 
-func (m *ResourcesManager) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
+func (r *ResourcesManager) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
 	id := item.GetUpdatedBy()
 	if id == "" {
 		id = item.GetCreatedBy()
@@ -214,7 +214,7 @@ func (m *ResourcesManager) withAuthorSignature(ctx context.Context, item utils.G
 		id = "grafana"
 	}
 
-	sig := m.userInfo[id] // lookup
+	sig := r.userInfo[id] // lookup
 	if sig.Name == "" && sig.Email == "" {
 		sig.Name = id
 	}
