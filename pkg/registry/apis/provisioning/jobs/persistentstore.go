@@ -28,8 +28,8 @@ const (
 	// The label must be formatted as milliseconds from Epoch. This grants a natural ordering, allowing for less-than operators in label selectors.
 	// The natural ordering would be broken if the number rolls over into 1 more digit. This won't happen before Nov, 2286.
 	LabelJobClaim = "provisioning.grafana.app/claim"
-	// LabelJobOriginalName contains the Job's name as a label. This allows for label selectors to find the archived version of a job.
-	LabelJobOriginalName = "provisioning.grafana.app/original-name"
+	// LabelJobOriginalUID contains the Job's original uid as a label. This allows for label selectors to find the archived version of a job.
+	LabelJobOriginalUID = "provisioning.grafana.app/original-uid"
 	// LabelRepository contains the repository name as a label. This allows for label selectors to find the archived version of a job.
 	LabelRepository = "provisioning.grafana.app/repository"
 )
@@ -274,17 +274,8 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 		job.Labels = make(map[string]string)
 	}
 	delete(job.Labels, LabelJobClaim)
-	// We also need a new, unique name.
-	job.Labels[LabelJobOriginalName] = job.GetName()
-	job.Labels[LabelRepository] = job.Spec.Repository
-	job.GenerateName = job.Name + "-"
-	job.Name = ""
-	// We also reset the UID as this is not the same object.
-	job.ObjectMeta.UID = ""
-	// We aren't allowed to write with ResourceVersion set.
-	job.ResourceVersion = ""
 
-	err = s.historicJobs.Write(ctx, job)
+	err = s.historicJobs.WriteJob(ctx, job)
 	if err != nil {
 		// We're not going to return this as it is not critical. Not ideal, but not critical.
 		logger.Warn("failed to create historic job", "historic_job", *job, "error", err)

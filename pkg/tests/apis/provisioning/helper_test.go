@@ -88,30 +88,30 @@ func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobSuccess(t, t.Context(), name)
+	h.AwaitJobSuccess(t, t.Context(), unstruct)
 }
 
-func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, jobName string) {
+func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, job *unstructured.Unstructured) {
 	t.Helper()
 	if !assert.EventuallyWithT(t, func(collect *assert.CollectT) {
 		jobs, err := h.HistoricJobs.Resource.List(ctx, metav1.ListOptions{
-			LabelSelector: jobs.LabelJobOriginalName + "=" + jobName,
+			LabelSelector: jobs.LabelJobOriginalUID + "=" + string(job.GetUID()),
 		})
 		if assert.NoError(collect, err) && assert.NotEmpty(collect, jobs.Items, "no historic jobs found yet") {
 			for _, job := range jobs.Items {
 				state := mustNestedString(job.Object, "status", "state")
 				if state == "" {
 					// The job hasn't gotten its state yet. We do two requests: one to insert the job, one to set the status.
-					assert.Fail(collect, "job '%s' has no state yet", jobName)
+					assert.Fail(collect, "job '%s' has no state yet", job.GetName())
 				}
 
 				// We can fail fast once the job is here: HistoricJobs are immutable.
-				require.Equal(t, string(provisioning.JobStateSuccess), state, "historic job '%s' was not successful", jobName)
+				require.Equal(t, string(provisioning.JobStateSuccess), state, "historic job '%s' was not successful", job.GetName())
 			}
 		}
 	}, time.Second*5, time.Millisecond*20) {
 		// We also want to add the job details to the error when it fails.
-		job, err := h.Jobs.Resource.Get(ctx, jobName, metav1.GetOptions{})
+		job, err := h.Jobs.Resource.Get(ctx, job.GetName(), metav1.GetOptions{})
 		if err != nil {
 			t.Logf("failed to get job details for further help: %v", err)
 		} else {

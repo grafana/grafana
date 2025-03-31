@@ -55,7 +55,18 @@ func (c *jobsConnector) Connect(
 
 	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			recent, err := c.historic.Recent(ctx, name)
+			query := r.URL.Query()
+			if query.Has("job") {
+				job, err := c.historic.GetJob(ctx, name, query.Get("job"))
+				if err != nil {
+					responder.Error(err)
+					return
+				}
+				responder.Object(http.StatusOK, &provisioning.JobList{Items: []provisioning.Job{*job}})
+				return
+			}
+
+			recent, err := c.historic.RecentJobs(ctx, name)
 			if err != nil {
 				responder.Error(err)
 				return

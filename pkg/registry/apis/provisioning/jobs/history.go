@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -14,10 +15,13 @@ import (
 
 type History interface {
 	// Adds a job to the history
-	Write(ctx context.Context, job *provisioning.Job) error
+	WriteJob(ctx context.Context, job *provisioning.Job) error
 
 	// Gets recent jobs for a repository
-	Recent(ctx context.Context, repo string) (*provisioning.JobList, error)
+	RecentJobs(ctx context.Context, repo string) (*provisioning.JobList, error)
+
+	// find a specific job from the original UID
+	GetJob(ctx context.Context, repo string, uid string) (*provisioning.Job, error)
 }
 
 func NewStorageBackedHistory(store rest.Storage) (History, error) {
@@ -42,7 +46,24 @@ type storageBackedHistory struct {
 }
 
 // Write implements History.
-func (s *storageBackedHistory) Write(ctx context.Context, job *provisioning.Job) error {
+func (s *storageBackedHistory) WriteJob(ctx context.Context, job *provisioning.Job) error {
+	if job.UID == "" {
+		return fmt.Errorf("missing UID in job '%s'", job.GetName())
+	}
+	if job.Labels == nil {
+		job.Labels = make(map[string]string)
+	}
+	job.Labels[LabelRepository] = job.Spec.Repository
+	job.Labels[LabelJobOriginalUID] = string(job.UID)
+
+	// Generate a new name based on the input job
+	job.GenerateName = job.Name + "-"
+	job.Name = ""
+	// We also reset the UID as this is not the same object.
+	job.ObjectMeta.UID = ""
+	// We aren't allowed to write with ResourceVersion set.
+	job.ResourceVersion = ""
+
 	_, err := s.creator.Create(ctx, &provisioning.HistoricJob{
 		ObjectMeta: job.ObjectMeta,
 		Spec:       job.Spec,
@@ -51,11 +72,7 @@ func (s *storageBackedHistory) Write(ctx context.Context, job *provisioning.Job)
 	return err
 }
 
-// Recent implements History.
-func (s *storageBackedHistory) Recent(ctx context.Context, repo string) (*provisioning.JobList, error) {
-	labels := labels.Set{
-		LabelRepository: repo,
-	}
+func (s *storageBackedHistory) getJobs(ctx context.Context, labels labels.Set) (*provisioning.JobList, error) {
 	obj, err := s.lister.List(ctx, &internalversion.ListOptions{
 		LabelSelector: labels.AsSelector(),
 	})
@@ -79,4 +96,25 @@ func (s *storageBackedHistory) Recent(ctx context.Context, repo string) (*provis
 		})
 	}
 	return jobs, nil
+}
+
+// Recent implements History.
+func (s *storageBackedHistory) RecentJobs(ctx context.Context, repo string) (*provisioning.JobList, error) {
+	return s.getJobs(ctx, labels.Set{
+		LabelRepository: repo,
+	})
+}
+
+// GetJob implements History.
+func (s *storageBackedHistory) GetJob(ctx context.Context, repo string, job string) (*provisioning.Job, error) {
+	jobs, err := s.getJobs(ctx, labels.Set{
+		LabelJobOriginalUID: job,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(jobs.Items) == 1 {
+		return &jobs.Items[0], nil
+	}
+	return nil, apierrors.NewNotFound(provisioning.JobResourceInfo.GroupResource(), job)
 }

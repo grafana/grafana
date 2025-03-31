@@ -243,7 +243,12 @@ const injectedRtkApi = api
         providesTags: ['Repository'],
       }),
       getRepositoryJobs: build.query<GetRepositoryJobsApiResponse, GetRepositoryJobsApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs` }),
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/jobs`,
+          params: {
+            job: queryArg.job,
+          },
+        }),
         providesTags: ['Repository'],
       }),
       createRepositoryJobs: build.mutation<CreateRepositoryJobsApiResponse, CreateRepositoryJobsApiArg>({
@@ -643,6 +648,8 @@ export type GetRepositoryJobsApiResponse = /** status 200 OK */ JobList;
 export type GetRepositoryJobsApiArg = {
   /** name of the Job */
   name: string;
+  /** job UUID */
+  job?: string;
 };
 export type CreateRepositoryJobsApiResponse = /** status 200 OK */ Job;
 export type CreateRepositoryJobsApiArg = {

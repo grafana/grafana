@@ -1903,6 +1903,16 @@
         ],
         "description": "List recent jobs",
         "operationId": "getRepositoryJobs",
+        "parameters": [
+          {
+            "name": "job",
+            "in": "query",
+            "description": "job UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",

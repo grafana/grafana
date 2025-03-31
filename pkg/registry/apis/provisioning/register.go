@@ -851,6 +851,16 @@ spec:
 		}
 
 		sub.Get.Description = "List recent jobs"
+		sub.Get.Parameters = append(sub.Get.Parameters, &spec3.Parameter{
+			ParameterProps: spec3.ParameterProps{
+				Name:        "job",
+				In:          "query",
+				Example:     "",
+				Description: "job UUID",
+				Schema:      spec.StringProperty(),
+				Required:    false,
+			},
+		})
 		sub.Get.Responses = &spec3.Responses{
 			ResponsesProps: spec3.ResponsesProps{
 				StatusCodeResponses: map[int]*spec3.Response{
