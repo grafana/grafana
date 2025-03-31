@@ -169,7 +169,7 @@ export function getLogLineSize(
   }
 
   // If a long line is collapsed, we show the line count + an extra line for the expand/collapse control
-  logs[index].checkCollapsedState(displayedFields);
+  logs[index].checkCollapsedState(displayedFields, container);
   if (logs[index].collapsed) {
     return (TRUNCATION_LINE_COUNT + 1) * lineHeight;
   }
@@ -255,9 +255,10 @@ export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: 
   return dimensions;
 };
 
-export const TRUNCATION_LINE_COUNT = Math.round(window.innerHeight / getLineHeight() / 2);
-export function getTruncationLength() {
-  return (window.innerWidth / measureTextWidth('e')) * (TRUNCATION_LINE_COUNT + 1);
+export const TRUNCATION_LINE_COUNT = Math.round(window.innerHeight / getLineHeight() / 1.5);
+export function getTruncationLength(container: HTMLDivElement | null) {
+  const availableWidth = container ? getLogContainerWidth(container) : window.innerWidth;
+  return (availableWidth / measureTextWidth('e')) * TRUNCATION_LINE_COUNT;
 }
 
 export function hasUnderOrOverflow(
