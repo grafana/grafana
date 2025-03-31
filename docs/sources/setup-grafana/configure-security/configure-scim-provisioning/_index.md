@@ -44,6 +44,31 @@ SCIM offers several advantages for managing users and teams in Grafana:
 - **Reduced administrative overhead**: Eliminate manual user management tasks and reduce the risk of human error
 - **Enhanced security**: Automatically disable access when users leave your organization
 
+## Configure SCIM in Grafana
+
+The table below describes all SCIM configuration options. Like any other Grafana configuration, you can apply these options as [environment variables](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#override-configuration-with-environment-variables).
+
+| Setting              | Required | Description                                                                                                                                                                                | Default |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| `user_sync_enabled`  | Yes      | Enable SCIM user provisioning. When enabled, Grafana will create, update, and deactivate users based on SCIM requests from your identity provider.                                         | `true`  |
+| `group_sync_enabled` | No       | Enable SCIM group provisioning. When enabled, Grafana will create, update, and delete teams based on SCIM requests from your identity provider. Cannot be enabled if Team Sync is enabled. | `false` |
+
+{{< admonition type="warning" >}}
+**Team Sync Compatibility**:
+
+- SCIM group sync (`group_sync_enabled = true`) and Team Sync cannot be enabled simultaneously
+- You can use SCIM user sync (`user_sync_enabled = true`) alongside Team Sync
+- For more details about migration and compatibility, see [SCIM vs Team Sync](./manage-users-teams/_index.md#scim-vs-team-sync)
+  {{< /admonition >}}
+
+### Example SCIM configuration
+
+```ini
+[auth.scim]
+user_sync_enabled = true
+group_sync_enabled = false
+```
+
 ## Supported identity providers
 
 The following identity providers are supported:
