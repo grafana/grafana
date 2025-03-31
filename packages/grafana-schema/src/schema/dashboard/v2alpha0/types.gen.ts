@@ -51,23 +51,6 @@ export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	variables: [],
 });
 
-// Resources used to import a dashboard
-export interface ImportableResources {
-	kind: "ImportableResources";
-	spec: {
-		resources: (DashboardKind | LibraryPanelImport)[];
-		requirements: DashboardImportableRequirements[];
-	};
-}
-
-export const defaultImportableResources = (): ImportableResources => ({
-	kind: "ImportableResources",
-	spec: {
-	resources: [],
-	requirements: [],
-},
-});
-
 // DashboardKind - used for importing/exporting dashboards
 export interface DashboardKind {
 	kind: "Dashboard";
@@ -77,21 +60,6 @@ export interface DashboardKind {
 export const defaultDashboardKind = (): DashboardKind => ({
 	kind: "Dashboard",
 	spec: defaultDashboardV2Spec(),
-});
-
-// ImportableDashboard requirements
-export interface DashboardImportableRequirements {
-	type: string;
-	id: string;
-	name: string;
-	version: string;
-}
-
-export const defaultDashboardImportableRequirements = (): DashboardImportableRequirements => ({
-	type: "",
-	id: "",
-	name: "",
-	version: "",
 });
 
 // Supported dashboard elements

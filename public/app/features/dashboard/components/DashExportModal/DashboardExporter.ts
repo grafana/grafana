@@ -1,12 +1,10 @@
-import { defaults, each, sortBy, uniqBy } from 'lodash';
+import { defaults, each, sortBy } from 'lodash';
 
 import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   DashboardKind,
-  DashboardImportableRequirements,
   DashboardV2Spec,
-  ImportableResources,
   LibraryPanelImport,
   LibraryPanelKind,
   PanelKind,
@@ -342,9 +340,8 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
   }
 }
 
-export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, ImportableResources> {
+export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, DashboardKind> {
   async makeExportable(dashboard: DashboardV2Spec) {
-    const requires: DashboardImportableRequirements[] = [];
     const variableLookup: { [key: string]: any } = {};
     const libraryPanels: LibraryPanelImport[] = [];
 
@@ -374,13 +371,6 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
             return;
           }
 
-          requires.push({
-            type: 'datasource',
-            id: ds.meta.id,
-            name: ds.meta.name,
-            version: ds.meta.info.version || '1.0.0',
-          });
-
           if (datasourceVariable) {
             return;
           }
@@ -395,55 +385,14 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
     const templateizeDatasourceUsage = (
       obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
     ) => {
-      if (obj.datasource === undefined) {
-        return;
-      }
-
-      let datasource = obj.datasource;
-      const datasourceUid: string | undefined = obj.datasource?.uid;
-      const match = datasourceUid && variableRegex.exec(datasourceUid);
-
-      // ignore data source properties that contain a variable
-      const { datasourceMatch } = getDatasourceFromMatch(match, datasource);
-
-      if (datasourceMatch) {
-        datasource = datasourceMatch;
-      }
-
-      return getDataSourceSrv()
-        .get(datasource)
-        .then((ds) => {
-          if (ds.meta?.builtIn) {
-            return;
-          }
-
-          requires.push({
-            type: 'datasource',
-            id: ds.meta.id,
-            name: ds.meta.name,
-            version: ds.meta.info.version || '1.0.0',
-          });
-
-          let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
-          obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
-        });
+      obj.datasource = undefined;
     };
 
-    const processPanel = async (panel: PanelKind) => {
+    const processPanel = (panel: PanelKind) => {
       if (panel.spec.data.spec.queries) {
         for (const query of panel.spec.data.spec.queries) {
-          await templateizeDatasourceUsage(query.spec);
+          templateizeDatasourceUsage(query.spec);
         }
-      }
-
-      const panelDef: PanelPluginMeta = config.panels[panel.spec.vizConfig.kind];
-      if (panelDef) {
-        requires.push({
-          type: 'panel',
-          id: panelDef.id,
-          name: panelDef.name,
-          version: panelDef.info.version,
-        });
       }
     };
 
@@ -460,7 +409,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
         },
       };
 
-      await templateizeLibraryPanelDatasourceUsage(exportableLibPanel.spec.model);
+      templateizeLibraryPanelDatasourceUsage(exportableLibPanel.spec.model);
 
       libraryPanels.push(exportableLibPanel);
     };
@@ -470,7 +419,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
 
       for (const element of Object.values(elements)) {
         if (element.kind === 'Panel') {
-          await processPanel(element);
+          processPanel(element);
         } else if (element.kind === 'LibraryPanel') {
           await processLibraryPanels(element);
         }
@@ -479,7 +428,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       // templatize template vars
       for (const variable of dashboard.variables) {
         if (variable.kind === 'QueryVariable') {
-          await templateizeDatasourceUsage(variable.spec);
+          templateizeDatasourceUsage(variable.spec);
           variable.spec.options = [];
           variable.spec.current = {} as unknown as VariableOption;
         } else if (variable.kind === 'DatasourceVariable') {
@@ -495,28 +444,12 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
         await templateizeDatasourceUsage(annotation.spec);
       }
 
-      // add grafana version
-      requires.push({
-        type: 'grafana',
-        id: 'grafana',
-        name: 'Grafana',
-        version: config.buildInfo.version,
-      });
-
       const importableDashboard: DashboardKind = {
         kind: 'Dashboard',
         spec: dashboard,
       };
 
-      const newObj: ImportableResources = {
-        kind: 'ImportableResources',
-        spec: {
-          resources: [importableDashboard, ...uniqBy(libraryPanels, 'spec.uid')],
-          requirements: uniqBy(sortBy(requires, ['id']), 'id'),
-        },
-      };
-
-      return newObj;
+      return importableDashboard;
     } catch (err) {
       console.error('Export failed:', err);
       return {
@@ -540,7 +473,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
 
 export function getDashboardExporter(): DashboardExporterLike<
   DashboardModel | DashboardV2Spec,
-  DashboardJson | ImportableResources
+  DashboardJson | DashboardKind
 > {
-  return config.featureToggles.useV2DashboardsAPI ? new DashboardExporterV2() : new DashboardExporterV1();
+  return config.featureToggles.dashboardNewLayouts ? new DashboardExporterV2() : new DashboardExporterV1();
 }
