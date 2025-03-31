@@ -1106,13 +1106,34 @@
       "create-label": "Create",
       "name-label": "Folder name"
     },
+    "new-provisioned-folder-form": {
+      "alert-error-creating-folder": "Error creating folder",
+      "alert-folder-created-successfully": "Folder created successfully",
+      "button-create": "Create",
+      "button-creating": "Creating...",
+      "cancel": "Cancel",
+      "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "error-invalid-folder-name": "Invalid folder name",
+      "error-required": "Folder name is required",
+      "folder-comment-input-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
+      "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
+      "label-branch": "Branch",
+      "label-comment": "Comment",
+      "label-folder-name": "Folder name",
+      "label-workflow": "Workflow",
+      "text-pull-request-created": "A pull request has been created with changes to this folder:",
+      "title-pull-request-created": "Pull request created",
+      "title-repository-not-found": "Repository not found",
+      "title-this-repository-is-read-only": "This repository is read only"
+    },
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
     "soft-delete": {
       "success": "Dashboard {{name}} moved to Recently deleted"
-    }
+    },
+    "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
   "clipboard-button": {
     "inline-toast": {
@@ -2596,6 +2617,9 @@
   "folder-picker": {
     "create-instructions": "Press enter to create the new folder.",
     "loading": "Loading folders..."
+  },
+  "folder-repo": {
+    "badge-text": "Provisioned"
   },
   "forgot-password": {
     "back-button": "Back to login",
@@ -4419,6 +4443,206 @@
       "name": "Name",
       "teams": "Teams",
       "text-loading-teams": "Loading teams..."
+    }
+  },
+  "provisioning": {
+    "bootstrap-step": {
+      "dashboards-unavailable-while-running-process": "Dashboards will be unavailable while running this process",
+      "description-clear-repository-connection": "Add a clear name for this repository connection",
+      "grafana": "Grafana",
+      "include-history": "Include history",
+      "include-identifiers": "Include identifiers",
+      "label-display-name": "Display name",
+      "label-migrate-options": "Migrate options",
+      "placeholder-my-repository-connection": "My repository connection",
+      "repository": "Repository",
+      "text-loading-resource-information": "Loading resource information...",
+      "title-files-exist-in-the-target": "Files exist in the target",
+      "title-note": "Note"
+    },
+    "check-repository": {
+      "check": "Check"
+    },
+    "config-form": {
+      "description-workflows-makes-repository": "no workflows makes the repository read only",
+      "label-automatic-pulling": "Automatic pulling"
+    },
+    "config-form-github-collapse": {
+      "instructions": "Instructions",
+      "label-git-hub-features": "GitHub features",
+      "pull-request-image-previews": "Pull Request image previews",
+      "realtime-feedback": "Realtime feedback"
+    },
+    "connect-repository-button": {
+      "connect-to-repository": "Connect to repository"
+    },
+    "connect-step": {
+      "description-choose-storage-resources": "Choose the type of storage for your resources",
+      "description-paste-your-git-hub-personal-access-token": "Paste your GitHub personal access token",
+      "label-storage-type": "Storage type"
+    },
+    "delete-repository-button": {
+      "tooltip-delete-this-repository": "Delete this repository"
+    },
+    "edit-repository-page": {
+      "back-to-repositories": "Back to repositories",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file."
+    },
+    "empty-state": {
+      "no-jobs": "No jobs..."
+    },
+    "enhanced-features": {
+      "description-visual-previews-dashboard-updates-directly-requests": "See visual previews of dashboard updates directly in pull requests",
+      "set-up-image-rendering": "Set up image rendering",
+      "set-up-public-access": "Set up public access",
+      "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks",
+      "title-visual-previews-in-pull-requests": "Visual previews in pull requests",
+      "unlock-enhanced-functionality-for-git-hub": "Unlock enhanced functionality for GitHub"
+    },
+    "expanded-row": {
+      "job-specification": "Job Specification",
+      "summary": "Summary",
+      "title-error": "Error"
+    },
+    "features-list": {
+      "actions": {
+        "set-up-required-feature-toggles": "Set up required feature toggles"
+      },
+      "learn-more": "Learn more",
+      "manage-dashboards-provision-updates-automatically": "Manage dashboards as code and provision updates automatically",
+      "manage-your-dashboards-with-remote-provisioning": "Manage your dashboards with remote provisioning",
+      "migrate-existing-dashboards-storage-provisioning": "Migrate existing dashboards to storage for provisioning"
+    },
+    "file-history-page": {
+      "back-to-repositories": "Back to repositories",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file."
+    },
+    "file-status-page": {
+      "title-error-loading-file": "Error loading file"
+    },
+    "files-view": {
+      "columns": {
+        "history": "History",
+        "view": "View"
+      },
+      "placeholder-search": "Search"
+    },
+    "finish-step": {
+      "description-often-shall-instance-updates-git-hub": "How often shall the instance pull updates from GitHub?",
+      "description-select-workflows-allowed-within-repository": "Select the workflows that are allowed within this repository",
+      "label-update-instance-interval-seconds": "Update instance interval (seconds)",
+      "label-workflows": "Workflows",
+      "placeholder": "60",
+      "placeholder-readonly-repository": "Read-only repository"
+    },
+    "folder-repository-list": {
+      "no-results-matching-your-query": "No results matching your query ",
+      "placeholder-search": "Search"
+    },
+    "getting-started": {
+      "engaging-graphic": "Engaging graphic",
+      "title-setting-connection-could-cause-temporary-outage": "Setting up this connection could cause a temporary outage"
+    },
+    "history-view": {
+      "not-found": "not found"
+    },
+    "home-page": {
+      "configured-repositories-while-running-legacy-storage": "Configured repositories will not work while running legacy storage.",
+      "remove-all-configured-repositories": "Remove all configured repositories",
+      "title-delete-all-configured-repositories": "Delete all configured repositories",
+      "title-legacy-storage-detected": "Legacy storage detected"
+    },
+    "job-status": {
+      "label-view-details": "View details",
+      "starting": "Starting...",
+      "status": {
+        "title-error-running-job": "error running job",
+        "title-job-completed-successfully": "Job completed successfully"
+      },
+      "summary": "Summary"
+    },
+    "recent-jobs": {
+      "jobs": "Jobs"
+    },
+    "repository-actions": {
+      "settings": "Settings",
+      "source-code": "Source Code"
+    },
+    "repository-card": {
+      "get-repository-meta": {
+        "webhook": "Webhook"
+      },
+      "settings": "Settings",
+      "view": "View"
+    },
+    "repository-health": {
+      "details": "Details:",
+      "no-errors-found": "No errors found",
+      "title-repository-is-healthy": "Repository is healthy",
+      "title-repository-is-unhealthy": "Repository is unhealthy"
+    },
+    "repository-link": {
+      "grafana-repository": "Grafana and your repository are now in sync.",
+      "view-folder": "View folder",
+      "view-repository": "View repository"
+    },
+    "repository-overview": {
+      "checked": "Checked:",
+      "finished": "Finished:",
+      "health": "Health",
+      "job-id": "Job ID:",
+      "last-ref": "Last Ref:",
+      "messages": "Messages:",
+      "pull-status": "Pull status",
+      "resources": "Resources",
+      "started": "Started:",
+      "status": "Status:",
+      "view-folder": "View Folder",
+      "webhook": "Webhook"
+    },
+    "repository-resources": {
+      "columns": {
+        "history": "History",
+        "view": "View"
+      },
+      "placeholder-search": "Search"
+    },
+    "repository-status-page": {
+      "back-to-repositories": "Back to repositories",
+      "not-found": "not found",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
+      "title-legacy-storage": "Legacy Storage",
+      "title-queued-for-deletion": "Queued for deletion"
+    },
+    "resource-view": {
+      "base": "Base",
+      "dashboard-preview": "Dashboard Preview",
+      "existing-dashboard": "Existing dashboard",
+      "history": "History",
+      "repository": "Repository",
+      "title-error-saving-file": "Error saving file"
+    },
+    "setup-modal": {
+      "done": "Done",
+      "next": "Next",
+      "previous": "Previous"
+    },
+    "stepper": "&#8212;",
+    "sync-repository": {
+      "pull": "Pull"
+    },
+    "token-permissions-info": {
+      "access": "Access",
+      "contents": "Contents",
+      "metadata": "Metadata",
+      "permission": "Permission",
+      "pull-requests": "Pull requests",
+      "read-and-write": "Read and write",
+      "readonly": "Read-only",
+      "webhooks": "Webhooks"
+    },
+    "wizard-content": {
+      "title-repository-verification-failed": "Repository verification failed"
     }
   },
   "public-dashboard": {
