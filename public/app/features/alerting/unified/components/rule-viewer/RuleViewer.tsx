@@ -4,7 +4,17 @@ import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  LinkButton,
+  LoadingBar,
+  Stack,
+  TabContent,
+  Text,
+  TextLink,
+  useStyles2,
+  withErrorBoundary,
+} from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans, t } from 'app/core/internationalization';
@@ -19,15 +29,17 @@ import {
 } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
+import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
-import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
+import { useHasRulerV2 } from '../../hooks/useHasRuler';
 import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
+import { ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink } from '../../utils/navigation';
 import {
@@ -64,8 +76,6 @@ export enum ActiveTab {
   Details = 'details',
   VersionHistory = 'version-history',
 }
-
-const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
@@ -281,57 +291,64 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
   );
 };
 
+interface PrometheusConsistencyCheckProps {
+  ruleIdentifier: RuleIdentifier;
+}
 /**
  * This component displays an Alert warning component if discovers inconsistencies between Prometheus and Ruler rules
  * It will show loading indicator until the Prometheus and Ruler rule is consistent
  * It will not show the warning if the rule is Grafana managed
  */
-function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }) {
-  const [ref, { width }] = useMeasure<HTMLDivElement>();
+const PrometheusConsistencyCheck = withErrorBoundary(
+  ({ ruleIdentifier }: PrometheusConsistencyCheckProps) => {
+    const [ref, { width }] = useMeasure<HTMLDivElement>();
 
-  const { data: dsFeatures } = useDiscoverDsFeaturesQuery({ rulesSourceName: ruleIdentifier.ruleSourceName });
-  const { result: ruleLocation } = useRuleLocation(ruleIdentifier);
-  const { waitForGroupConsistency, groupConsistent } = useRuleGroupConsistencyCheck();
+    const { hasRuler } = useHasRulerV2(ruleIdentifierToRuleSourceIdentifier(ruleIdentifier));
+    const { result: ruleLocation } = useRuleLocation(ruleIdentifier);
 
-  const [waitAction, waitState] = useAsync((groupIdentifier: RuleGroupIdentifierV2) => {
-    return waitForGroupConsistency(groupIdentifier);
-  });
+    const { waitForGroupConsistency, groupConsistent } = useRuleGroupConsistencyCheck();
 
-  useEffect(() => {
-    if (ruleLocation && Boolean(dsFeatures?.rulerConfig)) {
-      waitAction.execute(ruleLocation.groupIdentifier);
-    }
-  }, [ruleLocation, waitAction, dsFeatures?.rulerConfig]);
+    const [waitAction, waitState] = useAsync((groupIdentifier: RuleGroupIdentifierV2) => {
+      return waitForGroupConsistency(groupIdentifier);
+    });
 
-  if (isError(waitState)) {
-    return (
-      <Alert title="Unable to check the rule status" bottomSpacing={0} topSpacing={2}>
-        {stringifyErrorLike(waitState.error)}
-      </Alert>
-    );
-  }
+    useEffect(() => {
+      if (ruleLocation && hasRuler) {
+        waitAction.execute(ruleLocation.groupIdentifier);
+      }
+    }, [ruleLocation, hasRuler, waitAction]);
 
-  // If groupConsistent is undefined, it means that the rule is still being checked and we don't know if it's consistent or not
-  // To prevent the inconsistency banner from blinking, we only show it if groupConsistent is false
-  if (groupConsistent === false) {
-    return (
-      <Stack direction="column" gap={0} ref={ref}>
-        <LoadingBar width={width} />
-        <Alert
-          title={t('alerting.rule-viewer.prometheus-consistency-check.alert-title', 'Update in progress')}
-          severity="info"
-        >
-          <Trans i18nKey="alerting.rule-viewer.prometheus-consistency-check.alert-message">
-            Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list
-            view.
-          </Trans>
+    if (isError(waitState)) {
+      return (
+        <Alert title="Unable to check the rule status" bottomSpacing={0} topSpacing={2}>
+          {stringifyErrorLike(waitState.error)}
         </Alert>
-      </Stack>
-    );
-  }
+      );
+    }
 
-  return null;
-}
+    // If groupConsistent is undefined, it means that the rule is still being checked and we don't know if it's consistent or not
+    // To prevent the inconsistency banner from blinking, we only show it if groupConsistent is false
+    if (groupConsistent === false) {
+      return (
+        <Stack direction="column" gap={0} ref={ref}>
+          <LoadingBar width={width} />
+          <Alert
+            title={t('alerting.rule-viewer.prometheus-consistency-check.alert-title', 'Update in progress')}
+            severity="info"
+          >
+            <Trans i18nKey="alerting.rule-viewer.prometheus-consistency-check.alert-message">
+              Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list
+              view.
+            </Trans>
+          </Alert>
+        </Stack>
+      );
+    }
+
+    return null;
+  },
+  { errorLogger: logError }
+);
 
 export const isErrorHealth = (health?: RuleHealth) => health === 'error' || health === 'err';
 

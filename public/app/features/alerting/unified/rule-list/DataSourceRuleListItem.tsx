@@ -8,7 +8,12 @@ import { fromRule, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
 import { getRuleName, getRulePluginOrigin, rulerRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
-import { AlertRuleListItem, RecordingRuleListItem, RuleListItemCommonProps } from './components/AlertRuleListItem';
+import {
+  AlertRuleListItem,
+  RecordingRuleListItem,
+  RuleListItemCommonProps,
+  UnknownRuleListItem,
+} from './components/AlertRuleListItem';
 
 export interface DataSourceRuleListItemProps {
   rule: Rule;
@@ -33,7 +38,7 @@ export function DataSourceRuleListItem({
   const href = createViewLinkFromIdentifier(ruleIdentifier);
   const originMeta = getRulePluginOrigin(rule);
 
-  // If ruler ruler is available, we should use it as it contains fresh data
+  // If ruler rule is available, we should use it as it contains fresh data
   const ruleName = rulerRule ? getRuleName(rulerRule) : rule.name;
   const labels = rulerRule ? rulerRule.labels : rule.labels;
 
@@ -61,6 +66,8 @@ export function DataSourceRuleListItem({
       );
     case PromRuleType.Recording:
       return <RecordingRuleListItem {...commonProps} />;
+    default:
+      return <UnknownRuleListItem ruleName={ruleName} groupIdentifier={groupIdentifier} ruleDefinition={rule} />;
   }
 }
 
