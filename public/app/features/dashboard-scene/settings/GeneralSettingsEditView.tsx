@@ -123,7 +123,7 @@ export class GeneralSettingsEditView
     });
   };
 
-  public onWeekStartChange = (value: WeekStart) => {
+  public onWeekStartChange = (value?: WeekStart) => {
     this.getTimeRange().setState({ weekStart: value });
   };
 
@@ -224,15 +224,19 @@ export class GeneralSettingsEditView
               <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
             </Field>
             <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
-              <FolderPicker
-                value={meta.folderUid}
-                onChange={model.onFolderChange}
-                // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
-                initialTitle={meta.folderTitle}
-                inputId="dashboard-folder-input"
-                enableCreateNew
-                skipInitialLoad
-              />
+              {dashboard.isManagedRepository() ? (
+                <Input readOnly value={meta.folderTitle} />
+              ) : (
+                <FolderPicker
+                  value={meta.folderUid}
+                  onChange={model.onFolderChange}
+                  // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
+                  initialTitle={meta.folderTitle}
+                  inputId="dashboard-folder-input"
+                  enableCreateNew
+                  skipInitialLoad
+                />
+              )}
             </Field>
 
             <Field
@@ -258,7 +262,7 @@ export class GeneralSettingsEditView
             nowDelay={nowDelay || ''}
             liveNow={liveNow}
             timezone={timeZone || ''}
-            weekStart={weekStart || ''}
+            weekStart={weekStart}
           />
 
           {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}

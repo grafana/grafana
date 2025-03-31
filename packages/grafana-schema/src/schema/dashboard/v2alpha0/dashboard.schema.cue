@@ -22,7 +22,7 @@ DashboardV2Spec: {
 
   elements: [ElementReference.name]: Element
 
-  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+  layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 
   // Links with references to other dashboards or external websites.
   links: [...DashboardLink]
@@ -506,7 +506,7 @@ RowRepeatOptions: {
   value: string
 }
 
-ResponsiveGridRepeatOptions: {
+AutoGridRepeatOptions: {
   mode: RepeatMode
   value: string
 }
@@ -563,29 +563,38 @@ RowsLayoutRowKind: {
 
 RowsLayoutRowSpec: {
   title?: string
-  collapsed: bool
+  collapse?: bool
+  hideHeader?: bool
+  fillScreen?: bool
   repeat?: RowRepeatOptions
-  layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+  conditionalRendering?: ConditionalRenderingGroupKind
+  layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 }
 
-ResponsiveGridLayoutKind: {
-  kind: "ResponsiveGridLayout"
-  spec: ResponsiveGridLayoutSpec
+AutoGridLayoutKind: {
+  kind: "AutoGridLayout"
+  spec: AutoGridLayoutSpec
 }
 
-ResponsiveGridLayoutSpec: {
-  row: string,
-  col: string,
-  items: [...ResponsiveGridLayoutItemKind]
+AutoGridLayoutSpec: {
+	maxColumnCount?: number | *3
+	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
+	columnWidth?: number
+	rowHeightMode: "short" | *"standard" | "tall" | "custom"
+	rowHeight?: number
+	fillScreen?: bool | *false
+	items: [...AutoGridLayoutItemKind]
 }
 
-ResponsiveGridLayoutItemKind: {
-  kind: "ResponsiveGridLayoutItem"
-  spec: ResponsiveGridLayoutItemSpec
+AutoGridLayoutItemKind: {
+  kind: "AutoGridLayoutItem"
+  spec: AutoGridLayoutItemSpec
 }
 
-ResponsiveGridLayoutItemSpec: {
+AutoGridLayoutItemSpec: {
   element: ElementReference
+  repeat?: AutoGridRepeatOptions
+  conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 TabsLayoutKind: {
@@ -604,7 +613,7 @@ TabsLayoutTabKind: {
 
 TabsLayoutTabSpec: {
   title?: string
-  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
+  layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 }
 
 PanelSpec: {
@@ -923,4 +932,43 @@ AdHocFilterWithLabels: {
 AdhocVariableKind: {
   kind: "AdhocVariable"
   spec: AdhocVariableSpec
+}
+
+ConditionalRenderingGroupKind: {
+  kind: "ConditionalRenderingGroup"
+  spec: ConditionalRenderingGroupSpec
+}
+
+ConditionalRenderingGroupSpec: {
+  condition: "and" | "or"
+  items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
+}
+
+ConditionalRenderingVariableKind: {
+  kind: "ConditionalRenderingVariable"
+  spec: ConditionalRenderingVariableSpec
+}
+
+ConditionalRenderingVariableSpec: {
+  variable: string
+  operator: "equals" | "notEquals"
+  value: string
+}
+
+ConditionalRenderingDataKind: {
+  kind: "ConditionalRenderingData"
+  spec: ConditionalRenderingDataSpec
+}
+
+ConditionalRenderingDataSpec: {
+  value: bool
+}
+
+ConditionalRenderingTimeIntervalKind: {
+  kind: "ConditionalRenderingTimeInterval"
+  spec: ConditionalRenderingTimeIntervalSpec
+} 
+
+ConditionalRenderingTimeIntervalSpec: {
+  value: string
 }

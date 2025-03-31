@@ -255,7 +255,7 @@ export { UnaryOperationID, type UnaryOperation, unaryOperators } from './utils/u
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
-export { store } from './utils/store';
+export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 
 // Tranformations
@@ -550,12 +550,14 @@ export {
   type PluginExtensionLink,
   type PluginExtensionComponent,
   type PluginExtensionComponentMeta,
+  type ComponentTypeWithExtensionMeta,
   type PluginExtensionConfig,
   type PluginExtensionFunction,
   type PluginExtensionLinkConfig,
   type PluginExtensionComponentConfig,
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
+  type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
@@ -576,6 +578,8 @@ export {
   type ScopeNodeSpec,
   type ScopeNode,
   scopeFilterOperatorMap,
+  reverseScopeFilterOperatorMap,
+  isEqualityOrMultiOperator,
 } from './types/scopes';
 export {
   PluginState,

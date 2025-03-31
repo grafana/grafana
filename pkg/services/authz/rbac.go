@@ -11,6 +11,7 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/rest"
 
@@ -33,8 +34,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-// `authzService` is hardcoded in authz-service
-const authzServiceAudience = "authzService"
+// AuthzServiceAudience is the audience for the authz service.
+const AuthzServiceAudience = "authzService"
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
@@ -45,6 +46,7 @@ func ProvideAuthZClient(
 	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
+	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
@@ -67,7 +69,7 @@ func ProvideAuthZClient(
 			// When running in-proc we get a injection cycle between
 			// authz client, resource client and apiserver so we need to use
 			// package level function to get rest config
-			store.NewAPIFolderStore(tracer, apiserver.GetRestConfig),
+			store.NewAPIFolderStore(tracer, restConfig.GetRestConfig),
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
@@ -119,11 +121,19 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer tracing.Tracer) 
 		return nil, fmt.Errorf("failed to initialize token exchange client: %w", err)
 	}
 
+	transportCreds := insecure.NewCredentials()
+	if clientCfg.certFile != "" {
+		transportCreds, err = credentials.NewClientTLSFromFile(clientCfg.certFile, "")
+		if err != nil {
+			return nil, fmt.Errorf("failed to load TLS credentials: %w", err)
+		}
+	}
+
 	conn, err := grpc.NewClient(
 		clientCfg.remoteAddress,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(transportCreds),
 		grpc.WithPerRPCCredentials(
-			newGRPCTokenAuth(authzServiceAudience, clientCfg.tokenNamespace, tokenClient),
+			NewGRPCTokenAuth(AuthzServiceAudience, clientCfg.tokenNamespace, tokenClient),
 		),
 	)
 	if err != nil {
@@ -151,19 +161,23 @@ func RegisterRBACAuthZService(
 	reg prometheus.Registerer,
 	cache cache.Cache,
 	exchangeClient authnlib.TokenExchanger,
-	folderAPIURL string,
+	cfg RBACServerSettings,
 ) {
 	var folderStore store.FolderStore
 	// FIXME: for now we default to using database read proxy for folders if the api url is not configured.
 	// we should remove this and the sql implementation once we have verified that is works correctly
-	if folderAPIURL == "" {
+	if cfg.Folder.Host == "" {
 		folderStore = store.NewSQLFolderStore(db, tracer)
 	} else {
 		folderStore = store.NewAPIFolderStore(tracer, func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{
-				Host: folderAPIURL,
+				Host: cfg.Folder.Host,
 				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
 					return &tokenExhangeRoundTripper{te: exchangeClient, rt: rt}
+				},
+				TLSClientConfig: rest.TLSClientConfig{
+					Insecure: cfg.Folder.Insecure,
+					CAFile:   cfg.Folder.CAFile,
 				},
 				QPS:   50,
 				Burst: 100,

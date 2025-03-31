@@ -19,7 +19,7 @@ weight: -36
 
 Welcome to Grafana 9.5! We're excited to share some major updates to Grafana's navigation, tons of usability improvements to Alerting, and some promising experiments to help you query your Prometheus metrics. Also, read on to learn about our continued migration from API keys to service accounts, as well as deprecation of plugins that use Angular and a field in the InfluxDB data source.
 
-For more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v9.5, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v9.5/index.md" >}}).
+For more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v9.5, check out our [Upgrade Guide](../../upgrade-guide/upgrade-v9.5/).
 
 <!-- Template below
 
@@ -67,7 +67,7 @@ Dashboard panels contain a lot of information, some of which is difficult to dis
 
 We’ve improved panels without titles, made panel descriptions and errors more succinct, and linked key actions from the header of the panel. All of these are laid out from left to right in a row, so there are no overlapping, unusable components.
 
-Grafana’s new panel design is available only for React-based panels. No Angular-based panels, like the legacy Graph and Worldmap panels, are redesigned. As a reminder, Angular is deprecated in Grafana and will be removed in a future release. See our [deprecation docs]({{< relref "../developers/angular_deprecation" >}}) for more information.
+Grafana’s new panel design is available only for React-based panels. No Angular-based panels, like the legacy Graph and Worldmap panels, are redesigned. As a reminder, Angular is deprecated in Grafana and will be removed in a future release. See our [deprecation docs](../../developers/angular_deprecation/) for more information.
 
 {{< figure src="/media/docs/grafana/panel-redesign-whats-new-9.5.png" max-width="750px" caption="Panel header with open menu" >}}
 
@@ -96,7 +96,7 @@ This improves Prometheus query editor performance, with the biggest performance 
 
 ## Removal of API key creation from the UI
 
-With this update we are going one step further in deprecating API keys in favor of [service accounts]({{< relref "../administration/service-accounts" >}}). We've removed the button for creating new API keys through Grafana's user interface, and now only allow the creation of API keys using our HTTP API. We recommend that you migrate your existing API keys to service accounts, and opt for new service accounts instead of new API keys. This change is part of our long-term strategy for sunsetting API keys.
+With this update we are going one step further in deprecating API keys in favor of [service accounts](../../administration/service-accounts/). We've removed the button for creating new API keys through Grafana's user interface, and now only allow the creation of API keys using our HTTP API. We recommend that you migrate your existing API keys to service accounts, and opt for new service accounts instead of new API keys. This change is part of our long-term strategy for sunsetting API keys.
 
 Learn more about the deprecation strategy for API keys and how to manage them in our [Sunsetting API keys](https://github.com/grafana/grafana/issues/53567) GitHub issue.
 
@@ -106,7 +106,7 @@ _Generally available in all editions of Grafana._
 
 Support bundles provide a simple way to collect information about your Grafana instance through Grafana's user interface. In a few clicks, you can create a support bundle containing data about migrations, plugins, settings, and more. Once you've created a support bundle, you can either examine it yourself, or share it with your colleagues or Grafana engineers to aid in troubleshooting of your Grafana instance.
 
-Learn more about support bundles and how to configure them in our [support bundle documentation]({{< relref "../troubleshooting/support-bundles" >}}).
+Learn more about support bundles and how to configure them in our [support bundle documentation](../../troubleshooting/support-bundles/).
 
 {{< figure src="/static/img/docs/troubleshooting/support-bundle.png" max-width="750px" caption="Create a support bundle to resolve issues faster" >}}
 
@@ -166,7 +166,7 @@ Get additional help while configuring your Alertmanager. If you enter an invalid
 The `database` field in the provisioning file has been deprecated.
 This information will be stored in the `jsonData` field using the `dbName` property.
 The `database` field will be removed in the future to make InfluxDB consistent with other data sources.
-For more information and examples please refer to the [InfluxDB Provisioning docs]({{< relref "../datasources/influxdb#provision-the-data-source" >}}).
+For more information and examples please refer to the [InfluxDB Provisioning docs](../../datasources/influxdb/#provision-the-data-source).
 
 ## Auth: Lock organization roles synced from auth providers
 
@@ -180,7 +180,7 @@ This feature should be used if you want to enforce strict role synchronization f
 
 To use this feature, enable the `onlyExternalOrgRoleSync` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support. We'll also be automatically enabling this feature for Grafana Cloud instances over the upcoming weeks.
 
-You can also _prevent_ the synchronization of organization roles from a given authentication provider. Learn more in our [skip org role sync]({{< relref "../setup-grafana/configure-grafana#authgrafana_com-skip_org_role_sync/" >}})! documentation.
+You can also _prevent_ the synchronization of organization roles from a given authentication provider. Learn more in our [skip org role sync](../../setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync/)! documentation.
 
 ## Reporting UI adapted to match the new navigation style
 

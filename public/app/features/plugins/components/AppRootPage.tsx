@@ -21,6 +21,7 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { appEvents, contextSrv } from 'app/core/core';
+import { Trans, t } from 'app/core/internationalization';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
 import { getMessageFromError } from 'app/core/utils/errors';
 
@@ -94,7 +95,11 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   if (!plugin.root) {
     return (
       <Page navModel={navModel ?? getWarningNav('Plugin load error')}>
-        <div>No root app page component found</div>
+        <div>
+          <Trans i18nKey="plugins.app-root-page.no-root-app-page-component-found">
+            No root app page component found
+          </Trans>
+        </div>
       </Page>
     );
   }
@@ -135,7 +140,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     }
 
     // Check if action exists and give access if user has the required permission.
-    if (pluginInclude?.action && config.featureToggles.accessControlOnCall) {
+    if (pluginInclude?.action) {
       return contextSrv.hasPermission(pluginInclude.action);
     }
 
@@ -153,8 +158,10 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
 
   const AccessDenied = () => {
     return (
-      <Alert severity="warning" title="Access denied">
-        You do not have permission to see this page.
+      <Alert severity="warning" title={t('plugins.app-root-page.access-denied.title-access-denied', 'Access denied')}>
+        <Trans i18nKey="plugins.app-root-page.access-denied.permission">
+          You do not have permission to see this page.
+        </Trans>
       </Alert>
     );
   };

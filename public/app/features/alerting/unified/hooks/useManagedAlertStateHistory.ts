@@ -8,15 +8,15 @@ import { AsyncRequestState } from '../utils/redux';
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
-export function useManagedAlertStateHistory(alertId: string) {
+export function useManagedAlertStateHistory(ruleUID: string) {
   const dispatch = useDispatch();
   const history = useUnifiedAlertingSelector<AsyncRequestState<StateHistoryItem[]>>(
     (state) => state.managedAlertStateHistory
   );
 
   useEffect(() => {
-    dispatch(fetchGrafanaAnnotationsAction(alertId));
-  }, [dispatch, alertId]);
+    dispatch(fetchGrafanaAnnotationsAction(ruleUID));
+  }, [dispatch, ruleUID]);
 
   return history;
 }

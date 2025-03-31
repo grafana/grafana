@@ -13,7 +13,7 @@ import (
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanaRest "github.com/grafana/grafana/pkg/apiserver/rest"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	_ grafanaRest.LegacyStorage = (*legacyStorage)(nil)
+	_ grafanarest.Storage = (*legacyStorage)(nil)
 )
 
 type ReceiverService interface {

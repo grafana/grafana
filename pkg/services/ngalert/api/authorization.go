@@ -65,25 +65,12 @@ func (api *API) authorize(method, path string) web.Handler {
 				ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 			),
 		)
+	case http.MethodDelete + "/api/ruler/grafana/api/v1/trash/rule/guid/{RuleGUID}":
+		return middleware.ReqOrgAdmin
 
 	// Grafana rule state history paths
 	case http.MethodGet + "/api/v1/rules/history":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
-
-	// Grafana receivers paths
-	case http.MethodGet + "/api/v1/notifications/receivers":
-		// additional authorization is done at the service level
-		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversList),
-			ac.EvalPermission(ac.ActionAlertingReceiversRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
-		)
-	case http.MethodGet + "/api/v1/notifications/receivers/{Name}":
-		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingReceiversRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
-		)
 
 	// Grafana, Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/rules":
@@ -125,30 +112,39 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// convert/prometheus API paths
 	case http.MethodGet + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
-		http.MethodGet + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
+		http.MethodGet + "/api/convert/api/prom/rules/{NamespaceTitle}/{Group}",
+		http.MethodGet + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
+		http.MethodGet + "/api/convert/api/prom/rules/{NamespaceTitle}":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleRead),
 			ac.EvalPermission(dashboards.ActionFoldersRead),
 		)
 
-	case http.MethodGet + "/api/convert/prometheus/config/v1/rules":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
-
-	case http.MethodPost + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
+	case http.MethodGet + "/api/convert/prometheus/config/v1/rules",
+		http.MethodGet + "/api/convert/api/prom/rules":
 		eval = ac.EvalAll(
-			ac.EvalPermission(dashboards.ActionFoldersWrite),
 			ac.EvalPermission(ac.ActionAlertingRuleRead),
-			ac.EvalPermission(ac.ActionAlertingRuleUpdate),
+			ac.EvalPermission(dashboards.ActionFoldersRead),
+		)
+
+	case http.MethodPost + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
+		http.MethodPost + "/api/convert/api/prom/rules/{NamespaceTitle}",
+		http.MethodPost + "/api/convert/prometheus/config/v1/rules",
+		http.MethodPost + "/api/convert/api/prom/config/v1/rules":
+		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleCreate),
-			ac.EvalPermission(ac.ActionAlertingRuleDelete),
+			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 		)
 
 	case http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
-		http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
+		http.MethodDelete + "/api/convert/api/prom/rules/{NamespaceTitle}/{Group}",
+		http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
+		http.MethodDelete + "/api/convert/api/prom/rules/{NamespaceTitle}":
 		eval = ac.EvalAll(
-			ac.EvalPermission(ac.ActionAlertingRuleDelete),
 			ac.EvalPermission(ac.ActionAlertingRuleRead),
 			ac.EvalPermission(dashboards.ActionFoldersRead),
+			ac.EvalPermission(ac.ActionAlertingRuleDelete),
+			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 		)
 
 	// Alert Instances and Silences
@@ -432,14 +428,6 @@ func (api *API) authorize(method, path string) web.Handler {
 				ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
 				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 			),
-		)
-	case http.MethodGet + "/api/v1/notifications/time-intervals/{name}",
-		http.MethodGet + "/api/v1/notifications/time-intervals":
-		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
-			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
-			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 		)
 	}
 

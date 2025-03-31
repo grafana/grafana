@@ -48,18 +48,6 @@ Only use [reference style links](https://grafana.com/docs/writers-toolkit/write/
 
 ### [Contributing](/contribute/documentation/README.md)
 
-### Using `relref` for internal links
-
-Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) any time you are linking to other internal docs pages.
-
-Syntax is:
-
-```
-{{< relref "example.md" >}}
-```
-
-You might need to add more context for the link (containing folders and so on, `folder/example.md`) if Hugo says the relref is ambiguous.
-
 ### Managing redirects
 
 When moving content around or removing pages it's important that users following old links are properly redirected to the new location. We do this using the [aliases](https://gohugo.io/content-management/urls/#aliases) feature in Hugo.

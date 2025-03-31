@@ -4,15 +4,7 @@ import VectorImage from 'ol/layer/VectorImage';
 import { Stroke, Style } from 'ol/style';
 import Photo from 'ol-ext/style/Photo';
 
-import {
-  MapLayerRegistryItem,
-  PanelData,
-  GrafanaTheme2,
-  EventBus,
-  PluginState,
-  FieldType,
-  Field,
-} from '@grafana/data';
+import { MapLayerRegistryItem, PanelData, GrafanaTheme2, EventBus, PluginState, FieldType, Field } from '@grafana/data';
 import { FrameGeometrySourceMode, MapLayerOptions } from '@grafana/schema';
 import { findField } from 'app/features/dimensions';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
@@ -105,7 +97,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           radius: config.radius,
           crop: config.crop,
           kind: config.kind,
-          shadow: false,
+          shadow: 0,
           stroke: new Stroke({
             width: 0,
             color: 'rgba(0,0,0,0)',
@@ -124,7 +116,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           radius: config.radius,
           crop: false,
           kind: config.kind,
-          shadow: config.shadow,
+          shadow: config.shadow ? 2 : 0,
           stroke: new Stroke({
             width: config.border ?? 0,
             color: theme.visualization.getColorByName(config.color),
@@ -140,7 +132,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           radius: config.radius,
           crop: false,
           kind: config.kind,
-          shadow: false,
+          shadow: 0,
           stroke: new Stroke({
             width: 0,
             color: 'rgba(0,0,0,0)',

@@ -14,6 +14,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -24,8 +25,8 @@ import (
 type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
-	RepositoryIndexClient
-	BatchStoreClient
+	ManagedObjectIndexClient
+	BulkStoreClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -34,21 +35,21 @@ type ResourceClient interface {
 type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
-	RepositoryIndexClient
-	BatchStoreClient
+	ManagedObjectIndexClient
+	BulkStoreClient
 	BlobStoreClient
 	DiagnosticsClient
 }
 
-func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
+func NewLegacyResourceClient(channel grpc.ClientConnInterface) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		BatchStoreClient:      NewBatchStoreClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}
 }
 
@@ -60,9 +61,9 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
-		&RepositoryIndex_ServiceDesc,
+		&ManagedObjectIndex_ServiceDesc,
 		&BlobStore_ServiceDesc,
-		&BatchStore_ServiceDesc,
+		&BulkStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
 	} {
 		channel.RegisterService(
@@ -75,46 +76,61 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		)
 	}
 
-	clientInt, _ := authnlib.NewGrpcClientInterceptor(
-		&authnlib.GrpcClientConfig{TokenRequest: &authnlib.TokenExchangeRequest{}},
-		authnlib.WithTokenClientOption(grpcutils.ProvideInProcExchanger()),
-		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+	clientInt := authnlib.NewGrpcClientInterceptor(
+		grpcutils.ProvideInProcExchanger(),
+		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		BatchStoreClient:      NewBatchStoreClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}
 }
 
-func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
-	opts := []authnlib.GrpcClientInterceptorOption{
-		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
-		authnlib.WithTracerOption(tracer),
+type RemoteResourceClientConfig struct {
+	Token            string
+	TokenExchangeURL string
+	Audiences        []string
+	Namespace        string
+	AllowInsecure    bool
+}
+
+func NewRemoteResourceClient(tracer tracing.Tracer, conn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+	exchangeOpts := []authnlib.ExchangeClientOpts{}
+
+	if cfg.AllowInsecure {
+		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
 	}
 
-	if allowInsecure {
-		opts = allowInsecureTransportOpt(&cfg, opts)
-	}
+	tc, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+		Token:            cfg.Token,
+		TokenExchangeURL: cfg.TokenExchangeURL,
+	}, exchangeOpts...)
 
-	clientInt, err := authnlib.NewGrpcClientInterceptor(&cfg, opts...)
 	if err != nil {
 		return nil, err
 	}
+	clientInt := authnlib.NewGrpcClientInterceptor(
+		tc,
+		authnlib.WithClientInterceptorTracer(tracer),
+		authnlib.WithClientInterceptorNamespace(cfg.Namespace),
+		authnlib.WithClientInterceptorAudience(cfg.Audiences),
+		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
+	)
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		BatchStoreClient:      NewBatchStoreClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}, nil
 }
 
@@ -143,10 +159,4 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	}
 
 	return "", nil
-}
-
-func allowInsecureTransportOpt(grpcClientConfig *authnlib.GrpcClientConfig, opts []authnlib.GrpcClientInterceptorOption) []authnlib.GrpcClientInterceptorOption {
-	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-	tokenClient, _ := authnlib.NewTokenExchangeClient(*grpcClientConfig.TokenClientConfig, authnlib.WithHTTPClient(client))
-	return append(opts, authnlib.WithTokenClientOption(tokenClient))
 }

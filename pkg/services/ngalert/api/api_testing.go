@@ -25,7 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	apivalidation "github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -61,13 +63,13 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 	if err != nil {
 		return toNamespaceErrorResponse(dashboards.ErrFolderAccessDenied)
 	}
-	rule, err := validateRuleNode(
+	rule, err := apivalidation.ValidateRuleNode(
 		&body.Rule,
 		body.RuleGroup,
 		srv.cfg.BaseInterval,
 		c.SignedInUser.GetOrgID(),
 		folder.UID,
-		RuleLimitsFromConfig(srv.cfg, srv.featureManager),
+		apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager),
 	)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -239,7 +241,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		return ErrResp(400, nil, "Bad For interval")
 	}
 
-	intervalSeconds, err := validateInterval(time.Duration(cmd.Interval), srv.cfg.BaseInterval)
+	intervalSeconds, err := apivalidation.ValidateInterval(time.Duration(cmd.Interval), srv.cfg.BaseInterval)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}

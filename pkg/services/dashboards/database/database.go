@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -146,7 +147,7 @@ func (d *dashboardStore) GetProvisionedDashboardData(ctx context.Context, name s
 	return result, err
 }
 
-func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string) ([]*dashboards.Dashboard, error) {
+func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetProvisionedDashboardsByName")
 	defer span.End()
 
@@ -154,7 +155,7 @@ func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, nam
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
-			Where(`dashboard_provisioning.name = ?`, name).Find(&dashes)
+			Where(`dashboard_provisioning.name = ? AND dashboard.org_id = ?`, name, orgID).Find(&dashes)
 	})
 	if err != nil {
 		return nil, err
@@ -162,7 +163,7 @@ func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, nam
 	return dashes, nil
 }
 
-func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string) ([]*dashboards.Dashboard, error) {
+func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string, orgID int64) ([]*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetOrphanedProvisionedDashboards")
 	defer span.End()
 
@@ -170,6 +171,7 @@ func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, n
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+			Where(`dashboard.org_id = ?`, orgID).
 			NotIn(`dashboard_provisioning.name`, notIn).Find(&dashes)
 	})
 	if err != nil {
@@ -178,19 +180,25 @@ func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, n
 	return dashes, nil
 }
 
-func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, dash *dashboards.Dashboard, provisioning *dashboards.DashboardProvisioning) error {
+func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.SaveProvisionedDashboard")
 	defer span.End()
 
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if provisioning.Updated == 0 {
-			provisioning.Updated = dash.Updated.Unix()
+	var result *dashboards.Dashboard
+	var err error
+	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		result, err = saveDashboard(sess, &cmd, d.emitEntityEvent())
+		if err != nil {
+			return err
 		}
 
-		return saveProvisionedData(sess, provisioning, dash)
-	})
+		if provisioning.Updated == 0 {
+			provisioning.Updated = result.Updated.Unix()
+		}
 
-	return err
+		return saveProvisionedData(sess, provisioning, result)
+	})
+	return result, err
 }
 
 func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand) (*dashboards.Dashboard, error) {
@@ -299,13 +307,13 @@ func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopePara
 	return u, nil
 }
 
-func (d *dashboardStore) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+func (d *dashboardStore) CountInOrg(ctx context.Context, orgID int64, isFolder bool) (int64, error) {
 	type result struct {
 		Count int64
 	}
 	r := result{}
 	if err := d.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE org_id=? AND is_folder=%s", d.store.GetDialect().BooleanStr(false))
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE org_id=? AND is_folder=%s", d.store.GetDialect().BooleanStr(isFolder))
 		if _, err := sess.SQL(rawSQL, orgID).Get(&r); err != nil {
 			return err
 		}
@@ -486,6 +494,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		CreatedBy:     dash.UpdatedBy,
 		Message:       cmd.Message,
 		Data:          dash.Data,
+		APIVersion:    cmd.APIVersion,
 	}
 
 	// insert version entry
@@ -626,7 +635,7 @@ func (d *dashboardStore) SoftDeleteDashboardsInFolders(ctx context.Context, orgI
 		for _, folderUID := range folderUids {
 			args = append(args, folderUID)
 		}
-		args = append(args, orgID, d.store.GetDialect().BooleanStr(false))
+		args = append(args, orgID, d.store.GetDialect().BooleanValue(false))
 
 		_, err := sess.Exec(args...)
 		return err
@@ -665,7 +674,7 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{dashboard.UID, dashboard.OrgID}},
 		{SQL: "DELETE FROM star WHERE dashboard_id = ? ", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard WHERE id = ?", args: []any{dashboard.ID}},
-		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{dashboard.ID}},
+		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{strconv.FormatInt(dashboard.ID, 10)}}, // Column has TEXT type.
 		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{dashboard.ID}},
@@ -673,14 +682,20 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 
 	if dashboard.IsFolder {
 		if !d.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-			sqlStatements = append(sqlStatements, statement{SQL: "DELETE FROM dashboard WHERE org_id = ? AND folder_uid = ? AND is_folder = ? AND deleted IS NULL", args: []any{dashboard.OrgID, dashboard.UID, d.store.GetDialect().BooleanStr(false)}})
+			sqlStatements = append(sqlStatements, statement{
+				SQL:  "DELETE FROM dashboard WHERE org_id = ? AND folder_uid = ? AND is_folder = ? AND deleted IS NULL",
+				args: []any{dashboard.OrgID, dashboard.UID, d.store.GetDialect().BooleanValue(false)},
+			})
 
 			if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
 				return err
 			}
 		} else {
 			// soft delete all dashboards in the folder
-			sqlStatements = append(sqlStatements, statement{SQL: "UPDATE dashboard SET deleted = ? WHERE org_id = ? AND folder_uid = ? AND is_folder = ? ", args: []any{time.Now(), dashboard.OrgID, dashboard.UID, d.store.GetDialect().BooleanStr(false)}})
+			sqlStatements = append(sqlStatements, statement{
+				SQL:  "UPDATE dashboard SET deleted = ? WHERE org_id = ? AND folder_uid = ? AND is_folder = ? ",
+				args: []any{time.Now(), dashboard.OrgID, dashboard.UID, d.store.GetDialect().BooleanValue(false)},
+			})
 		}
 
 		// remove all access control permission with folder scope
@@ -723,7 +738,7 @@ func (d *dashboardStore) CleanupAfterDelete(ctx context.Context, cmd *dashboards
 	sqlStatements := []statement{
 		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
 		{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
-		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{cmd.ID}},
+		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{strconv.FormatInt(cmd.ID, 10)}}, // Column has TEXT type.
 		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{cmd.ID}},
 		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{cmd.ID}},
 		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{cmd.ID}},
@@ -891,7 +906,7 @@ func (d *dashboardStore) GetDashboardUIDByID(ctx context.Context, query *dashboa
 
 	us := &dashboards.DashboardRef{}
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = `SELECT uid, slug from dashboard WHERE Id=?`
+		var rawSQL = `SELECT uid, slug, folder_uid from dashboard WHERE Id=?`
 		exists, err := sess.SQL(rawSQL, query.ID).Get(us)
 		if err != nil {
 			return err
@@ -1001,7 +1016,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if !query.SkipAccessControlFilter {
-		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported))
+		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported, d.store.GetDialect()))
 	}
 
 	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
@@ -1082,7 +1097,7 @@ func (d *dashboardStore) CountDashboardsInFolders(
 			}
 		}
 		s.WriteString(" AND org_id = ? AND is_folder = ? AND deleted IS NULL")
-		args = append(args, req.OrgID, d.store.GetDialect().BooleanStr(false))
+		args = append(args, req.OrgID, d.store.GetDialect().BooleanValue(false))
 		sql := s.String()
 		_, err := sess.SQL(sql, args...).Get(&count)
 		return err
