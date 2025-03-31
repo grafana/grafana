@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -93,6 +94,18 @@ func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, typ claims
 	return a.newAnonymousIdentity(o), nil
 }
 
+func (a *Anonymous) UsageStatFn(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
+
+	// Add stats about anonymous auth
+	m["stats.anonymous.customized_role.count"] = 0
+	if !strings.EqualFold(a.cfg.Anonymous.OrgRole, "Viewer") {
+		m["stats.anonymous.customized_role.count"] = 1
+	}
+
+	return m, nil
+}
+
 func (a *Anonymous) Priority() uint {
 	return 100
 }
@@ -103,7 +116,7 @@ func (a *Anonymous) newAnonymousIdentity(o *org.Org) *authn.Identity {
 		Type:         claims.TypeAnonymous,
 		OrgID:        o.ID,
 		OrgName:      o.Name,
-		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleViewer},
+		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.Anonymous.OrgRole)},
 		ClientParams: authn.ClientParams{SyncPermissions: true},
 	}
 }

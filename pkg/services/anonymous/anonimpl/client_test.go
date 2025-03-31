@@ -31,6 +31,7 @@ func TestAnonymous_Authenticate(t *testing.T) {
 			org:  &org.Org{ID: 1, Name: "some org"},
 			cfg: &setting.Cfg{
 				Anonymous: setting.AnonymousSettings{
+					OrgRole: "Viewer",
 					OrgName: "some org",
 				},
 			},
@@ -40,6 +41,7 @@ func TestAnonymous_Authenticate(t *testing.T) {
 			err:  fmt.Errorf("some error"),
 			cfg: &setting.Cfg{
 				Anonymous: setting.AnonymousSettings{
+					OrgRole: "Viewer",
 					OrgName: "some org",
 				},
 			},
@@ -65,6 +67,7 @@ func TestAnonymous_Authenticate(t *testing.T) {
 				assert.Equal(t, "anonymous:0", user.GetID())
 				assert.Equal(t, tt.org.ID, user.OrgID)
 				assert.Equal(t, tt.org.Name, user.OrgName)
+				assert.Equal(t, tt.cfg.Anonymous.OrgRole, string(user.GetOrgRole()))
 			}
 		})
 	}
