@@ -128,12 +128,12 @@ Use these options to refine the visualization.
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-| Option                                  | Description                                                                                                                    |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| [Tooltip mode](#tooltip-mode)           | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                   |
-| [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                        |
-| Max width                               | Set the maximum width of the tooltip box.                                                                                      |
-| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                          |
+| Option                                  | Description                                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [Tooltip mode](#tooltip-mode)           | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave. |
+| [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                      |
+| Max width                               | Set the maximum width of the tooltip box.                                                                    |
+| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                        |
 
 #### Tooltip mode
 
