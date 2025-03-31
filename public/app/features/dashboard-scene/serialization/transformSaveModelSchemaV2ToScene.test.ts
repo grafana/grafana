@@ -527,7 +527,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
         const layoutManager = scene.state.body as AutoGridLayoutManager;
-        expect(layoutManager.descriptor.id).toBe('auto-grid');
+        expect(layoutManager.descriptor.id).toBe('AutoGridLayout');
         expect(layoutManager.state.maxColumnCount).toBe(4);
         expect(layoutManager.state.columnWidth).toBe(100);
         expect(layoutManager.state.rowHeight).toBe('standard');
@@ -648,7 +648,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
         const layoutManager = scene.state.body as RowsLayoutManager;
-        expect(layoutManager.descriptor.id).toBe('rows-layout');
+        expect(layoutManager.descriptor.id).toBe('RowsLayout');
         expect(layoutManager.state.rows.length).toBe(2);
         const row1Manager = layoutManager.state.rows[0].state.layout as AutoGridLayoutManager;
         expect(row1Manager.descriptor.id).toBe('auto-grid');
