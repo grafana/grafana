@@ -41,7 +41,8 @@ interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<Organi
 
 type AutoSortOptions = Array<{ order: Order; index: number; labelName?: string }>;
 
-const FIELD_NAME = '!{{fieldName}}';
+// draggable component needs an identifier, this is something that shouldn't be a label key
+const FIELD_NAME_DRAGGABLE_ID = '!{{fieldName}}';
 
 const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
   const { indexByName, excludeByName, renameByName, includeByName } = options;
@@ -139,7 +140,8 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
       const allOptions = [...allAutoSortOptions];
       const changedIdx = allOptions.findIndex(
         (label) =>
-          (sortOptionString === FIELD_NAME && label.labelName === undefined) || label.labelName === sortOptionString
+          (sortOptionString === FIELD_NAME_DRAGGABLE_ID && label.labelName === undefined) ||
+          label.labelName === sortOptionString
       );
       allOptions[changedIdx].order = sortOrder;
       onChange({ ...options, autoSortOptions: allOptions });
@@ -217,7 +219,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
                   <div ref={provided.innerRef} className={styles.labelsDraggable} {...provided.droppableProps}>
                     {allAutoSortOptions.map((label, idx) => (
                       <DraggableLabel
-                        key={label.labelName ?? FIELD_NAME}
+                        key={label.labelName ?? FIELD_NAME_DRAGGABLE_ID}
                         labelKeyName={label.labelName ?? 'Field Name'}
                         index={idx}
                         isFieldName={label.labelName === undefined}
@@ -350,7 +352,7 @@ const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort 
   const styles = useStyles2(getFieldNameStyles);
 
   return (
-    <Draggable draggableId={isFieldName ? FIELD_NAME : `${labelKeyName}`} index={index}>
+    <Draggable draggableId={isFieldName ? FIELD_NAME_DRAGGABLE_ID : `${labelKeyName}`} index={index}>
       {(provided) => (
         <Box marginBottom={0.5} display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
           <InlineLabel width={60} as="div">
@@ -372,7 +374,7 @@ const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort 
             ]}
             value={order ?? Order.Off}
             onChange={(order) => {
-              onChangeSort(isFieldName ? FIELD_NAME : labelKeyName, order);
+              onChangeSort(isFieldName ? FIELD_NAME_DRAGGABLE_ID : labelKeyName, order);
             }}
           />
         </Box>

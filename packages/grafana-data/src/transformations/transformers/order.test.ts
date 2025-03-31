@@ -319,4 +319,59 @@ describe('Order Transformer', () => {
       }
     );
   });
+
+  it.each`
+    labelPodIndex | labelUserIndex | fieldNameIndex | expectedFieldNameOrder
+    ${0}          | ${1}           | ${2}           | ${['Series-3', 'Series-1', 'Series-2']}
+    ${0}          | ${2}           | ${1}           | ${['Series-3', 'Series-2', 'Series-1']}
+    ${1}          | ${0}           | ${2}           | ${['Series-3', 'Series-1', 'Series-2']}
+    ${2}          | ${0}           | ${1}           | ${['Series-3', 'Series-1', 'Series-2']}
+    ${1}          | ${2}           | ${0}           | ${['Series-3', 'Series-2', 'Series-1']}
+    ${2}          | ${1}           | ${0}           | ${['Series-3', 'Series-2', 'Series-1']}
+  `(
+    'When the indexes are label pod: $labelPodIndex / label user: $labelUserIndex / field name: $fieldNameIndex when all of them are sort DESC, then the field order is $expectedFieldNameOrder',
+    async ({ labelPodIndex, labelUserIndex, fieldNameIndex, expectedFieldNameOrder }) => {
+      const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
+        id: DataTransformerID.order,
+        options: {
+          fieldOrder: FieldOrdering.Auto,
+          autoSortOptions: [
+            { index: labelPodIndex, labelName: 'pod', order: Order.Desc },
+            { index: labelUserIndex, labelName: 'user', order: Order.Desc },
+            { index: fieldNameIndex, order: Order.Desc },
+          ],
+        },
+      };
+
+      const data = toDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'Series-1',
+            type: FieldType.number,
+            labels: { pod: 123, user: 555 },
+            values: [10.3],
+          },
+          {
+            name: 'Series-2',
+            type: FieldType.number,
+            labels: { pod: 123, user: 312 },
+            values: [100.3],
+          },
+          {
+            name: 'Series-3',
+            labels: { pod: 456, user: 555 },
+            type: FieldType.number,
+            values: [10000.3],
+          },
+        ],
+      });
+
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const ordered = data[0];
+        expect(ordered.fields.map((f) => f.name)).toEqual(expectedFieldNameOrder);
+      });
+    }
+  );
 });
