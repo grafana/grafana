@@ -150,7 +150,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	switch gr.format {
 	case "alerting":
-		numberSet, err := extractNumberSet(frame)
+		numberSet, err := extractNumberSetFromSQLForAlerting(frame)
 		if err != nil {
 			rsp.Error = err
 			return rsp, nil
@@ -184,4 +184,58 @@ func totalCells(frames []*data.Frame) (total int64) {
 		}
 	}
 	return
+}
+
+func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, error) {
+	var (
+		numericField   *data.Field
+		numericFieldIx int
+	)
+
+	// Find the only numeric field
+	for i, f := range frame.Fields {
+		if f.Type().Numeric() {
+			if numericField != nil {
+				return nil, fmt.Errorf("expected exactly one numeric field, but found multiple")
+			}
+			numericField = f
+			numericFieldIx = i
+		}
+	}
+	if numericField == nil {
+		return nil, fmt.Errorf("no numeric field found in frame")
+	}
+
+	numbers := make([]mathexp.Number, frame.Rows())
+
+	for i := 0; i < frame.Rows(); i++ {
+		val, err := numericField.FloatAt(i)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read numeric value at row %d: %w", i, err)
+		}
+
+		labels := data.Labels{}
+		for j, f := range frame.Fields {
+			if j == numericFieldIx || (f.Type() != data.FieldTypeString && f.Type() != data.FieldTypeNullableString) {
+				continue
+			}
+		
+			val := f.At(i)
+			switch v := val.(type) {
+			case *string:
+				if v != nil {
+					labels[f.Name] = *v
+				}
+			case string:
+				labels[f.Name] = v
+			}
+		}
+
+		n := mathexp.NewNumber(numericField.Name, labels)
+		n.Frame.Fields[0].Config = numericField.Config
+		n.SetValue(&val)
+		numbers[i] = n
+	}
+
+	return numbers, nil
 }
