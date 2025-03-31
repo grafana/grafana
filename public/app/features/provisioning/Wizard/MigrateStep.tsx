@@ -22,7 +22,6 @@ export function MigrateStep({ onStepUpdate }: MigrateStepProps) {
       name: repositoryName,
       job: {
         spec: {
-          action: 'migrate',
           migrate: {
             identifier,
             history,

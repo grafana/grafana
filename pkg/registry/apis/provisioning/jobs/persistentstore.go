@@ -373,6 +373,9 @@ func (s *persistentStore) Insert(ctx context.Context, job *provisioning.Job) (*p
 	job.Labels[LabelRepository] = job.Spec.Repository
 
 	s.generateJobName(job) // Side-effect: updates the job's name.
+	if err := mutateJobAction(job); err != nil {
+		return nil, err
+	}
 
 	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
@@ -416,4 +419,29 @@ func (s *persistentStore) generateJobName(job *provisioning.Job) {
 	default:
 		job.Name = fmt.Sprintf("%s-%s", job.Spec.Repository, job.Spec.Action)
 	}
+}
+
+func mutateJobAction(job *provisioning.Job) error {
+	kinds := map[provisioning.JobAction]any{}
+	spec := job.Spec
+	if spec.Migrate != nil {
+		job.Spec.Action = provisioning.JobActionMigrate
+		kinds[provisioning.JobActionMigrate] = spec.Migrate
+	}
+	if spec.Pull != nil {
+		job.Spec.Action = provisioning.JobActionPull
+		kinds[provisioning.JobActionPull] = spec.Pull
+	}
+	if spec.Push != nil {
+		job.Spec.Action = provisioning.JobActionPush
+		kinds[provisioning.JobActionPush] = spec.Push
+	}
+	if spec.PullRequest != nil {
+		job.Spec.Action = provisioning.JobActionPullRequest
+		kinds[provisioning.JobActionPullRequest] = spec.PullRequest
+	}
+	if len(kinds) > 1 {
+		return apierrors.NewBadRequest("multiple job types found")
+	}
+	return nil
 }

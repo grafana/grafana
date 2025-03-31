@@ -41,7 +41,6 @@ export function SyncRepository({ repository }: Props) {
       name,
       job: {
         spec: {
-          action: 'pull',
           pull: {
             incremental: false, // will queue a full resync job
           },

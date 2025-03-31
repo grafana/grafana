@@ -16,7 +16,6 @@ export function PullStep({ onStepUpdate }: PullStepProps) {
       name: repositoryName,
       job: {
         spec: {
-          action: 'pull',
           pull: {
             incremental: false, // will queue a full resync job
           },

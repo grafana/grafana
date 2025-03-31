@@ -839,7 +839,7 @@ export type JobSpec = {
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch. */
-  action: 'migrate' | 'pr' | 'pull' | 'push';
+  action?: 'migrate' | 'pr' | 'pull' | 'push';
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
   /** Pull request options */
