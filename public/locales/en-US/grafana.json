@@ -567,6 +567,10 @@
     },
     "import-to-gma": {
       "action-button": "Import",
+      "confirm-modal": {
+        "confirm": "Yes, import",
+        "title": "Confirm import"
+      },
       "datasource": {
         "label": "Datasource",
         "required-message": "Please select a datasource"
@@ -954,6 +958,12 @@
     },
     "threshold": {
       "to": "TO"
+    },
+    "to-gma": {
+      "confirm-modal": {
+        "body": "If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
+        "summary": "These are the list of rules that will be imported:"
+      }
     }
   },
   "annotations": {

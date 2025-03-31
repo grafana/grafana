@@ -1,24 +1,17 @@
-import { isEmpty } from 'lodash';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { Box, Button, Collapse, Field, InlineField, InlineSwitch, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { Folder } from '../../types/rule-form';
-import { stringifyErrorLike } from '../../utils/misc';
-import { createListFilterLink } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
-import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSuggestions';
 
+import { ConfirmConversionModal } from './ConfirmConvertModal';
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
 
 export interface ImportFormValues {
@@ -50,41 +43,12 @@ const ImportFromDSRules = () => {
     formState: { errors, isSubmitting },
   } = formAPI;
 
-  const [targetFolder, selectedDatasourceName] = watch(['targetFolder', 'selectedDatasourceName']);
-  const [convert] = convertToGMAApi.useConvertToGMAMutation();
-  const notifyApp = useAppNotification();
   const [optionsShowing, toggleOptions] = useToggle(false);
-  const { rulerRules } = useGetNameSpacesByDatasourceName(selectedDatasourceName ?? '');
-  console.log('rulerRules', rulerRules);
+  const [targetFolder, selectedDatasourceName] = watch(['targetFolder', 'selectedDatasourceName']);
+  const [showConfirmModal, setShowConfirmModal] = useToggle(false);
 
-  const onSubmit = async (data: ImportFormValues) => {
-    const rulerRulesToPayload = filterRulerRulesConfig(rulerRules, data.namespace, data.ruleGroup);
-
-    try {
-      await convert({
-        dataSourceUID: data.selectedDatasourceUID,
-        targetFolderUID: data.targetFolder?.uid,
-        pauseRecordingRules: data.pauseRecordingRules,
-        pauseAlerts: data.pauseAlertingRules,
-        payload: rulerRulesToPayload,
-      }).unwrap();
-
-      const isRootFolder = isEmpty(data.targetFolder?.uid);
-
-      const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', data.targetFolder?.title ?? '']], {
-        skipSubPath: true,
-      });
-      notifyApp.success(
-        t('alerting.import-to-gma.success', 'Successfully imported alert rules to Grafana-managed rules.')
-      );
-      locationService.push(ruleListUrl);
-    } catch (error) {
-      notifyApp.error(
-        t('alerting.import-to-gma.error', 'Failed to import alert rules: {{error}}', {
-          error: stringifyErrorLike(error),
-        })
-      );
-    }
+  const onSubmit = async () => {
+    setShowConfirmModal(true);
   };
 
   return (
@@ -211,38 +175,12 @@ const ImportFromDSRules = () => {
                 <Trans i18nKey="common.cancel">Cancel</Trans>
               </LinkButton>
             </Stack>
+            <ConfirmConversionModal isOpen={showConfirmModal} onDismiss={() => setShowConfirmModal(false)} />
           </form>
         </FormProvider>
       </Stack>
     </AlertingPageWrapper>
   );
 };
-
-export function filterRulerRulesConfig(
-  rulerRulesConfig: RulerRulesConfigDTO,
-  namespace?: string,
-  groupName?: string
-): RulerRulesConfigDTO {
-  const filteredConfig: RulerRulesConfigDTO = {};
-
-  Object.entries(rulerRulesConfig).forEach(([ns, groups]) => {
-    if (namespace && ns !== namespace) {
-      return;
-    }
-
-    const filteredGroups = groups.filter((group) => {
-      if (groupName && group.name !== groupName) {
-        return false;
-      }
-      return true;
-    });
-
-    if (filteredGroups.length > 0) {
-      filteredConfig[ns] = filteredGroups;
-    }
-  });
-
-  return filteredConfig;
-}
 
 export default withPageErrorBoundary(ImportFromDSRules);
