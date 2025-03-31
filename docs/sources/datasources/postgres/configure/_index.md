@@ -89,8 +89,17 @@ Following is a list of PostgreSQL configuration options:
 
 **Connection section:**
 
-- **Host URL** - The IP address/hostname and optional port of your PostgreSQL instance.
-- **Database name** - The name of your PostgreSQL database.
+- **Host URL** - The IP address/hostname and optional port of your PostgreSQL instance. You can specify the host in several formats:
+  - Simple hostname: `localhost`
+  - Host with port: `localhost:5432`
+  - IPv4 address: `192.168.1.1:5432`
+  - IPv6 address: `[2001:db8::1]:5432`
+  - Full PostgreSQL URL: `postgresql://user:password@host:5432/dbname`
+  - Unix socket path: `/var/run/postgresql`
+
+{{< admonition type="note" >}}
+When using a full PostgreSQL URL, the username, password, and database name specified in the URL will be only used if the respective fields below are empty.
+{{< /admonition >}}
 
 **Authentication section:**
 
@@ -135,7 +144,7 @@ If you select the TLS/SSL Mode options **verify-ca** or **verify-full** with the
 
 **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 
-Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
+Click **Manage private data source connect** to be taken to your PDC connection page, where you'll find your PDC configuration details.
 
 After you have added your PostgreSQL connection settings, click **Save & test** to test and save the data source connection.
 
@@ -169,6 +178,7 @@ For more information about provisioning, and available configuration options, re
 apiVersion: 1
 
 datasources:
+  # Example with simple host and port
   - name: Postgres
     type: postgres
     url: localhost:5432
@@ -183,6 +193,52 @@ datasources:
       maxIdleConnsAuto: true
       connMaxLifetime: 14400
       postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
+      timescaledb: false
+
+  # Example with full PostgreSQL URL
+  - name: Postgres-URL
+    type: postgres
+    url: postgresql://user:password@host:5432/dbname?sslmode=require
+    jsonData:
+      maxOpenConns: 100
+      maxIdleConns: 100
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
+      postgresVersion: 903
+      timescaledb: false
+
+  # Example with IPv6 address
+  - name: Postgres-IPv6
+    type: postgres
+    url: '[2001:db8::1]:5432'
+    user: grafana
+    secureJsonData:
+      password: 'Password!'
+    jsonData:
+      database: grafana
+      sslmode: 'disable'
+      maxOpenConns: 100
+      maxIdleConns: 100
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
+      postgresVersion: 903
+      timescaledb: false
+
+  # Example with Unix socket
+  - name: Postgres-Socket
+    type: postgres
+    url: '/var/run/postgresql'
+    user: grafana
+    secureJsonData:
+      password: 'Password!'
+    jsonData:
+      database: grafana
+      sslmode: 'disable'
+      maxOpenConns: 100
+      maxIdleConns: 100
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
+      postgresVersion: 903
       timescaledb: false
 ```
 
