@@ -152,9 +152,23 @@ func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	testUpdatingProvisionionedDashboards(t, []string{})
+}
+
+func TestIntegrationUpdatingProvisionionedDashboardsK8s(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	// will be the default in g12
+	testUpdatingProvisionionedDashboards(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
+}
+
+func testUpdatingProvisionionedDashboards(t *testing.T, featureToggles []string) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
+		DisableAnonymous:     true,
+		EnableFeatureToggles: featureToggles,
 	})
 
 	provDashboardsDir := filepath.Join(dir, "conf", "provisioning", "dashboards")
