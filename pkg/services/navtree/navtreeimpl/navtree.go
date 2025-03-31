@@ -99,7 +99,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Starred",
 			Id:             "starred",
-			Icon:           "apps",
+			Icon:           "star",
 			SortWeight:     navtree.WeightSavedItems,
 			Children:       starredItemsLinks,
 			EmptyMessageId: "starred-empty",
