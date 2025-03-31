@@ -1,3 +1,4 @@
+import { produce } from 'immer';
 import { render, screen } from 'test/test-utils';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -10,7 +11,6 @@ import { grafanaRulerRule } from '../../../mocks/grafanaRulerApi';
 import { setFolderResponse } from '../../../mocks/server/configure';
 import { grantPermissionsHelper, testWithFeatureToggles } from '../../../test/test-utils';
 
-import { produce } from 'immer';
 import { DeletedRules } from './DeletedRules';
 
 setupMswServer();
