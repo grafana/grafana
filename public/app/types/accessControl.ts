@@ -157,6 +157,9 @@ export enum AccessControlAction {
   PluginsInstall = 'plugins:install',
   PluginsWrite = 'plugins:write',
 
+  // AI/ML
+  ActionAIMLRead = 'aiml:read',
+
   // Settings
   SettingsRead = 'settings:read',
   SettingsWrite = 'settings:write',
