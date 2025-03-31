@@ -768,7 +768,7 @@ const (
 	FlagTimeRangeProvider = "timeRangeProvider"
 
 	// FlagPrometheusUsesCombobox
-	// Use new combobox component for Prometheus query editor
+	// Use new **Combobox** component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 
 	// FlagAzureMonitorDisableLogLimit
@@ -872,7 +872,7 @@ const (
 	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
 
 	// FlagTemplateVariablesUsesCombobox
-	// Use new combobox component for template variables
+	// Use new **Combobox** component for template variables
 	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
 
 	// FlagABTestFeatureToggleB

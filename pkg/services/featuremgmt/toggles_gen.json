@@ -3493,16 +3493,17 @@
     {
       "metadata": {
         "name": "prometheusUsesCombobox",
-        "resourceVersion": "1735845919509",
+        "resourceVersion": "1740072685161",
         "creationTimestamp": "2024-10-23T11:18:33Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-20 17:31:25.161842198 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Use new combobox component for Prometheus query editor",
-        "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent"
+        "description": "Use new **Combobox** component for Prometheus query editor",
+        "stage": "GA",
+        "codeowner": "@grafana/oss-big-tent",
+        "expression": "true"
       }
     },
     {
@@ -4076,11 +4077,14 @@
     {
       "metadata": {
         "name": "templateVariablesUsesCombobox",
-        "resourceVersion": "1738141787383",
-        "creationTimestamp": "2025-01-29T09:09:47Z"
+        "resourceVersion": "1740072685161",
+        "creationTimestamp": "2025-01-29T09:09:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-20 17:31:25.161842198 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Use new combobox component for template variables",
+        "description": "Use new **Combobox** component for template variables",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true
