@@ -4,14 +4,18 @@ import { Repository } from 'app/api/clients/provisioning';
 import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 
 interface FeatureItemProps {
-  children: React.ReactNode;
+  children: NonNullable<React.ReactNode>;
 }
 
-const FeatureItem = ({ children }: FeatureItemProps) => (
-  <Text variant="body">
-    <Icon name="check" className="text-success" /> {children}
-  </Text>
-);
+const FeatureItem = ({ children }: FeatureItemProps) => {
+  // We use a stack here to ensure the icon and text are aligned correctly.
+  return (
+    <Stack direction="row" gap={1}>
+      <Icon name="check" className="text-success" />
+      <Text variant="body">{children}</Text>
+    </Stack>
+  );
+};
 
 interface FeaturesListProps {
   repos?: Repository[];
@@ -48,17 +52,12 @@ export const FeaturesList = ({
 
   return (
     <Stack direction="column" gap={2}>
-      <Text variant="h2">Provisioning as-code directly from Grafana</Text>
+      <Text variant="h2">Manage your dashboards with remote provisioning</Text>
+      <FeatureItem>Manage dashboards as code and provision updates automatically</FeatureItem>
       <FeatureItem>
-        Manage your dashboards as code and deploy them automatically from your GitHub repository or local storage
+        Store dashboards in version-controlled storage for better organization and history tracking
       </FeatureItem>
-      <FeatureItem>
-        Review, discuss, and approve dashboard changes with your team before they go live using GitHub pull requests
-      </FeatureItem>
-      <FeatureItem>
-        Export your existing dashboards as code and store them in GitHub repositories for version control and
-        collaboration
-      </FeatureItem>
+      <FeatureItem>Migrate existing dashboards to storage for provisioning</FeatureItem>
       {hasPublicAccess && (
         <FeatureItem>
           Automatically provision and update your dashboards as soon as changes are pushed to your GitHub repository
@@ -68,9 +67,12 @@ export const FeaturesList = ({
         <FeatureItem>Visual previews in pull requests to review your changes before going live</FeatureItem>
       )}
 
-      <LinkButton fill="text" href="#" icon="external-link-alt">
-        Learn more
-      </LinkButton>
+      {false && (
+        // We haven't gotten the design for this quite yet.
+        <LinkButton fill="text" href="#" icon="external-link-alt">
+          Learn more
+        </LinkButton>
+      )}
 
       {actions()}
     </Stack>
