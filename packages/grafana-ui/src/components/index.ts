@@ -21,6 +21,7 @@ export { TabbedContainer, type TabConfig } from './TabbedContainer/TabbedContain
 
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, type CascaderOption } from './Cascader/Cascader';
+export { Carousel } from './Carousel/Carousel';
 export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { InlineToast } from './InlineToast/InlineToast';
 
