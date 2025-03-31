@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
-import { clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
+import { clearButtonStyles, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { useIsClone } from '../../utils/clone';
@@ -14,54 +14,62 @@ import {
   useInterpolatedTitle,
   useIsConditionallyHidden,
 } from '../../utils/utils';
+import { DashboardScene } from '../DashboardScene';
 
 import { RowItem } from './RowItem';
-import { RowItemMenu } from './RowItemMenu';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, isCollapsed, height = 'min', isHeaderHidden } = model.useState();
+  const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden, isDropTarget } = model.useState();
   const isClone = useIsClone(model);
-  const { isEditing, showHiddenElements } = useDashboardState(model);
+  const { isEditing } = useDashboardState(model);
   const isConditionallyHidden = useIsConditionallyHidden(model);
   const { isSelected, onSelect, isSelectable } = useElementSelectionScene(model);
   const title = useInterpolatedTitle(model);
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
+  const isTopLevel = model.parent?.parent instanceof DashboardScene;
 
-  const shouldGrow = !isCollapsed && height === 'expand';
-  const isHiddenButVisibleElement = showHiddenElements && isConditionallyHidden;
-  const isHiddenButVisibleHeader = showHiddenElements && isHeaderHidden;
+  const shouldGrow = !isCollapsed && fillScreen;
+  const isHidden = isConditionallyHidden && !isEditing;
 
   // Highlight the full row when hovering over header
   const [selectableHighlight, setSelectableHighlight] = useState(false);
   const onHeaderEnter = useCallback(() => setSelectableHighlight(true), []);
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
 
-  if (isConditionallyHidden && !showHiddenElements) {
+  if (isHidden) {
     return null;
   }
 
   return (
     <div
+      ref={model.containerRef}
+      data-dashboard-drop-target-key={model.state.key}
       className={cx(
         styles.wrapper,
         isEditing && !isCollapsed && styles.wrapperEditing,
         isEditing && isCollapsed && styles.wrapperEditingCollapsed,
         isCollapsed && styles.wrapperCollapsed,
         shouldGrow && styles.wrapperGrow,
-        isHiddenButVisibleElement && 'dashboard-visible-hidden-element',
+        isConditionallyHidden && 'dashboard-visible-hidden-element',
         !isClone && isSelected && 'dashboard-selected-element',
-        !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element'
+        !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element',
+        isDropTarget && 'dashboard-drop-target'
       )}
-      onPointerDown={onSelect}
+      onPointerDown={(e) => {
+        // If we selected and are clicking a button inside row header then don't de-select row
+        if (isSelected && e.target instanceof Element && e.target.closest('button')) {
+          // Stop propagation otherwise dashboaed level onPointerDown will de-select row
+          e.stopPropagation();
+          return;
+        }
+
+        onSelect?.(e);
+      }}
     >
-      {(!isHeaderHidden || (isEditing && showHiddenElements)) && (
+      {(!isHeaderHidden || isEditing) && (
         <div
-          className={cx(
-            isHiddenButVisibleHeader && 'dashboard-visible-hidden-element',
-            styles.rowHeader,
-            'dashboard-row-header'
-          )}
+          className={cx(isHeaderHidden && 'dashboard-visible-hidden-element', styles.rowHeader, 'dashboard-row-header')}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}
         >
@@ -76,11 +84,24 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             data-testid={selectors.components.DashboardRow.title(title!)}
           >
             <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
-            <span className={styles.rowTitle} role="heading">
+            <span
+              className={cx(
+                styles.rowTitle,
+                isHeaderHidden && styles.rowTitleHidden,
+                !isTopLevel && styles.rowTitleNested
+              )}
+              role="heading"
+            >
               {title}
+              {isHeaderHidden && (
+                <Tooltip
+                  content={t('dashboard.rows-layout.header-hidden-tooltip', 'Row header only visible in edit mode')}
+                >
+                  <Icon name="eye-slash" />
+                </Tooltip>
+              )}
             </span>
           </button>
-          {!isClone && isEditing && <RowItemMenu model={model} />}
         </div>
       )}
       {!isCollapsed && <layout.Component model={layout} />}
@@ -94,7 +115,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       display: 'flex',
       gap: theme.spacing(1),
-      padding: theme.spacing(0.5),
+      padding: theme.spacing(0.5, 0.5, 0.5, 0),
       alignItems: 'center',
       marginBottom: theme.spacing(1),
     }),
@@ -108,6 +129,9 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
     }),
     rowTitle: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(2),
       fontSize: theme.typography.h5.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
@@ -117,11 +141,31 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       minWidth: 0,
     }),
+    rowTitleHidden: css({
+      textDecoration: 'line-through',
+    }),
+    rowTitleNested: css({
+      fontSize: theme.typography.body.fontSize,
+      fontWeight: theme.typography.fontWeightRegular,
+    }),
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
       width: '100%',
       minHeight: '100px',
+      '> div:nth-child(2)': {
+        marginLeft: theme.spacing(3),
+        position: 'relative',
+        '&:before': {
+          content: '""',
+          position: 'absolute',
+          top: `-8px`,
+          bottom: 0,
+          left: '-16px',
+          width: '1px',
+          backgroundColor: theme.colors.border.weak,
+        },
+      },
     }),
     wrapperEditing: css({
       padding: theme.spacing(0.5),

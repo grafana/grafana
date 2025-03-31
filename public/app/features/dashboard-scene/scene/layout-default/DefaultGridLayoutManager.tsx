@@ -10,7 +10,9 @@ import {
   SceneComponentProps,
   SceneGridItemLike,
   useSceneObjectState,
+  SceneGridLayoutDragStartEvent,
 } from '@grafana/scenes';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
@@ -20,6 +22,7 @@ import {
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
+import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
@@ -30,6 +33,7 @@ import {
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
   useDashboard,
+  getLayoutOrchestratorFor,
 } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -59,9 +63,12 @@ export class DefaultGridLayoutManager
     },
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
-    kind: 'GridLayout',
     isGridLayout: true,
   };
+
+  public serialize(): DashboardV2Spec['layout'] {
+    return serializeDefaultGridLayout(this);
+  }
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
 
@@ -72,6 +79,14 @@ export class DefaultGridLayoutManager
   }
 
   private _activationHandler() {
+    if (config.featureToggles.dashboardNewLayouts) {
+      this._subs.add(
+        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) =>
+          getLayoutOrchestratorFor(this)?.startDraggingSync(evt, panel)
+        )
+      );
+    }
+
     this._subs.add(
       this.state.grid.subscribeToState(({ children: newChildren }, { children: prevChildren }) => {
         if (newChildren.length === prevChildren.length) {
@@ -186,6 +201,29 @@ export class DefaultGridLayoutManager
     this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
   }
 
+  public duplicate(): DashboardLayoutManager {
+    const clone = this.clone({
+      key: undefined,
+      grid: this.state.grid.clone({
+        key: undefined,
+        children: this.state.grid.state.children.map((child) => {
+          if (child instanceof DashboardGridItem) {
+            return child.clone({
+              key: undefined,
+              body: child.state.body.clone({
+                key: getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(child.state.body)),
+              }),
+            });
+          }
+
+          return child.clone({ key: undefined });
+        }),
+      }),
+    });
+
+    return clone;
+  }
+
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
@@ -233,6 +271,7 @@ export class DefaultGridLayoutManager
 
     sceneGridLayout.setState({ children: [row, ...sceneGridLayout.state.children] });
 
+    this.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
     return row;
   }
 
@@ -426,7 +465,7 @@ export class DefaultGridLayoutManager
 
       currentX += panelWidth;
 
-      if (currentX + panelWidth >= GRID_COLUMN_COUNT) {
+      if (currentX + panelWidth > GRID_COLUMN_COUNT) {
         currentX = 0;
         currentY += panelHeight;
       }
@@ -467,7 +506,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
   const dashboard = useDashboard(model);
 
-  // If we are top level layout and have no children, show empty state
+  // If we are top level layout and we have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {
     return (
       <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />

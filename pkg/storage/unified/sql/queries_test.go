@@ -147,9 +147,9 @@ func TestUnifiedStorageQueries(t *testing.T) {
 			sqlResourceHistoryRead: {
 				{
 					Name: "single path",
-					Data: &sqlResourceReadRequest{
+					Data: &sqlResourceHistoryReadRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Request: &resource.ReadRequest{
+						Request: &historyReadRequest{
 							ResourceVersion: 123,
 							Key: &resource.ResourceKey{
 								Namespace: "ns",
@@ -163,6 +163,40 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
+			sqlResourceHistoryReadLatestRV: {
+				{
+					Name: "single path",
+					Data: &sqlResourceHistoryReadLatestRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyReadLatestRVRequest{
+							Key: &resource.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
+						},
+						Response: new(resourceHistoryReadLatestRVResponse),
+					},
+				},
+				{
+					Name: "with WatchEvent_DELETED",
+					Data: &sqlResourceHistoryReadLatestRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyReadLatestRVRequest{
+							Key: &resource.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
+							EventType: resource.WatchEvent_DELETED,
+						},
+						Response: new(resourceHistoryReadLatestRVResponse),
+					},
+				},
+			},
+
 			sqlResourceHistoryUpdateRV: {
 				{
 					Name: "single path",
@@ -172,26 +206,6 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							"guid1": 123,
 							"guid2": 456,
 						},
-					},
-				},
-			},
-
-			sqlResoureceHistoryUpdateUid: {
-				{
-					Name: "modify uids in history",
-					Data: &sqlResourceHistoryUpdateRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						WriteEvent: resource.WriteEvent{
-							Key: &resource.ResourceKey{
-								Namespace: "nn",
-								Group:     "gg",
-								Resource:  "rr",
-								Name:      "name",
-							},
-							PreviousRV: 1234,
-						},
-						OldUID: "old-uid",
-						NewUID: "new-uid",
 					},
 				},
 			},
@@ -264,6 +278,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							Namespace: "nn",
 							Group:     "gg",
 							Resource:  "rr",
+							Name:      "na",
 						},
 						HistoryLimit: 100,
 					},

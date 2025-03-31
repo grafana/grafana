@@ -35,5 +35,5 @@ type MinimumVersionError struct {
 }
 
 func (e *MinimumVersionError) Error() string {
-	return fmt.Errorf("input schema version is below minimum version. input: %d minimum: %d", e.inputVersion, MIN_VERSION).Error()
+	return fmt.Errorf("dashboard schema version %d cannot be migrated to latest version %d - migration path only exists for versions greater than %d", e.inputVersion, LATEST_VERSION, MIN_VERSION).Error()
 }

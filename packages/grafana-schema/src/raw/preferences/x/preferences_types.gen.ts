@@ -47,6 +47,10 @@ export interface Preferences {
    */
   language?: string;
   /**
+   * Selected locale (beta)
+   */
+  locale?: string;
+  /**
    * Navigation preferences
    */
   navbar?: NavbarPreference;
