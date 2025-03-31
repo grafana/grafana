@@ -20,13 +20,12 @@ import {
 } from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
-import { MultipleDataSourcePicker } from '../../../rule-list/components/RulesSourcePicker';
 import { RuleHealth } from '../../../search/rulesSearchParser';
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
-// import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
+import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
 import { RulesViewModeSelector } from './RulesViewModeSelector';
 

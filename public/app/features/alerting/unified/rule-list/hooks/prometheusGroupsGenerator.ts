@@ -96,6 +96,11 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
   );
 }
 
+/**
+ * Converts a Prometheus groups generator yielding arrays of groups to a generator yielding groups one by one
+ * @param generator - The paginated generator to convert
+ * @returns A non-paginated generator that yields all groups from the original generator one by one
+ */
 export function toPageless<TGroup extends PromRuleGroupDTO>(
   generator: AsyncGenerator<TGroup[], void, unknown>
 ): AsyncGenerator<TGroup, void, unknown> {
