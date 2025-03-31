@@ -56,6 +56,8 @@ type Service interface {
 
 	GetDescendantCounts(ctx context.Context, q *GetDescendantCountsQuery) (DescendantCounts, error)
 	GetDescendantCountsLegacy(ctx context.Context, q *GetDescendantCountsQuery) (DescendantCounts, error)
+
+	CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error)
 }
 
 // FolderStore is a folder store.

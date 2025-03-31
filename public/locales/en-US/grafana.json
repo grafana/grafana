@@ -1114,6 +1114,12 @@
       "success": "Dashboard {{name}} moved to Recently deleted"
     }
   },
+  "carousel": {
+    "close": "Close",
+    "error": "Something went wrong loading images",
+    "next": "Next",
+    "previous": "Previous"
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copied"
@@ -1128,9 +1134,6 @@
     },
     "custom-value": {
       "description": "Use custom value"
-    },
-    "group": {
-      "undefined": "No group"
     },
     "options": {
       "no-found": "No options found."
@@ -4780,7 +4783,7 @@
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",
-      "noResultsForScopes": "No dashboards found for the selected scopes",
+      "noResultsForScopes": "No dashboards or links found for the selected scopes",
       "noResultsNoScopes": "No scopes selected",
       "search": "Search",
       "toggle": {
@@ -5128,7 +5131,8 @@
       "week-start-label": "Week start"
     },
     "theme": {
-      "default-label": "Default"
+      "default-label": "Default",
+      "experimental": "Experimental"
     },
     "title": "Preferences"
   },

@@ -202,6 +202,14 @@ func (s *Service) DBMigration(db db.DB) {
 	s.log.Debug("syncing dashboard and folder tables finished")
 }
 
+func (s *Service) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		return s.unifiedStore.CountInOrg(ctx, orgID)
+	}
+
+	return s.store.CountInOrg(ctx, orgID)
+}
+
 func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		// TODO:

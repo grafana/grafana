@@ -1434,9 +1434,10 @@ var (
 		},
 		{
 			Name:        "prometheusUsesCombobox",
-			Description: "Use new combobox component for Prometheus query editor",
-			Stage:       FeatureStageExperimental,
+			Description: "Use new **Combobox** component for Prometheus query editor",
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOSSBigTent,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
@@ -1620,7 +1621,7 @@ var (
 		},
 		{
 			Name:         "templateVariablesUsesCombobox",
-			Description:  "Use new combobox component for template variables",
+			Description:  "Use new **Combobox** component for template variables",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
@@ -1704,6 +1705,14 @@ var (
 			Description:  "Enables the new Jira integration for contact points in cloud alert managers.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "useScopesNavigationEndpoint",
+			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
 			HideFromDocs: true,
 		},
@@ -1807,6 +1816,12 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "localeFormatPreference",
+			Description: "Specify the locale so we can show the correct format for numbers and dates",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+		},
+		{
 			Name:              "unifiedStorageGrpcConnectionPool",
 			Description:       "Enables the unified storage grpc connection pool",
 			Stage:             FeatureStageExperimental,
@@ -1823,6 +1838,13 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "true", // enabled by default
+		},
+		{
+			Name:         "localizationForPlugins",
+			Description:  "Enables localization for plugins",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: false,
 		},
 	}
 )

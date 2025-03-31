@@ -118,6 +118,29 @@ func (_m *FakeFolderStore) GetFolders(ctx context.Context, orgID int64, uids []s
 	return r0, r1
 }
 
+func (_m *FakeFolderStore) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	ret := _m.Called(ctx, orgID)
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (int64, error)); ok {
+		return rf(ctx, orgID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) int64); ok {
+		r0 = rf(ctx, orgID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewFakeFolderStore creates a new instance of FakeFolderStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewFakeFolderStore(t interface {
