@@ -9,6 +9,7 @@ import { NavLinkDTO } from './navModel';
 import { OrgRole } from './orgs';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
+import { TimeOption } from './time';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -240,8 +241,7 @@ export interface GrafanaConfig {
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset?: string;
   exploreHideLogsDownload?: boolean;
-  /** Custom quick ranges for the time picker */
-  quickRanges?: Array<{ from: string; to?: string; display: string }>;
+  quickRanges?: TimeOption[];
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
