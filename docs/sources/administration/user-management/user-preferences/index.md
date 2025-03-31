@@ -68,7 +68,7 @@ You can choose the way you would like data to appear in Grafana, including the u
 ### View and change themes
 
 {{< admonition type="note" >}}
-The **Change theme** drawer is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `its-feature-flag` feature toggle in Grafana to use this feature. This feature is automatically enabled in Grafana Cloud.
+The **Change theme** drawer is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `grafanaconThemes` feature toggle in Grafana to use this feature. This feature is automatically enabled in Grafana Cloud.
 {{< /admonition >}}
 
 The **Change theme** drawer allows you to see the color scheme of a theme without having to select it first.
