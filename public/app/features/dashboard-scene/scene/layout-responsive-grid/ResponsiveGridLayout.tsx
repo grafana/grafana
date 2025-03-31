@@ -1,4 +1,4 @@
-import { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
+import { createRef, CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 
 import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
@@ -6,6 +6,7 @@ import { getLayoutOrchestratorFor } from '../../utils/utils';
 
 import { AutoGridItem } from './ResponsiveGridItem';
 import { AutoGridLayoutRenderer } from './ResponsiveGridLayoutRenderer';
+import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
 export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOptions {
   children: AutoGridItem[];
@@ -58,7 +59,7 @@ export interface AutoGridLayoutOptions {
 export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> implements SceneLayout {
   public static Component = AutoGridLayoutRenderer;
 
-  private _containerRef: HTMLDivElement | null = null;
+  public containerRef = createRef<HTMLDivElement>();
   private _draggedGridItem: AutoGridItem | null = null;
   private _initialGridItemPosition: {
     pageX: number;
@@ -109,10 +110,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     return {
       onDragStart: this._onDragStart,
     };
-  }
-
-  public setRef(ref: HTMLDivElement | null) {
-    this._containerRef = ref;
   }
 
   private _canDrag(evt: ReactPointerEvent): boolean {
@@ -214,24 +211,27 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   }
 
   private _updatePanelPosition(top: number, left: number) {
-    this._containerRef?.style.setProperty(DRAGGED_ITEM_TOP, `${top}px`);
-    this._containerRef?.style.setProperty(DRAGGED_ITEM_LEFT, `${left}px`);
+    this._setContainerStyle(DRAGGED_ITEM_TOP, `${top}px`);
+    this._setContainerStyle(DRAGGED_ITEM_LEFT, `${left}px`);
   }
 
   private _updatePanelSize(width: number, height: number) {
-    this._containerRef?.style.setProperty(DRAGGED_ITEM_WIDTH, `${Math.floor(width)}px`);
-    this._containerRef?.style.setProperty(DRAGGED_ITEM_HEIGHT, `${Math.floor(height)}px`);
+    this._setContainerStyle(DRAGGED_ITEM_WIDTH, `${Math.floor(width)}px`);
+    this._setContainerStyle(DRAGGED_ITEM_HEIGHT, `${Math.floor(height)}px`);
   }
 
   private _resetPanelPositionAndSize() {
-    this._containerRef?.style.removeProperty(DRAGGED_ITEM_TOP);
-    this._containerRef?.style.removeProperty(DRAGGED_ITEM_LEFT);
-    this._containerRef?.style.removeProperty(DRAGGED_ITEM_WIDTH);
-    this._containerRef?.style.removeProperty(DRAGGED_ITEM_HEIGHT);
+    this._removeContainerStyle(DRAGGED_ITEM_TOP);
+    this._removeContainerStyle(DRAGGED_ITEM_LEFT);
+    this._removeContainerStyle(DRAGGED_ITEM_WIDTH);
+    this._removeContainerStyle(DRAGGED_ITEM_HEIGHT);
+  }
+
+  private _setContainerStyle(name: string, value: string) {
+    this.containerRef.current?.style.setProperty(name, value);
+  }
+
+  private _removeContainerStyle(name: string) {
+    this.containerRef.current?.style.removeProperty(name);
   }
 }
-
-export const DRAGGED_ITEM_TOP = '--responsive-grid-dragged-item-top';
-export const DRAGGED_ITEM_LEFT = '--responsive-grid-dragged-item-left';
-export const DRAGGED_ITEM_WIDTH = '--responsive-grid-dragged-item-width';
-export const DRAGGED_ITEM_HEIGHT = '--responsive-grid-dragged-item-height';
