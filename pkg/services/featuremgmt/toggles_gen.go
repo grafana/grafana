@@ -915,6 +915,10 @@ const (
 	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
 
+	// FlagUseScopesNavigationEndpoint
+	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"
+
 	// FlagAlertingRuleVersionHistoryRestore
 	// Enables the alert rule version history restore feature
 	FlagAlertingRuleVersionHistoryRestore = "alertingRuleVersionHistoryRestore"

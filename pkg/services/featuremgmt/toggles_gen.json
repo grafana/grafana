@@ -4392,6 +4392,20 @@
     },
     {
       "metadata": {
+        "name": "useScopesNavigationEndpoint",
+        "resourceVersion": "1743087365203",
+        "creationTimestamp": "2025-03-27T14:56:05Z"
+      },
+      "spec": {
+        "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "useSeessionStorageForRedirection",
         "resourceVersion": "1727082170583",
         "creationTimestamp": "2024-09-23T09:02:50Z",
