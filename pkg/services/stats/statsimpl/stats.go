@@ -51,7 +51,6 @@ func (ss *sqlStatsService) getDashboardCount(ctx context.Context, orgs []*org.Or
 		}
 		count += dashsCount
 	}
-
 	return count, nil
 }
 
@@ -72,20 +71,16 @@ func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) 
 }
 
 func (ss *sqlStatsService) getFolderCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
-	total := 0
+	total := int64(0)
 	for _, org := range orgs {
-		ctx, ident := identity.WithServiceIdentity(ctx, org.ID)
-		folders, err := ss.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
-			OrgID:        org.ID,
-			SignedInUser: ident,
-		})
+		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
+		folderCount, err := ss.folderSvc.CountFoldersInOrg(ctx, org.ID)
 		if err != nil {
 			return 0, err
 		}
-
-		total += len(folders)
+		total += folderCount
 	}
-	return int64(total), nil
+	return total, nil
 }
 
 func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) (result []*stats.NotifierUsageStats, err error) {

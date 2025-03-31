@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -37,7 +36,7 @@ type K8sHandler interface {
 	List(ctx context.Context, orgID int64, options v1.ListOptions) (*unstructured.UnstructuredList, error)
 	Search(ctx context.Context, orgID int64, in *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error)
 	GetStats(ctx context.Context, orgID int64) (*resource.ResourceStatsResponse, error)
-	GetUserFromMeta(ctx context.Context, userMeta string) (*user.User, error)
+	GetUsersFromMeta(ctx context.Context, userMeta []string) (map[string]*user.User, error)
 }
 
 var _ K8sHandler = (*k8sHandler)(nil)
@@ -203,26 +202,51 @@ func (h *k8sHandler) GetStats(ctx context.Context, orgID int64) (*resource.Resou
 	})
 }
 
-// GetUserFromMeta takes what meta accessor gives you from `GetCreatedBy` or `GetUpdatedBy` and returns the user
-func (h *k8sHandler) GetUserFromMeta(ctx context.Context, userMeta string) (*user.User, error) {
-	parts := strings.Split(userMeta, ":")
-	if len(parts) < 2 {
-		return &user.User{}, nil
-	}
-	meta := parts[1]
+// GetUsersFromMeta takes what meta accessor gives you from `GetCreatedBy` or `GetUpdatedBy` and returns the user(s), with the meta as the key
+func (h *k8sHandler) GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error) {
+	uids := []string{}
+	ids := []int64{}
+	metaToId := make(map[string]int64)
+	metaToUid := make(map[string]string)
+	userMap := make(map[string]*user.User)
 
-	userId, err := strconv.ParseInt(meta, 10, 64)
-	var u *user.User
-	if err == nil {
-		u, err = h.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userId})
-	} else {
-		u, err = h.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: meta})
+	for _, userMeta := range usersMeta {
+		parts := strings.Split(userMeta, ":")
+		if len(parts) < 2 {
+			return userMap, nil
+		}
+		meta := parts[1]
+
+		userId, err := strconv.ParseInt(meta, 10, 64)
+		if err == nil {
+			ids = append(ids, userId)
+			metaToId[userMeta] = userId
+		} else {
+			uids = append(uids, meta)
+			metaToUid[userMeta] = meta
+		}
 	}
 
-	if err != nil && errors.Is(err, user.ErrUserNotFound) {
-		return &user.User{}, nil
+	users, err := h.userService.ListByIdOrUID(ctx, uids, ids)
+	if err != nil {
+		return userMap, nil
 	}
-	return u, err
+
+	for _, u := range users {
+		for meta, id := range metaToId {
+			if u.ID == id {
+				userMap[meta] = u
+				break
+			}
+		}
+		for meta, uid := range metaToUid {
+			if u.UID == uid {
+				userMap[meta] = u
+				break
+			}
+		}
+	}
+	return userMap, err
 }
 
 func (h *k8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, error) {

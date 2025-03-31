@@ -8,6 +8,8 @@ import {
   JobList,
   Repository,
   RepositoryList,
+  HistoricJob,
+  HistoricJobList,
 } from './endpoints.gen';
 import { createOnCacheEntryAdded } from './utils/createOnCacheEntryAdded';
 
@@ -21,6 +23,15 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
         params: queryArg,
       });
       endpoint.onCacheEntryAdded = createOnCacheEntryAdded<JobSpec, JobStatus, Job, JobList>('jobs');
+    },
+    listHistoricJob(endpoint) {
+      endpoint.query = ({ watch, ...queryArg }) => ({
+        url: `/historicjobs`,
+        params: queryArg,
+      });
+      endpoint.onCacheEntryAdded = createOnCacheEntryAdded<JobSpec, JobStatus, HistoricJob, HistoricJobList>(
+        'historicjobs'
+      );
     },
     listRepository(endpoint) {
       endpoint.query = ({ watch, ...queryArg }) => ({

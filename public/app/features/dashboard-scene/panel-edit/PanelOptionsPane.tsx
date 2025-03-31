@@ -72,6 +72,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const panel = this.state.panelRef.resolve();
     const { options: prevOptions, fieldConfig: prevFieldConfig, pluginId: prevPluginId } = panel.state;
     const pluginId = options.pluginId;
+
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.SELECT_PANEL_PLUGIN,
       plugin_id: pluginId,
@@ -96,6 +97,15 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     }
 
     panel.changePluginType(pluginId, cachedOptions, newFieldConfig);
+
+    if (options.options) {
+      panel.onOptionsChange(options.options, true);
+    }
+
+    if (options.fieldConfig) {
+      panel.onFieldConfigChange(options.fieldConfig, true);
+    }
+
     this.onToggleVizPicker();
   };
 

@@ -151,7 +151,7 @@ export function PanelChrome({
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
-  const pointerDownEvt = useRef<React.PointerEvent | undefined>();
+  const pointerDownLocation = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const hasHeader = !hoverHeader;
 
@@ -198,32 +198,37 @@ export function PanelChrome({
 
   // Handle drag & selection events
   // Mainly the tricky bit of differentiating between dragging and selecting
+  const onPointerUp = React.useCallback(
+    (evt: React.PointerEvent) => {
+      const distance = Math.hypot(
+        evt.clientX - pointerDownLocation.current.x,
+        evt.clientY - pointerDownLocation.current.y
+      );
 
-  const onPointerUp = (evt: React.PointerEvent) => {
-    evt.stopPropagation();
+      if (
+        distance > 10 ||
+        (dragClassCancel && evt.target instanceof Element && evt.target.closest(`.${dragClassCancel}`))
+      ) {
+        return;
+      }
 
-    const distance = Math.hypot(
-      pointerDownEvt.current?.screenX ?? 0 - evt.screenX,
-      pointerDownEvt.current?.screenY ?? 0 - evt.screenY
-    );
+      // setTimeout is needed here because onSelect stops the event propagation
+      // By doing so, the event won't get to the document and drag will never be stopped
+      setTimeout(() => onSelect?.(evt));
+    },
+    [dragClassCancel, onSelect]
+  );
 
-    pointerDownEvt.current = undefined;
+  const onPointerDown = React.useCallback(
+    (evt: React.PointerEvent) => {
+      evt.stopPropagation();
 
-    // If we are dragging some distance or clicking on elements that should cancel dragging (panel menu, etc)
-    if (
-      distance > 10 ||
-      (dragClassCancel && evt.target instanceof HTMLElement && evt.target.closest(`.${dragClassCancel}`))
-    ) {
-      return;
-    }
+      pointerDownLocation.current = { x: evt.clientX, y: evt.clientY };
 
-    onSelect?.(evt);
-  };
-
-  const onPointerDown = (evt: React.PointerEvent) => {
-    evt.stopPropagation();
-    pointerDownEvt.current = evt;
-  };
+      onDragStart?.(evt);
+    },
+    [onDragStart]
+  );
 
   const headerContent = (
     <>
@@ -350,11 +355,6 @@ export function PanelChrome({
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
           data-testid="header-container"
-          onPointerMove={() => {
-            if (pointerDownEvt.current) {
-              onDragStart?.(pointerDownEvt.current);
-            }
-          }}
           onPointerDown={onPointerDown}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}

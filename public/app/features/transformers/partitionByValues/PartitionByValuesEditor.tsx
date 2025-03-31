@@ -18,6 +18,7 @@ import {
   RadioButtonGroup,
 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
+import { Trans, t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -91,7 +92,13 @@ export function PartitionByValuesEditor({
   );
 
   if (input.length > 1) {
-    return <FieldValidationMessage>Partition by values only works with a single frame.</FieldValidationMessage>;
+    return (
+      <FieldValidationMessage>
+        <Trans i18nKey="transformers.partition-by-values-editor.partition-values-works-single-frame">
+          Partition by values only works with a single frame.
+        </Trans>
+      </FieldValidationMessage>
+    );
   }
 
   const fieldNames = [...new Set(options.fields)];
@@ -99,7 +106,11 @@ export function PartitionByValuesEditor({
   return (
     <div>
       <InlineFieldRow>
-        <InlineField label="Field" labelWidth={10} grow={true}>
+        <InlineField
+          label={t('transformers.partition-by-values-editor.label-field', 'Field')}
+          labelWidth={10}
+          grow={true}
+        >
           <HorizontalGroup>
             {fieldNames.map((name) => (
               <Button key={name} icon="times" variant="secondary" size="md" onClick={() => removeField(name)}>
@@ -112,7 +123,7 @@ export function PartitionByValuesEditor({
                 size="md"
                 options={selectOptions}
                 onChange={addField}
-                label="Select field"
+                label={t('transformers.partition-by-values-editor.label-select-field', 'Select field')}
                 icon="plus"
               />
             )}

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -760,9 +761,21 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 			})
 		}
 
-		_, err := sess.InsertMulti(&dashes)
-		if err != nil {
-			return err
+		// Insert dashboards in batches
+		batchSize := 500
+		if db.IsTestDBSpanner() {
+			batchSize = 30 // spanner has a limit of 950 parameters per query
+		}
+		for i := 0; i < len(dashes); i += batchSize {
+			end := i + batchSize
+			if end > len(dashes) {
+				end = len(dashes)
+			}
+
+			_, err := sess.InsertMulti(dashes[i:end])
+			if err != nil {
+				return err
+			}
 		}
 
 		role := &accesscontrol.Role{
@@ -772,7 +785,7 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 			Updated: time.Now(),
 			Created: time.Now(),
 		}
-		_, err = sess.Insert(role)
+		_, err := sess.Insert(role)
 		if err != nil {
 			return err
 		}
@@ -794,10 +807,18 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 			permissions[i].Updated = time.Now()
 			permissions[i].Kind, permissions[i].Attribute, permissions[i].Identifier = permissions[i].SplitScope()
 		}
+
 		if len(permissions) > 0 {
-			_, err = sess.InsertMulti(&permissions)
-			if err != nil {
-				return err
+			for i := 0; i < len(permissions); i += batchSize {
+				end := i + batchSize
+				if end > len(permissions) {
+					end = len(permissions)
+				}
+
+				_, err = sess.InsertMulti(permissions[i:end])
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -819,7 +840,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	fStore := folderimpl.ProvideStore(db)
 	folderSvc := folderimpl.ProvideService(
 		fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(db),
-		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	// create parent folder
 	parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{

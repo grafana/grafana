@@ -82,12 +82,12 @@ func (m *MockK8sHandler) GetStats(ctx context.Context, orgID int64) (*resource.R
 	return args.Get(0).(*resource.ResourceStatsResponse), args.Error(1)
 }
 
-func (m *MockK8sHandler) GetUserFromMeta(ctx context.Context, userMeta string) (*user.User, error) {
-	args := m.Called(ctx, userMeta)
+func (m *MockK8sHandler) GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error) {
+	args := m.Called(ctx, usersMeta)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*user.User), args.Error(1)
+	return args.Get(0).(map[string]*user.User), args.Error(1)
 }
 
 type MockTestRestConfig struct {
