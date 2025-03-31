@@ -203,7 +203,6 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-
 	if isRecordingRule {
 		record = &models.Record{
 			From:                queryRefID,
