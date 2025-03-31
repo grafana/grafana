@@ -1,5 +1,5 @@
 import { isString } from 'lodash';
-import { combineLatest, filter, map, Observable, from, of, merge, switchMap, shareReplay } from 'rxjs';
+import { combineLatest, filter, map, Observable } from 'rxjs';
 
 import {
   PluginExtensionTypes,
@@ -48,22 +48,21 @@ export const getObservablePluginExtensions = (
         addedComponentsRegistry: components,
         addedLinksRegistry: links,
       })
-    ),
-    shareReplay(1)
+    )
   );
 };
 
 export const getObservablePluginLinks: GetObservablePluginLinks = (options) => {
   return getObservablePluginExtensions(options).pipe(
     map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.link)),
-    filter((extensions) => extensions.length)
+    filter((extensions) => extensions.length > 0)
   );
 };
 
 export const getObservablePluginComponents: GetObservablePluginComponents = (options) => {
   return getObservablePluginExtensions(options).pipe(
     map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.component)),
-    filter((extensions) => extensions.length)
+    filter((extensions) => extensions.length > 0)
   );
 };
 

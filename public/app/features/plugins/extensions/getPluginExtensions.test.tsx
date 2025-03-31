@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { first, take } from 'rxjs';
 
 import {
   type PluginExtensionAddedLinkConfig,
@@ -18,7 +19,6 @@ import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { pluginExtensionRegistries } from './registry/setup';
-import type { GetExtensions } from './types';
 import { isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
@@ -611,7 +611,7 @@ describe('getObservablePluginExtensions()', () => {
     });
   });
 
-it('should emit the initial state when no changes are made to the registries', async () => {
+  it('should emit the initial state when no changes are made to the registries', async () => {
     const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
 
     await expect(observable).toEmitValuesWith((received) => {
@@ -622,7 +622,7 @@ it('should emit the initial state when no changes are made to the registries', a
     });
   });
 
-it('should emit the new state when the registries change', async () => {
+  it('should emit the new state when the registries change', async () => {
     const observable = getObservablePluginExtensions({ extensionPointId }).pipe(take(2));
 
     setTimeout(() => {
@@ -638,7 +638,7 @@ it('should emit the new state when the registries change', async () => {
           },
         ],
       });
-    }, 10);
+    }, 0);
 
     await expect(observable).toEmitValuesWith((received) => {
       const { extensions } = received[0];
@@ -737,7 +737,7 @@ describe('getObservablePluginComponents()', () => {
     });
   });
 
-it('should only emit the components', async () => {
+  it('should only emit the components', async () => {
     const observable = getObservablePluginComponents({ extensionPointId }).pipe(first());
 
     await expect(observable).toEmitValuesWith((received) => {
