@@ -114,7 +114,7 @@ SCIM handles user synchronization but not role assignments. Role management is h
 SCIM provides automated team management capabilities that go beyond what Team Sync offers. While Team Sync only maps identity provider groups to existing Grafana teams, SCIM can automatically create and delete teams based on group changes in the identity provider.
 
 {{< admonition type="warning" >}}
-Teams provisioned through SCIM cannot be deleted manually from Grafana - they can only be deleted by removing their corresponding groups from the identity provider. 
+Teams provisioned through SCIM cannot be deleted manually from Grafana - they can only be deleted by removing their corresponding groups from the identity provider.
 {{< /admonition >}}
 
 For detailed configuration steps specific to the identity provider, see:
