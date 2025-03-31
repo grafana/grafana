@@ -215,16 +215,32 @@ func (b *backend) initPruner(ctx context.Context) error {
 		MaxWait:    time.Minute * 5,
 		ProcessHandler: func(ctx context.Context, key pruningKey) error {
 			return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
-					SQLTemplate:  sqltemplate.New(b.dialect),
-					HistoryLimit: defaultPrunerHistoryLimit,
+				req := &sqlPruneHistoryRequest{
+					SQLTemplate: sqltemplate.New(b.dialect),
 					Key: &resource.ResourceKey{
 						Namespace: key.namespace,
 						Group:     key.group,
 						Resource:  key.resource,
 						Name:      key.name,
 					},
-				})
+					Generation:   true,
+					HistoryLimit: 1, // Only one version for each generation
+				}
+
+				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, req)
+				if err != nil {
+					return fmt.Errorf("failed to prune history: %w", err)
+				}
+				generationRows, err := res.RowsAffected()
+				if err != nil {
+					return fmt.Errorf("failed to get rows affected: %w", err)
+				}
+
+				// Run the query again... this time skipping generations
+				req.Reset()
+				req.HistoryLimit = defaultPrunerHistoryLimit
+				req.Generation = false
+				res, err = dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, req)
 				if err != nil {
 					return fmt.Errorf("failed to prune history: %w", err)
 				}
@@ -232,11 +248,13 @@ func (b *backend) initPruner(ctx context.Context) error {
 				if err != nil {
 					return fmt.Errorf("failed to get rows affected: %w", err)
 				}
+
 				b.log.Debug("pruned history successfully",
 					"namespace", key.namespace,
 					"group", key.group,
 					"resource", key.resource,
 					"name", key.name,
+					"generations", generationRows,
 					"rows", rows)
 				return nil
 			})
