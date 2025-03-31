@@ -22,6 +22,7 @@ export function RepositoryResources({ repo }: RepoProps) {
   const data = (query.data?.items ?? []).filter((Resource) =>
     Resource.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const viewMessage = <Trans i18nKey="provisioning.repository-resources.columns.view">View</Trans>;
   const columns: Array<Column<ResourceListItem>> = useMemo(
     () => [
       {
@@ -87,16 +88,8 @@ export function RepositoryResources({ repo }: RepoProps) {
           const { resource, name, path } = original;
           return (
             <Stack>
-              {resource === 'dashboards' && (
-                <LinkButton href={`/d/${name}`}>
-                  <Trans i18nKey="provisioning.repository-resources.columns.view">View</Trans>
-                </LinkButton>
-              )}
-              {resource === 'folders' && (
-                <LinkButton href={`/dashboards/f/${name}`}>
-                  <Trans i18nKey="provisioning.repository-resources.columns.view">View</Trans>
-                </LinkButton>
-              )}
+              {resource === 'dashboards' && <LinkButton href={`/d/${name}`}>{viewMessage}</LinkButton>}
+              {resource === 'folders' && <LinkButton href={`/dashboards/f/${name}`}>{viewMessage}</LinkButton>}
               <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}>
                 <Trans i18nKey="provisioning.repository-resources.columns.history">History</Trans>
               </LinkButton>
@@ -105,7 +98,7 @@ export function RepositoryResources({ repo }: RepoProps) {
         },
       },
     ],
-    [repo.metadata?.name]
+    [repo.metadata?.name, viewMessage]
   );
 
   if (query.isLoading) {

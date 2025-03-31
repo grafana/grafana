@@ -92,11 +92,10 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   const hasSpec = Boolean(row.spec);
 
   if (!hasSummary && !hasErrors && !hasSpec) {
-    // Row has no content to display
     return null;
   }
 
-  // the action is already showin
+  // the action is already showing
   const data = useMemo(() => {
     const v: TraceKeyValuePair[] = [];
     const action = row.spec?.action;
@@ -164,7 +163,10 @@ function EmptyState() {
 
 function ErrorLoading(typ: string, error: string) {
   return (
-    <Alert title={t('provisioning.recent-jobs.error-loading', 'Error loading {type}', { type: typ })} severity="error">
+    <Alert
+      title={t('provisioning.recent-jobs.error-loading', 'Error loading {{type}}', { type: typ })}
+      severity="error"
+    >
       <pre>{JSON.stringify(error)}</pre>
     </Alert>
   );

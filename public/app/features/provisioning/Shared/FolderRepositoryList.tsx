@@ -32,7 +32,7 @@ export function FolderRepositoryList({ items }: Props) {
         ) : (
           <EmptySearchResult>
             <Trans i18nKey="provisioning.folder-repository-list.no-results-matching-your-query">
-              No results matching your query{' '}
+              No results matching your query
             </Trans>
           </EmptySearchResult>
         )}

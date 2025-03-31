@@ -53,7 +53,7 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
   if (!repository) {
     return {
       type: 'github',
-      title: t('provisioning.config-form.default-title', 'Repository'),
+      title: 'Repository',
       token: '',
       url: '',
       branch: 'main',
@@ -257,7 +257,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         invalid={!!errors?.workflows}
         description={t(
           'provisioning.config-form.description-workflows-makes-repository',
-          'no workflows makes the repository read only'
+          'No workflows makes the repository read only'
         )}
       >
         <Controller

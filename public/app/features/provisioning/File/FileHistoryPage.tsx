@@ -55,11 +55,7 @@ interface Props {
 
 function HistoryView({ history, path, repo }: Props) {
   if (!history.items) {
-    return (
-      <div>
-        <Trans i18nKey="provisioning.history-view.not-found">not found</Trans>
-      </div>
-    );
+    return <Trans i18nKey="provisioning.history-view.not-found">Not found</Trans>;
   }
 
   return (

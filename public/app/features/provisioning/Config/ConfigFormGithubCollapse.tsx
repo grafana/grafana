@@ -43,11 +43,7 @@ export function ConfigFormGithubCollapse({ previews }: ConfigFormGithubCollapseP
             'Public URL not configured'
           )}
           severity={'warning'}
-          buttonContent={
-            <span>
-              <Trans i18nKey="provisioning.config-form-github-collapse.instructions">Instructions</Trans>
-            </span>
-          }
+          buttonContent={<Trans i18nKey="provisioning.config-form-github-collapse.instructions">Instructions</Trans>}
           onRemove={() => navigate(GETTING_STARTED_URL)}
         >
           <Trans i18nKey="provisioning.config-form-github-collapse.text-changes-in-git-eventually-pulled">
@@ -69,11 +65,7 @@ export function ConfigFormGithubCollapse({ previews }: ConfigFormGithubCollapseP
             'Image renderer not configured'
           )}
           severity={'warning'}
-          buttonContent={
-            <span>
-              <Trans i18nKey="provisioning.config-form-github-collapse.instructions">Instructions</Trans>
-            </span>
-          }
+          buttonContent={<Trans i18nKey="provisioning.config-form-github-collapse.instructions">Instructions</Trans>}
           onRemove={() => window.open('https://grafana.com/grafana/plugins/grafana-image-renderer/', '_blank')}
         >
           <Trans i18nKey="provisioning.config-form-github-collapse.text-when-image-renderer-configured">
@@ -92,7 +84,7 @@ export function ConfigFormGithubCollapse({ previews }: ConfigFormGithubCollapseP
             <Trans i18nKey="provisioning.config-form-github-collapse.description-attach-dashboard-previews">
               Render before/after images and link them to the pull request.
               <br />
-              NOTE! this will render dashboards into an image that can be access by a public URL
+              NOTE: This will render dashboards into an image that can be access by a public URL
             </Trans>
           </span>
         }
