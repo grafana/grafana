@@ -40,7 +40,6 @@ export function JobStep({ onStepUpdate, description, startJob, children }: JobSt
       if (!response?.metadata?.name) {
         throw new Error('Invalid response from operation');
       }
-      console.log('Started', response);
       setJob(response);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to start operation';

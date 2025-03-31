@@ -16,13 +16,10 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
     listJob(endpoint) {
       // Do not include 'watch' in the first query, so we can get the initial list of jobs
       // and then start watching for changes
-      endpoint.query = ({ watch, ...queryArg }) => {
-        console.log('JOBS', queryArg);
-        return {
-          url: `/jobs`,
-          params: queryArg,
-        };
-      };
+      endpoint.query = ({ watch, ...queryArg }) => ({
+        url: `/jobs`,
+        params: queryArg,
+      });
       endpoint.onCacheEntryAdded = createOnCacheEntryAdded<JobSpec, JobStatus, Job, JobList>('jobs');
     },
     listRepository(endpoint) {
