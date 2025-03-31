@@ -699,7 +699,7 @@ function isSceneVariables(
 }
 
 function isSceneDataQuery(query: SceneDataQuery | QueryVariable | AnnotationQuery): query is SceneDataQuery {
-  return 'refId' in query && !('state' in query) && !('datasource' in query);
+  return 'refId' in query && !('state' in query);
 }
 
 function isAnnotationQuery(query: SceneDataQuery | QueryVariable | AnnotationQuery): query is AnnotationQuery {
