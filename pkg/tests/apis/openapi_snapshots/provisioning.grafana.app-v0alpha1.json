@@ -1318,92 +1318,6 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/export": {
-      "post": {
-        "tags": [
-          "Repository"
-        ],
-        "description": "Export from grafana into the remote repository",
-        "operationId": "createRepositoryExport",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "identifier"
-                ],
-                "properties": {
-                  "branch": {
-                    "description": "Target branch for export (only git)",
-                    "type": "string"
-                  },
-                  "folder": {
-                    "description": "The source folder (or empty) to export",
-                    "type": "string"
-                  },
-                  "identifier": {
-                    "description": "Include the identifier in the exported metadata",
-                    "type": "boolean",
-                    "default": false
-                  },
-                  "path": {
-                    "description": "Prefix in target file system",
-                    "type": "string"
-                  }
-                }
-              },
-              "example": {
-                "folder": "grafan-folder-ref",
-                "branch": "target-branch",
-                "path": "path/in/tree",
-                "identifier": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Job"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the Job",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/files/": {
       "get": {
         "tags": [
@@ -1982,36 +1896,87 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/migrate": {
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/jobs": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "List recent jobs",
+        "operationId": "getRepositoryJobs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Job"
+        }
+      },
       "post": {
         "tags": [
           "Repository"
         ],
-        "description": "Export from grafana into the remote repository",
-        "operationId": "createRepositoryMigrate",
+        "description": "Sync from repository into Grafana",
+        "operationId": "createRepositoryJobs",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "identifier"
-                ],
-                "properties": {
-                  "history": {
-                    "description": "Preserve history (if possible)",
-                    "type": "boolean"
-                  },
-                  "identifier": {
-                    "description": "Include the identifier in the exported metadata",
-                    "type": "boolean",
-                    "default": false
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
+              },
+              "examples": {
+                "incremental": {
+                  "summary": "Incremental sync job",
+                  "description": "look for changes since the last sync",
+                  "value": {
+                    "metadata": {
+                      "generation": 0
+                    },
+                    "spec": {
+                      "action": "pull",
+                      "repository": "",
+                      "pull": {
+                        "incremental": true
+                      }
+                    },
+                    "status": {
+                      "started": 0,
+                      "finished": 0,
+                      "progress": 0
+                    }
+                  }
+                },
+                "pull": {
+                  "summary": "Pull from repository",
+                  "description": "pull jobs",
+                  "value": {
+                    "metadata": {
+                      "generation": 0
+                    },
+                    "spec": {
+                      "action": "pull",
+                      "repository": "",
+                      "pull": {
+                        "incremental": false
+                      }
+                    },
+                    "status": {
+                      "started": 0,
+                      "finished": 0,
+                      "progress": 0
+                    }
                   }
                 }
-              },
-              "example": {
-                "history": true,
-                "identifier": false
               }
             }
           }
@@ -2445,77 +2410,6 @@
           "name": "pretty",
           "in": "query",
           "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/sync": {
-      "post": {
-        "tags": [
-          "Repository"
-        ],
-        "description": "Sync from repository into Grafana",
-        "operationId": "createRepositorySync",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "incremental"
-                ],
-                "properties": {
-                  "incremental": {
-                    "description": "Incremental synchronization for versioned repositories",
-                    "type": "boolean",
-                    "default": false
-                  }
-                }
-              },
-              "example": {
-                "incremental": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Job"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the Job",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
           "schema": {
             "type": "string",
             "uniqueItems": true

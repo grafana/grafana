@@ -335,7 +335,12 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create historic job storage: %w", err)
 	}
 
-	b.jobs, err = jobs.NewStore(realJobStore, historicJobStore, time.Second*30)
+	jobHistory, err := jobs.NewStorageBackedHistory(historicJobStore)
+	if err != nil {
+		return fmt.Errorf("failed to create historic job wrapper: %w", err)
+	}
+
+	b.jobs, err = jobs.NewStore(realJobStore, jobHistory, time.Second*30)
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
@@ -369,18 +374,10 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("sync")] = &syncConnector{
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
 		repoGetter: b,
 		jobs:       b.jobs,
-	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
-		repoGetter: b,
-		jobs:       b.jobs,
-	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("migrate")] = &migrateConnector{
-		repoGetter: b,
-		jobs:       b.jobs,
-		dual:       b.storageStatus,
+		historic:   jobHistory,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
 		blob: b.unified,
@@ -627,6 +624,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	defsBase := "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1."
+	refsBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
 
 	sub := oas.Paths.Paths[repoprefix+"/test"]
 	if sub != nil {
@@ -803,61 +801,73 @@ spec:
 		sub.Put.RequestBody = sub.Post.RequestBody
 	}
 
-	sub = oas.Paths.Paths[repoprefix+"/sync"]
+	sub = oas.Paths.Paths[repoprefix+"/jobs"]
 	if sub != nil {
-		optionsSchema := defs[defsBase+"SyncJobOptions"].Schema
 		sub.Post.Description = "Sync from repository into Grafana"
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &optionsSchema,
-							Example: &provisioning.SyncJobOptions{
-								Incremental: false,
+							Schema: &spec.Schema{
+								SchemaProps: spec.SchemaProps{
+									Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "Job"),
+								},
+							},
+							Examples: map[string]*spec3.Example{
+								"incremental": {
+									ExampleProps: spec3.ExampleProps{
+										Summary:     "Incremental sync job",
+										Description: "look for changes since the last sync",
+										Value: &provisioning.Job{
+											Spec: provisioning.JobSpec{
+												Action: provisioning.JobActionPull,
+												Pull: &provisioning.SyncJobOptions{
+													Incremental: true,
+												},
+											},
+										},
+									},
+								},
+								"pull": {
+									ExampleProps: spec3.ExampleProps{
+										Summary:     "Pull from repository",
+										Description: "pull jobs",
+										Value: &provisioning.Job{
+											Spec: provisioning.JobSpec{
+												Action: provisioning.JobActionPull,
+												Pull: &provisioning.SyncJobOptions{
+													Incremental: false,
+												},
+											},
+										},
+									},
+								},
 							},
 						},
 					},
 				},
 			},
 		}
-	}
 
-	sub = oas.Paths.Paths[repoprefix+"/export"]
-	if sub != nil {
-		optionsSchema := defs[defsBase+"ExportJobOptions"].Schema
-		sub.Post.Description = "Export from grafana into the remote repository"
-		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &optionsSchema,
-							Example: &provisioning.ExportJobOptions{
-								Folder: "grafan-folder-ref",
-								Branch: "target-branch",
-								Path:   "path/in/tree",
+		sub.Get.Description = "List recent jobs"
+		sub.Get.Responses = &spec3.Responses{
+			ResponsesProps: spec3.ResponsesProps{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Content: map[string]*spec3.MediaType{
+								"application/json": {
+									MediaTypeProps: spec3.MediaTypeProps{
+										Schema: &spec.Schema{
+											SchemaProps: spec.SchemaProps{
+												Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "JobList"),
+											},
+										},
+									},
+								},
 							},
-						},
-					},
-				},
-			},
-		}
-	}
-
-	sub = oas.Paths.Paths[repoprefix+"/migrate"]
-	if sub != nil {
-		optionsSchema := defs[defsBase+"MigrateJobOptions"].Schema
-		sub.Post.Description = "Export from grafana into the remote repository"
-		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &optionsSchema,
-							Example: &provisioning.MigrateJobOptions{
-								History: true,
-							},
+							Description: "OK",
 						},
 					},
 				},

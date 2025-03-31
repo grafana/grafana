@@ -8,10 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/apifmt"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +16,11 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/apifmt"
 )
 
 const (
@@ -77,8 +78,8 @@ type jobStorage interface {
 // When persistentStore claims a job, it will update the status of it. This does a ResourceVersion check to ensure it is atomic; if the job has been claimed by another worker, the claim will fail.
 // When a job is completed, it is moved to the historic job store by first deleting it from the job store and then creating it in the historic job store. We are fine with the job being lost if the historic job store fails to create it.
 type persistentStore struct {
-	jobStore         jobStorage
-	historicJobStore rest.Creater
+	jobStore     jobStorage
+	historicJobs History
 
 	// clock is a function that returns the current time.
 	clock func() time.Time
@@ -94,7 +95,7 @@ type persistentStore struct {
 
 func NewStore(
 	jobStore jobStorage,
-	historicJobStore rest.Creater,
+	historicJobs History,
 	expiry time.Duration,
 ) (*persistentStore, error) {
 	if expiry <= 0 {
@@ -102,8 +103,8 @@ func NewStore(
 	}
 
 	return &persistentStore{
-		jobStore:         jobStore,
-		historicJobStore: historicJobStore,
+		jobStore:     jobStore,
+		historicJobs: historicJobs,
 
 		clock:  time.Now,
 		expiry: expiry,
@@ -283,17 +284,12 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 	// We aren't allowed to write with ResourceVersion set.
 	job.ResourceVersion = ""
 
-	historicJob := &provisioning.HistoricJob{
-		ObjectMeta: job.ObjectMeta,
-		Spec:       job.Spec,
-		Status:     job.Status,
-	}
-	_, err = s.historicJobStore.Create(ctx, historicJob, nil, &metav1.CreateOptions{})
+	err = s.historicJobs.Write(ctx, job)
 	if err != nil {
 		// We're not going to return this as it is not critical. Not ideal, but not critical.
-		logger.Warn("failed to create historic job", "historic_job", *historicJob, "error", err)
+		logger.Warn("failed to create historic job", "historic_job", *job, "error", err)
 	} else {
-		logger.Debug("created historic job", "historic_job", *historicJob)
+		logger.Debug("created historic job", "historic_job", *job)
 	}
 
 	logger.Debug("job completion done")
