@@ -1,17 +1,15 @@
-import { createRef, CSSProperties, PointerEvent } from 'react';
+import { createRef, CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 
-import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-import { getDashboardSceneFor } from '../../utils/utils';
-import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
-import { DropZone, Point, Rect, SceneLayoutWithDragAndDrop } from '../layout-manager/utils';
-import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
+import { getLayoutOrchestratorFor } from '../../utils/utils';
 
-import { ResponsiveGridItem } from './ResponsiveGridItem';
-import { ResponsiveGridLayoutRenderer } from './ResponsiveGridLayoutRenderer';
+import { AutoGridItem } from './ResponsiveGridItem';
+import { AutoGridLayoutRenderer } from './ResponsiveGridLayoutRenderer';
+import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
-export interface ResponsiveGridLayoutState extends SceneObjectState, ResponsiveGridLayoutOptions {
-  children: ResponsiveGridItem[];
+export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOptions {
+  children: AutoGridItem[];
 
   /**
    * True when the item should be rendered but not visible.
@@ -22,16 +20,19 @@ export interface ResponsiveGridLayoutState extends SceneObjectState, ResponsiveG
   /**
    * For media query for screens smaller than md breakpoint
    */
-  md?: ResponsiveGridLayoutOptions;
+  md?: AutoGridLayoutOptions;
 
   /** True when the items should be lazy loaded */
   isLazy?: boolean;
 
   /** True when the items should be draggable */
   isDraggable?: boolean;
+
+  /** The key of the item being dragged */
+  draggingKey?: string;
 }
 
-export interface ResponsiveGridLayoutOptions {
+export interface AutoGridLayoutOptions {
   /**
    * Useful for setting a height on items without specifying how many rows there will be.
    * Defaults to 320px
@@ -55,24 +56,19 @@ export interface ResponsiveGridLayoutOptions {
   justifyContent?: CSSProperties['justifyContent'];
 }
 
-export class ResponsiveGridLayout
-  extends SceneObjectBase<ResponsiveGridLayoutState>
-  implements SceneLayoutWithDragAndDrop
-{
-  public layoutOrchestrator: LayoutOrchestrator | undefined;
-
-  public static Component = ResponsiveGridLayoutRenderer;
+export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> implements SceneLayout {
+  public static Component = AutoGridLayoutRenderer;
 
   public containerRef = createRef<HTMLDivElement>();
+  private _draggedGridItem: AutoGridItem | null = null;
+  private _initialGridItemPosition: {
+    pageX: number;
+    pageY: number;
+    top: number;
+    left: number;
+  } | null = null;
 
-  public activeIndex: number | undefined;
-  public activeGridCell = { row: 1, column: 1 };
-  public columnCount = 1;
-  // maybe not needed?
-  public rowCount = 1;
-  public scrollPos: ReturnType<typeof closestScroll> | undefined;
-
-  public constructor(state: Partial<ResponsiveGridLayoutState>) {
+  public constructor(state: Partial<AutoGridLayoutState>) {
     super({
       rowGap: 1,
       columnGap: 1,
@@ -82,12 +78,21 @@ export class ResponsiveGridLayout
       ...state,
     });
 
-    this.addActivationHandler(this.activationHandler);
+    this._onDragStart = this._onDragStart.bind(this);
+    this._onDragEnd = this._onDragEnd.bind(this);
+    this._onDrag = this._onDrag.bind(this);
+
+    this.addActivationHandler(() => this._activationHandler());
   }
 
-  private activationHandler = () => {
-    this.layoutOrchestrator = getDashboardSceneFor(this).state.layoutOrchestrator;
-  };
+  private _activationHandler() {
+    return () => {
+      this._resetPanelPositionAndSize();
+      document.body.removeEventListener('pointermove', this._onDrag);
+      document.body.removeEventListener('pointerup', this._onDragEnd);
+      document.body.classList.remove('dashboard-draggable-transparent-selection');
+    };
+  }
 
   public isDraggable(): boolean {
     return this.state.isDraggable ?? false;
@@ -101,110 +106,132 @@ export class ResponsiveGridLayout
     return 'grid-drag-cancel';
   }
 
-  public getDragHooks = () => {
-    return { onDragStart: this.onPointerDown };
-  };
+  public getDragHooks() {
+    return {
+      onDragStart: this._onDragStart,
+    };
+  }
 
-  public onPointerDown = (e: PointerEvent, panel: VizPanel) => {
-    const cannotDrag = this.cannotDrag(e.target);
-    if (cannotDrag || !this.layoutOrchestrator) {
+  private _canDrag(evt: ReactPointerEvent): boolean {
+    if (!this.isDraggable()) {
+      return false;
+    }
+
+    if (!(evt.target instanceof Element)) {
+      return false;
+    }
+
+    return !!evt.target.closest(`.${this.getDragClass()}`) && !evt.target.closest(`.${this.getDragClassCancel()}`);
+  }
+
+  // Start inside dragging
+  private _onDragStart(evt: ReactPointerEvent, panel: VizPanel) {
+    if (!this._canDrag(evt)) {
       return;
     }
 
-    e.preventDefault();
-    e.stopPropagation();
+    evt.preventDefault();
+    evt.stopPropagation();
 
-    // Refresh bounding boxes for all responsive grid items
-    for (const child of this.state.children) {
-      child.computeBoundingBox();
+    if (!(panel.parent instanceof AutoGridItem)) {
+      throw new Error('Dragging wrong item');
     }
 
-    this.scrollPos = closestScroll(this.containerRef.current);
-    this.layoutOrchestrator.onDragStart(e.nativeEvent, panel);
-  };
+    this._draggedGridItem = panel.parent;
 
-  private cannotDrag(el: EventTarget): boolean | Element {
-    const dragClass = this.getDragClass();
-    const dragCancelClass = this.getDragClassCancel();
+    const { top, left, width, height } = this._draggedGridItem.getBoundingBox();
+    this._initialGridItemPosition = { pageX: evt.pageX, pageY: evt.pageY, top, left: left };
+    this._updatePanelSize(width, height);
+    this._updatePanelPosition(top, left);
 
-    // cancel dragging if the element being interacted with has an ancestor with the drag cancel class set
-    // or if the drag class isn't set on an ancestor
-    return el instanceof Element && (el.closest(`.${dragCancelClass}`) || !el.closest(`.${dragClass}`));
+    this.setState({ draggingKey: this._draggedGridItem.state.key });
+
+    document.body.addEventListener('pointermove', this._onDrag);
+    document.body.addEventListener('pointerup', this._onDragEnd);
+    document.body.classList.add('dashboard-draggable-transparent-selection');
+
+    getLayoutOrchestratorFor(this)?.startDraggingSync(evt, panel);
   }
 
-  /**
-   * Find the drop zone in this layout closest to the provided `point`.
-   * This gets called every tick while a layout item is being dragged, so we use the grid item's cached bbox,
-   * calculated whenever the layout changes, rather than calculating them every time the cursor position changes.
-   */
-  public closestDropZone(point: Point): DropZone {
-    let minDistance = Number.POSITIVE_INFINITY;
-    let closestRect: Rect = { top: 0, bottom: 0, left: 0, right: 0 };
+  // Stop inside dragging
+  private _onDragEnd() {
+    window.getSelection()?.removeAllRanges();
 
-    let closestIndex: number | undefined;
-    let closest = { row: 1, column: 1 };
-    this.state.children.forEach((gridItem, i) => {
-      let curColumn = i % this.columnCount;
-      let curRow = Math.floor(i / this.columnCount);
-      const distance = gridItem.distanceToPoint(point);
-      if (distance < minDistance && gridItem.cachedBoundingBox) {
-        minDistance = distance;
-        const { top, bottom, left, right } = gridItem.cachedBoundingBox;
-        closestRect = { top, bottom, left, right };
-        closestIndex = i;
-        // css grid rows/columns are 1-indexed
-        closest = { row: curRow + 1, column: curColumn + 1 };
-      }
-    });
+    this._draggedGridItem = null;
+    this._initialGridItemPosition = null;
+    this._resetPanelPositionAndSize();
 
-    this.activeIndex = closestIndex;
-    this.activeGridCell = closest;
+    this.setState({ draggingKey: undefined });
 
-    return { ...closestRect, distanceToPoint: minDistance };
+    document.body.removeEventListener('pointermove', this._onDrag);
+    document.body.removeEventListener('pointerup', this._onDragEnd);
+    document.body.classList.remove('dashboard-draggable-transparent-selection');
   }
 
-  public importLayoutItem(layoutItem: DashboardLayoutItem) {
-    const layoutItemIR = layoutItem.toIntermediate();
-    const layoutChildren = [...this.state.children];
+  // Handle inside drag moves
+  private _onDrag(evt: PointerEvent) {
+    if (!this._draggedGridItem || !this._initialGridItemPosition) {
+      this._onDragEnd();
+      return;
+    }
 
-    layoutItemIR.body.clearParent();
+    this._updatePanelPosition(
+      this._initialGridItemPosition.top + (evt.pageY - this._initialGridItemPosition.pageY),
+      this._initialGridItemPosition.left + (evt.pageX - this._initialGridItemPosition.pageX)
+    );
 
-    const newLayoutItem = new ResponsiveGridItem({ body: layoutItemIR.body });
-    layoutChildren.splice(this.activeIndex ?? 0, 0, newLayoutItem);
+    const dropTargetGridItemKey = document
+      .elementsFromPoint(evt.clientX, evt.clientY)
+      ?.find((element) => {
+        const key = element.getAttribute('data-auto-grid-item-drop-target');
 
-    this.setState({
-      children: layoutChildren,
-    });
+        return !!key && key !== this._draggedGridItem!.state.key;
+      })
+      ?.getAttribute('data-auto-grid-item-drop-target');
 
-    newLayoutItem.activate();
+    if (dropTargetGridItemKey) {
+      this._onDragOverItem(dropTargetGridItemKey);
+    }
   }
 
-  public removeLayoutItem(layoutItem: DashboardLayoutItem) {
-    this.setState({
-      children: this.state.children.filter((c) => c !== layoutItem),
-    });
+  // Handle dragging an item from the same grid over another item from the same grid
+  private _onDragOverItem(key: string) {
+    const children = [...this.state.children];
+    const draggedIdx = children.findIndex((child) => child === this._draggedGridItem);
+    const draggedOverIdx = children.findIndex((child) => child.state.key === key);
 
-    layoutItem.clearParent();
-  }
-}
+    if (draggedIdx === -1 || draggedOverIdx === -1) {
+      return;
+    }
 
-function closestScroll(el?: HTMLElement | null): {
-  scrollTop: number;
-  scrollTopMax: number;
-  wrapper?: HTMLElement | null;
-} {
-  if (el && canScroll(el)) {
-    return { scrollTop: el.scrollTop, scrollTopMax: el.scrollHeight - el.clientHeight - 5, wrapper: el };
+    children.splice(draggedIdx, 1);
+    children.splice(draggedOverIdx, 0, this._draggedGridItem!);
+
+    this.setState({ children });
   }
 
-  return el ? closestScroll(el.parentElement) : { scrollTop: 0, scrollTopMax: 0, wrapper: el };
-}
+  private _updatePanelPosition(top: number, left: number) {
+    this._setContainerStyle(DRAGGED_ITEM_TOP, `${top}px`);
+    this._setContainerStyle(DRAGGED_ITEM_LEFT, `${left}px`);
+  }
 
-function canScroll(el: HTMLElement) {
-  const oldScroll = el.scrollTop;
-  el.scrollTop = Number.MAX_SAFE_INTEGER;
-  const newScroll = el.scrollTop;
-  el.scrollTop = oldScroll;
+  private _updatePanelSize(width: number, height: number) {
+    this._setContainerStyle(DRAGGED_ITEM_WIDTH, `${Math.floor(width)}px`);
+    this._setContainerStyle(DRAGGED_ITEM_HEIGHT, `${Math.floor(height)}px`);
+  }
 
-  return newScroll > 0;
+  private _resetPanelPositionAndSize() {
+    this._removeContainerStyle(DRAGGED_ITEM_TOP);
+    this._removeContainerStyle(DRAGGED_ITEM_LEFT);
+    this._removeContainerStyle(DRAGGED_ITEM_WIDTH);
+    this._removeContainerStyle(DRAGGED_ITEM_HEIGHT);
+  }
+
+  private _setContainerStyle(name: string, value: string) {
+    this.containerRef.current?.style.setProperty(name, value);
+  }
+
+  private _removeContainerStyle(name: string) {
+    this.containerRef.current?.style.removeProperty(name);
+  }
 }
