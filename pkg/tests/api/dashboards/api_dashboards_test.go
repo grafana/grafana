@@ -47,14 +47,25 @@ func TestIntegrationDashboardQuota(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	testDashboardQuota(t, []string{})
+}
 
+func TestIntegrationDashboardQuotaK8s(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	testDashboardQuota(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
+}
+
+func testDashboardQuota(t *testing.T, featureToggles []string) {
 	// enable quota and set low dashboard quota
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:  true,
-		EnableQuota:       true,
-		DashboardOrgQuota: &dashboardQuota,
+		DisableAnonymous:     true,
+		EnableQuota:          true,
+		DashboardOrgQuota:    &dashboardQuota,
+		EnableFeatureToggles: featureToggles,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
