@@ -11,9 +11,9 @@ import { generateLogGrammar } from './grammar';
 import { getTruncationLength } from './virtualization';
 
 export class LogListModel implements LogRowModel {
-  datasourceType?: string | undefined;
+  datasourceType: string | undefined;
   dataFrame: DataFrame;
-  duplicates?: number | undefined;
+  duplicates: number | undefined;
   entry: string;
   entryFieldIndex: number;
   hasAnsi: boolean;
@@ -23,14 +23,14 @@ export class LogListModel implements LogRowModel {
   raw: string;
   rowIndex: number;
   rowId?: string | undefined;
-  searchWords?: string[] | undefined;
+  searchWords: string[] | undefined;
   timeFromNow: string;
   timeEpochMs: number;
   timeEpochNs: string;
   timeLocal: string;
   timeUtc: string;
   uid: string;
-  uniqueLabels?: Labels | undefined;
+  uniqueLabels: Labels | undefined;
 
   private _body: string | undefined = undefined;
   displayLevel: string;
@@ -117,7 +117,7 @@ export class LogListModel implements LogRowModel {
     }
     return this.collapsed;
   }
-  
+
   setCollapsedState(collapsed: boolean) {
     if (this.collapsed !== collapsed) {
       this._body = undefined;

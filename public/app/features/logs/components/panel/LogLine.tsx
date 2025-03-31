@@ -45,7 +45,7 @@ export const LogLine = ({
 }: Props) => {
   const { onLogLineHover } = useLogListContext();
   const [collapsed, setCollapsed] = useState<boolean | undefined>(
-    wrapLogMessage && log.collapsed !== undefined ? true : undefined
+    wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
   );
   const logLineRef = useRef<HTMLDivElement | null>(null);
   const pinned = useLogIsPinned(log);
