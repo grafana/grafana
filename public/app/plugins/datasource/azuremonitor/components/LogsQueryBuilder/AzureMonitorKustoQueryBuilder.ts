@@ -39,7 +39,13 @@ const buildCondition = (
     }
 
     if (isTemplateVariable) {
-      return `${prop} in (${value})`;
+      if (op === '==') {
+        return `${prop} in (${value})`;
+      } else if (op === '!=') {
+        return `${prop} !in (${value})`;
+      } else {
+        return `${prop} ${op} ${value}`;
+      }
     }
 
     const escapedValue = String(value).replace(/'/g, "''");
@@ -81,7 +87,16 @@ const appendSummarize = (builderQuery: BuilderQueryExpression, phrases: string[]
   }
 
   const reduceExprs = builderQuery.reduce?.expressions ?? [];
-  const groupBy = builderQuery.groupBy?.expressions?.map((exp) => exp.property?.name).filter(Boolean) ?? [];
+  const groupBy =
+    builderQuery.groupBy?.expressions
+      ?.map((exp) => exp.property?.name)
+      .filter(Boolean)
+      .map((name) => {
+        if (name?.startsWith('$')) {
+          return name;
+        }
+        return `'${name!.replace(/'/g, "''")}'`;
+      }) ?? [];
 
   const summarizeParts = reduceExprs
     .map((expr) => {
