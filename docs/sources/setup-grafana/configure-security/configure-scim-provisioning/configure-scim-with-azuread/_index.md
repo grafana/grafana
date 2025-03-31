@@ -83,11 +83,11 @@ Only work email addresses are supported. Azure AD must be configured to use `ema
 
 Configure the following required attributes:
 
-| Azure AD Attribute.  | Grafana Attribute              |
-| -------------------- | ------------------------------ |
-| `userPrincipalName`  | `userName`                     |
-| `mail`               | `emails[type eq "work"].value` |
-| `displayName`        | `displayName`                  |
+| Azure AD Attribute. | Grafana Attribute              |
+| ------------------- | ------------------------------ |
+| `userPrincipalName` | `userName`                     |
+| `mail`              | `emails[type eq "work"].value` |
+| `displayName`       | `displayName`                  |
 
 ### Enable provisioning
 

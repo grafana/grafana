@@ -40,7 +40,7 @@ Other authentication methods aren't supported.
 SCIM offers several advantages for managing users and teams in Grafana:
 
 - **Automated user provisioning**: Automatically create, update, and disable users in Grafana when changes occur in your identity provider
-- **Automated team provisioning**: Automatically create, update, and delete teams in Grafana based on groups in your identity provider
+- **Automated team lifecycle management**: Automatically create teams when new groups are added, update team memberships, and delete teams when groups are removed from your identity provider
 - **Reduced administrative overhead**: Eliminate manual user management tasks and reduce the risk of human error
 - **Enhanced security**: Automatically disable access when users leave your organization
 

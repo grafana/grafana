@@ -27,7 +27,7 @@ With SCIM, you can:
 
 - **Automate user lifecycle** from creation to deactivation
 - **Manage existing users** by linking them with identity provider identities
-- **Synchronize team memberships** based on identity provider group assignments
+- **Automate team lifecycle** by automatically creating teams when groups are added, updating team memberships, and deleting teams when groups are removed
 - **Maintain security** through automated deprovisioning
 - **Replace Team Sync** with more robust SCIM group synchronization
 
@@ -51,8 +51,8 @@ SCIM uses a specific process to establish and maintain user identity between the
 
 2. Identity linking:
 
-   - The identity provider learns the relationship between the found Grafana user and Grafana's internal ID
-   - The identity provider updates Grafana with the External ID
+   - The identity provider learns the relationship between the found Grafana user and the Grafana internal ID
+   - The identity provider updates Grafana with its External ID
    - Grafana updates its authentication validations to expect this External ID
 
 3. Authentication validation:
@@ -117,16 +117,16 @@ For detailed configuration steps specific to the identity provider, see:
 ### SCIM vs Team Sync
 
 {{< admonition type="warning" >}}
-Do not enable both SCIM Group Sync and Team Sync simultaneously as these methods can conflict with each other.
+Do not enable both SCIM Group Sync and Team Sync simultaneously as these methods can conflict with each other. However, you can use SCIM for user provisioning while keeping Team Sync for team management until migration support is available.
 {{< /admonition >}}
 
-Choose one synchronization method:
+Choose one team synchronization method:
 
-- If you enable SCIM, disable Team Sync and use SCIM for team management
-- If you prefer Team Sync, do not enable SCIM provisioning
+- If you enable SCIM Group Sync, disable Team Sync and use SCIM for team management
+- If you prefer Team Sync, do not enable SCIM Group Sync
 
 {{< admonition type="warning" >}}
-**Migration Considerations:** Currently, there is no official migration path or tooling available for transitioning from Team Sync to SCIM Group Sync. Attempting to migrate without proper tooling can lead to service disruption, loss of team permissions, and potential access issues. We recommend keeping your existing Team Sync setup until official migration tooling becomes available.
+**Team Sync Migration:** Support for migrating from Team Sync to SCIM Group Sync is coming soon. Until this support is released, we recommend keeping your existing Team Sync setup for team management. You can still benefit from SCIM's user provisioning capabilities while using Team Sync for team management.
 {{< /admonition >}}
 
 ### Key differences
