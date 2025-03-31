@@ -8,13 +8,18 @@ import { Field, Input, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-
-export type IntervalConditionValue = string;
+import { ConditionalRenderingSerializerRegistryItem, IntervalConditionValue } from './types';
 
 type ConditionalRenderingIntervalState = ConditionalRenderingBaseState<IntervalConditionValue>;
 
 export class ConditionalRenderingInterval extends ConditionalRenderingBase<ConditionalRenderingIntervalState> {
   public static Component = ConditionalRenderingIntervalRenderer;
+
+  public static serializer: ConditionalRenderingSerializerRegistryItem = {
+    id: 'ConditionalRenderingTimeInterval',
+    name: 'Time Interval',
+    deserialize: this.deserialize,
+  };
 
   public get title(): string {
     return t('dashboard.conditional-rendering.interval.label', 'Dashboard time range less than');
@@ -47,12 +52,15 @@ export class ConditionalRenderingInterval extends ConditionalRenderingBase<Condi
   }
 
   public serialize(): ConditionalRenderingTimeIntervalKind {
-    return {
-      kind: 'ConditionalRenderingTimeInterval',
-      spec: {
-        value: this.state.value,
-      },
-    };
+    return { kind: 'ConditionalRenderingTimeInterval', spec: { value: this.state.value } };
+  }
+
+  public static deserialize(model: ConditionalRenderingTimeIntervalKind): ConditionalRenderingInterval {
+    return new ConditionalRenderingInterval({ value: model.spec.value });
+  }
+
+  public static createEmpty(): ConditionalRenderingInterval {
+    return new ConditionalRenderingInterval({ value: '7d' });
   }
 }
 

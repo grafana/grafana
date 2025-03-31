@@ -868,6 +868,7 @@ func NewDashboardConditionalRenderingGroupKind() *DashboardConditionalRenderingG
 
 // +k8s:openapi-gen=true
 type DashboardConditionalRenderingGroupSpec struct {
+	Outcome   DashboardConditionalRenderingGroupSpecOutcome                                                                   `json:"outcome"`
 	Condition DashboardConditionalRenderingGroupSpecCondition                                                                 `json:"condition"`
 	Items     []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind `json:"items"`
 }
@@ -1786,6 +1787,14 @@ type DashboardRepeatOptionsDirection string
 const (
 	DashboardRepeatOptionsDirectionH DashboardRepeatOptionsDirection = "h"
 	DashboardRepeatOptionsDirectionV DashboardRepeatOptionsDirection = "v"
+)
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingGroupSpecOutcome string
+
+const (
+	DashboardConditionalRenderingGroupSpecOutcomeShow DashboardConditionalRenderingGroupSpecOutcome = "show"
+	DashboardConditionalRenderingGroupSpecOutcomeHide DashboardConditionalRenderingGroupSpecOutcome = "hide"
 )
 
 // +k8s:openapi-gen=true

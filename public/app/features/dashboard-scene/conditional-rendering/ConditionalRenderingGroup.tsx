@@ -1,27 +1,38 @@
-import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
-
-import { SelectableValue } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Button, Field, RadioButtonGroup, Select, Stack, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { ConditionalRenderingData } from './ConditionalRenderingData';
+import { ConditionalRenderingGroupAdd } from './ConditionalRenderingGroupAdd';
+import { ConditionalRenderingGroupCondition } from './ConditionalRenderingGroupCondition';
+import { ConditionalRenderingGroupOutcome } from './ConditionalRenderingGroupOutcome';
 import { ConditionalRenderingInterval } from './ConditionalRenderingInterval';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
-import { ConditionalRenderingConditions } from './shared';
-
-export type GroupConditionValue = ConditionalRenderingConditions[];
+import { conditionalRenderingSerializerRegistry } from './serializers';
+import {
+  ConditionalRenderingKindTypes,
+  ConditionalRenderingSerializerRegistryItem,
+  GroupConditionCondition,
+  GroupConditionItemType,
+  GroupConditionOutcome,
+  GroupConditionValue,
+} from './types';
 
 export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<GroupConditionValue> {
-  outcome: 'show' | 'hide';
-  condition: 'and' | 'or';
+  outcome: GroupConditionOutcome;
+  condition: GroupConditionCondition;
 }
 
 export class ConditionalRenderingGroup extends ConditionalRenderingBase<ConditionalRenderingGroupState> {
   public static Component = ConditionalRenderingGroupRenderer;
+
+  public static serializer: ConditionalRenderingSerializerRegistryItem = {
+    id: 'ConditionalRenderingGroup',
+    name: 'Group',
+    deserialize: this.deserialize,
+  };
 
   public get title(): string {
     return t('dashboard.conditional-rendering.group.label', 'Group');
@@ -40,23 +51,21 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     return this.state.outcome === 'show' ? value : !value;
   }
 
-  public changeOutcome(outcome: 'show' | 'hide') {
+  public changeOutcome(outcome: GroupConditionOutcome) {
     this.setStateAndNotify({ outcome });
   }
 
-  public changeCondition(condition: 'and' | 'or') {
+  public changeCondition(condition: GroupConditionCondition) {
     this.setStateAndNotify({ condition });
   }
 
-  public addItem(itemType: 'data' | 'variable' | 'interval') {
+  public addItem(itemType: GroupConditionItemType) {
     const item =
       itemType === 'data'
-        ? new ConditionalRenderingData({ value: true })
+        ? ConditionalRenderingData.createEmpty()
         : itemType === 'variable'
-          ? new ConditionalRenderingVariable({
-              value: { name: sceneGraph.getVariables(this).state.variables[0].state.name, operator: '=', value: '' },
-            })
-          : new ConditionalRenderingInterval({ value: '7d' });
+          ? ConditionalRenderingVariable.createEmpty(sceneGraph.getVariables(this).state.variables[0].state.name)
+          : ConditionalRenderingInterval.createEmpty();
 
     // We don't use `setStateAndNotify` here because
     // We need to set a parent and activate the new condition before notifying the root
@@ -90,102 +99,44 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     };
   }
 
+  public static deserialize(model: ConditionalRenderingGroupKind): ConditionalRenderingGroup {
+    return new ConditionalRenderingGroup({
+      condition: model.spec.condition,
+      outcome: model.spec.outcome,
+      value: model.spec.items.map((item: ConditionalRenderingKindTypes) => {
+        const serializerRegistryItem = conditionalRenderingSerializerRegistry.getIfExists(item.kind);
+
+        if (!serializerRegistryItem) {
+          throw new Error(`No serializer found for conditional rendering kind: ${item.kind}`);
+        }
+
+        return serializerRegistryItem.deserialize(item);
+      }),
+    });
+  }
+
   public static createEmpty(): ConditionalRenderingGroup {
     return new ConditionalRenderingGroup({ condition: 'and', outcome: 'show', value: [] });
   }
 }
 
 function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<ConditionalRenderingGroup>) {
-  const styles = useStyles2(getStyles);
   const { condition, outcome, value } = model.useState();
-
-  const [viewNewRule, setViewNewRule] = useState(false);
-
-  useEffect(() => setViewNewRule(false), [value]);
-
-  const outcomeOptions: Array<SelectableValue<'show' | 'hide'>> = useMemo(
-    () => [
-      { label: t('dashboard.conditional-rendering.group.outcome.show', 'Show'), value: 'show' },
-      { label: t('dashboard.conditional-rendering.group.outcome.hide', 'Hide'), value: 'hide' },
-    ],
-    []
-  );
-
-  const conditionsOptions: Array<SelectableValue<'and' | 'or'>> = useMemo(
-    () => [
-      { label: t('dashboard.conditional-rendering.group.condition.all', 'And'), value: 'and' },
-      { label: t('dashboard.conditional-rendering.group.condition.any', 'Or'), value: 'or' },
-    ],
-    []
-  );
-
-  const variables = sceneGraph.getVariables(model).state.variables;
-
-  const newRuleOptions: Array<SelectableValue<'data' | 'variable' | 'interval'>> = useMemo(
-    () => [
-      { label: t('dashboard.conditional-rendering.group.add.data', 'Query result'), value: 'data' },
-      {
-        label: t('dashboard.conditional-rendering.group.add.variable', 'Template variable'),
-        value: 'variable',
-        isDisabled: variables.length === 0,
-      },
-      {
-        label: t('dashboard.conditional-rendering.group.add.interval', 'Dashboard time range less than'),
-        value: 'interval',
-      },
-    ],
-    [variables]
-  );
+  const { variables } = sceneGraph.getVariables(model).useState();
 
   return (
     <Stack direction="column" gap={2}>
-      <Field label={t('dashboard.conditional-rendering.group.outcome.label', 'Rules outcome')} className={styles.field}>
-        <RadioButtonGroup
-          fullWidth
-          options={outcomeOptions}
-          value={outcome}
-          onChange={(value) => model.changeOutcome(value!)}
-        />
-      </Field>
+      <ConditionalRenderingGroupOutcome value={outcome} onChange={(value) => model.changeOutcome(value)} />
 
-      <Field label={t('dashboard.conditional-rendering.group.condition.label', 'Match rules')} className={styles.field}>
-        <RadioButtonGroup
-          fullWidth
-          options={conditionsOptions}
-          value={condition}
-          onChange={(value) => model.changeCondition(value!)}
-        />
-      </Field>
+      <ConditionalRenderingGroupCondition value={condition} onChange={(value) => model.changeCondition(value)} />
 
-      <Stack direction="column" gap={2}>
-        {value.map((entry) => entry.render())}
+      {value.map((entry) => entry.render())}
 
-        {viewNewRule ? (
-          <Select
-            allowCustomValue={false}
-            placeholder={t('dashboard.conditional-rendering.group.add.placeholder', 'Select rule type')}
-            options={newRuleOptions}
-            onChange={({ value }) => model.addItem(value!)}
-          />
-        ) : null}
-      </Stack>
-
-      <div className={styles.addButtonContainer}>
-        <Button icon="plus" variant="secondary" size="sm" fullWidth onClick={() => setViewNewRule(true)}>
-          <Trans i18nKey="dashboard.conditional-rendering.group.add.button">Add rule</Trans>
-        </Button>
-      </div>
+      <ConditionalRenderingGroupAdd
+        allConditions={value}
+        hasVariables={variables.length > 0}
+        onAdd={(itemType) => model.addItem(itemType)}
+      />
     </Stack>
   );
 }
-
-const getStyles = () => ({
-  field: css({
-    margin: 0,
-  }),
-  addButtonContainer: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-  }),
-});

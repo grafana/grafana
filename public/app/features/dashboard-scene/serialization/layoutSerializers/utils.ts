@@ -242,9 +242,10 @@ export function getConditionalRendering(item: RowsLayoutRowKind | AutoGridLayout
   if (!item.spec.conditionalRendering) {
     return ConditionalRendering.createEmpty();
   }
+
   const rootGroup = conditionalRenderingSerializerRegistry
     .get(item.spec.conditionalRendering.kind)
-    .serializer.deserialize(item.spec.conditionalRendering);
+    .deserialize(item.spec.conditionalRendering);
 
   if (rootGroup && !(rootGroup instanceof ConditionalRenderingGroup)) {
     throw new Error(`Conditional rendering must always start with a root group`);

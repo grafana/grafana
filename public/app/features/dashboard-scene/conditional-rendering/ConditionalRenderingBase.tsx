@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
+import { ReactElement } from 'react';
 
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ConditionalRendering } from './ConditionalRendering';
-import { ConditionalRenderingKindTypes } from './serializers';
-import { ConditionValues } from './shared';
+import { ConditionalRenderingKindTypes, ConditionValues } from './types';
 
 export interface ConditionalRenderingBaseState<V = ConditionValues> extends SceneObjectState {
   value: V;
@@ -42,8 +42,8 @@ export abstract class ConditionalRenderingBase<
     this._getConditionalLogicRoot().deleteItem(this);
   }
 
-  public render(withWrapper = true) {
-    return <ConditionalRenderingBaseRenderer model={this} withWrapper={withWrapper} />;
+  public render(withWrapper = true): ReactElement {
+    return <ConditionalRenderingBaseRenderer model={this} withWrapper={withWrapper} key={this.state.key!} />;
   }
 
   public getItem(): SceneObject {
@@ -77,7 +77,7 @@ function ConditionalRenderingBaseRenderer<T extends ConditionalRenderingBase>({
   }
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" key={model.state.key}>
       <Text variant="bodySmall">{model.title}</Text>
       <Stack direction="row" gap={1} justifyContent="stretch" alignItems="baseline">
         <div className={styles.body}>{comp}</div>

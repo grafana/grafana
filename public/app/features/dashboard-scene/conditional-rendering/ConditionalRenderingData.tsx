@@ -10,13 +10,18 @@ import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem
 import { RowItem } from '../scene/layout-rows/RowItem';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-
-export type DataConditionValue = boolean;
+import { ConditionalRenderingSerializerRegistryItem, DataConditionValue } from './types';
 
 type ConditionalRenderingDataState = ConditionalRenderingBaseState<DataConditionValue>;
 
 export class ConditionalRenderingData extends ConditionalRenderingBase<ConditionalRenderingDataState> {
   public static Component = ConditionalRenderingDataRenderer;
+
+  public static serializer: ConditionalRenderingSerializerRegistryItem = {
+    id: 'ConditionalRenderingData',
+    name: 'Data',
+    deserialize: this.deserialize,
+  };
 
   public get title(): string {
     return t('dashboard.conditional-rendering.data.label', 'Query result');
@@ -100,12 +105,15 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   }
 
   public serialize(): ConditionalRenderingDataKind {
-    return {
-      kind: 'ConditionalRenderingData',
-      spec: {
-        value: this.state.value,
-      },
-    };
+    return { kind: 'ConditionalRenderingData', spec: { value: this.state.value } };
+  }
+
+  public static deserialize(model: ConditionalRenderingDataKind): ConditionalRenderingData {
+    return new ConditionalRenderingData({ value: model.spec.value });
+  }
+
+  public static createEmpty(): ConditionalRenderingData {
+    return new ConditionalRenderingData({ value: true });
   }
 }
 

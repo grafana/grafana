@@ -6,19 +6,22 @@ import { Box, Combobox, ComboboxOption, Input, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-
-export type VariableConditionValueOperator = '=' | '!=';
-
-export type VariableConditionValue = {
-  name: string;
-  operator: VariableConditionValueOperator;
-  value: string;
-};
+import {
+  ConditionalRenderingSerializerRegistryItem,
+  VariableConditionValue,
+  VariableConditionValueOperator,
+} from './types';
 
 type ConditionalRenderingVariableState = ConditionalRenderingBaseState<VariableConditionValue>;
 
 export class ConditionalRenderingVariable extends ConditionalRenderingBase<ConditionalRenderingVariableState> {
   public static Component = ConditionalRenderingVariableRenderer;
+
+  public static serializer: ConditionalRenderingSerializerRegistryItem = {
+    id: 'ConditionalRenderingVariable',
+    name: 'Variable',
+    deserialize: this.deserialize,
+  };
 
   public get title(): string {
     return t('dashboard.conditional-rendering.variable.label', 'Template variable');
@@ -61,6 +64,20 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
         value: this.state.value.value,
       },
     };
+  }
+
+  public static deserialize(model: ConditionalRenderingVariableKind): ConditionalRenderingVariable {
+    return new ConditionalRenderingVariable({
+      value: {
+        name: model.spec.variable,
+        operator: model.spec.operator === 'equals' ? '=' : '!=',
+        value: model.spec.value,
+      },
+    });
+  }
+
+  public static createEmpty(name: string): ConditionalRenderingVariable {
+    return new ConditionalRenderingVariable({ value: { name, operator: '=', value: '' } });
   }
 }
 

@@ -711,11 +711,13 @@ export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGrou
 });
 
 export interface ConditionalRenderingGroupSpec {
+	outcome: "show" | "hide";
 	condition: "and" | "or";
 	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind)[];
 }
 
 export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
+	outcome: "show",
 	condition: "and",
 	items: [],
 });

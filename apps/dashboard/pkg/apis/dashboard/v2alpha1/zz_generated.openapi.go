@@ -904,6 +904,13 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingGroupSpec(r
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"outcome": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"condition": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -924,7 +931,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingGroupSpec(r
 						},
 					},
 				},
-				Required: []string{"condition", "items"},
+				Required: []string{"outcome", "condition", "items"},
 			},
 		},
 		Dependencies: []string{
