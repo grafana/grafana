@@ -74,7 +74,6 @@ type Dialect interface {
 
 	CleanDB(engine *xorm.Engine) error
 	TruncateDBTables(engine *xorm.Engine) error
-	NoOpSQL() string
 	// CreateDatabaseFromSnapshot is called when migration log table is not found.
 	// Dialect can recreate all tables from existing snapshot. After successful (nil error) return,
 	// migrator will list migrations from the log, and apply all missing migrations.
@@ -351,10 +350,6 @@ func (b *BaseDialect) CleanDB(engine *xorm.Engine) error {
 
 func (b *BaseDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, tableName string) error {
 	return nil
-}
-
-func (b *BaseDialect) NoOpSQL() string {
-	return "SELECT 0;"
 }
 
 func (b *BaseDialect) TruncateDBTables(engine *xorm.Engine) error {
