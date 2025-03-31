@@ -35,6 +35,10 @@ With SCIM, you can:
 
 SCIM provisioning works in conjunction with existing user management methods in Grafana. While SCIM automates user provisioning from the identity provider, users can still be created through SAML just-in-time provisioning when they log in, manually through the Grafana UI, or via automation tools like Terraform and the Grafana API. For the most consistent user management experience, we recommend centralizing user provisioning through SCIM.
 
+{{< admonition type="warning" >}}
+Once a user is provisioned through SCIM, they cannot be deleted from Grafana - they can only be deactivated through the identity provider. This is important to consider when planning your user management strategy, especially for compliance and data retention requirements.
+{{< /admonition >}}
+
 For detailed configuration steps specific to the identity provider, see:
 
 - [Configure SCIM with Azure AD](../configure-scim-azure/)
@@ -108,6 +112,10 @@ SCIM handles user synchronization but not role assignments. Role management is h
 ## Team provisioning with SCIM
 
 SCIM provides automated team management capabilities that go beyond what Team Sync offers. While Team Sync only maps identity provider groups to existing Grafana teams, SCIM can automatically create and delete teams based on group changes in the identity provider.
+
+{{< admonition type="warning" >}}
+Teams provisioned through SCIM cannot be deleted manually from Grafana - they can only be deleted by removing their corresponding groups from the identity provider. 
+{{< /admonition >}}
 
 For detailed configuration steps specific to the identity provider, see:
 
