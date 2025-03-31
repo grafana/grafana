@@ -1,6 +1,6 @@
 import { Playlist } from '../../api/clients/playlist';
 import { DashboardQueryResult } from '../search/service/types';
-export type PlaylistMode = boolean | 'tv';
+export type PlaylistMode = boolean;
 
 export interface PlaylistUI {
   /**
