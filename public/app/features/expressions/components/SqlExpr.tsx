@@ -57,7 +57,10 @@ export const SqlExpr = ({ onChange, refIds, query }: Props) => {
 
   useEffect(() => {
     // Call the onChange method once so we have access to the initial query in consuming components
-    onEditorChange(initialQuery);
+    // But only if expression is empty
+    if (!query.expression) {
+      onEditorChange(initialQuery);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
