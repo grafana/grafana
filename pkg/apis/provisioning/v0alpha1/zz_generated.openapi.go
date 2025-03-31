@@ -733,8 +733,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 					},
 					"repository": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The the repository reference (for now also in labels)",
-							Default:     "",
+							Description: "The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -764,7 +763,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 						},
 					},
 				},
-				Required: []string{"action", "repository"},
+				Required: []string{"action"},
 			},
 		},
 		Dependencies: []string{

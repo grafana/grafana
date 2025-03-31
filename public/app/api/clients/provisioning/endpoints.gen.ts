@@ -844,8 +844,8 @@ export type JobSpec = {
   pull?: SyncJobOptions;
   /** Required when the action is `push` */
   push?: ExportJobOptions;
-  /** The the repository reference (for now also in labels) */
-  repository: string;
+  /** The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request */
+  repository?: string;
 };
 export type JobResourceSummary = {
   create?: number;

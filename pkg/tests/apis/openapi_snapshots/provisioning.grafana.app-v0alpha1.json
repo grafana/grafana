@@ -1954,7 +1954,6 @@
                     },
                     "spec": {
                       "action": "pull",
-                      "repository": "",
                       "pull": {
                         "incremental": true
                       }
@@ -1975,7 +1974,6 @@
                     },
                     "spec": {
                       "action": "pull",
-                      "repository": "",
                       "pull": {
                         "incremental": false
                       }
@@ -3105,8 +3103,7 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobSpec": {
         "type": "object",
         "required": [
-          "action",
-          "repository"
+          "action"
         ],
         "properties": {
           "action": {
@@ -3153,9 +3150,8 @@
             ]
           },
           "repository": {
-            "description": "The the repository reference (for now also in labels)",
-            "type": "string",
-            "default": ""
+            "description": "The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request",
+            "type": "string"
           }
         }
       },
