@@ -22,15 +22,15 @@ export interface JobStatusProps {
 }
 
 export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChange }: JobStatusProps) {
-  console.log('WATCH', watch.metadata?.name);
   const activeQuery = useListJobQuery({
-    labelSelector: `metadata.name=${watch.metadata?.name}`,
+    fieldSelector: `metadata.name=${watch.metadata?.name}`,
     watch: true,
   });
 
+  // ??? ideally only execute this after the active query is done
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
-    name: watch.metadata?.labels?.['xxx'] ?? 'repo',
-    uid: watch.metadata?.uid ?? 'uid',
+    name: watch.metadata?.labels?.['provisioning.grafana.app/repository']!,
+    uid: watch.metadata?.uid!,
   });
 
   const job = useMemo(() => {
@@ -42,7 +42,9 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
       if (finishedQuery.data) {
         return finishedQuery.data;
       }
-      finishedQuery.refetch(); // try again
+      setTimeout(() => {
+        finishedQuery.refetch(); // try again
+      }, 150);
     }
     return watch;
   }, [watch, activeQuery, finishedQuery]);

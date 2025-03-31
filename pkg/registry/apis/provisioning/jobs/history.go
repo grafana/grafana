@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -19,10 +20,10 @@ type History interface {
 	WriteJob(ctx context.Context, job *provisioning.Job) error
 
 	// Gets recent jobs for a repository
-	RecentJobs(ctx context.Context, repo string) (*provisioning.JobList, error)
+	RecentJobs(ctx context.Context, namespace string, repo string) (*provisioning.JobList, error)
 
 	// find a specific job from the original UID
-	GetJob(ctx context.Context, repo string, uid string) (*provisioning.Job, error)
+	GetJob(ctx context.Context, namespace string, uid string) (*provisioning.Job, error)
 }
 
 // NewStorageBackedHistory creates a History client backed by unified storage
@@ -75,7 +76,8 @@ func (s *storageBackedHistory) WriteJob(ctx context.Context, job *provisioning.J
 	return err
 }
 
-func (s *storageBackedHistory) getJobs(ctx context.Context, labels labels.Set) (*provisioning.JobList, error) {
+func (s *storageBackedHistory) getJobs(ctx context.Context, namespace string, labels labels.Set) (*provisioning.JobList, error) {
+	ctx = request.WithNamespace(ctx, namespace)
 	obj, err := s.lister.List(ctx, &internalversion.ListOptions{
 		LabelSelector: labels.AsSelector(),
 	})
@@ -102,15 +104,15 @@ func (s *storageBackedHistory) getJobs(ctx context.Context, labels labels.Set) (
 }
 
 // Recent implements History.
-func (s *storageBackedHistory) RecentJobs(ctx context.Context, repo string) (*provisioning.JobList, error) {
-	return s.getJobs(ctx, labels.Set{
+func (s *storageBackedHistory) RecentJobs(ctx context.Context, namespace, repo string) (*provisioning.JobList, error) {
+	return s.getJobs(ctx, namespace, labels.Set{
 		LabelRepository: repo,
 	})
 }
 
 // GetJob implements History.
-func (s *storageBackedHistory) GetJob(ctx context.Context, repo string, job string) (*provisioning.Job, error) {
-	jobs, err := s.getJobs(ctx, labels.Set{
+func (s *storageBackedHistory) GetJob(ctx context.Context, namespace, job string) (*provisioning.Job, error) {
+	jobs, err := s.getJobs(ctx, namespace, labels.Set{
 		LabelJobOriginalUID: job,
 	})
 	if err != nil {
