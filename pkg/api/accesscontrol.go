@@ -71,10 +71,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleEditor)},
 	}
 
-	if hs.Cfg.ViewersCanEdit {
-		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(org.RoleViewer))
-	}
-
 	datasourcesReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:datasources:reader",
@@ -256,9 +252,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	teamCreatorGrants := []string{string(org.RoleAdmin)}
-	if hs.Cfg.EditorsCanAdmin {
-		teamCreatorGrants = append(teamCreatorGrants, string(org.RoleEditor))
-	}
+
 	teamsCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:teams:creator",

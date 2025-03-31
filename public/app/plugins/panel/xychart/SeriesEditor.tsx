@@ -13,7 +13,7 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { Button, Field, IconButton, Select, useStyles2 } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { FieldNamePicker } from '@grafana/ui/internal';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 
 import { Options, SeriesMapping, XYSeriesConfig } from './panelcfg.gen';

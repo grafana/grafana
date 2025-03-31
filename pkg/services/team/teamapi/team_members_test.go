@@ -47,6 +47,7 @@ func SetupAPITestServer(t *testing.T, teamService team.Service, opts ...func(a *
 		cfg,
 		preftest.NewPreferenceServiceFake(),
 		dashboards.NewFakeDashboardService(t),
+		featuremgmt.WithFeatures(),
 	)
 	for _, o := range opts {
 		o(a)
@@ -302,6 +303,7 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 				cfg,
 				preftest.NewPreferenceServiceFake(),
 				dashboards.NewFakeDashboardService(t),
+				featuremgmt.WithFeatures(),
 			)
 
 			user := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {"users:id:*"}}}}

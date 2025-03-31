@@ -521,7 +521,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		sess.Join("INNER", "team", "team.id=team_member.team_id")
 
 		// explicitly check for serviceaccounts
-		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.db.GetDialect().Quote("user")), ss.db.GetDialect().BooleanStr(false))
+		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.db.GetDialect().Quote("user")), ss.db.GetDialect().BooleanValue(false))
 
 		if acUserFilter != nil {
 			sess.Where(acUserFilter.Where, acUserFilter.Args...)
@@ -549,20 +549,19 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 			sess.Where("team_member.user_id=?", query.UserID)
 		}
 		if query.External {
-			sess.Where("team_member.external=?", ss.db.GetDialect().BooleanStr(true))
+			sess.Where("team_member.external=?", ss.db.GetDialect().BooleanValue(true))
 		}
-		sess.Cols(
-			"team_member.org_id",
-			"team_member.team_id",
-			"team_member.user_id",
-			"user.email",
-			"user.name",
-			"user.login",
-			"team_member.external",
-			"team_member.permission",
-			"user_auth.auth_module",
-			"team.uid",
-		)
+		sess.Select(fmt.Sprintf(`team_member.org_id,
+			team_member.team_id,
+			team_member.user_id,
+			%[1]s.email,
+			%[1]s.name,
+			%[1]s.login,
+			%[1]s.uid as user_uid,
+			team_member.external,
+			team_member.permission,
+			user_auth.auth_module,
+			team.uid`, ss.db.GetDialect().Quote("user")))
 		sess.Asc("user.login", "user.email")
 
 		err := sess.Find(&queryResult)

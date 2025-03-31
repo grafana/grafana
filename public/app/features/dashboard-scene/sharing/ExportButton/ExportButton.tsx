@@ -10,7 +10,11 @@ import ExportMenu from './ExportMenu';
 
 const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton;
 
-export default function ExportButton({ dashboard }: { dashboard: DashboardScene }) {
+interface Props {
+  dashboard: DashboardScene;
+}
+
+export default function ExportButton({ dashboard }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
   const onMenuClick = useCallback((isOpen: boolean) => {

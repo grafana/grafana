@@ -82,7 +82,7 @@ export class DashboardGridItem
     return this.state.variableName ? 'panel-repeater-grid-item' : '';
   }
 
-  public getOptions(): OptionsPaneCategoryDescriptor {
+  public getOptions(): OptionsPaneCategoryDescriptor[] {
     return getDashboardGridItemOptions(this);
   }
 
@@ -157,6 +157,8 @@ export class DashboardGridItem
               name: variable.state.name,
               value: variableValues[index],
               text: String(variableTexts[index]),
+              isMulti: variable.state.isMulti,
+              includeAll: variable.state.includeAll,
             }),
           ],
         }),

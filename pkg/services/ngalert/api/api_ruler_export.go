@@ -9,7 +9,9 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 
 	authz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	apivalidation "github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -21,7 +23,7 @@ func (srv RulerSrv) ExportFromPayload(c *contextmodel.ReqContext, ruleGroupConfi
 		return toNamespaceErrorResponse(err)
 	}
 
-	rulesWithOptionals, err := ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, RuleLimitsFromConfig(srv.cfg, srv.featureManager))
+	rulesWithOptionals, err := apivalidation.ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager))
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}

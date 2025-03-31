@@ -1,5 +1,12 @@
-import { DataSourceApi, dateTime, ExploreUrlState, GrafanaConfig, locationUtil, LogsSortOrder } from '@grafana/data';
-import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import {
+  DataSourceApi,
+  dateTime,
+  ExploreUrlState,
+  GrafanaConfig,
+  locationUtil,
+  LogsSortOrder,
+  serializeStateToUrlParam,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';

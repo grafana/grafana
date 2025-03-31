@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -240,19 +241,19 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 
 	migrationLogExists, err := mg.DBEngine.IsTableExist(mg.tableName)
 	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to check table existence", err)
+		return fmt.Errorf("failed to check table existence: %w", err)
 	}
 
 	if !migrationLogExists {
 		// Check if dialect can initialize database from a snapshot.
 		err := mg.Dialect.CreateDatabaseFromSnapshot(ctx, mg.DBEngine, mg.tableName)
 		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to create database from snapshot", err)
+			return fmt.Errorf("failed to create database from snapshot: %w", err)
 		}
 
 		migrationLogExists, err = mg.DBEngine.IsTableExist(mg.tableName)
 		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to check table existence after applying snapshot", err)
+			return fmt.Errorf("failed to check table existence after applying snapshot: %w", err)
 		}
 	}
 
@@ -392,8 +393,12 @@ func (mg *Migrator) exec(ctx context.Context, m Migration, sess *xorm.Session) e
 		err = codeMigration.Exec(sess, mg)
 	} else {
 		sql := m.SQL(mg.Dialect)
-		logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
-		_, err = sess.Exec(sql)
+		if strings.TrimSpace(sql) == "" {
+			logger.Debug("Skipping empty sql migration", "id", m.Id())
+		} else {
+			logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
+			_, err = sess.Exec(sql)
+		}
 	}
 
 	if err != nil {

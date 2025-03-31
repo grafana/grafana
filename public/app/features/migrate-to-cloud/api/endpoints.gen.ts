@@ -26,6 +26,9 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           resultPage: queryArg.resultPage,
           resultLimit: queryArg.resultLimit,
+          resultSortColumn: queryArg.resultSortColumn,
+          resultSortOrder: queryArg.resultSortOrder,
+          errorsOnly: queryArg.errorsOnly,
         },
       }),
     }),
@@ -97,6 +100,12 @@ export type GetSnapshotApiArg = {
   resultPage?: number;
   /** Max limit for snapshot results returned. */
   resultLimit?: number;
+  /** ResultSortColumn can be used to override the default system sort. Valid values are "name", "resource_type", and "status". */
+  resultSortColumn?: string;
+  /** ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC. */
+  resultSortOrder?: string;
+  /** ErrorsOnly is used to only return resources with error statuses */
+  errorsOnly?: boolean;
   /** Session UID of a session */
   uid: string;
   /** UID of a snapshot */

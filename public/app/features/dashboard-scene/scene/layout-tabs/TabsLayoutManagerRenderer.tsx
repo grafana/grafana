@@ -3,24 +3,24 @@ import { Fragment } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { TabItemMenu } from './TabItemMenu';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { tabs, currentTabIndex } = model.useState();
-  const currentTab = tabs[currentTabIndex];
+  const { tabs } = model.useState();
+  const currentTab = model.getCurrentTab();
   const { layout } = currentTab.useState();
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
 
   return (
-    <>
-      <TabsBar className={styles.tabsWrapper}>
+    <div className={styles.tabLayoutContainer}>
+      <TabsBar className={styles.tabsBar}>
         <div className={styles.tabsRow}>
           <div className={styles.tabsContainer}>
             {tabs.map((tab) => (
@@ -29,40 +29,57 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
               </Fragment>
             ))}
           </div>
-          {isEditing && <TabItemMenu model={currentTab} />}
+          {isEditing && (
+            <div className="dashboard-canvas-add-button">
+              <Button icon="plus" variant="primary" fill="text" onClick={() => model.addNewTab()}>
+                <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
+              </Button>
+            </div>
+          )}
         </div>
       </TabsBar>
       <TabContent className={styles.tabContentContainer}>
         {currentTab && <layout.Component model={layout} />}
       </TabContent>
-    </>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tabsWrapper: css({
+  tabLayoutContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 auto',
+  }),
+  tabsBar: css({
     overflow: 'hidden',
+    '&:hover': {
+      '.dashboard-canvas-add-button': {
+        filter: 'unset',
+        opacity: 1,
+      },
+    },
   }),
   tabsRow: css({
-    justifyContent: 'space-between',
     display: 'flex',
     width: '100%',
+    alignItems: 'center',
   }),
   tabsContainer: css({
     display: 'flex',
     justifyContent: 'flex-start',
-    alignItems: 'center',
-    overflowX: 'scroll',
-    overflowY: 'visible',
+    alignItems: 'flex-end',
+    overflowX: 'auto',
+    overflowY: 'hidden',
     paddingInline: theme.spacing(0.125),
+    paddingTop: '1px',
   }),
   tabContentContainer: css({
     backgroundColor: 'transparent',
     display: 'flex',
+    flexDirection: 'column',
     flex: 1,
-    height: '100%',
-    overflow: 'auto',
-    scrollbarWidth: 'thin',
-    padding: '2px 2px 0 2px',
+    minHeight: 0,
+    paddingTop: theme.spacing(1),
   }),
 });

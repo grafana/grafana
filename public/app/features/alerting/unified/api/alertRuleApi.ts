@@ -13,10 +13,12 @@ import {
   AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
+  GrafanaRuleDefinition,
   Labels,
   PostableRulerRuleGroupDTO,
   PromRulesResponse,
   RulerGrafanaRuleDTO,
+  RulerGrafanaRulesConfigDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -25,7 +27,7 @@ import { ExportFormats } from '../components/export/providers';
 import { Folder } from '../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
-import { isCloudRuleIdentifier, isGrafanaRulerRule, isPrometheusRuleIdentifier } from '../utils/rules';
+import { isCloudRuleIdentifier, isPrometheusRuleIdentifier, rulerRuleType } from '../utils/rules';
 
 import { WithNotificationOptions, alertingApi } from './alertingApi';
 import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
@@ -283,7 +285,11 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     deleteRuleGroupFromNamespace: build.mutation<
       RulerRuleGroupDTO,
-      WithNotificationOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
+      WithNotificationOptions<{
+        rulerConfig: RulerDataSourceConfig;
+        namespace: string;
+        group: string;
+      }>
     >({
       query: ({ rulerConfig, namespace, group, notificationOptions }) => {
         const successMessage = t('alerting.rule-groups.delete.success', 'Successfully deleted rule group');
@@ -302,6 +308,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       invalidatesTags: (_result, _error, { namespace, group, rulerConfig }) => [
         { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${group}` },
         { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
+        'DeletedRules',
       ],
     }),
 
@@ -330,7 +337,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         };
       },
       invalidatesTags: (result, _error, { namespace, payload, rulerConfig }) => {
-        const grafanaRulerRules = payload.rules.filter((rule) => isGrafanaRulerRule(rule));
+        const grafanaRulerRules = payload.rules.filter(rulerRuleType.grafana.rule);
 
         return [
           { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
@@ -339,6 +346,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
             { type: 'GrafanaRulerRule', id: rule.grafana_alert.uid } as const,
             { type: 'GrafanaRulerRuleVersion', id: rule.grafana_alert.uid } as const,
           ]),
+          'DeletedRules',
         ];
       },
     }),
@@ -412,6 +420,18 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         responseType: 'text',
       }),
       keepUnusedDataFor: 0,
+    }),
+    getDeletedRules: build.query<Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>, {}>({
+      query: () => ({
+        url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rules/`,
+        params: { deleted: 'true' },
+      }),
+      transformResponse: (response: RulerGrafanaRulesConfigDTO) => {
+        const values = Object.values(response);
+        const deletedRules = values.length > 0 ? values[0][0]?.rules : [];
+        return deletedRules;
+      },
+      providesTags: ['DeletedRules'],
     }),
   }),
 });

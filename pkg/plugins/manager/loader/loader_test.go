@@ -88,6 +88,10 @@ func TestLoader_Load(t *testing.T) {
 								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 							},
+							Links: []plugins.InfoLink{
+								{Name: "Raise issue", URL: "https://github.com/grafana/grafana/issues/new"},
+								{Name: "Documentation", URL: "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/"},
+							},
 						},
 						Includes: []*plugins.Includes{
 							{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard", Role: "Viewer"},
