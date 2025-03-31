@@ -959,6 +959,10 @@ const (
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
 
+	// FlagLocaleFormatPreference
+	// Specify the locale so we can show the correct format for numbers and dates
+	FlagLocaleFormatPreference = "localeFormatPreference"
+
 	// FlagUnifiedStorageGrpcConnectionPool
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
