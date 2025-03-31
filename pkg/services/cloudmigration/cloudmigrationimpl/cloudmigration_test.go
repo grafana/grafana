@@ -343,6 +343,12 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
 			SnapshotUID: snapshotUID,
 			SessionUID:  sessionUID,
+			SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
+				ResultLimit: 10,
+				ResultPage:  1,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			},
 		})
 		require.NoError(t, err)
 		require.NotNil(t, snapshot)

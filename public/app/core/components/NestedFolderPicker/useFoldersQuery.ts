@@ -70,7 +70,7 @@ const listAllFoldersSelector = createSelector(
 );
 
 /**
- * Returns the whether the set of pages are 'fully loaded', the last page number, and if the last page is currently loading
+ * Returns whether the set of pages are 'fully loaded', the last page number, and if the last page is currently loading
  */
 function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undefined, boolean] {
   const lastPage = pages.at(-1);
@@ -151,7 +151,6 @@ export function useFoldersQuery(
 
         return pageItems.flatMap((item) => {
           const folderIsOpen = openFolders[item.uid];
-
           const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
             isOpen: Boolean(folderIsOpen),
             level: level,
@@ -159,6 +158,7 @@ export function useFoldersQuery(
               kind: 'folder' as const,
               title: item.title,
               uid: item.uid,
+              managedBy: item.managedBy,
             },
           };
 

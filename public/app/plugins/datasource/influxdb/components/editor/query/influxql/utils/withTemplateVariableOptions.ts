@@ -1,5 +1,5 @@
 // helper function to make it easy to call this from the widget-render-code
-import { TypedVariableModel } from '@grafana/data/src';
+import { TypedVariableModel } from '@grafana/data';
 
 import { getTemplateVariableOptions } from './getTemplateVariableOptions';
 
