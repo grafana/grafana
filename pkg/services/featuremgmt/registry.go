@@ -1709,6 +1709,14 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "useScopesNavigationEndpoint",
+			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
 			Name:              "alertingRuleVersionHistoryRestore",
 			Description:       "Enables the alert rule version history restore feature",
 			FrontendOnly:      true,
@@ -1799,6 +1807,12 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:        "localeFormatPreference",
+			Description: "Specify the locale so we can show the correct format for numbers and dates",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:              "unifiedStorageGrpcConnectionPool",

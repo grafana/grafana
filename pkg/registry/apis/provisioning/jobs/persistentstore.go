@@ -382,6 +382,7 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	}
 	s.generateJobName(job) // Side-effect: updates the job's name.
 
+	ctx = request.WithNamespace(ctx, job.GetNamespace())
 	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
 		return nil, apifmt.Errorf("job '%s' in '%s' already exists: %w", job.GetName(), job.GetNamespace(), err)
