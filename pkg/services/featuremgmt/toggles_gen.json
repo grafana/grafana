@@ -2471,6 +2471,18 @@
     },
     {
       "metadata": {
+        "name": "localeFormatPreference",
+        "resourceVersion": "1742397804851",
+        "creationTimestamp": "2025-03-19T15:23:24Z"
+      },
+      "spec": {
+        "description": "Specify the locale so we can show the correct format for numbers and dates",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
         "name": "localizationForPlugins",
         "resourceVersion": "1742561476144",
         "creationTimestamp": "2025-03-21T12:51:16Z"

@@ -50,8 +50,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	// Locale is used for some number and date/time formatting, whereas language is used just for
 	// translating words in the interface
 	acceptLangHeader := c.Req.Header.Get("Accept-Language")
-	locale := "en-US"
-	language := "" // frontend will set the default language
+	locale := "en-US" // default to en-US formatting, but use the accept-lang header or user's preference
+	language := ""    // frontend will set the default language
 
 	if prefs.JSONData.Language != "" {
 		language = prefs.JSONData.Language
@@ -60,6 +60,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	if len(acceptLangHeader) > 0 {
 		parts := strings.Split(acceptLangHeader, ",")
 		locale = parts[0]
+	}
+
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
+		if prefs.JSONData.Locale != "" {
+			locale = prefs.JSONData.Locale
+		}
 	}
 
 	appURL := hs.Cfg.AppURL
