@@ -966,7 +966,7 @@ const (
 	// FlagExtensionSidebar
 	// Enables the extension sidebar
 	FlagExtensionSidebar = "extensionSidebar"
-  
+
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
