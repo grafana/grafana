@@ -277,7 +277,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 			t.Run("path with slashes and user is editor", func(t *testing.T) {
 				ctx, _ := setUp()
-				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/api//admin")
+				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "//api//admin")
 				require.NoError(t, err)
 				err = proxy.validateRequest()
 				require.Error(t, err)
