@@ -97,30 +97,11 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 		isDir := safepath.IsDir(filePath)
 		if r.Method == http.MethodGet && isDir {
-			// TODO: Implement folder navigation
-			if len(filePath) > 0 {
-				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
-				return
-			}
-
-			// TODO: Add pagination
-			rsp, err := readWriter.ReadTree(ctx, ref)
+			files, err := s.listFolderFiles(ctx, filePath, ref, readWriter)
 			if err != nil {
 				responder.Error(err)
-				return
 			}
 
-			files := &provisioning.FileList{}
-			for _, v := range rsp {
-				if !v.Blob {
-					continue // folder item
-				}
-				files.Items = append(files.Items, provisioning.FileItem{
-					Path: v.Path,
-					Size: v.Size,
-					Hash: v.Hash,
-				})
-			}
 			responder.Object(http.StatusOK, files)
 			return
 		}
@@ -212,6 +193,34 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		logger.Debug("request resulted in valid object", "object", obj)
 		responder.Object(code, obj)
 	}), 30*time.Second), nil
+}
+
+// listFolderFiles returns a list of files in a folder
+func (s *filesConnector) listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
+	// TODO: Implement folder navigation
+	if len(filePath) > 0 {
+		return nil, apierrors.NewBadRequest("folder navigation not yet supported")
+	}
+
+	// TODO: Add pagination
+	rsp, err := readWriter.ReadTree(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+
+	files := &provisioning.FileList{}
+	for _, v := range rsp {
+		if !v.Blob {
+			continue // folder item
+		}
+		files.Items = append(files.Items, provisioning.FileItem{
+			Path: v.Path,
+			Size: v.Size,
+			Hash: v.Hash,
+		})
+	}
+
+	return files, nil
 }
 
 var (
