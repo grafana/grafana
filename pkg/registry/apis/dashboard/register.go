@@ -173,7 +173,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 			}
 
 			if provisioningData != nil {
-				return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+				return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 			}
 		}
 	}

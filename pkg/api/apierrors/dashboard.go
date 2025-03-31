@@ -46,5 +46,10 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store
 		return response.Error(http.StatusRequestEntityTooLarge, fmt.Sprintf("Dashboard is too large, max is %d MB", apiserver.MaxRequestBodyBytes/1024/1024), err)
 	}
 
+	var statusErr *apierrors.StatusError
+	if errors.As(err, &statusErr) {
+		return response.Error(int(statusErr.ErrStatus.Code), statusErr.ErrStatus.Message, err)
+	}
+
 	return response.Error(http.StatusInternalServerError, "Failed to save dashboard", err)
 }
