@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Field, Input, MultiCombobox, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getWorkflowOptions } from '../Config/ConfigForm';
 import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
@@ -42,21 +43,21 @@ export function FinishStep() {
     <Stack direction="column">
       {isGithub && (
         <Field
-          label="Update instance interval (seconds)"
-          description="How often shall the instance pull updates from GitHub?"
+          label={t("provisioning.finish-step.label-update-instance-interval-seconds", "Update instance interval (seconds)")}
+          description={t("provisioning.finish-step.description-often-shall-instance-updates-git-hub", "How often shall the instance pull updates from GitHub?")}
           required
         >
           <Input
             {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
             type="number"
-            placeholder="60"
+            placeholder={t("provisioning.finish-step.placeholder", "60")}
           />
         </Field>
       )}
 
       <Field
-        label="Workflows"
-        description="Select the workflows that are allowed within this repository"
+        label={t("provisioning.finish-step.label-workflows", "Workflows")}
+        description={t("provisioning.finish-step.description-select-workflows-allowed-within-repository", "Select the workflows that are allowed within this repository")}
         required
         error={errors.repository?.workflows?.message}
         invalid={!!errors.repository?.workflows}
@@ -68,7 +69,7 @@ export function FinishStep() {
           render={({ field: { ref, onChange, ...field } }) => (
             <MultiCombobox
               options={getWorkflowOptions(type)}
-              placeholder="Read-only repository"
+              placeholder={t("provisioning.finish-step.placeholder-readonly-repository", "Read-only repository")}
               onChange={(val) => {
                 onChange(val.map((v) => v.value));
               }}

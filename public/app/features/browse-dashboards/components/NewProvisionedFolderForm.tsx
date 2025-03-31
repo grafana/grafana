@@ -11,6 +11,7 @@ import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provis
 import { AnnoKeyManagerIdentity, AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam, useRepositoryList } from 'app/features/provisioning/hooks';
 import { WorkflowOption } from 'app/features/provisioning/types';
@@ -233,17 +234,3 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     </form>
   );
 }
-
-const BranchValidationError = () => {
-  return (
-    <>
-      Invalid branch name.
-      <ul style={{ padding: '0 20px' }}>
-        <li>It cannot start with '/' or end with '/', '.', or whitespace.</li>
-        <li>It cannot contain '//' or '..'.</li>
-        <li>It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\', or ']'.</li>
-        <li>It must have at least one valid character.</li>
-      </ul>
-    </>
-  );
-};

@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, Button, useStyles2, Stack, Text } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { SetupStep } from './SetupStep';
 import { Sidebar } from './Sidebar';
@@ -46,18 +47,18 @@ export const SetupModal = ({ title, description, steps, isOpen, onDismiss }: Pro
 
       <Modal.ButtonRow>
         <Stack direction="row" justifyContent="flex-end" gap={2}>
-          <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
+          <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}><Trans i18nKey="provisioning.setup-modal.previous">
             Previous
-          </Button>
+          </Trans></Button>
 
           {isLastStep ? (
-            <Button variant="primary" onClick={onDismiss} icon="check-circle">
+            <Button variant="primary" onClick={onDismiss} icon="check-circle"><Trans i18nKey="provisioning.setup-modal.done">
               Done
-            </Button>
+            </Trans></Button>
           ) : (
-            <Button variant="primary" onClick={handleNext}>
+            <Button variant="primary" onClick={handleNext}><Trans i18nKey="provisioning.setup-modal.next">
               Next
-            </Button>
+            </Trans></Button>
           )}
         </Stack>
       </Modal.ButtonRow>

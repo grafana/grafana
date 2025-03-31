@@ -11,6 +11,7 @@ import {
   useDeleteRepositoryMutation,
   useGetFrontendSettingsQuery,
 } from 'app/api/clients/provisioning';
+import { t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks';
@@ -198,7 +199,7 @@ export function WizardContent({
         </Text>
       </Box>
 
-      <RequestErrorAlert request={saveRequest} title="Repository verification failed" />
+      <RequestErrorAlert request={saveRequest} title={t("provisioning.wizard-content.title-repository-verification-failed", "Repository verification failed")} />
 
       <div className={styles.content}>
         {activeStep === 'connection' && <ConnectStep />}

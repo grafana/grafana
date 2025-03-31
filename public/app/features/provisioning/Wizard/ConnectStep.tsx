@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, ComboboxOption, Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getWorkflowOptions } from '../Config/ConfigForm';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
@@ -29,7 +30,7 @@ export function ConnectStep() {
 
   return (
     <Stack direction="column">
-      <Field label="Storage type" required description="Choose the type of storage for your resources">
+      <Field label={t("provisioning.connect-step.label-storage-type", "Storage type")} required description={t("provisioning.connect-step.description-choose-storage-resources", "Choose the type of storage for your resources")}>
         <Combobox
           options={typeOptions}
           value={type}
@@ -50,7 +51,7 @@ export function ConnectStep() {
           <Field
             label={'Enter your access token'}
             required
-            description="Paste your GitHub personal access token"
+            description={t("provisioning.connect-step.description-paste-your-git-hub-personal-access-token", "Paste your GitHub personal access token")}
             error={errors.repository?.token?.message}
             invalid={!!errors.repository?.token}
           >

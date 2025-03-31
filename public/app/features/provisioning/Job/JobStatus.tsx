@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 
 import { Alert, ControlledCollapse, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
+import { Trans, t } from 'app/core/internationalization';
 
 import ProgressBar from '../Shared/ProgressBar';
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
@@ -52,9 +53,9 @@ export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
         <Spinner size={24} />
-        <Text element="h4" weight="bold">
+        <Text element="h4" weight="bold"><Trans i18nKey="provisioning.job-status.starting">
           Starting...
-        </Text>
+        </Trans></Text>
       </Stack>
     );
   }
@@ -62,10 +63,10 @@ export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange
   const status = () => {
     switch (job.status?.state) {
       case 'success':
-        return <Alert severity="success" title="Job completed successfully" />;
+        return <Alert severity="success" title={t("provisioning.job-status.status.title-job-completed-successfully", "Job completed successfully")} />;
       case 'error':
         return (
-          <Alert severity="error" title="error running job">
+          <Alert severity="error" title={t("provisioning.job-status.status.title-error-running-job", "error running job")}>
             {job.status.message}
           </Alert>
         );
@@ -92,14 +93,14 @@ export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange
 
           {job.status.summary && (
             <Stack direction="column" gap={2}>
-              <Text variant="h3">Summary</Text>
+              <Text variant="h3"><Trans i18nKey="provisioning.job-status.summary">Summary</Trans></Text>
               <JobSummary summary={job.status.summary} />
             </Stack>
           )}
           {job.status.state === 'success' ? (
             <RepositoryLink name={job.metadata?.labels?.repository} />
           ) : (
-            <ControlledCollapse label="View details" isOpen={false}>
+            <ControlledCollapse label={t("provisioning.job-status.label-view-details", "View details")} isOpen={false}>
               <pre>{JSON.stringify(job, null, ' ')}</pre>
             </ControlledCollapse>
           )}
@@ -130,14 +131,14 @@ function RepositoryLink({ name }: RepositoryLinkProps) {
 
   return (
     <Stack direction="column" gap={1}>
-      <Text>Grafana and your repository are now in sync.</Text>
+      <Text><Trans i18nKey="provisioning.repository-link.grafana-repository">Grafana and your repository are now in sync.</Trans></Text>
       <Stack direction="row" gap={2}>
-        <LinkButton fill="outline" href={repoHref} icon="external-link-alt" target="_blank" rel="noopener noreferrer">
+        <LinkButton fill="outline" href={repoHref} icon="external-link-alt" target="_blank" rel="noopener noreferrer"><Trans i18nKey="provisioning.repository-link.view-repository">
           View repository
-        </LinkButton>
-        <LinkButton fill="outline" href={folderHref} icon="folder-open">
+        </Trans></LinkButton>
+        <LinkButton fill="outline" href={folderHref} icon="folder-open"><Trans i18nKey="provisioning.repository-link.view-folder">
           View folder
-        </LinkButton>
+        </Trans></LinkButton>
       </Stack>
     </Stack>
   );

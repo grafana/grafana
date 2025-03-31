@@ -1,5 +1,6 @@
 import { LinkButton } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
+import { Trans } from 'app/core/internationalization';
 
 import { CONNECT_URL } from '../constants';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
@@ -30,8 +31,8 @@ export function ConnectRepositoryButton({ items }: Props) {
   }
 
   return (
-    <LinkButton href={CONNECT_URL} variant="primary" icon="plus">
+    <LinkButton href={CONNECT_URL} variant="primary" icon="plus"><Trans i18nKey="provisioning.connect-repository-button.connect-to-repository">
       Connect to repository
-    </LinkButton>
+    </Trans></LinkButton>
   );
 }

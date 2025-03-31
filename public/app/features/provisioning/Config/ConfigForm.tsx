@@ -19,6 +19,7 @@ import {
 } from '@grafana/ui';
 import { Repository, RepositorySpec } from 'app/api/clients/provisioning';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
+import { t } from 'app/core/internationalization';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { useCreateOrUpdateRepository } from '../hooks';
@@ -203,7 +204,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         required
         error={errors?.workflows?.message}
         invalid={!!errors?.workflows}
-        description="no workflows makes the repository read only"
+        description={t("provisioning.config-form.description-workflows-makes-repository", "no workflows makes the repository read only")}
       >
         <Controller
           name={'workflows'}
@@ -228,7 +229,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         />
       )}
 
-      <ControlledCollapse label="Automatic pulling" isOpen={false}>
+      <ControlledCollapse label={t("provisioning.config-form.label-automatic-pulling", "Automatic pulling")} isOpen={false}>
         <Field label={'Enabled'} description={'Once automatic pulling is enabled, the target cannot be changed.'}>
           <Switch {...register('sync.enabled')} id={'sync.enabled'} />
         </Field>

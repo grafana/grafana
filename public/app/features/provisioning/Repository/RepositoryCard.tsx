@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 
 import { IconName, Stack, Text, TextLink, Icon, Card, LinkButton } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning';
+import { Trans } from 'app/core/internationalization';
 
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
@@ -34,9 +35,9 @@ export function RepositoryCard({ repository }: Props) {
         const webhookUrl = `${url}/settings/hooks/${status.webhook.id}`;
         meta.push(
           <Stack gap={1} direction="row" alignItems="center">
-            <TextLink key="webhook" href={webhookUrl}>
+            <TextLink key="webhook" href={webhookUrl}><Trans i18nKey="provisioning.repository-card.get-repository-meta.webhook">
               Webhook
-            </TextLink>
+            </Trans></TextLink>
             <Icon name="check" className="text-success" />
           </Stack>
         );
@@ -97,13 +98,13 @@ export function RepositoryCard({ repository }: Props) {
 
       <Card.Actions>
         <Stack gap={1} direction="row">
-          <LinkButton icon="eye" href={`${PROVISIONING_URL}/${name}`} variant="primary" size="md">
+          <LinkButton icon="eye" href={`${PROVISIONING_URL}/${name}`} variant="primary" size="md"><Trans i18nKey="provisioning.repository-card.view">
             View
-          </LinkButton>
+          </Trans></LinkButton>
           <SyncRepository repository={repository} />
-          <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`} size="md">
+          <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`} size="md"><Trans i18nKey="provisioning.repository-card.settings">
             Settings
-          </LinkButton>
+          </Trans></LinkButton>
         </Stack>
       </Card.Actions>
       <Card.SecondaryActions>

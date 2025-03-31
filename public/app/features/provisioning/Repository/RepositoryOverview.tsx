@@ -14,6 +14,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning';
+import { Trans } from 'app/core/internationalization';
 
 import { RecentJobs } from '../Job/RecentJobs';
 import { formatTimestamp } from '../utils/time';
@@ -56,7 +57,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         <Grid columns={3} gap={2}>
           <div className={styles.cardContainer}>
             <Card className={styles.card}>
-              <Card.Heading>Resources</Card.Heading>
+              <Card.Heading><Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans></Card.Heading>
               <Card.Description>
                 {repo.status?.stats ? (
                   <InteractiveTable
@@ -67,28 +68,28 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 ) : null}
               </Card.Description>
               <Card.Actions className={styles.actions}>
-                <LinkButton fill="outline" size="md" href={getFolderURL(repo)} icon="folder-open">
+                <LinkButton fill="outline" size="md" href={getFolderURL(repo)} icon="folder-open"><Trans i18nKey="provisioning.repository-overview.view-folder">
                   View Folder
-                </LinkButton>
+                </Trans></LinkButton>
               </Card.Actions>
             </Card>
           </div>
           {repo.status?.health && (
             <div className={styles.cardContainer}>
               <Card className={styles.card}>
-                <Card.Heading>Health</Card.Heading>
+                <Card.Heading><Trans i18nKey="provisioning.repository-overview.health">Health</Trans></Card.Heading>
                 <Card.Description>
                   <RepositoryHealth health={repo.status?.health} />
                   <Grid columns={12} gap={1} alignItems="baseline">
                     <div className={styles.labelColumn}>
-                      <Text color="secondary">Status:</Text>
+                      <Text color="secondary"><Trans i18nKey="provisioning.repository-overview.status">Status:</Trans></Text>
                     </div>
                     <div className={styles.valueColumn}>
                       <Text variant="body">{status?.health?.healthy ? 'Healthy' : 'Unhealthy'}</Text>
                     </div>
 
                     <div className={styles.labelColumn}>
-                      <Text color="secondary">Checked:</Text>
+                      <Text color="secondary"><Trans i18nKey="provisioning.repository-overview.checked">Checked:</Trans></Text>
                     </div>
                     <div className={styles.valueColumn}>
                       <Text variant="body">{formatTimestamp(status?.health?.checked)}</Text>
@@ -97,7 +98,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                     {!!status?.health?.message?.length && (
                       <>
                         <div className={styles.labelColumn}>
-                          <Text color="secondary">Messages:</Text>
+                          <Text color="secondary"><Trans i18nKey="provisioning.repository-overview.messages">Messages:</Trans></Text>
                         </div>
                         <div className={styles.valueColumn}>
                           <Stack gap={1}>
@@ -120,39 +121,39 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           )}
           <div className={styles.cardContainer}>
             <Card className={styles.card}>
-              <Card.Heading>Pull status</Card.Heading>
+              <Card.Heading><Trans i18nKey="provisioning.repository-overview.pull-status">Pull status</Trans></Card.Heading>
               <Card.Description>
                 <Grid columns={12} gap={1} alignItems="baseline">
                   <div className={styles.labelColumn}>
-                    <Text color="secondary">Status:</Text>
+                    <Text color="secondary"><Trans i18nKey="provisioning.repository-overview.status">Status:</Trans></Text>
                   </div>
                   <div className={styles.valueColumn}>
                     <Text variant="body">{status?.sync.state ?? 'N/A'}</Text>
                   </div>
 
                   <div className={styles.labelColumn}>
-                    <Text color="secondary">Job ID:</Text>
+                    <Text color="secondary"><Trans i18nKey="provisioning.repository-overview.job-id">Job ID:</Trans></Text>
                   </div>
                   <div className={styles.valueColumn}>
                     <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
                   </div>
 
                   <div className={styles.labelColumn}>
-                    <Text color="secondary">Last Ref:</Text>
+                    <Text color="secondary"><Trans i18nKey="provisioning.repository-overview.last-ref">Last Ref:</Trans></Text>
                   </div>
                   <div className={styles.valueColumn}>
                     <Text variant="body">{status?.sync.lastRef ? status.sync.lastRef.substring(0, 7) : 'N/A'}</Text>
                   </div>
 
                   <div className={styles.labelColumn}>
-                    <Text color="secondary">Started:</Text>
+                    <Text color="secondary"><Trans i18nKey="provisioning.repository-overview.started">Started:</Trans></Text>
                   </div>
                   <div className={styles.valueColumn}>
                     <Text variant="body">{formatTimestamp(status?.sync.started)}</Text>
                   </div>
 
                   <div className={styles.labelColumn}>
-                    <Text color="secondary">Finished:</Text>
+                    <Text color="secondary"><Trans i18nKey="provisioning.repository-overview.finished">Finished:</Trans></Text>
                   </div>
                   <div className={styles.valueColumn}>
                     <Text variant="body">{formatTimestamp(status?.sync.finished)}</Text>
@@ -161,7 +162,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                   {!!status?.sync?.message?.length && (
                     <>
                       <div className={styles.labelColumn}>
-                        <Text color="secondary">Messages:</Text>
+                        <Text color="secondary"><Trans i18nKey="provisioning.repository-overview.messages">Messages:</Trans></Text>
                       </div>
                       <div className={styles.valueColumn}>
                         <Stack gap={1}>
@@ -179,9 +180,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
               <Card.Actions className={styles.actions}>
                 <SyncRepository repository={repo} />
                 {webhookURL && (
-                  <TextLink external href={webhookURL} icon="link">
+                  <TextLink external href={webhookURL} icon="link"><Trans i18nKey="provisioning.repository-overview.webhook">
                     Webhook
-                  </TextLink>
+                  </Trans></TextLink>
                 )}
               </Card.Actions>
             </Card>

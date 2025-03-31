@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { CellProps, Column, FilterInput, InteractiveTable, Link, LinkButton, Spinner, Stack } from '@grafana/ui';
 import { Repository, ResourceListItem, useGetRepositoryResourcesQuery } from 'app/api/clients/provisioning';
+import { Trans, t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
 
@@ -86,9 +87,9 @@ export function RepositoryResources({ repo }: RepoProps) {
           const { resource, name, path } = original;
           return (
             <Stack>
-              {resource === 'dashboards' && <LinkButton href={`/d/${name}`}>View</LinkButton>}
-              {resource === 'folders' && <LinkButton href={`/dashboards/f/${name}`}>View</LinkButton>}
-              <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}>History</LinkButton>
+              {resource === 'dashboards' && <LinkButton href={`/d/${name}`}><Trans i18nKey="provisioning.repository-resources.columns.view">View</Trans></LinkButton>}
+              {resource === 'folders' && <LinkButton href={`/dashboards/f/${name}`}><Trans i18nKey="provisioning.repository-resources.columns.view">View</Trans></LinkButton>}
+              <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}><Trans i18nKey="provisioning.repository-resources.columns.history">History</Trans></LinkButton>
             </Stack>
           );
         },
@@ -108,7 +109,7 @@ export function RepositoryResources({ repo }: RepoProps) {
   return (
     <Stack grow={1} direction={'column'} gap={2}>
       <Stack gap={2}>
-        <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
+        <FilterInput placeholder={t("provisioning.repository-resources.placeholder-search", "Search")} autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
       </Stack>
       <InteractiveTable
         columns={columns}

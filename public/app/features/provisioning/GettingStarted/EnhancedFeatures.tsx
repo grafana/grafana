@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Box, Stack, Text, LinkButton, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { FeatureCard } from './FeatureCard';
 
@@ -35,18 +36,18 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
 
   return (
     <Box marginTop={2}>
-      <Text variant="h2">Unlock enhanced functionality for GitHub</Text>
+      <Text variant="h2"><Trans i18nKey="provisioning.enhanced-features.unlock-enhanced-functionality-for-git-hub">Unlock enhanced functionality for GitHub</Trans></Text>
       <Box marginTop={4}>
         <Stack direction="row" gap={2}>
           <FeatureCard
-            title="Instant updates and pull requests with webhooks"
+            title={t("provisioning.enhanced-features.title-instant-updates-requests-webhooks", "Instant updates and pull requests with webhooks")}
             description="Get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live."
             icon={<IconCircle icon="sync" color="primary" background="rgba(24, 121, 219, 0.12)" />}
             action={
               !hasPublicAccess && (
-                <LinkButton fill="outline" onClick={onSetupPublicAccess}>
+                <LinkButton fill="outline" onClick={onSetupPublicAccess}><Trans i18nKey="provisioning.enhanced-features.set-up-public-access">
                   Set up public access
-                </LinkButton>
+                </Trans></LinkButton>
               )
             }
           />
@@ -54,8 +55,8 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
           <div className={style.separator} />
 
           <FeatureCard
-            title="Visual previews in pull requests"
-            description="See visual previews of dashboard updates directly in pull requests"
+            title={t("provisioning.enhanced-features.title-visual-previews-in-pull-requests", "Visual previews in pull requests")}
+            description={t("provisioning.enhanced-features.description-visual-previews-dashboard-updates-directly-requests", "See visual previews of dashboard updates directly in pull requests")}
             icon={
               <Stack direction="row" gap={2}>
                 <IconCircle icon="camera" color="orange" background="rgba(255, 120, 10, 0.12)" />
@@ -68,9 +69,9 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
                   fill="outline"
                   href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
                   icon="external-link-alt"
-                >
+                ><Trans i18nKey="provisioning.enhanced-features.set-up-image-rendering">
                   Set up image rendering
-                </LinkButton>
+                </Trans></LinkButton>
               )
             }
           />

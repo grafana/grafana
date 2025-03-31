@@ -1,5 +1,6 @@
 import { Stack, Text, Box, LinkButton, Icon } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
+import { Trans } from 'app/core/internationalization';
 
 import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 
@@ -36,9 +37,9 @@ export const FeaturesList = ({
     if (!hasRequiredFeatures) {
       return (
         <Box>
-          <LinkButton fill="outline" onClick={onSetupFeatures}>
+          <LinkButton fill="outline" onClick={onSetupFeatures}><Trans i18nKey="provisioning.features-list.actions.set-up-required-feature-toggles">
             Set up required feature toggles
-          </LinkButton>
+          </Trans></LinkButton>
         </Box>
       );
     }
@@ -52,12 +53,12 @@ export const FeaturesList = ({
 
   return (
     <Stack direction="column" gap={2}>
-      <Text variant="h2">Manage your dashboards with remote provisioning</Text>
-      <FeatureItem>Manage dashboards as code and provision updates automatically</FeatureItem>
+      <Text variant="h2"><Trans i18nKey="provisioning.features-list.manage-your-dashboards-with-remote-provisioning">Manage your dashboards with remote provisioning</Trans></Text>
+      <FeatureItem><Trans i18nKey="provisioning.features-list.manage-dashboards-provision-updates-automatically">Manage dashboards as code and provision updates automatically</Trans></FeatureItem>
       <FeatureItem>
         Store dashboards in version-controlled storage for better organization and history tracking
       </FeatureItem>
-      <FeatureItem>Migrate existing dashboards to storage for provisioning</FeatureItem>
+      <FeatureItem><Trans i18nKey="provisioning.features-list.migrate-existing-dashboards-storage-provisioning">Migrate existing dashboards to storage for provisioning</Trans></FeatureItem>
       {hasPublicAccess && (
         <FeatureItem>
           Automatically provision and update your dashboards as soon as changes are pushed to your GitHub repository
@@ -69,9 +70,9 @@ export const FeaturesList = ({
 
       {false && (
         // We haven't gotten the design for this quite yet.
-        <LinkButton fill="text" href="#" icon="external-link-alt">
+        <LinkButton fill="text" href="#" icon="external-link-alt"><Trans i18nKey="provisioning.features-list.learn-more">
           Learn more
-        </LinkButton>
+        </Trans></LinkButton>
       )}
 
       {actions()}

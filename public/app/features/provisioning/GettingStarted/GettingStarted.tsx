@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { Alert, Stack, Text, Box } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
+import { t, Trans } from 'app/core/internationalization';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';
@@ -108,7 +109,7 @@ export default function GettingStarted({ items }: Props) {
   return (
     <>
       {legacyStorage && (
-        <Alert severity="info" title="Setting up this connection could cause a temporary outage">
+        <Alert severity="info" title={t("provisioning.getting-started.title-setting-connection-could-cause-temporary-outage", "Setting up this connection could cause a temporary outage")}>
           When you connect your whole instance, dashboards will be unavailable while running the migration. We recommend
           warning your users before starting the process.
         </Alert>
@@ -138,7 +139,7 @@ export default function GettingStarted({ items }: Props) {
               justifyContent: `center`,
             })}
           >
-            <Text variant="h2">Engaging graphic</Text>
+            <Text variant="h2"><Trans i18nKey="provisioning.getting-started.engaging-graphic">Engaging graphic</Trans></Text>
           </div>
         </Box>
       </Stack>

@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { ValidationResult } from './types';
 
@@ -50,7 +51,7 @@ export function Stepper<T extends string | number>({
             {successField && <Icon name={'check'} size={'xl'} className={styles.successItem} />}
             {warnField && <Icon name={'exclamation-triangle'} className={styles.warnItem} />}
             <div className={styles.link}>{step.name}</div>
-            {!isLast && <div className={styles.divider}>&#8212;</div>}
+            {!isLast && <div className={styles.divider}><Trans i18nKey="provisioning.stepper">&#8212;</Trans></div>}
           </li>
         );
       })}

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
 import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
 import { HistoricJob, Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
+import { Trans, t } from 'app/core/internationalization';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
@@ -117,9 +118,9 @@ function ExpandedRow({ row }: ExpandedRowProps) {
       <Stack direction="column" gap={2}>
         {hasSpec && (
           <Stack direction="column">
-            <Text variant="body" color="secondary">
+            <Text variant="body" color="secondary"><Trans i18nKey="provisioning.expanded-row.job-specification">
               Job Specification
-            </Text>
+            </Trans></Text>
             <KeyValuesTable data={data} />
           </Stack>
         )}
@@ -128,7 +129,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
             {row.status?.errors?.map(
               (error, index) =>
                 error.trim() && (
-                  <Alert key={index} severity="error" title="Error">
+                  <Alert key={index} severity="error" title={t("provisioning.expanded-row.title-error", "Error")}>
                     <Stack alignItems="center" gap={1}>
                       <Icon name="exclamation-circle" size="sm" />
                       {error}
@@ -140,9 +141,9 @@ function ExpandedRow({ row }: ExpandedRowProps) {
         )}
         {hasSummary && (
           <Stack direction="column" gap={2}>
-            <Text variant="body" color="secondary">
+            <Text variant="body" color="secondary"><Trans i18nKey="provisioning.expanded-row.summary">
               Summary
-            </Text>
+            </Trans></Text>
             <JobSummary summary={row.status!.summary!} />
           </Stack>
         )}
@@ -154,7 +155,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
 function EmptyState() {
   return (
     <Stack direction={'column'} alignItems={'center'}>
-      <Text color="secondary">No jobs...</Text>
+      <Text color="secondary"><Trans i18nKey="provisioning.empty-state.no-jobs">No jobs...</Trans></Text>
     </Stack>
   );
 }
@@ -207,7 +208,7 @@ export function RecentJobs({ repo }: Props) {
 
   return (
     <Card>
-      <Card.Heading>Jobs</Card.Heading>
+      <Card.Heading><Trans i18nKey="provisioning.recent-jobs.jobs">Jobs</Trans></Card.Heading>
       <Card.Description>{description}</Card.Description>
     </Card>
   );

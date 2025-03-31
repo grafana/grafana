@@ -5,6 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { ConfirmModal, IconButton } from '@grafana/ui';
 import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning';
+import { t } from 'app/core/internationalization';
 
 const appEvents = getAppEvents();
 
@@ -39,7 +40,7 @@ export function DeleteRepositoryButton({ name, redirectTo }: Props) {
     <>
       <IconButton
         name="trash-alt"
-        tooltip="Delete this repository"
+        tooltip={t("provisioning.delete-repository-button.tooltip-delete-this-repository", "Delete this repository")}
         disabled={request.isLoading}
         onClick={() => {
           setShowModal(true);

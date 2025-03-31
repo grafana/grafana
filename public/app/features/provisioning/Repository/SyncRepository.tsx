@@ -5,6 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { Repository, useCreateRepositorySyncMutation } from 'app/api/clients/provisioning';
+import { Trans } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
 
@@ -51,9 +52,9 @@ export function SyncRepository({ repository }: Props) {
         tooltip={isHealthy ? undefined : 'Unable to pull an unhealthy repository'}
         disabled={syncQuery.isLoading || !name || !isHealthy}
         onClick={onClick}
-      >
+      ><Trans i18nKey="provisioning.sync-repository.pull">
         Pull
-      </Button>
+      </Trans></Button>
       {!repository.spec?.sync.enabled && (
         <ConfirmModal
           isOpen={isModalOpen}

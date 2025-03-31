@@ -5,6 +5,7 @@ import { getAppEvents } from '@grafana/runtime';
 import { Alert, ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
+import { t, Trans } from 'app/core/internationalization';
 
 import { FilesView } from './File/FilesView';
 import GettingStarted from './GettingStarted/GettingStarted';
@@ -111,19 +112,19 @@ export default function HomePage() {
       <Page.Contents isLoading={isLoading}>
         {settings.data?.legacyStorage && (
           <Alert
-            title="Legacy storage detected"
+            title={t("provisioning.home-page.title-legacy-storage-detected", "Legacy storage detected")}
             severity="error"
-            buttonContent={<>Remove all configured repositories</>}
+            buttonContent={<><Trans i18nKey="provisioning.home-page.remove-all-configured-repositories">Remove all configured repositories</Trans></>}
             onRemove={() => {
               setShowDeleteModal(true);
             }}
-          >
+          ><Trans i18nKey="provisioning.home-page.configured-repositories-while-running-legacy-storage">
             Configured repositories will not work while running legacy storage.
-          </Alert>
+          </Trans></Alert>
         )}
         <ConfirmModal
           isOpen={showDeleteModal}
-          title="Delete all configured repositories"
+          title={t("provisioning.home-page.title-delete-all-configured-repositories", "Delete all configured repositories")}
           body="Are you sure you want to delete all configured repositories? This action cannot be undone."
           confirmText="Delete repositories"
           onConfirm={onConfirmDelete}
