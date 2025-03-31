@@ -44,8 +44,6 @@ export type Preferences = {
   homeDashboardUID?: string;
   /** Selected language (beta) */
   language?: string;
-  /** Selected locale (beta) */
-  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
   /** light, dark, empty is default */
@@ -76,7 +74,6 @@ export type PatchPrefsCmd = {
   homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
-  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
   theme?: 'light' | 'dark';
@@ -89,7 +86,6 @@ export type UpdatePrefsCmd = {
   homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
-  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
   theme?: 'light' | 'dark' | 'system';
