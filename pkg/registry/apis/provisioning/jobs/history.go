@@ -21,7 +21,7 @@ type History interface {
 }
 
 func NewStorageBackedHistory(store rest.Storage) (History, error) {
-	ok := true
+	var ok bool
 	history := &storageBackedHistory{}
 	history.creator, ok = store.(rest.Creater)
 	if !ok {

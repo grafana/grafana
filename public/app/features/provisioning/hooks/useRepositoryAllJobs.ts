@@ -19,7 +19,7 @@ interface RepositoryHistoricalJobsArgs {
 }
 
 function labelSelectorActive(repositoryName?: string): string | undefined {
-  return repositoryName ? `repository=${repositoryName}` : undefined;
+  return repositoryName ? `provisioning.grafana.app/repository=${repositoryName}` : undefined;
 }
 
 function fieldSelectorActive(jobName?: string): string | undefined {

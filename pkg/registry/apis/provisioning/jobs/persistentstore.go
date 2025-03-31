@@ -373,6 +373,14 @@ func (s *persistentStore) cleanupClaims(ctx context.Context) error {
 }
 
 func (s *persistentStore) Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+	if job.Spec.Repository == "" {
+		return nil, apifmt.Errorf("missing repository in job '%s'", job.GetName())
+	}
+	if job.Labels == nil {
+		job.Labels = make(map[string]string)
+	}
+	job.Labels[LabelRepository] = job.Spec.Repository
+
 	s.generateJobName(job) // Side-effect: updates the job's name.
 
 	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})

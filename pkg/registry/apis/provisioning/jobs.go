@@ -69,6 +69,7 @@ func (c *jobsConnector) Connect(
 			responder.Error(apierrors.NewBadRequest("error decoding provisioning.Job from request"))
 			return
 		}
+		job.Spec.Repository = name
 		job.Namespace = cfg.Namespace
 
 		job, err := c.jobs.Insert(ctx, job)

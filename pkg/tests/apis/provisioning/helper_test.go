@@ -55,17 +55,21 @@ type provisioningTestHelper struct {
 func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options *provisioning.SyncJobOptions) {
 	t.Helper()
 
-	var opts provisioning.SyncJobOptions
-	if options != nil {
-		opts = *options
+	if options == nil {
+		options = &provisioning.SyncJobOptions{}
 	}
-	body := asJSON(opts)
+	body := asJSON(&provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   options,
+		},
+	})
 
 	result := h.AdminREST.Post().
 		Namespace("default").
 		Resource("repositories").
 		Name(repo).
-		SubResource("sync").
+		SubResource("jobs").
 		Body(body).
 		SetHeader("Content-Type", "application/json").
 		Do(t.Context())
