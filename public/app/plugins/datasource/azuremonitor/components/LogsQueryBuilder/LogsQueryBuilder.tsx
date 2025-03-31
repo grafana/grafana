@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
 
@@ -21,6 +21,7 @@ import {
   AzureLogAnalyticsMetadataColumn,
   AzureMonitorQuery,
   EngineSchema,
+  AzureMonitorOption,
 } from '../../types';
 
 import { AggregateSection } from './AggregationSection';
@@ -39,7 +40,7 @@ interface LogsQueryBuilderProps {
   basicLogsEnabled: boolean;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   schema: EngineSchema;
-  templateVariableOptions: SelectableValue<string>;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   datasource: Datasource;
   timeRange?: TimeRange;
 }

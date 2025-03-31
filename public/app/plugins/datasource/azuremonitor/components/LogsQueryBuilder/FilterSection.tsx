@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, ComboboxOption, Label, useStyles2 } from '@grafana/ui';
+import { Button, Label, useStyles2 } from '@grafana/ui';
 
 import {
   AzureQueryType,
@@ -14,7 +14,8 @@ import {
   BuilderQueryEditorWhereExpressionItems,
 } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { addValueToOptions } from '../../utils/common';
 
 import { FilterItem } from './FilterItem';
 import { BuildAndUpdateOptions } from './utils';
@@ -23,7 +24,7 @@ interface FilterSectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
-  templateVariableOptions: SelectableValue<string>;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   datasource: Datasource;
   timeRange?: TimeRange;
 }
@@ -38,7 +39,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   buildAndUpdateQuery,
   query,
   allColumns,
-  templateVariableOptions,
+  variableOptionGroup,
   datasource,
   timeRange,
 }) => {
@@ -54,13 +55,11 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   );
   const hasLoadedFilters = useRef(false);
 
-  const variableOptions = Array.isArray(templateVariableOptions) ? templateVariableOptions : [templateVariableOptions];
-
   const availableColumns: Array<SelectableValue<string>> = builderQuery?.columns?.columns?.length
     ? filterDynamicColumns(builderQuery.columns.columns, allColumns).map((col) => ({ label: col, value: col }))
     : allColumns.filter((col) => col.type !== 'dynamic').map((col) => ({ label: col.name, value: col.name }));
 
-  const selectableOptions = [...availableColumns, ...variableOptions];
+  const selectableOptions = addValueToOptions(availableColumns, variableOptionGroup);
 
   const usedColumnsInOtherGroups = (currentGroupIndex: number): string[] => {
     return filters
@@ -201,12 +200,12 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     if (results.state === 'Done') {
       const values = results.data?.[0]?.fields?.[0]?.values ?? [];
 
-      return values.toArray().map(
-        (v: any): ComboboxOption<string> => ({
-          label: String(v),
-          value: String(v),
-        })
-      );
+      const selectable = values.toArray().map((v: any) => ({
+        label: String(v),
+        value: String(v),
+      }));
+
+      return [...variableOptionGroup.options, ...selectable];
     }
 
     return [];
@@ -217,7 +216,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
       <EditorFieldGroup>
         <EditorField label="Filters" optional tooltip="Narrow results by applying conditions to specific columns.">
           <div className={styles.filters}>
-            {filters.length === 0 || filters.every((g) => g.expressions.length === 0) ? (
+            {filters.length === 0 ? (
               <InputGroup>
                 <Button variant="secondary" onClick={onAddAndFilters} icon="plus" />
               </InputGroup>

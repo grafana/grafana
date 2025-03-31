@@ -5,37 +5,45 @@ import {
   BuilderQueryExpression,
 } from '../../dataquery.gen';
 
-const isNestedExpression = (
+const isExpressionGroup = (
   exp: BuilderQueryEditorWhereExpression | BuilderQueryEditorWhereExpressionItems
-): exp is BuilderQueryEditorWhereExpressionItems =>
-  'operator' in exp &&
-  'property' in exp &&
-  typeof exp.operator?.name === 'string' &&
-  typeof exp.property?.name === 'string';
+): exp is BuilderQueryEditorWhereExpression => {
+  return 'expressions' in exp && Array.isArray(exp.expressions);
+};
+
+const isFilterExpression = (
+  exp: BuilderQueryEditorWhereExpression | BuilderQueryEditorWhereExpressionItems
+): exp is BuilderQueryEditorWhereExpressionItems => {
+  return 'operator' in exp && 'property' in exp;
+};
 
 const buildCondition = (
   exp: BuilderQueryEditorWhereExpression | BuilderQueryEditorWhereExpressionItems
 ): string | undefined => {
-  if ('expressions' in exp && Array.isArray(exp.expressions)) {
-    const isGroupOfFilters = exp.expressions.every((e) => 'operator' in e && 'property' in e);
-
+  if (isExpressionGroup(exp)) {
+    const joiner = exp.type === 'or' ? ' or ' : ' and ';
     const nested = exp.expressions.map(buildCondition).filter((c): c is string => Boolean(c));
-
     if (nested.length === 0) {
       return;
     }
-
-    const joiner = isGroupOfFilters ? ' or ' : ' and ';
-    const joined = nested.join(joiner);
-
-    return nested.length > 1 ? `(${joined})` : joined;
+    return nested.length > 1 ? `(${nested.join(joiner)})` : nested[0];
   }
 
-  if (isNestedExpression(exp)) {
+  if (isFilterExpression(exp)) {
     const { name: op, value } = exp.operator;
     const { name: prop } = exp.property;
+    const isTemplateVariable = typeof value === 'string' && value.startsWith('$');
+
+    if (op === '$__timeFilter') {
+      return `$__timeFilter(${prop})`;
+    }
+
+    if (isTemplateVariable) {
+      return `${prop} in (${value})`;
+    }
+
     const escapedValue = String(value).replace(/'/g, "''");
-    return op === '$__timeFilter' ? `$__timeFilter(${prop})` : `${prop} ${op} '${escapedValue}'`;
+    return `${prop} ${op} '${escapedValue}'`;
   }
 
   return;

@@ -9,7 +9,8 @@ import {
   BuilderQueryEditorWhereExpression,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { addValueToOptions } from '../../utils/common';
 
 import { BuildAndUpdateOptions, removeExtraQuotes } from './utils';
 
@@ -17,14 +18,14 @@ interface FuzzySearchProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
-  templateVariableOptions: SelectableValue<string>;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 }
 
 export const FuzzySearch: React.FC<FuzzySearchProps> = ({
   buildAndUpdateQuery,
   query,
   allColumns,
-  templateVariableOptions,
+  variableOptionGroup,
 }) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
@@ -59,12 +60,8 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
     value: col.name,
   }));
 
-  const safeTemplateVariables: Array<SelectableValue<string>> = Array.isArray(templateVariableOptions)
-    ? templateVariableOptions
-    : [templateVariableOptions];
-
   const defaultColumn: SelectableValue<string> = { label: 'All Columns *', value: '*' };
-  const selectableOptions = [defaultColumn, ...columnOptions, ...safeTemplateVariables];
+  const selectableOptions = addValueToOptions([defaultColumn, ...columnOptions], variableOptionGroup, selectedColumn);
 
   const updateFuzzySearch = (column: string, term: string) => {
     setSearchTerm(term);
