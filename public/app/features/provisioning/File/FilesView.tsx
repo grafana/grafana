@@ -53,9 +53,13 @@ export function FilesView({ repo }: FilesViewProps) {
         return (
           <Stack>
             {(path.endsWith('.json') || path.endsWith('.yaml') || path.endsWith('.yml')) && (
-              <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}><Trans i18nKey="provisioning.files-view.columns.view">View</Trans></LinkButton>
+              <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}>
+                <Trans i18nKey="provisioning.files-view.columns.view">View</Trans>
+              </LinkButton>
             )}
-            <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}><Trans i18nKey="provisioning.files-view.columns.history">History</Trans></LinkButton>
+            <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}>
+              <Trans i18nKey="provisioning.files-view.columns.history">History</Trans>
+            </LinkButton>
           </Stack>
         );
       },
@@ -73,7 +77,12 @@ export function FilesView({ repo }: FilesViewProps) {
   return (
     <Stack grow={1} direction={'column'} gap={2}>
       <Stack gap={2}>
-        <FilterInput placeholder={t("provisioning.files-view.placeholder-search", "Search")} autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
+        <FilterInput
+          placeholder={t('provisioning.files-view.placeholder-search', 'Search')}
+          autoFocus={true}
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
       </Stack>
       <InteractiveTable columns={columns} data={data} pageSize={25} getRowId={(f: FileDetails) => String(f.path)} />
     </Stack>

@@ -21,14 +21,14 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
     <Stack>
       <StatusBadge repo={repository} />
       {repoHref && (
-        <Button variant="secondary" icon="github" onClick={() => window.open(repoHref, '_blank')}><Trans i18nKey="provisioning.repository-actions.source-code">
-          Source Code
-        </Trans></Button>
+        <Button variant="secondary" icon="github" onClick={() => window.open(repoHref, '_blank')}>
+          <Trans i18nKey="provisioning.repository-actions.source-code">Source Code</Trans>
+        </Button>
       )}
       <SyncRepository repository={repository} />
-      <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}><Trans i18nKey="provisioning.repository-actions.settings">
-        Settings
-      </Trans></LinkButton>
+      <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
+        <Trans i18nKey="provisioning.repository-actions.settings">Settings</Trans>
+      </LinkButton>
       <DeleteRepositoryButton name={name} redirectTo={PROVISIONING_URL} />
     </Stack>
   );

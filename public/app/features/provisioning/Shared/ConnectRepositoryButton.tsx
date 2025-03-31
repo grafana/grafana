@@ -1,6 +1,6 @@
 import { LinkButton } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { CONNECT_URL } from '../constants';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
@@ -23,16 +23,25 @@ export function ConnectRepositoryButton({ items }: Props) {
         variant="primary"
         icon="plus"
         disabled={true}
-        tooltip={`Max repositories already created (${state.repoCount})`}
+        tooltip={t(
+          'provisioning.connect-repository-button.tooltip-max-repos',
+          'Max repositories already created ({{count}})',
+          { count: state.repoCount }
+        )}
       >
-        Maximum repositories exist ({state.repoCount})
+        <Trans
+          i18nKey="provisioning.connect-repository-button.max-repositories-exist"
+          values={{ count: state.repoCount }}
+        >
+          Maximum repositories exist ({state.repoCount})
+        </Trans>
       </LinkButton>
     );
   }
 
   return (
-    <LinkButton href={CONNECT_URL} variant="primary" icon="plus"><Trans i18nKey="provisioning.connect-repository-button.connect-to-repository">
-      Connect to repository
-    </Trans></LinkButton>
+    <LinkButton href={CONNECT_URL} variant="primary" icon="plus">
+      <Trans i18nKey="provisioning.connect-repository-button.connect-to-repository">Connect to repository</Trans>
+    </LinkButton>
   );
 }

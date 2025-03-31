@@ -47,18 +47,18 @@ export const SetupModal = ({ title, description, steps, isOpen, onDismiss }: Pro
 
       <Modal.ButtonRow>
         <Stack direction="row" justifyContent="flex-end" gap={2}>
-          <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}><Trans i18nKey="provisioning.setup-modal.previous">
-            Previous
-          </Trans></Button>
+          <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
+            <Trans i18nKey="provisioning.setup-modal.previous">Previous</Trans>
+          </Button>
 
           {isLastStep ? (
-            <Button variant="primary" onClick={onDismiss} icon="check-circle"><Trans i18nKey="provisioning.setup-modal.done">
-              Done
-            </Trans></Button>
+            <Button variant="primary" onClick={onDismiss} icon="check-circle">
+              <Trans i18nKey="provisioning.setup-modal.done">Done</Trans>
+            </Button>
           ) : (
-            <Button variant="primary" onClick={handleNext}><Trans i18nKey="provisioning.setup-modal.next">
-              Next
-            </Trans></Button>
+            <Button variant="primary" onClick={handleNext}>
+              <Trans i18nKey="provisioning.setup-modal.next">Next</Trans>
+            </Button>
           )}
         </Stack>
       </Modal.ButtonRow>

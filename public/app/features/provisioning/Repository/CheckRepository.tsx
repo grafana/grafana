@@ -42,9 +42,9 @@ export function CheckRepository({ repository }: Props) {
 
   return (
     <>
-      <Button icon="check-circle" variant={'secondary'} disabled={testQuery.isLoading || !name} onClick={onClick}><Trans i18nKey="provisioning.check-repository.check">
-        Check
-      </Trans></Button>
+      <Button icon="check-circle" variant={'secondary'} disabled={testQuery.isLoading || !name} onClick={onClick}>
+        <Trans i18nKey="provisioning.check-repository.check">Check</Trans>
+      </Button>
     </>
   );
 }

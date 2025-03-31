@@ -38,7 +38,7 @@ const getStatusColor = (state?: SyncStatus['state']) => {
 const getJobColumns = () => [
   {
     id: 'status',
-    header: 'Status',
+    header: t('provisioning.recent-jobs.column-status', 'Status'),
     cell: ({ row: { original: job } }: JobCell) => (
       <Badge
         text={job.status?.state || ''}
@@ -49,17 +49,17 @@ const getJobColumns = () => [
   },
   {
     id: 'action',
-    header: 'Action',
+    header: t('provisioning.recent-jobs.column-action', 'Action'),
     cell: ({ row: { original: job } }: JobCell) => job.spec?.action,
   },
   {
     id: 'started',
-    header: 'Started',
+    header: t('provisioning.recent-jobs.column-started', 'Started'),
     cell: ({ row: { original: job } }: JobCell) => formatTimestamp(job.status?.started),
   },
   {
     id: 'duration',
-    header: 'Duration',
+    header: t('provisioning.recent-jobs.column-duration', 'Duration'),
     cell: ({ row: { original: job } }: JobCell) => {
       const interval = {
         start: job.status?.started ?? 0,
@@ -77,7 +77,7 @@ const getJobColumns = () => [
   },
   {
     id: 'message',
-    header: 'Message',
+    header: t('provisioning.recent-jobs.column-message', 'Message'),
     cell: ({ row: { original: job } }: JobCell) => <span>{job.status?.message}</span>,
   },
 ];
@@ -92,7 +92,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   const hasSpec = Boolean(row.spec);
 
   if (!hasSummary && !hasErrors && !hasSpec) {
-    console.log('no summary, errors, or spec', row);
+    // Row has no content to display
     return null;
   }
 
@@ -118,9 +118,9 @@ function ExpandedRow({ row }: ExpandedRowProps) {
       <Stack direction="column" gap={2}>
         {hasSpec && (
           <Stack direction="column">
-            <Text variant="body" color="secondary"><Trans i18nKey="provisioning.expanded-row.job-specification">
-              Job Specification
-            </Trans></Text>
+            <Text variant="body" color="secondary">
+              <Trans i18nKey="provisioning.expanded-row.job-specification">Job Specification</Trans>
+            </Text>
             <KeyValuesTable data={data} />
           </Stack>
         )}
@@ -129,7 +129,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
             {row.status?.errors?.map(
               (error, index) =>
                 error.trim() && (
-                  <Alert key={index} severity="error" title={t("provisioning.expanded-row.title-error", "Error")}>
+                  <Alert key={index} severity="error" title={t('provisioning.expanded-row.title-error', 'Error')}>
                     <Stack alignItems="center" gap={1}>
                       <Icon name="exclamation-circle" size="sm" />
                       {error}
@@ -141,9 +141,9 @@ function ExpandedRow({ row }: ExpandedRowProps) {
         )}
         {hasSummary && (
           <Stack direction="column" gap={2}>
-            <Text variant="body" color="secondary"><Trans i18nKey="provisioning.expanded-row.summary">
-              Summary
-            </Trans></Text>
+            <Text variant="body" color="secondary">
+              <Trans i18nKey="provisioning.expanded-row.summary">Summary</Trans>
+            </Text>
             <JobSummary summary={row.status!.summary!} />
           </Stack>
         )}
@@ -155,14 +155,16 @@ function ExpandedRow({ row }: ExpandedRowProps) {
 function EmptyState() {
   return (
     <Stack direction={'column'} alignItems={'center'}>
-      <Text color="secondary"><Trans i18nKey="provisioning.empty-state.no-jobs">No jobs...</Trans></Text>
+      <Text color="secondary">
+        <Trans i18nKey="provisioning.empty-state.no-jobs">No jobs...</Trans>
+      </Text>
     </Stack>
   );
 }
 
-function ErrorLoading(typ: string, error: any) {
+function ErrorLoading(typ: string, error: string) {
   return (
-    <Alert title={`Error loading ${typ}`} severity="error">
+    <Alert title={t('provisioning.recent-jobs.error-loading', 'Error loading {type}', { type: typ })} severity="error">
       <pre>{JSON.stringify(error)}</pre>
     </Alert>
   );
@@ -190,7 +192,7 @@ export function RecentJobs({ repo }: Props) {
   if (activeQuery.isLoading || historicQuery.isLoading) {
     description = Loading();
   } else if (activeQuery.isError) {
-    description = ErrorLoading('active jobs', activeQuery.error);
+    description = ErrorLoading(t('provisioning.recent-jobs.active-jobs', 'active jobs'), activeQuery.error);
     // TODO: Figure out what to do if historic fails. Maybe a separate card?
   } else if (!jobs?.length) {
     description = <EmptyState />;
@@ -208,7 +210,9 @@ export function RecentJobs({ repo }: Props) {
 
   return (
     <Card>
-      <Card.Heading><Trans i18nKey="provisioning.recent-jobs.jobs">Jobs</Trans></Card.Heading>
+      <Card.Heading>
+        <Trans i18nKey="provisioning.recent-jobs.jobs">Jobs</Trans>
+      </Card.Heading>
       <Card.Description>{description}</Card.Description>
     </Card>
   );

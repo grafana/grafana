@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -27,18 +27,6 @@ enum TabSelection {
   Repositories = 'repositories',
 }
 
-const connectedTabInfo = [
-  { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
-  { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in Grafana database' },
-  { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
-  { value: TabSelection.GettingStarted, label: 'Getting started', title: 'Getting started' },
-];
-
-const disconnectedTabInfo = [
-  { value: TabSelection.Repositories, label: 'Repositories', title: 'List of repositories' },
-  { value: TabSelection.GettingStarted, label: 'Getting started', title: 'Getting started' },
-];
-
 export default function HomePage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
   const settings = useGetFrontendSettingsQuery();
@@ -49,11 +37,53 @@ export default function HomePage() {
     instanceConnected ? TabSelection.Overview : TabSelection.Repositories
   );
 
+  const connectedTabInfo = useMemo(
+    () => [
+      {
+        value: TabSelection.Overview,
+        label: t('provisioning.home-page.tab-overview', 'Overview'),
+        title: t('provisioning.home-page.tab-overview-title', 'Repository overview'),
+      },
+      {
+        value: TabSelection.Resources,
+        label: t('provisioning.home-page.tab-resources', 'Resources'),
+        title: t('provisioning.home-page.tab-resources-title', 'Resources saved in Grafana database'),
+      },
+      {
+        value: TabSelection.Files,
+        label: t('provisioning.home-page.tab-files', 'Files'),
+        title: t('provisioning.home-page.tab-files-title', 'The raw file list from the repository'),
+      },
+      {
+        value: TabSelection.GettingStarted,
+        label: t('provisioning.home-page.tab-getting-started', 'Getting started'),
+        title: t('provisioning.home-page.tab-getting-started-title', 'Getting started'),
+      },
+    ],
+    []
+  );
+
+  const disconnectedTabInfo = useMemo(
+    () => [
+      {
+        value: TabSelection.Repositories,
+        label: t('provisioning.home-page.tab-repositories', 'Repositories'),
+        title: t('provisioning.home-page.tab-repositories-title', 'List of repositories'),
+      },
+      {
+        value: TabSelection.GettingStarted,
+        label: t('provisioning.home-page.tab-getting-started', 'Getting started'),
+        title: t('provisioning.home-page.tab-getting-started-title', 'Getting started'),
+      },
+    ],
+    []
+  );
+
   useEffect(() => {
     if (deleteAllResult.isSuccess) {
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['All configured repositories deleted'],
+        payload: [t('provisioning.home-page.success-all-repositories-deleted', 'All configured repositories deleted')],
       });
     }
   }, [deleteAllResult.isSuccess]);
@@ -106,27 +136,39 @@ export default function HomePage() {
   return (
     <Page
       navId="provisioning"
-      subTitle="View and manage your configured repositories"
+      subTitle={t('provisioning.home-page.subtitle', 'View and manage your configured repositories')}
       actions={instanceConnected && items?.length ? <RepositoryActions repository={items[0]} /> : undefined}
     >
       <Page.Contents isLoading={isLoading}>
         {settings.data?.legacyStorage && (
           <Alert
-            title={t("provisioning.home-page.title-legacy-storage-detected", "Legacy storage detected")}
+            title={t('provisioning.home-page.title-legacy-storage-detected', 'Legacy storage detected')}
             severity="error"
-            buttonContent={<><Trans i18nKey="provisioning.home-page.remove-all-configured-repositories">Remove all configured repositories</Trans></>}
+            buttonContent={
+              <Trans i18nKey="provisioning.home-page.remove-all-configured-repositories">
+                Remove all configured repositories
+              </Trans>
+            }
             onRemove={() => {
               setShowDeleteModal(true);
             }}
-          ><Trans i18nKey="provisioning.home-page.configured-repositories-while-running-legacy-storage">
-            Configured repositories will not work while running legacy storage.
-          </Trans></Alert>
+          >
+            <Trans i18nKey="provisioning.home-page.configured-repositories-while-running-legacy-storage">
+              Configured repositories will not work while running legacy storage.
+            </Trans>
+          </Alert>
         )}
         <ConfirmModal
           isOpen={showDeleteModal}
-          title={t("provisioning.home-page.title-delete-all-configured-repositories", "Delete all configured repositories")}
-          body="Are you sure you want to delete all configured repositories? This action cannot be undone."
-          confirmText="Delete repositories"
+          title={t(
+            'provisioning.home-page.title-delete-all-configured-repositories',
+            'Delete all configured repositories'
+          )}
+          body={t(
+            'provisioning.home-page.confirm-delete-repositories',
+            'Are you sure you want to delete all configured repositories? This action cannot be undone.'
+          )}
+          confirmText={t('provisioning.home-page.button-delete-repositories', 'Delete repositories')}
           onConfirm={onConfirmDelete}
           onDismiss={() => setShowDeleteModal(false)}
         />

@@ -87,9 +87,19 @@ export function RepositoryResources({ repo }: RepoProps) {
           const { resource, name, path } = original;
           return (
             <Stack>
-              {resource === 'dashboards' && <LinkButton href={`/d/${name}`}><Trans i18nKey="provisioning.repository-resources.columns.view">View</Trans></LinkButton>}
-              {resource === 'folders' && <LinkButton href={`/dashboards/f/${name}`}><Trans i18nKey="provisioning.repository-resources.columns.view">View</Trans></LinkButton>}
-              <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}><Trans i18nKey="provisioning.repository-resources.columns.history">History</Trans></LinkButton>
+              {resource === 'dashboards' && (
+                <LinkButton href={`/d/${name}`}>
+                  <Trans i18nKey="provisioning.repository-resources.columns.view">View</Trans>
+                </LinkButton>
+              )}
+              {resource === 'folders' && (
+                <LinkButton href={`/dashboards/f/${name}`}>
+                  <Trans i18nKey="provisioning.repository-resources.columns.view">View</Trans>
+                </LinkButton>
+              )}
+              <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}>
+                <Trans i18nKey="provisioning.repository-resources.columns.history">History</Trans>
+              </LinkButton>
             </Stack>
           );
         },
@@ -109,7 +119,12 @@ export function RepositoryResources({ repo }: RepoProps) {
   return (
     <Stack grow={1} direction={'column'} gap={2}>
       <Stack gap={2}>
-        <FilterInput placeholder={t("provisioning.repository-resources.placeholder-search", "Search")} autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
+        <FilterInput
+          placeholder={t('provisioning.repository-resources.placeholder-search', 'Search')}
+          autoFocus={true}
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
       </Stack>
       <InteractiveTable
         columns={columns}

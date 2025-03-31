@@ -21,8 +21,14 @@ export default function EditRepositoryPage() {
       <Page.Contents isLoading={query.isLoading}>
         {notFound ? (
           <EmptyState message={`Repository config not found`} variant="not-found">
-            <Text element={'p'}><Trans i18nKey="provisioning.edit-repository-page.repository-config-exists-configuration">Make sure the repository config exists in the configuration file.</Trans></Text>
-            <TextLink href={PROVISIONING_URL}><Trans i18nKey="provisioning.edit-repository-page.back-to-repositories">Back to repositories</Trans></TextLink>
+            <Text element={'p'}>
+              <Trans i18nKey="provisioning.edit-repository-page.repository-config-exists-configuration">
+                Make sure the repository config exists in the configuration file.
+              </Trans>
+            </Text>
+            <TextLink href={PROVISIONING_URL}>
+              <Trans i18nKey="provisioning.edit-repository-page.back-to-repositories">Back to repositories</Trans>
+            </TextLink>
           </EmptyState>
         ) : (
           <ConfigForm data={query.data} />

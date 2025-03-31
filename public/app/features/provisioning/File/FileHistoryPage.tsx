@@ -29,8 +29,14 @@ export default function FileHistoryPage() {
       <Page.Contents isLoading={false}>
         {notFound ? (
           <EmptyState message={`Repository not found`} variant="not-found">
-            <Text element={'p'}><Trans i18nKey="provisioning.file-history-page.repository-config-exists-configuration">Make sure the repository config exists in the configuration file.</Trans></Text>
-            <TextLink href={PROVISIONING_URL}><Trans i18nKey="provisioning.file-history-page.back-to-repositories">Back to repositories</Trans></TextLink>
+            <Text element={'p'}>
+              <Trans i18nKey="provisioning.file-history-page.repository-config-exists-configuration">
+                Make sure the repository config exists in the configuration file.
+              </Trans>
+            </Text>
+            <TextLink href={PROVISIONING_URL}>
+              <Trans i18nKey="provisioning.file-history-page.back-to-repositories">Back to repositories</Trans>
+            </TextLink>
           </EmptyState>
         ) : (
           //@ts-expect-error TODO fix history response types
@@ -49,7 +55,11 @@ interface Props {
 
 function HistoryView({ history, path, repo }: Props) {
   if (!history.items) {
-    return <div><Trans i18nKey="provisioning.history-view.not-found">not found</Trans></div>;
+    return (
+      <div>
+        <Trans i18nKey="provisioning.history-view.not-found">not found</Trans>
+      </div>
+    );
   }
 
   return (
