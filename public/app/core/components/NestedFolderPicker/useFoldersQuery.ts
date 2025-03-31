@@ -70,7 +70,7 @@ const listAllFoldersSelector = createSelector(
 );
 
 /**
- * Returns the whether the set of pages are 'fully loaded', and the last page number
+ * Returns the whether the set of pages are 'fully loaded', the last page number, and if the last page is currently loading
  */
 function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undefined, boolean] {
   const lastPage = pages.at(-1);
