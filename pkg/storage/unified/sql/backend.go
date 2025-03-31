@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
-	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,6 +18,8 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -435,6 +436,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			WriteEvent:  event,
 			Folder:      folder,
 			GUID:        guid,
+			Generation:  event.Object.GetGeneration(),
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
@@ -488,6 +490,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			WriteEvent:  event,
 			Folder:      folder,
 			GUID:        guid,
+			Generation:  0, // object does not exist
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}

@@ -307,6 +307,7 @@ func (r sqlGetHistoryRequest) Validate() error {
 type sqlPruneHistoryRequest struct {
 	sqltemplate.SQLTemplate
 	Key          *resource.ResourceKey
+	Generation   bool // partion by generation
 	HistoryLimit int64
 }
 
