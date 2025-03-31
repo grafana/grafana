@@ -513,15 +513,6 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
       case 'query':
         let query = v.query || {};
 
-        if (typeof query === 'string') {
-          console.warn(
-            'Query variable query is a string which is deprecated in the schema v2. It should extend DataQuery'
-          );
-          query = {
-            [LEGACY_STRING_VALUE_KEY]: query,
-          };
-        }
-
         const qv: QueryVariableKind = {
           kind: 'QueryVariable',
           spec: {

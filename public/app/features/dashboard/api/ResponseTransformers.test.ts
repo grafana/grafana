@@ -307,11 +307,12 @@ describe('ResponseTransformers', () => {
             },
             // Query variable with minimal props and without current
             {
+              datasource: { type: 'prometheus', uid: 'abc' },
               name: 'org_id',
               label: 'Org ID',
               hide: 2,
               type: 'query',
-              query: 'label_values(grafanacloud_org_info{org_slug="$org_slug"}, org_id)',
+              query: { refId: 'A', query: 'label_values(grafanacloud_org_info{org_slug="$org_slug"}, org_id)' },
             },
           ],
         },
