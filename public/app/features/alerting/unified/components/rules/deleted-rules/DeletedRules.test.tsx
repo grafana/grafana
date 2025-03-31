@@ -10,6 +10,7 @@ import { grafanaRulerRule } from '../../../mocks/grafanaRulerApi';
 import { setFolderResponse } from '../../../mocks/server/configure';
 import { grantPermissionsHelper, testWithFeatureToggles } from '../../../test/test-utils';
 
+import { produce } from 'immer';
 import { DeletedRules } from './DeletedRules';
 
 setupMswServer();
@@ -36,11 +37,14 @@ function renderDeletedRules() {
     },
   };
   setFolderResponse(mockFolder(folder));
+  const deletedRule = produce(grafanaRulerRule, (draft) => {
+    draft.grafana_alert.guid = '1234';
+  });
 
   return render(
     <>
       <AppNotificationList />
-      <DeletedRules deletedRules={[grafanaRulerRule]} />
+      <DeletedRules deletedRules={[deletedRule]} />
     </>
   );
 }
