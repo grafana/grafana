@@ -3,6 +3,7 @@ import { Action } from 'redux';
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { LinkButton, FilterInput } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { t, Trans } from 'app/core/internationalization';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
 import { DataSourcePluginCategory, StoreState, useDispatch, useSelector } from 'app/types';
 
@@ -64,10 +65,17 @@ export function NewDataSourceView({
     <>
       {/* Search */}
       <div className="page-action-bar">
-        <FilterInput value={searchQuery} onChange={onSetSearchQuery} placeholder="Filter by name or type" />
+        <FilterInput
+          value={searchQuery}
+          onChange={onSetSearchQuery}
+          placeholder={t(
+            'datasources.new-data-source-view.placeholder-filter-by-name-or-type',
+            'Filter by name or type'
+          )}
+        />
         <div className="page-action-bar__spacer" />
         <LinkButton href={ROUTES.DataSources} fill="outline" variant="secondary" icon="arrow-left">
-          Cancel
+          <Trans i18nKey="datasources.new-data-source-view.cancel">Cancel</Trans>
         </LinkButton>
       </div>
 

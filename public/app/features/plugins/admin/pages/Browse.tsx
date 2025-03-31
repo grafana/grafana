@@ -6,6 +6,7 @@ import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
 import { locationSearchToObject } from '@grafana/runtime';
 import { Select, RadioButtonGroup, useStyles2, Tooltip, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { t } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { useSelector } from 'app/types';
@@ -95,14 +96,14 @@ export default function Browse() {
     <Page navModel={navModel} actions={updateAllButton} subTitle={subTitle}>
       <Page.Contents>
         <HorizontalGroup wrap>
-          <Field label="Search">
+          <Field label={t('plugins.browse.label-search', 'Search')}>
             <SearchField value={keyword} onSearch={onSearch} />
           </Field>
           <HorizontalGroup wrap className={styles.actionBar}>
             {/* Filter by type */}
-            <Field label="Type">
+            <Field label={t('plugins.browse.label-type', 'Type')}>
               <Select
-                aria-label="Plugin type filter"
+                aria-label={t('plugins.browse.aria-label-plugin-type-filter', 'Plugin type filter')}
                 value={filterByType}
                 onChange={onFilterByTypeChange}
                 width={18}
@@ -117,7 +118,7 @@ export default function Browse() {
 
             {/* Filter by installed / all */}
             {remotePluginsAvailable ? (
-              <Field label="State">
+              <Field label={t('plugins.browse.label-state', 'State')}>
                 <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
               </Field>
             ) : (
@@ -126,7 +127,7 @@ export default function Browse() {
                 placement="top"
               >
                 <div>
-                  <Field label="State">
+                  <Field label={t('plugins.browse.label-state', 'State')}>
                     <RadioButtonGroup
                       disabled={true}
                       value={filterBy}

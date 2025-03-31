@@ -9,8 +9,6 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/mattn/go-sqlite3"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
@@ -18,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var (
@@ -401,6 +401,129 @@ func TestBackend_delete(t *testing.T) {
 	})
 }
 
+type readHistoryRow struct {
+	namespace        string
+	group            string
+	resource         string
+	name             string
+	folder           string
+	resource_version string
+	value            string
+}
+
+func TestBackend_ReadResource(t *testing.T) {
+	t.Parallel()
+
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		expectedReadRow := readHistoryRow{
+			namespace:        "ns",
+			group:            "gr",
+			resource:         "rs",
+			name:             "nm",
+			folder:           "folder",
+			resource_version: "300",
+			value:            "rv-300",
+		}
+		readResource := []string{"namespace", "group", "resource", "name", "folder", "resource_version", "value"}
+		b.SQLMock.ExpectBegin()
+		b.SQLMock.ExpectQuery("SELECT .* FROM resource").
+			WillReturnRows(sqlmock.NewRows(readResource).
+				AddRow(
+					expectedReadRow.namespace,
+					expectedReadRow.group,
+					expectedReadRow.resource,
+					expectedReadRow.name,
+					expectedReadRow.folder,
+					expectedReadRow.resource_version,
+					expectedReadRow.value,
+				))
+		b.SQLMock.ExpectCommit()
+
+		req := &resource.ReadRequest{
+			Key: resKey,
+		}
+		rps := b.ReadResource(ctx, req)
+		require.NotNil(t, rps)
+		require.Equal(t, int64(300), rps.ResourceVersion)
+		require.Equal(t, "rv-300", string(rps.Value))
+		require.Equal(t, "folder", rps.Folder)
+	})
+
+	t.Run("no resource found", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.SQLMock.ExpectQuery("SELECT .* FROM resource").
+			WillReturnRows(sqlmock.NewRows([]string{}))
+		b.SQLMock.ExpectCommit()
+
+		req := &resource.ReadRequest{
+			Key: resKey,
+		}
+		res := b.ReadResource(ctx, req)
+		require.NotNil(t, res.Error)
+		require.Equal(t, res.Error.Code, int32(404))
+	})
+
+	t.Run("with resource version", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		expectedReadRow := readHistoryRow{
+			namespace:        "ns",
+			group:            "gr",
+			resource:         "rs",
+			name:             "nm",
+			folder:           "folder",
+			resource_version: "300",
+			value:            "rv-300",
+		}
+
+		readHistoryColumns := []string{"namespace", "group", "resource", "name", "folder", "resource_version", "value"}
+		b.SQLMock.ExpectBegin()
+		b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").
+			WillReturnRows(sqlmock.NewRows(readHistoryColumns).
+				AddRow(
+					expectedReadRow.namespace,
+					expectedReadRow.group,
+					expectedReadRow.resource,
+					expectedReadRow.name,
+					expectedReadRow.folder,
+					expectedReadRow.resource_version,
+					expectedReadRow.value,
+				))
+		b.SQLMock.ExpectCommit()
+
+		req := &resource.ReadRequest{
+			Key:             resKey,
+			ResourceVersion: 300,
+		}
+		rps := b.ReadResource(ctx, req)
+		require.NotNil(t, rps)
+		require.Equal(t, int64(300), rps.ResourceVersion)
+		require.Equal(t, "rv-300", string(rps.Value))
+		require.Equal(t, "folder", rps.Folder)
+	})
+
+	t.Run("error reading resource", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").
+			WillReturnError(errTest)
+
+		req := &resource.ReadRequest{
+			Key: resKey,
+		}
+		rps := b.ReadResource(ctx, req)
+		require.NotNil(t, rps.Error)
+	})
+}
+
 func TestBackend_getHistory(t *testing.T) {
 	t.Parallel()
 
@@ -415,16 +538,19 @@ func TestBackend_getHistory(t *testing.T) {
 	cols := []string{"resource_version", "namespace", "name", "folder", "value"}
 
 	tests := []struct {
-		name              string
-		versionMatch      resource.ResourceVersionMatchV2
-		resourceVersion   int64
-		expectedVersions  []int64
-		expectedListRv    int64
-		expectedRowsCount int
-		expectedErr       string
+		name                          string
+		source                        resource.ListRequest_Source
+		versionMatch                  resource.ResourceVersionMatchV2
+		resourceVersion               int64
+		expectedVersions              []int64
+		expectedListRv                int64
+		expectedRowsCount             int
+		expectedErr                   string
+		expectedLatestDeletionAsMinRV bool
 	}{
 		{
 			name:              "with ResourceVersionMatch_NotOlderThan",
+			source:            resource.ListRequest_HISTORY,
 			versionMatch:      resource.ResourceVersionMatchV2_NotOlderThan,
 			resourceVersion:   rv2,
 			expectedVersions:  []int64{rv2, rv3}, // Should be in ASC order due to NotOlderThan
@@ -432,15 +558,18 @@ func TestBackend_getHistory(t *testing.T) {
 			expectedRowsCount: 2,
 		},
 		{
-			name:              "with ResourceVersionMatch_NotOlderThan and ResourceVersion=0",
-			versionMatch:      resource.ResourceVersionMatchV2_NotOlderThan,
-			resourceVersion:   0,
-			expectedVersions:  []int64{rv1, rv2, rv3}, // Should be in ASC order due to NotOlderThan
-			expectedListRv:    rv3,
-			expectedRowsCount: 3,
+			name:                          "with ResourceVersionMatch_NotOlderThan and ResourceVersion=0",
+			source:                        resource.ListRequest_HISTORY,
+			versionMatch:                  resource.ResourceVersionMatchV2_NotOlderThan,
+			resourceVersion:               0,
+			expectedVersions:              []int64{rv1, rv2, rv3}, // Should be in ASC order due to NotOlderThan
+			expectedListRv:                rv3,
+			expectedRowsCount:             3,
+			expectedLatestDeletionAsMinRV: true,
 		},
 		{
 			name:              "with ResourceVersionMatch_Exact",
+			source:            resource.ListRequest_HISTORY,
 			versionMatch:      resource.ResourceVersionMatchV2_Exact,
 			resourceVersion:   rv2,
 			expectedVersions:  []int64{rv2},
@@ -448,16 +577,26 @@ func TestBackend_getHistory(t *testing.T) {
 			expectedRowsCount: 1,
 		},
 		{
-			name:              "with ResourceVersionMatch_Unset (default)",
-			expectedVersions:  []int64{rv3, rv2, rv1}, // Should be in DESC order by default
-			expectedListRv:    rv3,
-			expectedRowsCount: 3,
+			name:                          "with ResourceVersionMatch_Unset (default)",
+			source:                        resource.ListRequest_HISTORY,
+			expectedVersions:              []int64{rv3, rv2, rv1}, // Should be in DESC order by default
+			expectedListRv:                rv3,
+			expectedRowsCount:             3,
+			expectedLatestDeletionAsMinRV: true,
 		},
 		{
 			name:            "error with ResourceVersionMatch_Exact and ResourceVersion <= 0",
+			source:          resource.ListRequest_HISTORY,
 			versionMatch:    resource.ResourceVersionMatchV2_Exact,
 			resourceVersion: 0,
 			expectedErr:     "expecting an explicit resource version query when using Exact matching",
+		},
+		{
+			name:              "with ListRequest_TRASH",
+			source:            resource.ListRequest_TRASH,
+			expectedVersions:  []int64{rv3, rv2, rv1}, // Should be in DESC order by default
+			expectedListRv:    rv3,
+			expectedRowsCount: 3,
 		},
 	}
 
@@ -472,7 +611,7 @@ func TestBackend_getHistory(t *testing.T) {
 				Options:         &resource.ListOptions{Key: key},
 				ResourceVersion: tc.resourceVersion,
 				VersionMatchV2:  tc.versionMatch,
-				Source:          resource.ListRequest_HISTORY,
+				Source:          tc.source,
 			}
 
 			// Set up mock expectations only if we don't expect an error
@@ -507,6 +646,13 @@ func TestBackend_getHistory(t *testing.T) {
 				latestRVRows := sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).
 					AddRow(rv3, 0)
 				b.SQLMock.ExpectQuery("SELECT .* FROM resource_version").WillReturnRows(latestRVRows)
+
+				if tc.expectedLatestDeletionAsMinRV {
+					latestHistoryRVRows := sqlmock.NewRows([]string{"resource_version"}).
+						AddRow(rv1)
+					b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").
+						WillReturnRows(latestHistoryRVRows)
+				}
 
 				// Expect history query
 				historyRows := sqlmock.NewRows(cols)
@@ -606,6 +752,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 				req.NextPageToken = page.token.String()
 			}
 
+			expectedLatestDeletionAsMinRV := false
 			items := make([]int64, 0)
 			callback := func(iter resource.ListIterator) error {
 				for iter.Next() {
@@ -615,7 +762,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 			}
 
 			b.SQLMock.ExpectBegin()
-			historyRows := setupHistoryTest(b, page.versions, rv60)
+			historyRows := setupHistoryTest(b, page.versions, rv60, expectedLatestDeletionAsMinRV)
 			b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").WillReturnRows(historyRows)
 			b.SQLMock.ExpectCommit()
 
@@ -643,6 +790,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 			Limit:           4,
 		}
 
+		expectedLatestDeletionAsMinRV := true
 		// First batch of items we expect, in ASC order (because of NotOlderThan flag)
 		// Even with ResourceVersion=0, the order is ASC because we use SortAscending=true
 		expectedVersions := []int64{rv51, rv52, rv53, rv54}
@@ -656,7 +804,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 		}
 
 		b.SQLMock.ExpectBegin()
-		historyRows := setupHistoryTest(b, expectedVersions, rv60)
+		historyRows := setupHistoryTest(b, expectedVersions, rv60, expectedLatestDeletionAsMinRV)
 		b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").WillReturnRows(historyRows)
 		b.SQLMock.ExpectCommit()
 
@@ -668,11 +816,18 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 }
 
 // setupHistoryTest creates the necessary mock expectations for a history test
-func setupHistoryTest(b testBackend, resourceVersions []int64, latestRV int64) *sqlmock.Rows {
+func setupHistoryTest(b testBackend, resourceVersions []int64, latestRV int64, expectedLatestDeletionAsMinRV4 bool) *sqlmock.Rows {
 	// Expect fetch latest RV call - set to the highest resource version
 	latestRVRows := sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).
 		AddRow(latestRV, 0)
 	b.SQLMock.ExpectQuery("SELECT .* FROM resource_version").WillReturnRows(latestRVRows)
+
+	if expectedLatestDeletionAsMinRV4 {
+		latestHistoryRVRows := sqlmock.NewRows([]string{"resource_version"}).
+			AddRow(latestRV)
+		b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").
+			WillReturnRows(latestHistoryRVRows)
+	}
 
 	// Create the mock rows for the history items
 	cols := []string{"resource_version", "namespace", "name", "folder", "value"}

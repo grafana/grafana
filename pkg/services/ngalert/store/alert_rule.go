@@ -242,7 +242,7 @@ func (st DBstore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodel
 	alertRules := make([]*ngmodels.AlertRule, 0)
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		// take only the latest versions of each rule by GUID
-		rows, err := sess.Table(alertRuleVersion{}).Where("rule_org_id = ? AND rule_uid = ''", orgID).Rows(alertRuleVersion{})
+		rows, err := sess.Table(alertRuleVersion{}).Where("rule_org_id = ? AND rule_uid = ''", orgID).Desc("created", "id").Rows(alertRuleVersion{})
 		if err != nil {
 			return err
 		}
