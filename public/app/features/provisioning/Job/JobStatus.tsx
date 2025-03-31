@@ -1,37 +1,51 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { Alert, ControlledCollapse, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
-import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
+import {
+  Job,
+  useGetRepositoryJobsWithPathQuery,
+  useGetRepositoryQuery,
+  useListJobQuery,
+} from 'app/api/clients/provisioning';
 
 import ProgressBar from '../Shared/ProgressBar';
-import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 import { getRepoHref } from '../utils/git';
 
 import { JobSummary } from './JobSummary';
 
 export interface JobStatusProps {
-  name: string;
+  watch: Job;
   onStatusChange?: (success: boolean) => void;
   onRunningChange?: (isRunning: boolean) => void;
   onErrorChange?: (error: string | null) => void;
 }
 
-export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange }: JobStatusProps) {
-  const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({ jobName: name, watch: true });
-  const job = jobs?.[0];
+export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChange }: JobStatusProps) {
+  console.log('WATCH', watch.metadata?.name);
+  const activeQuery = useListJobQuery({
+    labelSelector: `metadata.name=${watch.metadata?.name}`,
+    watch: true,
+  });
 
-  useEffect(() => {
-    if (onRunningChange) {
-      onRunningChange(
-        activeQuery.isLoading ||
-          historicQuery.isLoading ||
-          !job ||
-          job.status?.state === 'working' ||
-          job.status?.state === 'pending'
-      );
+  const finishedQuery = useGetRepositoryJobsWithPathQuery({
+    name: watch.metadata?.labels?.['xxx'] ?? 'repo',
+    uid: watch.metadata?.uid ?? 'uid',
+  });
+
+  const job = useMemo(() => {
+    const active = activeQuery?.data?.items?.[0];
+    if (active) {
+      return active;
     }
-  }, [activeQuery.isLoading, historicQuery.isLoading, job, onRunningChange, onErrorChange]);
+    if (activeQuery.isSuccess) {
+      if (finishedQuery.data) {
+        return finishedQuery.data;
+      }
+      finishedQuery.refetch(); // try again
+    }
+    return watch;
+  }, [watch, activeQuery, finishedQuery]);
 
   useEffect(() => {
     if (onStatusChange && job?.status?.state === 'success') {
@@ -48,7 +62,7 @@ export function JobStatus({ name, onStatusChange, onRunningChange, onErrorChange
     }
   }, [job, onStatusChange, onErrorChange, onRunningChange]);
 
-  if (!name || activeQuery.isLoading || historicQuery.isLoading || !job) {
+  if (!job || activeQuery.isLoading) {
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
         <Spinner size={24} />

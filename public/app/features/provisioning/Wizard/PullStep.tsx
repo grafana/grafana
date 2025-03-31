@@ -14,11 +14,9 @@ export function PullStep({ onStepUpdate }: PullStepProps) {
   const startSync = async (repositoryName: string) => {
     const response = await createJob({
       name: repositoryName,
-      job: {
-        spec: {
-          pull: {
-            incremental: false, // will queue a full resync job
-          },
+      jobSpec: {
+        pull: {
+          incremental: false, // will queue a full resync job
         },
       },
     }).unwrap();

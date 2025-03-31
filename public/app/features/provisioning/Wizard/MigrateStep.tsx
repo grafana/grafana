@@ -20,12 +20,10 @@ export function MigrateStep({ onStepUpdate }: MigrateStepProps) {
   const startMigration = async (repositoryName: string) => {
     const response = await createJob({
       name: repositoryName,
-      job: {
-        spec: {
-          migrate: {
-            identifier,
-            history,
-          },
+      jobSpec: {
+        migrate: {
+          identifier,
+          history,
         },
       },
     }).unwrap();

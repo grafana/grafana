@@ -805,6 +805,7 @@ spec:
 	sub = oas.Paths.Paths[repoprefix+"/jobs"]
 	if sub != nil {
 		sub.Post.Description = "Register a job for this repository"
+		sub.Post.Responses = getJSONResponse("#/components/schemas/" + refsBase + "Job")
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{
@@ -812,20 +813,17 @@ spec:
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &spec.Schema{
 								SchemaProps: spec.SchemaProps{
-									Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "Job"),
+									Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "JobSpec"),
 								},
 							},
 							Examples: map[string]*spec3.Example{
 								"incremental": {
 									ExampleProps: spec3.ExampleProps{
-										Summary:     "Incremental sync job",
+										Summary:     "Pull (incremental)",
 										Description: "look for changes since the last sync",
-										Value: &provisioning.Job{
-											Spec: provisioning.JobSpec{
-												Action: provisioning.JobActionPull,
-												Pull: &provisioning.SyncJobOptions{
-													Incremental: true,
-												},
+										Value: provisioning.JobSpec{
+											Pull: &provisioning.SyncJobOptions{
+												Incremental: true,
 											},
 										},
 									},
@@ -833,13 +831,10 @@ spec:
 								"pull": {
 									ExampleProps: spec3.ExampleProps{
 										Summary:     "Pull from repository",
-										Description: "pull jobs",
-										Value: &provisioning.Job{
-											Spec: provisioning.JobSpec{
-												Action: provisioning.JobActionPull,
-												Pull: &provisioning.SyncJobOptions{
-													Incremental: false,
-												},
+										Description: "pull all files",
+										Value: provisioning.JobSpec{
+											Pull: &provisioning.SyncJobOptions{
+												Incremental: false,
 											},
 										},
 									},
@@ -852,56 +847,14 @@ spec:
 		}
 
 		sub.Get.Description = "List recent jobs"
-		sub.Get.Responses = &spec3.Responses{
-			ResponsesProps: spec3.ResponsesProps{
-				StatusCodeResponses: map[int]*spec3.Response{
-					200: {
-						ResponseProps: spec3.ResponseProps{
-							Content: map[string]*spec3.MediaType{
-								"application/json": {
-									MediaTypeProps: spec3.MediaTypeProps{
-										Schema: &spec.Schema{
-											SchemaProps: spec.SchemaProps{
-												Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "JobList"),
-											},
-										},
-									},
-								},
-							},
-							Description: "OK",
-						},
-					},
-				},
-			},
-		}
+		sub.Get.Responses = getJSONResponse("#/components/schemas/" + refsBase + "JobList")
 	}
 
 	sub = oas.Paths.Paths[repoprefix+"/jobs/{path}"]
 	if sub != nil {
 		sub.Post = nil
 		sub.Get.Description = "Get job by UID"
-		sub.Get.Responses = &spec3.Responses{
-			ResponsesProps: spec3.ResponsesProps{
-				StatusCodeResponses: map[int]*spec3.Response{
-					200: {
-						ResponseProps: spec3.ResponseProps{
-							Content: map[string]*spec3.MediaType{
-								"application/json": {
-									MediaTypeProps: spec3.MediaTypeProps{
-										Schema: &spec.Schema{
-											SchemaProps: spec.SchemaProps{
-												Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "Job"),
-											},
-										},
-									},
-								},
-							},
-							Description: "OK",
-						},
-					},
-				},
-			},
-		}
+		sub.Get.Responses = getJSONResponse("#/components/schemas/" + refsBase + "Job")
 
 		// Change the {path} to {uid}
 		for _, v := range sub.Parameters {
@@ -1182,5 +1135,30 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
+	}
+}
+
+func getJSONResponse(ref string) *spec3.Responses {
+	return &spec3.Responses{
+		ResponsesProps: spec3.ResponsesProps{
+			StatusCodeResponses: map[int]*spec3.Response{
+				200: {
+					ResponseProps: spec3.ResponseProps{
+						Content: map[string]*spec3.MediaType{
+							"application/json": {
+								MediaTypeProps: spec3.MediaTypeProps{
+									Schema: &spec.Schema{
+										SchemaProps: spec.SchemaProps{
+											Ref: spec.MustCreateRef(ref),
+										},
+									},
+								},
+							},
+						},
+						Description: "OK",
+					},
+				},
+			},
+		},
 	}
 }

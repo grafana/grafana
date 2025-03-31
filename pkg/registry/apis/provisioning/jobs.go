@@ -56,6 +56,7 @@ func (c *jobsConnector) Connect(
 	cfg := repo.Config()
 
 	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx = r.Context()
 		prefix := fmt.Sprintf("/%s/jobs/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if r.Method == http.MethodGet {
@@ -86,15 +87,14 @@ func (c *jobsConnector) Connect(
 			return
 		}
 
-		job := &provisioning.Job{}
-		if err := unmarshalJSON(r, defaultMaxBodySize, job); err != nil {
+		spec := provisioning.JobSpec{}
+		if err := unmarshalJSON(r, defaultMaxBodySize, &spec); err != nil {
 			responder.Error(apierrors.NewBadRequest("error decoding provisioning.Job from request"))
 			return
 		}
-		job.Spec.Repository = name
-		job.Namespace = cfg.Namespace
+		spec.Repository = name
 
-		job, err := c.jobs.Insert(ctx, job)
+		job, err := c.jobs.Insert(ctx, cfg.Namespace, spec)
 		if err != nil {
 			responder.Error(err)
 			return

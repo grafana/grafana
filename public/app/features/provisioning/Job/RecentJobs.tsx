@@ -179,9 +179,7 @@ export function RecentJobs({ repo }: Props) {
   // TODO: Decide on whether we want to wait on historic jobs to show the current ones.
   //   Gut feeling is that current jobs are far more important to show than historic ones.
   const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({
-    repositoryName: repo.metadata?.name,
-    watch: true,
-    sort: 'active-first',
+    repositoryName: repo.metadata?.name ?? 'x',
   });
   const jobColumns = useMemo(() => getJobColumns(), []);
 

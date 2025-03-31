@@ -61,7 +61,7 @@ type Queue interface {
 	// The job name is not honoured. It will be overwritten with a name that fits the job.
 	//
 	// This saves it if it is a new job, or fails with `apierrors.IsAlreadyExists(err) == true` if one already exists.
-	Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
+	Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error)
 }
 
 var _ Queue = (*persistentStore)(nil)
@@ -363,19 +363,24 @@ func (s *persistentStore) cleanupClaims(ctx context.Context) error {
 	return nil
 }
 
-func (s *persistentStore) Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
-	if job.Spec.Repository == "" {
-		return nil, apifmt.Errorf("missing repository in job '%s'", job.GetName())
+func (s *persistentStore) Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error) {
+	if spec.Repository == "" {
+		return nil, apifmt.Errorf("missing repository in job '%s'", spec)
 	}
-	if job.Labels == nil {
-		job.Labels = make(map[string]string)
-	}
-	job.Labels[LabelRepository] = job.Spec.Repository
 
-	s.generateJobName(job) // Side-effect: updates the job's name.
+	job := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Labels: map[string]string{
+				LabelRepository: spec.Repository,
+			},
+		},
+		Spec: spec,
+	}
 	if err := mutateJobAction(job); err != nil {
 		return nil, err
 	}
+	s.generateJobName(job) // Side-effect: updates the job's name.
 
 	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {

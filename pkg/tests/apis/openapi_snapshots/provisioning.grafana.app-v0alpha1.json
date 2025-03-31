@@ -1932,46 +1932,24 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobSpec"
               },
               "examples": {
                 "incremental": {
-                  "summary": "Incremental sync job",
+                  "summary": "Pull (incremental)",
                   "description": "look for changes since the last sync",
                   "value": {
-                    "metadata": {
-                      "generation": 0
-                    },
-                    "spec": {
-                      "action": "pull",
-                      "pull": {
-                        "incremental": true
-                      }
-                    },
-                    "status": {
-                      "started": 0,
-                      "finished": 0,
-                      "progress": 0
+                    "pull": {
+                      "incremental": true
                     }
                   }
                 },
                 "pull": {
                   "summary": "Pull from repository",
-                  "description": "pull jobs",
+                  "description": "pull all files",
                   "value": {
-                    "metadata": {
-                      "generation": 0
-                    },
-                    "spec": {
-                      "action": "pull",
-                      "pull": {
-                        "incremental": false
-                      }
-                    },
-                    "status": {
-                      "started": 0,
-                      "finished": 0,
-                      "progress": 0
+                    "pull": {
+                      "incremental": false
                     }
                   }
                 }
@@ -1983,7 +1961,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
                 }

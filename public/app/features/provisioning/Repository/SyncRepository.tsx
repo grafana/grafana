@@ -39,11 +39,9 @@ export function SyncRepository({ repository }: Props) {
     }
     createJob({
       name,
-      job: {
-        spec: {
-          pull: {
-            incremental: false, // will queue a full resync job
-          },
+      jobSpec: {
+        pull: {
+          incremental: false, // will queue a full resync job
         },
       },
     });

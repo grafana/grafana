@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { Stack, Text } from '@grafana/ui';
+import { Job } from 'app/api/clients/provisioning';
 
 import { JobStatus } from '../Job/JobStatus';
 import { StepStatus, useStepStatus } from '../hooks/useStepStatus';
@@ -12,7 +13,7 @@ import { WizardFormData } from './types';
 interface JobStepProps {
   onStepUpdate: (status: StepStatus, error?: string) => void;
   description: ReactNode;
-  startJob: (repositoryName: string) => Promise<{ metadata?: { name?: string } }>;
+  startJob: (repositoryName: string) => Promise<Job>;
   children?: ReactNode;
 }
 
@@ -22,12 +23,12 @@ export function JobStep({ onStepUpdate, description, startJob, children }: JobSt
   const { watch } = useFormContext<WizardFormData>();
   const repositoryName = watch('repositoryName');
   const stepStatus = useStepStatus({ onStepUpdate });
-  const [jobName, setJobName] = useState<string>();
+  const [job, setJob] = useState<Job>();
 
   // Set initial running state outside the async operation
   useAsync(async () => {
     // Skip if we don't have a repository name or if we already started the job
-    if (!repositoryName || jobName) {
+    if (!repositoryName || job) {
       return;
     }
 
@@ -39,22 +40,23 @@ export function JobStep({ onStepUpdate, description, startJob, children }: JobSt
       if (!response?.metadata?.name) {
         throw new Error('Invalid response from operation');
       }
-      setJobName(response.metadata.name);
+      console.log('Started', response);
+      setJob(response);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to start operation';
       stepStatus.setError(errorMessage);
       throw error; // Re-throw to mark the async operation as failed
     }
-  }, [repositoryName, jobName]); // Only depend on values that determine if we should start the job
+  }, [repositoryName, job, setJob]); // Only depend on values that determine if we should start the job
 
   return (
     <Stack direction="column" gap={2}>
       {description && <Text color="secondary">{description}</Text>}
       {children}
 
-      {jobName && (
+      {job && (
         <JobStatus
-          name={jobName}
+          watch={job}
           onStatusChange={(success) => {
             if (success) {
               stepStatus.setSuccess();
