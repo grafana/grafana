@@ -562,6 +562,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 				b.secrets,
 				b.clonedir,
+				b.parsers,
 			)
 			syncWorker := sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
