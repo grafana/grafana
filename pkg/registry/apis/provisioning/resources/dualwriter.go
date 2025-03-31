@@ -193,12 +193,7 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 	// Directly update the grafana database
 	// Behaves the same running sync after writing
 	if ref == "" {
-		// FIXME: I don't like this parsed strategy here
-		if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
-			parsed.Errors = append(parsed.Errors, err)
-			return parsed, nil
-		}
-
+		// FIXME: we are not creating the folder path
 		// TODO: will existing also be present here? for update?
 		if parsed.Existing == nil {
 			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
@@ -262,10 +257,7 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 	// Directly update the grafana database
 	// Behaves the same running sync after writing
 	if ref == "" {
-		if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
-			parsed.Errors = append(parsed.Errors, err)
-		}
-
+		// FIXME: we are not creating the folder path
 		// FIXME: I don't like this parsed strategy here
 		if parsed.Existing == nil {
 			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
