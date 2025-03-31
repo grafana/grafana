@@ -52,8 +52,8 @@ SCIM uses a specific process to establish and maintain user identity between the
 2. Identity linking:
 
    - The identity provider learns the relationship between the found Grafana user and the Grafana internal ID
-   - The identity provider updates Grafana with its External ID
-   - Grafana updates its authentication validations to expect this External ID
+   - The identity provider updates Grafana with the External ID
+   - Grafana updates the authentication validations to expect this External ID
 
 3. Authentication validation:
    - Grafana expects the SAML integration to return the same External ID in SAML assertions
@@ -126,7 +126,7 @@ Choose one team synchronization method:
 - If you prefer Team Sync, do not enable SCIM Group Sync
 
 {{< admonition type="warning" >}}
-**Team Sync Migration:** Support for migrating from Team Sync to SCIM Group Sync is coming soon. Until this support is released, we recommend keeping your existing Team Sync setup for team management. You can still benefit from SCIM's user provisioning capabilities while using Team Sync for team management.
+**Team Sync Migration:** Support for migrating from Team Sync to SCIM Group Sync is coming soon. Until this support is released, we recommend keeping your existing Team Sync setup for team management. You can still benefit from SCIM user provisioning capabilities while using Team Sync for team management.
 {{< /admonition >}}
 
 ### Key differences

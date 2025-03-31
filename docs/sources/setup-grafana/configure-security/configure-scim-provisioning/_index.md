@@ -62,7 +62,7 @@ The synchronization process works as follows:
 ## Comparison with other sync methods
 
 Grafana offers several methods for synchronizing users, teams, and roles.
-The following table compares SCIM with other synchronization methods to help you understand its advantages:
+The following table compares SCIM with other synchronization methods to help you understand the advantages:
 
 | Sync Method                                                                    | Users | Teams | Roles | Automation | Key Benefits                                                             | Limitations                                                  | On-Prem | Cloud |
 | ------------------------------------------------------------------------------ | ----- | ----- | ----- | ---------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ | ------- | ----- |
@@ -76,7 +76,7 @@ The following table compares SCIM with other synchronization methods to help you
 
 - **Comprehensive user and team automation**: SCIM provides full automation for user and team provisioning, while role management is handled separately through Role Sync
 - **Dynamic team creation**: Teams are created automatically based on identity provider groups
-- **Near real-time synchronization**: Changes in your identity provider are reflected based on the provider's synchronization schedule
+- **Near real-time synchronization**: Changes in the identity provider are reflected based on the provider synchronization schedule
 - **Enterprise-ready**: Designed for large organizations with complex user management needs
 
 ## Next steps
