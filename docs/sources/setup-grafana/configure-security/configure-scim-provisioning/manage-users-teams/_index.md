@@ -39,6 +39,10 @@ SCIM provisioning works in conjunction with existing user management methods in 
 User provisioning requires `user_sync_enabled = true` in the SCIM configuration. See [Configure SCIM in Grafana](../_index.md#configure-scim-in-grafana) for more information.
 {{< /admonition >}}
 
+{{< admonition type="warning" >}}
+Once a user is provisioned through SCIM, they cannot be deleted from Grafana - they can only be deactivated through the identity provider. This is important to consider when planning your user management strategy, especially for compliance and data retention requirements.
+{{< /admonition >}}
+
 For detailed configuration steps specific to the identity provider, see:
 
 - [Configure SCIM with Azure AD](../configure-scim-azure/)
@@ -115,6 +119,10 @@ SCIM provides automated team management capabilities that go beyond what Team Sy
 
 {{< admonition type="note" >}}
 Team provisioning requires `group_sync_enabled = true` in the SCIM configuration. See [Configure SCIM in Grafana](../_index.md#configure-scim-in-grafana) for more information.
+{{< /admonition >}}
+
+{{< admonition type="warning" >}}
+Teams provisioned through SCIM cannot be deleted manually from Grafana - they can only be deleted by removing their corresponding groups from the identity provider.
 {{< /admonition >}}
 
 For detailed configuration steps specific to the identity provider, see:
