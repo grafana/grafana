@@ -19,10 +19,12 @@ import (
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
+	"gocloud.dev/gcerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/backend"
 )
 
 type CDKBackendOptions struct {
@@ -116,6 +118,16 @@ func (s *cdkBackend) GetResourceStats(ctx context.Context, namespace string, min
 }
 
 func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
+	path := s.getPath(event.Key, 0)
+	iter := s.bucket.List(&blob.ListOptions{Prefix: path + "/", Delimiter: "/"})
+	if _, err := iter.Next(ctx); !errors.Is(err, io.EOF) && gcerrors.Code(err) != gcerrors.NotFound {
+		if err == nil {
+			// The folder already exists. Not OK!
+			return 0, backend.ErrResourceAlreadyExists
+		}
+		return 0, err
+	}
+
 	// Scope the lock
 	{
 		s.mutex.Lock()
