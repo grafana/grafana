@@ -19,10 +19,10 @@ The LDAP integration in Grafana allows your Grafana users to login with their LD
 group memberships and Grafana Organization user roles.
 
 {{% admonition type="note" %}}
-[Enhanced LDAP authentication]({{< relref "../enhanced-ldap" >}}) is available in [Grafana Cloud](/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}).
+[Enhanced LDAP authentication](../enhanced-ldap/) is available in [Grafana Cloud](/docs/grafana-cloud/) and in [Grafana Enterprise](../../../../introduction/grafana-enterprise/).
 {{% /admonition %}}
 
-Refer to [Role-based access control]({{< relref "../../../../administration/roles-and-permissions/access-control" >}}) to understand how you can control access with role-based permissions.
+Refer to [Role-based access control](../../../../administration/roles-and-permissions/access-control/) to understand how you can control access with role-based permissions.
 
 ## Supported LDAP Servers
 
@@ -32,7 +32,7 @@ This means that you should be able to configure LDAP integration using any compl
 
 ## Enable LDAP
 
-In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../../../configure-grafana" >}}) as well as specify the path to the LDAP
+In order to use LDAP integration you'll first need to enable LDAP in the [main config file](../../../configure-grafana/) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
 After enabling LDAP, the default behavior is for Grafana users to be created automatically upon successful LDAP authentication. If you prefer for only existing Grafana users to be able to sign in, you can change `allow_sign_up` to `false` in the `[auth.ldap]` section.
@@ -164,7 +164,7 @@ Note that this does not work if you are using the single bind configuration outl
 
 {{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" alt="LDAP mapping displayed" >}}
 
-[Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) users with [enhanced LDAP integration]({{< relref "../enhanced-ldap" >}}) enabled can also see sync status in the debug view. This requires the `ldap.status:read` permission.
+[Grafana Enterprise](../../../../introduction/grafana-enterprise/) users with [enhanced LDAP integration](../enhanced-ldap/) enabled can also see sync status in the debug view. This requires the `ldap.status:read` permission.
 
 {{< figure src="/static/img/docs/ldap_sync_debug.png" class="docs-image--no-shadow" max-width="600px" alt="LDAP sync status" >}}
 
@@ -418,7 +418,7 @@ Please inspect your Active Directory configuration and documentation to find the
 
 ## Troubleshooting
 
-To troubleshoot and get more log info enable LDAP debug logging in the [main config file]({{< relref "../../../configure-grafana" >}}).
+To troubleshoot and get more log info enable LDAP debug logging in the [main config file](../../../configure-grafana/).
 
 ```bash
 [log]

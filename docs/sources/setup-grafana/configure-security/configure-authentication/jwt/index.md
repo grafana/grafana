@@ -27,7 +27,7 @@ authentication in an app embedding Grafana.
 
 To use JWT authentication:
 
-1. Enable JWT in the [main config file]({{< relref "../../../configure-grafana" >}}).
+1. Enable JWT in the [main config file](../../../configure-grafana/).
 1. Specify the header name that contains a token.
 
 ```ini
@@ -94,7 +94,7 @@ you can use JWT authentication to authenticate the iframe.
 
 {{% admonition type="note" %}}
 For Grafana Cloud, or scenarios where verifying viewer identity is not required,
-embed [public dashboards]({{< relref "../../../../dashboards/dashboard-public" >}}).
+embed [public dashboards](../../../../dashboards/dashboard-public/).
 {{% /admonition %}}
 
 In this scenario, you will need to configure Grafana to accept a JWT
@@ -102,7 +102,7 @@ provided in the HTTP header and a reverse proxy should rewrite requests to the
 Grafana instance to include the JWT in the request's headers.
 
 {{% admonition type="note" %}}
-For embedding to work, you must enable `allow_embedding` in the [security section]({{< relref "../../../configure-grafana#allow_embedding" >}}). This setting is not available in Grafana Cloud.
+For embedding to work, you must enable `allow_embedding` in the [security section](../../../configure-grafana/#allow_embedding). This setting is not available in Grafana Cloud.
 {{% /admonition %}}
 
 In a scenario where it is not possible to rewrite the request headers you

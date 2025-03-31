@@ -22,10 +22,10 @@ weight: 1300
 
 Keycloak OAuth2 authentication allows users to log in to Grafana using their Keycloak credentials. This guide explains how to set up Keycloak as an authentication provider in Grafana.
 
-Refer to [Generic OAuth authentication]({{< relref "../generic-oauth" >}}) for extra configuration options available for this provider.
+Refer to [Generic OAuth authentication](../generic-oauth/) for extra configuration options available for this provider.
 
 {{% admonition type="note" %}}
-If Users use the same email address in Keycloak that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
+If Users use the same email address in Keycloak that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
 {{% /admonition %}}
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
@@ -109,10 +109,10 @@ viewer
 ## Teamsync
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
-[Teamsync]({{< relref "../../configure-team-sync" >}}) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
+[Teamsync](../../configure-team-sync/) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
 
 To enable teamsync, you need to add a `groups` mapper to the client configuration in Keycloak.
 This will add the `groups` claim to the id_token. You can then use the `groups` claim to map groups to teams in Grafana.

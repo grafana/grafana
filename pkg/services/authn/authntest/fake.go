@@ -88,6 +88,13 @@ func (f *FakeService) IsClientEnabled(name string) bool {
 	return false
 }
 
+func (f *FakeService) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
+	if f.ExpectedClientConfig == nil {
+		return nil, false
+	}
+	return f.ExpectedClientConfig, true
+}
+
 func (f *FakeService) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {}
 
 func (f *FakeService) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uint) {}
@@ -170,6 +177,10 @@ func (f *FakeClient) Authenticate(ctx context.Context, r *authn.Request) (*authn
 }
 
 func (f FakeClient) IsEnabled() bool { return true }
+
+func (f *FakeClient) GetConfig() authn.SSOClientConfig {
+	return nil
+}
 
 func (f *FakeClient) Test(ctx context.Context, r *authn.Request) bool {
 	return f.ExpectedTest

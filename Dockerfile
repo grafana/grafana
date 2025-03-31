@@ -3,10 +3,10 @@
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
-ARG BASE_IMAGE=alpine:3.19.1
+ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.23.5-alpine
+ARG GO_IMAGE=golang:1.23.7-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
@@ -156,7 +156,8 @@ RUN if grep -i -q alpine /etc/issue && [ `arch` = "x86_64" ]; then \
         usr/glibc-compat/lib/libdl.so.2 \
         usr/glibc-compat/lib/libm.so.6 \
         usr/glibc-compat/lib/libpthread.so.0 \
-        usr/glibc-compat/lib/librt.so.1 && \
+        usr/glibc-compat/lib/librt.so.1 \
+        usr/glibc-compat/lib/libresolv.so.2 && \
       mkdir /lib64 && \
       ln -s /usr/glibc-compat/lib/ld-linux-x86-64.so.2 /lib64; \
     fi

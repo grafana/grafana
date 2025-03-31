@@ -47,6 +47,11 @@ var (
 		StatusCode: 400,
 		Status:     "empty-name",
 	}
+	ErrDashboardTitleTooLong = DashboardErr{
+		Reason:     "Dashboard title cannot contain more than 5 000 characters",
+		StatusCode: 400,
+		Status:     "title-too-long",
+	}
 	ErrDashboardFolderCannotHaveParent = DashboardErr{
 		Reason:     "A Dashboard Folder cannot be added to another folder",
 		StatusCode: 400,

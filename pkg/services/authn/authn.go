@@ -133,6 +133,9 @@ type Service interface {
 	// - "saml" = "auth.client.saml"
 	// - "github" = "auth.client.github"
 	IsClientEnabled(client string) bool
+
+	// GetClientConfig returns the client configuration for the given client and a boolean indicating if the config was present.
+	GetClientConfig(client string) (SSOClientConfig, bool)
 }
 
 type IdentitySynchronizer interface {
@@ -179,6 +182,11 @@ type RedirectClient interface {
 type LogoutClient interface {
 	Client
 	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
+}
+
+type SSOSettingsAwareClient interface {
+	Client
+	GetConfig() SSOClientConfig
 }
 
 type PasswordClient interface {

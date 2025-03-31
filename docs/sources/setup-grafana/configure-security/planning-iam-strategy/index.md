@@ -12,7 +12,7 @@ keywords:
 
 # Plan your IAM integration strategy
 
-This section describes the decisions you should make when using an Identity and Access Management (IAM) provider to manage access to Grafana. IAM ensures that users have secure access to sensitive data and [other resources]({{< relref "../../../administration/data-source-management" >}}), simplifying user management and authentication.
+This section describes the decisions you should make when using an Identity and Access Management (IAM) provider to manage access to Grafana. IAM ensures that users have secure access to sensitive data and [other resources](../../../administration/data-source-management/), simplifying user management and authentication.
 
 ## Benefits of integrating with an IAM provider
 
@@ -33,12 +33,12 @@ In order to plan an integration with Grafana, assess your organization's current
 As a first step, determine how you want to manage users who will access Grafana.
 
 Do you already use an identity provider to manage users? If so, Grafana might be able to integrate with your identity provider through one of our IdP integrations.
-Refer to [Configure authentication documentation]({{< relref "../../configure-security/configure-authentication" >}}) for the list of supported providers.
+Refer to [Configure authentication documentation](../configure-authentication/) for the list of supported providers.
 
 If you are not interested in setting up an external identity provider, but still want to limit access to your Grafana instance, consider using Grafana's basic authentication.
 
 Finally, if you want your Grafana instance to be accessible to everyone, you can enable anonymous access to Grafana.
-For information, refer to the [anonymous authentication documentation]({{< relref "../../configure-security/configure-authentication#anonymous-authentication" >}}).
+For information, refer to the [anonymous authentication documentation](../configure-authentication/#anonymous-authentication).
 
 ## Ways to organize users
 
@@ -51,7 +51,7 @@ Organize users in subgroups that are sensible to the organization. For example:
 
 ### Users in Grafana teams
 
-You can organize users into [teams]({{< relref "../../../administration/team-management" >}}) and assign them roles and permissions reflecting the current organization. For example, instead of assigning five users access to the same dashboard, you can create a team of those users and assign dashboard permissions to the team.
+You can organize users into [teams](../../../administration/team-management/) and assign them roles and permissions reflecting the current organization. For example, instead of assigning five users access to the same dashboard, you can create a team of those users and assign dashboard permissions to the team.
 
 A user can belong to multiple teams and be a member or an administrator for a given team. Team members inherit permissions from the team but cannot edit the team itself. Team administrators can add members to a team and update its settings, such as the team name, team members, roles assigned, and UI preferences.
 
@@ -59,17 +59,17 @@ Teams are a perfect solution for working with a subset of users. Teams can share
 
 ### Users in Grafana organizations
 
-[Grafana organizations]({{< relref "../../../administration/organization-management" >}}) allow complete isolation of resources, such as dashboards and data sources. Users can be members of one or several organizations, and they can only access resources from an organization they belong to.
+[Grafana organizations](../../../administration/organization-management/) allow complete isolation of resources, such as dashboards and data sources. Users can be members of one or several organizations, and they can only access resources from an organization they belong to.
 
 Having multiple organizations in a single instance of Grafana lets you manage your users in one place while completely separating resources.
 
-Organizations provide a higher measure of isolation within Grafana than teams do and can be helpful in certain scenarios. However, because organizations lack the scalability and flexibility of teams and [folders]({{< relref "../../../dashboards/manage-dashboards#create-a-dashboard-folder" >}}), we do not recommend using them as the default way to group users and resources.
+Organizations provide a higher measure of isolation within Grafana than teams do and can be helpful in certain scenarios. However, because organizations lack the scalability and flexibility of teams and [folders](../../../dashboards/manage-dashboards/#create-a-dashboard-folder), we do not recommend using them as the default way to group users and resources.
 
 Note that Grafana Cloud does not support having more than 1 organizations per instance.
 
 ### Choosing between teams and organizations
 
-[Grafana teams]({{< relref "../../../administration/team-management" >}}) and Grafana organizations serve similar purposes in the Grafana platform. Both are designed to help group users and manage and control access to resources.
+[Grafana teams](../../../administration/team-management/) and Grafana organizations serve similar purposes in the Grafana platform. Both are designed to help group users and manage and control access to resources.
 
 Teams provide more flexibility, as resources can be accessible by multiple teams, and team creation and management are simple.
 
@@ -106,7 +106,7 @@ A common use case for creating a service account is to perform operations on aut
 - Set up an external SAML authentication provider
 - Interact with Grafana without signing in as a user
 
-In [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}), you can also use service accounts in combination with [role-based access control]({{< relref "../../../administration/roles-and-permissions/access-control" >}}) to grant very specific permissions to applications that interact with Grafana.
+In [Grafana Enterprise](../../../introduction/grafana-enterprise/), you can also use service accounts in combination with [role-based access control](../../../administration/roles-and-permissions/access-control/) to grant very specific permissions to applications that interact with Grafana.
 
 {{% admonition type="note" %}}
 Service accounts can only act in the organization they are created for. We recommend creating service accounts in each organization if you have the same task needed for multiple organizations.
@@ -136,7 +136,7 @@ Service account access tokens inherit permissions from the service account.
 ### API keys
 
 {{% admonition type="note" %}}
-If you use Grafana v8.5 or newer, you should use service accounts instead of API keys. API keys will be deprecated in the near future. For more information, refer to [Grafana service accounts]({{< relref ".#service-accounts" >}}).
+If you use Grafana v8.5 or newer, you should use service accounts instead of API keys. API keys will be deprecated in the near future. For more information, refer to [Grafana service accounts](./#service-accounts).
 {{% /admonition %}}
 
 You can use Grafana API keys to interact with data sources via HTTP APIs.
@@ -149,7 +149,7 @@ You can assign roles through the user interface or APIs, establish them through 
 
 ### What are roles?
 
-Within an organization, Grafana has established three primary [organization roles]({{< relref "../../../administration/roles-and-permissions#organization-roles" >}}) - organization administrator, editor, and viewer - which dictate the user's level of access and permissions, including the ability to edit data sources or create teams. Grafana also has an empty role that you can start with and to which you can gradually add custom permissions.
+Within an organization, Grafana has established three primary [organization roles](../../../administration/roles-and-permissions/#organization-roles) - organization administrator, editor, and viewer - which dictate the user's level of access and permissions, including the ability to edit data sources or create teams. Grafana also has an empty role that you can start with and to which you can gradually add custom permissions.
 To be a member of any organization, every user must be assigned a role.
 
 In addition, Grafana provides a server administrator role that grants access to and enables interaction with resources that affect the entire instance, including organizations, users, and server-wide settings.
@@ -157,23 +157,23 @@ This particular role can only be accessed by users of self-hosted Grafana instan
 
 ### What are permissions?
 
-Each role consists of a set of [permissions]({{< relref "../../../administration/roles-and-permissions#dashboard-permissions" >}}) that determine the tasks a user can perform in the system.
+Each role consists of a set of [permissions](../../../administration/roles-and-permissions/#dashboard-permissions) that determine the tasks a user can perform in the system.
 For example, the **Admin** role includes permissions that let an administrator create and delete users.
 
 Grafana allows for precise permission settings on both dashboards and folders, giving you the ability to control which users and teams can view, edit, and administer them.
 For example, you might want a certain viewer to be able to edit a dashboard. While that user can see all dashboards, you can grant them access to update only one of them.
 
-In [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}), you can also grant granular permissions for data sources to control who can query and edit them.
+In [Grafana Enterprise](../../../introduction/grafana-enterprise/), you can also grant granular permissions for data sources to control who can query and edit them.
 
 Dashboard, folder, and data source permissions can be set through the UI or APIs or provisioned through Terraform.
 
 ### Role-based access control
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
-If you think that the basic organization and server administrator roles are too limiting, it might be beneficial to employ [role-based access control (RBAC)]({{< relref "../../../administration/roles-and-permissions/access-control" >}}).
+If you think that the basic organization and server administrator roles are too limiting, it might be beneficial to employ [role-based access control (RBAC)](../../../administration/roles-and-permissions/access-control/).
 RBAC is a flexible approach to managing user access to Grafana resources, including users, data sources, and reports. It enables easy granting, changing, and revoking of read and write access for users.
 
 RBAC comes with pre-defined roles, such as data source writer, which allows updating, reading, or querying all data sources.
@@ -190,7 +190,7 @@ When connecting Grafana to an identity provider, it's important to think beyond 
 Team sync is a feature that allows you to synchronize teams or groups from your authentication provider with teams in Grafana. This means that users of specific teams or groups in LDAP, OAuth, or SAML will be automatically added or removed as members of corresponding teams in Grafana. Whenever a user logs in, Grafana will check for any changes in the teams or groups of the authentication provider and update the user's teams in Grafana accordingly. This makes it easy to manage user permissions across multiple systems.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
 {{% /admonition %}}
 
 {{% admonition type="note" %}}

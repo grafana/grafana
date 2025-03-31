@@ -18,14 +18,14 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build verify-drone
@@ -69,13 +69,13 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - go install github.com/bazelbuild/buildtools/buildifier@latest
   - buildifier --lint=warn -mode=check -r .
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: lint-starlark
 trigger:
   event:
@@ -112,7 +112,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -170,7 +170,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -307,7 +307,7 @@ steps:
     path: /github-app
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -414,7 +414,7 @@ steps:
     path: /github-app
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -424,7 +424,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -433,21 +433,21 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-jsonnet
 - commands:
   - apk add --update make
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: test-backend
 - commands:
   - apk add --update build-base
@@ -456,7 +456,7 @@ steps:
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: test-backend-integration
 trigger:
   event:
@@ -503,14 +503,14 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - echo $(/usr/bin/github-app-external-token) > /github-app/token
@@ -554,16 +554,16 @@ steps:
   - apk add --update make
   - make gen-go
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - go run scripts/modowners/modowners.go check go.mod
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: validate-modfile
 - commands:
   - apk add --update make
   - make swagger-validate
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: validate-openapi-spec
 trigger:
   event:
@@ -625,11 +625,11 @@ steps:
     path: /github-app
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.2/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -638,7 +638,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -648,7 +648,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -657,7 +657,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-jsonnet
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -689,12 +689,14 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
     -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
-    -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.23.5 --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.5
+    -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.24.1 --yarn-cache=$$YARN_CACHE_FOLDER
+    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.21.3
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
     .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
     > packages.txt
@@ -751,7 +753,7 @@ steps:
     GF_APP_MODE: development
     GF_SERVER_HTTP_PORT: "3001"
     GF_SERVER_ROUTER_LOGGING: "1"
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: grafana-server
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
@@ -1092,7 +1094,7 @@ steps:
     path: /github-app
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.2/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1101,11 +1103,11 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1115,7 +1117,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -1124,14 +1126,14 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-jsonnet
 - commands:
   - apk add --update make
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
@@ -1152,7 +1154,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: postgres-integration-tests
 - commands:
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
@@ -1173,7 +1175,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: mysql-5.7-integration-tests
 - commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
@@ -1194,7 +1196,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379 -timeout 120s
@@ -1210,7 +1212,7 @@ steps:
   - wait-for-redis
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -1226,7 +1228,7 @@ steps:
   - wait-for-memcached
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: memcached-integration-tests
 - commands:
   - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
@@ -1243,7 +1245,7 @@ steps:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
   failure: ignore
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
   event:
@@ -1296,7 +1298,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -1328,7 +1330,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 trigger:
   event:
@@ -1448,7 +1450,7 @@ steps:
     && return 1; fi
   depends_on:
   - clone-enterprise
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: swagger-gen
 trigger:
   event:
@@ -1563,7 +1565,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1574,7 +1576,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - clone-enterprise
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -1584,14 +1586,14 @@ steps:
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on:
   - clone-enterprise
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-jsonnet
 - commands:
   - apk add --update make
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - apk add --update build-base
@@ -1599,7 +1601,7 @@ steps:
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: sqlite-benchmark-integration-tests
 - commands:
   - apk add --update build-base
@@ -1611,7 +1613,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: postgres-benchmark-integration-tests
 - commands:
   - apk add --update build-base
@@ -1622,7 +1624,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: mysql-5.7-benchmark-integration-tests
 - commands:
   - apk add --update build-base
@@ -1633,7 +1635,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: mysql-8.0-benchmark-integration-tests
 trigger:
   event:
@@ -1676,7 +1678,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -1708,7 +1710,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 trigger:
   branch: main
@@ -1747,7 +1749,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -1805,7 +1807,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -1871,7 +1873,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1881,7 +1883,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -1890,21 +1892,21 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-jsonnet
 - commands:
   - apk add --update make
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: test-backend
 - commands:
   - apk add --update build-base
@@ -1913,7 +1915,7 @@ steps:
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: test-backend-integration
 trigger:
   branch: main
@@ -1951,29 +1953,29 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - apk add --update make
   - make gen-go
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - go run scripts/modowners/modowners.go check go.mod
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: validate-modfile
 - commands:
   - apk add --update make
   - make swagger-validate
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: validate-openapi-spec
 - commands:
   - ./bin/build verify-drone
@@ -2017,7 +2019,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -2091,11 +2093,11 @@ steps:
     path: /github-app
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.2/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2104,7 +2106,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -2114,7 +2116,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -2123,7 +2125,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-jsonnet
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -2154,12 +2156,14 @@ steps:
   image: node:20.9.0-alpine
   name: build-frontend-packages
 - commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
     -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
-    -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.23.5 --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.5
+    -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.24.1 --yarn-cache=$$YARN_CACHE_FOLDER
+    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.21.3
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
     .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
     > packages.txt
@@ -2220,7 +2224,7 @@ steps:
     GF_APP_MODE: development
     GF_SERVER_HTTP_PORT: "3001"
     GF_SERVER_ROUTER_LOGGING: "1"
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: grafana-server
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
@@ -2635,7 +2639,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.2/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2644,11 +2648,11 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -2658,7 +2662,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -2667,14 +2671,14 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-jsonnet
 - commands:
   - apk add --update make
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
@@ -2695,7 +2699,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: postgres-integration-tests
 - commands:
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
@@ -2716,7 +2720,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: mysql-5.7-integration-tests
 - commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
@@ -2737,7 +2741,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379 -timeout 120s
@@ -2753,7 +2757,7 @@ steps:
   - wait-for-redis
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -2769,7 +2773,7 @@ steps:
   - wait-for-memcached
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: memcached-integration-tests
 - commands:
   - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
@@ -2786,7 +2790,7 @@ steps:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
   failure: ignore
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
   branch: main
@@ -2918,7 +2922,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -2974,7 +2978,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -3038,7 +3042,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3048,7 +3052,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -3057,21 +3061,21 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-jsonnet
 - commands:
   - apk add --update make
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: test-backend
 - commands:
   - apk add --update build-base
@@ -3080,7 +3084,7 @@ steps:
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: test-backend-integration
 trigger:
   branch:
@@ -3116,29 +3120,29 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - apk add --update make
   - make gen-go
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - go run scripts/modowners/modowners.go check go.mod
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: validate-modfile
 - commands:
   - apk add --update make
   - make swagger-validate
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: validate-openapi-spec
 trigger:
   branch:
@@ -3219,7 +3223,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.2/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3228,11 +3232,11 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3242,7 +3246,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -3251,14 +3255,14 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-jsonnet
 - commands:
   - apk add --update make
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
@@ -3279,7 +3283,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: postgres-integration-tests
 - commands:
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
@@ -3300,7 +3304,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: mysql-5.7-integration-tests
 - commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
@@ -3321,7 +3325,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379 -timeout 120s
@@ -3337,7 +3341,7 @@ steps:
   - wait-for-redis
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -3353,7 +3357,7 @@ steps:
   - wait-for-memcached
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: memcached-integration-tests
 - commands:
   - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
@@ -3370,7 +3374,7 @@ steps:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
   failure: ignore
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
   branch:
@@ -3460,11 +3464,11 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.2/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3473,7 +3477,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -3592,11 +3596,11 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.2/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3605,7 +3609,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -3746,7 +3750,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts packages --artifacts-editions=oss --tag $${DRONE_TAG} --src-bucket
@@ -3837,7 +3841,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -3937,7 +3941,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - depends_on:
   - compile-build-cmd
@@ -4034,7 +4038,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
@@ -4081,7 +4085,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-    ALPINE_BASE: alpine:3.20.5
+    ALPINE_BASE: alpine:3.21.3
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -4096,7 +4100,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.23.5
+    GO_VERSION: 1.24.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4156,7 +4160,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-    ALPINE_BASE: alpine:3.20.5
+    ALPINE_BASE: alpine:3.21.3
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -4171,7 +4175,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.23.5
+    GO_VERSION: 1.24.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4191,51 +4195,6 @@ steps:
     path: /var/run/docker.sock
   - name: github-app
     path: /github-app
-trigger:
-  event:
-    exclude:
-    - promote
-  ref:
-    exclude:
-    - refs/tags/*-cloud*
-    include:
-    - refs/tags/v*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: release-whatsnew-checker
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.5-alpine
-  name: compile-build-cmd
-- commands:
-  - ./bin/build whatsnew-checker
-  depends_on:
-  - compile-build-cmd
-  image: golang:1.23.5-alpine
-  name: whats-new-checker
 trigger:
   event:
     exclude:
@@ -4318,7 +4277,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-    ALPINE_BASE: alpine:3.20.5
+    ALPINE_BASE: alpine:3.21.3
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -4333,7 +4292,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.23.5
+    GO_VERSION: 1.24.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4420,7 +4379,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -4474,7 +4433,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -4484,7 +4443,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -4493,21 +4452,21 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-jsonnet
 - commands:
   - apk add --update make
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: test-backend
 - commands:
   - apk add --update build-base
@@ -4516,7 +4475,7 @@ steps:
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: test-backend-integration
 trigger:
   cron:
@@ -4555,7 +4514,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-    ALPINE_BASE: alpine:3.20.5
+    ALPINE_BASE: alpine:3.21.3
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -4570,7 +4529,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.23.5
+    GO_VERSION: 1.24.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4699,7 +4658,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-    ALPINE_BASE: alpine:3.20.5
+    ALPINE_BASE: alpine:3.21.3
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -4714,7 +4673,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.23.5
+    GO_VERSION: 1.24.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4820,13 +4779,13 @@ steps:
   - export GITHUB_TOKEN=$(cat /github-app/token)
   - 'dagger run --silent /src/grafana-build artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
     --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --version=$${VERSION} '
-  - --go-version=1.23.5
+  - --go-version=1.24.1
   depends_on:
   - github-app-generate-token
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-    ALPINE_BASE: alpine:3.20.5
+    ALPINE_BASE: alpine:3.21.3
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -4841,7 +4800,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.23.5
+    GO_VERSION: 1.24.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4970,13 +4929,13 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.2/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.5
+  image: alpine:3.21.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -4986,7 +4945,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -4995,14 +4954,14 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: verify-gen-jsonnet
 - commands:
   - apk add --update make
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: wire-install
 - commands:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
@@ -5023,7 +4982,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: postgres-integration-tests
 - commands:
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
@@ -5044,7 +5003,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: mysql-5.7-integration-tests
 - commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
@@ -5065,7 +5024,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379 -timeout 120s
@@ -5081,7 +5040,7 @@ steps:
   - wait-for-redis
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -5097,7 +5056,7 @@ steps:
   - wait-for-memcached
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: memcached-integration-tests
 - commands:
   - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
@@ -5114,7 +5073,7 @@ steps:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
   failure: ignore
-  image: golang:1.23.5-alpine
+  image: golang:1.24.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
   event:
@@ -5420,12 +5379,12 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM docker:27-cli
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.23.5-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.24.1-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20.9.0-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20-bookworm
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.20.5
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.21.3
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM ubuntu:22.04
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM byrnedo/alpine-curl:0.1.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
@@ -5459,12 +5418,12 @@ steps:
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL docker:27-cli
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine/git:2.40.1
-  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.23.5-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.24.1-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL node:20.9.0-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL node:20-bookworm
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
-  - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.20.5
+  - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.21.3
   - trivy --exit-code 1 --severity HIGH,CRITICAL ubuntu:22.04
   - trivy --exit-code 1 --severity HIGH,CRITICAL byrnedo/alpine-curl:0.1.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
@@ -5729,6 +5688,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 16489caa870a3645e21569481281c5d114af0c5ff48b519e86da36189bd57606
+hmac: 8ad781cfeffcb06a70361fe83946c22ba08bb185306f0c47b75d67517f3eb0d8
 
 ...

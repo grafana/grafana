@@ -73,7 +73,7 @@ You use the Service Graph to detect performance issues; track increases in error
 ## Display the Service Graph
 
 1. [Configure Grafana Alloy](https://grafana.com/docs/tempo/latest/configuration/grafana-alloy/) or [Tempo or GET](https://grafana.com/docs/tempo/latest/metrics-generator/service_graphs/#tempo) to generate Service Graph data.
-1. Link a Prometheus data source in the Tempo data source's [Service Graph]({{< relref "./configure-tempo-data-source#configure-service-graph" >}}) settings.
+1. Link a Prometheus data source in the Tempo data source's [Service Graph](../configure-tempo-data-source/#configure-service-graph) settings.
 1. Navigate to [Explore](ref:explore).
 1. Select the Tempo data source.
 1. Select the **Service Graph** query type.

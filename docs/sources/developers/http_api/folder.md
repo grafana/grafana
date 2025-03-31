@@ -18,7 +18,7 @@ title: Folder HTTP API
 
 # Folder API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Identifier (id) vs unique identifier (uid)
 
@@ -302,7 +302,7 @@ Content-Length: 97
 
 Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
 
-If [Grafana Alerting]({{< relref "/docs/grafana/latest/alerting" >}}) is enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana alerts. However, if this parameter is set to `true` then it will delete any Grafana alerts under this folder.
+If [Grafana Alerting](/docs/grafana/latest/alerting/) is enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana alerts. However, if this parameter is set to `true` then it will delete any Grafana alerts under this folder.
 
 **Required permissions**
 
@@ -422,7 +422,7 @@ If moving the folder under root:
 
 JSON body schema:
 
-- **parentUid** – Optional [unique identifier]({{< relref "#identifier-id-vs-unique-identifier-uid" >}}) of the new parent folder. If this is empty, then the folder is moved under the root.
+- **parentUid** – Optional [unique identifier](#identifier-id-vs-unique-identifier-uid) of the new parent folder. If this is empty, then the folder is moved under the root.
 
 **Example Request**:
 

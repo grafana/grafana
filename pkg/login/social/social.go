@@ -27,9 +27,7 @@ const (
 	LDAPProviderName       = "ldap"
 )
 
-var (
-	SocialBaseUrl = "/login/"
-)
+var SocialBaseUrl = "/login/"
 
 type Service interface {
 	GetOAuthProviders() map[string]bool
