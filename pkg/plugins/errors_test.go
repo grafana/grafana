@@ -28,7 +28,7 @@ func TestErrPluginGrpcConnectionUnavailableBase(t *testing.T) {
 		{
 			name: "with stack ID in context",
 			ctx: identity.WithRequester(context.Background(), &identity.StaticRequester{
-				Namespace: "stack-123",
+				Namespace: "stacks-123",
 			}),
 			err:            errors.New("connection failed"),
 			expectedPublic: "Data source became unavailable during request. Please try again. If the problem persists, please contact customer support.",
