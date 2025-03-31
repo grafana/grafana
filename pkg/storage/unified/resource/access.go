@@ -14,7 +14,6 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 )
 
@@ -149,7 +148,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 	}
 	resp, err := c.client.Check(ctx, id, req)
 	if err != nil {
-		c.logger.Error("Check", "group", req.Group, "resource", req.Resource, "error", err, "duration", time.Since(t), "traceid", tracing.TraceIDFromContext(ctx, false))
+		c.logger.Error("Check", "group", req.Group, "resource", req.Resource, "error", err, "duration", time.Since(t), "traceid", trace.SpanContextFromContext(ctx).TraceID().String())
 		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()
 		span.SetStatus(codes.Error, fmt.Sprintf("check failed: %v", err))
 		span.RecordError(err)
@@ -199,7 +198,7 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 	}
 	checker, err := c.client.Compile(ctx, id, req)
 	if err != nil {
-		c.logger.Error("Compile", "group", req.Group, "resource", req.Resource, "error", err, "traceid", tracing.TraceIDFromContext(ctx, false))
+		c.logger.Error("Compile", "group", req.Group, "resource", req.Resource, "error", err, "traceid", trace.SpanContextFromContext(ctx).TraceID().String())
 		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()
 		span.SetStatus(codes.Error, fmt.Sprintf("compile failed: %v", err))
 		span.RecordError(err)
