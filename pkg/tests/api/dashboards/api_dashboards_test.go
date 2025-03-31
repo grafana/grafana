@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -315,9 +316,22 @@ func TestIntegrationCreate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	testCreate(t, []string{})
+}
+
+func TestIntegrationCreateK8s(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	testCreate(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
+}
+
+func testCreate(t *testing.T, featureToggles []string) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
+		DisableAnonymous:     true,
+		EnableFeatureToggles: featureToggles,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
