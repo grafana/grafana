@@ -85,11 +85,8 @@ func UnmarshalSQLCommand(rn *rawNode, limit int64) (*SQLCommand, error) {
 		return nil, fmt.Errorf("expected sql expression to be type string, but got type %T", expressionRaw)
 	}
 
-	formatRaw, _ := rn.Query["format"]
-	format, ok := formatRaw.(string)
-	if !ok {
-		format = ""
-	}
+	formatRaw := rn.Query["format"]
+	format, _ := formatRaw.(string)
 
 	return NewSQLCommand(rn.RefID, format, expression, limit)
 }
@@ -219,7 +216,7 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 			if j == numericFieldIx || (f.Type() != data.FieldTypeString && f.Type() != data.FieldTypeNullableString) {
 				continue
 			}
-		
+
 			val := f.At(i)
 			switch v := val.(type) {
 			case *string:
