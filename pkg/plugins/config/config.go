@@ -35,6 +35,7 @@ type Features struct {
 	SkipHostEnvVarsEnabled      bool
 	SriChecksEnabled            bool
 	PluginsCDNSyncLoaderEnabled bool
+	LocalizationForPlugins      bool
 }
 
 // NewPluginManagementCfg returns a new PluginManagementCfg.

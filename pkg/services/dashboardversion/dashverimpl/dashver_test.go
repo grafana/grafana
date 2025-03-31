@@ -73,7 +73,7 @@ func TestDashboardVersionService(t *testing.T) {
 		obj, err := utils.MetaAccessor(dash)
 		require.NoError(t, err)
 		obj.SetUpdatedTimestamp(&updatedTimestamp)
-		mockCli.On("GetUsersFromMeta", mock.Anything, []string{"user:1", ""}).Return(map[string]*user.User{"user:1": &user.User{ID: 1}}, nil)
+		mockCli.On("GetUsersFromMeta", mock.Anything, []string{"user:1", ""}).Return(map[string]*user.User{"user:1": {ID: 1}}, nil)
 		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
 			Items: []unstructured.Unstructured{*dash}}, nil).Once()
 		res, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{

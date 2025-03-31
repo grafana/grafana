@@ -403,6 +403,108 @@ func Test_ReadPluginJSON(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "can read languages in a datasource plugin",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "myorg-languages-datasource",
+					"name": "Languages Datasource",
+					"type": "datasource",
+					"languages": ["en-US", "pt-BR"]
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:        "myorg-languages-datasource",
+				Name:      "Languages Datasource",
+				Type:      TypeDataSource,
+				Languages: []string{"en-US", "pt-BR"},
+
+				Extensions: Extensions{
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+			},
+		},
+		{
+			name: "can read languages in a panel plugin",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "myorg-languages-panel",
+					"name": "Languages Panel",
+					"type": "panel",
+					"languages": ["en-US", "pt-BR"]
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:        "myorg-languages-panel",
+				Name:      "Languages Panel",
+				Type:      TypePanel,
+				Languages: []string{"en-US", "pt-BR"},
+
+				Extensions: Extensions{
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+			},
+		},
+		{
+			name: "can read languages in an app plugin",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "myorg-languages-app",
+					"name": "Languages App",
+					"type": "app",
+					"languages": ["en-US", "pt-BR"]
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:        "myorg-languages-app",
+				Name:      "Languages App",
+				Type:      TypeApp,
+				Languages: []string{"en-US", "pt-BR"},
+
+				Extensions: Extensions{
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
