@@ -2,41 +2,41 @@ package migrate
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strings"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-func (j *migrationJob) loadUsers(ctx context.Context) error {
-	client, err := j.parser.Clients().User()
+const maxUsers = 10000
+
+func loadUsers(ctx context.Context, parser *resources.Parser) (map[string]repository.CommitSignature, error) {
+	client, err := parser.Clients().User()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
-	if err != nil {
-		return fmt.Errorf("failed to list users: %w", err)
-	}
-	if rawList.GetContinue() != "" {
-		return fmt.Errorf("unable to list all users in one request: %s", rawList.GetContinue())
-	}
+	userInfo := make(map[string]repository.CommitSignature)
+	var count int
+	err = resources.ForEachResource(ctx, client, func(item *unstructured.Unstructured) error {
+		count++
+		if count > maxUsers {
+			return errors.New("too many users")
+		}
 
-	var ok bool
-	j.userInfo = make(map[string]repository.CommitSignature)
-	for _, item := range rawList.Items {
 		sig := repository.CommitSignature{}
 		// FIXME: should we improve logging here?
+		var ok bool
 		sig.Name, ok, err = unstructured.NestedString(item.Object, "spec", "login")
 		if !ok || err != nil {
-			continue
+			return nil
 		}
 		sig.Email, ok, err = unstructured.NestedString(item.Object, "spec", "email")
 		if !ok || err != nil {
-			continue
+			return nil
 		}
 
 		if sig.Name == sig.Email {
@@ -47,7 +47,12 @@ func (j *migrationJob) loadUsers(ctx context.Context) error {
 			}
 		}
 
-		j.userInfo["user:"+item.GetName()] = sig
+		userInfo["user:"+item.GetName()] = sig
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	return userInfo, nil
 }

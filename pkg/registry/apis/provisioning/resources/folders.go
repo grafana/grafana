@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,22 +16,32 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
+const maxFolders = 10000
+
 type FolderManager struct {
-	repo   repository.Repository
-	lookup *FolderTree
+	repo   repository.ReaderWriter
+	tree   *FolderTree
 	client dynamic.ResourceInterface
 }
 
-func NewFolderManager(repo repository.Repository, client dynamic.ResourceInterface) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup *FolderTree) *FolderManager {
 	return &FolderManager{
 		repo:   repo,
-		lookup: NewEmptyFolderTree(),
+		tree:   lookup,
 		client: client,
 	}
 }
 
 func (fm *FolderManager) Client() dynamic.ResourceInterface {
 	return fm.client
+}
+
+func (fm *FolderManager) Tree() *FolderTree {
+	return fm.tree
+}
+
+func (fm *FolderManager) SetTree(tree *FolderTree) {
+	fm.tree = tree
 }
 
 // EnsureFoldersExist creates the folder structure in the cluster.
@@ -48,13 +59,13 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 	}
 
 	f := ParseFolder(dir, cfg.Name)
-	if fm.lookup.In(f.ID) {
+	if fm.tree.In(f.ID) {
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
-		if fm.lookup.In(f.ID) {
+		if fm.tree.In(f.ID) {
 			parent = f.ID
 			return nil
 		}
@@ -63,7 +74,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 			return fmt.Errorf("ensure folder exists: %w", err)
 		}
 
-		fm.lookup.Add(f, parent)
+		fm.tree.Add(f, parent)
 		parent = f.ID
 		return nil
 	})
@@ -130,4 +141,41 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
 	return fm.client.Get(ctx, name, metav1.GetOptions{})
+}
+
+// ReplicateTree replicates the folder tree to the repository.
+// The function fn is called for each folder.
+// If the folder already exists, the function is called with created set to false.
+// If the folder is created, the function is called with created set to true.
+func (fm *FolderManager) EnsureTreeExists(ctx context.Context, ref, path string, fn func(folder Folder, created bool, err error) error) error {
+	return fm.tree.Walk(ctx, func(ctx context.Context, folder Folder) error {
+		p := folder.Path
+		if path != "" {
+			p = safepath.Join(path, p)
+		}
+
+		_, err := fm.repo.Read(ctx, p, ref)
+		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
+			return fn(folder, false, fmt.Errorf("check if folder exists before writing: %w", err))
+		} else if err == nil {
+			return fn(folder, false, nil)
+		}
+
+		msg := fmt.Sprintf("Add folder %s", p)
+		if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
+			return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
+		}
+
+		return fn(folder, true, nil)
+	})
+}
+
+func (fm *FolderManager) LoadFromServer(ctx context.Context) error {
+	return ForEachResource(ctx, fm.client, func(item *unstructured.Unstructured) error {
+		if fm.tree.Count() > maxFolders {
+			return errors.New("too many folders")
+		}
+
+		return fm.tree.AddUnstructured(item, fm.repo.Config().Name)
+	})
 }

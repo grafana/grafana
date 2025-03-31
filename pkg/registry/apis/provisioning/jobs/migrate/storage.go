@@ -6,27 +6,16 @@ import (
 	"time"
 
 	"google.golang.org/grpc/metadata"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// called when an error exists
 func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) error {
-	kinds := []schema.GroupResource{{
-		Group:    folders.GROUP,
-		Resource: folders.RESOURCE,
-	}, {
-		Group:    dashboard.GROUP,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-	}}
-
-	for _, gr := range kinds {
-		status, _ := dual.Status(ctx, gr)
+	for _, gr := range resources.SupportedResources {
+		status, _ := dual.Status(ctx, gr.GroupResource())
 		status.ReadUnified = false
 		status.Migrated = 0
 		status.Migrating = 0
@@ -35,20 +24,13 @@ func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) erro
 			return err
 		}
 	}
+
 	return nil
 }
 
-func (j *migrationJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service) error {
-	kinds := []schema.GroupResource{{
-		Group:    folders.GROUP,
-		Resource: folders.RESOURCE,
-	}, {
-		Group:    dashboard.GROUP,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-	}}
-
-	for _, gr := range kinds {
-		status, _ := dual.Status(ctx, gr)
+func wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service, namespace string, batch resource.BulkStoreClient) error {
+	for _, gr := range resources.SupportedResources {
+		status, _ := dual.Status(ctx, gr.GroupResource())
 		if status.ReadUnified {
 			return fmt.Errorf("unexpected state - already using unified storage for: %s", gr)
 		}
@@ -60,13 +42,13 @@ func (j *migrationJob) wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual d
 		settings := resource.BulkSettings{
 			RebuildCollection: true, // wipes everything in the collection
 			Collection: []*resource.ResourceKey{{
-				Namespace: j.namespace,
+				Namespace: namespace,
 				Group:     gr.Group,
 				Resource:  gr.Resource,
 			}},
 		}
 		ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-		stream, err := j.batch.BulkProcess(ctx)
+		stream, err := batch.BulkProcess(ctx)
 		if err != nil {
 			return fmt.Errorf("error clearing unified %s / %w", gr, err)
 		}
