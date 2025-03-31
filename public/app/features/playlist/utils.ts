@@ -1,12 +1,9 @@
 import { lastValueFrom } from 'rxjs';
 
 import { DataQueryRequest, DataFrameView } from '@grafana/data';
-import { getBackendSrv, config } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { config } from '@grafana/runtime';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
-import { dispatch } from 'app/store/store';
 
 import { Playlist } from '../../api/clients/playlist';
 import { getGrafanaSearcher } from '../search/service/searcher';
@@ -39,34 +36,6 @@ export function k8sResourceAsPlaylist(r: Playlist): PlaylistUI {
     interval: spec.interval,
     items: spec.items,
   };
-}
-
-// TODO figure out where we need to use this
-/** @deprecated -- this migrates playlists saved with internal ids to uid  */
-async function migrateInternalIDs(playlist: PlaylistUI) {
-  if (playlist?.items) {
-    for (const item of playlist.items) {
-      if (item.type === 'dashboard_by_id') {
-        item.type = 'dashboard_by_uid';
-        const uids = await getBackendSrv().get<string[]>(`/api/dashboards/ids/${item.value}`);
-        if (uids?.length) {
-          item.value = uids[0];
-        }
-      }
-    }
-  }
-}
-
-// TODO figure out where we need to use this
-async function withErrorHandling(apiCall: () => Promise<void>, message = 'Playlist saved') {
-  try {
-    await apiCall();
-    dispatch(notifyApp(createSuccessNotification(message)));
-  } catch (e) {
-    if (e instanceof Error) {
-      dispatch(notifyApp(createErrorNotification('Unable to save playlist', e)));
-    }
-  }
 }
 
 /** Returns a copy with the dashboards loaded */
