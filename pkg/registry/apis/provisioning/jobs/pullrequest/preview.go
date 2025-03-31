@@ -25,21 +25,27 @@ type resourcePreview struct {
 }
 
 const previewsCommentTemplate = `Hey there! 🎉
-Grafana spotted some changes for your resources in this pull request:
+Grafana spotted some changes for a single resource in this pull request:
+
 ## Summary
-| File Name | Kind | Path | Action | Links |
-|-----------|------|------|--------|-------|
-{{- range .}}
-| {{.Filename}} | {{.Kind}} | {{.Path}} | {{.Action}} | {{- if .OriginalURL}}[Original]({{.OriginalURL}}){{- end}}{{- if and .OriginalURL .PreviewURL}}, {{end}}{{- if .PreviewURL}}[Preview]({{.PreviewURL}}){{- end}} |
+File Name: {{.Filename}}
+Kind: {{.Kind}}
+Path: {{.Path}}
+Action: {{.Action}}
+Links:
+{{- if .OriginalURL}}
+- [Original]({{.OriginalURL}})
+{{- end}}
+{{- if .PreviewURL}}
+- [Preview]({{.PreviewURL}})
 {{- end}}
 
-Click the preview links above to view how your changes will look and compare them with the original and current versions.
+Click the preview link above to view how your changes will look and compare them with the original and current versions.
 
-{{- range .}}
 {{- if .PreviewScreenshotURL}}
 ### Preview of {{.Filename}}
 ![Preview]({{.PreviewScreenshotURL}})
-{{- end}}{{- end}}`
+{{- end}}`
 
 // PreviewRenderer is an interface for rendering a preview of a file
 type PreviewRenderer interface {
@@ -62,9 +68,9 @@ func NewPreviewer(renderer PreviewRenderer, urlProvider func(namespace string) s
 }
 
 // GenerateComment creates a formatted comment for dashboard previews
-func (p *Previewer) GenerateComment(previews []resourcePreview) (string, error) {
+func (p *Previewer) GenerateComment(preview *resourcePreview) (string, error) {
 	var buf bytes.Buffer
-	if err := p.template.Execute(&buf, previews); err != nil {
+	if err := p.template.Execute(&buf, preview); err != nil {
 		return "", fmt.Errorf("execute previews comment template: %w", err)
 	}
 	return buf.String(), nil
