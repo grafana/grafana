@@ -1709,6 +1709,14 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "useScopesNavigationEndpoint",
+			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
 			Name:              "alertingRuleVersionHistoryRestore",
 			Description:       "Enables the alert rule version history restore feature",
 			FrontendOnly:      true,
