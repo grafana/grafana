@@ -29,7 +29,7 @@ import {
 
 import {
   GridLayoutSpec,
-  ResponsiveGridLayoutSpec,
+  AutoGridLayoutSpec,
   RowsLayoutSpec,
   TabsLayoutSpec,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
@@ -42,9 +42,9 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayout } from '../scene/layout-responsive-grid/ResponsiveGridLayout';
-import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridLayout } from '../scene/layout-responsive-grid/ResponsiveGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -739,10 +739,10 @@ describe('dynamic layouts', () => {
         new RowsLayoutManager({
           rows: [
             new RowItem({
-              layout: new ResponsiveGridLayoutManager({
-                layout: new ResponsiveGridLayout({
+              layout: new AutoGridLayoutManager({
+                layout: new AutoGridLayout({
                   children: [
-                    new ResponsiveGridItem({
+                    new AutoGridItem({
                       body: new VizPanel({}),
                     }),
                   ],
@@ -772,29 +772,29 @@ describe('dynamic layouts', () => {
     const rowsLayout = result.layout.spec as RowsLayoutSpec;
     expect(rowsLayout.rows.length).toBe(2);
     expect(rowsLayout.rows[0].kind).toBe('RowsLayoutRow');
-    expect(rowsLayout.rows[0].spec.layout.kind).toBe('ResponsiveGridLayout');
-    const layout1 = rowsLayout.rows[0].spec.layout.spec as ResponsiveGridLayoutSpec;
-    expect(layout1.items[0].kind).toBe('ResponsiveGridLayoutItem');
+    expect(rowsLayout.rows[0].spec.layout.kind).toBe('AutoGridLayout');
+    const layout1 = rowsLayout.rows[0].spec.layout.spec as AutoGridLayoutSpec;
+    expect(layout1.items[0].kind).toBe('AutoGridLayoutItem');
 
     expect(rowsLayout.rows[1].spec.layout.kind).toBe('GridLayout');
     const layout2 = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
     expect(layout2.items[0].kind).toBe('GridLayoutItem');
   });
 
-  it('should transform scene with responsive grid layout to schema v2', () => {
+  it('should transform scene with auto grid layout to schema v2', () => {
     const scene = setupDashboardScene(
       getMinimalSceneState(
-        new ResponsiveGridLayoutManager({
+        new AutoGridLayoutManager({
           columnWidth: 100,
           rowHeight: 'standard',
           maxColumnCount: 4,
           fillScreen: true,
-          layout: new ResponsiveGridLayout({
+          layout: new AutoGridLayout({
             children: [
-              new ResponsiveGridItem({
+              new AutoGridItem({
                 body: new VizPanel({}),
               }),
-              new ResponsiveGridItem({
+              new AutoGridItem({
                 body: new VizPanel({}),
               }),
             ],
@@ -803,8 +803,8 @@ describe('dynamic layouts', () => {
       )
     );
     const result = transformSceneToSaveModelSchemaV2(scene);
-    expect(result.layout.kind).toBe('ResponsiveGridLayout');
-    const respGridLayout = result.layout.spec as ResponsiveGridLayoutSpec;
+    expect(result.layout.kind).toBe('AutoGridLayout');
+    const respGridLayout = result.layout.spec as AutoGridLayoutSpec;
     expect(respGridLayout.columnWidthMode).toBe('custom');
     expect(respGridLayout.columnWidth).toBe(100);
     expect(respGridLayout.rowHeightMode).toBe('standard');
@@ -812,7 +812,7 @@ describe('dynamic layouts', () => {
     expect(respGridLayout.maxColumnCount).toBe(4);
     expect(respGridLayout.fillScreen).toBe(true);
     expect(respGridLayout.items.length).toBe(2);
-    expect(respGridLayout.items[0].kind).toBe('ResponsiveGridLayoutItem');
+    expect(respGridLayout.items[0].kind).toBe('AutoGridLayoutItem');
   });
 
   it('should transform scene with tabs layout to schema v2', () => {

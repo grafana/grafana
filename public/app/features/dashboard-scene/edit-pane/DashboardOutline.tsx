@@ -37,6 +37,7 @@ function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneO
 
   const children = collectEditableElementChildren(sceneObject);
   const elementInfo = editableElement.getEditableElementInfo();
+  const instanceName = elementInfo.instanceName === '' ? '<empty title>' : elementInfo.instanceName;
 
   return (
     <>
@@ -46,11 +47,12 @@ function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneO
         onPointerDown={(evt) => {
           onSelect?.(evt);
           setIsExpanded(!isExpanded);
+          editableElement.scrollIntoView?.();
         }}
       >
         {expandable && <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />}
         <Icon size="sm" name={elementInfo.icon} />
-        <span>{elementInfo.instanceName}</span>
+        <span>{instanceName}</span>
       </button>
 
       {expandable && isExpanded && (
@@ -88,7 +90,7 @@ function getStyles(theme: GrafanaTheme2) {
       boxShadow: 'none',
       border: 'none',
       background: 'transparent',
-      padding: theme.spacing(0.25, 1),
+      padding: theme.spacing(0.25, 1, 0.25, 0),
       borderRadius: theme.shape.radius.default,
       color: theme.colors.text.secondary,
       display: 'flex',
