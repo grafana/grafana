@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type historySubresource struct {
@@ -76,7 +76,7 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 			return
 		}
 
-		if err := resources.IsPathSupported(filePath); err != nil {
+		if err := safepath.IsSafe(filePath); err != nil {
 			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}
