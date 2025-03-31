@@ -1977,7 +1977,7 @@ func TestGetDashboardUIDByID(t *testing.T) {
 
 func TestUnstructuredToLegacyDashboard(t *testing.T) {
 	k8sCliMock := new(client.MockK8sHandler)
-	k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{"user:useruid": &user.User{ID: 10, UID: "useruid"}}, nil)
+	k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{"user:useruid": {ID: 10, UID: "useruid"}}, nil)
 	dr := &DashboardServiceImpl{
 		k8sclient: k8sCliMock,
 	}
@@ -2281,7 +2281,7 @@ func TestCountDashboardsInOrg(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("CountInOrg", mock.Anything, mock.Anything).Return(nil, nil).Once()
+		fakeStore.On("CountInOrg", mock.Anything, mock.Anything, false).Return(nil, nil).Once()
 		_, err := service.CountDashboardsInOrg(context.Background(), 1)
 		require.NoError(t, err)
 		fakeStore.AssertExpectations(t)

@@ -16010,6 +16010,33 @@
             }
           },
           {
+            "description": "ResultSortColumn can be used to override the default system sort. Valid values are \"name\", \"resource_type\", and \"status\".",
+            "in": "query",
+            "name": "resultSortColumn",
+            "schema": {
+              "default": "default",
+              "type": "string"
+            }
+          },
+          {
+            "description": "ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC.",
+            "in": "query",
+            "name": "resultSortOrder",
+            "schema": {
+              "default": "ASC",
+              "type": "string"
+            }
+          },
+          {
+            "description": "ErrorsOnly is used to only return resources with error statuses",
+            "in": "query",
+            "name": "errorsOnly",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
             "description": "Session UID of a session",
             "in": "path",
             "name": "uid",

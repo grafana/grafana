@@ -1434,9 +1434,10 @@ var (
 		},
 		{
 			Name:        "prometheusUsesCombobox",
-			Description: "Use new combobox component for Prometheus query editor",
-			Stage:       FeatureStageExperimental,
+			Description: "Use new **Combobox** component for Prometheus query editor",
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOSSBigTent,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
@@ -1620,7 +1621,7 @@ var (
 		},
 		{
 			Name:         "templateVariablesUsesCombobox",
-			Description:  "Use new combobox component for template variables",
+			Description:  "Use new **Combobox** component for template variables",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
@@ -1816,6 +1817,13 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "true", // enabled by default
+		},
+		{
+			Name:         "localizationForPlugins",
+			Description:  "Enables localization for plugins",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: false,
 		},
 	}
 )
