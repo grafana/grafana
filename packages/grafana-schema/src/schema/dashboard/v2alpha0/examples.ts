@@ -1,4 +1,4 @@
-import { DashboardV2Spec } from './types.gen';
+import { Spec as DashboardV2Spec } from '../v2alpha1/types.spec.gen';
 
 export const handyTestingSchema: DashboardV2Spec = {
   title: 'Default Dashboard',
