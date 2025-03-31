@@ -62,7 +62,9 @@ export const numberOrVariableValidator = (value: string | number) => {
   if (!Number.isNaN(Number(value))) {
     return true;
   }
-  if (value.match(variableRegex) !== null) {
+  const variableFound = variableRegex.test(value);
+  variableRegex.lastIndex = 0;
+  if (variableFound) {
     return true;
   }
   return false;
