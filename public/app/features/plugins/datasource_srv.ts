@@ -5,6 +5,7 @@ import {
   DataSourceRef,
   DataSourceSelectItem,
   ScopedVars,
+  isObject,
   matchPluginId,
 } from '@grafana/data';
 import {
@@ -397,7 +398,7 @@ export function variableInterpolation<T>(value: T | T[]) {
 }
 
 const isDatasourceRef = (ref: string | DataSourceRef | null | undefined): ref is DataSourceRef => {
-  if (ref && 'type' in (ref as DataSourceRef)) {
+  if (ref && isObject(ref) && 'type' in ref) {
     return true;
   }
   return false;
