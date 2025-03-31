@@ -3,6 +3,8 @@ import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Button } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
@@ -16,7 +18,6 @@ import {
   getLineHeight,
   LogFieldDimension,
   TRUNCATION_LINE_COUNT,
-  getTruncationLength,
 } from './virtualization';
 
 interface Props {
@@ -26,7 +27,7 @@ interface Props {
   showTime: boolean;
   style: CSSProperties;
   styles: LogLineStyles;
-  onOverflow?: (index: number, id: string, height: number) => void;
+  onOverflow?: (index: number, id: string, height?: number) => void;
   variant?: 'infinite-scroll';
   wrapLogMessage: boolean;
 }
@@ -43,15 +44,11 @@ export const LogLine = ({
   wrapLogMessage,
 }: Props) => {
   const { onLogLineHover } = useLogListContext();
-  const [expanded, setExpanded] = useState<boolean | undefined>(
-    wrapLogMessage ? getLogInitialExpandedState(log, displayedFields) : undefined
+  const [collapsed, setCollapsed] = useState<boolean | undefined>(
+    wrapLogMessage && log.collapsed !== undefined ? true : undefined
   );
   const logLineRef = useRef<HTMLDivElement | null>(null);
   const pinned = useLogIsPinned(log);
-
-  const handleMouseOver = useCallback(() => {
-    onLogLineHover?.(log);
-  }, [log, onLogLineHover]);
 
   useEffect(() => {
     if (!onOverflow || !logLineRef.current) {
@@ -64,46 +61,74 @@ export const LogLine = ({
     }
   }, [index, log.uid, onOverflow, style.height]);
 
+  const handleMouseOver = useCallback(() => onLogLineHover?.(log), [log, onLogLineHover]);
+
+  const handleExpandCollapse = useCallback(() => {
+    const newState = !collapsed;
+    setCollapsed(newState);
+    log.setCollapsedState(newState);
+    onOverflow?.(index, log.uid);
+  }, [collapsed, index, log, onOverflow]);
+
   return (
-    <div
-      style={style}
-      className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''}`}
-      ref={onOverflow ? logLineRef : undefined}
-      onMouseOver={handleMouseOver}
-    >
-      <LogLineMenu styles={styles} log={log} />
+    <div style={style}>
       <div
-        className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${expanded === false ? styles.truncatedLogLine : ''}`}
+        className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''}`}
+        ref={onOverflow ? logLineRef : undefined}
+        onMouseOver={handleMouseOver}
       >
-        <Log
-          displayedFields={displayedFields}
-          expanded={expanded}
-          log={log}
-          showTime={showTime}
-          styles={styles}
-          wrapLogMessage={wrapLogMessage}
-        />
+        <LogLineMenu styles={styles} log={log} />
+        <div
+          className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
+        >
+          <Log
+            displayedFields={displayedFields}
+            log={log}
+            showTime={showTime}
+            styles={styles}
+            wrapLogMessage={wrapLogMessage}
+          />
+        </div>
       </div>
+      {collapsed === true && (
+        <div className={styles.expandCollapseControl}>
+          <Button
+            variant="primary"
+            fill="text"
+            size="sm"
+            className={styles.expandCollapseControlButton}
+            onClick={handleExpandCollapse}
+          >
+            {t('logs.log-line.show-more', 'show more')}
+          </Button>
+        </div>
+      )}
+      {collapsed === false && (
+        <div className={styles.expandCollapseControl}>
+          <Button
+            variant="primary"
+            fill="text"
+            size="sm"
+            className={styles.expandCollapseControlButton}
+            onClick={handleExpandCollapse}
+          >
+            {t('logs.log-line.show-less', 'show less')}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
 
-function getLogInitialExpandedState(log: LogListModel, displayedFields: string[]) {
-  const lineLength =
-    displayedFields.map((field) => getDisplayedFieldValue(field, log)).join('').length + log.body.length;
-  return lineLength >= getTruncationLength() ? false : undefined;
-}
-
 interface LogProps {
   displayedFields: string[];
-  expanded?: boolean;
   log: LogListModel;
   showTime: boolean;
   styles: LogLineStyles;
   wrapLogMessage: boolean;
 }
 
-const Log = ({ displayedFields, expanded, log, showTime, styles, wrapLogMessage }: LogProps) => {
+const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
   return (
     <>
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
@@ -116,10 +141,10 @@ const Log = ({ displayedFields, expanded, log, showTime, styles, wrapLogMessage 
       {displayedFields.length > 0 ? (
         displayedFields.map((field) =>
           field === LOG_LINE_BODY_FIELD_NAME ? (
-            <LogLineBody log={log} key={field} expanded={expanded} />
+            <LogLineBody log={log} key={field} />
           ) : (
             <span className="field" title={field} key={field}>
-              {getDisplayedFieldValue(field, log)}
+              {log.getDisplayedFieldValue(field)}
             </span>
           )
         )
@@ -130,7 +155,7 @@ const Log = ({ displayedFields, expanded, log, showTime, styles, wrapLogMessage 
   );
 };
 
-const LogLineBody = ({ expanded, log }: { expanded?: boolean; log: LogListModel }) => {
+const LogLineBody = ({ log }: { log: LogListModel }) => {
   const { syntaxHighlighting } = useLogListContext();
 
   if (log.hasAnsi) {
@@ -150,20 +175,6 @@ const LogLineBody = ({ expanded, log }: { expanded?: boolean; log: LogListModel 
 
   return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
 };
-
-export function getDisplayedFieldValue(fieldName: string, log: LogListModel): string {
-  if (fieldName === LOG_LINE_BODY_FIELD_NAME) {
-    return log.body;
-  }
-  if (log.labels[fieldName] != null) {
-    return log.labels[fieldName];
-  }
-  const field = log.fields.find((field) => {
-    return field.keys[0] === fieldName;
-  });
-
-  return field ? field.values.toString() : '';
-}
 
 export function getGridTemplateColumns(dimensions: LogFieldDimension[]) {
   const columns = dimensions.map((dimension) => dimension.width).join('px ');
@@ -304,9 +315,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
         marginRight: 0,
       },
     }),
-    truncatedLogLine: css({
+    collapsedLogLine: css({
       maxHeight: `${TRUNCATION_LINE_COUNT * getLineHeight()}px`,
       overflow: 'hidden',
+    }),
+    expandCollapseControl: css({
+      display: 'flex',
+      justifyContent: 'center',
+    }),
+    expandCollapseControlButton: css({
+      fontWeight: theme.typography.fontWeightLight,
+      height: getLineHeight(),
+      margin: 0,
     }),
   };
 };

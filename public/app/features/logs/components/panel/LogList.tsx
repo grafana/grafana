@@ -220,11 +220,11 @@ const LogListComponent = ({
   });
 
   const handleOverflow = useCallback(
-    (index: number, id: string, height: number) => {
-      if (containerElement) {
+    (index: number, id: string, height?: number) => {
+      if (containerElement && height !== undefined) {
         storeLogLineSize(id, containerElement, height);
-        listRef.current?.resetAfterIndex(index);
       }
+      listRef.current?.resetAfterIndex(index);
     },
     [containerElement]
   );

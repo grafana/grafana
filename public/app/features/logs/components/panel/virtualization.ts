@@ -2,7 +2,6 @@ import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
-import { getDisplayedFieldValue } from './LogLine';
 import { LogListModel } from './processing';
 
 let ctx: CanvasRenderingContext2D | null = null;
@@ -168,6 +167,13 @@ export function getLogLineSize(
   if (!wrap || !logs[index]) {
     return lineHeight + paddingBottom;
   }
+
+  // If a long line is collapsed, we show the line count + an extra line for the expand/collapse control
+  logs[index].checkCollapsedState(displayedFields);
+  if (logs[index].collapsed) {
+    return (TRUNCATION_LINE_COUNT + 1) * lineHeight;
+  }
+
   const storedSize = retrieveLogLineSize(logs[index].uid, container);
   if (storedSize) {
     return storedSize;
@@ -189,14 +195,15 @@ export function getLogLineSize(
     textToMeasure += logs[index].displayLevel ?? '';
   }
   for (const field of displayedFields) {
-    textToMeasure = getDisplayedFieldValue(field, logs[index]) + textToMeasure;
+    textToMeasure = logs[index].getDisplayedFieldValue(field) + textToMeasure;
   }
   if (!displayedFields.length) {
     textToMeasure += logs[index].body;
   }
 
   const { height } = measureTextHeight(textToMeasure, getLogContainerWidth(container), optionsWidth);
-  return height;
+  // When the log is collapsed, add an extra line for the expand/collapse control
+  return logs[index].collapsed === false ? height + 1 : height;
 }
 
 export interface LogFieldDimension {
@@ -221,7 +228,7 @@ export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: 
       levelWidth = Math.round(width);
     }
     for (const field of displayedFields) {
-      width = measureTextWidth(getDisplayedFieldValue(field, logs[i]));
+      width = measureTextWidth(logs[i].getDisplayedFieldValue(field));
       fieldWidths[field] = !fieldWidths[field] || width > fieldWidths[field] ? Math.round(width) : fieldWidths[field];
     }
   }
@@ -250,7 +257,7 @@ export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: 
 
 export const TRUNCATION_LINE_COUNT = 4;
 export function getTruncationLength() {
-  return (window.innerWidth / measureTextWidth('e')) * TRUNCATION_LINE_COUNT;
+  return (window.innerWidth / measureTextWidth('e')) * (TRUNCATION_LINE_COUNT + 1);
 }
 
 export function hasUnderOrOverflow(element: HTMLDivElement, calculatedHeight?: number): number | null {
