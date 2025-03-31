@@ -215,9 +215,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
     }
 
+    // HERE. we are relying on target, however when we are dealing a v2 dashboard, the an
+    // annotation target is not available, only the query
+    // if we are dealing with a v2 dashboard, we need to use the query
+    const target = annotation.query ? annotation.query.spec : annotation.target;
     const query = {
       ...datasource.annotations?.getDefaultQuery?.(),
-      ...(annotation.target ?? { refId: 'Anno' }),
+      ...(target ?? { refId: 'Anno' }),
     };
 
     return (

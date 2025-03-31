@@ -44,6 +44,7 @@ import {
   DashboardCursorSync,
   FieldConfig,
   FieldColor,
+  AnnotationQuerySpec,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -400,34 +401,55 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
       },
     };
 
-    // For built-in annotations, always use grafana kind but respect target if it exists
-    if (layer.state.query.builtIn) {
-      result.spec.query = {
-        kind: 'grafana',
-        spec: layer.state.query.target || {
-          type: 'dashboard',
-          limit: 100,
-          matchAny: false,
-          tags: [],
-        },
-      };
-    } else if (layer.state.query.target) {
-      // Transform old target structure to new query structure for non-built-in annotations
-      result.spec.query = {
-        kind: getAnnotationQueryKind(layer.state.query),
-        spec: {
-          ...layer.state.query.target,
-          // Include any datasource-specific query properties (like expr for Prometheus)
-          ...(layer.state.query.expr && { expr: layer.state.query.expr }),
-        },
-      };
-    } else if (layer.state.query.query?.kind) {
-      // Use new query structure if it exists
+    // To define the annnotation.query.spec, are we dealing with an scene that was saved in v1 and is now being saved in v2?
+    // If so, we need to transform the old target structure to new query structure
+    if (layer.state.query.target) {
+      // if we are dealing with built-in annotations
+      if (layer.state.query.builtIn) {
+        result.spec.query = {
+          kind: 'grafana', // built-in annotations are always of type grafana
+          spec: {
+            ...layer.state.query.target,
+          },
+        };
+      } else {
+        result.spec.query = {
+          kind: getAnnotationQueryKind(layer.state.query),
+          spec: {
+            ...layer.state.query.target,
+          },
+        };
+      }
+    }
+    // we can have cases where query.query is not defined, like grafana annotations with no tags or other prop that
+    // could generate a target property
+    else if (layer.state.query.query?.kind) {
       result.spec.query = {
         kind: layer.state.query.query.kind,
-        spec: layer.state.query.query.spec,
+        spec: {
+          ...layer.state.query.query.spec,
+        },
       };
     }
+    // add other props that are not in the spec of annotation
+    // this is for cases like prometheus, where expr and other props are not in the target but outside, and the query editor is expecting them
+    let otherProps = omit(
+      layer.state.query,
+      'type',
+      'target',
+      'builtIn',
+      'name',
+      'datasource',
+      'iconColor',
+      'enable',
+      'hide',
+      'filter'
+    );
+
+    result.spec = {
+      ...result.spec,
+      ...otherProps,
+    };
 
     // If filter is an empty array, don't save it
     if (layer.state.query.filter?.ids?.length) {
