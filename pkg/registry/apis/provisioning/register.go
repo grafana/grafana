@@ -856,11 +856,12 @@ spec:
 		sub.Get.Description = "Get job by UID"
 		sub.Get.Responses = getJSONResponse("#/components/schemas/" + refsBase + "Job")
 
-		// Change the {path} to {uid}
+		// Replace {path} with {uid} (it is a UID query, but all k8s sub-resources are called path)
 		for _, v := range sub.Parameters {
 			if v.Name == "path" {
 				v.Name = "uid"
 				v.Description = "Original Job UID"
+				break
 			}
 		}
 
@@ -887,11 +888,12 @@ spec:
 			},
 		}
 
-		// Change the {path} to {uid}
+		// Replace {path} with {guid} (it is a GUID, but all k8s sub-resources are called path)
 		for _, v := range sub.Parameters {
 			if v.Name == "path" {
 				v.Name = "guid"
 				v.Description = "Image GUID"
+				break
 			}
 		}
 

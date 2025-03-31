@@ -1,6 +1,6 @@
 import { useDebounce } from 'react-use';
 
-import { HistoricJob, Job, useGetRepositoryJobsQuery, useListJobQuery } from 'app/api/clients/provisioning';
+import { Job, useGetRepositoryJobsQuery, useListJobQuery } from 'app/api/clients/provisioning';
 
 interface RepositoryHistoricalJobsArgs {
   /** Limits the returned jobs to those which apply to this repository. */
@@ -14,7 +14,7 @@ function labelSelectorActive(repositoryName?: string): string | undefined {
 export function useRepositoryAllJobs({
   repositoryName,
 }: RepositoryHistoricalJobsArgs): [
-  Array<Job | HistoricJob> | undefined,
+  Job[] | undefined,
   ReturnType<typeof useListJobQuery>,
   ReturnType<typeof useGetRepositoryJobsQuery>,
 ] {
@@ -27,7 +27,7 @@ export function useRepositoryAllJobs({
     () => {
       historicQuery.refetch(); // fetch again when the watch value changes
     },
-    200,
+    250,
     [activeQuery.data]
   );
 
