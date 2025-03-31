@@ -48,7 +48,7 @@ var (
 	)
 	errMismatchedExternalUID = errutil.Unauthorized(
 		"user.sync.mismatched-externalUID",
-		errutil.WithPublicMessage("Mismatched externalUID"),
+		errutil.WithPublicMessage("Mismatched provisioned identity"),
 	)
 	errEmptyExternalUID = errutil.Unauthorized(
 		"user.sync.empty-externalUID",
@@ -132,6 +132,11 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 			s.log.FromContext(ctx).Error("Failed to update user", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errSyncUserInternal.Errorf("unable to update user")
 		}
+	}
+
+	if id.ExternalUID != userAuth.ExternalUID { // if user is provisioned
+		s.log.Error("mismatched externalUID", "provisioned_externalUID", userAuth.ExternalUID, "identity_externalUID", id.ExternalUID)
+		return errMismatchedExternalUID.Errorf("externalUID mistmatch")
 	}
 
 	syncUserToIdentity(usr, id)
@@ -334,7 +339,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 			return errEmptyExternalUID.Errorf("externalUID is empty")
 		}
 
-		if id.ExternalUID != authInfo.ExternalUID {
+		if id.ExternalUID != authInfo.ExternalUID { // TODO: this probaable should be removed
 			s.log.Error("mismatched externalUID", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
 			return errMismatchedExternalUID.Errorf("externalUID mistmatch")
 		}
