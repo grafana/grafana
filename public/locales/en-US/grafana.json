@@ -472,7 +472,6 @@
       "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
       "self-reference": "You can't link an expression to itself"
     },
-    "delete-permanently": "Delete permanently",
     "delete-rule-modal": {
       "title": "Delete rule",
       "with-soft-delete": "Are you sure you want to delete this rule? This rule will be recoverable from the Recently deleted page by a user with an admin role.",
@@ -482,6 +481,7 @@
       "delete-permanently": "Delete permanently",
       "empty-state-title": "No recently deleted rules found",
       "errorloading": "Failed to load alert deleted rules",
+      "restore": "Restore",
       "restore-deleted-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the deleted rule by editing the rule and saving it.",
       "restore-modal": {
         "body": "Are you sure you want to restore this deleted alert rule definition?",

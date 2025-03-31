@@ -51,9 +51,7 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
   };
 
   const showDeleteConfirmation = (id: string) => {
-    const ruleTorestore = deletedRules.find(
-      (rule) => getRowId(rule.grafana_alert) === id
-    );
+    const ruleTorestore = deletedRules.find((rule) => getRowId(rule.grafana_alert) === id);
     if (!ruleTorestore) {
       return;
     }
@@ -75,16 +73,15 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
             size="sm"
             icon="trash-alt"
             onClick={() => {
-              showDeleteConfirmation(getRowId(row.original.grafana_alert)
-              );
+              showDeleteConfirmation(getRowId(row.original.grafana_alert));
             }}
           >
-            <Trans i18nKey="alerting.deletedRules.delete-permanently">Delete permanently</Trans>
+            <Trans i18nKey="alerting.deleted-rules.delete-permanently">Delete permanently</Trans>
           </Button>
         </Stack>
       );
     },
-  }
+  };
 
   const columns: Array<Column<(typeof deletedRules)[0]>> = [
     {
@@ -142,19 +139,16 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
               size="sm"
               icon="history"
               onClick={() => {
-                showConfirmation(getRowId(row.original.grafana_alert)
-                );
+                showConfirmation(getRowId(row.original.grafana_alert));
               }}
             >
-              <Trans i18nKey="alerting..delete-permanently">Delete permanently</Trans>
+              <Trans i18nKey="alerting.deleted-rules.restore">Restore</Trans>
             </Button>
           </Stack>
         );
       },
     },
-    ...(shouldAllowRemovePermanently
-      ? [removePermanentlyColumn]
-      : []),
+    ...(shouldAllowRemovePermanently ? [removePermanentlyColumn] : []),
   ];
 
   return (
