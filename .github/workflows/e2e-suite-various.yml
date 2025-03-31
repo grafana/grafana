@@ -19,5 +19,5 @@ jobs:
         with:
           verb: run
           dagger-flags: '--quiet'
-          args: go run ./pkg/build/e2e -package=grafana.tar.gz -suite="various suite"
+          args: go run ./pkg/build/e2e -package=grafana.tar.gz -suite="various-suite"
       - run: ls -al videos
