@@ -1,9 +1,8 @@
 import { attempt, compact, isString } from 'lodash';
 import memoize from 'micro-memoize';
 
-import { isExpressionReference } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { AlertQuery, PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
@@ -111,14 +110,10 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     const isGrafanaRule = prometheusRuleType.grafana.rule(rule);
     if (isGrafanaRule) {
       try {
-        const parsedQuery: AlertQuery[] = JSON.parse(rule.query);
+        const filterDatasourceUids = mapDataSourceNamesToUids(filterState.dataSourceNames);
+        const queriedDatasourceUids = rule.queriedDatasources || [];
 
-        const filterDataSourceUids = mapDataSourceNamesToUids(filterState.dataSourceNames);
-        const queryDataSourceUids = parsedQuery
-          .map((q) => q.datasourceUid)
-          .filter((uid) => !isExpressionReference(uid));
-
-        const queryIncludesDataSource = queryDataSourceUids.some((uid) => filterDataSourceUids.includes(uid));
+        const queryIncludesDataSource = queriedDatasourceUids.some((uid) => filterDatasourceUids.includes(uid));
         if (!queryIncludesDataSource) {
           return false;
         }

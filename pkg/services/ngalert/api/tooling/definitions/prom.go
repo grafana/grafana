@@ -152,9 +152,10 @@ type AlertingRule struct {
 	// required: true
 	Name string `json:"name,omitempty"`
 	// required: true
-	Query         string  `json:"query,omitempty"`
-	Duration      float64 `json:"duration,omitempty"`
-	KeepFiringFor float64 `json:"keepFiringFor,omitempty"`
+	Query              string   `json:"query,omitempty"`
+	QueriedDatasources []string `json:"queriedDatasources,omitempty"`
+	Duration           float64  `json:"duration,omitempty"`
+	KeepFiringFor      float64  `json:"keepFiringFor,omitempty"`
 	// required: true
 	Annotations promlabels.Labels `json:"annotations,omitempty"`
 	// required: true
@@ -170,7 +171,7 @@ type AlertingRule struct {
 type Rule struct {
 	UID string `json:"uid,omitempty"`
 	// required: true
-	Name string `json:"name"`
+	Name      string `json:"name"`
 	FolderUID string `json:"folderUid,omitempty"`
 	// required: true
 	Query  string            `json:"query"`

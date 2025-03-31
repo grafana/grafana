@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -544,13 +545,23 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 			}
 		}
 
+		queriedDatasources := make([]string, 0, len(rule.Data))
+		for _, query := range rule.Data {
+			// Skip expression datasources (UID -100 or __expr__)
+			if expr.IsDataSource(query.DatasourceUID) {
+				continue
+			}
+			queriedDatasources = append(queriedDatasources, query.DatasourceUID)
+		}
+
 		alertingRule := apimodels.AlertingRule{
-			State:         "inactive",
-			Name:          rule.Title,
-			Query:         ruleToQuery(log, rule),
-			Duration:      rule.For.Seconds(),
-			KeepFiringFor: rule.KeepFiringFor.Seconds(),
-			Annotations:   apimodels.LabelsFromMap(rule.Annotations),
+			State:              "inactive",
+			Name:               rule.Title,
+			Query:              ruleToQuery(log, rule),
+			QueriedDatasources: queriedDatasources,
+			Duration:           rule.For.Seconds(),
+			KeepFiringFor:      rule.KeepFiringFor.Seconds(),
+			Annotations:        apimodels.LabelsFromMap(rule.Annotations),
 		}
 
 		newRule := apimodels.Rule{

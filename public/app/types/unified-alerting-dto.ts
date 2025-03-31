@@ -163,11 +163,13 @@ export interface PromRuleGroupDTO<TRule = PromRuleDTO> {
 export interface GrafanaPromAlertingRuleDTO extends PromAlertingRuleDTO {
   uid: string;
   folderUid: string;
+  queriedDatasources?: string[];
 }
 
 export interface GrafanaPromRecordingRuleDTO extends PromRecordingRuleDTO {
   uid: string;
   folderUid: string;
+  queriedDatasources?: string[];
 }
 export type GrafanaPromRuleDTO = GrafanaPromAlertingRuleDTO | GrafanaPromRecordingRuleDTO;
 

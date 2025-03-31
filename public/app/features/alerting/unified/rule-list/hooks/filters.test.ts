@@ -180,7 +180,7 @@ describe('ruleFilter', () => {
         if (ruleSourceName === 'loki') {
           return 'datasource-uid-3';
         }
-        return undefined;
+        throw new Error(`Unknown datasource name: ${ruleSourceName}`);
       });
     });
 
@@ -192,10 +192,7 @@ describe('ruleFilter', () => {
     it('should match rules that use the filtered datasource', () => {
       // Create a Grafana rule with matching datasource
       const ruleWithMatchingDatasource = mockGrafanaPromAlertingRule({
-        query: JSON.stringify([
-          { refId: 'A', datasourceUid: 'datasource-uid-1' }, // Will match 'prometheus'
-          { refId: 'B', datasourceUid: 'datasource-uid-2' },
-        ]),
+        queriedDatasources: ['datasource-uid-1'],
       });
 
       // 'prometheus' resolves to 'datasource-uid-1' which is in the rule
@@ -205,10 +202,7 @@ describe('ruleFilter', () => {
     it("should filter out rules that don't use the filtered datasource", () => {
       // Create a Grafana rule without the target datasource
       const ruleWithoutMatchingDatasource = mockGrafanaPromAlertingRule({
-        query: JSON.stringify([
-          { refId: 'A', datasourceUid: 'datasource-uid-1' },
-          { refId: 'B', datasourceUid: 'datasource-uid-2' },
-        ]),
+        queriedDatasources: ['datasource-uid-1', 'datasource-uid-2'],
       });
 
       // 'loki' resolves to 'datasource-uid-3' which is not in the rule
