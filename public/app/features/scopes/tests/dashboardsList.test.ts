@@ -293,7 +293,7 @@ describe('Dashboards list', () => {
             [dashboardWithoutFolder.spec.dashboard]: {
               url: '/d/' + dashboardWithoutFolder.spec.dashboard,
               title: dashboardWithoutFolder.status.dashboardTitle,
-              name: dashboardWithoutFolder.spec.dashboard,
+              id: dashboardWithoutFolder.spec.dashboard,
             },
           },
         },
@@ -310,7 +310,7 @@ describe('Dashboards list', () => {
             [dashboardWithRootFolder.spec.dashboard]: {
               url: '/d/' + dashboardWithRootFolder.spec.dashboard,
               title: dashboardWithRootFolder.status.dashboardTitle,
-              name: dashboardWithRootFolder.spec.dashboard,
+              id: dashboardWithRootFolder.spec.dashboard,
             },
           },
         },
@@ -331,12 +331,12 @@ describe('Dashboards list', () => {
                 [dashboardWithOneFolder.spec.dashboard]: {
                   url: '/d/' + dashboardWithOneFolder.spec.dashboard,
                   title: dashboardWithOneFolder.status.dashboardTitle,
-                  name: dashboardWithOneFolder.spec.dashboard,
+                  id: dashboardWithOneFolder.spec.dashboard,
                 },
                 [dashboardWithTwoFolders.spec.dashboard]: {
                   url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
                   title: dashboardWithTwoFolders.status.dashboardTitle,
-                  name: dashboardWithTwoFolders.spec.dashboard,
+                  id: dashboardWithTwoFolders.spec.dashboard,
                 },
               },
             },
@@ -348,7 +348,7 @@ describe('Dashboards list', () => {
                 [dashboardWithTwoFolders.spec.dashboard]: {
                   url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
                   title: dashboardWithTwoFolders.status.dashboardTitle,
-                  name: dashboardWithTwoFolders.spec.dashboard,
+                  id: dashboardWithTwoFolders.spec.dashboard,
                 },
               },
             },
@@ -374,7 +374,7 @@ describe('Dashboards list', () => {
                 [dashboardWithTwoFolders.spec.dashboard]: {
                   url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
                   title: dashboardWithTwoFolders.status.dashboardTitle,
-                  name: dashboardWithTwoFolders.spec.dashboard,
+                  id: dashboardWithTwoFolders.spec.dashboard,
                 },
               },
             },
@@ -386,7 +386,7 @@ describe('Dashboards list', () => {
                 [dashboardWithTwoFolders.spec.dashboard]: {
                   url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
                   title: dashboardWithTwoFolders.status.dashboardTitle,
-                  name: dashboardWithTwoFolders.spec.dashboard,
+                  id: dashboardWithTwoFolders.spec.dashboard,
                 },
               },
             },
@@ -413,17 +413,17 @@ describe('Dashboards list', () => {
             [dashboardWithRootFolderAndOtherFolder.spec.dashboard]: {
               url: '/d/' + dashboardWithRootFolderAndOtherFolder.spec.dashboard,
               title: dashboardWithRootFolderAndOtherFolder.status.dashboardTitle,
-              name: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
+              id: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
             },
             [dashboardWithRootFolder.spec.dashboard]: {
               url: '/d/' + dashboardWithRootFolder.spec.dashboard,
               title: dashboardWithRootFolder.status.dashboardTitle,
-              name: dashboardWithRootFolder.spec.dashboard,
+              id: dashboardWithRootFolder.spec.dashboard,
             },
             [dashboardWithoutFolder.spec.dashboard]: {
               url: '/d/' + dashboardWithoutFolder.spec.dashboard,
               title: dashboardWithoutFolder.status.dashboardTitle,
-              name: dashboardWithoutFolder.spec.dashboard,
+              id: dashboardWithoutFolder.spec.dashboard,
             },
           },
           folders: {
@@ -432,12 +432,12 @@ describe('Dashboards list', () => {
                 [dashboardWithOneFolder.spec.dashboard]: {
                   url: '/d/' + dashboardWithOneFolder.spec.dashboard,
                   title: dashboardWithOneFolder.status.dashboardTitle,
-                  name: dashboardWithOneFolder.spec.dashboard,
+                  id: dashboardWithOneFolder.spec.dashboard,
                 },
                 [dashboardWithTwoFolders.spec.dashboard]: {
                   url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
                   title: dashboardWithTwoFolders.status.dashboardTitle,
-                  name: dashboardWithTwoFolders.spec.dashboard,
+                  id: dashboardWithTwoFolders.spec.dashboard,
                 },
               },
               folders: {},
@@ -449,7 +449,7 @@ describe('Dashboards list', () => {
                 [dashboardWithTwoFolders.spec.dashboard]: {
                   url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
                   title: dashboardWithTwoFolders.status.dashboardTitle,
-                  name: dashboardWithTwoFolders.spec.dashboard,
+                  id: dashboardWithTwoFolders.spec.dashboard,
                 },
               },
               folders: {},
@@ -461,7 +461,7 @@ describe('Dashboards list', () => {
                 [dashboardWithRootFolderAndOtherFolder.spec.dashboard]: {
                   url: '/d/' + dashboardWithRootFolderAndOtherFolder.spec.dashboard,
                   title: dashboardWithRootFolderAndOtherFolder.status.dashboardTitle,
-                  name: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
+                  id: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
                 },
               },
               folders: {},
@@ -534,7 +534,7 @@ describe('Dashboards list', () => {
                 'Dashboard ID': {
                   url: '/d/Dashboard ID',
                   title: 'Dashboard Title',
-                  name: 'Dashboard ID',
+                  id: 'Dashboard ID',
                 },
               },
             },
@@ -546,7 +546,7 @@ describe('Dashboards list', () => {
                 'Dashboard ID': {
                   url: '/d/Dashboard ID',
                   title: 'Dashboard Title',
-                  name: 'Dashboard ID',
+                  id: 'Dashboard ID',
                 },
               },
             },
@@ -618,7 +618,7 @@ describe('Dashboards list', () => {
                 'Dashboard ID': {
                   url: '/d/Dashboard ID',
                   title: 'Dashboard Title',
-                  name: 'Dashboard ID',
+                  id: 'Dashboard ID',
                 },
               },
             },
@@ -627,7 +627,7 @@ describe('Dashboards list', () => {
             'Dashboard ID': {
               url: '/d/Dashboard ID',
               title: 'Dashboard Title',
-              name: 'Dashboard ID',
+              id: 'Dashboard ID',
             },
           },
         },
