@@ -32,9 +32,8 @@ export function ConnectRepositoryButton({ items }: Props) {
         <Trans
           i18nKey="provisioning.connect-repository-button.max-repositories-exist"
           values={{ count: state.repoCount }}
-        >
-          Maximum repositories exist ({state.repoCount})
-        </Trans>
+          defaults={'Maximum repositories exist ({{count}})'}
+        />
       </LinkButton>
     );
   }
