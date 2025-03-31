@@ -6,7 +6,7 @@ import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } f
 import { Icon } from '../Icon/Icon';
 
 import { Table } from './TableRT/Table';
-import { CustomHeaderRendererProps, BaseTableProps } from './types';
+import { CustomHeaderRendererProps, TableRTProps } from './types';
 
 // mock transition styles to ensure consistent behaviour in unit tests
 jest.mock('@floating-ui/react', () => ({
@@ -101,11 +101,11 @@ function applyOverrides(dataFrame: DataFrame) {
   return dataFrames[0];
 }
 
-function getTestContext(propOverrides: Partial<BaseTableProps> = {}) {
+function getTestContext(propOverrides: Partial<TableRTProps> = {}) {
   const onSortByChange = jest.fn();
   const onCellFilterAdded = jest.fn();
   const onColumnResize = jest.fn();
-  const props: BaseTableProps = {
+  const props: TableRTProps = {
     ariaLabel: 'aria-label',
     data: getDataFrame(fullDataFrame),
     height: 600,
@@ -415,7 +415,7 @@ describe('Table', () => {
       const onSortByChange = jest.fn();
       const onCellFilterAdded = jest.fn();
       const onColumnResize = jest.fn();
-      const props: BaseTableProps = {
+      const props: TableRTProps = {
         ariaLabel: 'aria-label',
         data: getDataFrame(fullDataFrame),
         height: 600,
@@ -557,7 +557,7 @@ describe('Table', () => {
       const onSortByChange = jest.fn();
       const onCellFilterAdded = jest.fn();
       const onColumnResize = jest.fn();
-      const props: BaseTableProps = {
+      const props: TableRTProps = {
         ariaLabel: 'aria-label',
         data: getDataFrame(fullDataFrame),
         height: 600,

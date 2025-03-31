@@ -42,9 +42,7 @@ import {
   setCorrelationsService,
   setPluginFunctionsHook,
 } from '@grafana/runtime';
-import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
-import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
-import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
+import { setPanelDataErrorView, setPanelRenderer, setPluginPage } from '@grafana/runtime/internal';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 

@@ -400,7 +400,15 @@ func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resource.Reso
 		return nil, fmt.Errorf("invalid kind")
 	}
 
-	count, err := c.dashboardStore.CountInOrg(ctx, info.OrgID)
+	var count int64
+	switch parts[0] {
+	case dashboard.GROUP:
+		count, err = c.dashboardStore.CountInOrg(ctx, info.OrgID, false)
+	case folderv0alpha1.GROUP:
+		count, err = c.dashboardStore.CountInOrg(ctx, info.OrgID, true)
+	default:
+		return nil, fmt.Errorf("invalid group")
+	}
 	if err != nil {
 		return nil, err
 	}

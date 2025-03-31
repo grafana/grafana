@@ -42,6 +42,31 @@ func TestAllowQuery(t *testing.T) {
 			q:    `SELECT * FROM a_table WHERE a_column IS NOT NULL`,
 			err:  nil,
 		},
+		{
+			name: "null literal",
+			q:    `SELECT 1 as id, NULL as null_col`,
+			err:  nil,
+		},
+		{
+			name: "val tuple in read query",
+			q:    `SELECT 1 WHERE 1 IN (1, 2, 3)`,
+			err:  nil,
+		},
+		{
+			name: "group concat in read query",
+			q:    `SELECT 1 as id, GROUP_CONCAT('will_', 'concatenate') as concat_val`,
+			err:  nil,
+		},
+		{
+			name: "collate in read query",
+			q:    `SELECT 'some text' COLLATE utf8mb4_bin`,
+			err:  nil,
+		},
+		{
+			name: "allow substring_index",
+			q:    `SELECT __value__, SUBSTRING_INDEX(name, '.', -1) AS code FROM A`,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
