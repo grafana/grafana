@@ -1814,8 +1814,8 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
-    },
-    {
+		},
+		{
 			Name:              "alertingRuleRecoverDeleted",
 			Description:       "Enables the UI functionality to recover and view deleted alert rules",
 			FrontendOnly:      true,
