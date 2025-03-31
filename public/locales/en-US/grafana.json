@@ -480,7 +480,7 @@
     "deleted-rules": {
       "delete-modal": {
         "body": "Are you sure you want to delete permanently this alert rule? This action cannot be undone.",
-        "confirm": "Yes, deleted permanently",
+        "confirm": "Yes, delete permanently",
         "error": "Could not delete alert rule permanently",
         "success": "Alert rule deleted permanently",
         "title": "Delete permanently an alert rule"

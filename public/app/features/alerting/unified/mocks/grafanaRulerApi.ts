@@ -36,6 +36,7 @@ export const grafanaRulerRule: RulerGrafanaRuleDTO = {
   },
   grafana_alert: {
     uid: '4d7125fee983',
+    guid: 'adnpo0g62bg1sb',
     title: 'Grafana-rule',
     namespace_uid: 'uuid020c61ef',
     rule_group: grafanaRulerGroupName,

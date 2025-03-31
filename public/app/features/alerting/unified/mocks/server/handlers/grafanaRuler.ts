@@ -114,12 +114,23 @@ export const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
         return new HttpResponse(null, { status: 403 });
       }
 
-      return HttpResponse.json(
-        {
-          message: 'Rules deleted',
-        },
-        { status: 202 }
-      );
+      return HttpResponse.json(undefined, { status: 200 });
+    }
+  );
+
+export const deleteRulerRulePermanentlyHandler = (options?: HandlerOptions) =>
+  http.delete<{ ruleGuid: string }>(
+    `/api/ruler/grafana/api/v1/trash/rule/guid/:ruleGuid`,
+    ({ params: { ruleGuid } }) => {
+      if (options?.response) {
+        return options.response;
+      }
+
+      if (grafanaRulerRule.grafana_alert.guid !== ruleGuid) {
+        return new HttpResponse(null, { status: 403 });
+      }
+
+      return HttpResponse.json({ status: 202 });
     }
   );
 
@@ -210,6 +221,7 @@ const handlers = [
   historyHandler(),
   updateRulerRuleNamespaceHandler(),
   deleteRulerRuleGroupHandler(),
+  deleteRulerRulePermanentlyHandler(),
   rulerRuleVersionHistoryHandler(),
 ];
 export default handlers;

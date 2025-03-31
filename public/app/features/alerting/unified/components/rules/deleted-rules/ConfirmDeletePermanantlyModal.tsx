@@ -12,14 +12,10 @@ type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismis
   guid?: string;
 };
 
-export const ConfirmDeletedPermanentlyModal = ({
-  isOpen,
-  onDismiss,
-  guid,
-}: ModalProps) => {
+export const ConfirmDeletedPermanentlyModal = ({ isOpen, onDismiss, guid }: ModalProps) => {
   const [remove] = alertRuleApi.endpoints.removePermanentlyDeletedRule.useMutation();
   const title = t('alerting.deleted-rules.delete-modal.title', 'Delete permanently an alert rule');
-  const confirmText = t('alerting.deleted-rules.delete-modal.confirm', 'Yes, deleted permanently')
+  const confirmText = t('alerting.deleted-rules.delete-modal.confirm', 'Yes, delete permanently');
   const appNotification = useAppNotification();
 
   const styles = useStyles2(getStyles);
@@ -34,7 +30,9 @@ export const ConfirmDeletedPermanentlyModal = ({
         appNotification.success(t('alerting.deleted-rules.delete-modal.success', 'Alert rule deleted permanently'));
       })
       .catch((err) => {
-        appNotification.error(t('alerting.deleted-rules.delete-modal.error', 'Could not delete alert rule permanently'));
+        appNotification.error(
+          t('alerting.deleted-rules.delete-modal.error', 'Could not delete alert rule permanently')
+        );
       });
   }
 
@@ -63,4 +61,3 @@ const getStyles = () => ({
     width: '700px',
   }),
 });
-
