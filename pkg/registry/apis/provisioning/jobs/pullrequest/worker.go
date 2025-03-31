@@ -14,9 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-// maxNumberOfPreviews is the maximum number of previews to show in a pull request comment.
-const maxNumberOfPreviews = 10
-
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*repository.FileInfo, error)
@@ -94,74 +91,41 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return nil
 	}
 
-	progress.SetMessage(ctx, "processing pull request files")
-	previews := make([]resourcePreview, 0, len(files))
-	var tooManyFiles bool
-	for _, f := range files {
-		result := jobs.JobResourceResult{
-			Path: f.Path,
-		}
-
-		if err := resources.IsPathSupported(f.Path); err != nil {
-			result.Action = repository.FileActionIgnored
-			progress.Record(ctx, result)
-			continue
-		}
-
-		if len(previews) >= maxNumberOfPreviews {
-			result.Action = repository.FileActionIgnored
-			progress.Record(ctx, result)
-			tooManyFiles = true
-			continue
-		}
-
-		result.Action = f.Action
-
-		fileInfo, err := prRepo.Read(ctx, f.Path, ref)
-		if err != nil {
-			return fmt.Errorf("read file: %w", err)
-		}
-
-		parsed, err := parser.Parse(ctx, fileInfo, true)
-		if err != nil {
-			if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-				logger.Debug("file is not a resource", "path", f.Path)
-				result.Action = repository.FileActionIgnored
-				progress.Record(ctx, result)
-			} else {
-				result.Error = fmt.Errorf("failed to parse resource: %w", err)
-				progress.Record(ctx, result)
-			}
-			continue
-		}
-
-		result.Resource = parsed.GVR.Resource
-		result.Group = parsed.GVR.Group
-		result.Name = parsed.Obj.GetName()
-
-		preview, err := c.previewer.Preview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, ref, options.URL, cfg.GitHub.GenerateDashboardPreviews)
-		if err != nil {
-			result.Error = fmt.Errorf("create preview: %w", err)
-			progress.Record(ctx, result)
-			continue
-		}
-
-		previews = append(previews, *preview)
-		progress.Record(ctx, result)
-	}
-
-	if len(previews) == 0 {
-		progress.SetFinalMessage(ctx, "no previews to add")
+	if len(files) > 1 {
+		progress.SetFinalMessage(ctx, "too many files to preview")
 		return nil
 	}
 
-	if tooManyFiles {
-		progress.SetFinalMessage(ctx, "too many previews to add")
+	f := files[0]
+	progress.SetMessage(ctx, "processing file preview")
+
+	if err := resources.IsPathSupported(f.Path); err != nil {
+		progress.SetFinalMessage(ctx, "file path is not supported")
 		return nil
+	}
+
+	fileInfo, err := prRepo.Read(ctx, f.Path, ref)
+	if err != nil {
+		return fmt.Errorf("read file: %w", err)
+	}
+
+	_, err = parser.Parse(ctx, fileInfo, true)
+	if err != nil {
+		if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
+			progress.SetFinalMessage(ctx, "file changes is not valid resource")
+			return nil
+		} else {
+			return fmt.Errorf("parse resource: %w", err)
+		}
+	}
+
+	preview, err := c.previewer.Preview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, ref, options.URL, cfg.GitHub.GenerateDashboardPreviews)
+	if err != nil {
+		return fmt.Errorf("generate preview: %w", err)
 	}
 
 	progress.SetMessage(ctx, "generating previews comment")
-	comment, err := c.previewer.GenerateComment(previews)
+	comment, err := c.previewer.GenerateComment(preview)
 	if err != nil {
 		return fmt.Errorf("generate comment: %w", err)
 	}
@@ -169,7 +133,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	if err := prRepo.CommentPullRequest(ctx, options.PR, comment); err != nil {
 		return fmt.Errorf("comment pull request: %w", err)
 	}
-	logger.Info("previews comment added", "number", len(previews))
+	logger.Info("preview comment added")
 
 	return nil
 }
