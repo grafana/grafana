@@ -57,7 +57,7 @@ export const RoleMenuOption = forwardRef<HTMLDivElement, React.PropsWithChildren
           disabled={disabled}
         />
         <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
-          <span>{data.displayName || data.name}</span>
+          <span>{data.filteredDisplayName || data.displayName || data.name}</span>
           {!hideDescription && data.description && <div className={styles.optionDescription}>{data.description}</div>}
         </div>
         {disabledMessage && (
