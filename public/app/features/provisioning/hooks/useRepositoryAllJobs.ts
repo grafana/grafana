@@ -1,3 +1,5 @@
+import { useDebounce } from 'react-use';
+
 import { HistoricJob, Job, useGetRepositoryJobsQuery, useListJobQuery } from 'app/api/clients/provisioning';
 
 interface RepositoryHistoricalJobsArgs {
@@ -40,6 +42,13 @@ export function useRepositoryAllJobs({
     watch,
   });
   const historicQuery = useGetRepositoryJobsQuery({ name: repositoryName! });
+  useDebounce(
+    () => {
+      historicQuery.refetch(); // fetch again when the watch value changes
+    },
+    200,
+    [activeQuery.data]
+  );
 
   const concatedItems = [...(activeQuery.data?.items ?? []), ...(historicQuery.data?.items ?? [])];
   const collator = new Intl.Collator(undefined, { numeric: true });
