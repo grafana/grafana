@@ -10,7 +10,9 @@ import {
   SceneComponentProps,
   SceneGridItemLike,
   useSceneObjectState,
+  SceneGridLayoutDragStartEvent,
 } from '@grafana/scenes';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
@@ -20,6 +22,7 @@ import {
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
+import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
@@ -30,6 +33,7 @@ import {
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
   useDashboard,
+  getLayoutOrchestratorFor,
 } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -59,9 +63,12 @@ export class DefaultGridLayoutManager
     },
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
-    kind: 'GridLayout',
     isGridLayout: true,
   };
+
+  public serialize(): DashboardV2Spec['layout'] {
+    return serializeDefaultGridLayout(this);
+  }
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
 
@@ -72,6 +79,14 @@ export class DefaultGridLayoutManager
   }
 
   private _activationHandler() {
+    if (config.featureToggles.dashboardNewLayouts) {
+      this._subs.add(
+        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) =>
+          getLayoutOrchestratorFor(this)?.startDraggingSync(evt, panel)
+        )
+      );
+    }
+
     this._subs.add(
       this.state.grid.subscribeToState(({ children: newChildren }, { children: prevChildren }) => {
         if (newChildren.length === prevChildren.length) {
