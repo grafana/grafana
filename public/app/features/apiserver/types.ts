@@ -56,7 +56,7 @@ export const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 
 // Grant permissions to the created resource
-export const AnnoKeyGrantPermissions = 'grafana.app/grantPermissions';
+export const AnnoKeyGrantPermissions = 'grafana.app/grant-permissions';
 
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeySlug = 'grafana.app/slug';
