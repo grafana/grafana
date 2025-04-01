@@ -22,5 +22,5 @@ type RepoGetter interface {
 }
 
 type ClientGetter interface {
-	ProvisioningV0alpha1() client.ProvisioningV0alpha1Interface
+	GetClient() client.ProvisioningV0alpha1Interface
 }
