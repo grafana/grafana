@@ -564,7 +564,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     actionsWrapper: css({
       position: 'relative',
-      top: theme.spacing(5),
+      paddingBottom: theme.spacing(5),
     }),
   };
 }
