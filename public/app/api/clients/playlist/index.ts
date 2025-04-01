@@ -1,12 +1,25 @@
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification, createSuccessNotification } from '../../../core/copy/appNotification';
+import { contextSrv } from '../../../core/services/context_srv';
 
 import { generatedAPI } from './endpoints.gen';
 
 export const playlistAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
-    createPlaylist: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+    createPlaylist: (endpointDefinition) => {
+      const originalQuery = endpointDefinition.query;
+      if (originalQuery) {
+        endpointDefinition.query = (requestOptions) => {
+          if (!requestOptions.playlist.metadata.name && !requestOptions.playlist.metadata.generateName) {
+            const login = contextSrv.user.login;
+            // GenerateName lets the apiserver create a new uid for the name
+            // The passed in value is the suggested prefix
+            requestOptions.playlist.metadata.generateName = login ? login.slice(0, 2) : 'g';
+          }
+          return originalQuery(requestOptions);
+        };
+      }
+      endpointDefinition.onQueryStarted = async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
           dispatch(notifyApp(createSuccessNotification('Playlist created')));
@@ -15,7 +28,7 @@ export const playlistAPI = generatedAPI.enhanceEndpoints({
             dispatch(notifyApp(createErrorNotification('Unable to create playlist', e)));
           }
         }
-      },
+      };
     },
     replacePlaylist: {
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
