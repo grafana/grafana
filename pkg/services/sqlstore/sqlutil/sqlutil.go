@@ -94,7 +94,6 @@ func sqLite3TestDB() (*TestDB, error) {
 		sqliteDb = f.Name()
 
 		ret.Cleanup = func() {
-			return
 			// remove db file if it exists
 			err := os.Remove(sqliteDb)
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
