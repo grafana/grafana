@@ -56,6 +56,78 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			expectError: false,
 		},
 		{
+			// If the rule group has no recording rules, the target datasource
+			// can be anything and should not be validated.
+			name:      "alert rules with non-prometheus target datasource",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			config: Config{
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: "non-prometheus-datasource",
+			},
+			expectError: false,
+		},
+		{
+			// If the rule group has recording rules and a non-prometheus target datasource,
+			// we should return an error
+			name:      "recording rules with non-prometheus target datasource",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Rules: []PrometheusRule{
+					{
+						Record: "some_metric",
+						Expr:   "sum(rate(http_requests_total[5m]))",
+					},
+				},
+			},
+			config: Config{
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: "non-prometheus-datasource",
+			},
+			expectError: true,
+			errorMsg:    "invalid target datasource type: non-prometheus-datasource, must be prometheus",
+		},
+		{
+			// If the rule group has recording rules and a non-prometheus target datasource,
+			// we should return an error
+			name:      "mixed group with both alert and recording rules requires prometheus target datasource",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "mixed-rules-group",
+				Interval: prommodel.Duration(10 * time.Second),
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+					{
+						Record: "some_metric",
+						Expr:   "sum(rate(http_requests_total[5m]))",
+					},
+				},
+			},
+			config: Config{
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: "non-prometheus-datasource",
+			},
+			expectError: true,
+			errorMsg:    "invalid target datasource type: non-prometheus-datasource, must be prometheus",
+		},
+		{
 			name:      "rules with keep_firing_for are not supported",
 			orgID:     1,
 			namespace: "namespaceUID",
