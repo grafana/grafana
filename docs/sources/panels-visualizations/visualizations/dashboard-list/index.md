@@ -65,18 +65,32 @@ Use the following options to refine your dashboard list visualization.
 
 | Option | Description |
 | ------ | ----------- |
-| Include current time range | Select this option to propagate the time range of the current dashboard to the dashboard links. When you click a link, the linked dashboard opens with the indicated time range already set. |
-| Include current template variable values | Select this option to include template variables that are being used as query parameters in a link. When you click the link, any matching templates in the linked dashboard are set to the values from the link. Learn more in [Dashboard URL variables](ref:dashboard-url-variables). |
+| Include current time range | Propagate the time range of the current dashboard to the dashboard links. When you click a link, the linked dashboard opens with the indicated time range already set. |
+| Include current template variable values | Include template variables that are being used as query parameters in a link. When you click the link, any matching templates in the linked dashboard are set to the values from the link. Learn more in [Dashboard URL variables](ref:dashboard-url-variables). |
 | Starred | Display starred dashboards in alphabetical order. |
 | Recently viewed | Display recently viewed dashboards in alphabetical order. |
-| Search | Display dashboards by search query or tags. You must enter at least one value in **Query** or **Tags**. For the **Query** and **Tags** fields, variable interpolation is supported. For example, `$my_var` or `${my_var}`. Learn more in [Search option](#search-options). |
-| Show headings | The selected list section is shown as a heading:<ul><li>Starred</li><li>Recently viewed</li>Search</ul> |
+| Search | Display dashboards returned by search. You must enter at least one value in the search fields, **Query** or **Tags**. Variable interpolation is supported for both fields. For example, `$my_var` or `${my_var}`. |
+| Show headings | Headings for enabled sections are displayed. Sections are:<ul><li>**Starred**</li><li>**Recently viewed**</li><li>**Search**</li> |
 | Show folder names | Display the name of the folder where the dashboard is located. |
-| Max items | Sets the maximum number of items to list per section. For example, if you leave this at the default value of 10 and select **Starred** and **Recently viewed** dashboards, then the panel displays up to 20 total dashboards, 10 in each section. |
-| Query | Use this field to search by dashboard name. Query terms are case-insensitive and partial values are accepted. For example, if you have dashboards called "Indoor Temps" and "Outdoor temp", entering the word "temp" would return both results. |
-| Folder | Select the dashboard folders that you want to display. |
-| Tags | Enter tags by which you want to search. Note that tags don't appear as you type, and they're case sensitive. Tag search uses an `OR` condition, so if a dashboard has one of the defined tags, it's included in the list.<p>When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.</p> |
+| Max items | Set the maximum number of items to list per section. If you enter "10" and enable **Starred** and **Recently viewed** dashboards, the panel displays up to 20 total dashboards, 10 in each section. |
+| [Query](#query) | Use this field to search by dashboard name. This option is only applied when the **Search** switch is toggled on. |
+| [Folder](#folder) | Only dashboards from the selected folder are displayed in the dashboard list. This option is only applied when the **Search** switch is toggled on. |
+| [Tags](#tags) | Enter tags by which you want to search. This option is only applied when the **Search** switch is toggled on.  |
 
 <!-- prettier-ignore-end -->
 
-<!--fix wording of Search, Folder -->
+#### Query
+
+Use this field to search by dashboard name. Query terms are case-insensitive and partial values are accepted. For example, if you have dashboards called "Indoor Temps" and "Outdoor temp", entering the word "temp" returns both results. This option is only applied when the **Search** switch is toggled on.
+
+#### Folder
+
+Only dashboards from the selected folder are included in search results and displayed in the dashboard list. To include all dashboards in search results, select the top-level **Dashboards** folder. This option is only applied when the **Search** switch is toggled on.
+
+#### Tags
+
+Enter tags by which you want to search. Note that tags don't appear as you type, and they're case sensitive. Tag search uses an `OR` condition, so if a dashboard has one of the defined tags, it's included in the list.
+
+When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
+
+This option is only applied when the **Search** switch is toggled on.
