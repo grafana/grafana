@@ -1417,7 +1417,9 @@
       "group-into-tab": "Group into tab",
       "group-panels": "Group panels",
       "new-row": "New row",
-      "new-tab": "New tab"
+      "new-tab": "New tab",
+      "paste-row": "Paste row",
+      "paste-tab": "Paste tab"
     },
     "conditional-rendering": {
       "data": {
@@ -1526,6 +1528,14 @@
         "paste-panel": {
           "heading": "Paste panel",
           "title": "Paste a panel from the clipboard"
+        },
+        "paste-row": {
+          "heading": "Paste row",
+          "title": "Paste a row from the clipboard"
+        },
+        "paste-tab": {
+          "heading": "Paste tab",
+          "title": "Paste a tab from the clipboard"
         },
         "row": {
           "heading": "Row",
