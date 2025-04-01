@@ -183,12 +183,14 @@ describe('parseRefsFromSqlExpression', () => {
       expect(parseRefsFromSqlExpression('SELECT * FROM table1')).toEqual(['table1']);
     });
 
-    it('ignores comments that might contain "as"', () => {
+    it('ignores comments that might contain "from"', () => {
       expect(
         parseRefsFromSqlExpression(`
--- Run MySQL-dialect SQL against the tables returned from your data sources.
--- Data source queries (ie "data") are available as tables and referenced by query-name
--- Fields are available as columns, as returned from the data source.
+-- a from b
+/** foo from bar */
+/**
+ joe from bloggs
+ */
 SELECT * FROM table1`)
       ).toEqual(['table1']);
     });
