@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
 import { Alert, ControlledCollapse, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
 import {
@@ -26,28 +26,23 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
     fieldSelector: `metadata.name=${watch.metadata?.name}`,
     watch: true,
   });
+  const activeJob = activeQuery?.data?.items?.[0];
+  const finishedQuery = useGetRepositoryJobsWithPathQuery(
+    activeJob
+      ? skipToken
+      : {
+          name: watch.metadata?.labels?.['provisioning.grafana.app/repository']!,
+          uid: watch.metadata?.uid!,
+        }
+  );
 
-  // ??? ideally only execute this after the active query is done
-  const finishedQuery = useGetRepositoryJobsWithPathQuery({
-    name: watch.metadata?.labels?.['provisioning.grafana.app/repository']!,
-    uid: watch.metadata?.uid!,
-  });
+  const job = activeJob || finishedQuery.data;
 
-  const job = useMemo(() => {
-    const active = activeQuery?.data?.items?.[0];
-    if (active) {
-      return active;
+  useEffect(() => {
+    if (!job) {
+      finishedQuery.refetch();
     }
-    if (activeQuery.isSuccess) {
-      if (finishedQuery.data) {
-        return finishedQuery.data;
-      }
-      setTimeout(() => {
-        finishedQuery.refetch(); // try again
-      }, 150);
-    }
-    return watch;
-  }, [watch, activeQuery, finishedQuery]);
+  }, [finishedQuery, job]);
 
   useEffect(() => {
     if (onStatusChange && job?.status?.state === 'success') {
