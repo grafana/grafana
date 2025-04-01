@@ -122,9 +122,13 @@ export function parseRefsFromSqlExpression(input: string): string[] {
   if (!input) {
     return [];
   }
+  // Remove any comment lines
+  const lines = input.split('\n');
+  const nonCommentLines = lines.filter((line) => !line.trim().startsWith('--'));
+  const noComments = nonCommentLines.join(' ');
 
   // Normalize whitespace only
-  const query = input.replace(/\s+/g, ' ');
+  const query = noComments.replace(/\s+/g, ' ');
   const tableMatches = [];
 
   // Extract tables after FROM - case insensitive with /i flag

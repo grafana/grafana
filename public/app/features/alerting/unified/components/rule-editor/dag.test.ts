@@ -183,6 +183,16 @@ describe('parseRefsFromSqlExpression', () => {
       expect(parseRefsFromSqlExpression('SELECT * FROM table1')).toEqual(['table1']);
     });
 
+    it('ignores comments that might contain "as"', () => {
+      expect(
+        parseRefsFromSqlExpression(`
+-- Run MySQL-dialect SQL against the tables returned from your data sources.
+-- Data source queries (ie "data") are available as tables and referenced by query-name
+-- Fields are available as columns, as returned from the data source.
+SELECT * FROM table1`)
+      ).toEqual(['table1']);
+    });
+
     it('should be case insensitive for SQL keywords', () => {
       expect(parseRefsFromSqlExpression('select * from table1')).toEqual(['table1']);
     });
@@ -255,9 +265,9 @@ describe('parseRefsFromSqlExpression', () => {
   describe('complex queries', () => {
     it('should extract all tables from a complex query with joins and aliases', () => {
       const complexQuery = `
-        SELECT t1.field1, t2.field2 
-        FROM schema1.table1 AS t1 
-        JOIN schema2.table2 t2 ON t1.id = t2.id 
+        SELECT t1.field1, t2.field2
+        FROM schema1.table1 AS t1
+        JOIN schema2.table2 t2 ON t1.id = t2.id
         LEFT JOIN table3 ON t2.id = table3.id
       `;
       expect(parseRefsFromSqlExpression(complexQuery)).toEqual(['table1', 'table2', 'table3']);
