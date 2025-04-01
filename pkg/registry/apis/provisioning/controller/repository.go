@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"slices"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -257,10 +256,6 @@ func (rc *RepositoryController) shouldCheckHealth(obj *provisioning.Repository) 
 	}
 
 	healthAge := time.Since(time.UnixMilli(obj.Status.Health.Checked))
-	if obj.Status.Webhook != nil && obj.Status.Webhook.LastPing == 0 && healthAge > 30*time.Second {
-		return true
-	}
-
 	if obj.Status.Health.Healthy {
 		return healthAge > time.Minute*5 // when healthy, check every 5 mins
 	}
@@ -268,9 +263,23 @@ func (rc *RepositoryController) shouldCheckHealth(obj *provisioning.Repository) 
 	return healthAge > time.Minute // otherwise within a minute
 }
 
-func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo repository.Repository) provisioning.HealthStatus {
+func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo repository.Repository, webhookStatus *provisioning.WebhookStatus) provisioning.HealthStatus {
 	logger := logging.FromContext(ctx)
 	logger.Info("running health check")
+
+	// check first if webhook is healthy
+	if webhookStatus == nil {
+		webhookStatus = repo.Config().Status.Webhook
+	}
+
+	if webhookStatus != nil && webhookStatus.LastPing == 0 {
+		return provisioning.HealthStatus{
+			Healthy: false,
+			Message: []string{"webhook has not been pinged"},
+			Checked: time.Now().UnixMilli(),
+		}
+	}
+
 	res, err := rc.tester.TestRepository(ctx, repo)
 	if err != nil {
 		res = &provisioning.TestResults{
@@ -501,25 +510,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	healthStatus := obj.Status.Health
-	var patchHealth bool
 	if shouldCheckHealth {
-		healthStatus = rc.runHealthCheck(ctx, repo)
-		patchHealth = true
-	}
-
-	// Fail health check if webhook is not pinged so that the repositoy doesn't get marked as healthy too early
-	if webhookStatus == nil {
-		webhookStatus = obj.Status.Webhook
-	}
-
-	notPingedMsg := []string{"webhook has not been pinged"}
-	if webhookStatus != nil && webhookStatus.LastPing == 0 && healthStatus.Healthy && !slices.Equal(healthStatus.Message, notPingedMsg) {
-		healthStatus.Message = notPingedMsg
-		healthStatus.Checked = time.Now().UnixMilli()
-		patchHealth = true
-	}
-
-	if patchHealth {
+		healthStatus = rc.runHealthCheck(ctx, repo, webhookStatus)
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/health",
