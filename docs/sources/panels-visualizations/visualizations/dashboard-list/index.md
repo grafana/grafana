@@ -49,35 +49,39 @@ Once you’ve created a [dashboard](ref:dashboard), the following video shows yo
 
 {{< docs/play title="Dashboard List Visualization" url="https://play.grafana.org/d/fdlojrg7daebka/" >}}
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Dashboard list options
+### Dashboard list options
 
 Use the following options to refine your dashboard list visualization.
 
-### Include current time range
+#### Include current time range
 
 Select this option to propagate the time range of the current dashboard to the dashboard links. When you click a link, the linked dashboard opens with the indicated time range already set.
 
-### Include current template variable values
+#### Include current template variable values
 
 Select this option to include template variables that are being used as query parameters in a link. When you click the link, any matching templates in the linked dashboard are set to the values from the link. Learn more in [Dashboard URL variables](ref:dashboard-url-variables).
 
-### Starred
+#### Starred
 
 Display starred dashboards in alphabetical order.
 
-### Recently viewed
+#### Recently viewed
 
 Display recently viewed dashboards in alphabetical order.
 
-### Search
+#### Search
 
 Display dashboards by search query or tags. You must enter at least one value in **Query** or **Tags**. For the **Query** and **Tags** fields, variable interpolation is supported. For example, `$my_var` or `${my_var}`. Learn more in [Search option](#search-options).
 
-### Show headings
+#### Show headings
 
 The selected list section is shown as a heading:
 
@@ -85,23 +89,23 @@ The selected list section is shown as a heading:
 - **Recently viewed**
 - **Search**
 
-### Max items
+#### Max items
 
 Sets the maximum number of items to list per section. For example, if you leave this at the default value of 10 and select **Starred** and **Recently viewed** dashboards, then the panel displays up to 20 total dashboards, 10 in each section.
 
-## Search options
+### Search options
 
 These options only apply if you select the **Search** option.
 
-### Query
+#### Query
 
 Use this field to search by dashboard name. Query terms are case-insensitive and partial values are accepted. For example, if you have dashboards called "Indoor Temps" and "Outdoor temp", entering the word "temp" would return both results.
 
-### Folder
+#### Folder
 
 Select the dashboard folders that you want to display.
 
-### Tags
+#### Tags
 
 Enter tags by which you want to search. Note that tags don't appear as you type, and they're case sensitive. Tag search uses an `OR` condition, so if a dashboard has one of the defined tags, it's included in the list.
 
