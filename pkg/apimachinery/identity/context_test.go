@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -22,5 +23,23 @@ func TestRequesterFromContext(t *testing.T) {
 		actual, err := identity.GetRequester(ctx)
 		require.NoError(t, err)
 		require.Equal(t, expected.GetUID(), actual.GetUID())
+	})
+}
+
+func TestServiceIdentityInContext(t *testing.T) {
+	t.Run("is assigned to the context", func(t *testing.T) {
+		ctx := t.Context()
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
+		identity, err := identity.GetRequester(ctx)
+		require.NoError(t, err)
+		require.Equal(t, identity.GetName(), "service")
+	})
+
+	t.Run("has permission to all namespaces", func(t *testing.T) {
+		ctx := t.Context()
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
+		identity, err := identity.GetRequester(ctx)
+		require.NoError(t, err)
+		require.True(t, types.NamespaceMatches(identity.GetNamespace(), "unit-test"), "namespace of identity and an arbitrary example should match")
 	})
 }
