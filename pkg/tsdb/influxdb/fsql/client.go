@@ -41,16 +41,17 @@ func newFlightSQLClient(addr string, metadata metadata.MD, secure bool, proxyCli
 }
 
 func grpcDialOptions(secure bool, proxyClient proxy.Client) ([]grpc.DialOption, error) {
+	dialOptions := []grpc.DialOption{}
 	secureDialOpt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	var transport grpc.DialOption
 
 	if secure {
 		pool, err := x509.SystemCertPool()
 		if err != nil {
 			return nil, fmt.Errorf("x509: %s", err)
 		}
-		transport = grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, ""))
+		secureDialOpt = grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, ""))
 	}
+	dialOptions = append(dialOptions, secureDialOpt)
 
 	if proxyClient.SecureSocksProxyEnabled() {
 		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
@@ -58,7 +59,9 @@ func grpcDialOptions(secure bool, proxyClient proxy.Client) ([]grpc.DialOption, 
 			return nil, fmt.Errorf("failed to create influx proxy dialer: %s", err)
 		}
 
-		transport = grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
+		dialOptions = append(dialOptions, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
+			logger := glog.FromContext(ctx)
+			logger.Debug("Dialing secure socks proxy", "host", host)
 			conn, err := dialer.Dial("tcp", host)
 			if err != nil {
 				return nil, fmt.Errorf("not possible to dial secure socks proxy: %w", err)
@@ -69,18 +72,10 @@ func grpcDialOptions(secure bool, proxyClient proxy.Client) ([]grpc.DialOption, 
 			default:
 				return conn, nil
 			}
-		})
+		}))
 	}
 
-	opts := []grpc.DialOption{
-		secureDialOpt,
-	}
-
-	if transport != nil {
-		opts = append(opts, transport)
-	}
-
-	return opts, nil
+	return dialOptions, nil
 }
 
 // DoGetWithHeaderExtraction performs a normal DoGet, but wraps the stream in a
