@@ -59,7 +59,7 @@ export function SaveProvisionedDashboardForm({
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { meta, isDirty } = dashboard.useState();
+  const { meta, isDirty, editPanel: panelEditor } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -71,7 +71,6 @@ export function SaveProvisionedDashboardForm({
     control,
     reset,
   } = useForm<FormData>({ defaultValues });
-
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
 
   // Update the form if default values change
@@ -82,7 +81,10 @@ export function SaveProvisionedDashboardForm({
   useEffect(() => {
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
+
       if (workflow === 'branch' && ref !== '' && path !== '') {
+        dashboard.closeModal();
+        panelEditor?.onDiscard();
         // Redirect to the provisioning preview pages
         navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
         return;
@@ -124,7 +126,7 @@ export function SaveProvisionedDashboardForm({
         ],
       });
     }
-  }, [appEvents, dashboard, defaultValues.repo, isNew, navigate, path, ref, request, workflow]);
+  }, [appEvents, dashboard, defaultValues.repo, drawer, isNew, navigate, panelEditor, path, ref, request, workflow]);
 
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: FormData) => {
