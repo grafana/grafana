@@ -46,7 +46,7 @@ SCIM offers several advantages for managing users and teams in Grafana:
 
 ## Identity provider consistency
 
-Grafana follows the best practice of not mixing different identity providers and SSO methods. When you enable SCIM in Grafana, you must use the same identity provider for both authentication and user provisioning. This means that users attempting to log in through other authentication methods like LDAP or OAuth will be blocked from accessing Grafana. 
+Grafana follows the best practice of not mixing different identity providers and SSO methods. When you enable SCIM in Grafana, you must use the same identity provider for both authentication and user provisioning. This means that users attempting to log in through other authentication methods like LDAP or OAuth will be blocked from accessing Grafana.
 
 Users with Basic Auth credentials and those using their grafana.com accounts will still be able to log in successfully.
 
