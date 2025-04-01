@@ -1114,6 +1114,12 @@
       "success": "Instrumentpanelen {{name}} har flyttats till Nyligen raderat"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Kopierad"
@@ -1128,9 +1134,6 @@
     },
     "custom-value": {
       "description": "Använd eget värde"
-    },
-    "group": {
-      "undefined": "Ingen grupp"
     },
     "options": {
       "no-found": "Inga alternativ hittades."
@@ -4780,7 +4783,7 @@
       "loading": "Laddar instrumentpaneler",
       "noResultsForFilter": "Inga resultat hittades för din fråga",
       "noResultsForFilterClear": "Rensa sökningen",
-      "noResultsForScopes": "Inga instrumentpaneler hittades för de valda omfattningarna",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Inga omfattningar har valts",
       "search": "Sök",
       "toggle": {
@@ -5128,7 +5131,8 @@
       "week-start-label": "Veckostart"
     },
     "theme": {
-      "default-label": "Standard"
+      "default-label": "Standard",
+      "experimental": ""
     },
     "title": "Inställningar"
   },
