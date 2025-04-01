@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -190,7 +191,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	z.handle, err = grpcserver.ProvideService(
 		z.cfg,
 		z.features,
-		grpcutils.NewAuthenticatorInterceptor(authenticator, tracer),
+		interceptors.AuthenticatorFunc(grpcutils.NewAuthenticatorInterceptor(authenticator, tracer)),
 		tracer,
 		prometheus.DefaultRegisterer,
 	)
