@@ -177,20 +177,20 @@ The options under the **Graph styles** section let you control the general appea
 
 ### Axis options
 
-Options under the **Axis** section control how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you're editing. You can also press `Enter`.
-
 | Option                             | Description                                                                                                        |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | [Placement](#placement)            | Select the placement of the y-axis.                                                                                |
 | Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override. |
 | Width                              | Set a fixed width for the axis. By default, Grafana dynamically calculates the width of an axis.                   |
-| Show grid lines                    | Set the axis grid line visibility.<br>                                                                             |
-| Color                              | Set the color of the axis.                                                                                         |
+| Show grid lines                    | Set the axis grid line visibility. Choose from: **Auto**, **On**, and **Off**.                                     |
+| Color                              | Set the color of the axis. Choose from:<ul>**Text** - Uses panel text color.<li></li><li>**Series** - Uses the colors of the series.</li></ul> |
 | Show border                        | Set the axis border visibility.                                                                                    |
-| Scale                              | Set the y-axis values scale.<br>                                                                                   |
+| [Scale](#scale)                    | Set the y-axis values scale. Choose from: **Linear**, **Logarithmic**, and **Symlog**.                             |
 | Centered zero                      | Set the y-axis so it's centered on zero.                                                                           |
-| [Soft min](#soft-min-and-soft-max) | Set a soft min to better control the y-axis limits. zero.                                                          |
-| [Soft max](#soft-min-and-soft-max) | Set a soft max to better control the y-axis limits. zero.                                                          |
+| [Soft min](#soft-min-and-soft-max) | Set a soft min to better control the y-axis limits.                                                                |
+| [Soft max](#soft-min-and-soft-max) | Set a soft max to better control the y-axis limits.                                                                |
+
+<!-- prettier-ignore-end -->
 
 #### Placement
 
@@ -200,6 +200,14 @@ Select the placement of the y-axis. Choose from the following:
 - **Left** - Display all y-axes on the left side.
 - **Right** - Display all y-axes on the right side.
 - **Hidden** - Hide all axes. To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
+
+#### Scale
+
+Set the y-axis values scale. Choose from:
+
+- **Linear** - Divides the scale into equal parts.
+- **Logarithmic** - Use a logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale.
+- **Symlog** - Use a symmetrical logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale. The linear threshold option allows you to set the threshold at which the scale changes from linear to logarithmic.
 
 #### Soft min and soft max
 
