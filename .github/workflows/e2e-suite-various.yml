@@ -20,6 +20,7 @@ jobs:
           verb: run
           args: go run ./pkg/build/e2e -package=grafana.tar.gz -suite="various-suite"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: e2e-various-${{github.run_number}}
           path: videos

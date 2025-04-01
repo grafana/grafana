@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 
 	"dagger.io/dagger"
@@ -43,8 +44,31 @@ func main() {
 	}
 
 	// *spec.ts.mp4
-	videos := RunSuiteVideos(d, svc, grafana, yarnCache, *suite)
+	c := RunSuite(d, svc, grafana, yarnCache, *suite)
+	c, err = c.Sync(ctx)
+	videos := c.Directory(fmt.Sprintf("/src/e2e/%s/videos", *suite))
+	if err != nil {
+		// Attempt to export videos first
+		if _, exportErr := videos.Export(ctx, "videos"); exportErr != nil {
+			log.Fatalf("could not export videos dir: %s\nError: %s", exportErr, err)
+		}
+
+		log.Fatalf("error running dagger: %s", err)
+	}
+
+	code, err := c.ExitCode(ctx)
+	if err != nil {
+		log.Fatalf("error getting exit code: %s", err)
+	}
+
+	log.Println("exit code:", code)
+
+	// No sync error; export the videos dir
 	if _, err := videos.Export(ctx, "videos"); err != nil {
-		panic(err)
+		log.Fatalf("error getting videos: %s", err)
+	}
+
+	if code != 0 {
+		log.Fatalf("tests failed: exit code %d", code)
 	}
 }
