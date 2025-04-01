@@ -1105,6 +1105,12 @@
       "success": "{{name}} 대시보드를 '최근 삭제됨'으로 이동함"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "복사됨"
@@ -1119,9 +1125,6 @@
     },
     "custom-value": {
       "description": "사용자 지정 값 사용"
-    },
-    "group": {
-      "undefined": "그룹 없음"
     },
     "options": {
       "no-found": "옵션을 찾을 수 없습니다."
@@ -4766,7 +4769,7 @@
       "loading": "대시보드 로딩 중",
       "noResultsForFilter": "쿼리에 대해 찾은 결과 없음",
       "noResultsForFilterClear": "검색 초기화",
-      "noResultsForScopes": "선택한 범위에 대해 찾은 대시보드 없음",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "선택된 범위 없음",
       "search": "검색",
       "toggle": {
@@ -5114,7 +5117,8 @@
       "week-start-label": "주 시작 요일"
     },
     "theme": {
-      "default-label": "기본값"
+      "default-label": "기본값",
+      "experimental": ""
     },
     "title": "기본 설정"
   },

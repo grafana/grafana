@@ -1114,6 +1114,12 @@
       "success": "Dashboard {{name}} in „Kürzlich gelöscht“ verschoben"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Kopiert"
@@ -1128,9 +1134,6 @@
     },
     "custom-value": {
       "description": "Benutzerdefinierten Wert verwenden"
-    },
-    "group": {
-      "undefined": "Keine Gruppe"
     },
     "options": {
       "no-found": "Keine Optionen gefunden."
@@ -4780,7 +4783,7 @@
       "loading": "Dashboards werden geladen",
       "noResultsForFilter": "Keine Ergebnisse für Ihre Abfrage gefunden",
       "noResultsForFilterClear": "Suche löschen",
-      "noResultsForScopes": "Keine Dashboards für die ausgewählten Bereiche gefunden",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Keine Bereiche ausgewählt",
       "search": "",
       "toggle": {
@@ -5128,7 +5131,8 @@
       "week-start-label": "Wochenbeginn"
     },
     "theme": {
-      "default-label": "Standard"
+      "default-label": "Standard",
+      "experimental": ""
     },
     "title": "Einstellungen"
   },
